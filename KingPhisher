@@ -1,0 +1,16 @@
+#!/usr/bin/python -B
+
+import os
+
+from gi.repository import Gtk
+
+from king_phisher.client import client
+
+def main():
+	os.environ['GLADE_FILE'] = 'king_phisher/KingPhisherClient.glade'
+	main_window = client.KingPhisherClient()
+	main_window.show_all()
+	Gtk.main()
+
+if __name__ == '__main__':
+	main()

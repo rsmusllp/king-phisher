@@ -1,0 +1,4 @@
+*.py[cod]
+# Geany
+*.geany
+*.log
