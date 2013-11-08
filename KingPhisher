@@ -10,7 +10,9 @@ def main():
 	os.environ['GLADE_FILE'] = 'king_phisher/KingPhisherClient.glade'
 	main_window = client.KingPhisherClient()
 	main_window.show_all()
-	Gtk.main()
+	if main_window.server_connect():
+		Gtk.main()
+	main_window.save_config()
 
 if __name__ == '__main__':
 	main()

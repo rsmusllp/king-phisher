@@ -10,7 +10,7 @@ import os
 
 from gi.repository import Gtk
 
-from king_phisher.utilities import UtilityGladeGObject
+from king_phisher.utilities import show_dialog_yes_no, UtilityGladeGObject
 from king_phisher.client.tabs.mailer import MailSenderTab
 
 __version__ = '0.0.1'
@@ -37,6 +37,23 @@ DEFAULT_CONFIG = """
 }
 """
 
+class KingPhisherClientLoginDialog(UtilityGladeGObject):
+	gobject_ids = [
+		'entry_server',
+		'entry_server_username',
+		'entry_server_password'
+	]
+	gobject_id_suffix = 1
+	top_gobject = 'dialog'
+
+	def interact(self):
+		self.dialog.show_all()
+		response = self.dialog.run()
+		if response != Gtk.ResponseType.CANCEL:
+			self.objects_save_to_config()
+		self.dialog.destroy()
+		return response
+
 class KingPhisherClientConfigDialog(UtilityGladeGObject):
 	gobject_ids = [
 			# Server Tab
@@ -57,12 +74,10 @@ class KingPhisherClientConfigDialog(UtilityGladeGObject):
 	def interact(self):
 		self.dialog.show_all()
 		response = self.dialog.run()
-		if response == Gtk.ResponseType.CANCEL:
-			self.dialog.destroy()
-			return
-		self.objects_save_to_config()
+		if response != Gtk.ResponseType.CANCEL:
+			self.objects_save_to_config()
 		self.dialog.destroy()
-		return
+		return response
 
 class KingPhisherClient(Gtk.Window):
 	def __init__(self):
@@ -126,6 +141,15 @@ class KingPhisherClient(Gtk.Window):
 		accelgroup = uimanager.get_accel_group()
 		self.add_accel_group(accelgroup)
 		return uimanager
+
+	def server_connect(self):
+		login_dialog = KingPhisherClientLoginDialog(self.config, self)
+		login_dialog.objects_load_from_config()
+		response = login_dialog.interact()
+		return response != Gtk.ResponseType.CANCEL
+
+	def server_disconnect(self):
+		return show_dialog_yes_no("Are you sure you want to disconnect?", self)
 
 	def load_config(self):
 		config_file = os.path.expanduser(CONFIG_FILE_PATH)

@@ -45,11 +45,7 @@ class MailSenderEditTab(UtilityGladeGObject):
 		if not html_file:
 			return
 		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
-		dialog = Gtk.MessageDialog(self.parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, "Save HTML File?")
-		dialog.show_all()
-		response = dialog.run()
-		dialog.destroy()
-		if response != Gtk.ResponseType.YES:
+		if not show_dialog_yes_no(self.parent, "Save HTML File?"):
 			return
 		html_file_h = open(html_file, 'w')
 		html_file_h.write(text)
@@ -73,6 +69,11 @@ class MailSenderConfigTab(UtilityGladeGObject):
 
 	def signal_entry_activate_open_file(self, entry):
 		dialog = UtilityFileChooser('Choose File')
+		if entry == self.gobjects.get('entry_html_file'):
+			dialog.quick_add_filter('HTML Files', '*.html')
+		elif entry == self.gobjects.get('entry_target_file'):
+			dialog.quick_add_filter('CSV Files', '*.csv')
+		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
 		dialog.destroy()
 		if not response:
@@ -130,11 +131,7 @@ class MailSenderTab(Gtk.VBox):
 				old_text = open(html_file, 'r').read()
 				if old_text == text:
 					break
-				dialog = Gtk.MessageDialog(self.parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, "Save HTML File?")
-				dialog.show_all()
-				response = dialog.run()
-				dialog.destroy()
-				if response != Gtk.ResponseType.YES:
+				if not show_dialog_yes_no("Save HTML File?", self.parent):
 					break
 				html_file_h = open(html_file, 'w')
 				html_file_h.write(text)

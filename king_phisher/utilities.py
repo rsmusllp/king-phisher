@@ -44,9 +44,17 @@ def server_parse(server, default_port):
 			port = int(port)
 		return (host, port)
 
+def show_dialog_yes_no(message, parent):
+	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, message)
+	dialog.show_all()
+	response = dialog.run()
+	dialog.destroy()
+	return response == Gtk.ResponseType.YES
+
 class UtilityGladeGObject(object):
 	gobject_ids = [ ]
 	config_prefix = ''
+	gobject_id_suffix = ''
 	top_gobject = 'gobject'
 	def __init__(self, config, parent):
 		self.config = config
@@ -60,7 +68,7 @@ class UtilityGladeGObject(object):
 
 		self.gobjects = {}
 		for gobject_id in self.gobject_ids:
-			gobject = builder.get_object(gobject_id)
+			gobject = builder.get_object(gobject_id + str(self.gobject_id_suffix))
 			# The following three lines ensure that the types match up, this is
 			# primarily to enforce clean development.
 			gtype = gobject_id.split('_', 1)[0]
