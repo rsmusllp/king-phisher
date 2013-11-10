@@ -646,20 +646,20 @@
       <object class="GtkTable" id="table2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="n_rows">7</property>
+        <property name="n_rows">8</property>
         <property name="n_columns">2</property>
         <child>
           <object class="GtkLabel" id="label1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Company Name</property>
+            <property name="label" translatable="yes">Company Name*</property>
           </object>
         </child>
         <child>
           <object class="GtkLabel" id="label2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Source Email</property>
+            <property name="label" translatable="yes">Source Email*</property>
           </object>
           <packing>
             <property name="top_attach">1</property>
@@ -681,7 +681,7 @@
           <object class="GtkLabel" id="label4">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Subject</property>
+            <property name="label" translatable="yes">Subject*</property>
           </object>
           <packing>
             <property name="top_attach">3</property>
@@ -703,7 +703,7 @@
           <object class="GtkLabel" id="label6">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Message HTML File</property>
+            <property name="label" translatable="yes">Message HTML File*</property>
           </object>
           <packing>
             <property name="top_attach">5</property>
@@ -714,7 +714,7 @@
           <object class="GtkLabel" id="label7">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Target CSV File</property>
+            <property name="label" translatable="yes">Target CSV File*</property>
           </object>
           <packing>
             <property name="top_attach">6</property>
@@ -896,6 +896,20 @@
             <property name="right_attach">2</property>
             <property name="top_attach">6</property>
             <property name="bottom_attach">7</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label23">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">* Required Options</property>
+          </object>
+          <packing>
+            <property name="top_attach">7</property>
+            <property name="bottom_attach">8</property>
           </packing>
         </child>
       </object>

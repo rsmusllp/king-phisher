@@ -29,6 +29,20 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 		self.sender_thread = None
 
 	def signal_button_clicked_sender_start(self, button):
+		required_settings = [
+			'mailer.company_name',
+			'mailer.source_email',
+			'mailer.subject',
+			'mailer.html_file',
+			'mailer.target_file'
+		]
+		for setting in required_settings:
+			if not self.config.get(setting):
+				show_dialog_warning('Missing Required Option', self.parent, 'Return to the Config tab and set all required options')
+				return
+		if not config.get('smtp_server'):
+			show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
+			return
 		if self.sender_thread:
 			return
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
