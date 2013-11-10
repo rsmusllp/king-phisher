@@ -1,21 +1,98 @@
 import collections
 import os
-import string
 import urlparse
 
-from king_phisher.utilities import which_glade, UtilityFileChooser, UtilityGladeGObject
+from king_phisher.client.login import KingPhisherClientSSHLoginDialog
+from king_phisher.client.mailer import format_message, MailSenderThread
+from king_phisher.utilities import gtk_sync, show_dialog_error, show_dialog_warning, show_dialog_yes_no, which_glade, UtilityFileChooser, UtilityGladeGObject
 
 from gi.repository import Gtk
+from gi.repository import Gdk
 from gi.repository import WebKit
 
-def format_message(template, config):
-	template = string.Template(template)
-	template_vars = {}
-	template_vars['first_name'] = 'Alice'
-	template_vars['last_name'] = 'Liddle'
-	template_vars['companyname'] = config.get('mailer.company_name', '')
-	template_vars['webserver'] = config.get('mailer.webserver', '')
-	return template.substitute(**template_vars)
+class MailSenderSendMessagesTab(UtilityGladeGObject):
+	gobject_ids = [
+		'button_mail_sender_start',
+		'button_mail_sender_stop',
+		'textview_mail_sender_progress',
+		'togglebutton_mail_sender_pause',
+		'progressbar_mail_sender'
+	]
+	top_gobject = 'box'
+	def __init__(self, *args, **kwargs):
+		self.label = Gtk.Label('Send Messages')
+		super(MailSenderSendMessagesTab, self).__init__(*args, **kwargs)
+		self.textview = self.gobjects['textview_mail_sender_progress']
+		self.textbuffer = self.textview.get_buffer()
+		self.textbuffer_iter = self.textbuffer.get_start_iter()
+		self.progressbar = self.gobjects['progressbar_mail_sender']
+		self.sender_thread = None
+
+	def signal_button_clicked_sender_start(self, button):
+		if self.sender_thread:
+			return
+		self.gobjects['button_mail_sender_start'].set_sensitive(False)
+		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
+		self.progressbar.set_fraction(0)
+		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self.text_insert, lambda p: self.progressbar.set_fraction(p), self.sender_cleanup)
+
+		# Connect to the SMTP server
+		if self.config['smtp_ssh_enable']:
+			self.text_insert('Connecting To SSH... ')
+			if not self.config.get('ssh_server') or not self.config.get('ssh_username') or not self.config.get('ssh_password'):
+				login_dialog = KingPhisherClientSSHLoginDialog(self.config, self.parent)
+				login_dialog.objects_load_from_config()
+				response = login_dialog.interact()
+				if response == Gtk.ResponseType.CANCEL:
+					self.sender_start_failure('Failed to connect to SSH', 'Failed.\n')
+					return
+			if not self.sender_thread.server_ssh_connect():
+				self.sender_start_failure('Failed to connect to SSH', 'Failed.\n')
+				return
+			self.text_insert('Done.\n')
+		self.text_insert('Connecting To SMTP Server... ')
+		if not self.sender_thread.server_smtp_connect():
+			self.sender_start_failure('Failed to connect to SMTP', 'Failed.\n')
+			return
+		self.text_insert('Done.\n')
+		self.sender_thread.start()
+		self.gobjects['togglebutton_mail_sender_pause'].set_sensitive(True)
+
+	def signal_button_clicked_sender_stop(self, button):
+		if not self.sender_thread:
+			return
+		self.sender_thread.stop()
+		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
+		self.gobjects['button_mail_sender_start'].set_sensitive(True)
+		self.gobjects['togglebutton_mail_sender_pause'].set_property('active', False)
+		self.gobjects['togglebutton_mail_sender_pause'].set_sensitive(False)
+
+	def signal_button_toggled_sender_pause(self, button):
+		if not self.sender_thread:
+			return
+		if button.get_property('active'):
+			self.sender_thread.pause()
+		else:
+			self.sender_thread.unpause()
+
+	def text_insert(self, message):
+		self.textbuffer.insert(self.textbuffer_iter, message)
+		gtk_sync()
+
+	def sender_start_failure(self, message, text = None):
+		if text:
+			self.text_insert(text)
+		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
+		self.gobjects['button_mail_sender_start'].set_sensitive(True)
+		show_dialog_error(message, self.parent)
+
+	def sender_cleanup(self):
+		self.progressbar.set_fraction(1)
+		self.sender_thread = None
+		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
+		self.gobjects['togglebutton_mail_sender_pause'].set_property('active', False)
+		self.gobjects['togglebutton_mail_sender_pause'].set_sensitive(False)
+		self.gobjects['button_mail_sender_start'].set_sensitive(True)
 
 class MailSenderPreviewTab(object):
 	def __init__(self, config, parent):
@@ -45,7 +122,7 @@ class MailSenderEditTab(UtilityGladeGObject):
 		if not html_file:
 			return
 		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
-		if not show_dialog_yes_no(self.parent, "Save HTML File?"):
+		if not show_dialog_yes_no("Save HTML File?", self.parent):
 			return
 		html_file_h = open(html_file, 'w')
 		html_file_h.write(text)
@@ -109,6 +186,10 @@ class MailSenderTab(Gtk.VBox):
 		self.tabs['preview'] = preview_tab
 		self.notebook.append_page(preview_tab.box, preview_tab.label)
 
+		send_messages_tab = MailSenderSendMessagesTab(self.config, self.parent)
+		self.tabs['send_messages'] = send_messages_tab
+		self.notebook.append_page(send_messages_tab.box, send_messages_tab.label)
+
 		for tab in self.tabs.values():
 			tab.box.show_all()
 		self.notebook.show()
@@ -119,8 +200,11 @@ class MailSenderTab(Gtk.VBox):
 		config_tab = self.tabs.get('config')
 		edit_tab = self.tabs.get('edit')
 		preview_tab = self.tabs.get('preview')
+		progress_tab = self.tabs.get('progress')
 
-		if edit_tab and previous_page == edit_tab.box:
+		if config_tab and previous_page == config_tab.box:
+			config_tab.objects_save_to_config()
+		elif edit_tab and previous_page == edit_tab.box:
 			for i in xrange(1):
 				html_file = self.config.get('mailer.html_file')
 				if not html_file:
@@ -150,11 +234,7 @@ class MailSenderTab(Gtk.VBox):
 			html_file = self.config.get('mailer.html_file')
 			if not html_file:
 				return
-			config_tab.objects_save_to_config()
 			html_file_uri = urlparse.urlparse(html_file, 'file').geturl()
 			html_data = open(html_file, 'r').read()
 			html_data = format_message(html_data, self.config)
 			preview_tab.webview.load_html_string(html_data, html_file_uri)
-		elif self.tabs.get('edit') and current_page == self.tabs.get('edit').box:
-			edit_tab = self.tabs['edit']
-

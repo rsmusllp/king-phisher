@@ -4,6 +4,7 @@
 #  client.py
 #
 
+import copy
 import json
 import logging
 import os
@@ -11,7 +12,8 @@ import os
 from gi.repository import Gtk
 
 from king_phisher.utilities import show_dialog_yes_no, UtilityGladeGObject
-from king_phisher.client.tabs.mailer import MailSenderTab
+from king_phisher.client.login import KingPhisherClientLoginDialog
+from king_phisher.client.tabs.mail import MailSenderTab
 
 __version__ = '0.0.1'
 
@@ -37,23 +39,6 @@ DEFAULT_CONFIG = """
 }
 """
 
-class KingPhisherClientLoginDialog(UtilityGladeGObject):
-	gobject_ids = [
-		'entry_server',
-		'entry_server_username',
-		'entry_server_password'
-	]
-	gobject_id_suffix = 1
-	top_gobject = 'dialog'
-
-	def interact(self):
-		self.dialog.show_all()
-		response = self.dialog.run()
-		if response != Gtk.ResponseType.CANCEL:
-			self.objects_save_to_config()
-		self.dialog.destroy()
-		return response
-
 class KingPhisherClientConfigDialog(UtilityGladeGObject):
 	gobject_ids = [
 			# Server Tab
@@ -61,6 +46,7 @@ class KingPhisherClientConfigDialog(UtilityGladeGObject):
 			'entry_server_username',
 			# SMTP Server Tab
 			'entry_smtp_server',
+			'checkbutton_smtp_ssl_enable',
 			'checkbutton_smtp_ssh_enable',
 			'entry_ssh_server',
 			'entry_ssh_username'
@@ -160,8 +146,13 @@ class KingPhisherClient(Gtk.Window):
 			self.config = json.load(open(config_file, 'rb'))
 
 	def save_config(self):
+		config = copy.copy(self.config)
+		for key in self.config.keys():
+			if 'password' in key:
+				del config[key]
 		config_file = os.path.expanduser(CONFIG_FILE_PATH)
-		json.dump(self.config, open(config_file, 'wb'), sort_keys = True, indent = 4)
+		config_file_h = open(config_file, 'wb')
+		json.dump(config, config_file_h, sort_keys = True, indent = 4)
 
 	def edit_preferences(self):
 		dialog = KingPhisherClientConfigDialog(self.config, self)

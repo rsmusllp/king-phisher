@@ -31,6 +31,10 @@ def which(program):
 			return exe_file
 	return None
 
+def gtk_sync():
+	while Gtk.events_pending():
+		Gtk.main_iteration()
+
 def server_parse(server, default_port):
 	server = server.split(':')
 	host = server[0]
@@ -44,8 +48,28 @@ def server_parse(server, default_port):
 			port = int(port)
 		return (host, port)
 
-def show_dialog_yes_no(message, parent):
+def show_dialog_error(message, parent, secondary_text = None):
+	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, message)
+	if secondary_text:
+		dialog.format_secondary_text(secondary_text)
+	dialog.show_all()
+	response = dialog.run()
+	dialog.destroy()
+	return None
+
+def show_dialog_warning(message, parent, secondary_text = None):
+	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, message)
+	if secondary_text:
+		dialog.format_secondary_text(secondary_text)
+	dialog.show_all()
+	response = dialog.run()
+	dialog.destroy()
+	return None
+
+def show_dialog_yes_no(message, parent, secondary_text = None):
 	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, message)
+	if secondary_text:
+		dialog.format_secondary_text(secondary_text)
 	dialog.show_all()
 	response = dialog.run()
 	dialog.destroy()
