@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <requires lib="gtk+" version="2.24"/>
-  <!-- interface-naming-policy project-wide -->
+  <!-- interface-naming-policy toplevel-contextual -->
   <object class="GtkDialog" id="KingPhisherClientConfigDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -64,14 +64,21 @@
               <object class="GtkTable" id="table1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="border_width">10</property>
                 <property name="n_rows">2</property>
                 <property name="n_columns">2</property>
+                <property name="column_spacing">5</property>
+                <property name="row_spacing">5</property>
                 <child>
                   <object class="GtkLabel" id="label8">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Server</property>
                   </object>
+                  <packing>
+                    <property name="x_options"/>
+                    <property name="y_options"/>
+                  </packing>
                 </child>
                 <child>
                   <object class="GtkEntry" id="entry_server">
@@ -88,6 +95,7 @@
                   <packing>
                     <property name="left_attach">1</property>
                     <property name="right_attach">2</property>
+                    <property name="y_options"/>
                   </packing>
                 </child>
                 <child>
@@ -99,6 +107,8 @@
                   <packing>
                     <property name="top_attach">1</property>
                     <property name="bottom_attach">2</property>
+                    <property name="x_options"/>
+                    <property name="y_options"/>
                   </packing>
                 </child>
                 <child>
@@ -117,6 +127,7 @@
                     <property name="right_attach">2</property>
                     <property name="top_attach">1</property>
                     <property name="bottom_attach">2</property>
+                    <property name="y_options"/>
                   </packing>
                 </child>
               </object>
@@ -396,7 +407,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_server1">
+              <object class="GtkEntry" id="entry_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">●</property>
@@ -423,7 +434,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_server_username1">
+              <object class="GtkEntry" id="entry_server_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">●</property>
@@ -452,7 +463,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_server_password1">
+              <object class="GtkEntry" id="entry_server_password">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="visibility">False</property>
@@ -551,7 +562,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_ssh_server1">
+              <object class="GtkEntry" id="entry_ssh_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">●</property>
@@ -578,7 +589,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_ssh_username1">
+              <object class="GtkEntry" id="entry_ssh_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">●</property>
@@ -607,7 +618,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_ssh_password1">
+              <object class="GtkEntry" id="entry_ssh_password">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="visibility">False</property>
@@ -642,18 +653,30 @@
   <object class="GtkVBox" id="MailSenderConfigTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="border_width">5</property>
     <child>
       <object class="GtkTable" id="table2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="n_rows">8</property>
+        <property name="n_rows">9</property>
         <property name="n_columns">2</property>
+        <property name="column_spacing">5</property>
+        <property name="row_spacing">5</property>
+        <child>
+          <placeholder/>
+        </child>
         <child>
           <object class="GtkLabel" id="label1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Company Name*</property>
           </object>
+          <packing>
+            <property name="top_attach">1</property>
+            <property name="bottom_attach">2</property>
+            <property name="x_options"/>
+            <property name="y_options"/>
+          </packing>
         </child>
         <child>
           <object class="GtkLabel" id="label2">
@@ -662,8 +685,10 @@
             <property name="label" translatable="yes">Source Email*</property>
           </object>
           <packing>
-            <property name="top_attach">1</property>
-            <property name="bottom_attach">2</property>
+            <property name="top_attach">2</property>
+            <property name="bottom_attach">3</property>
+            <property name="x_options"/>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
@@ -673,8 +698,10 @@
             <property name="label" translatable="yes">Friendly Alias</property>
           </object>
           <packing>
-            <property name="top_attach">2</property>
-            <property name="bottom_attach">3</property>
+            <property name="top_attach">3</property>
+            <property name="bottom_attach">4</property>
+            <property name="x_options"/>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
@@ -684,8 +711,10 @@
             <property name="label" translatable="yes">Subject*</property>
           </object>
           <packing>
-            <property name="top_attach">3</property>
-            <property name="bottom_attach">4</property>
+            <property name="top_attach">4</property>
+            <property name="bottom_attach">5</property>
+            <property name="x_options"/>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
@@ -695,8 +724,10 @@
             <property name="label" translatable="yes">Reply To</property>
           </object>
           <packing>
-            <property name="top_attach">4</property>
-            <property name="bottom_attach">5</property>
+            <property name="top_attach">5</property>
+            <property name="bottom_attach">6</property>
+            <property name="x_options"/>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
@@ -706,8 +737,10 @@
             <property name="label" translatable="yes">Message HTML File*</property>
           </object>
           <packing>
-            <property name="top_attach">5</property>
-            <property name="bottom_attach">6</property>
+            <property name="top_attach">6</property>
+            <property name="bottom_attach">7</property>
+            <property name="x_options"/>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
@@ -717,8 +750,10 @@
             <property name="label" translatable="yes">Target CSV File*</property>
           </object>
           <packing>
-            <property name="top_attach">6</property>
-            <property name="bottom_attach">7</property>
+            <property name="top_attach">7</property>
+            <property name="bottom_attach">8</property>
+            <property name="x_options"/>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
@@ -734,12 +769,16 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
+            <property name="top_attach">1</property>
+            <property name="bottom_attach">2</property>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
           <object class="GtkEntry" id="entry_source_email">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="tooltip_text" translatable="yes">Example: trustme@clickme.com</property>
             <property name="invisible_char">●</property>
             <property name="primary_icon_activatable">False</property>
             <property name="secondary_icon_activatable">False</property>
@@ -749,8 +788,9 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
-            <property name="top_attach">1</property>
-            <property name="bottom_attach">2</property>
+            <property name="top_attach">2</property>
+            <property name="bottom_attach">3</property>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
@@ -766,8 +806,9 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
-            <property name="top_attach">2</property>
-            <property name="bottom_attach">3</property>
+            <property name="top_attach">3</property>
+            <property name="bottom_attach">4</property>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
@@ -783,14 +824,16 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
-            <property name="top_attach">3</property>
-            <property name="bottom_attach">4</property>
+            <property name="top_attach">4</property>
+            <property name="bottom_attach">5</property>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
           <object class="GtkEntry" id="entry_reply_to_email">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="tooltip_text" translatable="yes">Example: trustme@clickme.com</property>
             <property name="invisible_char">●</property>
             <property name="primary_icon_activatable">False</property>
             <property name="secondary_icon_activatable">False</property>
@@ -800,17 +843,18 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
-            <property name="top_attach">4</property>
-            <property name="bottom_attach">5</property>
+            <property name="top_attach">5</property>
+            <property name="bottom_attach">6</property>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
           <object class="GtkHBox" id="hbox1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="spacing">5</property>
             <child>
               <object class="GtkEntry" id="entry_html_file">
-                <property name="width_request">400</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="editable">False</property>
@@ -831,7 +875,6 @@
             <child>
               <object class="GtkButton" id="button1">
                 <property name="label" translatable="yes">Select File</property>
-                <property name="width_request">125</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -839,7 +882,7 @@
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">True</property>
+                <property name="fill">False</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -847,17 +890,18 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
-            <property name="top_attach">5</property>
-            <property name="bottom_attach">6</property>
+            <property name="top_attach">6</property>
+            <property name="bottom_attach">7</property>
+            <property name="y_options"/>
           </packing>
         </child>
         <child>
           <object class="GtkHBox" id="hbox2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="spacing">5</property>
             <child>
               <object class="GtkEntry" id="entry_target_file">
-                <property name="width_request">400</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="editable">False</property>
@@ -878,7 +922,6 @@
             <child>
               <object class="GtkButton" id="button2">
                 <property name="label" translatable="yes">Select File</property>
-                <property name="width_request">125</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -886,7 +929,7 @@
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">True</property>
+                <property name="fill">False</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -894,12 +937,10 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
-            <property name="top_attach">6</property>
-            <property name="bottom_attach">7</property>
+            <property name="top_attach">7</property>
+            <property name="bottom_attach">8</property>
+            <property name="y_options"/>
           </packing>
-        </child>
-        <child>
-          <placeholder/>
         </child>
         <child>
           <object class="GtkLabel" id="label23">
@@ -908,8 +949,38 @@
             <property name="label" translatable="yes">* Required Options</property>
           </object>
           <packing>
-            <property name="top_attach">7</property>
-            <property name="bottom_attach">8</property>
+            <property name="top_attach">8</property>
+            <property name="bottom_attach">9</property>
+            <property name="x_options"/>
+            <property name="y_options"/>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label24">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Web Server URL*</property>
+          </object>
+          <packing>
+            <property name="x_options"/>
+            <property name="y_options"/>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="entry_webserver_url">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="tooltip_text" translatable="yes">Example: http://clickme.com/</property>
+            <property name="invisible_char">●</property>
+            <property name="primary_icon_activatable">False</property>
+            <property name="secondary_icon_activatable">False</property>
+            <property name="primary_icon_sensitive">True</property>
+            <property name="secondary_icon_sensitive">True</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="right_attach">2</property>
+            <property name="y_options"/>
           </packing>
         </child>
       </object>
@@ -938,6 +1009,7 @@
               <object class="GtkVBox" id="vbox2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="border_width">5</property>
                 <child>
                   <object class="GtkHBox" id="hbox4">
                     <property name="visible">True</property>
@@ -1007,8 +1079,9 @@
   <object class="GtkVBox" id="MailSenderSendMessagesTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="border_width">5</property>
     <child>
-      <object class="GtkScrolledWindow" id="scrolledwindow2">
+      <object class="GtkScrolledWindow" id="scrolledwindow_mail_sender_progress">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="hscrollbar_policy">automatic</property>
@@ -1018,6 +1091,7 @@
             <property name="can_focus">True</property>
             <property name="editable">False</property>
             <property name="cursor_visible">False</property>
+            <signal name="size-allocate" handler="signal_textview_size_allocate_autoscroll" swapped="no"/>
           </object>
         </child>
       </object>
@@ -1039,17 +1113,30 @@
       </packing>
     </child>
     <child>
-      <object class="GtkHButtonBox" id="hbuttonbox1">
+      <object class="GtkHBox" id="hbox1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="spacing">5</property>
         <child>
-          <object class="GtkButton" id="button_mail_sender_stop">
-            <property name="label" translatable="yes">Stop</property>
+          <object class="GtkHButtonBox" id="hbuttonbox1">
             <property name="visible">True</property>
-            <property name="sensitive">False</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="signal_button_clicked_sender_stop" swapped="no"/>
+            <property name="can_focus">False</property>
+            <property name="layout_style">start</property>
+            <child>
+              <object class="GtkButton" id="button_mail_sender_stop">
+                <property name="label" translatable="yes">Stop</property>
+                <property name="visible">True</property>
+                <property name="sensitive">False</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="signal_button_clicked_sender_stop" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -1058,34 +1145,47 @@
           </packing>
         </child>
         <child>
-          <object class="GtkToggleButton" id="togglebutton_mail_sender_pause">
-            <property name="label" translatable="yes">Pause</property>
+          <object class="GtkHButtonBox" id="hbuttonbox2">
             <property name="visible">True</property>
-            <property name="sensitive">False</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="toggled" handler="signal_button_toggled_sender_pause" swapped="no"/>
+            <property name="can_focus">False</property>
+            <property name="spacing">5</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkToggleButton" id="togglebutton_mail_sender_pause">
+                <property name="label" translatable="yes">Pause</property>
+                <property name="visible">True</property>
+                <property name="sensitive">False</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="toggled" handler="signal_button_toggled_sender_pause" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="pack_type">end</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button_mail_sender_start">
+                <property name="label" translatable="yes">Start</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="signal_button_clicked_sender_start" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="pack_type">end</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
           </object>
           <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="pack_type">end</property>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
             <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="button_mail_sender_start">
-            <property name="label" translatable="yes">Start</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="signal_button_clicked_sender_start" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">2</property>
           </packing>
         </child>
       </object>

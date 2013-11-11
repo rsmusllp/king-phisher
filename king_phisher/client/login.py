@@ -8,7 +8,6 @@ class KingPhisherClientLoginDialog(UtilityGladeGObject):
 		'entry_server_username',
 		'entry_server_password'
 	]
-	gobject_id_suffix = 1
 	top_gobject = 'dialog'
 
 	def interact(self):

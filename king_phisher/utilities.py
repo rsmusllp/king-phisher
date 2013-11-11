@@ -1,3 +1,4 @@
+import logging
 import os
 
 from gi.repository import Gtk
@@ -78,11 +79,11 @@ def show_dialog_yes_no(message, parent, secondary_text = None):
 class UtilityGladeGObject(object):
 	gobject_ids = [ ]
 	config_prefix = ''
-	gobject_id_suffix = ''
 	top_gobject = 'gobject'
 	def __init__(self, config, parent):
 		self.config = config
 		self.parent = parent
+		self.logger = logging.getLogger(self.__class__.__name__)
 
 		builder = Gtk.Builder()
 		builder.add_objects_from_file(which_glade(os.environ['GLADE_FILE']), [self.__class__.__name__])
@@ -92,7 +93,7 @@ class UtilityGladeGObject(object):
 
 		self.gobjects = {}
 		for gobject_id in self.gobject_ids:
-			gobject = builder.get_object(gobject_id + str(self.gobject_id_suffix))
+			gobject = builder.get_object(gobject_id)
 			# The following three lines ensure that the types match up, this is
 			# primarily to enforce clean development.
 			gtype = gobject_id.split('_', 1)[0]

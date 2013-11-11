@@ -1,5 +1,7 @@
 #!/usr/bin/python -B
 
+import argparse
+import logging
 import os
 
 from gi.repository import Gdk
@@ -9,11 +11,26 @@ from gi.repository import Gtk
 from king_phisher.client import client
 
 def main():
+	parser = argparse.ArgumentParser(description = 'King Phisher', conflict_handler='resolve')
+	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + client.__version__)
+	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
+	arguments = parser.parse_args()
+
+	logging.getLogger('').setLevel(logging.DEBUG)
+	console_log_handler = logging.StreamHandler()
+	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
+	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
+	logging.getLogger('').addHandler(console_log_handler)
+	del arguments, parser
+
+	# Configure environment variables
 	os.environ['GLADE_FILE'] = 'king_phisher/KingPhisherClient.glade'
+	if 'SSH_AUTH_SOCK' in os.environ:
+		del os.environ['SSH_AUTH_SOCK']
 	GLib.threads_init()
 	Gdk.threads_init()
 	main_window = client.KingPhisherClient()
-	main_window.show_all()
+	main_window.set_position(Gtk.WindowPosition.CENTER)
 	if main_window.server_connect():
 		Gtk.main()
 	main_window.save_config()

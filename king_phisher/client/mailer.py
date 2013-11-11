@@ -1,9 +1,11 @@
 import csv
+import logging
 import os
 import random
 import smtplib
 import string
 import threading
+import urlparse
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
@@ -12,20 +14,26 @@ from king_phisher.utilities import server_parse
 
 make_uid = lambda: os.urandom(16).encode('hex')
 
-def format_message(template, config, uid = None):
+def format_message(template, config, first_name= None, last_name = None, uid = None):
+	first_name = (first_name or 'Alice')
+	last_name = (last_name or 'Liddle')
 	uid = (uid or make_uid())
 	template = string.Template(template)
 	template_vars = {}
 	template_vars['uid'] = uid
-	template_vars['first_name'] = 'Alice'
-	template_vars['last_name'] = 'Liddle'
+	template_vars['first_name'] = first_name
+	template_vars['last_name'] = last_name
 	template_vars['companyname'] = config.get('mailer.company_name', '')
-	template_vars['webserver'] = config.get('mailer.webserver', '')
+	webserver_url = config.get('mailer.webserver_url', '')
+	webserver_url = urlparse.urlparse(webserver_url)
+	webserver_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, '', '', '', ''))
+	template_vars['webserver_url'] = webserver_url
 	return template.substitute(**template_vars)
 
 class MailSenderThread(threading.Thread):
 	def __init__(self, config, target_file, notify_status, notify_progress, notify_stopped):
 		super(MailSenderThread, self).__init__()
+		self.logger = logging.getLogger(self.__class__.__name__)
 		self.config = config
 		self.target_file = target_file
 		self.notify_status = notify_status
@@ -43,13 +51,13 @@ class MailSenderThread(threading.Thread):
 		username = self.config['ssh_username']
 		password = self.config['ssh_password']
 		remote_server = server_parse(self.config['smtp_server'], 25)
-		local_port = random.randint(2000,6000)
+		local_port = random.randint(2000, 6000)
 		try:
 			self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server)
 			self.ssh_forwarder.start()
 		except:
 			return False
-		self.smtp_server = (self.smtp_server[0], local_port)
+		self.smtp_server = ('localhost', local_port)
 		return True
 
 	def server_smtp_connect(self):
@@ -101,14 +109,14 @@ class MailSenderThread(threading.Thread):
 			self.send_email(target['email_address'], msg)
 		target_file_h.close()
 		self.notify_status("Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
-		if self.ssh_forwarder:
-			self.ssh_forwarder.stop()
-			self.ssh_forwarder = None
-			self.notify_status('Disconnected From SSH Server\n')
 		if self.smtp_connection:
 			self.smtp_connection.quit()
 			self.smtp_connection = None
 			self.notify_status('Disconnected From SMTP Server\n')
+		if self.ssh_forwarder:
+			self.ssh_forwarder.stop()
+			self.ssh_forwarder = None
+			self.notify_status('Disconnected From SSH Server\n')
 		self.notify_stopped()
 		return
 
@@ -126,7 +134,8 @@ class MailSenderThread(threading.Thread):
 		msg_alt = MIMEMultipart('alternative')
 		msg.attach(msg_alt)
 		msg_template = open(self.config['mailer.html_file'], 'r').read()
-		msg_body = MIMEText(format_message(msg_template, self.config), "html")
+		formatted_msg = format_message(msg_template, self.config, first_name = first_name, last_name = last_name, uid = uid)
+		msg_body = MIMEText(formatted_msg, "html")
 		msg_alt.attach(msg_body)
 		return msg
 

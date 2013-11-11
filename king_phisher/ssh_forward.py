@@ -54,8 +54,8 @@ class SSHTCPForwarder(threading.Thread):
 		self.remote_server = remote_server
 		client = paramiko.SSHClient()
 		client.load_system_host_keys()
-		client.set_missing_host_key_policy(paramiko.WarningPolicy())
-		client.connect(server[0], server[1], username=username, look_for_keys=True, key_filename= None, password=password)
+		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+		client.connect(server[0], server[1], username = username, look_for_keys = True, key_filename = None, password = password)
 		self.client = client
 
 	def run(self):

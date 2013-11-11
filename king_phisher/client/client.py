@@ -65,6 +65,8 @@ class KingPhisherClientConfigDialog(UtilityGladeGObject):
 		self.dialog.destroy()
 		return response
 
+# This is the top level class/window for the client side of the king-phisher
+# application
 class KingPhisherClient(Gtk.Window):
 	def __init__(self):
 		super(KingPhisherClient, self).__init__()
@@ -72,6 +74,7 @@ class KingPhisherClient(Gtk.Window):
 		self.load_config()
 		self.set_property('title', 'King Phisher')
 		vbox = Gtk.VBox()
+		vbox.show()
 		self.add(vbox)
 
 		action_group = Gtk.ActionGroup("my_actions")
@@ -83,6 +86,7 @@ class KingPhisherClient(Gtk.Window):
 
 		# create notebook and tabs
 		hbox = Gtk.HBox()
+		hbox.show()
 		self.notebook = Gtk.Notebook()
 		self.notebook.set_scrollable(True)
 		hbox.pack_start(self.notebook, True, True, 0)
@@ -90,15 +94,16 @@ class KingPhisherClient(Gtk.Window):
 
 		self.tabs = {}
 		mailer_tab = MailSenderTab(self.config, self)
+		mailer_tab.show()
 		self.tabs['mailer'] = mailer_tab
 		current_page = self.notebook.get_current_page()
 		self.notebook.insert_page(mailer_tab, mailer_tab.label, current_page+1)
 		self.notebook.set_current_page(current_page+1)
-		mailer_tab.show_all()
 
 		self.set_size_request(800, 600)
 		self.connect('destroy', Gtk.main_quit)
 		self.notebook.show()
+		self.show()
 
 	def _add_menu_actions(self, action_group):
 		# File Menu Actions

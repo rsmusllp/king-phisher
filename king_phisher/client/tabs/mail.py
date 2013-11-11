@@ -16,7 +16,8 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 		'button_mail_sender_stop',
 		'textview_mail_sender_progress',
 		'togglebutton_mail_sender_pause',
-		'progressbar_mail_sender'
+		'progressbar_mail_sender',
+		'scrolledwindow_mail_sender_progress'
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
@@ -30,6 +31,7 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 
 	def signal_button_clicked_sender_start(self, button):
 		required_settings = [
+			'mailer.webserver_url',
 			'mailer.company_name',
 			'mailer.source_email',
 			'mailer.subject',
@@ -40,7 +42,7 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 			if not self.config.get(setting):
 				show_dialog_warning('Missing Required Option', self.parent, 'Return to the Config tab and set all required options')
 				return
-		if not config.get('smtp_server'):
+		if not self.config.get('smtp_server'):
 			show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
 			return
 		if self.sender_thread:
@@ -52,18 +54,18 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 
 		# Connect to the SMTP server
 		if self.config['smtp_ssh_enable']:
-			self.text_insert('Connecting To SSH... ')
-			if not self.config.get('ssh_server') or not self.config.get('ssh_username') or not self.config.get('ssh_password'):
+			while True:
+				self.text_insert('Connecting To SSH... ')
 				login_dialog = KingPhisherClientSSHLoginDialog(self.config, self.parent)
 				login_dialog.objects_load_from_config()
 				response = login_dialog.interact()
 				if response == Gtk.ResponseType.CANCEL:
-					self.sender_start_failure('Failed to connect to SSH', 'Failed.\n')
+					self.sender_start_failure(text = 'Canceled.\n')
 					return
-			if not self.sender_thread.server_ssh_connect():
+				if self.sender_thread.server_ssh_connect():
+					self.text_insert('Done.\n')
+					break
 				self.sender_start_failure('Failed to connect to SSH', 'Failed.\n')
-				return
-			self.text_insert('Done.\n')
 		self.text_insert('Connecting To SMTP Server... ')
 		if not self.sender_thread.server_smtp_connect():
 			self.sender_start_failure('Failed to connect to SMTP', 'Failed.\n')
@@ -74,6 +76,8 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 
 	def signal_button_clicked_sender_stop(self, button):
 		if not self.sender_thread:
+			return
+		if not show_dialog_yes_no('Are you sure you want to stop?', self.parent):
 			return
 		self.sender_thread.stop()
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
@@ -89,16 +93,22 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 		else:
 			self.sender_thread.unpause()
 
+	def signal_textview_size_allocate_autoscroll(self, textview, allocation):
+		scrolled_window = self.gobjects['scrolledwindow_mail_sender_progress']
+		adjustment = scrolled_window.get_vadjustment()
+		adjustment.set_value(adjustment.get_upper() - adjustment.get_page_size())
+
 	def text_insert(self, message):
 		self.textbuffer.insert(self.textbuffer_iter, message)
 		gtk_sync()
 
-	def sender_start_failure(self, message, text = None):
+	def sender_start_failure(self, message = None, text = None):
 		if text:
 			self.text_insert(text)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
 		self.gobjects['button_mail_sender_start'].set_sensitive(True)
-		show_dialog_error(message, self.parent)
+		if message:
+			show_dialog_error(message, self.parent)
 
 	def sender_cleanup(self):
 		self.progressbar.set_fraction(1)
@@ -115,7 +125,9 @@ class MailSenderPreviewTab(object):
 		self.parent = parent
 
 		self.box = Gtk.VBox()
+		self.box.show()
 		self.webview = WebKit.WebView()
+		self.webview.show()
 		self.box.pack_start(self.webview, True, True, 0)
 
 class MailSenderEditTab(UtilityGladeGObject):
@@ -144,6 +156,7 @@ class MailSenderEditTab(UtilityGladeGObject):
 
 class MailSenderConfigTab(UtilityGladeGObject):
 	gobject_ids = [
+			'entry_webserver_url',
 			'entry_company_name',
 			'entry_source_email',
 			'entry_source_email_alias',
@@ -205,7 +218,7 @@ class MailSenderTab(Gtk.VBox):
 		self.notebook.append_page(send_messages_tab.box, send_messages_tab.label)
 
 		for tab in self.tabs.values():
-			tab.box.show_all()
+			tab.box.show()
 		self.notebook.show()
 
 	def _tab_changed(self, notebook, current_page, index):
