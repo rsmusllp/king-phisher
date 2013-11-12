@@ -658,7 +658,7 @@
       <object class="GtkTable" id="table2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="n_rows">9</property>
+        <property name="n_rows">10</property>
         <property name="n_columns">2</property>
         <property name="column_spacing">5</property>
         <property name="row_spacing">5</property>
@@ -865,6 +865,7 @@
                 <property name="primary_icon_sensitive">True</property>
                 <property name="secondary_icon_sensitive">True</property>
                 <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
+                <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -912,6 +913,7 @@
                 <property name="primary_icon_sensitive">True</property>
                 <property name="secondary_icon_sensitive">True</property>
                 <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
+                <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -949,8 +951,8 @@
             <property name="label" translatable="yes">* Required Options</property>
           </object>
           <packing>
-            <property name="top_attach">8</property>
-            <property name="bottom_attach">9</property>
+            <property name="top_attach">9</property>
+            <property name="bottom_attach">10</property>
             <property name="x_options"/>
             <property name="y_options"/>
           </packing>
@@ -980,6 +982,67 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
+            <property name="y_options"/>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label8">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">File Attachment</property>
+          </object>
+          <packing>
+            <property name="top_attach">8</property>
+            <property name="bottom_attach">9</property>
+            <property name="x_options"/>
+            <property name="y_options"/>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHBox" id="hbox3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="spacing">5</property>
+            <child>
+              <object class="GtkEntry" id="entry_attachment_file">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="editable">False</property>
+                <property name="invisible_char">●</property>
+                <property name="invisible_char_set">True</property>
+                <property name="primary_icon_activatable">False</property>
+                <property name="secondary_icon_activatable">False</property>
+                <property name="primary_icon_sensitive">True</property>
+                <property name="secondary_icon_sensitive">True</property>
+                <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
+                <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button3">
+                <property name="label" translatable="yes">Select File</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="signal_entry_activate_open_file" object="entry_attachment_file" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="right_attach">2</property>
+            <property name="top_attach">8</property>
+            <property name="bottom_attach">9</property>
             <property name="y_options"/>
           </packing>
         </child>
@@ -1105,6 +1168,7 @@
       <object class="GtkProgressBar" id="progressbar_mail_sender">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="show_text">True</property>
       </object>
       <packing>
         <property name="expand">False</property>

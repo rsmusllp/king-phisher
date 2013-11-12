@@ -145,7 +145,7 @@ class KingPhisherClient(Gtk.Window):
 	def load_config(self):
 		config_file = os.path.expanduser(CONFIG_FILE_PATH)
 		if not os.path.isfile(config_file):
-			self.config = json.loads(DEFAULT_CONFIG)
+			self.config = {}
 			self.save_config()
 		else:
 			self.config = json.load(open(config_file, 'rb'))

@@ -1,11 +1,14 @@
 import csv
 import logging
+import mimetypes
 import os
 import random
 import smtplib
 import string
 import threading
 import urlparse
+from email import Encoders
+from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
@@ -31,13 +34,13 @@ def format_message(template, config, first_name= None, last_name = None, uid = N
 	return template.substitute(**template_vars)
 
 class MailSenderThread(threading.Thread):
-	def __init__(self, config, target_file, notify_status, notify_progress, notify_stopped):
+	def __init__(self, config, target_file, notify_status, notify_sent, notify_stopped):
 		super(MailSenderThread, self).__init__()
 		self.logger = logging.getLogger(self.__class__.__name__)
 		self.config = config
 		self.target_file = target_file
 		self.notify_status = notify_status
-		self.notify_progress = notify_progress
+		self.notify_sent = notify_sent
 		self.notify_stopped = notify_stopped
 		self.ssh_forwarder = None
 		self.smtp_connection = None
@@ -101,12 +104,12 @@ class MailSenderThread(threading.Thread):
 					self.notify_status('Sending Emails Cancelled\n')
 					break
 				self.notify_status('Resuming Sending Emails\n')
-			emails_done += 1
-			self.notify_progress(float(emails_done) / float(emails_total))
 			uid = make_uid()
+			emails_done += 1
 			self.notify_status("Sending Email {0} of {1} To {2} With UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
 			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
 			self.send_email(target['email_address'], msg)
+			self.notify_sent(uid, emails_done, emails_total)
 		target_file_h.close()
 		self.notify_status("Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
 		if self.smtp_connection:
@@ -137,11 +140,19 @@ class MailSenderThread(threading.Thread):
 		formatted_msg = format_message(msg_template, self.config, first_name = first_name, last_name = last_name, uid = uid)
 		msg_body = MIMEText(formatted_msg, "html")
 		msg_alt.attach(msg_body)
+		if self.config.get('mailer.attachment_file'):
+			attachment = self.config['mailer.attachment_file']
+			attachfile = MIMEBase(*mimetypes.guess_type(attachment))
+			attachfile.set_payload(open(attachment, 'rb').read())
+			Encoders.encode_base64(attachfile)
+			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
+			msg.attach(attachfile)
 		return msg
 
 	def send_email(self, target_email, msg):
 		source_email = self.config['mailer.source_email']
 		self.smtp_connection.sendmail(source_email, target_email, msg.as_string())
+		import time; time.sleep(1)
 
 	def pause(self):
 		self.running.clear()

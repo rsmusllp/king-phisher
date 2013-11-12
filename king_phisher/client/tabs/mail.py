@@ -50,7 +50,7 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
-		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self.text_insert, lambda p: self.progressbar.set_fraction(p), self.sender_cleanup)
+		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self.text_insert, self.notify_sent, self.sender_cleanup)
 
 		# Connect to the SMTP server
 		if self.config['smtp_ssh_enable']:
@@ -101,6 +101,9 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 	def text_insert(self, message):
 		self.textbuffer.insert(self.textbuffer_iter, message)
 		gtk_sync()
+
+	def notify_sent(self, uid, emails_done, emails_total):
+		self.progressbar.set_fraction(float(emails_done) / float(emails_total))
 
 	def sender_start_failure(self, message = None, text = None):
 		if text:
@@ -163,7 +166,8 @@ class MailSenderConfigTab(UtilityGladeGObject):
 			'entry_subject',
 			'entry_reply_to_email',
 			'entry_html_file',
-			'entry_target_file'
+			'entry_target_file',
+			'entry_attachment_file'
 	]
 	config_prefix = 'mailer.'
 	top_gobject = 'box'
@@ -183,6 +187,10 @@ class MailSenderConfigTab(UtilityGladeGObject):
 		if not response:
 			return False
 		entry.set_text(response['target_filename'])
+		return True
+
+	def signal_entry_backspace(self, entry):
+		entry.set_text('')
 		return True
 
 class MailSenderTab(Gtk.VBox):
