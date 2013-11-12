@@ -135,6 +135,7 @@ class MailSenderPreviewTab(object):
 
 class MailSenderEditTab(UtilityGladeGObject):
 	gobject_ids = [
+			'button_save_as_html_file',
 			'button_save_html_file',
 			'textview_html_file'
 	]
@@ -146,13 +147,29 @@ class MailSenderEditTab(UtilityGladeGObject):
 		self.textbuffer = self.textview.get_buffer()
 		self.button_save_html_file = self.gobjects['button_save_html_file']
 
+	def signal_button_save_as(self, button):
+		html_file = self.config.get('mailer.html_file')
+		if not html_file:
+			return
+		dialog = UtilityFileChooser('Save HTML File')
+		response = dialog.run_quick_save(current_name = os.path.basename(html_file))
+		dialog.destroy()
+		if not response:
+			return
+		destination_file = response['target_filename']
+		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
+		html_file_h = open(destination_file, 'w')
+		html_file_h.write(text)
+		html_file_h.close()
+		self.config['mailer.html_file'] = destination_file
+
 	def signal_button_save(self, button):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
 			return
-		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
 		if not show_dialog_yes_no("Save HTML File?", self.parent):
 			return
+		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
 		html_file_h = open(html_file, 'w')
 		html_file_h.write(text)
 		html_file_h.close()
@@ -256,6 +273,8 @@ class MailSenderTab(Gtk.VBox):
 				html_file_h.write(text)
 				html_file_h.close()
 
+		if config_tab and current_page == config_tab.box:
+			config_tab.objects_load_from_config()
 		if edit_tab and current_page == edit_tab.box:
 			html_file = self.config.get('mailer.html_file')
 			if not html_file:
