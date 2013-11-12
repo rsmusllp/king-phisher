@@ -9,9 +9,12 @@ import json
 import logging
 import os
 
-from gi.repository import Gtk
+import urlparse
 
-from king_phisher.utilities import show_dialog_yes_no, UtilityGladeGObject
+from gi.repository import Gtk
+from AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPCClient
+
+from king_phisher.utilities import server_parse, show_dialog_error, show_dialog_yes_no, UtilityGladeGObject
 from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.tabs.mail import MailSenderTab
 
@@ -104,6 +107,7 @@ class KingPhisherClient(Gtk.Window):
 		self.connect('destroy', Gtk.main_quit)
 		self.notebook.show()
 		self.show()
+		self.rpc = None
 
 	def _add_menu_actions(self, action_group):
 		# File Menu Actions
@@ -134,10 +138,30 @@ class KingPhisherClient(Gtk.Window):
 		return uimanager
 
 	def server_connect(self):
-		login_dialog = KingPhisherClientLoginDialog(self.config, self)
-		login_dialog.objects_load_from_config()
-		response = login_dialog.interact()
-		return response != Gtk.ResponseType.CANCEL
+		import socket
+		while True:
+			login_dialog = KingPhisherClientLoginDialog(self.config, self)
+			login_dialog.objects_load_from_config()
+			response = login_dialog.interact()
+			if response == Gtk.ResponseType.CANCEL:
+				return False
+			server_url = urlparse.urlparse(self.config['server'])
+			username = self.config['server_username']
+			password = self.config['server_password']
+			server = server_parse(server_url.netloc, 80)
+			use_ssl = server_url == 'https'
+			try:
+				self.rpc = AdvancedHTTPServerRPCClient(server, use_ssl = use_ssl, username = username, password = password)
+			except:
+				pass
+			try:
+				assert(self.rpc('ping'))
+				return True
+			except AdvancedHTTPServerRPCError as err:
+				if err.status == 401:
+					show_dialog_error('Invalid Credentials', self)
+			except:
+				pass
 
 	def server_disconnect(self):
 		return show_dialog_yes_no("Are you sure you want to disconnect?", self)

@@ -89,6 +89,8 @@ class UtilityGladeGObject(object):
 		builder.add_objects_from_file(which_glade(os.environ['GLADE_FILE']), [self.__class__.__name__])
 		builder.connect_signals(self)
 		gobject = builder.get_object(self.__class__.__name__)
+		if isinstance(gobject, Gtk.Window):
+			gobject.set_transient_for(self.parent)
 		setattr(self, self.top_gobject, gobject)
 
 		self.gobjects = {}
