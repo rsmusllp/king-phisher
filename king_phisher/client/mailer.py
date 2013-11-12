@@ -29,7 +29,7 @@ def format_message(template, config, first_name= None, last_name = None, uid = N
 	template_vars['companyname'] = config.get('mailer.company_name', '')
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urlparse.urlparse(webserver_url)
-	webserver_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, '', '', '', ''))
+	webserver_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
 	template_vars['webserver_url'] = webserver_url
 	return template.substitute(**template_vars)
 

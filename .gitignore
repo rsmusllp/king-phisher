@@ -2,3 +2,5 @@
 # Geany
 *.geany
 *.log
+*.conf
+*.db

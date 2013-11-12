@@ -230,19 +230,26 @@
                       <object class="GtkAlignment" id="alignment1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="left_padding">12</property>
+                        <property name="left_padding">5</property>
                         <child>
                           <object class="GtkTable" id="table5">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="border_width">5</property>
                             <property name="n_rows">2</property>
                             <property name="n_columns">2</property>
+                            <property name="column_spacing">5</property>
+                            <property name="row_spacing">5</property>
                             <child>
                               <object class="GtkLabel" id="label12">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">SSH Server</property>
                               </object>
+                              <packing>
+                                <property name="x_options"/>
+                                <property name="y_options"/>
+                              </packing>
                             </child>
                             <child>
                               <object class="GtkEntry" id="entry_ssh_server">
@@ -259,6 +266,7 @@
                               <packing>
                                 <property name="left_attach">1</property>
                                 <property name="right_attach">2</property>
+                                <property name="y_options"/>
                               </packing>
                             </child>
                             <child>
@@ -270,6 +278,8 @@
                               <packing>
                                 <property name="top_attach">1</property>
                                 <property name="bottom_attach">2</property>
+                                <property name="x_options"/>
+                                <property name="y_options"/>
                               </packing>
                             </child>
                             <child>
@@ -288,6 +298,7 @@
                                 <property name="right_attach">2</property>
                                 <property name="top_attach">1</property>
                                 <property name="bottom_attach">2</property>
+                                <property name="y_options"/>
                               </packing>
                             </child>
                           </object>
@@ -1073,6 +1084,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="border_width">5</property>
+                <property name="spacing">5</property>
                 <child>
                   <object class="GtkHBox" id="hbox4">
                     <property name="visible">True</property>

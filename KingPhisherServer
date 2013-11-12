@@ -1,0 +1,36 @@
+#!/usr/bin/python -B
+
+import argparse
+import ConfigParser
+import logging
+import os
+
+from AdvancedHTTPServer import build_server_from_config
+
+from king_phisher.server import server
+
+def main():
+	parser = argparse.ArgumentParser(description = 'King Phisher Server', conflict_handler='resolve')
+	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + server.__version__)
+	parser.add_argument('--foreground', dest = 'foreground', action = 'store_true', default = False, help = 'run in forground (do not fork)')
+	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
+	parser.add_argument('config_file', action = 'store', type = argparse.FileType('r'), help = 'configuration file to use')
+	arguments = parser.parse_args()
+
+	logging.getLogger('').setLevel(logging.DEBUG)
+	console_log_handler = logging.StreamHandler()
+	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
+	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
+	logging.getLogger('').addHandler(console_log_handler)
+	config_file = arguments.config_file
+	del parser
+
+	config = ConfigParser.ConfigParser()
+	config.readfp(config_file)
+	king_phisher_server = build_server_from_config(config, 'server', ServerClass = server.KingPhisherServer, HandlerClass = server.KingPhisherRequestHandler)
+	king_phisher_server.serve_files = True
+	king_phisher_server.load_database(config.get('server', 'database'))
+	king_phisher_server.serve_forever(fork = (not arguments.foreground))
+
+if __name__ == '__main__':
+	main()
