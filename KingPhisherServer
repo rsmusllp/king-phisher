@@ -8,6 +8,7 @@ import os
 from AdvancedHTTPServer import build_server_from_config
 
 from king_phisher.server import server
+from king_phisher.server import database
 
 def main():
 	parser = argparse.ArgumentParser(description = 'King Phisher Server', conflict_handler='resolve')
@@ -29,7 +30,11 @@ def main():
 	config.readfp(config_file)
 	king_phisher_server = build_server_from_config(config, 'server', ServerClass = server.KingPhisherServer, HandlerClass = server.KingPhisherRequestHandler)
 	king_phisher_server.serve_files = True
-	king_phisher_server.load_database(config.get('server', 'database'))
+	database_file = config.get('server', 'database')
+	import pdb; pdb.set_trace()
+	if database_file != ':memory:' and not os.path.exists(database_file):
+		database.create_database(database_file)
+	king_phisher_server.load_database(database_file)
 	king_phisher_server.serve_forever(fork = (not arguments.foreground))
 
 if __name__ == '__main__':

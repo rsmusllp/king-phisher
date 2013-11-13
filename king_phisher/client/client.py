@@ -8,15 +8,15 @@ import copy
 import json
 import logging
 import os
-
-import urlparse
+import random
 
 from gi.repository import Gtk
 from AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPCClient
 
-from king_phisher.utilities import server_parse, show_dialog_error, show_dialog_yes_no, UtilityGladeGObject
 from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.tabs.mail import MailSenderTab
+from king_phisher.ssh_forward import SSHTCPForwarder
+from king_phisher.utilities import server_parse, show_dialog_error, show_dialog_yes_no, UtilityGladeGObject
 
 __version__ = '0.0.1'
 
@@ -145,15 +145,17 @@ class KingPhisherClient(Gtk.Window):
 			response = login_dialog.interact()
 			if response == Gtk.ResponseType.CANCEL:
 				return False
-			server_url = urlparse.urlparse(self.config['server'])
+			server = server_parse(self.config['server'], 22)
 			username = self.config['server_username']
 			password = self.config['server_password']
-			server = server_parse(server_url.netloc, 80)
-			use_ssl = server_url == 'https'
+			server_remote_port = self.config.get('server_remote_port', 80)
+			local_port = random.randint(2000, 6000)
 			try:
-				self.rpc = AdvancedHTTPServerRPCClient(server, use_ssl = use_ssl, username = username, password = password)
+				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port))
+				self.ssh_forwarder.start()
 			except:
-				pass
+				continue
+			self.rpc = AdvancedHTTPServerRPCClient(('localhost', local_port), username = username, password = password)
 			try:
 				assert(self.rpc('ping'))
 				return True
@@ -164,7 +166,8 @@ class KingPhisherClient(Gtk.Window):
 				pass
 
 	def server_disconnect(self):
-		return show_dialog_yes_no("Are you sure you want to disconnect?", self)
+		self.ssh_forwarder.stop()
+		return
 
 	def load_config(self):
 		config_file = os.path.expanduser(CONFIG_FILE_PATH)
