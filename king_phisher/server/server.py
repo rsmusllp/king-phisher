@@ -22,6 +22,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.rpc_handler_map['/campaign/list'] = self.rpc_campaign_list
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
+		self.rpc_handler_map['/campaign/visits/view'] = self.rpc_campaign_visits_view
 
 	@contextlib.contextmanager
 	def get_cursor(self):
@@ -70,11 +71,14 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		return
 
 	def handle_visit(self, query, msg_id):
-		get_query_parameter = lambda p: query.get(p, [None])[0]
 		with self.get_cursor() as cursor:
-			cursor.execute('SELECT 1 FROM messages WHERE id = ?', (msg_id,))
-			if not cursor.fetchone():
+			cursor.execute('SELECT campaign_id FROM messages WHERE id = ?', (msg_id,))
+			campaign_id = cursor.fetchone()
+			if not campaign_id:
 				return
+			campaign_id = campaign_id[0]
+
+		get_query_parameter = lambda p: query.get(p, [None])[0]
 		kp_cookie_name = self.config.get('cookie_name', 'KPID')
 		if not kp_cookie_name in self.cookies:
 			visit_id = make_uid()
@@ -83,17 +87,19 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 			with self.get_cursor() as cursor:
 				client_ip = self.client_address[0]
 				user_agent = (self.headers.getheader('user-agent') or '')
-				cursor.execute('INSERT INTO visits (id, message_id, visitor_ip, visitor_details) VALUES (?, ?, ?, ?)', (visit_id, msg_id, client_ip, user_agent))
+				cursor.execute('INSERT INTO visits (id, message_id, campaign_id, visitor_ip, visitor_details) VALUES (?, ?, ?, ?, ?)', (visit_id, msg_id, campaign_id, client_ip, user_agent))
 		else:
 			visit_id = self.cookies[kp_cookie_name].value
 			with self.get_cursor() as cursor:
 				cursor.execute('UPDATE visits SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (visit_id,))
+
 		username = (get_query_parameter('username') or get_query_parameter('user') or get_query_parameter('u'))
+		if not username:
+			return
 		password = (get_query_parameter('password') or get_query_parameter('pass') or get_query_parameter('p'))
-		if username:
-			password = (password or '')
-			with self.get_cursor() as cursor:
-				cursor.execute('INSERT INTO credentials (visit_id, username, password) VALUES (?, ?, ?)', (visit_id, username, password))
+		password = (password or '')
+		with self.get_cursor() as cursor:
+			cursor.execute('INSERT INTO credentials (visit_id, username, password) VALUES (?, ?, ?)', (visit_id, username, password))
 
 	def rpc_ping(self):
 		return True
@@ -115,6 +121,19 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		with self.get_cursor() as cursor:
 			cursor.execute('INSERT INTO messages (id, campaign_id, target_email) VALUES (?, ?, ?)', (email_id, campaign_id, email_target))
 		return
+
+	def rpc_campaign_visits_view(self, campaign_id, page = 0):
+		visits = []
+		offset = 25 * page
+		columns = ['id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit']
+		with self.get_cursor() as cursor:
+			for row in cursor.execute('SELECT ' + ', '.join(columns) + ' FROM visits WHERE campaign_id = ? LIMIT 25 OFFSET ?', (campaign_id, offset)):
+				visit = dict(zip(columns, row))
+				visits.append(visit)
+		if not len(visits):
+			return None
+		return visits
+
 
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):

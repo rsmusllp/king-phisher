@@ -233,6 +233,7 @@ class KingPhisherClient(Gtk.Window):
 			except:
 				continue
 			self.rpc = AdvancedHTTPServerRPCClient(('localhost', local_port), username = username, password = password)
+			self.rpc.set_serializer('binary/json+zlib')
 			try:
 				assert(self.rpc('ping'))
 				return True

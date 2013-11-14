@@ -25,6 +25,7 @@ def create_database(database_file):
 	CREATE TABLE visits (
 		id TEXT PRIMARY KEY UNIQUE NOT NULL,
 		message_id TEXT NOT NULL,
+		campaign_id INTEGER NOT NULL,
 		visit_count INTEGER DEFAULT 1,
 		visitor_ip TEXT,
 		visitor_details TEXT,
