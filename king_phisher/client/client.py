@@ -16,7 +16,7 @@ from AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPC
 from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.ssh_forward import SSHTCPForwarder
-from king_phisher.utilities import server_parse, show_dialog_error, show_dialog_yes_no, UtilityGladeGObject
+from king_phisher.client.utilities import server_parse, show_dialog_error, show_dialog_yes_no, UtilityGladeGObject
 
 __version__ = '0.0.1'
 
@@ -61,13 +61,13 @@ class KingPhisherClientCampaignSelectionDialog(UtilityGladeGObject):
 		treeview = self.gobjects['treeview_campaigns']
 		store = treeview.get_model()
 		if store == None:
-			store = Gtk.ListStore(int, str)
+			store = Gtk.ListStore(str, str)
 			treeview.set_model(store)
 		else:
 			store.clear()
 		campaigns = self.parent.rpc('campaign/list')
 		for campaign_id, campaign_name in campaigns.items():
-			store.append([int(campaign_id), campaign_name])
+			store.append([campaign_id, campaign_name])
 
 	def signal_button_clicked(self, button):
 		campaign_name_entry = self.gobjects['entry_new_campaign_name']

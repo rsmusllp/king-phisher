@@ -5,7 +5,7 @@ import ConfigParser
 import logging
 import os
 
-from AdvancedHTTPServer import build_server_from_config
+from AdvancedHTTPServer import build_server_from_config, SectionConfigParser
 
 from king_phisher.server import server
 from king_phisher.server import database
@@ -32,6 +32,7 @@ def main():
 	king_phisher_server.serve_files = True
 	king_phisher_server.serve_files_list_directories = False
 	king_phisher_server.serve_robots_txt = True
+	king_phisher_server.http_server.config = SectionConfigParser('server', config)
 	database_file = config.get('server', 'database')
 	if database_file != ':memory:' and not os.path.exists(database_file):
 		database.create_database(database_file)

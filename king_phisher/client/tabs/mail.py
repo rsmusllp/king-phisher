@@ -4,7 +4,7 @@ import urlparse
 
 from king_phisher.client.login import KingPhisherClientSSHLoginDialog
 from king_phisher.client.mailer import format_message, MailSenderThread
-from king_phisher.utilities import gtk_sync, show_dialog_error, show_dialog_warning, show_dialog_yes_no, which_glade, UtilityFileChooser, UtilityGladeGObject
+from king_phisher.client.utilities import gtk_sync, show_dialog_error, show_dialog_warning, show_dialog_yes_no, which_glade, UtilityFileChooser, UtilityGladeGObject
 
 from gi.repository import Gtk
 from gi.repository import Gdk

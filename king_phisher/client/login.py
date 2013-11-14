@@ -1,6 +1,6 @@
 from gi.repository import Gtk
 
-from king_phisher.utilities import UtilityGladeGObject
+from king_phisher.client.utilities import UtilityGladeGObject
 
 class KingPhisherClientLoginDialog(UtilityGladeGObject):
 	gobject_ids = [

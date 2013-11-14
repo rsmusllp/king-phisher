@@ -13,7 +13,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
 from king_phisher.ssh_forward import SSHTCPForwarder
-from king_phisher.utilities import server_parse
+from king_phisher.client.utilities import server_parse
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
 
