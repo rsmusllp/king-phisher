@@ -30,8 +30,9 @@ def main():
 	config.readfp(config_file)
 	king_phisher_server = build_server_from_config(config, 'server', ServerClass = server.KingPhisherServer, HandlerClass = server.KingPhisherRequestHandler)
 	king_phisher_server.serve_files = True
+	king_phisher_server.serve_files_list_directories = False
+	king_phisher_server.serve_robots_txt = True
 	database_file = config.get('server', 'database')
-	import pdb; pdb.set_trace()
 	if database_file != ':memory:' and not os.path.exists(database_file):
 		database.create_database(database_file)
 	king_phisher_server.load_database(database_file)

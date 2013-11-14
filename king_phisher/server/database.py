@@ -6,7 +6,40 @@ def create_database(database_file):
 		os.unlink(database_file)
 	db = sqlite3.connect(database_file, check_same_thread = False)
 	cursor = db.cursor()
-	cursor.execute('''CREATE TABLE campaigns (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+	cursor.execute("""
+	CREATE TABLE campaigns (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT UNIQUE NOT NULL,
+		created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
+	""")
+	cursor.execute("""
+	CREATE TABLE messages (
+		id TEXT PRIMARY KEY UNIQUE NOT NULL,
+		campaign_id INTEGER NOT NULL,
+		target_email TEXT,
+		sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
+	""")
+	cursor.execute("""
+	CREATE TABLE visits (
+		id TEXT PRIMARY KEY UNIQUE NOT NULL,
+		message_id TEXT NOT NULL,
+		visitor_ip TEXT,
+		visitor_details TEXT,
+		first_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		last_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
+	""")
+	cursor.execute("""
+	CREATE TABLE credentials (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		visit_id TEXT NOT NULL,
+		username TEXT,
+		password TEXT,
+		submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
+	""")
 	db.commit()
 	return db
 

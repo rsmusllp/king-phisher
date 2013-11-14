@@ -24,7 +24,7 @@ UI_INFO = """
 <ui>
 	<menubar name="MenuBar">
 		<menu action="FileMenu">
-			<menuitem action="FileNewCampaign" />
+			<menuitem action="FileOpenCampaign" />
 			<separator />
 			<menuitem action="FileQuit" />
 		</menu>
@@ -41,6 +41,65 @@ DEFAULT_CONFIG = """
 
 }
 """
+
+class KingPhisherClientCampaignSelectionDialog(UtilityGladeGObject):
+	gobject_ids = [
+		'button_new_campaign',
+		'entry_new_campaign_name',
+		'treeview_campaigns'
+	]
+	top_gobject = 'dialog'
+	def __init__(self, *args, **kwargs):
+		super(self.__class__, self).__init__(*args, **kwargs)
+		treeview = self.gobjects['treeview_campaigns']
+		column = Gtk.TreeViewColumn('Campaign', Gtk.CellRendererText(), text=1)
+		treeview.append_column(column)
+		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		self.load_campaigns()
+
+	def load_campaigns(self):
+		treeview = self.gobjects['treeview_campaigns']
+		store = treeview.get_model()
+		if store == None:
+			store = Gtk.ListStore(int, str)
+			treeview.set_model(store)
+		else:
+			store.clear()
+		campaigns = self.parent.rpc('campaign/list')
+		for campaign_id, campaign_name in campaigns.items():
+			store.append([int(campaign_id), campaign_name])
+
+	def signal_button_clicked(self, button):
+		campaign_name_entry = self.gobjects['entry_new_campaign_name']
+		campaign_name = campaign_name_entry.get_property('text')
+		if not campaign_name:
+			show_dialog_warning('Invalid Campaign Name', self.dialog, 'Please specify a new campaign name')
+			return
+		try:
+			self.parent.rpc('campaign/new', campaign_name)
+		except:
+			show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
+		else:
+			campaign_name_entry.set_property('text', '')
+			self.load_campaigns()
+
+	def interact(self):
+		self.dialog.show_all()
+		response = self.dialog.run()
+		if response != Gtk.ResponseType.CANCEL:
+			treeview = self.gobjects['treeview_campaigns']
+			selection = treeview.get_selection()
+			(model, tree_iter) = selection.get_selected()
+			if not tree_iter:
+				show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one')
+				self.dialog.destroy()
+				return Gtk.ResponseType.CANCEL
+			campaign_id = model.get_value(tree_iter, 0)
+			self.config['campaign_id'] = campaign_id
+			campaign_name = model.get_value(tree_iter, 1)
+			self.config['campaign_name'] = campaign_name
+		self.dialog.destroy()
+		return response
 
 class KingPhisherClientConfigDialog(UtilityGladeGObject):
 	gobject_ids = [
@@ -104,7 +163,7 @@ class KingPhisherClient(Gtk.Window):
 		self.notebook.set_current_page(current_page+1)
 
 		self.set_size_request(800, 600)
-		self.connect('destroy', Gtk.main_quit)
+		self.connect('destroy', self.signal_window_destroy)
 		self.notebook.show()
 		self.show()
 		self.rpc = None
@@ -114,12 +173,12 @@ class KingPhisherClient(Gtk.Window):
 		action_filemenu = Gtk.Action("FileMenu", "File", None, None)
 		action_group.add_action(action_filemenu)
 
-		action_file_new_campaign = Gtk.Action("FileNewCampaign", "_New Campaign", "Start a new Campaign", Gtk.STOCK_NEW)
-		action_file_new_campaign.connect("activate", lambda x: self.start_new_campaign())
-		action_group.add_action_with_accel(action_file_new_campaign, "<control>N")
+		action_file_new_campaign = Gtk.Action("FileOpenCampaign", "_Open Campaign", "Open a Campaign", Gtk.STOCK_NEW)
+		action_file_new_campaign.connect("activate", lambda x: self.select_campaign())
+		action_group.add_action_with_accel(action_file_new_campaign, "<control>O")
 
 		action_file_quit = Gtk.Action("FileQuit", None, None, Gtk.STOCK_QUIT)
-		action_file_quit.connect("activate", lambda x: Gtk.main_quit())
+		action_file_quit.connect("activate", lambda x: self.client_quit())
 		action_group.add_action_with_accel(action_file_quit, "<control>Q")
 
 		# Edit Menu Actions
@@ -136,6 +195,24 @@ class KingPhisherClient(Gtk.Window):
 		accelgroup = uimanager.get_accel_group()
 		self.add_accel_group(accelgroup)
 		return uimanager
+
+	def signal_window_destroy(self, window):
+		self.client_quit()
+
+	def client_initialize(self):
+		if not self.server_connect():
+			return False
+		campaign_id = self.config.get('campaign_id')
+		if campaign_id == None:
+			if not self.select_campaign():
+				self.server_disconnect()
+				return False
+		return True
+
+	def client_quit(self):
+		self.server_disconnect()
+		Gtk.main_quit()
+		return
 
 	def server_connect(self):
 		import socket
@@ -188,7 +265,8 @@ class KingPhisherClient(Gtk.Window):
 
 	def edit_preferences(self):
 		dialog = KingPhisherClientConfigDialog(self.config, self)
-		dialog.interact()
+		dialog.interact() != Gtk.ResponseType.CANCEL
 
-	def start_new_campaign(self):
-		pass
+	def select_campaign(self):
+		dialog = KingPhisherClientCampaignSelectionDialog(self.config, self)
+		return dialog.interact() != Gtk.ResponseType.CANCEL

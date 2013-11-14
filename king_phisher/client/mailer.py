@@ -15,7 +15,7 @@ from email.MIMEText import MIMEText
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.utilities import server_parse
 
-make_uid = lambda: os.urandom(16).encode('hex')
+make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
 
 def format_message(template, config, first_name= None, last_name = None, uid = None):
 	first_name = (first_name or 'Alice')
@@ -109,7 +109,7 @@ class MailSenderThread(threading.Thread):
 			self.notify_status("Sending Email {0} of {1} To {2} With UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
 			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
 			self.send_email(target['email_address'], msg)
-			self.notify_sent(uid, emails_done, emails_total)
+			self.notify_sent(uid, target['email_address'], emails_done, emails_total)
 		target_file_h.close()
 		self.notify_status("Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
 		if self.smtp_connection:
@@ -152,7 +152,6 @@ class MailSenderThread(threading.Thread):
 	def send_email(self, target_email, msg):
 		source_email = self.config['mailer.source_email']
 		self.smtp_connection.sendmail(source_email, target_email, msg.as_string())
-		import time; time.sleep(1)
 
 	def pause(self):
 		self.running.clear()

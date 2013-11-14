@@ -102,8 +102,10 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 		self.textbuffer.insert(self.textbuffer_iter, message)
 		gtk_sync()
 
-	def notify_sent(self, uid, emails_done, emails_total):
+	def notify_sent(self, uid, email_target, emails_done, emails_total):
 		self.progressbar.set_fraction(float(emails_done) / float(emails_total))
+		campaign_id = self.config['campaign_id']
+		self.parent.rpc('campaign/message/new', campaign_id, uid, email_target)
 
 	def sender_start_failure(self, message = None, text = None):
 		if text:

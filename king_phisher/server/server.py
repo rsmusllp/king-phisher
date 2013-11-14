@@ -1,5 +1,7 @@
 import contextlib
+import random
 import sqlite3
+import string
 
 import pam
 from AdvancedHTTPServer import *
@@ -7,6 +9,8 @@ from AdvancedHTTPServer import *
 from king_phisher.server import database
 
 __version__ = '0.0.1'
+
+make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
 class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
@@ -16,6 +20,8 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.rpc_handler_map['/ping'] = self.rpc_ping
 		self.rpc_handler_map['/campaign/list'] = self.rpc_campaign_list
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
+
+		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 
 	@contextlib.contextmanager
 	def get_cursor(self):
@@ -48,6 +54,11 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 			cursor.execute('SELECT id FROM campaigns WHERE name = ?', (name,))
 			campaign_id = cursor.fetchone()[0]
 		return campaign_id
+
+	def rpc_campaign_message_new(self, campaign_id, email_id, email_target):
+		with self.get_cursor() as cursor:
+			cursor.execute('INSERT INTO messages (id, campaign_id, target_email) VALUES (?, ?, ?)', (email_id, campaign_id, email_target))
+		return
 
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):

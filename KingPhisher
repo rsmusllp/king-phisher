@@ -31,7 +31,7 @@ def main():
 	Gdk.threads_init()
 	main_window = client.KingPhisherClient()
 	main_window.set_position(Gtk.WindowPosition.CENTER)
-	if main_window.server_connect():
+	if main_window.client_initialize():
 		Gtk.main()
 	main_window.save_config()
 
