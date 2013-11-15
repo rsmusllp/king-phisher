@@ -4,6 +4,7 @@ import random
 import shutil
 import sqlite3
 import string
+import threading
 
 import pam
 from AdvancedHTTPServer import *
@@ -17,18 +18,49 @@ make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) f
 class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
 		self.database = self.server.database
+		self.database_lock = threading.Lock()
 		self.config = self.server.config
 		self.rpc_handler_map['/ping'] = self.rpc_ping
 		self.rpc_handler_map['/campaign/list'] = self.rpc_campaign_list
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 		self.rpc_handler_map['/campaign/visits/view'] = self.rpc_campaign_visits_view
+		self.rpc_handler_map['/message/get'] = self.rpc_message_get
 
 	@contextlib.contextmanager
 	def get_cursor(self):
 		cursor = self.database.cursor()
+		self.database_lock.acquire()
 		yield cursor
 		self.database.commit()
+		self.database_lock.release()
+
+	def do_GET(self, *args, **kwargs):
+		self.server.throttle_semaphore.acquire()
+		try:
+			super(self.__class__, self).do_GET(*args, **kwargs)
+		except:
+			raise
+		finally:
+			self.server.throttle_semaphore.release()
+
+	def do_POST(self, *args, **kwargs):
+		self.server.throttle_semaphore.acquire()
+		try:
+			super(self.__class__, self).do_POST(*args, **kwargs)
+		except:
+			raise
+		finally:
+			self.server.throttle_semaphore.release()
+
+	def do_RPC(self, *args, **kwargs):
+		self.server.throttle_semaphore.acquire()
+		try:
+			super(self.__class__, self).do_RPC(*args, **kwargs)
+		except:
+			raise
+		finally:
+			self.server.throttle_semaphore.release()
 
 	def custom_authentication(self, username, password):
 		return pam.authenticate(username, password)
@@ -121,6 +153,15 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		with self.get_cursor() as cursor:
 			cursor.execute('INSERT INTO messages (id, campaign_id, target_email) VALUES (?, ?, ?)', (email_id, campaign_id, email_target))
 		return
+
+	def rpc_message_get(self, message_id):
+		with self.get_cursor() as cursor:
+			columns = ['campaign_id', 'target_email', 'sent']
+			cursor.execute('SELECT ' + ', '.join(columns) + ' FROM messages WHERE id = ?', (message_id,))
+			message = cursor.fetchone()
+			if message:
+				message = dict(zip(columns, message))
+		return message
 
 	def rpc_campaign_visits_view(self, campaign_id, page = 0):
 		visits = []

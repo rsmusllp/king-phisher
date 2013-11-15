@@ -4,6 +4,7 @@ import argparse
 import ConfigParser
 import logging
 import os
+import threading
 
 from AdvancedHTTPServer import build_server_from_config, SectionConfigParser
 
@@ -11,7 +12,7 @@ from king_phisher.server import server
 from king_phisher.server import database
 
 def main():
-	parser = argparse.ArgumentParser(description = 'King Phisher Server', conflict_handler='resolve')
+	parser = argparse.ArgumentParser(description = 'King Phisher Server', conflict_handler = 'resolve')
 	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + server.__version__)
 	parser.add_argument('--foreground', dest = 'foreground', action = 'store_true', default = False, help = 'run in forground (do not fork)')
 	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
@@ -33,6 +34,7 @@ def main():
 	king_phisher_server.serve_files_list_directories = False
 	king_phisher_server.serve_robots_txt = True
 	king_phisher_server.http_server.config = SectionConfigParser('server', config)
+	king_phisher_server.http_server.throttle_semaphore = threading.Semaphore(2)
 	database_file = config.get('server', 'database')
 	if database_file != ':memory:' and not os.path.exists(database_file):
 		database.create_database(database_file)

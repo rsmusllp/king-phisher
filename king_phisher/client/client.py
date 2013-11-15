@@ -15,6 +15,7 @@ from AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPC
 
 from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.tabs.mail import MailSenderTab
+from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.client.utilities import server_parse, show_dialog_error, show_dialog_yes_no, UtilityGladeGObject
 
@@ -161,6 +162,11 @@ class KingPhisherClient(Gtk.Window):
 		current_page = self.notebook.get_current_page()
 		self.notebook.insert_page(mailer_tab, mailer_tab.label, current_page+1)
 		self.notebook.set_current_page(current_page+1)
+
+		campaign_tab = CampaignViewTab(self.config, self)
+		campaign_tab.box.show()
+		self.tabs['campaign'] = campaign_tab
+		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page+2)
 
 		self.set_size_request(800, 600)
 		self.connect('destroy', self.signal_window_destroy)

@@ -11,7 +11,7 @@ from gi.repository import Gtk
 from king_phisher.client import client
 
 def main():
-	parser = argparse.ArgumentParser(description = 'King Phisher', conflict_handler='resolve')
+	parser = argparse.ArgumentParser(description = 'King Phisher', conflict_handler = 'resolve')
 	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + client.__version__)
 	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
 	arguments = parser.parse_args()
