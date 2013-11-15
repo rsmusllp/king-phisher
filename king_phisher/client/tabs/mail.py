@@ -211,17 +211,18 @@ class MailSenderConfigTab(UtilityGladeGObject):
 		entry.set_text('')
 		return True
 
-class MailSenderTab(Gtk.VBox):
-	def __init__(self, config, parent, *args, **kwargs):
+class MailSenderTab(object):
+	def __init__(self, config, parent):
 		self.config = config
 		self.parent = parent
-		super(MailSenderTab, self).__init__(*args, **kwargs)
+		self.box = Gtk.VBox()
+		self.box.show()
 		self.label = Gtk.Label('Send Messages')
 
 		self.notebook = Gtk.Notebook()
 		self.notebook.connect('switch-page', self._tab_changed)
 		self.notebook.set_scrollable(True)
-		self.pack_start(self.notebook, True, True, 0)
+		self.box.pack_start(self.notebook, True, True, 0)
 
 		self.tabs = {}
 		current_page = self.notebook.get_current_page()

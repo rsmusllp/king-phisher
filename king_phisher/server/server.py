@@ -20,12 +20,14 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.database = self.server.database
 		self.database_lock = threading.Lock()
 		self.config = self.server.config
-		self.rpc_handler_map['/ping'] = self.rpc_ping
+		self.rpc_handler_map['/campaign/get'] = self.rpc_campaign_get
 		self.rpc_handler_map['/campaign/list'] = self.rpc_campaign_list
-		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
+		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
 		self.rpc_handler_map['/campaign/visits/view'] = self.rpc_campaign_visits_view
 		self.rpc_handler_map['/message/get'] = self.rpc_message_get
+		self.rpc_handler_map['/ping'] = self.rpc_ping
+		self.rpc_handler_map['/visit/get'] = self.rpc_visit_get
 
 	@contextlib.contextmanager
 	def get_cursor(self):
@@ -142,6 +144,10 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 			campaigns = cursor.fetchall()
 		return dict(campaigns)
 
+	def rpc_campaign_get(self, campaign_id):
+		columns = ['name', 'created']
+		return self.database_get_row_by_id('campaigns', columns, campaign_id)
+
 	def rpc_campaign_new(self, name):
 		with self.get_cursor() as cursor:
 			cursor.execute('INSERT INTO campaigns (name) VALUES (?)', (name,))
@@ -155,13 +161,8 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		return
 
 	def rpc_message_get(self, message_id):
-		with self.get_cursor() as cursor:
-			columns = ['campaign_id', 'target_email', 'sent']
-			cursor.execute('SELECT ' + ', '.join(columns) + ' FROM messages WHERE id = ?', (message_id,))
-			message = cursor.fetchone()
-			if message:
-				message = dict(zip(columns, message))
-		return message
+		columns = ['campaign_id', 'target_email', 'sent']
+		return self.database_get_row_by_id('messages', columns, message_id)
 
 	def rpc_campaign_visits_view(self, campaign_id, page = 0):
 		visits = []
@@ -175,6 +176,17 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 			return None
 		return visits
 
+	def rpc_visit_get(self, visit_id):
+		columns = ['message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit']
+		return self.database_get_row_by_id('visits', columns, visit_id)
+
+	def database_get_row_by_id(self, table, columns, row_id):
+		with self.get_cursor() as cursor:
+			cursor.execute('SELECT ' + ', '.join(columns) + ' FROM ' + table + ' WHERE id = ?', (row_id,))
+			row = cursor.fetchone()
+			if row:
+				row = dict(zip(columns, row))
+		return row
 
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):

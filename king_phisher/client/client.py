@@ -157,10 +157,9 @@ class KingPhisherClient(Gtk.Window):
 
 		self.tabs = {}
 		mailer_tab = MailSenderTab(self.config, self)
-		mailer_tab.show()
 		self.tabs['mailer'] = mailer_tab
 		current_page = self.notebook.get_current_page()
-		self.notebook.insert_page(mailer_tab, mailer_tab.label, current_page+1)
+		self.notebook.insert_page(mailer_tab.box, mailer_tab.label, current_page+1)
 		self.notebook.set_current_page(current_page+1)
 
 		campaign_tab = CampaignViewTab(self.config, self)

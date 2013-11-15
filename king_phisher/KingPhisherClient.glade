@@ -2,7 +2,7 @@
 <interface>
   <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy toplevel-contextual -->
-  <object class="GtkVBox" id="CampaignViewTab">
+  <object class="GtkVBox" id="CampaignViewVisitTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>

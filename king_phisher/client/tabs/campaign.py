@@ -7,27 +7,23 @@ from king_phisher.client.utilities import UtilityGladeGObject
 
 from gi.repository import Gtk
 
-class CampaignViewTab(UtilityGladeGObject):
+class CampaignViewVisitTab(UtilityGladeGObject):
 	gobject_ids = [
 		'button_refresh',
 		'treeview_campaign'
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Campaign')
+		self.label = Gtk.Label('Visits')
 		super(self.__class__, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		column = Gtk.TreeViewColumn('Email', Gtk.CellRendererText(), text = 1)
-		treeview.append_column(column)
-		column = Gtk.TreeViewColumn('Visitor IP', Gtk.CellRendererText(), text = 2)
-		treeview.append_column(column)
-		column = Gtk.TreeViewColumn('Visitor Details', Gtk.CellRendererText(), text = 3)
-		treeview.append_column(column)
-		column = Gtk.TreeViewColumn('First Visit', Gtk.CellRendererText(), text = 4)
-		treeview.append_column(column)
-		column = Gtk.TreeViewColumn('Last Visit', Gtk.CellRendererText(), text = 5)
-		treeview.append_column(column)
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		columns = {1:'Email', 2:'Visitor IP', 3:'Visitor Details', 4:'Visit Count', 5:'First Visit', 6:'Last Visit'}
+		for column_id in range(1, len(columns) + 1):
+			column_name = columns[column_id]
+			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
+			column.set_sort_column_id(column_id)
+			treeview.append_column(column)
 
 	def signal_button_clicked(self, button):
 		self.load_campaign_information()
@@ -36,7 +32,7 @@ class CampaignViewTab(UtilityGladeGObject):
 		treeview = self.gobjects['treeview_campaign']
 		store = treeview.get_model()
 		if store == None:
-			store = Gtk.ListStore(str, str, str, str, str, str)
+			store = Gtk.ListStore(str, str, str, str, str, str, str)
 			treeview.set_model(store)
 		else:
 			store.clear()
@@ -51,4 +47,34 @@ class CampaignViewTab(UtilityGladeGObject):
 				msg_id = visit['message_id']
 				msg_details = self.parent.rpc.cache_call('message/get', msg_id)
 				visitor_email = msg_details['target_email']
-				store.append([visit['id'], visitor_email, visit['visitor_ip'], visit['visitor_details'], visit['first_visit'], visit['last_visit']])
+				store.append([visit['id'], visitor_email, visit['visitor_ip'], visit['visitor_details'], str(visit['visit_count']), visit['first_visit'], visit['last_visit']])
+
+class CampaignViewTab(object):
+	def __init__(self, config, parent):
+		self.config = config
+		self.parent = parent
+		self.box = Gtk.VBox()
+		self.box.show()
+		self.label = Gtk.Label('View Campaign')
+
+		self.notebook = Gtk.Notebook()
+		self.notebook.connect('switch-page', self._tab_changed)
+		self.notebook.set_scrollable(True)
+		self.box.pack_start(self.notebook, True, True, 0)
+
+		self.tabs = {}
+		current_page = self.notebook.get_current_page()
+		self.last_page_id = current_page
+
+		visit_tab = CampaignViewVisitTab(self.config, self.parent)
+		self.tabs['visit'] = visit_tab
+		self.notebook.append_page(visit_tab.box, visit_tab.label)
+
+		for tab in self.tabs.values():
+			tab.box.show()
+		self.notebook.show()
+
+	def _tab_changed(self, notebook, current_page, index):
+		previous_page = notebook.get_nth_page(self.last_page_id)
+		self.last_page_id = index
+		visit_tab = self.tabs.get('visit')
