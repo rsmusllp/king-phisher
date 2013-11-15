@@ -3,11 +3,11 @@ import os
 import urlparse
 
 from king_phisher.client.mailer import format_message, MailSenderThread
-from king_phisher.client.utilities import UtilityGladeGObject
+from king_phisher.client import utilities
 
 from gi.repository import Gtk
 
-class CampaignViewVisitTab(UtilityGladeGObject):
+class CampaignViewVisitTab(utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'button_refresh',
 		'treeview_campaign'
@@ -25,7 +25,17 @@ class CampaignViewVisitTab(UtilityGladeGObject):
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
 
-	def signal_button_clicked(self, button):
+	def signal_button_clicked_export(self, button):
+		dialog = utilities.UtilityFileChooser('Export Data', self.parent)
+		file_name = self.config['campaign_name'] + '.csv'
+		response = dialog.run_quick_save(file_name)
+		dialog.destroy()
+		if not response:
+			return
+		destination_file = response['target_filename']
+		utilities.export_treeview_liststore_csv(self.gobjects['treeview_campaign'], destination_file)
+
+	def signal_button_clicked_refresh(self, button):
 		self.load_campaign_information()
 
 	def load_campaign_information(self):

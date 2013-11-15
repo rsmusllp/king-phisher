@@ -4,12 +4,12 @@ import urlparse
 
 from king_phisher.client.login import KingPhisherClientSSHLoginDialog
 from king_phisher.client.mailer import format_message, MailSenderThread
-from king_phisher.client.utilities import gtk_sync, show_dialog_error, show_dialog_warning, show_dialog_yes_no, UtilityFileChooser, UtilityGladeGObject
+from king_phisher.client import utilities
 
 from gi.repository import Gtk
 from gi.repository import WebKit
 
-class MailSenderSendMessagesTab(UtilityGladeGObject):
+class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'button_mail_sender_start',
 		'button_mail_sender_stop',
@@ -39,10 +39,10 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 		]
 		for setting in required_settings:
 			if not self.config.get(setting):
-				show_dialog_warning('Missing Required Option', self.parent, 'Return to the Config tab and set all required options')
+				utilities.show_dialog_warning('Missing Required Option', self.parent, 'Return to the Config tab and set all required options')
 				return
 		if not self.config.get('smtp_server'):
-			show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
+			utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
 			return
 		if self.sender_thread:
 			return
@@ -76,7 +76,7 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 	def signal_button_clicked_sender_stop(self, button):
 		if not self.sender_thread:
 			return
-		if not show_dialog_yes_no('Are you sure you want to stop?', self.parent):
+		if not utilities.show_dialog_yes_no('Are you sure you want to stop?', self.parent):
 			return
 		self.sender_thread.stop()
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
@@ -99,7 +99,7 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 
 	def text_insert(self, message):
 		self.textbuffer.insert(self.textbuffer_iter, message)
-		gtk_sync()
+		utilities.gtk_sync()
 
 	def notify_sent(self, uid, email_target, emails_done, emails_total):
 		self.progressbar.set_fraction(float(emails_done) / float(emails_total))
@@ -112,7 +112,7 @@ class MailSenderSendMessagesTab(UtilityGladeGObject):
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
 		self.gobjects['button_mail_sender_start'].set_sensitive(True)
 		if message:
-			show_dialog_error(message, self.parent)
+			utilities.show_dialog_error(message, self.parent)
 
 	def sender_cleanup(self):
 		self.progressbar.set_fraction(1)
@@ -134,7 +134,7 @@ class MailSenderPreviewTab(object):
 		self.webview.show()
 		self.box.pack_start(self.webview, True, True, 0)
 
-class MailSenderEditTab(UtilityGladeGObject):
+class MailSenderEditTab(utilities.UtilityGladeGObject):
 	gobject_ids = [
 			'button_save_as_html_file',
 			'button_save_html_file',
@@ -152,7 +152,7 @@ class MailSenderEditTab(UtilityGladeGObject):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
 			return
-		dialog = UtilityFileChooser('Save HTML File')
+		dialog = utilities.UtilityFileChooser('Save HTML File', self.parent)
 		response = dialog.run_quick_save(current_name = os.path.basename(html_file))
 		dialog.destroy()
 		if not response:
@@ -168,14 +168,14 @@ class MailSenderEditTab(UtilityGladeGObject):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
 			return
-		if not show_dialog_yes_no("Save HTML File?", self.parent):
+		if not utilities.show_dialog_yes_no("Save HTML File?", self.parent):
 			return
 		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
 		html_file_h = open(html_file, 'w')
 		html_file_h.write(text)
 		html_file_h.close()
 
-class MailSenderConfigTab(UtilityGladeGObject):
+class MailSenderConfigTab(utilities.UtilityGladeGObject):
 	gobject_ids = [
 			'entry_webserver_url',
 			'entry_company_name',
@@ -194,7 +194,7 @@ class MailSenderConfigTab(UtilityGladeGObject):
 		super(MailSenderConfigTab, self).__init__(*args, **kwargs)
 
 	def signal_entry_activate_open_file(self, entry):
-		dialog = UtilityFileChooser('Choose File')
+		dialog = utilities.UtilityFileChooser('Choose File')
 		if entry == self.gobjects.get('entry_html_file'):
 			dialog.quick_add_filter('HTML Files', '*.html')
 		elif entry == self.gobjects.get('entry_target_file'):
@@ -269,7 +269,7 @@ class MailSenderTab(object):
 				old_text = open(html_file, 'r').read()
 				if old_text == text:
 					break
-				if not show_dialog_yes_no("Save HTML File?", self.parent):
+				if not utilities.show_dialog_yes_no("Save HTML File?", self.parent):
 					break
 				html_file_h = open(html_file, 'w')
 				html_file_h.write(text)

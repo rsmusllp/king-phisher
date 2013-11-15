@@ -17,7 +17,7 @@ from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.ssh_forward import SSHTCPForwarder
-from king_phisher.client.utilities import server_parse, show_dialog_error, show_dialog_yes_no, UtilityGladeGObject
+from king_phisher.client import utilities
 
 __version__ = '0.0.1'
 
@@ -43,7 +43,7 @@ DEFAULT_CONFIG = """
 }
 """
 
-class KingPhisherClientCampaignSelectionDialog(UtilityGladeGObject):
+class KingPhisherClientCampaignSelectionDialog(utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'button_new_campaign',
 		'entry_new_campaign_name',
@@ -74,12 +74,12 @@ class KingPhisherClientCampaignSelectionDialog(UtilityGladeGObject):
 		campaign_name_entry = self.gobjects['entry_new_campaign_name']
 		campaign_name = campaign_name_entry.get_property('text')
 		if not campaign_name:
-			show_dialog_warning('Invalid Campaign Name', self.dialog, 'Please specify a new campaign name')
+			utilities.show_dialog_warning('Invalid Campaign Name', self.dialog, 'Please specify a new campaign name')
 			return
 		try:
 			self.parent.rpc('campaign/new', campaign_name)
 		except:
-			show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
+			utilities.show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
 		else:
 			campaign_name_entry.set_property('text', '')
 			self.load_campaigns()
@@ -92,7 +92,7 @@ class KingPhisherClientCampaignSelectionDialog(UtilityGladeGObject):
 			selection = treeview.get_selection()
 			(model, tree_iter) = selection.get_selected()
 			if not tree_iter:
-				show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one')
+				utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one')
 				self.dialog.destroy()
 				return Gtk.ResponseType.CANCEL
 			campaign_id = model.get_value(tree_iter, 0)
@@ -102,7 +102,7 @@ class KingPhisherClientCampaignSelectionDialog(UtilityGladeGObject):
 		self.dialog.destroy()
 		return response
 
-class KingPhisherClientConfigDialog(UtilityGladeGObject):
+class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 	gobject_ids = [
 			# Server Tab
 			'entry_server',
@@ -212,6 +212,13 @@ class KingPhisherClient(Gtk.Window):
 			if not self.select_campaign():
 				self.server_disconnect()
 				return False
+		campaign_info = self.rpc.cache_call('campaign/get', self.config['campaign_id'])
+		if campaign_info == None:
+			if not self.select_campaign():
+				self.server_disconnect()
+				return False
+			campaign_info = self.rpc.cache_call_refresh('campaign/get', self.config['campaign_id'])
+		self.config['campaign_name'] = campaign_info['name']
 		return True
 
 	def client_quit(self):
@@ -227,7 +234,7 @@ class KingPhisherClient(Gtk.Window):
 			response = login_dialog.interact()
 			if response == Gtk.ResponseType.CANCEL:
 				return False
-			server = server_parse(self.config['server'], 22)
+			server = utilities.server_parse(self.config['server'], 22)
 			username = self.config['server_username']
 			password = self.config['server_password']
 			server_remote_port = self.config.get('server_remote_port', 80)
@@ -244,7 +251,7 @@ class KingPhisherClient(Gtk.Window):
 				return True
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
-					show_dialog_error('Invalid Credentials', self)
+					utilities.show_dialog_error('Invalid Credentials', self)
 			except:
 				pass
 

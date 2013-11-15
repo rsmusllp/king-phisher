@@ -1,3 +1,4 @@
+import csv
 import logging
 import os
 
@@ -76,6 +77,24 @@ def show_dialog_yes_no(message, parent, secondary_text = None):
 	dialog.destroy()
 	return response == Gtk.ResponseType.YES
 
+def export_treeview_liststore_csv(treeview, target_file):
+	target_file_h = open(target_file, 'wb')
+	writer = csv.writer(target_file_h, quoting = csv.QUOTE_ALL)
+	column_names = map(lambda x: x.get_property('title'), treeview.get_columns())
+	column_count = len(column_names)
+	writer.writerow(column_names)
+	store = treeview.get_model()
+	store_iter = store.get_iter_first()
+	rows_written = 0
+	while store_iter:
+		values = map(lambda x: store.get_value(store_iter, x), range(column_count))
+		writer.writerow(values)
+		rows_written += 1
+		store_iter = store.iter_next(store_iter)
+	target_file_h.close()
+	return rows_written
+
+
 class UtilityGladeGObject(object):
 	gobject_ids = [ ]
 	config_prefix = ''
@@ -137,7 +156,8 @@ class UtilityFileChooser(Gtk.FileChooserDialog):
 		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
 		self.add_button(Gtk.STOCK_SAVE, Gtk.ResponseType.ACCEPT)
 		self.set_do_overwrite_confirmation(True)
-		self.set_current_name(current_name)
+		if current_name:
+			self.set_current_name(current_name)
 		self.show_all()
 		response = self.run()
 		if response == Gtk.ResponseType.CANCEL:
