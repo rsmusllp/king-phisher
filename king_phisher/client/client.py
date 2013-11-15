@@ -11,7 +11,7 @@ import os
 import random
 
 from gi.repository import Gtk
-from AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPCClient
+from AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPCClientCached
 
 from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.tabs.mail import MailSenderTab
@@ -238,7 +238,7 @@ class KingPhisherClient(Gtk.Window):
 				self.ssh_forwarder.start()
 			except:
 				continue
-			self.rpc = AdvancedHTTPServerRPCClient(('localhost', local_port), username = username, password = password)
+			self.rpc = AdvancedHTTPServerRPCClientCached(('localhost', local_port), username = username, password = password)
 			self.rpc.set_serializer('binary/json+zlib')
 			try:
 				assert(self.rpc('ping'))

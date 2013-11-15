@@ -40,7 +40,6 @@ class CampaignViewTab(UtilityGladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		message_cache = {}
 		page = 0
 		visits = True
 		while visits:
@@ -50,7 +49,6 @@ class CampaignViewTab(UtilityGladeGObject):
 				break
 			for visit in visits:
 				msg_id = visit['message_id']
-				if not msg_id in message_cache:
-					message_cache[msg_id] = self.parent.rpc('message/get', msg_id)
-				visitor_email = message_cache[msg_id]['target_email']
+				msg_details = self.parent.rpc.cache_call('message/get', msg_id)
+				visitor_email = msg_details['target_email']
 				store.append([visit['id'], visitor_email, visit['visitor_ip'], visit['visitor_details'], visit['first_visit'], visit['last_visit']])
