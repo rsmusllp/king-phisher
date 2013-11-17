@@ -141,6 +141,14 @@ class CampaignViewTab(object):
 		self.notebook.show()
 
 	def _tab_changed(self, notebook, current_page, index):
+		if not hasattr(self.parent, 'rpc'):
+			return
 		previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
-		visit_tab = self.tabs.get('visits')
+		visits_tab = self.tabs.get('visits')
+		credentials_tab = self.tabs.get('credentials')
+
+		if visits_tab and current_page == visits_tab.box:
+			visits_tab.load_campaign_information()
+		elif credentials_tab and current_page == credentials_tab.box:
+			credentials_tab.load_campaign_information()

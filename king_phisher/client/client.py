@@ -151,14 +151,17 @@ class KingPhisherClient(Gtk.Window):
 		hbox = Gtk.HBox()
 		hbox.show()
 		self.notebook = Gtk.Notebook()
+		self.notebook.connect('switch-page', self._tab_changed)
 		self.notebook.set_scrollable(True)
 		hbox.pack_start(self.notebook, True, True, 0)
 		vbox.pack_start(hbox, True, True, 0)
 
 		self.tabs = {}
+		current_page = self.notebook.get_current_page()
+		self.last_page_id = current_page
+
 		mailer_tab = MailSenderTab(self.config, self)
 		self.tabs['mailer'] = mailer_tab
-		current_page = self.notebook.get_current_page()
 		self.notebook.insert_page(mailer_tab.box, mailer_tab.label, current_page+1)
 		self.notebook.set_current_page(current_page+1)
 
@@ -200,6 +203,22 @@ class KingPhisherClient(Gtk.Window):
 		accelgroup = uimanager.get_accel_group()
 		self.add_accel_group(accelgroup)
 		return uimanager
+
+	def _tab_changed(self, notebook, current_page, index):
+		previous_page = notebook.get_nth_page(self.last_page_id)
+		self.last_page_id = index
+		mailer_tab = self.tabs.get('mailer')
+		campaign_tab = self.tabs.get('campaign')
+
+		notebook = None
+		if mailer_tab and current_page == mailer_tab.box:
+			notebook = mailer_tab.notebook
+		elif campaign_tab and current_page == campaign_tab.box:
+			notebook = campaign_tab.notebook
+
+		if notebook:
+			index = notebook.get_current_page()
+			notebook.emit('switch-page', notebook.get_nth_page(index), index)
 
 	def signal_window_destroy(self, window):
 		self.client_quit()
