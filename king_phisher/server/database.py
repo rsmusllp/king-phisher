@@ -43,6 +43,8 @@ def create_database(database_file):
 	CREATE TABLE credentials (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		visit_id TEXT NOT NULL,
+		message_id TEXT NOT NULL,
+		campaign_id INTEGER NOT NULL,
 		username TEXT,
 		password TEXT,
 		submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP

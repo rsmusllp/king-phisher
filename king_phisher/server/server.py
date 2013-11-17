@@ -14,12 +14,14 @@ from king_phisher.server import database
 __version__ = '0.0.1'
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
+VISIT_ROW_COUNT = 25
 
 class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
 		self.database = self.server.database
 		self.database_lock = threading.Lock()
 		self.config = self.server.config
+		self.rpc_handler_map['/campaign/credentials/view'] = self.rpc_campaign_credentials_view
 		self.rpc_handler_map['/campaign/get'] = self.rpc_campaign_get
 		self.rpc_handler_map['/campaign/list'] = self.rpc_campaign_list
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
@@ -92,6 +94,13 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 
 		get_query_parameter = lambda p: query.get(p, [None])[0]
 		msg_id = get_query_parameter('id')
+		if not msg_id:
+			kp_cookie_name = self.config.get('cookie_name', 'KPID')
+			if kp_cookie_name in self.cookies:
+				with self.get_cursor() as cursor:
+					visit_id = self.cookies[kp_cookie_name].value
+					cursor.execute('SELECT message_id FROM visits WHERE id = ?', (visit_id,))
+					msg_id = cursor.fetchone()[0]
 		if msg_id:
 			try:
 				self.handle_visit(query, msg_id)
@@ -133,7 +142,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		password = (get_query_parameter('password') or get_query_parameter('pass') or get_query_parameter('p'))
 		password = (password or '')
 		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO credentials (visit_id, username, password) VALUES (?, ?, ?)', (visit_id, username, password))
+			cursor.execute('INSERT INTO credentials (visit_id, message_id, campaign_id, username, password) VALUES (?, ?, ?, ?, ?)', (visit_id, msg_id, campaign_id, username, password))
 
 	def rpc_ping(self):
 		return True
@@ -164,9 +173,21 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		columns = ['campaign_id', 'target_email', 'sent']
 		return self.database_get_row_by_id('messages', columns, message_id)
 
+	def rpc_campaign_credentials_view(self, campaign_id, page = 0):
+		visits = []
+		offset = VISIT_ROW_COUNT * page
+		columns = ['id', 'visit_id', 'message_id', 'campaign_id', 'username', 'password', 'submitted']
+		with self.get_cursor() as cursor:
+			for row in cursor.execute('SELECT ' + ', '.join(columns) + ' FROM credentials WHERE campaign_id = ? LIMIT 25 OFFSET ?', (campaign_id, offset)):
+				visit = dict(zip(columns, row))
+				visits.append(visit)
+		if not len(visits):
+			return None
+		return visits
+
 	def rpc_campaign_visits_view(self, campaign_id, page = 0):
 		visits = []
-		offset = 25 * page
+		offset = VISIT_ROW_COUNT * page
 		columns = ['id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit']
 		with self.get_cursor() as cursor:
 			for row in cursor.execute('SELECT ' + ', '.join(columns) + ' FROM visits WHERE campaign_id = ? LIMIT 25 OFFSET ?', (campaign_id, offset)):
