@@ -30,7 +30,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import base64
 import contextlib
+import json
 import os
 import random
 import shutil
@@ -41,6 +43,7 @@ import threading
 import pam
 from AdvancedHTTPServer import *
 
+from king_phisher import xor
 from king_phisher.server import database
 
 __version__ = '0.0.1'
@@ -53,6 +56,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.database = self.server.database
 		self.database_lock = threading.Lock()
 		self.config = self.server.config
+		self.handler_map['^kpdd$'] = self.handle_deaddrop_visit
 		self.rpc_handler_map['/campaign/credentials/view'] = self.rpc_campaign_credentials_view
 		self.rpc_handler_map['/campaign/get'] = self.rpc_campaign_get
 		self.rpc_handler_map['/campaign/list'] = self.rpc_campaign_list
@@ -143,6 +147,45 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.end_headers()
 		shutil.copyfileobj(file_obj, self.wfile)
 		file_obj.close()
+		return
+
+	def handle_deaddrop_visit(self, query):
+		data = query['token'][0]
+		data = data.decode('base64')
+		data = xor.xor_decode(data)
+		data = json.loads(data)
+
+		deployment_id = data.get('deaddrop_id')
+		with self.get_cursor() as cursor:
+			cursor.execute('SELECT campaign_id FROM deaddrop_deployments WHERE id = ?', (deployment_id,))
+			campaign_id = cursor.fetchone()
+			if not campaign_id:
+				self.send_response(200)
+				self.end_headers()
+				return
+			campaign_id = campaign_id[0]
+
+		local_username = data.get('local_username')
+		local_hostname = data.get('local_hostname')
+		if campaign_id == None or local_username == None or local_hostname == None:
+			return
+		local_ip_addresses = data.get('local_ip_addresses')
+		if isinstance(local_ip_addresses, (list, tuple)):
+			local_ip_addresses = ' '.join(local_ip_addresses)
+
+		with self.get_cursor() as cursor:
+			cursor.execute('SELECT id FROM deaddrop_connections WHERE deployment_id = ? AND local_username = ? AND local_hostname = ?', (deployment_id, local_username, local_hostname))
+			drop_id = cursor.fetchone()
+			if drop_id:
+				drop_id = drop_id[0]
+				cursor.execute('UPDATE deaddrop_connections SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (drop_id,))
+				self.send_response(200)
+				self.end_headers()
+				return
+			values = (deployment_id, campaign_id, self.client_address[0], local_username, local_hostname, local_ip_addresses)
+			cursor.execute('INSERT INTO deaddrop_connections (deployment_id, campaign_id, visitor_ip, local_username, local_hostname, local_ip_addresses) VALUES (?, ?, ?, ?, ?, ?)', values)
+		self.send_response(200)
+		self.end_headers()
 		return
 
 	def handle_visit(self, query, msg_id):

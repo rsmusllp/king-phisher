@@ -82,6 +82,27 @@ def create_database(database_file):
 		submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
 	""")
+	cursor.execute("""
+	CREATE TABLE deaddrop_deployments (
+		id TEXT PRIMARY KEY UNIQUE NOT NULL,
+		campaign_id INTEGER NOT NULL,
+		destination TEXT
+	)
+	""")
+	cursor.execute("""
+	CREATE TABLE deaddrop_connections (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		deployment_id TEXT NOT NULL,
+		campaign_id INTEGER NOT NULL,
+		visit_count INTEGER DEFAULT 1,
+		visitor_ip TEXT,
+		local_username TEXT,
+		local_hostname TEXT,
+		local_ip_addresses TEXT,
+		first_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		last_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
+	""")
 	db.commit()
 	return db
 
