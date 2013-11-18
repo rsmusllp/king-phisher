@@ -1,7 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  client.py
+#  king_phisher/client/client.py
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are
+#  met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following disclaimer
+#    in the documentation and/or other materials provided with the
+#    distribution.
+#  * Neither the name of the  nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+#  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+#  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+#  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+#  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
 import copy
@@ -31,6 +57,9 @@ UI_INFO = """
 		</menu>
 		<menu action="EditMenu">
 			<menuitem action="EditPreferences" />
+		</menu>
+		<menu action="HelpMenu">
+			<menuitem action="HelpAbout" />
 		</menu>
 	</menubar>
 </ui>
@@ -182,7 +211,7 @@ class KingPhisherClient(Gtk.Window):
 		action_group.add_action(action_filemenu)
 
 		action_file_new_campaign = Gtk.Action("FileOpenCampaign", "_Open Campaign", "Open a Campaign", Gtk.STOCK_NEW)
-		action_file_new_campaign.connect("activate", lambda x: self.select_campaign())
+		action_file_new_campaign.connect("activate", lambda x: self.show_campaign_selection())
 		action_group.add_action_with_accel(action_file_new_campaign, "<control>O")
 
 		action_file_quit = Gtk.Action("FileQuit", None, None, Gtk.STOCK_QUIT)
@@ -196,6 +225,14 @@ class KingPhisherClient(Gtk.Window):
 		action_edit_preferences = Gtk.Action("EditPreferences", "Preferences", "Edit preferences", Gtk.STOCK_EDIT)
 		action_edit_preferences.connect("activate", lambda x: self.edit_preferences())
 		action_group.add_action(action_edit_preferences)
+
+		# Help Menu Actions
+		action_helpmenu = Gtk.Action("HelpMenu", "Help", None, None)
+		action_group.add_action(action_helpmenu)
+
+		action_help_about = Gtk.Action("HelpAbout", "About", "About", None)
+		action_help_about.connect("activate", lambda x: self.show_about_dialog())
+		action_group.add_action(action_help_about)
 
 	def _create_ui_manager(self):
 		uimanager = Gtk.UIManager()
@@ -228,12 +265,12 @@ class KingPhisherClient(Gtk.Window):
 			return False
 		campaign_id = self.config.get('campaign_id')
 		if campaign_id == None:
-			if not self.select_campaign():
+			if not self.show_campaign_selection():
 				self.server_disconnect()
 				return False
 		campaign_info = self.rpc.cache_call('campaign/get', self.config['campaign_id'])
 		if campaign_info == None:
-			if not self.select_campaign():
+			if not self.show_campaign_selection():
 				self.server_disconnect()
 				return False
 			campaign_info = self.rpc.cache_call_refresh('campaign/get', self.config['campaign_id'])
@@ -299,6 +336,35 @@ class KingPhisherClient(Gtk.Window):
 		dialog = KingPhisherClientConfigDialog(self.config, self)
 		dialog.interact() != Gtk.ResponseType.CANCEL
 
-	def select_campaign(self):
+	def show_about_dialog(self):
+		source_file_h = open(__file__, 'r')
+		source_code = []
+		source_code.append(source_file_h.readline())
+		while source_code[-1].startswith('#'):
+			source_code.append(source_file_h.readline())
+		source_code = source_code[5:-1]
+		source_code = map(lambda x: x.strip('# '), source_code)
+		license_text = ''.join(source_code)
+		about_dialog = Gtk.AboutDialog()
+		about_dialog.set_transient_for(self)
+		about_dialog_properties = {
+			'authors': ['Spencer McIntyre', 'Jeff McCutchan'],
+			'comments': 'Phishing Campaign Toolkit',
+			'copyright': '(c) 2013 SecureState',
+			'license': license_text,
+			'license-type': Gtk.License.BSD,
+			'program-name': 'KingPhisher',
+			'version': __version__,
+			'website': 'https://github.com/securestate/kingphisher',
+			'website-label': 'GitHub Home Page',
+			'wrap-license': False,
+		}
+		for property_name, property_value in about_dialog_properties.items():
+			about_dialog.set_property(property_name, property_value)
+		about_dialog.show_all()
+		about_dialog.run()
+		about_dialog.destroy()
+
+	def show_campaign_selection(self):
 		dialog = KingPhisherClientCampaignSelectionDialog(self.config, self)
 		return dialog.interact() != Gtk.ResponseType.CANCEL
