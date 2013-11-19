@@ -69,6 +69,21 @@ def gtk_sync():
 	while Gtk.events_pending():
 		Gtk.main_iteration()
 
+def remote_table(rpc, table_view, *args):
+	page = 0
+	args = list(args)
+	args.append(page)
+	results = rpc(table_view, *args)
+	results_length = len(results or '')
+	while results:
+		columns = results['columns']
+		for row in results['rows']:
+			yield dict(zip(columns, row))
+		if len(results) < results_length:
+			break
+		args[-1] += 1
+		results = rpc(table_view, *args)
+
 def server_parse(server, default_port):
 	server = server.split(':')
 	host = server[0]
@@ -125,7 +140,6 @@ def export_treeview_liststore_csv(treeview, target_file):
 		store_iter = store.iter_next(store_iter)
 	target_file_h.close()
 	return rows_written
-
 
 class UtilityGladeGObject(object):
 	gobject_ids = [ ]

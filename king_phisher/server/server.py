@@ -49,7 +49,7 @@ from king_phisher.server import database
 __version__ = '0.0.1'
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
-VISIT_ROW_COUNT = 25
+VIEW_ROW_COUNT = 25
 
 class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
@@ -58,11 +58,13 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.config = self.server.config
 		self.handler_map['^kpdd$'] = self.handle_deaddrop_visit
 		self.rpc_handler_map['/campaign/credentials/view'] = self.rpc_campaign_credentials_view
+		self.rpc_handler_map['/campaign/deaddrop_connections/view'] = self.rpc_campaign_deaddrop_connections_view
 		self.rpc_handler_map['/campaign/get'] = self.rpc_campaign_get
 		self.rpc_handler_map['/campaign/list'] = self.rpc_campaign_list
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
 		self.rpc_handler_map['/campaign/visits/view'] = self.rpc_campaign_visits_view
+		self.rpc_handler_map['/deaddrop_deployment/get'] = self.rpc_deaddrop_deployment_get
 		self.rpc_handler_map['/message/get'] = self.rpc_message_get
 		self.rpc_handler_map['/ping'] = self.rpc_ping
 		self.rpc_handler_map['/visit/get'] = self.rpc_visit_get
@@ -249,32 +251,39 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		return self.database_get_row_by_id('messages', columns, message_id)
 
 	def rpc_campaign_credentials_view(self, campaign_id, page = 0):
-		visits = []
-		offset = VISIT_ROW_COUNT * page
 		columns = ['id', 'visit_id', 'message_id', 'campaign_id', 'username', 'password', 'submitted']
-		with self.get_cursor() as cursor:
-			for row in cursor.execute('SELECT ' + ', '.join(columns) + ' FROM credentials WHERE campaign_id = ? LIMIT 25 OFFSET ?', (campaign_id, offset)):
-				visit = dict(zip(columns, row))
-				visits.append(visit)
-		if not len(visits):
-			return None
-		return visits
+		return self.database_get_rows_by_campaign('credentials', columns, campaign_id, page)
+
+	def rpc_campaign_deaddrop_connections_view(self, campaign_id, page = 0):
+		columns = ['id', 'deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit']
+		return self.database_get_rows_by_campaign('deaddrop_connections', columns, campaign_id, page)
 
 	def rpc_campaign_visits_view(self, campaign_id, page = 0):
-		visits = []
-		offset = VISIT_ROW_COUNT * page
 		columns = ['id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit']
-		with self.get_cursor() as cursor:
-			for row in cursor.execute('SELECT ' + ', '.join(columns) + ' FROM visits WHERE campaign_id = ? LIMIT 25 OFFSET ?', (campaign_id, offset)):
-				visit = dict(zip(columns, row))
-				visits.append(visit)
-		if not len(visits):
-			return None
-		return visits
+		return self.database_get_rows_by_campaign('visits', columns, campaign_id, page)
+
+	def rpc_deaddrop_connection_get(self, connection_id):
+		columns = ['deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit']
+		return self.database_get_row_by_id('deaddrop_connections', columns, connection_id)
+
+	def rpc_deaddrop_deployment_get(self, deploy_id):
+		columns = ['campaign_id', 'destination']
+		return self.database_get_row_by_id('deaddrop_deployments', columns, deploy_id)
 
 	def rpc_visit_get(self, visit_id):
 		columns = ['message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit']
 		return self.database_get_row_by_id('visits', columns, visit_id)
+
+	def database_get_rows_by_campaign(self, table, columns, campaign_id, page):
+		rows = []
+		offset = VIEW_ROW_COUNT * page
+		with self.get_cursor() as cursor:
+			sql_query = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + ' WHERE campaign_id = ? LIMIT ' + str(VIEW_ROW_COUNT) + ' OFFSET ?'
+			for row in cursor.execute(sql_query, (campaign_id, offset)):
+				rows.append(row)
+		if not len(rows):
+			return None
+		return {'columns': columns, 'rows': rows}
 
 	def database_get_row_by_id(self, table, columns, row_id):
 		with self.get_cursor() as cursor:

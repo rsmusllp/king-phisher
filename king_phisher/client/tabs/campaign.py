@@ -39,6 +39,51 @@ from king_phisher.client import utilities
 
 from gi.repository import Gtk
 
+class CampaignViewDeaddropTab(utilities.UtilityGladeGObject):
+	gobject_ids = [
+		'button_refresh',
+		'treeview_campaign'
+	]
+	top_gobject = 'box'
+	def __init__(self, *args, **kwargs):
+		self.label = Gtk.Label('Deaddrop')
+		super(self.__class__, self).__init__(*args, **kwargs)
+		treeview = self.gobjects['treeview_campaign']
+		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		columns = {1:'Destination', 2:'Visit Count', 3:'External IP', 4:'Username', 5:'Hostname', 6:'Local IP Addresses', 7:'First Hit', 8:'Last Hit'}
+		for column_id in range(1, len(columns) + 1):
+			column_name = columns[column_id]
+			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
+			column.set_sort_column_id(column_id)
+			treeview.append_column(column)
+
+	def signal_button_clicked_export(self, button):
+		dialog = utilities.UtilityFileChooser('Export Data', self.parent)
+		file_name = self.config['campaign_name'] + '.csv'
+		response = dialog.run_quick_save(file_name)
+		dialog.destroy()
+		if not response:
+			return
+		destination_file = response['target_filename']
+		utilities.export_treeview_liststore_csv(self.gobjects['treeview_campaign'], destination_file)
+
+	def signal_button_clicked_refresh(self, button):
+		self.load_campaign_information()
+
+	def load_campaign_information(self):
+		treeview = self.gobjects['treeview_campaign']
+		store = treeview.get_model()
+		if store == None:
+			store = Gtk.ListStore(str, str, str, str, str, str, str, str, str)
+			treeview.set_model(store)
+		else:
+			store.clear()
+		for connection in utilities.remote_table(self.parent.rpc, 'campaign/deaddrop_connections/view', self.config['campaign_id']):
+			deploy_id = connection['deployment_id']
+			deploy_details = self.parent.rpc.cache_call('deaddrop_deployment/get', deploy_id)
+			deploy_dest = deploy_details['destination']
+			store.append([str(connection['id']), deploy_dest, str(connection['visit_count']), connection['visitor_ip'], connection['local_username'], connection['local_hostname'], connection['local_ip_addresses'], connection['first_visit'], connection['last_visit']])
+
 class CampaignViewCredentialsTab(utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'button_refresh',
@@ -78,18 +123,11 @@ class CampaignViewCredentialsTab(utilities.UtilityGladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		page = 0
-		credentials = True
-		while credentials:
-			credentials = self.parent.rpc('campaign/credentials/view', self.config['campaign_id'], page)
-			if not credentials:
-				break
-			page += 1
-			for credential in credentials:
-				msg_id = credential['message_id']
-				msg_details = self.parent.rpc.cache_call('message/get', msg_id)
-				credential_email = msg_details['target_email']
-				store.append([str(credential['id']), credential_email, credential['username'], credential['password'], credential['submitted']])
+		for credential in utilities.remote_table(self.parent.rpc, 'campaign/credentials/view', self.config['campaign_id']):
+			msg_id = credential['message_id']
+			msg_details = self.parent.rpc.cache_call('message/get', msg_id)
+			credential_email = msg_details['target_email']
+			store.append([str(credential['id']), credential_email, credential['username'], credential['password'], credential['submitted']])
 
 class CampaignViewVisitsTab(utilities.UtilityGladeGObject):
 	gobject_ids = [
@@ -130,18 +168,11 @@ class CampaignViewVisitsTab(utilities.UtilityGladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		page = 0
-		visits = True
-		while visits:
-			visits = self.parent.rpc('campaign/visits/view', self.config['campaign_id'], page)
-			if not visits:
-				break
-			page += 1
-			for visit in visits:
-				msg_id = visit['message_id']
-				msg_details = self.parent.rpc.cache_call('message/get', msg_id)
-				visitor_email = msg_details['target_email']
-				store.append([visit['id'], visitor_email, visit['visitor_ip'], visit['visitor_details'], str(visit['visit_count']), visit['first_visit'], visit['last_visit']])
+		for visit in utilities.remote_table(self.parent.rpc, 'campaign/visits/view', self.config['campaign_id']):
+			msg_id = visit['message_id']
+			msg_details = self.parent.rpc.cache_call('message/get', msg_id)
+			visitor_email = msg_details['target_email']
+			store.append([visit['id'], visitor_email, visit['visitor_ip'], visit['visitor_details'], str(visit['visit_count']), visit['first_visit'], visit['last_visit']])
 
 class CampaignViewTab(object):
 	def __init__(self, config, parent):
@@ -168,6 +199,10 @@ class CampaignViewTab(object):
 		self.tabs['credentials'] = credentials_tab
 		self.notebook.append_page(credentials_tab.box, credentials_tab.label)
 
+		deaddrop_connections_tab = CampaignViewDeaddropTab(self.config, self.parent)
+		self.tabs['deaddrop_connections'] = deaddrop_connections_tab
+		self.notebook.append_page(deaddrop_connections_tab.box, deaddrop_connections_tab.label)
+
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()
@@ -179,8 +214,11 @@ class CampaignViewTab(object):
 		self.last_page_id = index
 		visits_tab = self.tabs.get('visits')
 		credentials_tab = self.tabs.get('credentials')
+		deaddrop_connections_tab = self.tabs.get('deaddrop_connections')
 
 		if visits_tab and current_page == visits_tab.box:
 			visits_tab.load_campaign_information()
+		elif deaddrop_connections_tab and current_page == deaddrop_connections_tab.box:
+			deaddrop_connections_tab.load_campaign_information()
 		elif credentials_tab and current_page == credentials_tab.box:
 			credentials_tab.load_campaign_information()
