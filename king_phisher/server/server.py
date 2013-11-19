@@ -60,7 +60,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.rpc_handler_map['/campaign/credentials/view'] = self.rpc_campaign_credentials_view
 		self.rpc_handler_map['/campaign/deaddrop_connections/view'] = self.rpc_campaign_deaddrop_connections_view
 		self.rpc_handler_map['/campaign/get'] = self.rpc_campaign_get
-		self.rpc_handler_map['/campaign/list'] = self.rpc_campaign_list
+		self.rpc_handler_map['/campaigns/view'] = self.rpc_campaigns_view
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
 		self.rpc_handler_map['/campaign/visits/view'] = self.rpc_campaign_visits_view
@@ -224,11 +224,9 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def rpc_ping(self):
 		return True
 
-	def rpc_campaign_list(self):
-		with self.get_cursor() as cursor:
-			cursor.execute('SELECT id, name FROM campaigns')
-			campaigns = cursor.fetchall()
-		return dict(campaigns)
+	def rpc_campaigns_view(self, page = 0):
+		columns = ['id', 'name', 'created']
+		return self.database_get_rows('campaigns', columns, page)
 
 	def rpc_campaign_get(self, campaign_id):
 		columns = ['name', 'created']
@@ -273,6 +271,17 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def rpc_visit_get(self, visit_id):
 		columns = ['message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit']
 		return self.database_get_row_by_id('visits', columns, visit_id)
+
+	def database_get_rows(self, table, columns, page):
+		rows = []
+		offset = VIEW_ROW_COUNT * page
+		with self.get_cursor() as cursor:
+			sql_query = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + ' LIMIT ' + str(VIEW_ROW_COUNT) + ' OFFSET ?'
+			for row in cursor.execute(sql_query, (offset,)):
+				rows.append(row)
+		if not len(rows):
+			return None
+		return {'columns': columns, 'rows': rows}
 
 	def database_get_rows_by_campaign(self, table, columns, campaign_id, page):
 		rows = []

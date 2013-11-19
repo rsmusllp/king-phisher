@@ -37,9 +37,10 @@ import os
 import random
 
 from gi.repository import Gtk
-from AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPCClientCached
+from AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
 from king_phisher.client.login import KingPhisherClientLoginDialog
+from king_phisher.client.rpcclient import KingPhisherRPCClient
 from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.ssh_forward import SSHTCPForwarder
@@ -95,9 +96,8 @@ class KingPhisherClientCampaignSelectionDialog(utilities.UtilityGladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		campaigns = self.parent.rpc('campaign/list')
-		for campaign_id, campaign_name in campaigns.items():
-			store.append([campaign_id, campaign_name])
+		for campaign in self.parent.rpc.remote_table('campaigns'):
+			store.append([str(campaign['id']), campaign['name']])
 
 	def signal_button_clicked(self, button):
 		campaign_name_entry = self.gobjects['entry_new_campaign_name']
@@ -300,8 +300,7 @@ class KingPhisherClient(Gtk.Window):
 				self.ssh_forwarder.start()
 			except:
 				continue
-			self.rpc = AdvancedHTTPServerRPCClientCached(('localhost', local_port), username = username, password = password)
-			self.rpc.set_serializer('binary/json+zlib')
+			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
 			try:
 				assert(self.rpc('ping'))
 				return True

@@ -78,7 +78,7 @@ class CampaignViewDeaddropTab(utilities.UtilityGladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		for connection in utilities.remote_table(self.parent.rpc, 'campaign/deaddrop_connections/view', self.config['campaign_id']):
+		for connection in self.parent.rpc.remote_table('campaign/deaddrop_connections', self.config['campaign_id']):
 			deploy_id = connection['deployment_id']
 			deploy_details = self.parent.rpc.cache_call('deaddrop_deployment/get', deploy_id)
 			deploy_dest = deploy_details['destination']
@@ -123,7 +123,7 @@ class CampaignViewCredentialsTab(utilities.UtilityGladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		for credential in utilities.remote_table(self.parent.rpc, 'campaign/credentials/view', self.config['campaign_id']):
+		for credential in self.parent.rpc.remote_table('campaign/credentials', self.config['campaign_id']):
 			msg_id = credential['message_id']
 			msg_details = self.parent.rpc.cache_call('message/get', msg_id)
 			credential_email = msg_details['target_email']
@@ -168,7 +168,7 @@ class CampaignViewVisitsTab(utilities.UtilityGladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		for visit in utilities.remote_table(self.parent.rpc, 'campaign/visits/view', self.config['campaign_id']):
+		for visit in self.parent.rpc.remote_table('campaign/visits', self.config['campaign_id']):
 			msg_id = visit['message_id']
 			msg_details = self.parent.rpc.cache_call('message/get', msg_id)
 			visitor_email = msg_details['target_email']

@@ -69,21 +69,6 @@ def gtk_sync():
 	while Gtk.events_pending():
 		Gtk.main_iteration()
 
-def remote_table(rpc, table_view, *args):
-	page = 0
-	args = list(args)
-	args.append(page)
-	results = rpc(table_view, *args)
-	results_length = len(results or '')
-	while results:
-		columns = results['columns']
-		for row in results['rows']:
-			yield dict(zip(columns, row))
-		if len(results) < results_length:
-			break
-		args[-1] += 1
-		results = rpc(table_view, *args)
-
 def server_parse(server, default_port):
 	server = server.split(':')
 	host = server[0]
