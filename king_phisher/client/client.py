@@ -58,6 +58,8 @@ UI_INFO = """
 		</menu>
 		<menu action="EditMenu">
 			<menuitem action="EditPreferences" />
+			<separator />
+			<menuitem action="EditDeleteCampaign" />
 		</menu>
 		<menu action="HelpMenu">
 			<menuitem action="HelpAbout" />
@@ -230,6 +232,10 @@ class KingPhisherClient(Gtk.Window):
 		action_edit_preferences.connect("activate", lambda x: self.edit_preferences())
 		action_group.add_action(action_edit_preferences)
 
+		action_edit_delete_campaign = Gtk.Action("EditDeleteCampaign", "Delete Campaign", "Delete Campaign", None)
+		action_edit_delete_campaign.connect("activate", lambda x: self.delete_campaign())
+		action_group.add_action(action_edit_delete_campaign)
+
 		# Help Menu Actions
 		action_helpmenu = Gtk.Action("HelpMenu", "Help", None, None)
 		action_group.add_action(action_helpmenu)
@@ -334,6 +340,14 @@ class KingPhisherClient(Gtk.Window):
 		config_file = os.path.expanduser(CONFIG_FILE_PATH)
 		config_file_h = open(config_file, 'wb')
 		json.dump(config, config_file_h, sort_keys = True, indent = 4)
+
+	def delete_campaign(self):
+		if not utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible. All campaign data will be lost.'):
+			return
+		self.rpc('campaign/delete', self.config['campaign_id'])
+		if not self.show_campaign_selection():
+			utilities.show_dialog_error('A Campaign Must Be Selected', self, 'Now exiting')
+			self.client_quit()
 
 	def edit_preferences(self):
 		dialog = KingPhisherClientConfigDialog(self.config, self)

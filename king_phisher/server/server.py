@@ -59,6 +59,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.handler_map['^kpdd$'] = self.handle_deaddrop_visit
 		self.rpc_handler_map['/campaign/credentials/view'] = self.rpc_campaign_credentials_view
 		self.rpc_handler_map['/campaign/deaddrop_connections/view'] = self.rpc_campaign_deaddrop_connections_view
+		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
 		self.rpc_handler_map['/campaign/get'] = self.rpc_campaign_get
 		self.rpc_handler_map['/campaigns/view'] = self.rpc_campaigns_view
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
@@ -255,6 +256,15 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def rpc_campaign_deaddrop_connections_view(self, campaign_id, page = 0):
 		columns = ['id', 'deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit']
 		return self.database_get_rows_by_campaign('deaddrop_connections', columns, campaign_id, page)
+
+	def rpc_campaign_delete(self, campaign_id):
+		tables = ['deaddrop_connections', 'deaddrop_deployments', 'credentials', 'visits', 'messages']
+		with self.get_cursor() as cursor:
+			for table in tables:
+				sql_query = "DELETE FROM {0} WHERE campaign_id = ?".format(table)
+				cursor.execute(sql_query, (campaign_id,))
+			cursor.execute("DELETE FROM campaigns WHERE id = ?", (campaign_id,))
+		return
 
 	def rpc_campaign_visits_view(self, campaign_id, page = 0):
 		columns = ['id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit']
