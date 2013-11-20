@@ -278,12 +278,12 @@ class KingPhisherClient(Gtk.Window):
 			if not self.show_campaign_selection():
 				self.server_disconnect()
 				return False
-		campaign_info = self.rpc.cache_call('campaign/get', self.config['campaign_id'])
+		campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache = True)
 		if campaign_info == None:
 			if not self.show_campaign_selection():
 				self.server_disconnect()
 				return False
-			campaign_info = self.rpc.cache_call_refresh('campaign/get', self.config['campaign_id'])
+			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache = True, refresh = True)
 		self.config['campaign_name'] = campaign_info['name']
 		return True
 

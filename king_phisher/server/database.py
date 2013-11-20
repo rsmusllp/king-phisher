@@ -39,6 +39,15 @@ import string
 __version__ = '0.0.1'
 make_uid = lambda s: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
+DATABASE_TABLES = {
+	'campaigns':            ['id', 'name', 'created'],
+	'messages':             ['id', 'campaign_id', 'target_email', 'sent'],
+	'visits':               ['id', 'campaign_id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit'],
+	'credentials':          ['id', 'campaign_id', 'message_id', 'visit_id', 'username', 'password', 'submitted'],
+	'deaddrop_deployments': ['id', 'campaign_id', 'destination'],
+	'deaddrop_connections': ['id', 'campaign_id', 'deployment_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit'],
+}
+
 def create_database(database_file):
 	if database_file != ':memory:' and os.path.exists(database_file):
 		os.unlink(database_file)

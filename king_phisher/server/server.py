@@ -50,6 +50,7 @@ __version__ = '0.0.1'
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 VIEW_ROW_COUNT = 25
+DATABASE_TABLES = database.DATABASE_TABLES
 
 class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
@@ -57,18 +58,25 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.database_lock = threading.Lock()
 		self.config = self.server.config
 		self.handler_map['^kpdd$'] = self.handle_deaddrop_visit
-		self.rpc_handler_map['/campaign/credentials/view'] = self.rpc_campaign_credentials_view
-		self.rpc_handler_map['/campaign/deaddrop_connections/view'] = self.rpc_campaign_deaddrop_connections_view
-		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
-		self.rpc_handler_map['/campaign/get'] = self.rpc_campaign_get
-		self.rpc_handler_map['/campaigns/view'] = self.rpc_campaigns_view
+
+		self.rpc_handler_map['/ping'] = self.rpc_ping
+
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
-		self.rpc_handler_map['/campaign/visits/view'] = self.rpc_campaign_visits_view
-		self.rpc_handler_map['/deaddrop_deployment/get'] = self.rpc_deaddrop_deployment_get
-		self.rpc_handler_map['/message/get'] = self.rpc_message_get
-		self.rpc_handler_map['/ping'] = self.rpc_ping
-		self.rpc_handler_map['/visit/get'] = self.rpc_visit_get
+
+		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
+
+		for table_name in DATABASE_TABLES.keys():
+			self.rpc_handler_map['/' + table_name + '/get'] = self.rpc_database_get_row_by_id
+			self.rpc_handler_map['/' + table_name + '/view'] = self.rpc_database_get_rows
+
+		# Tables with a campaign_id field
+		for table_name in ['messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']:
+			self.rpc_handler_map['/campaign/' + table_name + '/view'] = self.rpc_database_get_rows
+
+		# Tables with a message_id field
+		for table_name in ['visits', 'credentials']:
+			self.rpc_handler_map['/message/' + table_name + '/view'] = self.rpc_database_get_rows
 
 	@contextlib.contextmanager
 	def get_cursor(self):
@@ -225,14 +233,6 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def rpc_ping(self):
 		return True
 
-	def rpc_campaigns_view(self, page = 0):
-		columns = ['id', 'name', 'created']
-		return self.database_get_rows('campaigns', columns, page)
-
-	def rpc_campaign_get(self, campaign_id):
-		columns = ['name', 'created']
-		return self.database_get_row_by_id('campaigns', columns, campaign_id)
-
 	def rpc_campaign_new(self, name):
 		with self.get_cursor() as cursor:
 			cursor.execute('INSERT INTO campaigns (name) VALUES (?)', (name,))
@@ -245,18 +245,6 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 			cursor.execute('INSERT INTO messages (id, campaign_id, target_email) VALUES (?, ?, ?)', (email_id, campaign_id, email_target))
 		return
 
-	def rpc_message_get(self, message_id):
-		columns = ['campaign_id', 'target_email', 'sent']
-		return self.database_get_row_by_id('messages', columns, message_id)
-
-	def rpc_campaign_credentials_view(self, campaign_id, page = 0):
-		columns = ['id', 'visit_id', 'message_id', 'campaign_id', 'username', 'password', 'submitted']
-		return self.database_get_rows_by_campaign('credentials', columns, campaign_id, page)
-
-	def rpc_campaign_deaddrop_connections_view(self, campaign_id, page = 0):
-		columns = ['id', 'deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit']
-		return self.database_get_rows_by_campaign('deaddrop_connections', columns, campaign_id, page)
-
 	def rpc_campaign_delete(self, campaign_id):
 		tables = ['deaddrop_connections', 'deaddrop_deployments', 'credentials', 'visits', 'messages']
 		with self.get_cursor() as cursor:
@@ -265,33 +253,6 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 				cursor.execute(sql_query, (campaign_id,))
 			cursor.execute("DELETE FROM campaigns WHERE id = ?", (campaign_id,))
 		return
-
-	def rpc_campaign_visits_view(self, campaign_id, page = 0):
-		columns = ['id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit']
-		return self.database_get_rows_by_campaign('visits', columns, campaign_id, page)
-
-	def rpc_deaddrop_connection_get(self, connection_id):
-		columns = ['deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit']
-		return self.database_get_row_by_id('deaddrop_connections', columns, connection_id)
-
-	def rpc_deaddrop_deployment_get(self, deploy_id):
-		columns = ['campaign_id', 'destination']
-		return self.database_get_row_by_id('deaddrop_deployments', columns, deploy_id)
-
-	def rpc_visit_get(self, visit_id):
-		columns = ['message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit']
-		return self.database_get_row_by_id('visits', columns, visit_id)
-
-	def database_get_rows(self, table, columns, page):
-		rows = []
-		offset = VIEW_ROW_COUNT * page
-		with self.get_cursor() as cursor:
-			sql_query = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + ' LIMIT ' + str(VIEW_ROW_COUNT) + ' OFFSET ?'
-			for row in cursor.execute(sql_query, (offset,)):
-				rows.append(row)
-		if not len(rows):
-			return None
-		return {'columns': columns, 'rows': rows}
 
 	def database_get_rows_by_campaign(self, table, columns, campaign_id, page):
 		rows = []
@@ -304,7 +265,30 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 			return None
 		return {'columns': columns, 'rows': rows}
 
-	def database_get_row_by_id(self, table, columns, row_id):
+	def rpc_database_get_rows(self, *args):
+		args = list(args)
+		offset = (args.pop() * VIEW_ROW_COUNT)
+
+		table = self.path.split('/')[-2]
+		fields = self.path.split('/')[1:-2]
+		assert(len(fields) == len(args))
+		columns = DATABASE_TABLES[table]
+		rows = []
+		sql_query = 'SELECT ' + ', '.join(columns) + ' FROM ' + table
+		if len(fields):
+			sql_query += ' WHERE ' + ' AND '.join(map(lambda f: f + '_id = ?', fields))
+		sql_query += ' LIMIT ' + str(VIEW_ROW_COUNT) + ' OFFSET ?'
+		args.append(offset)
+		with self.get_cursor() as cursor:
+			for row in cursor.execute(sql_query, args):
+				rows.append(row)
+		if not len(rows):
+			return None
+		return {'columns': columns, 'rows': rows}
+
+	def rpc_database_get_row_by_id(self, row_id):
+		table = self.path.split('/')[-2]
+		columns = DATABASE_TABLES[table]
 		with self.get_cursor() as cursor:
 			cursor.execute('SELECT ' + ', '.join(columns) + ' FROM ' + table + ' WHERE id = ?', (row_id,))
 			row = cursor.fetchone()

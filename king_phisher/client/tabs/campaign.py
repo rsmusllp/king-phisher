@@ -80,7 +80,7 @@ class CampaignViewDeaddropTab(utilities.UtilityGladeGObject):
 			store.clear()
 		for connection in self.parent.rpc.remote_table('campaign/deaddrop_connections', self.config['campaign_id']):
 			deploy_id = connection['deployment_id']
-			deploy_details = self.parent.rpc.cache_call('deaddrop_deployment/get', deploy_id)
+			deploy_details = self.parent.rpc.remote_table_row('deaddrop_deployments', deploy_id, cache = True)
 			deploy_dest = deploy_details['destination']
 			store.append([str(connection['id']), deploy_dest, str(connection['visit_count']), connection['visitor_ip'], connection['local_username'], connection['local_hostname'], connection['local_ip_addresses'], connection['first_visit'], connection['last_visit']])
 
@@ -125,7 +125,7 @@ class CampaignViewCredentialsTab(utilities.UtilityGladeGObject):
 			store.clear()
 		for credential in self.parent.rpc.remote_table('campaign/credentials', self.config['campaign_id']):
 			msg_id = credential['message_id']
-			msg_details = self.parent.rpc.cache_call('message/get', msg_id)
+			msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache = True)
 			credential_email = msg_details['target_email']
 			store.append([str(credential['id']), credential_email, credential['username'], credential['password'], credential['submitted']])
 
@@ -170,7 +170,7 @@ class CampaignViewVisitsTab(utilities.UtilityGladeGObject):
 			store.clear()
 		for visit in self.parent.rpc.remote_table('campaign/visits', self.config['campaign_id']):
 			msg_id = visit['message_id']
-			msg_details = self.parent.rpc.cache_call('message/get', msg_id)
+			msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache = True)
 			visitor_email = msg_details['target_email']
 			store.append([visit['id'], visitor_email, visit['visitor_ip'], visit['visitor_details'], str(visit['visit_count']), visit['first_visit'], visit['last_visit']])
 
