@@ -35,6 +35,7 @@ import os
 import urlparse
 
 from king_phisher.client.mailer import format_message, MailSenderThread
+from king_phisher.client import export
 from king_phisher.client import utilities
 
 from gi.repository import Gtk
@@ -65,7 +66,7 @@ class CampaignViewDeaddropTab(utilities.UtilityGladeGObject):
 		if not response:
 			return
 		destination_file = response['target_filename']
-		utilities.export_treeview_liststore_csv(self.gobjects['treeview_campaign'], destination_file)
+		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
 
 	def signal_button_clicked_refresh(self, button):
 		self.load_campaign_information()
@@ -110,7 +111,7 @@ class CampaignViewCredentialsTab(utilities.UtilityGladeGObject):
 		if not response:
 			return
 		destination_file = response['target_filename']
-		utilities.export_treeview_liststore_csv(self.gobjects['treeview_campaign'], destination_file)
+		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
 
 	def signal_button_clicked_refresh(self, button):
 		self.load_campaign_information()
@@ -155,7 +156,7 @@ class CampaignViewVisitsTab(utilities.UtilityGladeGObject):
 		if not response:
 			return
 		destination_file = response['target_filename']
-		utilities.export_treeview_liststore_csv(self.gobjects['treeview_campaign'], destination_file)
+		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
 
 	def signal_button_clicked_refresh(self, button):
 		self.load_campaign_information()

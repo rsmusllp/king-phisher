@@ -39,6 +39,7 @@ import random
 from gi.repository import Gtk
 from AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from king_phisher.client import export
 from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.rpcclient import KingPhisherRPCClient
 from king_phisher.client.tabs.mail import MailSenderTab
@@ -53,6 +54,9 @@ UI_INFO = """
 	<menubar name="MenuBar">
 		<menu action="FileMenu">
 			<menuitem action="FileOpenCampaign" />
+			<menu action="FileExportMenu">
+				<menuitem action="FileExportXML" />
+			</menu>
 			<separator />
 			<menuitem action="FileQuit" />
 		</menu>
@@ -220,6 +224,13 @@ class KingPhisherClient(Gtk.Window):
 		action_file_new_campaign.connect("activate", lambda x: self.show_campaign_selection())
 		action_group.add_action_with_accel(action_file_new_campaign, "<control>O")
 
+		action_fileexportmenu = Gtk.Action("FileExportMenu", "Export", None, None)
+		action_group.add_action(action_fileexportmenu)
+
+		action_file_export_xml = Gtk.Action("FileExportXML", "Export XML", "Export XML", None)
+		action_file_export_xml.connect("activate", lambda x: self.export_xml())
+		action_group.add_action(action_file_export_xml)
+
 		action_file_quit = Gtk.Action("FileQuit", None, None, Gtk.STOCK_QUIT)
 		action_file_quit.connect("activate", lambda x: self.client_quit())
 		action_group.add_action_with_accel(action_file_quit, "<control>Q")
@@ -352,6 +363,16 @@ class KingPhisherClient(Gtk.Window):
 	def edit_preferences(self):
 		dialog = KingPhisherClientConfigDialog(self.config, self)
 		dialog.interact() != Gtk.ResponseType.CANCEL
+
+	def export_xml(self):
+		dialog = utilities.UtilityFileChooser('Export Campaign XML Data', self)
+		file_name = self.config['campaign_name'] + '.xml'
+		response = dialog.run_quick_save(file_name)
+		dialog.destroy()
+		if not response:
+			return
+		destination_file = response['target_filename']
+		export.campaign_to_xml(self.rpc, self.config['campaign_id'], destination_file)
 
 	def show_about_dialog(self):
 		source_file_h = open(__file__, 'r')
