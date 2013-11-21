@@ -55,7 +55,7 @@ DATABASE_TABLES = database.DATABASE_TABLES
 class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
 		self.database = self.server.database
-		self.database_lock = threading.Lock()
+		self.database_lock = threading.RLock()
 		self.config = self.server.config
 		self.handler_map['^kpdd$'] = self.handle_deaddrop_visit
 
@@ -80,8 +80,8 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 
 	@contextlib.contextmanager
 	def get_cursor(self):
-		cursor = self.database.cursor()
 		self.database_lock.acquire()
+		cursor = self.database.cursor()
 		yield cursor
 		self.database.commit()
 		self.database_lock.release()
