@@ -115,7 +115,7 @@ class UtilityGladeGObject(object):
 	def __init__(self, config, parent):
 		self.config = config
 		self.parent = parent
-		self.logger = logging.getLogger('KingPhisher.' + self.__class__.__name__)
+		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 
 		builder = Gtk.Builder()
 		builder.add_objects_from_file(which_glade(os.environ['GLADE_FILE']), [self.__class__.__name__])

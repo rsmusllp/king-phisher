@@ -33,6 +33,7 @@
 import base64
 import contextlib
 import json
+import logging
 import os
 import random
 import shutil
@@ -313,6 +314,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
 		self.database = None
+		self.logger = logging.getLogger('KingPhisher.Server')
 
 	def load_database(self, database_file):
 		if database_file == ':memory:':

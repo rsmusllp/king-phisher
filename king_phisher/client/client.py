@@ -35,6 +35,7 @@ import json
 import logging
 import os
 import random
+import time
 
 from gi.repository import Gtk
 from AdvancedHTTPServer import AdvancedHTTPServerRPCError
@@ -170,9 +171,10 @@ class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 # This is the top level class/window for the client side of the king-phisher
 # application
 class KingPhisherClient(Gtk.Window):
-	def __init__(self):
+	def __init__(self, config_file = None):
 		super(KingPhisherClient, self).__init__()
-		self.logger = logging.getLogger('browser')
+		self.logger = logging.getLogger('KingPhisher.Client')
+		self.config_file = (config_file or CONFIG_FILE_PATH)
 		self.load_config()
 		self.set_property('title', 'King Phisher')
 		vbox = Gtk.VBox()
@@ -319,7 +321,10 @@ class KingPhisherClient(Gtk.Window):
 			try:
 				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port))
 				self.ssh_forwarder.start()
+				time.sleep(0.5)
+				self.logger.info('started ssh port forwarding')
 			except:
+				self.logger.warning('failed to connect to remote ssh server')
 				continue
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
 			try:
@@ -336,7 +341,7 @@ class KingPhisherClient(Gtk.Window):
 		return
 
 	def load_config(self):
-		config_file = os.path.expanduser(CONFIG_FILE_PATH)
+		config_file = os.path.expanduser(self.config_file)
 		if not os.path.isfile(config_file):
 			self.config = {}
 			self.save_config()
@@ -348,7 +353,7 @@ class KingPhisherClient(Gtk.Window):
 		for key in self.config.keys():
 			if 'password' in key:
 				del config[key]
-		config_file = os.path.expanduser(CONFIG_FILE_PATH)
+		config_file = os.path.expanduser(self.config_file)
 		config_file_h = open(config_file, 'wb')
 		json.dump(config, config_file_h, sort_keys = True, indent = 4)
 

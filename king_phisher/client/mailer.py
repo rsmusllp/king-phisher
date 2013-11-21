@@ -38,6 +38,7 @@ import random
 import smtplib
 import string
 import threading
+import time
 import urlparse
 from email import Encoders
 from email.MIMEBase import MIMEBase
@@ -64,12 +65,12 @@ def format_message(template, config, first_name= None, last_name = None, uid = N
 	webserver_url = urlparse.urlparse(webserver_url)
 	webserver_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
 	template_vars['webserver_url'] = webserver_url
-	return template.substitute(**template_vars)
+	return template.safe_substitute(**template_vars)
 
 class MailSenderThread(threading.Thread):
 	def __init__(self, config, target_file, notify_status, notify_sent, notify_stopped):
 		super(MailSenderThread, self).__init__()
-		self.logger = logging.getLogger(self.__class__.__name__)
+		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		self.config = config
 		self.target_file = target_file
 		self.notify_status = notify_status
@@ -91,7 +92,9 @@ class MailSenderThread(threading.Thread):
 		try:
 			self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server)
 			self.ssh_forwarder.start()
+			time.sleep(0.5)
 		except:
+			self.logger.warning('failed to connect to remote ssh server')
 			return False
 		self.smtp_server = ('localhost', local_port)
 		return True
