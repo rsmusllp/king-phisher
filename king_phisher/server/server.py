@@ -40,11 +40,11 @@ import sqlite3
 import string
 import threading
 
-import pam
 from AdvancedHTTPServer import *
 
 from king_phisher import xor
 from king_phisher.server import database
+from king_phisher.server import authenticator
 
 __version__ = '0.0.1'
 
@@ -114,7 +114,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 			self.server.throttle_semaphore.release()
 
 	def custom_authentication(self, username, password):
-		return pam.authenticate(username, password)
+		return self.server.authenticator.authenticate(username, password)
 
 	def check_authorization(self):
 		if self.command in ['GET', 'POST']:
@@ -300,6 +300,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
 		self.database = None
+		self.http_server.authenticator = authenticator.ForkedAuthenticator()
 
 	def load_database(self, database_file):
 		if database_file == ':memory:':

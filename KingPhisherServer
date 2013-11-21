@@ -34,6 +34,7 @@ import argparse
 import ConfigParser
 import logging
 import os
+import pwd
 import threading
 
 from AdvancedHTTPServer import build_server_from_config, SectionConfigParser
@@ -69,6 +70,11 @@ def main():
 	if database_file != ':memory:' and not os.path.exists(database_file):
 		database.create_database(database_file)
 	king_phisher_server.load_database(database_file)
+	if config.has_option('server', 'setuid_username'):
+		setuid_username = config.get('server', 'setuid_username')
+		user_info = pwd.getpwnam(setuid_username)
+		os.setregid(user_info.pw_gid, user_info.pw_gid)
+		os.setreuid(user_info.pw_uid, user_info.pw_uid)
 	king_phisher_server.serve_forever(fork = (not arguments.foreground))
 
 if __name__ == '__main__':
