@@ -36,7 +36,7 @@ import os
 import pam
 
 class ForkedAuthenticator(object):
-	def __init__(self):
+	def start(self):
 		self.parent_rfile, self.child_wfile = os.pipe()
 		self.child_rfile, self.parent_wfile = os.pipe()
 		self.child_pid = os.fork()
@@ -52,7 +52,7 @@ class ForkedAuthenticator(object):
 			self.child_routine()
 			self.rfile.close()
 			self.wfile.close()
-			return
+		return self.child_pid
 
 	def send(self, request):
 		self.wfile.write(json.dumps(request) + '\n')

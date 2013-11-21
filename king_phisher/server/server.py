@@ -44,7 +44,6 @@ from AdvancedHTTPServer import *
 
 from king_phisher import xor
 from king_phisher.server import database
-from king_phisher.server import authenticator
 
 __version__ = '0.0.1'
 
@@ -300,7 +299,6 @@ class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
 		self.database = None
-		self.http_server.authenticator = authenticator.ForkedAuthenticator()
 
 	def load_database(self, database_file):
 		if database_file == ':memory:':
