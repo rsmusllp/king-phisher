@@ -37,11 +37,8 @@ import os
 import pwd
 import threading
 
-from AdvancedHTTPServer import build_server_from_config, SectionConfigParser
-
 from king_phisher.server import server
 from king_phisher.server import database
-from king_phisher.server import authenticator
 
 def main():
 	parser = argparse.ArgumentParser(description = 'King Phisher Server', conflict_handler = 'resolve')
@@ -59,20 +56,14 @@ def main():
 	config_file = arguments.config_file
 	del parser
 
-	forked_authenticator = authenticator.ForkedAuthenticator()
-	if forked_authenticator.start() == 0:
+	if os.getuid():
+		print('[-] This must be executed as root')
+		print('[-] Configure the setuid_username option in the config file to drop privileges')
 		return
 
 	config = ConfigParser.ConfigParser()
 	config.readfp(config_file)
-	king_phisher_server = build_server_from_config(config, 'server', ServerClass = server.KingPhisherServer, HandlerClass = server.KingPhisherRequestHandler)
-	king_phisher_server.serve_files = True
-	king_phisher_server.serve_files_list_directories = False
-	king_phisher_server.serve_robots_txt = True
-	king_phisher_server.http_server.authenticator = forked_authenticator
-	king_phisher_server.http_server.config = SectionConfigParser('server', config)
-	king_phisher_server.http_server.throttle_semaphore = threading.Semaphore(2)
-
+	king_phisher_server = server.build_king_phisher_server(config, 'server')
 	database_file = config.get('server', 'database')
 	if database_file != ':memory:' and not os.path.exists(database_file):
 		database.create_database(database_file)

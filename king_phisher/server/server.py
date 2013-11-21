@@ -41,8 +41,11 @@ import string
 import threading
 
 from AdvancedHTTPServer import *
+from AdvancedHTTPServer import build_server_from_config
+from AdvancedHTTPServer import SectionConfigParser
 
 from king_phisher import xor
+from king_phisher.server import authenticator
 from king_phisher.server import database
 
 __version__ = '0.0.1'
@@ -50,6 +53,17 @@ __version__ = '0.0.1'
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 VIEW_ROW_COUNT = 25
 DATABASE_TABLES = database.DATABASE_TABLES
+
+def build_king_phisher_server(config, section_name):
+	forked_authenticator = authenticator.ForkedAuthenticator()
+	king_phisher_server = build_server_from_config(config, 'server', ServerClass = KingPhisherServer, HandlerClass = KingPhisherRequestHandler)
+	king_phisher_server.serve_files = True
+	king_phisher_server.serve_files_list_directories = False
+	king_phisher_server.serve_robots_txt = True
+	king_phisher_server.http_server.authenticator = forked_authenticator
+	king_phisher_server.http_server.config = SectionConfigParser('server', config)
+	king_phisher_server.http_server.throttle_semaphore = threading.Semaphore(2)
+	return king_phisher_server
 
 class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
