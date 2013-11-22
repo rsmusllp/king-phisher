@@ -39,6 +39,7 @@ from king_phisher.client.mailer import format_message, MailSenderThread
 from king_phisher.client import utilities
 
 from gi.repository import Gtk
+from gi.repository import Gdk
 from gi.repository import WebKit
 
 class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
@@ -130,8 +131,10 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		adjustment.set_value(adjustment.get_upper() - adjustment.get_page_size())
 
 	def text_insert(self, message):
+		Gdk.threads_enter()
 		self.textbuffer.insert(self.textbuffer_iter, message)
 		utilities.gtk_sync()
+		Gdk.threads_leave()
 
 	def notify_sent(self, uid, email_target, emails_done, emails_total):
 		self.progressbar.set_fraction(float(emails_done) / float(emails_total))

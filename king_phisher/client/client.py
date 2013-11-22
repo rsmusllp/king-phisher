@@ -302,6 +302,7 @@ class KingPhisherClient(Gtk.Window):
 
 	def client_quit(self):
 		self.server_disconnect()
+		self.save_config()
 		Gtk.main_quit()
 		return
 
@@ -324,7 +325,7 @@ class KingPhisherClient(Gtk.Window):
 				time.sleep(0.5)
 				self.logger.info('started ssh port forwarding')
 			except:
-				self.logger.warning('failed to connect to remote ssh server')
+				self.logger.warning('failed to connect to the remote ssh server')
 				continue
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
 			try:
@@ -333,7 +334,10 @@ class KingPhisherClient(Gtk.Window):
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
 					utilities.show_dialog_error('Invalid Credentials', self)
+				else:
+					self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
 			except:
+				self.logger.warning('failed to connect to the remote rpc server')
 				pass
 
 	def server_disconnect(self):
@@ -367,7 +371,8 @@ class KingPhisherClient(Gtk.Window):
 
 	def edit_preferences(self):
 		dialog = KingPhisherClientConfigDialog(self.config, self)
-		dialog.interact() != Gtk.ResponseType.CANCEL
+		if dialog.interact() != Gtk.ResponseType.CANCEL:
+			self.save_config()
 
 	def export_xml(self):
 		dialog = utilities.UtilityFileChooser('Export Campaign XML Data', self)
