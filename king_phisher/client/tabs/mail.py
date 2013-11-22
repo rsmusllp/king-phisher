@@ -63,17 +63,23 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		self.sender_thread = None
 
 	def signal_button_clicked_sender_start(self, button):
-		required_settings = [
-			'mailer.webserver_url',
-			'mailer.company_name',
-			'mailer.source_email',
-			'mailer.subject',
-			'mailer.html_file',
-			'mailer.target_file'
-		]
-		for setting in required_settings:
+		required_settings = {
+			'mailer.webserver_url': 'Web Server URL',
+			'mailer.company_name': 'Company Name',
+			'mailer.source_email': 'Source Email',
+			'mailer.subject': 'Friendly Alias',
+			'mailer.html_file': 'Message HTML File',
+			'mailer.target_file': 'Target CSV File'
+		}
+		for setting, setting_name in required_settings.items():
 			if not self.config.get(setting):
-				utilities.show_dialog_warning('Missing Required Option', self.parent, 'Return to the Config tab and set all required options')
+				utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
+				return
+			if not setting.endswith('_file'):
+				continue
+			file_path = self.config[setting]
+			if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
+				utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: File could not be read".format(setting_name))
 				return
 		if not self.config.get('smtp_server'):
 			utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
@@ -141,7 +147,9 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		Gdk.threads_leave()
 
 	def notify_sent(self, uid, email_target, emails_done, emails_total):
+		Gdk.threads_enter()
 		self.progressbar.set_fraction(float(emails_done) / float(emails_total))
+		Gdk.threads_leave()
 		campaign_id = self.config['campaign_id']
 		self.parent.rpc('campaign/message/new', campaign_id, uid, email_target)
 
@@ -236,7 +244,7 @@ class MailSenderConfigTab(utilities.UtilityGladeGObject):
 	def signal_entry_activate_open_file(self, entry):
 		dialog = utilities.UtilityFileChooser('Choose File')
 		if entry == self.gobjects.get('entry_html_file'):
-			dialog.quick_add_filter('HTML Files', '*.html')
+			dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		elif entry == self.gobjects.get('entry_target_file'):
 			dialog.quick_add_filter('CSV Files', '*.csv')
 		dialog.quick_add_filter('All Files', '*')
@@ -319,7 +327,7 @@ class MailSenderTab(object):
 			config_tab.objects_load_from_config()
 		if edit_tab and current_page == edit_tab.box:
 			html_file = self.config.get('mailer.html_file')
-			if not html_file:
+			if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 				edit_tab.button_save_html_file.set_sensitive(False)
 				edit_tab.textview.set_property('editable', False)
 				return
@@ -328,7 +336,7 @@ class MailSenderTab(object):
 			edit_tab.textbuffer.set_text(open(html_file, 'r').read())
 		elif preview_tab and current_page == preview_tab.box:
 			html_file = self.config.get('mailer.html_file')
-			if not html_file:
+			if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 				return
 			html_file_uri = urlparse.urlparse(html_file, 'file').geturl()
 			html_data = open(html_file, 'r').read()
