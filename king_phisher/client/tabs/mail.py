@@ -59,6 +59,7 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		self.textbuffer = self.textview.get_buffer()
 		self.textbuffer_iter = self.textbuffer.get_start_iter()
 		self.progressbar = self.gobjects['progressbar_mail_sender']
+		self.pause_button = self.gobjects['togglebutton_mail_sender_pause']
 		self.sender_thread = None
 
 	def signal_button_clicked_sender_start(self, button):
@@ -82,7 +83,7 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
-		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self.text_insert, self.notify_sent, self.sender_cleanup)
+		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self)
 
 		# Connect to the SMTP server
 		if self.config['smtp_ssh_enable']:
@@ -131,9 +132,12 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		adjustment.set_value(adjustment.get_upper() - adjustment.get_page_size())
 
 	def text_insert(self, message):
-		Gdk.threads_enter()
 		self.textbuffer.insert(self.textbuffer_iter, message)
 		utilities.gtk_sync()
+
+	def notify_status(self, message):
+		Gdk.threads_enter()
+		self.text_insert(message)
 		Gdk.threads_leave()
 
 	def notify_sent(self, uid, email_target, emails_done, emails_total):
@@ -148,8 +152,9 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		self.gobjects['button_mail_sender_start'].set_sensitive(True)
 		if message:
 			utilities.show_dialog_error(message, self.parent)
+		self.sender_thread = None
 
-	def sender_cleanup(self):
+	def notify_stopped(self):
 		self.progressbar.set_fraction(1)
 		self.sender_thread = None
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)

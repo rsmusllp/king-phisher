@@ -68,14 +68,12 @@ def format_message(template, config, first_name= None, last_name = None, uid = N
 	return template.safe_substitute(**template_vars)
 
 class MailSenderThread(threading.Thread):
-	def __init__(self, config, target_file, notify_status, notify_sent, notify_stopped):
+	def __init__(self, config, target_file, tab):
 		super(MailSenderThread, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		self.config = config
 		self.target_file = target_file
-		self.notify_status = notify_status
-		self.notify_sent = notify_sent
-		self.notify_stopped = notify_stopped
+		self.tab = tab
 		self.ssh_forwarder = None
 		self.smtp_connection = None
 		self.smtp_server = server_parse(self.config['smtp_server'], 25)
@@ -110,6 +108,22 @@ class MailSenderThread(threading.Thread):
 			return False
 		return True
 
+	def server_smtp_disconnect(self):
+		if self.smtp_connection:
+			self.smtp_connection.quit()
+			self.smtp_connection = None
+			self.tab.notify_status('Disconnected From SMTP Server\n')
+
+	def server_smtp_reconnect(self):
+		if self.smtp_connection:
+			self.smtp_connection.quit()
+		while not self.server_smtp_connect(self):
+			self.tab.notify_status('Failed To Reconnect To The SMTP Server\n')
+			self.tab.pause_button.set_property('active', True)
+			if not process_pause():
+				return False
+		return True
+
 	def count_emails(self, target_file):
 		targets = 0
 		target_file_h = open(target_file, 'r')
@@ -129,35 +143,40 @@ class MailSenderThread(threading.Thread):
 		target_file_h = open(self.target_file, 'r')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
+			if emails_done > 0 and (emails_done % 1):
+				self.server_smtp_reconnect()
 			if self.should_exit.is_set():
-				self.notify_status('Sending Emails Cancelled\n')
+				self.tab.notify_status('Sending Emails Cancelled\n')
 				break
-			if self.paused.is_set():
-				self.notify_status('Paused Sending Emails, Waiting To Resume\n')
-				self.running.wait()
-				self.paused.clear()
-				if self.should_exit.is_set():
-					self.notify_status('Sending Emails Cancelled\n')
-					break
-				self.notify_status('Resuming Sending Emails\n')
+			if not self.process_pause():
+				break
 			uid = make_uid()
 			emails_done += 1
-			self.notify_status("Sending Email {0} of {1} To {2} With UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
+			self.tab.notify_status("Sending Email {0} of {1} To {2} With UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
 			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
-			self.send_email(target['email_address'], msg)
-			self.notify_sent(uid, target['email_address'], emails_done, emails_total)
+			if not self.try_send_email(target['email_address'], msg):
+				break
+			self.tab.notify_sent(uid, target['email_address'], emails_done, emails_total)
 		target_file_h.close()
-		self.notify_status("Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
-		if self.smtp_connection:
-			self.smtp_connection.quit()
-			self.smtp_connection = None
-			self.notify_status('Disconnected From SMTP Server\n')
+		self.tab.notify_status("Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
+		self.server_smtp_disconnect()
 		if self.ssh_forwarder:
 			self.ssh_forwarder.stop()
 			self.ssh_forwarder = None
-			self.notify_status('Disconnected From SSH Server\n')
-		self.notify_stopped()
+			self.tab.notify_status('Disconnected From SSH Server\n')
+		self.tab.notify_stopped()
 		return
+
+	def process_pause(self):
+		if self.paused.is_set():
+			self.tab.notify_status('Paused Sending Emails, Waiting To Resume\n')
+			self.running.wait()
+			self.paused.clear()
+			if self.should_exit.is_set():
+				self.tab.notify_status('Sending Emails Cancelled\n')
+				return False
+			self.tab.notify_status('Resuming Sending Emails\n')
+		return True
 
 	def create_email(self, first_name, last_name, target_email, uid):
 		msg = MIMEMultipart()
@@ -184,6 +203,25 @@ class MailSenderThread(threading.Thread):
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
 			msg.attach(attachfile)
 		return msg
+
+	def try_send_email(self, *args, **kwargs):
+		message_sent = False
+		while not message_sent:
+			for i in xrange(0, 3):
+				try:
+					self.send_email(*args, **kwargs)
+					message_sent = True
+					break
+				except:
+					self.tab.notify_status('Failed To Send Message\n')
+					time.sleep(1)
+			if not message_sent:
+				self.server_smtp_disconnect()
+				self.tab.pause_button.set_property('active', True)
+				if not process_pause():
+					return False
+				self.server_smtp_reconnect()
+		return True
 
 	def send_email(self, target_email, msg):
 		source_email = self.config['mailer.source_email']
