@@ -80,6 +80,8 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		if not tree_iter:
 			return
 		row_id = model.get_value(tree_iter, 0)
+		if not utilities.show_dialog_yes_no('Delete This Row?', self.parent, 'This information will be lost'):
+			return
 		self.parent.rpc(self.remote_table_name + '/delete', row_id)
 		self.load_campaign_information()
 
