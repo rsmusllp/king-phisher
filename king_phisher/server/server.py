@@ -81,6 +81,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
 
 		for table_name in DATABASE_TABLES.keys():
+			self.rpc_handler_map['/' + table_name + '/delete'] = self.rpc_database_delete_row_by_id
 			self.rpc_handler_map['/' + table_name + '/get'] = self.rpc_database_get_row_by_id
 			self.rpc_handler_map['/' + table_name + '/view'] = self.rpc_database_get_rows
 
@@ -299,6 +300,12 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		if not len(rows):
 			return None
 		return {'columns': columns, 'rows': rows}
+
+	def rpc_database_delete_row_by_id(self, row_id):
+		table = self.path.split('/')[-2]
+		with self.get_cursor() as cursor:
+			cursor.execute('DELETE FROM ' + table + ' WHERE id = ?', (row_id,))
+		return
 
 	def rpc_database_get_row_by_id(self, row_id):
 		table = self.path.split('/')[-2]

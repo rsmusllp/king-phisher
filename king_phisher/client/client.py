@@ -187,6 +187,7 @@ class KingPhisherClient(Gtk.Window):
 		uimanager.insert_action_group(action_group)
 		menubar = uimanager.get_widget("/MenuBar")
 		vbox.pack_start(menubar, False, False, 0)
+		self.uimanager = uimanager
 
 		# create notebook and tabs
 		hbox = Gtk.HBox()

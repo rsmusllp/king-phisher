@@ -38,25 +38,18 @@ from king_phisher.client.mailer import format_message, MailSenderThread
 from king_phisher.client import export
 from king_phisher.client import utilities
 
+from gi.repository import Gdk
 from gi.repository import Gtk
 
-class CampaignViewDeaddropTab(utilities.UtilityGladeGObject):
+class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'button_refresh',
 		'treeview_campaign'
 	]
 	top_gobject = 'box'
-	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Deaddrop')
-		super(self.__class__, self).__init__(*args, **kwargs)
-		treeview = self.gobjects['treeview_campaign']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
-		columns = {1:'Destination', 2:'Visit Count', 3:'External IP', 4:'Username', 5:'Hostname', 6:'Local IP Addresses', 7:'First Hit', 8:'Last Hit'}
-		for column_id in range(1, len(columns) + 1):
-			column_name = columns[column_id]
-			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
-			column.set_sort_column_id(column_id)
-			treeview.append_column(column)
+	remote_table_name = ''
+	def signal_button_clicked_refresh(self, button):
+		self.load_campaign_information()
 
 	def signal_button_clicked_export(self, button):
 		dialog = utilities.UtilityFileChooser('Export Data', self.parent)
@@ -68,8 +61,41 @@ class CampaignViewDeaddropTab(utilities.UtilityGladeGObject):
 		destination_file = response['target_filename']
 		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
 
-	def signal_button_clicked_refresh(self, button):
+	def signal_treeview_button_pressed(self, widget, event):
+		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
+			return
+		menu = Gtk.Menu.new()
+		menu_item = Gtk.MenuItem.new_with_label('Delete')
+		menu_item.connect('activate', self.signal_treeview_popup_menu_delete)
+		menu.append(menu_item)
+		menu.show_all()
+		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
+		menu.popup(None, None, pos_func, None, event.button, event.time)
+		return
+
+	def signal_treeview_popup_menu_delete(self, action):
+		treeview = self.gobjects['treeview_campaign']
+		selection = treeview.get_selection()
+		(model, tree_iter) = selection.get_selected()
+		if not tree_iter:
+			return
+		row_id = model.get_value(tree_iter, 0)
+		self.parent.rpc(self.remote_table_name + '/delete', row_id)
 		self.load_campaign_information()
+
+class CampaignViewDeaddropTab(CampaignViewGenericTab):
+	remote_table_name = 'deaddrop_connections'
+	def __init__(self, *args, **kwargs):
+		self.label = Gtk.Label('Deaddrop')
+		super(CampaignViewDeaddropTab, self).__init__(*args, **kwargs)
+		treeview = self.gobjects['treeview_campaign']
+		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		columns = {1:'Destination', 2:'Visit Count', 3:'External IP', 4:'Username', 5:'Hostname', 6:'Local IP Addresses', 7:'First Hit', 8:'Last Hit'}
+		for column_id in range(1, len(columns) + 1):
+			column_name = columns[column_id]
+			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
+			column.set_sort_column_id(column_id)
+			treeview.append_column(column)
 
 	def load_campaign_information(self):
 		treeview = self.gobjects['treeview_campaign']
@@ -85,15 +111,11 @@ class CampaignViewDeaddropTab(utilities.UtilityGladeGObject):
 			deploy_dest = deploy_details['destination']
 			store.append([str(connection['id']), deploy_dest, str(connection['visit_count']), connection['visitor_ip'], connection['local_username'], connection['local_hostname'], connection['local_ip_addresses'], connection['first_visit'], connection['last_visit']])
 
-class CampaignViewCredentialsTab(utilities.UtilityGladeGObject):
-	gobject_ids = [
-		'button_refresh',
-		'treeview_campaign'
-	]
-	top_gobject = 'box'
+class CampaignViewCredentialsTab(CampaignViewGenericTab):
+	remote_table_name = 'credentials'
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label('Credentials')
-		super(self.__class__, self).__init__(*args, **kwargs)
+		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
 		columns = {1:'Email', 2:'Username', 3:'Password', 4:'Submitted'}
@@ -102,19 +124,6 @@ class CampaignViewCredentialsTab(utilities.UtilityGladeGObject):
 			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
-
-	def signal_button_clicked_export(self, button):
-		dialog = utilities.UtilityFileChooser('Export Data', self.parent)
-		file_name = self.config['campaign_name'] + '.csv'
-		response = dialog.run_quick_save(file_name)
-		dialog.destroy()
-		if not response:
-			return
-		destination_file = response['target_filename']
-		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
-
-	def signal_button_clicked_refresh(self, button):
-		self.load_campaign_information()
 
 	def load_campaign_information(self):
 		treeview = self.gobjects['treeview_campaign']
@@ -130,15 +139,11 @@ class CampaignViewCredentialsTab(utilities.UtilityGladeGObject):
 			credential_email = msg_details['target_email']
 			store.append([str(credential['id']), credential_email, credential['username'], credential['password'], credential['submitted']])
 
-class CampaignViewVisitsTab(utilities.UtilityGladeGObject):
-	gobject_ids = [
-		'button_refresh',
-		'treeview_campaign'
-	]
-	top_gobject = 'box'
+class CampaignViewVisitsTab(CampaignViewGenericTab):
+	remote_table_name = 'visits'
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label('Visits')
-		super(self.__class__, self).__init__(*args, **kwargs)
+		super(CampaignViewVisitsTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
 		columns = {1:'Email', 2:'Visitor IP', 3:'Visitor Details', 4:'Visit Count', 5:'First Visit', 6:'Last Visit'}
@@ -147,19 +152,6 @@ class CampaignViewVisitsTab(utilities.UtilityGladeGObject):
 			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
-
-	def signal_button_clicked_export(self, button):
-		dialog = utilities.UtilityFileChooser('Export Data', self.parent)
-		file_name = self.config['campaign_name'] + '.csv'
-		response = dialog.run_quick_save(file_name)
-		dialog.destroy()
-		if not response:
-			return
-		destination_file = response['target_filename']
-		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
-
-	def signal_button_clicked_refresh(self, button):
-		self.load_campaign_information()
 
 	def load_campaign_information(self):
 		treeview = self.gobjects['treeview_campaign']
