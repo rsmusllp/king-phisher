@@ -40,7 +40,7 @@ __version__ = '0.0.1'
 make_uid = lambda s: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
 DATABASE_TABLES = {
-	'campaigns':            ['id', 'name', 'created'],
+	'campaigns':            ['id', 'name', 'creator', 'created'],
 	'messages':             ['id', 'campaign_id', 'target_email', 'sent'],
 	'visits':               ['id', 'campaign_id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit'],
 	'credentials':          ['id', 'campaign_id', 'message_id', 'visit_id', 'username', 'password', 'submitted'],
@@ -57,6 +57,7 @@ def create_database(database_file):
 	CREATE TABLE campaigns (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT UNIQUE NOT NULL,
+		creator TEXT NOT NULL,
 		created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
 	""")

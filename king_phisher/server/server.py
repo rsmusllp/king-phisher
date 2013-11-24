@@ -250,7 +250,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 
 	def rpc_campaign_new(self, name):
 		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO campaigns (name) VALUES (?)', (name,))
+			cursor.execute('INSERT INTO campaigns (name, creator) VALUES (?, ?)', (name, self.basic_auth_user))
 			cursor.execute('SELECT id FROM campaigns WHERE name = ?', (name,))
 			campaign_id = cursor.fetchone()[0]
 		return campaign_id
