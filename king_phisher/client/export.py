@@ -40,11 +40,13 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	metadata = ET.SubElement(root, 'metadata')
 	timestamp = ET.SubElement(metadata, 'timestamp')
 	timestamp.text = datetime.datetime.now().isoformat()
+	version = ET.SubElement(metadata, 'version')
+	version.text = '1.0'
 
 	campaign = ET.SubElement(root, 'campaign')
 	campaign_info = rpc.remote_table_row('campaigns', campaign_id)
 	for key, value in campaign_info.items():
-		ET.SubElement(campaign, key).text = str(value)
+		ET.SubElement(campaign, key).text = str(value).encode('utf-8')
 
 	# Tables with a campaign_id field
 	for table_name in ['messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']:
@@ -52,7 +54,7 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 		for table_row in rpc.remote_table('campaign/' + table_name, campaign_id):
 			table_row_element = ET.SubElement(table_element, table_name[:-1])
 			for key, value in table_row.items():
-				ET.SubElement(table_row_element, key).text = str(value)
+				ET.SubElement(table_row_element, key).text = str(value).encode('utf-8')
 
 	element_tree = ET.ElementTree(root)
 	element_tree.write(xml_file, encoding = 'utf-8', xml_declaration = True)
