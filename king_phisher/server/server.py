@@ -30,8 +30,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import base64
-import contextlib
 import json
 import logging
 import os
@@ -47,13 +45,11 @@ from AdvancedHTTPServer import SectionConfigParser
 
 from king_phisher import xor
 from king_phisher.server import authenticator
-from king_phisher.server import database
+from king_phisher.server import rpcmixin
 
 __version__ = '0.0.1'
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
-VIEW_ROW_COUNT = 25
-DATABASE_TABLES = database.DATABASE_TABLES
 
 def build_king_phisher_server(config, section_name):
 	forked_authenticator = authenticator.ForkedAuthenticator()
@@ -66,40 +62,13 @@ def build_king_phisher_server(config, section_name):
 	king_phisher_server.http_server.throttle_semaphore = threading.Semaphore(2)
 	return king_phisher_server
 
-class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
+class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
+		super(KingPhisherRequestHandler, self).install_handlers()
 		self.database = self.server.database
 		self.database_lock = threading.RLock()
 		self.config = self.server.config
 		self.handler_map['^kpdd$'] = self.handle_deaddrop_visit
-
-		self.rpc_handler_map['/ping'] = self.rpc_ping
-
-		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
-		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
-
-		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
-
-		for table_name in DATABASE_TABLES.keys():
-			self.rpc_handler_map['/' + table_name + '/delete'] = self.rpc_database_delete_row_by_id
-			self.rpc_handler_map['/' + table_name + '/get'] = self.rpc_database_get_row_by_id
-			self.rpc_handler_map['/' + table_name + '/view'] = self.rpc_database_get_rows
-
-		# Tables with a campaign_id field
-		for table_name in ['messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']:
-			self.rpc_handler_map['/campaign/' + table_name + '/view'] = self.rpc_database_get_rows
-
-		# Tables with a message_id field
-		for table_name in ['visits', 'credentials']:
-			self.rpc_handler_map['/message/' + table_name + '/view'] = self.rpc_database_get_rows
-
-	@contextlib.contextmanager
-	def get_cursor(self):
-		self.database_lock.acquire()
-		cursor = self.database.cursor()
-		yield cursor
-		self.database.commit()
-		self.database_lock.release()
 
 	def do_GET(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
@@ -244,78 +213,6 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 		password = (password or '')
 		with self.get_cursor() as cursor:
 			cursor.execute('INSERT INTO credentials (visit_id, message_id, campaign_id, username, password) VALUES (?, ?, ?, ?, ?)', (visit_id, msg_id, campaign_id, username, password))
-
-	def rpc_ping(self):
-		return True
-
-	def rpc_campaign_new(self, name):
-		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO campaigns (name, creator) VALUES (?, ?)', (name, self.basic_auth_user))
-			cursor.execute('SELECT id FROM campaigns WHERE name = ?', (name,))
-			campaign_id = cursor.fetchone()[0]
-		return campaign_id
-
-	def rpc_campaign_message_new(self, campaign_id, email_id, email_target):
-		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO messages (id, campaign_id, target_email) VALUES (?, ?, ?)', (email_id, campaign_id, email_target))
-		return
-
-	def rpc_campaign_delete(self, campaign_id):
-		tables = ['deaddrop_connections', 'deaddrop_deployments', 'credentials', 'visits', 'messages']
-		with self.get_cursor() as cursor:
-			for table in tables:
-				sql_query = "DELETE FROM {0} WHERE campaign_id = ?".format(table)
-				cursor.execute(sql_query, (campaign_id,))
-			cursor.execute("DELETE FROM campaigns WHERE id = ?", (campaign_id,))
-		return
-
-	def database_get_rows_by_campaign(self, table, columns, campaign_id, page):
-		rows = []
-		offset = VIEW_ROW_COUNT * page
-		with self.get_cursor() as cursor:
-			sql_query = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + ' WHERE campaign_id = ? LIMIT ' + str(VIEW_ROW_COUNT) + ' OFFSET ?'
-			for row in cursor.execute(sql_query, (campaign_id, offset)):
-				rows.append(row)
-		if not len(rows):
-			return None
-		return {'columns': columns, 'rows': rows}
-
-	def rpc_database_get_rows(self, *args):
-		args = list(args)
-		offset = (args.pop() * VIEW_ROW_COUNT)
-
-		table = self.path.split('/')[-2]
-		fields = self.path.split('/')[1:-2]
-		assert(len(fields) == len(args))
-		columns = DATABASE_TABLES[table]
-		rows = []
-		sql_query = 'SELECT ' + ', '.join(columns) + ' FROM ' + table
-		if len(fields):
-			sql_query += ' WHERE ' + ' AND '.join(map(lambda f: f + '_id = ?', fields))
-		sql_query += ' LIMIT ' + str(VIEW_ROW_COUNT) + ' OFFSET ?'
-		args.append(offset)
-		with self.get_cursor() as cursor:
-			for row in cursor.execute(sql_query, args):
-				rows.append(row)
-		if not len(rows):
-			return None
-		return {'columns': columns, 'rows': rows}
-
-	def rpc_database_delete_row_by_id(self, row_id):
-		table = self.path.split('/')[-2]
-		with self.get_cursor() as cursor:
-			cursor.execute('DELETE FROM ' + table + ' WHERE id = ?', (row_id,))
-		return
-
-	def rpc_database_get_row_by_id(self, row_id):
-		table = self.path.split('/')[-2]
-		columns = DATABASE_TABLES[table]
-		with self.get_cursor() as cursor:
-			cursor.execute('SELECT ' + ', '.join(columns) + ' FROM ' + table + ' WHERE id = ?', (row_id,))
-			row = cursor.fetchone()
-			if row:
-				row = dict(zip(columns, row))
-		return row
 
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):
