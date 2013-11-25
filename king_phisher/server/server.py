@@ -104,7 +104,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def do_GET(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
 		try:
-			super(self.__class__, self).do_GET(*args, **kwargs)
+			super(KingPhisherRequestHandler, self).do_GET(*args, **kwargs)
 		except:
 			raise
 		finally:
@@ -113,7 +113,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def do_POST(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
 		try:
-			super(self.__class__, self).do_POST(*args, **kwargs)
+			super(KingPhisherRequestHandler, self).do_POST(*args, **kwargs)
 		except:
 			raise
 		finally:
@@ -122,7 +122,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 	def do_RPC(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
 		try:
-			super(self.__class__, self).do_RPC(*args, **kwargs)
+			super(KingPhisherRequestHandler, self).do_RPC(*args, **kwargs)
 		except:
 			raise
 		finally:
@@ -136,7 +136,7 @@ class KingPhisherRequestHandler(AdvancedHTTPServerRequestHandler):
 			return True
 		if self.client_address[0] != '127.0.0.1':
 			return False
-		return super(self.__class__, self).check_authorization()
+		return super(KingPhisherRequestHandler, self).check_authorization()
 
 	def respond_file(self, file_path, attachment = False, query = {}):
 		file_path = os.path.abspath(file_path)

@@ -1,0 +1,6 @@
+[server]
+ip = 0.0.0.0
+port = 80
+database = /var/kingphisher.db
+cookie_name = KPID
+setuid_username = nobody

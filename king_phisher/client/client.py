@@ -88,7 +88,7 @@ class KingPhisherClientCampaignSelectionDialog(utilities.UtilityGladeGObject):
 	]
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
-		super(self.__class__, self).__init__(*args, **kwargs)
+		super(KingPhisherClientCampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
 		columns = {1:'Campaign Name', 2:'Created'}
 		for column_id in range(1, len(columns) + 1):

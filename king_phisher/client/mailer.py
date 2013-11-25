@@ -136,6 +136,7 @@ class MailSenderThread(threading.Thread):
 	def run(self):
 		emails_done = 0
 		emails_total = self.count_emails(self.target_file)
+		max_messages_per_connection = self.config.get('mailer.max_messages_per_connection', 5)
 		self.running.set()
 		self.should_exit.clear()
 		self.paused.clear()
@@ -143,7 +144,7 @@ class MailSenderThread(threading.Thread):
 		target_file_h = open(self.target_file, 'r')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
-			if emails_done > 0 and (emails_done % 1):
+			if emails_done > 0 and (emails_done % max_messages_per_connection):
 				self.server_smtp_reconnect()
 			if self.should_exit.is_set():
 				self.tab.notify_status('Sending Emails Cancelled\n')
