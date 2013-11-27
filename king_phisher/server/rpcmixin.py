@@ -31,6 +31,7 @@
 #
 
 import contextlib
+import threading
 
 from king_phisher.server import database
 
@@ -41,6 +42,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 	def install_handlers(self):
 		super(KingPhisherRequestHandlerRPCMixin, self).install_handlers()
 		self.rpc_handler_map['/ping'] = self.rpc_ping
+		self.rpc_handler_map['/shutdown'] = self.rpc_shutdown
 
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
@@ -70,6 +72,11 @@ class KingPhisherRequestHandlerRPCMixin(object):
 
 	def rpc_ping(self):
 		return True
+
+	def rpc_shutdown(self):
+		shutdown_thread = threading.Thread(target = lambda: self.server.shutdown())
+		shutdown_thread.run()
+		return
 
 	def rpc_campaign_new(self, name):
 		with self.get_cursor() as cursor:

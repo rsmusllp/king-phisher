@@ -52,14 +52,8 @@ __version__ = '0.0.1'
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
 def build_king_phisher_server(config, section_name):
-	forked_authenticator = authenticator.ForkedAuthenticator()
 	king_phisher_server = build_server_from_config(config, 'server', ServerClass = KingPhisherServer, HandlerClass = KingPhisherRequestHandler)
-	king_phisher_server.serve_files = True
-	king_phisher_server.serve_files_list_directories = False
-	king_phisher_server.serve_robots_txt = True
-	king_phisher_server.http_server.authenticator = forked_authenticator
 	king_phisher_server.http_server.config = SectionConfigParser('server', config)
-	king_phisher_server.http_server.throttle_semaphore = threading.Semaphore(2)
 	return king_phisher_server
 
 class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, AdvancedHTTPServerRequestHandler):
@@ -98,7 +92,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			self.server.throttle_semaphore.release()
 
 	def custom_authentication(self, username, password):
-		return self.server.authenticator.authenticate(username, password)
+		return self.server.forked_authenticator.authenticate(username, password)
 
 	def check_authorization(self):
 		if self.command in ['GET', 'POST']:
@@ -219,6 +213,11 @@ class KingPhisherServer(AdvancedHTTPServer):
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
 		self.database = None
 		self.logger = logging.getLogger('KingPhisher.Server')
+		self.serve_files = True
+		self.serve_files_list_directories = False
+		self.serve_robots_txt = True
+		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator()
+		self.http_server.throttle_semaphore = threading.Semaphore()
 
 	def load_database(self, database_file):
 		if database_file == ':memory:':
@@ -227,3 +226,8 @@ class KingPhisherServer(AdvancedHTTPServer):
 			db = sqlite3.connect(database_file, check_same_thread = False)
 		self.database = db
 		self.http_server.database = db
+
+	def shutdown(self, *args, **kwargs):
+		super(KingPhisherServer, self).shutdown(*args, **kwargs)
+		self.http_server.forked_authenticator.stop()
+

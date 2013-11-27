@@ -86,6 +86,7 @@ def main():
 		os.setregid(user_info.pw_gid, user_info.pw_gid)
 		os.setreuid(user_info.pw_uid, user_info.pw_uid)
 	king_phisher_server.serve_forever(fork = (not arguments.foreground))
+	king_phisher_server.shutdown()
 
 if __name__ == '__main__':
 	main()
