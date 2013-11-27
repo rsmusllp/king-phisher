@@ -40,6 +40,12 @@ import threading
 from king_phisher.server import server
 from king_phisher.server import database
 
+try:
+	import msgpack
+	has_msgpack = True
+except ImportError:
+	has_msgpack = False
+
 def main():
 	parser = argparse.ArgumentParser(description = 'King Phisher Server', conflict_handler = 'resolve')
 	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + server.__version__)
@@ -59,6 +65,11 @@ def main():
 	if os.getuid():
 		print('[-] This must be executed as root')
 		print('[-] Configure the setuid_username option in the config file to drop privileges')
+		return
+
+	if not has_msgpack:
+		print('[-] This server requires the Python msgpack module to be installed')
+		print('[-] Please install it from http://msgpack.org/ or your package manager')
 		return
 
 	config = ConfigParser.ConfigParser()

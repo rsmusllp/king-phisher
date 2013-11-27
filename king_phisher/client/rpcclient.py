@@ -32,10 +32,20 @@
 
 from AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPCClientCached
 
+try:
+	import msgpack
+	has_msgpack = True
+except ImportError:
+	has_msgpack = False
+
 class KingPhisherRPCClient(AdvancedHTTPServerRPCClientCached):
 	def __init__(self, *args, **kwargs):
 		super(KingPhisherRPCClient, self).__init__(*args, **kwargs)
-		self.set_serializer('binary/json+zlib')
+		if has_msgpack:
+			serializer = 'binary/message-pack'
+		else:
+			serializer = 'binary/json'
+		self.set_serializer(serializer)
 
 	def remote_table(self, table, *args):
 		table_method = table + '/view'
