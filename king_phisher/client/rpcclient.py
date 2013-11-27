@@ -72,3 +72,43 @@ class KingPhisherRPCClient(AdvancedHTTPServerRPCClientCached):
 		else:
 			result = self.call(table_method, row_id)
 		return result
+
+def main():
+	import argparse
+	import code
+	import getpass
+	import logging
+
+	import utilities
+
+	try:
+		import readline
+	except ImportError:
+		print('[-] Module readline not available.')
+	else:
+		import rlcompleter
+		readline.parse_and_bind('tab: complete')
+
+	parser = argparse.ArgumentParser(description = 'King Phisher RPC Client', conflict_handler = 'resolve')
+	parser.add_argument('-u', '--username', dest = 'username', default = None, required = False, help = 'user to authenticate as')
+	parser.add_argument('server', action = 'store', help = 'server to connect to')
+	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
+	arguments = parser.parse_args()
+
+	logging.getLogger('').setLevel(logging.DEBUG)
+	console_log_handler = logging.StreamHandler()
+	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
+	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
+	logging.getLogger('').addHandler(console_log_handler)
+	server = utilities.server_parse(arguments.server, 80)
+	username = (arguments.username or getpass.getuser())
+	del arguments, parser
+
+	password = getpass.getpass("Password For {0}@{1}: ".format(username, server[0]))
+	rpc = KingPhisherRPCClient(server, username = username, password = password)
+	console = code.InteractiveConsole({'rpc':rpc, 'server':server})
+	console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
+	return
+
+if __name__ == '__main__':
+	main()
