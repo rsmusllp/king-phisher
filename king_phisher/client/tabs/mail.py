@@ -180,7 +180,10 @@ class MailSenderPreviewTab(object):
 		self.box.show()
 		self.webview = WebKit.WebView()
 		self.webview.show()
-		self.box.pack_start(self.webview, True, True, 0)
+		scrolled_window = Gtk.ScrolledWindow()
+		scrolled_window.add(self.webview)
+		scrolled_window.show()
+		self.box.pack_start(scrolled_window, True, True, 0)
 
 class MailSenderEditTab(utilities.UtilityGladeGObject):
 	gobject_ids = [
