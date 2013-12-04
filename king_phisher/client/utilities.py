@@ -44,7 +44,7 @@ GOBJECT_PROPERTY_MAP = {
 	)
 }
 
-DEFAULT_GLADE_PATH = '/usr/share:/usr/local/share:.'
+DEFAULT_GLADE_PATH = '/usr/share:/usr/local/share:data/client:.'
 def which_glade(glade):
 	is_readable = lambda gpath: (os.path.isfile(gpath) and os.access(gpath, os.R_OK))
 	glade_path = os.environ.get('GLADE_PATH', DEFAULT_GLADE_PATH)
