@@ -59,7 +59,7 @@ def format_message(template, config, first_name= None, last_name = None, uid = N
 	template_vars['uid'] = uid
 	template_vars['first_name'] = first_name
 	template_vars['last_name'] = last_name
-	template_vars['companyname'] = config.get('mailer.company_name', '')
+	template_vars['company_name'] = config.get('mailer.company_name', '')
 	template_vars['rickroll_url'] = 'http://www.youtube.com/watch?v=oHg5SJYRHA0'
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urlparse.urlparse(webserver_url)
