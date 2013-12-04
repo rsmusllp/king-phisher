@@ -65,6 +65,7 @@ UI_INFO = """
 			<menuitem action="EditPreferences" />
 			<separator />
 			<menuitem action="EditDeleteCampaign" />
+			<menuitem action="EditStopService" />
 		</menu>
 		<menu action="HelpMenu">
 			<menuitem action="HelpAbout" />
@@ -250,6 +251,10 @@ class KingPhisherClient(Gtk.Window):
 		action_edit_delete_campaign.connect("activate", lambda x: self.delete_campaign())
 		action_group.add_action(action_edit_delete_campaign)
 
+		action_edit_shutdown_server = Gtk.Action("EditStopService", "Stop Service", "Stop Remote King-Phisher Service", None)
+		action_edit_shutdown_server.connect("activate", lambda x: self.stop_remote_service())
+		action_group.add_action(action_edit_shutdown_server)
+
 		# Help Menu Actions
 		action_helpmenu = Gtk.Action("HelpMenu", "Help", None, None)
 		action_group.add_action(action_helpmenu)
@@ -417,3 +422,10 @@ class KingPhisherClient(Gtk.Window):
 	def show_campaign_selection(self):
 		dialog = KingPhisherClientCampaignSelectionDialog(self.config, self)
 		return dialog.interact() != Gtk.ResponseType.CANCEL
+
+	def stop_remote_service(self):
+		if not utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self, 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
+			return
+		self.rpc('shutdown')
+		utilities.show_dialog_error('The Remote Service Has Been Stopped', self, 'Now exiting')
+		self.client_quit()
