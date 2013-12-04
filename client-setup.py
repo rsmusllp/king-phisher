@@ -36,11 +36,11 @@ import os
 from king_phisher.client import client
 
 data_files_src_prefix = os.path.join('data', 'client', 'king_phisher')
-if os.path.isdir(data_files_src_prefix):
-	data_files = os.listdir(data_files_src_prefix)
-	data_files = map(lambda x: os.path.join(data_files_src_prefix, x), data_files)
-else:
-	data_files = []
+data_files = []
+for root, dirs, files in os.walk(data_files_src_prefix):
+	dest_dir = os.path.join('share', *root.split(os.path.sep)[2:])
+	files = map(lambda x: os.path.join(root, x), files)
+	data_files.append((dest_dir, files))
 
 setup(
 	name = 'King Phisher Client',
@@ -54,5 +54,5 @@ setup(
 		'king_phisher.client.tabs',
 	],
 	scripts = ['KingPhisher'],
-	data_files = [(os.path.join('share', 'king_phisher'), data_files)],
+	data_files = data_files,
 )

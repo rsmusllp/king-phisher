@@ -6,3 +6,5 @@
 *.db
 *.html
 build/*
+
+!data/*/king_phisher/*_templates/*.html
