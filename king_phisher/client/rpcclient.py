@@ -90,7 +90,8 @@ def main():
 		readline.parse_and_bind('tab: complete')
 
 	parser = argparse.ArgumentParser(description = 'King Phisher RPC Client', conflict_handler = 'resolve')
-	parser.add_argument('-u', '--username', dest = 'username', default = None, required = False, help = 'user to authenticate as')
+	parser.add_argument('-u', '--username', dest = 'username', help = 'user to authenticate as')
+	parser.add_argument('-p', '--password', dest = 'password', help = argparse.SUPPRESS)
 	parser.add_argument('server', action = 'store', help = 'server to connect to')
 	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
 	arguments = parser.parse_args()
@@ -102,9 +103,11 @@ def main():
 	logging.getLogger('').addHandler(console_log_handler)
 	server = utilities.server_parse(arguments.server, 80)
 	username = (arguments.username or getpass.getuser())
+	if arguments.password:
+		password = arguments.password
+	else:
+		password = getpass.getpass("Password For {0}@{1}: ".format(username, server[0]))
 	del arguments, parser
-
-	password = getpass.getpass("Password For {0}@{1}: ".format(username, server[0]))
 	rpc = KingPhisherRPCClient(server, username = username, password = password)
 	console = code.InteractiveConsole({'rpc':rpc, 'server':server})
 	console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
