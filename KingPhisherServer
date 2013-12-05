@@ -74,19 +74,31 @@ def main():
 
 	config = ConfigParser.ConfigParser()
 	config.readfp(config_file)
+
+	if (not arguments.foreground) and os.fork():
+		return
+
 	king_phisher_server = server.build_king_phisher_server(config, 'server')
 	database_file = config.get('server', 'database')
 	if database_file != ':memory:' and not os.path.exists(database_file):
 		database.create_database(database_file)
 	king_phisher_server.load_database(database_file)
 
+	server_pid = os.getpid()
+	king_phisher_server.logger.info('server running in process: ' + str(server_pid))
+
+	if config.has_option('server', 'pid_file'):
+		pid_file = open(config.get('server', 'pid_file'), 'w')
+		pid_file.write(str(server_pid))
+		pid_file.close()
 	if config.has_option('server', 'setuid_username'):
 		setuid_username = config.get('server', 'setuid_username')
 		user_info = pwd.getpwnam(setuid_username)
 		os.setregid(user_info.pw_gid, user_info.pw_gid)
 		os.setreuid(user_info.pw_uid, user_info.pw_uid)
-	king_phisher_server.serve_forever(fork = (not arguments.foreground))
+	king_phisher_server.serve_forever(fork = False)
 	king_phisher_server.shutdown()
+	return
 
 if __name__ == '__main__':
 	main()
