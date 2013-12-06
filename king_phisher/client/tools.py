@@ -67,6 +67,8 @@ class KingPhisherClientRPCTerminal(object):
 				readline.parse_and_bind('tab: complete')
 			rpc = pickle.loads(rpc_data)
 			console = code.InteractiveConsole({'os':os, 'rpc':rpc})
+			banner = "Python {0} on {1}".format(sys.version, sys.platform)
+			print(banner)
 			console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
 			sys.exit(0)
 
