@@ -30,32 +30,47 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import code
 import os
-import time
+import pickle
+import pty
+import signal
+import sys
 
 from gi.repository import Gtk
 from gi.repository import GLib
 from gi.repository import Vte
 
-from king_phisher.client import rpcclient
 from king_phisher.client import utilities
+from king_phisher.client.rpcclient import KingPhisherRPCClient
 
 class KingPhisherClientRPCTerminal(object):
 	def __init__(self, config, client):
 		self.window = Gtk.Window()
 		self.window.set_property('title', 'King Phisher RPC')
-		#self.window.set_size_request(800, 600)
-		self.box = Gtk.VBox()
-		self.window.add(self.box)
+		self.window.set_transient_for(client)
+		self.window.set_destroy_with_parent(True)
+		self.window.connect('destroy', self.signal_window_destroy)
 		self.terminal = Vte.Terminal()
+		self.window.add(self.terminal)
 		self.terminal.set_scroll_on_keystroke(True)
-		self.box.pack_start(self.terminal, True, True, 0)
 
-		rpc_args = [utilities.which('python'), rpcclient.__file__]
-		rpc_args.extend(['-u', config['server_username']])
-		rpc_args.extend(['-p', config['server_password']])
-		rpc_args.append("localhost:{0}".format(client.server_local_port))
-		self.terminal.fork_command_full(Vte.PtyFlags.DEFAULT, os.getcwd(), rpc_args, [], GLib.SpawnFlags.DO_NOT_REAP_CHILD, None, None)
-		self.terminal.connect('child-exited', lambda x: self.window.destroy())
+		rpc_data = pickle.dumps(client.rpc)
+		vte_pty = self.terminal.pty_new(Vte.PtyFlags.DEFAULT)
 
+		child_pid, child_fd = pty.fork()
+		if child_pid == 0:
+			rpc = pickle.loads(rpc_data)
+			console = code.InteractiveConsole({'os':os, 'rpc':rpc})
+			console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
+			sys.exit(0)
+
+		self.child_pid = child_pid
+		vte_pty = Vte.Pty.new_foreign(child_fd)
+		self.terminal.set_pty_object(vte_pty)
+		GLib.child_watch_add(child_pid, lambda pid, status: self.window.destroy())
 		self.window.show_all()
+
+	def signal_window_destroy(self, window):
+		if os.path.exists("/proc/{0}".format(self.child_pid)):
+			os.kill(self.child_pid, signal.SIGKILL)

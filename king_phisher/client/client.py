@@ -45,6 +45,7 @@ from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.rpcclient import KingPhisherRPCClient
 from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.client.tabs.campaign import CampaignViewTab
+from king_phisher.client.tools import KingPhisherClientRPCTerminal
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.client import utilities
 
@@ -66,6 +67,9 @@ UI_INFO = """
 			<separator />
 			<menuitem action="EditDeleteCampaign" />
 			<menuitem action="EditStopService" />
+		</menu>
+		<menu action="ToolsMenu">
+			<menuitem action="ToolsRPCTerminal" />
 		</menu>
 		<menu action="HelpMenu">
 			<menuitem action="HelpAbout" />
@@ -255,6 +259,14 @@ class KingPhisherClient(Gtk.Window):
 		action_edit_shutdown_server.connect("activate", lambda x: self.stop_remote_service())
 		action_group.add_action(action_edit_shutdown_server)
 
+		# Tools Menu Action
+		action_toolsmenu = Gtk.Action("ToolsMenu", "Tools", None, None)
+		action_group.add_action(action_toolsmenu)
+
+		action_tools_rpc_terminal = Gtk.Action("ToolsRPCTerminal", "RPC Terminal", "RPC Terminal", None)
+		action_tools_rpc_terminal.connect("activate", lambda x: KingPhisherClientRPCTerminal(self.config, self))
+		action_group.add_action(action_tools_rpc_terminal)
+
 		# Help Menu Actions
 		action_helpmenu = Gtk.Action("HelpMenu", "Help", None, None)
 		action_group.add_action(action_helpmenu)
@@ -336,6 +348,7 @@ class KingPhisherClient(Gtk.Window):
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
 			try:
 				assert(self.rpc('ping'))
+				self.server_local_port = local_port
 				return True
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
