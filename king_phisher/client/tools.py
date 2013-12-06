@@ -56,10 +56,15 @@ class KingPhisherClientRPCTerminal(object):
 		self.terminal.set_scroll_on_keystroke(True)
 
 		rpc_data = pickle.dumps(client.rpc)
-		vte_pty = self.terminal.pty_new(Vte.PtyFlags.DEFAULT)
-
 		child_pid, child_fd = pty.fork()
 		if child_pid == 0:
+			try:
+				import readline
+				import rlcompleter
+			except ImportError:
+				pass
+			else:
+				readline.parse_and_bind('tab: complete')
 			rpc = pickle.loads(rpc_data)
 			console = code.InteractiveConsole({'os':os, 'rpc':rpc})
 			console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
