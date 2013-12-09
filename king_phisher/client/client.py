@@ -125,9 +125,20 @@ class KingPhisherClientCampaignSelectionDialog(utilities.UtilityGladeGObject):
 			self.parent.rpc('campaign/new', campaign_name)
 		except:
 			utilities.show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
-		else:
-			campaign_name_entry.set_property('text', '')
-			self.load_campaigns()
+			return
+		campaign_name_entry.set_property('text', '')
+		self.load_campaigns()
+		treeview = self.gobjects['treeview_campaigns']
+		store = treeview.get_model()
+		store_iter = store.get_iter_first()
+		while store_iter:
+			if campaign_name == store.get_value(store_iter, 1):
+				treeview.set_cursor(store.get_path(store_iter), None, False)
+				break
+			store_iter = store.iter_next(store_iter)
+
+	def signal_entry_new_campaign_name_activate(self, entry):
+		self.gobjects['button_new_campaign'].emit('clicked')
 
 	def interact(self):
 		self.dialog.show_all()

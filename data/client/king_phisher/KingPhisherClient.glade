@@ -263,6 +263,7 @@
                 <property name="secondary_icon_activatable">False</property>
                 <property name="primary_icon_sensitive">True</property>
                 <property name="secondary_icon_sensitive">True</property>
+                <signal name="activate" handler="signal_entry_new_campaign_name_activate" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>
