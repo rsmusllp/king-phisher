@@ -36,12 +36,12 @@ from king_phisher.client.utilities import UtilityGladeGObject
 
 class KingPhisherClientLoginDialog(UtilityGladeGObject):
 	gobject_ids = [
+		'button_connect',
 		'entry_server',
 		'entry_server_username',
 		'entry_server_password'
 	]
 	top_gobject = 'dialog'
-
 	def interact(self):
 		self.dialog.show_all()
 		response = self.dialog.run()
@@ -50,8 +50,12 @@ class KingPhisherClientLoginDialog(UtilityGladeGObject):
 		self.dialog.destroy()
 		return response
 
+	def signal_entry_activate(self, entry):
+		self.gobjects['button_connect'].emit('clicked')
+
 class KingPhisherClientSSHLoginDialog(KingPhisherClientLoginDialog):
 	gobject_ids = [
+		'button_connect',
 		'entry_ssh_server',
 		'entry_ssh_username',
 		'entry_ssh_password'
