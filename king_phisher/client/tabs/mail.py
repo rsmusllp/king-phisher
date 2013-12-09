@@ -32,6 +32,7 @@
 
 import collections
 import os
+import urllib2
 import urlparse
 
 from king_phisher.client.login import KingPhisherClientSSHLoginDialog
@@ -243,6 +244,16 @@ class MailSenderConfigTab(utilities.UtilityGladeGObject):
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label('Config')
 		super(MailSenderConfigTab, self).__init__(*args, **kwargs)
+
+	def signal_button_clicked_verify(self, button):
+		target_url = self.gobjects['entry_webserver_url'].get_text()
+		try:
+			urllib2.urlopen(target_url)
+		except:
+			utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent)
+			return
+		utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
+		return
 
 	def signal_entry_activate_open_file(self, entry):
 		dialog = utilities.UtilityFileChooser('Choose File')

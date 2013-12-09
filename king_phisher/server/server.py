@@ -122,10 +122,12 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		if not msg_id:
 			kp_cookie_name = self.config.get('cookie_name', 'KPID')
 			if kp_cookie_name in self.cookies:
+				visit_id = self.cookies[kp_cookie_name].value
 				with self.get_cursor() as cursor:
-					visit_id = self.cookies[kp_cookie_name].value
 					cursor.execute('SELECT message_id FROM visits WHERE id = ?', (visit_id,))
-					msg_id = cursor.fetchone()[0]
+					result = cursor.fetchone()
+					if result:
+						msg_id = result[0]
 		if msg_id:
 			try:
 				self.handle_visit(query, msg_id)

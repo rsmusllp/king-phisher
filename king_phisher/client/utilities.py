@@ -90,6 +90,15 @@ def show_dialog_error(message, parent, secondary_text = None):
 	dialog.destroy()
 	return None
 
+def show_dialog_info(message, parent, secondary_text = None):
+	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.INFO, Gtk.ButtonsType.OK, message)
+	if secondary_text:
+		dialog.format_secondary_text(secondary_text)
+	dialog.show_all()
+	response = dialog.run()
+	dialog.destroy()
+	return None
+
 def show_dialog_warning(message, parent, secondary_text = None):
 	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, message)
 	if secondary_text:
