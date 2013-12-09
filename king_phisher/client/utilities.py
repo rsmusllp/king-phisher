@@ -81,41 +81,27 @@ def server_parse(server, default_port):
 			port = int(port)
 		return (host, port)
 
-def show_dialog_error(message, parent, secondary_text = None):
-	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, message)
+def show_dialog(message_type, message, parent, secondary_text = None, message_buttons = Gtk.ButtonsType.OK):
+	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, message_type, message_buttons, message)
 	if secondary_text:
 		dialog.format_secondary_text(secondary_text)
 	dialog.show_all()
 	response = dialog.run()
 	dialog.destroy()
-	return None
+	return response
 
-def show_dialog_info(message, parent, secondary_text = None):
-	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.INFO, Gtk.ButtonsType.OK, message)
-	if secondary_text:
-		dialog.format_secondary_text(secondary_text)
-	dialog.show_all()
-	response = dialog.run()
-	dialog.destroy()
-	return None
+def show_dialog_error(*args, **kwargs):
+	return show_dialog(Gtk.MessageType.ERROR, *args, **kwargs)
 
-def show_dialog_warning(message, parent, secondary_text = None):
-	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, message)
-	if secondary_text:
-		dialog.format_secondary_text(secondary_text)
-	dialog.show_all()
-	response = dialog.run()
-	dialog.destroy()
-	return None
+def show_dialog_info(*args, **kwargs):
+	return show_dialog(Gtk.MessageType.INFO, *args, **kwargs)
 
-def show_dialog_yes_no(message, parent, secondary_text = None):
-	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, message)
-	if secondary_text:
-		dialog.format_secondary_text(secondary_text)
-	dialog.show_all()
-	response = dialog.run()
-	dialog.destroy()
-	return response == Gtk.ResponseType.YES
+def show_dialog_warning(*args, **kwargs):
+	return show_dialog(Gtk.MessageType.WARNING, *args, **kwargs)
+
+def show_dialog_yes_no(*args, **kwargs):
+	kwargs['message_buttons'] = Gtk.ButtonsType.YES_NO
+	return show_dialog(Gtk.MessageType.QUESTION, *args, **kwargs) == Gtk.ResponseType.YES
 
 class UtilityGladeGObject(object):
 	gobject_ids = [ ]
