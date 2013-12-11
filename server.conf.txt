@@ -3,3 +3,5 @@ ip = 0.0.0.0
 port = 80
 database = /var/kingphisher.db
 setuid_username = nobody
+pid_file = /var/run/kingphisher.pid
+web_root = /var/www
