@@ -63,7 +63,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self.database_lock = threading.RLock()
 		self.config = self.server.config
 		self.handler_map['^kpdd$'] = self.handle_deaddrop_visit
-		self.handler_map['^email_logo_banner.jpg$'] = self.handle_email_opened
+		self.handler_map['^email_logo_banner.gif$'] = self.handle_email_opened
 
 	def do_GET(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
@@ -182,16 +182,15 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 
 	def handle_email_opened(self, query):
 		# Buffer Size: 125 Bytes
-		jpg_data  = 'ffd8ffe000104a46494600010101004800480000ffdb00430003020202020203'
-		jpg_data += '0202020303030304060404040404080606050609080a0a090809090a0c0f0c0a'
-		jpg_data += '0b0e0b09090d110d0e0f101011100a0c12131210130f101010ffc9000b080001'
-		jpg_data += '000101011100ffcc000600101005ffda0008010100003f00d2cf20ffd9'
-		jpg_data  = jpg_data.decode('hex')
-		self.send_header('Content-Type', 'image/jpeg')
-		self.send_header('Content-Length', str(len(jpg_data)))
+		# Buffer Size:  49 Bytes
+		img_data  = '47494638396101000100910000000000ffffffffffff00000021f90401000002'
+		img_data += '002c00000000010001000002025401003b'
+		img_data  = img_data.decode('hex')
 		self.send_response(200)
+		self.send_header('Content-Type', 'image/gif')
+		self.send_header('Content-Length', str(len(img_data)))
 		self.end_headers()
-		self.wfile.write(jpg_data)
+		self.wfile.write(img_data)
 
 		get_query_parameter = lambda p: query.get(p, [None])[0]
 		msg_id = get_query_parameter('id')
