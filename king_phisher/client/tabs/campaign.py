@@ -48,6 +48,20 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 	]
 	top_gobject = 'box'
 	remote_table_name = ''
+	label_text = 'Unknown'
+	view_columns = { }
+	def __init__(self, *args, **kwargs):
+		self.label = Gtk.Label(self.label_text)
+		super(CampaignViewGenericTab, self).__init__(*args, **kwargs)
+		treeview = self.gobjects['treeview_campaign']
+		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		columns = self.view_columns
+		for column_id in range(1, len(columns) + 1):
+			column_name = columns[column_id]
+			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
+			column.set_sort_column_id(column_id)
+			treeview.append_column(column)
+
 	def signal_button_clicked_refresh(self, button):
 		self.load_campaign_information()
 
@@ -87,18 +101,17 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 
 class CampaignViewDeaddropTab(CampaignViewGenericTab):
 	remote_table_name = 'deaddrop_connections'
-	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Deaddrop')
-		super(CampaignViewDeaddropTab, self).__init__(*args, **kwargs)
-		treeview = self.gobjects['treeview_campaign']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
-		columns = {1:'Destination', 2:'Visit Count', 3:'External IP', 4:'Username', 5:'Hostname', 6:'Local IP Addresses', 7:'First Hit', 8:'Last Hit'}
-		for column_id in range(1, len(columns) + 1):
-			column_name = columns[column_id]
-			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
-			column.set_sort_column_id(column_id)
-			treeview.append_column(column)
-
+	label_text = 'Deaddrop'
+	view_columns = {
+		1:'Destination',
+		2:'Visit Count',
+		3:'External IP',
+		4:'Username',
+		5:'Hostname',
+		6:'Local IP Addresses',
+		7:'First Hit',
+		8:'Last Hit'
+	}
 	def load_campaign_information(self):
 		treeview = self.gobjects['treeview_campaign']
 		store = treeview.get_model()
@@ -115,18 +128,13 @@ class CampaignViewDeaddropTab(CampaignViewGenericTab):
 
 class CampaignViewCredentialsTab(CampaignViewGenericTab):
 	remote_table_name = 'credentials'
-	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Credentials')
-		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
-		treeview = self.gobjects['treeview_campaign']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
-		columns = {1:'Email', 2:'Username', 3:'Password', 4:'Submitted'}
-		for column_id in range(1, len(columns) + 1):
-			column_name = columns[column_id]
-			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
-			column.set_sort_column_id(column_id)
-			treeview.append_column(column)
-
+	label_text = 'Credentials'
+	view_columns = {
+		1:'Email',
+		2:'Username',
+		3:'Password',
+		4:'Submitted'
+	}
 	def load_campaign_information(self):
 		treeview = self.gobjects['treeview_campaign']
 		store = treeview.get_model()
@@ -143,18 +151,15 @@ class CampaignViewCredentialsTab(CampaignViewGenericTab):
 
 class CampaignViewVisitsTab(CampaignViewGenericTab):
 	remote_table_name = 'visits'
-	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Visits')
-		super(CampaignViewVisitsTab, self).__init__(*args, **kwargs)
-		treeview = self.gobjects['treeview_campaign']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
-		columns = {1:'Email', 2:'Visitor IP', 3:'Visitor Details', 4:'Visit Count', 5:'First Visit', 6:'Last Visit'}
-		for column_id in range(1, len(columns) + 1):
-			column_name = columns[column_id]
-			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
-			column.set_sort_column_id(column_id)
-			treeview.append_column(column)
-
+	label_text = 'Visits'
+	view_columns = {
+		1:'Email',
+		2:'Visitor IP',
+		3:'Visitor Details',
+		4:'Visit Count',
+		5:'First Visit',
+		6:'Last Visit'
+	}
 	def load_campaign_information(self):
 		treeview = self.gobjects['treeview_campaign']
 		store = treeview.get_model()
@@ -171,18 +176,12 @@ class CampaignViewVisitsTab(CampaignViewGenericTab):
 
 class CampaignViewMessagesTab(CampaignViewGenericTab):
 	remote_table_name = 'messages'
-	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Messages')
-		super(CampaignViewMessagesTab, self).__init__(*args, **kwargs)
-		treeview = self.gobjects['treeview_campaign']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
-		columns = {1:'Email', 2:'Sent', 3:'Opened'}
-		for column_id in range(1, len(columns) + 1):
-			column_name = columns[column_id]
-			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
-			column.set_sort_column_id(column_id)
-			treeview.append_column(column)
-
+	label_text = 'Messages'
+	view_columns = {
+		1:'Email',
+		2:'Sent',
+		3:'Opened'
+	}
 	def load_campaign_information(self):
 		treeview = self.gobjects['treeview_campaign']
 		store = treeview.get_model()
@@ -236,16 +235,7 @@ class CampaignViewTab(object):
 			return
 		previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
-		messages_tab = self.tabs.get('messages')
-		visits_tab = self.tabs.get('visits')
-		credentials_tab = self.tabs.get('credentials')
-		deaddrop_connections_tab = self.tabs.get('deaddrop_connections')
 
-		if messages_tab and current_page == messages_tab.box:
-			messages_tab.load_campaign_information()
-		elif visits_tab and current_page == visits_tab.box:
-			visits_tab.load_campaign_information()
-		elif deaddrop_connections_tab and current_page == deaddrop_connections_tab.box:
-			deaddrop_connections_tab.load_campaign_information()
-		elif credentials_tab and current_page == credentials_tab.box:
-			credentials_tab.load_campaign_information()
+		for tab_name, tab in self.tabs.items():
+			if isinstance(tab, CampaignViewGenericTab) and current_page == tab.box:
+				tab.load_campaign_information()
