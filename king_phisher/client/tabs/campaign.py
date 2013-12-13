@@ -169,6 +169,31 @@ class CampaignViewVisitsTab(CampaignViewGenericTab):
 			visitor_email = msg_details['target_email']
 			store.append([visit['id'], visitor_email, visit['visitor_ip'], visit['visitor_details'], str(visit['visit_count']), visit['first_visit'], visit['last_visit']])
 
+class CampaignViewMessagesTab(CampaignViewGenericTab):
+	remote_table_name = 'messages'
+	def __init__(self, *args, **kwargs):
+		self.label = Gtk.Label('Messages')
+		super(CampaignViewMessagesTab, self).__init__(*args, **kwargs)
+		treeview = self.gobjects['treeview_campaign']
+		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		columns = {1:'Email', 2:'Sent', 3:'Opened'}
+		for column_id in range(1, len(columns) + 1):
+			column_name = columns[column_id]
+			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
+			column.set_sort_column_id(column_id)
+			treeview.append_column(column)
+
+	def load_campaign_information(self):
+		treeview = self.gobjects['treeview_campaign']
+		store = treeview.get_model()
+		if store == None:
+			store = Gtk.ListStore(str, str, str, str)
+			treeview.set_model(store)
+		else:
+			store.clear()
+		for message in self.parent.rpc.remote_table('campaign/messages', self.config['campaign_id']):
+			store.append([message['id'], message['target_email'], message['sent'], message['opened']])
+
 class CampaignViewTab(object):
 	def __init__(self, config, parent):
 		self.config = config
@@ -185,6 +210,10 @@ class CampaignViewTab(object):
 		self.tabs = {}
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
+
+		messages_tab = CampaignViewMessagesTab(self.config, self.parent)
+		self.tabs['messages'] = messages_tab
+		self.notebook.append_page(messages_tab.box, messages_tab.label)
 
 		visits_tab = CampaignViewVisitsTab(self.config, self.parent)
 		self.tabs['visits'] = visits_tab
@@ -207,11 +236,14 @@ class CampaignViewTab(object):
 			return
 		previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
+		messages_tab = self.tabs.get('messages')
 		visits_tab = self.tabs.get('visits')
 		credentials_tab = self.tabs.get('credentials')
 		deaddrop_connections_tab = self.tabs.get('deaddrop_connections')
 
-		if visits_tab and current_page == visits_tab.box:
+		if messages_tab and current_page == messages_tab.box:
+			messages_tab.load_campaign_information()
+		elif visits_tab and current_page == visits_tab.box:
 			visits_tab.load_campaign_information()
 		elif deaddrop_connections_tab and current_page == deaddrop_connections_tab.box:
 			deaddrop_connections_tab.load_campaign_information()

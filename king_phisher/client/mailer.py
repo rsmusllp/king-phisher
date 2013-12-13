@@ -54,6 +54,7 @@ def format_message(template, config, first_name= None, last_name = None, uid = N
 	first_name = (first_name or 'Alice')
 	last_name = (last_name or 'Liddle')
 	uid = (uid or make_uid())
+
 	template = string.Template(template)
 	template_vars = {}
 	template_vars['uid'] = uid
@@ -61,10 +62,14 @@ def format_message(template, config, first_name= None, last_name = None, uid = N
 	template_vars['last_name'] = last_name
 	template_vars['company_name'] = config.get('mailer.company_name', '')
 	template_vars['rickroll_url'] = 'http://www.youtube.com/watch?v=oHg5SJYRHA0'
+
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urlparse.urlparse(webserver_url)
+	tracking_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, 'email_logo_banner.jpg', '', 'id=' + uid, ''))
 	webserver_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
 	template_vars['webserver_url'] = webserver_url
+	template_vars['tracking_dot_url'] = tracking_url
+	template_vars['tracking_dot_image_tag'] = "<img src=\"{0}\" style=\"display:none\" />".format(tracking_url)
 	return template.safe_substitute(**template_vars)
 
 class MailSenderThread(threading.Thread):
