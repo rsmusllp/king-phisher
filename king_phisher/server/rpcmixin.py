@@ -44,9 +44,10 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		self.rpc_handler_map['/ping'] = self.rpc_ping
 		self.rpc_handler_map['/shutdown'] = self.rpc_shutdown
 
+		self.rpc_handler_map['/config/get'] = self.rpc_config_get
+
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
-
 		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
 
 		for table_name in DATABASE_TABLES.keys():
@@ -77,6 +78,11 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		shutdown_thread = threading.Thread(target = lambda: self.server.shutdown())
 		shutdown_thread.run()
 		return
+
+	def rpc_config_get(self, option_name):
+		if self.config.has_option(option_name):
+			return self.config.get(option_name)
+		return None
 
 	def rpc_campaign_new(self, name):
 		with self.get_cursor() as cursor:
