@@ -16,6 +16,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
+            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
           </object>
         </child>
       </object>
@@ -66,6 +67,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
+            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
           </object>
         </child>
       </object>
@@ -129,6 +131,8 @@
           <object class="GtkTreeView" id="treeview_campaign">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
+            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
           </object>
         </child>
       </object>
@@ -193,6 +197,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
+            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
           </object>
         </child>
       </object>

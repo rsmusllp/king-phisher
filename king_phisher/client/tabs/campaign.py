@@ -62,6 +62,10 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
 
+	def load_campaign_information(self):
+		# override me
+		pass
+
 	def signal_button_clicked_refresh(self, button):
 		self.load_campaign_information()
 
@@ -86,6 +90,12 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
 		menu.popup(None, None, pos_func, None, event.button, event.time)
 		return
+
+	def signal_treeview_key_pressed(self, widget, event):
+		if event.type != Gdk.EventType.KEY_PRESS:
+			return
+		if event.get_keyval()[1] == Gdk.KEY_F5:
+			self.load_campaign_information()
 
 	def signal_treeview_popup_menu_delete(self, action):
 		treeview = self.gobjects['treeview_campaign']
