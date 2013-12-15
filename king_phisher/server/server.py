@@ -52,6 +52,9 @@ __version__ = '0.0.1'
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
 def build_king_phisher_server(config, section_name):
+	# set config defaults
+	config.set(section_name, 'tracking_image', 'email_logo_banner.gif')
+
 	king_phisher_server = build_server_from_config(config, 'server', ServerClass = KingPhisherServer, HandlerClass = KingPhisherRequestHandler)
 	king_phisher_server.http_server.config = SectionConfigParser('server', config)
 	return king_phisher_server
@@ -63,7 +66,10 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self.database_lock = threading.RLock()
 		self.config = self.server.config
 		self.handler_map['^kpdd$'] = self.handle_deaddrop_visit
-		self.handler_map['^email_logo_banner.gif$'] = self.handle_email_opened
+
+		tracking_image = self.config.get('tracking_image')
+		tracking_image = tracking_image.replace('.', '\\.')
+		self.handler_map['^' + tracking_image + '$'] = self.handle_email_opened
 
 	def do_GET(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
@@ -181,7 +187,6 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		return
 
 	def handle_email_opened(self, query):
-		# Buffer Size: 125 Bytes
 		# Buffer Size:  49 Bytes
 		img_data  = '47494638396101000100910000000000ffffffffffff00000021f90401000002'
 		img_data += '002c00000000010001000002025401003b'

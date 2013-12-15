@@ -315,6 +315,7 @@ class KingPhisherClient(Gtk.Window):
 	def client_initialize(self):
 		if not self.server_connect():
 			return False
+		self.load_server_config()
 		campaign_id = self.config.get('campaign_id')
 		if campaign_id == None:
 			if not self.show_campaign_selection():
@@ -359,8 +360,6 @@ class KingPhisherClient(Gtk.Window):
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
 			try:
 				assert(self.rpc('ping'))
-				self.server_local_port = local_port
-				return True
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
 					utilities.show_dialog_error('Invalid Credentials', self)
@@ -368,7 +367,9 @@ class KingPhisherClient(Gtk.Window):
 					self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
 			except:
 				self.logger.warning('failed to connect to the remote rpc server')
-				pass
+			self.logger.info('successfully connected to the server')
+			self.server_local_port = local_port
+			return True
 
 	def server_disconnect(self):
 		self.ssh_forwarder.stop()
@@ -382,10 +383,16 @@ class KingPhisherClient(Gtk.Window):
 		else:
 			self.config = json.load(open(config_file, 'rb'))
 
+	def load_server_config(self):
+		server_config = { }
+		server_config['tracking_image'] = self.rpc('config/get', 'tracking_image')
+		self.config['server_config'] = server_config
+		return
+
 	def save_config(self):
 		config = copy.copy(self.config)
 		for key in self.config.keys():
-			if 'password' in key:
+			if 'password' in key or key == 'server_config':
 				del config[key]
 		config_file = os.path.expanduser(self.config_file)
 		config_file_h = open(config_file, 'wb')

@@ -65,7 +65,8 @@ def format_message(template, config, first_name= None, last_name = None, uid = N
 
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urlparse.urlparse(webserver_url)
-	tracking_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, 'email_logo_banner.gif', '', 'id=' + uid, ''))
+	tracking_image = config['server_config']['tracking_image']
+	tracking_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, tracking_image, '', 'id=' + uid, ''))
 	webserver_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
 	template_vars['webserver_url'] = webserver_url
 	template_vars['tracking_dot_url'] = tracking_url
