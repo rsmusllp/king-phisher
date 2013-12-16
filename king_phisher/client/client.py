@@ -376,6 +376,7 @@ class KingPhisherClient(Gtk.Window):
 		return
 
 	def load_config(self):
+		self.logger.info('loading the config from disk')
 		config_file = os.path.expanduser(self.config_file)
 		if not os.path.isfile(config_file):
 			self.config = {}
@@ -390,6 +391,7 @@ class KingPhisherClient(Gtk.Window):
 		return
 
 	def save_config(self):
+		self.logger.info('writing the config to disk')
 		config = copy.copy(self.config)
 		for key in self.config.keys():
 			if 'password' in key or key == 'server_config':

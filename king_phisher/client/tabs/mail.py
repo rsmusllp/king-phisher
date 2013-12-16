@@ -87,6 +87,7 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 			return
 		if self.sender_thread:
 			return
+		self.parent.save_config()
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
