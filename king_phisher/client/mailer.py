@@ -116,13 +116,20 @@ class MailSenderThread(threading.Thread):
 
 	def server_smtp_disconnect(self):
 		if self.smtp_connection:
-			self.smtp_connection.quit()
+			try:
+				self.smtp_connection.quit()
+			except smtplib.SMTPServerDisconnected:
+				pass
 			self.smtp_connection = None
 			self.tab.notify_status('Disconnected From SMTP Server\n')
 
 	def server_smtp_reconnect(self):
 		if self.smtp_connection:
-			self.smtp_connection.quit()
+			try:
+				self.smtp_connection.quit()
+			except smtplib.SMTPServerDisconnected:
+				pass
+			self.smtp_connection = None
 		while not self.server_smtp_connect():
 			self.tab.notify_status('Failed To Reconnect To The SMTP Server\n')
 			self.tab.pause_button.set_property('active', True)
