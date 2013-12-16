@@ -126,7 +126,7 @@ class MailSenderThread(threading.Thread):
 		while not self.server_smtp_connect():
 			self.tab.notify_status('Failed To Reconnect To The SMTP Server\n')
 			self.tab.pause_button.set_property('active', True)
-			if not process_pause():
+			if not self.process_pause():
 				return False
 		return True
 
@@ -225,7 +225,7 @@ class MailSenderThread(threading.Thread):
 			if not message_sent:
 				self.server_smtp_disconnect()
 				self.tab.pause_button.set_property('active', True)
-				if not process_pause():
+				if not self.process_pause():
 					return False
 				self.server_smtp_reconnect()
 		return True
