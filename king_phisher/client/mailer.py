@@ -50,9 +50,9 @@ from king_phisher.client.utilities import server_parse
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
 
-def format_message(template, config, first_name= None, last_name = None, uid = None):
-	first_name = (first_name or 'Alice')
-	last_name = (last_name or 'Liddle')
+def format_message(template, config, first_name = None, last_name = None, uid = None):
+	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
+	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
 	uid = (uid or make_uid())
 
 	template = string.Template(template)
