@@ -1,7 +1,7 @@
 #!/usr/bin/python -B
 # -*- coding: utf-8 -*-
 #
-#  KingPhisherServer
+#  KingPhisherSMTPD
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -31,27 +31,17 @@
 #
 
 import argparse
-import ConfigParser
 import logging
 import os
-import pwd
-import threading
 
-from king_phisher.server import server
-from king_phisher.server import database
-
-try:
-	import msgpack
-	has_msgpack = True
-except ImportError:
-	has_msgpack = False
+from king_phisher import smtp_server
 
 def main():
-	parser = argparse.ArgumentParser(description = 'King Phisher Server', conflict_handler = 'resolve')
-	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + server.__version__)
+	parser = argparse.ArgumentParser(description = 'King Phisher SMTP Debug Server', conflict_handler = 'resolve')
+	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + smtp_server.__version__)
 	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
 	parser.add_argument('-f', '--foreground', dest = 'foreground', action = 'store_true', default = False, help = 'run in forground (do not fork)')
-	parser.add_argument('config_file', action = 'store', type = argparse.FileType('r'), help = 'configuration file to use')
+	parser.add_argument('-p', '--port', dest = 'port', type = int, default = 2525, help = 'port to listen on')
 	arguments = parser.parse_args()
 
 	logging.getLogger('').setLevel(logging.DEBUG)
@@ -59,46 +49,13 @@ def main():
 	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
 	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
 	logging.getLogger('').addHandler(console_log_handler)
-	config_file = arguments.config_file
 	del parser
-
-	if os.getuid():
-		print('[-] This must be executed as root')
-		print('[-] Configure the setuid_username option in the config file to drop privileges')
-		return
-
-	if not has_msgpack:
-		print('[-] This server requires the Python msgpack module to be installed')
-		print('[-] Please install it from http://msgpack.org/ or your package manager')
-		return
-
-	config = ConfigParser.ConfigParser()
-	config.readfp(config_file)
 
 	if (not arguments.foreground) and os.fork():
 		return
 
-	king_phisher_server = server.build_king_phisher_server(config, 'server')
-	database_file = config.get('server', 'database')
-	if database_file != ':memory:' and not os.path.exists(database_file):
-		database.create_database(database_file)
-	king_phisher_server.load_database(database_file)
-
-	server_pid = os.getpid()
-	king_phisher_server.logger.info('server running in process: ' + str(server_pid))
-
-	if config.has_option('server', 'pid_file'):
-		pid_file = open(config.get('server', 'pid_file'), 'w')
-		pid_file.write(str(server_pid))
-		pid_file.close()
-	if config.has_option('server', 'setuid_username'):
-		setuid_username = config.get('server', 'setuid_username')
-		user_info = pwd.getpwnam(setuid_username)
-		os.setregid(user_info.pw_gid, user_info.pw_gid)
-		os.setreuid(user_info.pw_uid, user_info.pw_uid)
-	king_phisher_server.serve_forever(fork = False)
-	king_phisher_server.shutdown()
-	return
+	server = smtp_server.KingPhisherSMTPServer(('localhost', arguments.port), None, debugging = True)
+	server.serve_forever()
 
 if __name__ == '__main__':
 	main()
