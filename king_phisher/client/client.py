@@ -143,14 +143,15 @@ class KingPhisherClientCampaignSelectionDialog(utilities.UtilityGladeGObject):
 	def interact(self):
 		self.dialog.show_all()
 		response = self.dialog.run()
-		if response != Gtk.ResponseType.CANCEL:
+		while response != Gtk.ResponseType.CANCEL:
 			treeview = self.gobjects['treeview_campaigns']
 			selection = treeview.get_selection()
 			(model, tree_iter) = selection.get_selected()
-			if not tree_iter:
-				utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one')
-				self.dialog.destroy()
-				return Gtk.ResponseType.CANCEL
+			if tree_iter:
+				break
+			utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one')
+			response = self.dialog.run()
+		if response != Gtk.ResponseType.CANCEL:
 			campaign_id = model.get_value(tree_iter, 0)
 			self.config['campaign_id'] = campaign_id
 			campaign_name = model.get_value(tree_iter, 1)

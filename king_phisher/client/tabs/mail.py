@@ -165,12 +165,14 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		self.sender_thread = None
 
 	def notify_stopped(self):
+		Gdk.threads_enter()
 		self.progressbar.set_fraction(1)
-		self.sender_thread = None
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
 		self.gobjects['togglebutton_mail_sender_pause'].set_property('active', False)
 		self.gobjects['togglebutton_mail_sender_pause'].set_sensitive(False)
 		self.gobjects['button_mail_sender_start'].set_sensitive(True)
+		Gdk.threads_leave()
+		self.sender_thread = None
 
 class MailSenderPreviewTab(object):
 	def __init__(self, config, parent):
