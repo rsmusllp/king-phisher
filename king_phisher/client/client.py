@@ -37,8 +37,9 @@ import os
 import random
 import time
 
-from gi.repository import Gtk
 from AdvancedHTTPServer import AdvancedHTTPServerRPCError
+from gi.repository import Gtk
+import paramiko
 
 from king_phisher.client import export
 from king_phisher.client.login import KingPhisherClientLoginDialog
@@ -343,45 +344,51 @@ class KingPhisherClient(Gtk.Window):
 	def server_connect(self):
 		import socket
 		while True:
+			if self.ssh_forwarder:
+				self.ssh_forwarder.stop()
+				self.ssh_forwarder = None
+				self.logger.info('stopped ssh port forwarding')
 			login_dialog = KingPhisherClientLoginDialog(self.config, self)
 			login_dialog.objects_load_from_config()
 			response = login_dialog.interact()
 			if response == Gtk.ResponseType.CANCEL:
-				if self.ssh_forwarder:
-					self.ssh_forwarder.stop()
 				return False
 			server = utilities.server_parse(self.config['server'], 22)
 			username = self.config['server_username']
 			password = self.config['server_password']
 			server_remote_port = self.config.get('server_remote_port', 80)
 			local_port = random.randint(2000, 6000)
-			if not self.ssh_forwarder:
-				try:
-					self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port))
-					self.ssh_forwarder.start()
-					time.sleep(0.5)
-					self.logger.info('started ssh port forwarding')
-				except:
-					self.logger.warning('failed to connect to the remote ssh server')
-					utilities.show_dialog_error('Failed To Connect To The SSH Service', self)
-					continue
+			try:
+				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port))
+				self.ssh_forwarder.start()
+				time.sleep(0.5)
+				self.logger.info('started ssh port forwarding')
+			except paramiko.AuthenticationException:
+				self.logger.warning('failed to authenticate to the remote ssh server')
+				utilities.show_dialog_error('Invalid Credentials', self)
+				continue
+			except:
+				self.logger.warning('failed to connect to the remote ssh server')
+				utilities.show_dialog_error('Failed To Connect To The SSH Service', self)
+				continue
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
 			try:
 				assert(self.rpc('ping'))
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
-					self.logger.warning('remote server responded that the credentials were invalid')
+					self.logger.warning('failed to authenticate to the remote king phisher service')
 					utilities.show_dialog_error('Invalid Credentials', self)
 				else:
 					self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
 				continue
 			except:
-				self.logger.warning('failed to connect to the remote rpc server')
+				self.logger.warning('failed to connect to the remote rpc service')
 				utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self)
 				continue
-			self.logger.info('successfully connected to the server')
-			self.server_local_port = local_port
-			return True
+			break
+		self.logger.info('successfully connected to the server')
+		self.server_local_port = local_port
+		return True
 
 	def server_disconnect(self):
 		if self.ssh_forwarder:
