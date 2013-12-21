@@ -40,7 +40,6 @@ from king_phisher.client.mailer import format_message, MailSenderThread
 from king_phisher.client import utilities
 
 from gi.repository import Gtk
-from gi.repository import Gdk
 from gi.repository import WebKit
 
 class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
@@ -91,7 +90,7 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
-		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self)
+		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self, self.parent.rpc)
 
 		# Connect to the SMTP server
 		if self.config['smtp_ssh_enable']:
@@ -141,19 +140,12 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 
 	def text_insert(self, message):
 		self.textbuffer.insert(self.textbuffer_iter, message)
-		utilities.gtk_sync()
 
 	def notify_status(self, message):
-		Gdk.threads_enter()
 		self.text_insert(message)
-		Gdk.threads_leave()
 
-	def notify_sent(self, uid, email_target, emails_done, emails_total):
-		Gdk.threads_enter()
+	def notify_sent(self, emails_done, emails_total):
 		self.progressbar.set_fraction(float(emails_done) / float(emails_total))
-		Gdk.threads_leave()
-		campaign_id = self.config['campaign_id']
-		self.parent.rpc('campaign/message/new', campaign_id, uid, email_target)
 
 	def sender_start_failure(self, message = None, text = None):
 		if text:
@@ -165,13 +157,11 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		self.sender_thread = None
 
 	def notify_stopped(self):
-		Gdk.threads_enter()
 		self.progressbar.set_fraction(1)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
 		self.gobjects['togglebutton_mail_sender_pause'].set_property('active', False)
 		self.gobjects['togglebutton_mail_sender_pause'].set_sensitive(False)
 		self.gobjects['button_mail_sender_start'].set_sensitive(True)
-		Gdk.threads_leave()
 		self.sender_thread = None
 
 class MailSenderPreviewTab(object):

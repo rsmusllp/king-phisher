@@ -234,6 +234,7 @@ class KingPhisherClient(Gtk.Window):
 		self.notebook.show()
 		self.show()
 		self.rpc = None
+		self.ssh_forwarder = None
 
 	def _add_menu_actions(self, action_group):
 		# File Menu Actions
@@ -311,7 +312,11 @@ class KingPhisherClient(Gtk.Window):
 			notebook.emit('switch-page', notebook.get_nth_page(index), index)
 
 	def signal_window_destroy(self, window):
-		self.client_quit()
+		utilities.gtk_sync()
+		self.server_disconnect()
+		self.save_config()
+		Gtk.main_quit()
+		return
 
 	def client_initialize(self):
 		if not self.server_connect():
@@ -331,10 +336,8 @@ class KingPhisherClient(Gtk.Window):
 		self.config['campaign_name'] = campaign_info['name']
 		return True
 
-	def client_quit(self):
-		self.server_disconnect()
-		self.save_config()
-		Gtk.main_quit()
+	def client_quit(self, destroy = True):
+		self.destroy()
 		return
 
 	def server_connect(self):
@@ -344,36 +347,47 @@ class KingPhisherClient(Gtk.Window):
 			login_dialog.objects_load_from_config()
 			response = login_dialog.interact()
 			if response == Gtk.ResponseType.CANCEL:
+				if self.ssh_forwarder:
+					self.ssh_forwarder.stop()
 				return False
 			server = utilities.server_parse(self.config['server'], 22)
 			username = self.config['server_username']
 			password = self.config['server_password']
 			server_remote_port = self.config.get('server_remote_port', 80)
 			local_port = random.randint(2000, 6000)
-			try:
-				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port))
-				self.ssh_forwarder.start()
-				time.sleep(0.5)
-				self.logger.info('started ssh port forwarding')
-			except:
-				self.logger.warning('failed to connect to the remote ssh server')
-				continue
+			if not self.ssh_forwarder:
+				try:
+					self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port))
+					self.ssh_forwarder.start()
+					time.sleep(0.5)
+					self.logger.info('started ssh port forwarding')
+				except:
+					self.logger.warning('failed to connect to the remote ssh server')
+					utilities.show_dialog_error('Failed To Connect To The SSH Service', self)
+					continue
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
 			try:
 				assert(self.rpc('ping'))
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
+					self.logger.warning('remote server responded that the credentials were invalid')
 					utilities.show_dialog_error('Invalid Credentials', self)
 				else:
 					self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
+				continue
 			except:
 				self.logger.warning('failed to connect to the remote rpc server')
+				utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self)
+				continue
 			self.logger.info('successfully connected to the server')
 			self.server_local_port = local_port
 			return True
 
 	def server_disconnect(self):
-		self.ssh_forwarder.stop()
+		if self.ssh_forwarder:
+			self.ssh_forwarder.stop()
+			self.ssh_forwarder = None
+			self.logger.info('stopped ssh port forwarding')
 		return
 
 	def load_config(self):
@@ -460,6 +474,10 @@ class KingPhisherClient(Gtk.Window):
 	def stop_remote_service(self):
 		if not utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self, 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
 			return
+		self.client_quit()
+		return
 		self.rpc('shutdown')
+		self.logger.info('the remote king phisher service has been stopped')
 		utilities.show_dialog_error('The Remote Service Has Been Stopped', self, 'Now exiting')
 		self.client_quit()
+		return

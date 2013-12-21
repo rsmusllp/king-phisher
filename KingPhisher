@@ -33,9 +33,9 @@
 import argparse
 import logging
 import os
+import sys
 
-from gi.repository import Gdk
-from gi.repository import GLib
+from gi.repository import GObject
 from gi.repository import Gtk
 
 from king_phisher.client import client
@@ -63,15 +63,13 @@ def main():
 		return 0
 	if 'SSH_AUTH_SOCK' in os.environ:
 		del os.environ['SSH_AUTH_SOCK']
+
+	Gtk.init(sys.argv)
 	main_window = client.KingPhisherClient(config_file = config_file)
 	main_window.set_position(Gtk.WindowPosition.CENTER)
 	if main_window.client_initialize():
-		GLib.threads_init()
-		Gdk.threads_init()
-		Gdk.threads_enter()
+		GObject.threads_init()
 		Gtk.main()
-		Gdk.threads_leave()
-	main_window.save_config()
 
 if __name__ == '__main__':
 	main()

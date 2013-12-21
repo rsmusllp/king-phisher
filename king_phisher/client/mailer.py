@@ -48,6 +48,8 @@ from email.MIMEText import MIMEText
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.client.utilities import server_parse
 
+from gi.repository import GLib
+
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
 
 def format_message(template, config, first_name = None, last_name = None, uid = None):
@@ -74,12 +76,13 @@ def format_message(template, config, first_name = None, last_name = None, uid = 
 	return template.safe_substitute(**template_vars)
 
 class MailSenderThread(threading.Thread):
-	def __init__(self, config, target_file, tab):
+	def __init__(self, config, target_file, tab, rpc):
 		super(MailSenderThread, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		self.config = config
 		self.target_file = target_file
 		self.tab = tab
+		self.rpc = rpc
 		self.ssh_forwarder = None
 		self.smtp_connection = None
 		self.smtp_server = server_parse(self.config['smtp_server'], 25)
@@ -121,7 +124,7 @@ class MailSenderThread(threading.Thread):
 			except smtplib.SMTPServerDisconnected:
 				pass
 			self.smtp_connection = None
-			self.tab.notify_status('Disconnected From SMTP Server\n')
+			GLib.idle_add(self.tab.notify_status, 'Disconnected From SMTP Server\n')
 
 	def server_smtp_reconnect(self):
 		if self.smtp_connection:
@@ -131,9 +134,8 @@ class MailSenderThread(threading.Thread):
 				pass
 			self.smtp_connection = None
 		while not self.server_smtp_connect():
-			self.tab.notify_status('Failed To Reconnect To The SMTP Server\n')
-			self.tab.pause_button.set_property('active', True)
-			if not self.process_pause():
+			GLib.idle_add(self.tab.notify_status, 'Failed To Reconnect To The SMTP Server\n')
+			if not self.process_pause(True):
 				return False
 		return True
 
@@ -160,36 +162,44 @@ class MailSenderThread(threading.Thread):
 			if emails_done > 0 and (emails_done % max_messages_per_connection):
 				self.server_smtp_reconnect()
 			if self.should_exit.is_set():
-				self.tab.notify_status('Sending Emails Cancelled\n')
+				GLib.idle_add(self.tab.notify_status, 'Sending Emails Cancelled\n')
 				break
 			if not self.process_pause():
 				break
 			uid = make_uid()
 			emails_done += 1
-			self.tab.notify_status("Sending Email {0} of {1} To {2} With UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
+			GLib.idle_add(self.tab.notify_status, "Sending Email {0} of {1} To {2} With UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
 			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
 			if not self.try_send_email(target['email_address'], msg):
 				break
-			self.tab.notify_sent(uid, target['email_address'], emails_done, emails_total)
+			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
+			campaign_id = self.config['campaign_id']
+			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'])
 		target_file_h.close()
-		self.tab.notify_status("Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
+		GLib.idle_add(self.tab.notify_status, "Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
 		self.server_smtp_disconnect()
 		if self.ssh_forwarder:
 			self.ssh_forwarder.stop()
 			self.ssh_forwarder = None
-			self.tab.notify_status('Disconnected From SSH Server\n')
-		self.tab.notify_stopped()
+			GLib.idle_add(self.tab.notify_status, 'Disconnected From SSH Server\n')
+		GLib.idle_add(self.tab.notify_stopped)
 		return
 
-	def process_pause(self):
+	def process_pause(self, set_pause = False):
+		if set_pause:
+			gsource_completed = threading.Event()
+			GLib.idle_add(lambda: self.tab.pause_button.set_property('active', True) and gsource_completed.set())
+			print('Waiting on gsource_completed...')
+			gsource_completed.wait()
+			print('Gsource completed done, continuing')
 		if self.paused.is_set():
-			self.tab.notify_status('Paused Sending Emails, Waiting To Resume\n')
+			GLib.idle_add(self.tab.notify_status, 'Paused Sending Emails, Waiting To Resume\n')
 			self.running.wait()
 			self.paused.clear()
 			if self.should_exit.is_set():
-				self.tab.notify_status('Sending Emails Cancelled\n')
+				GLib.idle_add(self.tab.notify_status, 'Sending Emails Cancelled\n')
 				return False
-			self.tab.notify_status('Resuming Sending Emails\n')
+			GLib.idle_add(self.tab.notify_status, 'Resuming Sending Emails\n')
 		return True
 
 	def create_email(self, first_name, last_name, target_email, uid):
@@ -227,12 +237,11 @@ class MailSenderThread(threading.Thread):
 					message_sent = True
 					break
 				except:
-					self.tab.notify_status('Failed To Send Message\n')
+					GLib.idle_add(self.tab.notify_status, 'Failed To Send Message\n')
 					time.sleep(1)
 			if not message_sent:
 				self.server_smtp_disconnect()
-				self.tab.pause_button.set_property('active', True)
-				if not self.process_pause():
+				if not self.process_pause(True):
 					return False
 				self.server_smtp_reconnect()
 		return True
