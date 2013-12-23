@@ -33,11 +33,13 @@
 import json
 import os
 import sys
+import time
 
 import pam
 
 class ForkedAuthenticator(object):
-	def __init__(self):
+	def __init__(self, cache_timeout = 600):
+		self.cache_timeout = cache_timeout
 		self.parent_rfile, self.child_wfile = os.pipe()
 		self.child_rfile, self.parent_wfile = os.pipe()
 		self.child_pid = os.fork()
@@ -54,6 +56,7 @@ class ForkedAuthenticator(object):
 			self.rfile.close()
 			self.wfile.close()
 			sys.exit(0)
+		self.cache = {}
 		return
 
 	def send(self, request):
@@ -78,13 +81,18 @@ class ForkedAuthenticator(object):
 			self.send(result)
 
 	def authenticate(self, username, password):
-		request = {}
-		request['action'] = 'authenticate'
-		request['username'] = username
-		request['password'] = password
-		self.send(request)
-		result = self.recv()
-		return result['result']
+		cached_password, timeout = self.cache.get(username, (None, 0))
+		if timeout < time.time():
+			request = {}
+			request['action'] = 'authenticate'
+			request['username'] = username
+			request['password'] = password
+			self.send(request)
+			result = self.recv()
+			if result['result']:
+				self.cache[username] = (password, time.time() + self.cache_timeout)
+			return result['result']
+		return (cached_password == password)
 
 	def stop(self):
 		request = {}
