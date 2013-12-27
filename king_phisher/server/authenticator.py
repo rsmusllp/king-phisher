@@ -30,12 +30,18 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import hashlib
 import json
 import os
+import random
+import string
 import sys
 import time
 
 import pam
+
+make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for x in range(random.randint(5, 8)))
+make_hash = lambda pw: hashlib.sha512(pw).digest()
 
 class ForkedAuthenticator(object):
 	def __init__(self, cache_timeout = 600):
@@ -56,6 +62,7 @@ class ForkedAuthenticator(object):
 			self.rfile.close()
 			self.wfile.close()
 			sys.exit(0)
+		self.cache_salt = make_salt()
 		self.cache = {}
 		return
 
@@ -81,7 +88,8 @@ class ForkedAuthenticator(object):
 			self.send(result)
 
 	def authenticate(self, username, password):
-		cached_password, timeout = self.cache.get(username, (None, 0))
+		pw_hash = make_hash(self.cache_salt + password)
+		cached_hash, timeout = self.cache.get(username, (None, 0))
 		if timeout < time.time():
 			request = {}
 			request['action'] = 'authenticate'
@@ -90,9 +98,9 @@ class ForkedAuthenticator(object):
 			self.send(request)
 			result = self.recv()
 			if result['result']:
-				self.cache[username] = (password, time.time() + self.cache_timeout)
+				self.cache[username] = (pw_hash, time.time() + self.cache_timeout)
 			return result['result']
-		return (cached_password == password)
+		return (cached_hash == pw_hash)
 
 	def stop(self):
 		request = {}
