@@ -67,6 +67,8 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		self.last_load_time = float('-inf')
 		self.row_loader_thread = None
 		self.row_loader_thread_lock = threading.Lock()
+		self.is_destroyed = threading.Event()
+		getattr(self, self.top_gobject).connect('destroy', self.signal_destroy)
 
 	def load_campaign_information(self, force = False):
 		if not force and ((time.time() - self.last_load_time) < 180):
@@ -96,6 +98,8 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 			row_data = self.format_row_data(row_data)
 			row_data = map(lambda x: '' if x == None else str(x), row_data)
 			row_data.insert(0, str(row_id))
+			if self.is_destroyed.is_set():
+				return
 			utilities.glib_idle_add_wait(store.append, row_data)
 		utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', True))
 
@@ -114,6 +118,11 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 			return
 		destination_file = response['target_filename']
 		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
+
+	def signal_destroy(self, gobject):
+		self.is_destroyed.set()
+		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
+			self.row_loader_thread.join()
 
 	def signal_treeview_button_pressed(self, widget, event):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
