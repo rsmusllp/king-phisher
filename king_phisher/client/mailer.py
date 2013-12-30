@@ -46,7 +46,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
 from king_phisher.ssh_forward import SSHTCPForwarder
-from king_phisher.client.utilities import server_parse
+from king_phisher.client import utilities
 
 from gi.repository import GLib
 
@@ -85,16 +85,16 @@ class MailSenderThread(threading.Thread):
 		self.rpc = rpc
 		self.ssh_forwarder = None
 		self.smtp_connection = None
-		self.smtp_server = server_parse(self.config['smtp_server'], 25)
+		self.smtp_server = utilities.server_parse(self.config['smtp_server'], 25)
 		self.running = threading.Event()
 		self.paused = threading.Event()
 		self.should_exit = threading.Event()
 
 	def server_ssh_connect(self):
-		server = server_parse(self.config['ssh_server'], 22)
+		server = utilities.server_parse(self.config['ssh_server'], 22)
 		username = self.config['ssh_username']
 		password = self.config['ssh_password']
-		remote_server = server_parse(self.config['smtp_server'], 25)
+		remote_server = utilities.server_parse(self.config['smtp_server'], 25)
 		local_port = random.randint(2000, 6000)
 		try:
 			self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server)
@@ -187,9 +187,7 @@ class MailSenderThread(threading.Thread):
 
 	def process_pause(self, set_pause = False):
 		if set_pause:
-			gsource_completed = threading.Event()
-			GLib.idle_add(lambda: self.tab.pause_button.set_property('active', True) or gsource_completed.set())
-			gsource_completed.wait()
+			utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
 		if self.paused.is_set():
 			GLib.idle_add(self.tab.notify_status, 'Paused Sending Emails, Waiting To Resume\n')
 			self.running.wait()

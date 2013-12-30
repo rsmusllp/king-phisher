@@ -32,7 +32,9 @@
 
 import logging
 import os
+import threading
 
+from gi.repository import GLib
 from gi.repository import Gtk
 
 GOBJECT_PROPERTY_MAP = {
@@ -67,6 +69,14 @@ def which(program):
 def gtk_sync():
 	while Gtk.events_pending():
 		Gtk.main_iteration()
+
+def glib_idle_add_wait(function, *args):
+	gsource_completed = threading.Event()
+	def wrapper():
+		function(*args)
+		gsource_completed.set()
+	GLib.idle_add(wrapper)
+	gsource_completed.wait()
 
 def server_parse(server, default_port):
 	server = server.split(':')

@@ -32,6 +32,8 @@
 
 import collections
 import os
+import threading
+import time
 import urlparse
 
 from king_phisher.client.mailer import format_message, MailSenderThread
@@ -39,6 +41,7 @@ from king_phisher.client import export
 from king_phisher.client import utilities
 
 from gi.repository import Gdk
+from gi.repository import GLib
 from gi.repository import Gtk
 
 class CampaignViewGenericTab(utilities.UtilityGladeGObject):
@@ -61,15 +64,48 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
+		self.last_load_time = float('-inf')
+		self.row_loader_thread = None
+		self.row_loader_thread_lock = threading.Lock()
 
-	def load_campaign_information(self):
-		# override me
-		pass
+	def load_campaign_information(self, force = False):
+		if not force and ((time.time() - self.last_load_time) < 180):
+			return
+		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
+			return
+		self.row_loader_thread_lock.acquire()
+		treeview = self.gobjects['treeview_campaign']
+		store = treeview.get_model()
+		if store == None:
+			store_columns = [str]
+			map(lambda x: store_columns.append(str), range(len(self.view_columns)))
+			store = Gtk.ListStore(*store_columns)
+			treeview.set_model(store)
+		else:
+			store.clear()
+		self.last_load_time = time.time()
+		self.row_loader_thread = threading.Thread(target = self.row_loader_thread_routine, args = (store,))
+		self.row_loader_thread.start()
+		self.row_loader_thread_lock.release()
+		return
+
+	def row_loader_thread_routine(self, store):
+		utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
+		for row_data in self.parent.rpc.remote_table('campaign/' + self.remote_table_name, self.config['campaign_id']):
+			row_id = row_data['id']
+			row_data = self.format_row_data(row_data)
+			row_data = map(lambda x: '' if x == None else str(x), row_data)
+			row_data.insert(0, str(row_id))
+			utilities.glib_idle_add_wait(store.append, row_data)
+		utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', True))
 
 	def signal_button_clicked_refresh(self, button):
-		self.load_campaign_information()
+		self.load_campaign_information(force = True)
 
 	def signal_button_clicked_export(self, button):
+		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
+			utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
+			return
 		dialog = utilities.UtilityFileChooser('Export Data', self.parent)
 		file_name = self.config['campaign_name'] + '.csv'
 		response = dialog.run_quick_save(file_name)
@@ -95,9 +131,12 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		if event.type != Gdk.EventType.KEY_PRESS:
 			return
 		if event.get_keyval()[1] == Gdk.KEY_F5:
-			self.load_campaign_information()
+			self.load_campaign_information(force = True)
 
 	def signal_treeview_popup_menu_delete(self, action):
+		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
+			utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
+			return
 		treeview = self.gobjects['treeview_campaign']
 		selection = treeview.get_selection()
 		(model, tree_iter) = selection.get_selected()
@@ -122,19 +161,11 @@ class CampaignViewDeaddropTab(CampaignViewGenericTab):
 		7:'First Hit',
 		8:'Last Hit'
 	}
-	def load_campaign_information(self):
-		treeview = self.gobjects['treeview_campaign']
-		store = treeview.get_model()
-		if store == None:
-			store = Gtk.ListStore(str, str, str, str, str, str, str, str, str)
-			treeview.set_model(store)
-		else:
-			store.clear()
-		for connection in self.parent.rpc.remote_table('campaign/deaddrop_connections', self.config['campaign_id']):
-			deploy_id = connection['deployment_id']
-			deploy_details = self.parent.rpc.remote_table_row('deaddrop_deployments', deploy_id, cache = True)
-			deploy_dest = deploy_details['destination']
-			store.append([str(connection['id']), deploy_dest, str(connection['visit_count']), connection['visitor_ip'], connection['local_username'], connection['local_hostname'], connection['local_ip_addresses'], connection['first_visit'], connection['last_visit']])
+	def format_row_data(self, connection):
+		deploy_id = connection['deployment_id']
+		deploy_details = self.parent.rpc.remote_table_row('deaddrop_deployments', deploy_id, cache = True)
+		deploy_dest = deploy_details['destination']
+		return [deploy_dest, connection['visit_count'], connection['visitor_ip'], connection['local_username'], connection['local_hostname'], connection['local_ip_addresses'], connection['first_visit'], connection['last_visit']]
 
 class CampaignViewCredentialsTab(CampaignViewGenericTab):
 	remote_table_name = 'credentials'
@@ -145,19 +176,11 @@ class CampaignViewCredentialsTab(CampaignViewGenericTab):
 		3:'Password',
 		4:'Submitted'
 	}
-	def load_campaign_information(self):
-		treeview = self.gobjects['treeview_campaign']
-		store = treeview.get_model()
-		if store == None:
-			store = Gtk.ListStore(str, str, str, str, str)
-			treeview.set_model(store)
-		else:
-			store.clear()
-		for credential in self.parent.rpc.remote_table('campaign/credentials', self.config['campaign_id']):
-			msg_id = credential['message_id']
-			msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache = True)
-			credential_email = msg_details['target_email']
-			store.append([str(credential['id']), credential_email, credential['username'], credential['password'], credential['submitted']])
+	def format_row_data(self, credential):
+		msg_id = credential['message_id']
+		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache = True)
+		credential_email = msg_details['target_email']
+		return [credential_email, credential['username'], credential['password'], credential['submitted']]
 
 class CampaignViewVisitsTab(CampaignViewGenericTab):
 	remote_table_name = 'visits'
@@ -170,19 +193,11 @@ class CampaignViewVisitsTab(CampaignViewGenericTab):
 		5:'First Visit',
 		6:'Last Visit'
 	}
-	def load_campaign_information(self):
-		treeview = self.gobjects['treeview_campaign']
-		store = treeview.get_model()
-		if store == None:
-			store = Gtk.ListStore(str, str, str, str, str, str, str)
-			treeview.set_model(store)
-		else:
-			store.clear()
-		for visit in self.parent.rpc.remote_table('campaign/visits', self.config['campaign_id']):
-			msg_id = visit['message_id']
-			msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache = True)
-			visitor_email = msg_details['target_email']
-			store.append([visit['id'], visitor_email, visit['visitor_ip'], visit['visitor_details'], str(visit['visit_count']), visit['first_visit'], visit['last_visit']])
+	def format_row_data(self, visit):
+		msg_id = visit['message_id']
+		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache = True)
+		visitor_email = msg_details['target_email']
+		return [visitor_email, visit['visitor_ip'], visit['visitor_details'], visit['visit_count'], visit['first_visit'], visit['last_visit']]
 
 class CampaignViewMessagesTab(CampaignViewGenericTab):
 	remote_table_name = 'messages'
@@ -192,16 +207,8 @@ class CampaignViewMessagesTab(CampaignViewGenericTab):
 		2:'Sent',
 		3:'Opened'
 	}
-	def load_campaign_information(self):
-		treeview = self.gobjects['treeview_campaign']
-		store = treeview.get_model()
-		if store == None:
-			store = Gtk.ListStore(str, str, str, str)
-			treeview.set_model(store)
-		else:
-			store.clear()
-		for message in self.parent.rpc.remote_table('campaign/messages', self.config['campaign_id']):
-			store.append([message['id'], message['target_email'], message['sent'], message['opened']])
+	def format_row_data(self, message):
+		return [message['target_email'], message['sent'], message['opened']]
 
 class CampaignViewTab(object):
 	def __init__(self, config, parent):
