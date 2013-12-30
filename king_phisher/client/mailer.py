@@ -188,10 +188,8 @@ class MailSenderThread(threading.Thread):
 	def process_pause(self, set_pause = False):
 		if set_pause:
 			gsource_completed = threading.Event()
-			GLib.idle_add(lambda: self.tab.pause_button.set_property('active', True) and gsource_completed.set())
-			print('Waiting on gsource_completed...')
+			GLib.idle_add(lambda: self.tab.pause_button.set_property('active', True) or gsource_completed.set())
 			gsource_completed.wait()
-			print('Gsource completed done, continuing')
 		if self.paused.is_set():
 			GLib.idle_add(self.tab.notify_status, 'Paused Sending Emails, Waiting To Resume\n')
 			self.running.wait()
