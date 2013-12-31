@@ -206,6 +206,8 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 
 	def handle_visit(self, query, msg_id):
 		with self.get_cursor() as cursor:
+			# set the opened timestamp to the visit time if it's null
+			cursor.execute('UPDATE messages SET opened = CURRENT_TIMESTAMP WHERE id = ? AND opened IS NULL', (msg_id,))
 			cursor.execute('SELECT campaign_id FROM messages WHERE id = ?', (msg_id,))
 			campaign_id = cursor.fetchone()
 			if not campaign_id:
