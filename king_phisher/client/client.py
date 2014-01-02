@@ -465,7 +465,7 @@ class KingPhisherClient(Gtk.Window):
 			'license-type': Gtk.License.BSD,
 			'program-name': 'King Phisher',
 			'version': __version__,
-			'website': 'https://github.com/securestate/kingphisher',
+			'website': 'https://github.com/securestate/king-phisher',
 			'website-label': 'GitHub Home Page',
 			'wrap-license': False,
 		}
