@@ -40,6 +40,8 @@ __version__ = '0.0.1'
 make_uid = lambda s: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
 DATABASE_TABLES = {
+	'users':                ['id', 'phone_carrier', 'phone_number'],
+	'alert_subscriptions':  ['id', 'user_id', 'campaign_id'],
 	'campaigns':            ['id', 'name', 'creator', 'created'],
 	'messages':             ['id', 'campaign_id', 'target_email', 'opened', 'sent'],
 	'visits':               ['id', 'campaign_id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit'],
@@ -53,6 +55,20 @@ def create_database(database_file):
 		os.unlink(database_file)
 	db = sqlite3.connect(database_file, check_same_thread = False)
 	cursor = db.cursor()
+	cursor.execute("""
+	CREATE TABLE users (
+		id TEXT PRIMARY KEY UNIQUE NOT NULL,
+		phone_carrier TEXT,
+		phone_number TEXT
+	)
+	""")
+	cursor.execute("""
+	CREATE TABLE alert_subscriptions (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id TEXT NOT NULL,
+		campaign_id INTEGER
+	)
+	""")
 	cursor.execute("""
 	CREATE TABLE campaigns (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

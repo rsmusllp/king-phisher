@@ -30,21 +30,36 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import contextlib
 import logging
 import os
 import threading
 
 from gi.repository import GLib
+from gi.repository import GObject
 from gi.repository import Gtk
 
 GOBJECT_PROPERTY_MAP = {
 	'entry': 'text',
 	'checkbutton': 'active',
+	'combobox': (
+		lambda c, v: c.set_active_iter(search_list_store(c.get_model(), v)),
+		lambda c: c.get_model().get_value(c.get_active_iter(), 0)
+	),
 	'textview': (
-		lambda t,v: t.get_buffer().set_text(v),
+		lambda t, v: t.get_buffer().set_text(v),
 		lambda t: t.get_buffer().get_text(t.get_buffer().get_start_iter(), t.get_buffer().get_end_iter(), False)
 	)
 }
+
+def get_gobject_value(gobject, gtype = None):
+	gtype = (gtype or gobject.__class__.__name__)
+	gtype = gtype.lower()
+	if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
+		value = GOBJECT_PROPERTY_MAP[gtype][1](gobject)
+	else:
+		value = gobject.get_property(GOBJECT_PROPERTY_MAP[gtype])
+	return value
 
 DEFAULT_GLADE_PATH = '/usr/share:/usr/local/share:data/client:.'
 def which_glade(glade):
@@ -70,6 +85,14 @@ def gtk_sync():
 	while Gtk.events_pending():
 		Gtk.main_iteration()
 
+@contextlib.contextmanager
+def gtk_signal_blocked(gobject, signal_name):
+	signal_id = GObject.signal_lookup(signal_name, gobject.__class__)
+	handler_id = GObject.signal_handler_find(gobject, GObject.SignalMatchType.ID, signal_id, 0, None, 0, 0)
+	GObject.signal_handler_block(gobject, handler_id)
+	yield
+	GObject.signal_handler_unblock(gobject, handler_id)
+
 def glib_idle_add_wait(function, *args):
 	gsource_completed = threading.Event()
 	def wrapper():
@@ -77,6 +100,12 @@ def glib_idle_add_wait(function, *args):
 		gsource_completed.set()
 	GLib.idle_add(wrapper)
 	gsource_completed.wait()
+
+def search_list_store(list_store, value):
+	for row in list_store:
+		if row[0] == value:
+			return row.iter
+	return None
 
 def server_parse(server, default_port):
 	server = server.split(':')
@@ -115,6 +144,7 @@ def show_dialog_yes_no(*args, **kwargs):
 
 class UtilityGladeGObject(object):
 	gobject_ids = [ ]
+	top_level_dependencies = [ ]
 	config_prefix = ''
 	top_gobject = 'gobject'
 	def __init__(self, config, parent):
@@ -123,7 +153,9 @@ class UtilityGladeGObject(object):
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 
 		builder = Gtk.Builder()
-		builder.add_objects_from_file(which_glade(os.environ['GLADE_FILE']), [self.__class__.__name__])
+		self.gtk_builder = builder
+
+		builder.add_objects_from_file(which_glade(os.environ['GLADE_FILE']), self.top_level_dependencies + [self.__class__.__name__])
 		builder.connect_signals(self)
 		gobject = builder.get_object(self.__class__.__name__)
 		if isinstance(gobject, Gtk.Window):
@@ -159,11 +191,7 @@ class UtilityGladeGObject(object):
 			config_name = self.config_prefix + config_name
 			if not gtype in GOBJECT_PROPERTY_MAP:
 				continue
-			if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
-				value = GOBJECT_PROPERTY_MAP[gtype][1](gobject)
-			else:
-				value = gobject.get_property(GOBJECT_PROPERTY_MAP[gtype])
-			self.config[config_name] = value
+			self.config[config_name] = get_gobject_value(gobject, gtype)
 
 class UtilityFileChooser(Gtk.FileChooserDialog):
 	def __init__(self, *args, **kwargs):

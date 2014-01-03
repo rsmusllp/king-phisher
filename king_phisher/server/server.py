@@ -43,6 +43,7 @@ from AdvancedHTTPServer import *
 from AdvancedHTTPServer import build_server_from_config
 from AdvancedHTTPServer import SectionConfigParser
 
+from king_phisher import sms
 from king_phisher import xor
 from king_phisher.server import authenticator
 from king_phisher.server import rpcmixin
@@ -70,6 +71,20 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		tracking_image = self.config.get('tracking_image')
 		tracking_image = tracking_image.replace('.', '\\.')
 		self.handler_map['^' + tracking_image + '$'] = self.handle_email_opened
+
+	def issue_alert(self, alert_text, campaign_id = None):
+		with self.get_cursor() as cursor:
+			if campaign_id:
+				cursor.execute('SELECT user_id FROM alert_subscriptions WHERE campaign_id = ?', (campaign_id,))
+			else:
+				cursor.execute('SELECT id FROM users WHERE phone_number IS NOT NULL AND phone_carrier IS NOT NULL')
+			user_ids = map(lambda user_id: user_id[0], cursor.fetchall())
+		for user_id in user_ids:
+			with self.get_cursor() as cursor:
+				cursor.execute('SELECT phone_number, phone_carrier FROM users WHERE id = ?', (user_id,))
+				number, carrier = cursor.fetchone()
+			self.server.logger.debug("sending alert SMS message to {0} ({1})".format(number, carrier))
+			sms.send_sms(alert_text, number, carrier, 'donotreply@kingphisher.local')
 
 	def do_GET(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
@@ -230,12 +245,21 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				cursor.execute('UPDATE visits SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (visit_id,))
 
 		username = (get_query_parameter('username') or get_query_parameter('user') or get_query_parameter('u'))
-		if not username:
-			return
-		password = (get_query_parameter('password') or get_query_parameter('pass') or get_query_parameter('p'))
-		password = (password or '')
+		if username:
+			password = (get_query_parameter('password') or get_query_parameter('pass') or get_query_parameter('p'))
+			password = (password or '')
+			with self.get_cursor() as cursor:
+				cursor.execute('INSERT INTO credentials (visit_id, message_id, campaign_id, username, password) VALUES (?, ?, ?, ?, ?)', (visit_id, msg_id, campaign_id, username, password))
+
 		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO credentials (visit_id, message_id, campaign_id, username, password) VALUES (?, ?, ?, ?, ?)', (visit_id, msg_id, campaign_id, username, password))
+			cursor.execute('SELECT COUNT(id) FROM visits WHERE campaign_id = ?', (campaign_id,))
+			visits = cursor.fetchone()[0]
+		if (visits in [1, 10, 25]) or ((visits % 50) == 0):
+			with self.get_cursor() as cursor:
+				cursor.execute('SELECT name FROM campaigns WHERE id = ?', (campaign_id,))
+				campaign_name = cursor.fetchone()[0]
+			alert_text = "{0} vists reached for campaign: {1}".format(visits, campaign_name)
+			self.issue_alert(alert_text, campaign_id)
 
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):

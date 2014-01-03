@@ -44,8 +44,12 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		self.rpc_handler_map['/ping'] = self.rpc_ping
 		self.rpc_handler_map['/shutdown'] = self.rpc_shutdown
 
+		self.rpc_handler_map['/client/initialize'] = self.rpc_client_initialize
 		self.rpc_handler_map['/config/get'] = self.rpc_config_get
 
+		self.rpc_handler_map['/campaign/alerts/is_subscribed'] = self.rpc_campaign_is_subscribed
+		self.rpc_handler_map['/campaign/alerts/subscribe'] = self.rpc_campaign_alerts_subscribe
+		self.rpc_handler_map['/campaign/alerts/unsubscribe'] = self.rpc_campaign_alerts_unsubscribe
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
 		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
@@ -53,14 +57,15 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		for table_name in DATABASE_TABLES.keys():
 			self.rpc_handler_map['/' + table_name + '/delete'] = self.rpc_database_delete_row_by_id
 			self.rpc_handler_map['/' + table_name + '/get'] = self.rpc_database_get_row_by_id
+			self.rpc_handler_map['/' + table_name + '/set'] = self.rpc_database_set_row_value
 			self.rpc_handler_map['/' + table_name + '/view'] = self.rpc_database_get_rows
 
 		# Tables with a campaign_id field
-		for table_name in ['messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']:
+		for table_name in map(lambda x: x[0], filter(lambda x: 'campaign_id' in x[1], DATABASE_TABLES.items())):
 			self.rpc_handler_map['/campaign/' + table_name + '/view'] = self.rpc_database_get_rows
 
 		# Tables with a message_id field
-		for table_name in ['visits', 'credentials']:
+		for table_name in map(lambda x: x[0], filter(lambda x: 'message_id' in x[1], DATABASE_TABLES.items())):
 			self.rpc_handler_map['/message/' + table_name + '/view'] = self.rpc_database_get_rows
 
 	@contextlib.contextmanager
@@ -72,6 +77,14 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		self.database_lock.release()
 
 	def rpc_ping(self):
+		return True
+
+	def rpc_client_initialize(self):
+		username = self.basic_auth_user
+		if not username:
+			return True
+		with self.get_cursor() as cursor:
+			cursor.execute('INSERT OR IGNORE INTO users (id) VALUES (?)', (username,))
 		return True
 
 	def rpc_shutdown(self):
@@ -90,6 +103,28 @@ class KingPhisherRequestHandlerRPCMixin(object):
 			cursor.execute('SELECT id FROM campaigns WHERE name = ?', (name,))
 			campaign_id = cursor.fetchone()[0]
 		return campaign_id
+
+	def rpc_campaign_is_subscribed(self, campaign_id):
+		username = self.basic_auth_user
+		with self.get_cursor() as cursor:
+			cursor.execute('SELECT id FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id))
+			if cursor.fetchone():
+				return True
+		return False
+
+	def rpc_campaign_alerts_subscribe(self, campaign_id):
+		username = self.basic_auth_user
+		with self.get_cursor() as cursor:
+			cursor.execute('SELECT id FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id))
+			if cursor.fetchone():
+				return
+			cursor.execute('INSERT INTO alert_subscriptions (user_id, campaign_id) VALUES (?, ?)', (username, campaign_id))
+		return
+
+	def rpc_campaign_alerts_unsubscribe(self, campaign_id):
+		username = self.basic_auth_user
+		with self.get_cursor() as cursor:
+			cursor.execute('DELETE FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id))
 
 	def rpc_campaign_message_new(self, campaign_id, email_id, email_target):
 		with self.get_cursor() as cursor:
@@ -141,3 +176,15 @@ class KingPhisherRequestHandlerRPCMixin(object):
 			if row:
 				row = dict(zip(columns, row))
 		return row
+
+	def rpc_database_set_row_value(self, row_id, keys, values):
+		table = self.path.split('/')[-2]
+		if not isinstance(keys, (list, tuple)):
+			keys = (keys,)
+		if not isinstance(values, (list, tuple)):
+			values = (values,)
+		assert(len(keys) == len(values))
+		with self.get_cursor() as cursor:
+			for key, value in zip(keys, values):
+				assert(key in DATABASE_TABLES[table])
+				cursor.execute('UPDATE ' + table + ' SET ' + key + ' = ? WHERE id = ?', (value, row_id))

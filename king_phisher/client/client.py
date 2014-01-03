@@ -165,6 +165,8 @@ class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 			# Server Tab
 			'entry_server',
 			'entry_server_username',
+			'entry_sms_phone_number',
+			'combobox_sms_carrier',
 			# SMTP Server Tab
 			'entry_smtp_server',
 			'checkbutton_smtp_ssl_enable',
@@ -173,18 +175,52 @@ class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 			'entry_ssh_username'
 	]
 	top_gobject = 'dialog'
+	top_level_dependencies = [
+		'SMSCarriers'
+	]
 	def signal_smtp_ssh_enable(self, cbutton):
 		active = cbutton.get_property('active')
 		self.gobjects['entry_ssh_server'].set_sensitive(active)
 		self.gobjects['entry_ssh_username'].set_sensitive(active)
 
+	def signal_alert_subscribe(self, cbutton):
+		active = cbutton.get_property('active')
+		if active:
+			remote_method = 'campaign/alerts/subscribe'
+		else:
+			remote_method = 'campaign/alerts/unsubscribe'
+		self.parent.rpc(remote_method, self.config['campaign_id'])
+
 	def interact(self):
+		cb_subscribed = self.gtk_builder.get_object('checkbutton_alert_subscribe')
+		with utilities.gtk_signal_blocked(cb_subscribed, 'toggled'):
+			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
+
 		self.dialog.show_all()
 		response = self.dialog.run()
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
+			self.verify_sms_settings()
 		self.dialog.destroy()
 		return response
+
+	def verify_sms_settings(self):
+		phone_number = utilities.get_gobject_value(self.gobjects['entry_sms_phone_number'])
+		phone_number_set = bool(phone_number)
+		sms_carrier_set = bool(self.gobjects['combobox_sms_carrier'].get_active() > 0)
+		if phone_number_set ^ sms_carrier_set:
+			utilities.show_dialog_warning('Missing Information', self.parent, 'Both a phone number and a valid carrier must be specified')
+			if 'sms_phone_number' in self.config:
+				del self.config['sms_phone_number']
+			if 'sms_carrier' in self.config:
+				del self.config['sms_carrier']
+		elif phone_number_set and sms_carrier_set:
+			phone_number = filter(lambda x: x in map(str, range(0, 10)), phone_number)
+			if len(phone_number) != 10:
+				utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must contain exactly 10 digits')
+				return
+			username = self.config['server_username']
+			self.parent.rpc('users/set', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))
 
 # This is the top level class/window for the client side of the king-phisher
 # application
@@ -374,7 +410,7 @@ class KingPhisherClient(Gtk.Window):
 				continue
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
 			try:
-				assert(self.rpc('ping'))
+				assert(self.rpc('client/initialize'))
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
 					self.logger.warning('failed to authenticate to the remote king phisher service')
