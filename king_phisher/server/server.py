@@ -43,6 +43,7 @@ from AdvancedHTTPServer import *
 from AdvancedHTTPServer import build_server_from_config
 from AdvancedHTTPServer import SectionConfigParser
 
+from king_phisher import job
 from king_phisher import sms
 from king_phisher import xor
 from king_phisher.server import authenticator
@@ -259,7 +260,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				cursor.execute('SELECT name FROM campaigns WHERE id = ?', (campaign_id,))
 				campaign_name = cursor.fetchone()[0]
 			alert_text = "{0} vists reached for campaign: {1}".format(visits, campaign_name)
-			self.issue_alert(alert_text, campaign_id)
+			self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):
@@ -270,7 +271,10 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.serve_files_list_directories = False
 		self.serve_robots_txt = True
 		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator()
+		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.http_server.throttle_semaphore = threading.Semaphore()
+		self.http_server.job_manager = job.JobManager()
+		self.http_server.job_manager.start()
 
 	def load_database(self, database_file):
 		if database_file == ':memory:':
@@ -281,6 +285,8 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.database = db
 
 	def shutdown(self, *args, **kwargs):
+		self.logger.warning('processing shutdown request')
 		super(KingPhisherServer, self).shutdown(*args, **kwargs)
 		self.http_server.forked_authenticator.stop()
-
+		self.logger.debug('stopped the forked authenticator process')
+		self.http_server.job_manager.stop()

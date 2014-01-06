@@ -518,8 +518,6 @@ class KingPhisherClient(Gtk.Window):
 	def stop_remote_service(self):
 		if not utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self, 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
 			return
-		self.client_quit()
-		return
 		self.rpc('shutdown')
 		self.logger.info('the remote king phisher service has been stopped')
 		utilities.show_dialog_error('The Remote Service Has Been Stopped', self, 'Now exiting')

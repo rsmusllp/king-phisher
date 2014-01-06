@@ -36,7 +36,7 @@ import threading
 import time
 import urlparse
 
-from king_phisher.client.mailer import format_message, MailSenderThread
+from king_phisher.client.mailer import MailSenderThread
 from king_phisher.client import export
 from king_phisher.client import utilities
 

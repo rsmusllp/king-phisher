@@ -52,9 +52,10 @@ from gi.repository import GLib
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
 
-def format_message(template, config, first_name = None, last_name = None, uid = None):
+def format_message(template, config, first_name = None, last_name = None, uid = None, target_email = None):
 	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
 	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
+	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, (str, unicode)) else target_email)
 	uid = (uid or make_uid())
 
 	template = string.Template(template)
@@ -62,6 +63,7 @@ def format_message(template, config, first_name = None, last_name = None, uid = 
 	template_vars['uid'] = uid
 	template_vars['first_name'] = first_name
 	template_vars['last_name'] = last_name
+	template_vars['email_address'] = target_email
 	template_vars['company_name'] = config.get('mailer.company_name', '')
 	template_vars['rickroll_url'] = 'http://www.youtube.com/watch?v=oHg5SJYRHA0'
 
@@ -212,7 +214,7 @@ class MailSenderThread(threading.Thread):
 		msg_alt = MIMEMultipart('alternative')
 		msg.attach(msg_alt)
 		msg_template = open(self.config['mailer.html_file'], 'r').read()
-		formatted_msg = format_message(msg_template, self.config, first_name = first_name, last_name = last_name, uid = uid)
+		formatted_msg = format_message(msg_template, self.config, first_name = first_name, last_name = last_name, uid = uid, target_email = target_email)
 		msg_body = MIMEText(formatted_msg, "html")
 		msg_alt.attach(msg_body)
 		if self.config.get('mailer.attachment_file'):
