@@ -63,6 +63,7 @@ def treeview_liststore_to_csv(treeview, target_file):
 	target_file_h = open(target_file, 'wb')
 	writer = csv.writer(target_file_h, quoting = csv.QUOTE_ALL)
 	column_names = map(lambda x: x.get_property('title'), treeview.get_columns())
+	column_names.insert(0, 'UID')
 	column_count = len(column_names)
 	writer.writerow(column_names)
 	store = treeview.get_model()
