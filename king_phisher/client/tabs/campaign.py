@@ -70,6 +70,12 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		self.is_destroyed = threading.Event()
 		getattr(self, self.top_gobject).connect('destroy', self.signal_destroy)
 
+		self.popup_menu = Gtk.Menu.new()
+		menu_item = Gtk.MenuItem.new_with_label('Delete')
+		menu_item.connect('activate', self.signal_treeview_popup_menu_delete)
+		self.popup_menu.append(menu_item)
+		self.popup_menu.show_all()
+
 	def load_campaign_information(self, force = False):
 		if not force and ((time.time() - self.last_load_time) < 180):
 			return
@@ -96,6 +102,9 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		for row_data in self.parent.rpc.remote_table('campaign/' + self.remote_table_name, self.config['campaign_id']):
 			row_id = row_data['id']
 			row_data = self.format_row_data(row_data)
+			if row_data == None:
+				self.parent.rpc(self.remote_table_name + '/delete', row_id)
+				continue
 			row_data = map(lambda x: '' if x == None else str(x), row_data)
 			row_data.insert(0, str(row_id))
 			if self.is_destroyed.is_set():
@@ -127,14 +136,9 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 	def signal_treeview_button_pressed(self, widget, event):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
 			return
-		menu = Gtk.Menu.new()
-		menu_item = Gtk.MenuItem.new_with_label('Delete')
-		menu_item.connect('activate', self.signal_treeview_popup_menu_delete)
-		menu.append(menu_item)
-		menu.show_all()
 		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
-		menu.popup(None, None, pos_func, None, event.button, event.time)
-		return
+		self.popup_menu.popup(None, None, pos_func, None, event.button, event.time)
+		return True
 
 	def signal_treeview_key_pressed(self, widget, event):
 		if event.type != Gdk.EventType.KEY_PRESS:
@@ -155,7 +159,7 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		if not utilities.show_dialog_yes_no('Delete This Row?', self.parent, 'This information will be lost'):
 			return
 		self.parent.rpc(self.remote_table_name + '/delete', row_id)
-		self.load_campaign_information()
+		self.load_campaign_information(force = True)
 
 class CampaignViewDeaddropTab(CampaignViewGenericTab):
 	remote_table_name = 'deaddrop_connections'
@@ -173,6 +177,8 @@ class CampaignViewDeaddropTab(CampaignViewGenericTab):
 	def format_row_data(self, connection):
 		deploy_id = connection['deployment_id']
 		deploy_details = self.parent.rpc.remote_table_row('deaddrop_deployments', deploy_id, cache = True)
+		if not deploy_details:
+			return None
 		deploy_dest = deploy_details['destination']
 		return [deploy_dest, connection['visit_count'], connection['visitor_ip'], connection['local_username'], connection['local_hostname'], connection['local_ip_addresses'], connection['first_visit'], connection['last_visit']]
 
@@ -188,6 +194,8 @@ class CampaignViewCredentialsTab(CampaignViewGenericTab):
 	def format_row_data(self, credential):
 		msg_id = credential['message_id']
 		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache = True)
+		if not msg_details:
+			return None
 		credential_email = msg_details['target_email']
 		return [credential_email, credential['username'], credential['password'], credential['submitted']]
 
@@ -205,6 +213,8 @@ class CampaignViewVisitsTab(CampaignViewGenericTab):
 	def format_row_data(self, visit):
 		msg_id = visit['message_id']
 		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache = True)
+		if not msg_details:
+			return None
 		visitor_email = msg_details['target_email']
 		return [visitor_email, visit['visitor_ip'], visit['visitor_details'], visit['visit_count'], visit['first_visit'], visit['last_visit']]
 
