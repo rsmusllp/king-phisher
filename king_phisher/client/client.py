@@ -192,7 +192,7 @@ class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 		self.parent.rpc(remote_method, self.config['campaign_id'])
 
 	def interact(self):
-		cb_subscribed = self.gtk_builder.get_object('checkbutton_alert_subscribe')
+		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
 		with utilities.gtk_signal_blocked(cb_subscribed, 'toggled'):
 			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
 

@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.16.0 on Tue Jan  7 16:55:04 2014 -->
 <interface>
-  <requires lib="gtk+" version="2.24"/>
-  <!-- interface-naming-policy toplevel-contextual -->
-  <object class="GtkVBox" id="CampaignViewCredentialsTab">
+  <!-- interface-requires gtk+ 3.0 -->
+  <object class="GtkBox" id="CampaignViewDeaddropTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="orientation">vertical</property>
     <child>
-      <object class="GtkScrolledWindow" id="scrolledwindow1">
+      <object class="GtkScrolledWindow" id="CampaignViewDeaddropTab.scrolledwindow2">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="hscrollbar_policy">automatic</property>
-        <property name="vscrollbar_policy">automatic</property>
         <child>
-          <object class="GtkTreeView" id="treeview_campaign">
+          <object class="GtkTreeView" id="CampaignViewDeaddropTab.treeview_campaign">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
             <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="CampaignViewDeaddropTab.treeview-selection6"/>
+            </child>
           </object>
         </child>
       </object>
@@ -27,63 +29,11 @@
       </packing>
     </child>
     <child>
-      <object class="GtkHButtonBox" id="hbuttonbox1">
+      <object class="GtkButtonBox" id="CampaignViewDeaddropTab.buttonbox2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="layout_style">end</property>
         <child>
-          <object class="GtkButton" id="button_refresh">
-            <property name="label" translatable="yes">Refresh</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="signal_button_clicked_refresh" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">False</property>
-        <property name="position">1</property>
-      </packing>
-    </child>
-  </object>
-  <object class="GtkVBox" id="CampaignViewDeaddropTab">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <child>
-      <object class="GtkScrolledWindow" id="scrolledwindow1">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="hscrollbar_policy">automatic</property>
-        <property name="vscrollbar_policy">automatic</property>
-        <child>
-          <object class="GtkTreeView" id="treeview_campaign">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
-            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
-          </object>
-        </child>
-      </object>
-      <packing>
-        <property name="expand">True</property>
-        <property name="fill">True</property>
-        <property name="position">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkHButtonBox" id="hbuttonbox1">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="layout_style">edge</property>
-        <child>
-          <object class="GtkButton" id="button_export">
+          <object class="GtkButton" id="CampaignViewDeaddropTab.button_export">
             <property name="label" translatable="yes">Export</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -97,7 +47,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="button_refresh">
+          <object class="GtkButton" id="CampaignViewDeaddropTab.button_refresh">
             <property name="label" translatable="yes">Refresh</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -113,26 +63,28 @@
       </object>
       <packing>
         <property name="expand">False</property>
-        <property name="fill">False</property>
+        <property name="fill">True</property>
         <property name="position">1</property>
       </packing>
     </child>
   </object>
-  <object class="GtkVBox" id="CampaignViewMessagesTab">
+  <object class="GtkBox" id="CampaignViewMessagesTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="orientation">vertical</property>
     <child>
-      <object class="GtkScrolledWindow" id="scrolledwindow1">
+      <object class="GtkScrolledWindow" id="CampaignViewMessagesTab.scrolledwindow3">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="hscrollbar_policy">automatic</property>
-        <property name="vscrollbar_policy">automatic</property>
         <child>
-          <object class="GtkTreeView" id="treeview_campaign">
+          <object class="GtkTreeView" id="CampaignViewMessagesTab.treeview_campaign">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
             <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="CampaignViewMessagesTab.treeview-selection7"/>
+            </child>
           </object>
         </child>
       </object>
@@ -143,12 +95,11 @@
       </packing>
     </child>
     <child>
-      <object class="GtkHButtonBox" id="hbuttonbox1">
+      <object class="GtkButtonBox" id="CampaignViewMessagesTab.buttonbox3">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="layout_style">edge</property>
         <child>
-          <object class="GtkButton" id="button_export">
+          <object class="GtkButton" id="CampaignViewMessagesTab.button_export">
             <property name="label" translatable="yes">Export</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -162,7 +113,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="button_refresh">
+          <object class="GtkButton" id="CampaignViewMessagesTab.button_refresh">
             <property name="label" translatable="yes">Refresh</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -178,42 +129,43 @@
       </object>
       <packing>
         <property name="expand">False</property>
-        <property name="fill">False</property>
+        <property name="fill">True</property>
         <property name="position">1</property>
       </packing>
     </child>
   </object>
-  <object class="GtkVBox" id="CampaignViewVisitsTab">
+  <object class="GtkBox" id="CampaignViewVisitsTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="orientation">vertical</property>
     <child>
-      <object class="GtkScrolledWindow" id="scrolledwindow1">
+      <object class="GtkScrolledWindow" id="CampaignViewVisitsTab.scrolledwindow4">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="hscrollbar_policy">automatic</property>
-        <property name="vscrollbar_policy">automatic</property>
         <child>
-          <object class="GtkTreeView" id="treeview_campaign">
+          <object class="GtkTreeView" id="CampaignViewVisitsTab.treeview_campaign">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
             <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="CampaignViewVisitsTab.treeview-selection3"/>
+            </child>
           </object>
         </child>
       </object>
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="position">0</property>
+        <property name="position">1</property>
       </packing>
     </child>
     <child>
-      <object class="GtkHButtonBox" id="hbuttonbox1">
+      <object class="GtkButtonBox" id="CampaignViewVisitsTab.buttonbox4">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="layout_style">edge</property>
         <child>
-          <object class="GtkButton" id="button_export">
+          <object class="GtkButton" id="CampaignViewVisitsTab.button_export">
             <property name="label" translatable="yes">Export</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -227,7 +179,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="button_refresh">
+          <object class="GtkButton" id="CampaignViewVisitsTab.button_refresh">
             <property name="label" translatable="yes">Refresh</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -243,8 +195,8 @@
       </object>
       <packing>
         <property name="expand">False</property>
-        <property name="fill">False</property>
-        <property name="position">1</property>
+        <property name="fill">True</property>
+        <property name="position">2</property>
       </packing>
     </child>
   </object>
@@ -255,20 +207,22 @@
     <property name="border_width">5</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox4">
+      <object class="GtkBox" id="KingPhisherClientCampaignSelectionDialog.dialog-vbox4">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
         <property name="spacing">5</property>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow1">
+          <object class="GtkScrolledWindow" id="KingPhisherClientCampaignSelectionDialog.scrolledwindow5">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="hscrollbar_policy">automatic</property>
-            <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="GtkTreeView" id="treeview_campaigns">
+              <object class="GtkTreeView" id="KingPhisherClientCampaignSelectionDialog.treeview_campaigns">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="KingPhisherClientCampaignSelectionDialog.treeview-selection5"/>
+                </child>
               </object>
             </child>
           </object>
@@ -279,12 +233,12 @@
           </packing>
         </child>
         <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area4">
+          <object class="GtkButtonBox" id="KingPhisherClientCampaignSelectionDialog.dialog-action_area4">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="button2">
+              <object class="GtkButton" id="KingPhisherClientCampaignSelectionDialog.button_cancel">
                 <property name="label" translatable="yes">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -297,8 +251,9 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="button1">
+              <object class="GtkButton" id="KingPhisherClientCampaignSelectionDialog.button_select">
                 <property name="label" translatable="yes">Select</property>
+                <property name="related_action"/>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -318,19 +273,17 @@
           </packing>
         </child>
         <child>
-          <object class="GtkHBox" id="hbox1">
+          <object class="GtkBox" id="box1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="spacing">5</property>
+            <property name="spacing">3</property>
             <child>
-              <object class="GtkEntry" id="entry_new_campaign_name">
+              <object class="GtkEntry" id="KingPhisherClientCampaignSelectionDialog.entry_new_campaign_name">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">●</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
                 <signal name="activate" handler="signal_entry_new_campaign_name_activate" swapped="no"/>
               </object>
               <packing>
@@ -340,7 +293,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="button_new_campaign">
+              <object class="GtkButton" id="KingPhisherClientCampaignSelectionDialog.button_new_campaign">
                 <property name="label" translatable="yes">New Campaign</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -356,15 +309,15 @@
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="fill">False</property>
+            <property name="fill">True</property>
             <property name="position">2</property>
           </packing>
         </child>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">button2</action-widget>
-      <action-widget response="-10">button1</action-widget>
+      <action-widget response="-6">KingPhisherClientCampaignSelectionDialog.button_cancel</action-widget>
+      <action-widget response="-10">KingPhisherClientCampaignSelectionDialog.button_select</action-widget>
     </action-widgets>
   </object>
   <object class="GtkDialog" id="KingPhisherClientConfigDialog">
@@ -376,17 +329,18 @@
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox3">
+      <object class="GtkBox" id="KingPhisherClientConfigDialog.dialog-vbox3">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area3">
+          <object class="GtkButtonBox" id="KingPhisherClientConfigDialog.dialog-action_area3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="button_cancel">
+              <object class="GtkButton" id="KingPhisherClientConfigDialog.button_cancel">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -400,7 +354,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="button_apply">
+              <object class="GtkButton" id="KingPhisherClientConfigDialog.button_apply">
                 <property name="label">gtk-apply</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -422,157 +376,140 @@
           </packing>
         </child>
         <child>
-          <object class="GtkNotebook" id="notebook1">
+          <object class="GtkNotebook" id="KingPhisherClientConfigDialog.notebook1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
-              <object class="GtkVBox" id="vbox2">
+              <object class="GtkBox" id="box2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="border_width">5</property>
+                <property name="margin_left">5</property>
+                <property name="margin_right">5</property>
+                <property name="margin_top">5</property>
+                <property name="margin_bottom">5</property>
+                <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkTable" id="table1">
+                  <object class="GtkGrid" id="grid1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="border_width">10</property>
-                    <property name="n_rows">2</property>
-                    <property name="n_columns">2</property>
-                    <property name="column_spacing">5</property>
-                    <property name="row_spacing">5</property>
+                    <property name="row_homogeneous">True</property>
+                    <property name="column_homogeneous">True</property>
                     <child>
-                      <object class="GtkLabel" id="label8">
+                      <object class="GtkLabel" id="label1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Server</property>
                       </object>
                       <packing>
-                        <property name="x_options"/>
-                        <property name="y_options"/>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="entry_server">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="editable">False</property>
-                        <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
-                        <property name="primary_icon_activatable">False</property>
-                        <property name="secondary_icon_activatable">False</property>
-                        <property name="primary_icon_sensitive">True</property>
-                        <property name="secondary_icon_sensitive">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="right_attach">2</property>
-                        <property name="y_options"/>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label9">
+                      <object class="GtkLabel" id="label2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Username</property>
                       </object>
                       <packing>
+                        <property name="left_attach">0</property>
                         <property name="top_attach">1</property>
-                        <property name="bottom_attach">2</property>
-                        <property name="x_options"/>
-                        <property name="y_options"/>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="entry_server_username">
+                      <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_server">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="editable">False</property>
-                        <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
-                        <property name="primary_icon_activatable">False</property>
-                        <property name="secondary_icon_activatable">False</property>
-                        <property name="primary_icon_sensitive">True</property>
-                        <property name="secondary_icon_sensitive">True</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
-                        <property name="right_attach">2</property>
+                        <property name="top_attach">0</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_server_username">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="editable">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
                         <property name="top_attach">1</property>
-                        <property name="bottom_attach">2</property>
-                        <property name="y_options"/>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
                       </packing>
                     </child>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="frame2">
+                  <object class="GtkFrame" id="KingPhisherClientConfigDialog.frame2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkAlignment" id="alignment2">
+                      <object class="GtkAlignment" id="KingPhisherClientConfigDialog.alignment2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="left_padding">12</property>
                         <child>
-                          <object class="GtkTable" id="table2">
+                          <object class="GtkGrid" id="grid3">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="border_width">10</property>
-                            <property name="n_rows">2</property>
-                            <property name="n_columns">2</property>
-                            <property name="column_spacing">5</property>
-                            <property name="row_spacing">5</property>
+                            <property name="row_homogeneous">True</property>
+                            <property name="column_homogeneous">True</property>
                             <child>
-                              <object class="GtkLabel" id="label2">
+                              <object class="GtkLabel" id="label4">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="xalign">0.4699999988079071</property>
                                 <property name="label" translatable="yes">Phone Number</property>
                               </object>
                               <packing>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">0</property>
+                                <property name="width">1</property>
+                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="entry_sms_phone_number">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="tooltip_text" translatable="yes">(XXX) XXX-XXXX</property>
-                                <property name="max_length">14</property>
-                                <property name="invisible_char">●</property>
-                                <property name="invisible_char_set">True</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                                <property name="primary_icon_sensitive">True</property>
-                                <property name="secondary_icon_sensitive">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="right_attach">2</property>
-                                <property name="y_options"/>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label3">
+                              <object class="GtkLabel" id="label5">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Carrier</property>
                               </object>
                               <packing>
+                                <property name="left_attach">0</property>
                                 <property name="top_attach">1</property>
-                                <property name="bottom_attach">2</property>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="width">1</property>
+                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBox" id="combobox_sms_carrier">
+                              <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_sms_phone_number">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="max_length">14</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">0</property>
+                                <property name="width">1</property>
+                                <property name="height">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBox" id="KingPhisherClientConfigDialog.combobox_sms_carrier">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="model">SMSCarriers</property>
@@ -585,9 +522,9 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="right_attach">2</property>
                                 <property name="top_attach">1</property>
-                                <property name="bottom_attach">2</property>
+                                <property name="width">1</property>
+                                <property name="height">1</property>
                               </packing>
                             </child>
                           </object>
@@ -595,7 +532,7 @@
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="label1">
+                      <object class="GtkLabel" id="KingPhisherClientConfigDialog.label1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;SMS Settings&lt;/b&gt;</property>
@@ -612,7 +549,7 @@
               </object>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="label10">
+              <object class="GtkLabel" id="KingPhisherClientConfigDialog.label10">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
@@ -622,76 +559,84 @@
               </packing>
             </child>
             <child>
-              <object class="GtkVBox" id="vbox1">
+              <object class="GtkBox" id="box4">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="border_width">5</property>
+                <property name="margin_left">5</property>
+                <property name="margin_right">5</property>
+                <property name="margin_top">5</property>
+                <property name="margin_bottom">5</property>
+                <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkTable" id="table4">
+                  <object class="GtkGrid" id="grid2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="n_rows">3</property>
-                    <property name="n_columns">2</property>
+                    <property name="row_homogeneous">True</property>
+                    <property name="column_homogeneous">True</property>
                     <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label11">
+                      <object class="GtkLabel" id="label3">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">SMTP Server</property>
                       </object>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="entry_smtp_server">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="tooltip_text" translatable="yes">Example: smtp.attacker.org:25</property>
-                        <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
-                        <property name="primary_icon_activatable">False</property>
-                        <property name="secondary_icon_activatable">False</property>
-                        <property name="primary_icon_sensitive">True</property>
-                        <property name="secondary_icon_sensitive">True</property>
-                      </object>
                       <packing>
-                        <property name="left_attach">1</property>
-                        <property name="right_attach">2</property>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkCheckButton" id="checkbutton_smtp_ssh_enable">
+                      <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_smtp_server">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="KingPhisherClientConfigDialog.checkbutton_smtp_ssl_enable">
+                        <property name="label" translatable="yes">Connect With SSL</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="xalign">0</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="KingPhisherClientConfigDialog.checkbutton_smtp_ssh_enable">
                         <property name="label" translatable="yes">Tunnel Over SSH</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="xalign">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="signal_smtp_ssh_enable" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
-                        <property name="right_attach">2</property>
                         <property name="top_attach">2</property>
-                        <property name="bottom_attach">3</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkCheckButton" id="checkbutton_smtp_ssl_enable">
-                        <property name="label" translatable="yes">Connect with SSL</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="draw_indicator">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="right_attach">2</property>
-                        <property name="top_attach">1</property>
-                        <property name="bottom_attach">2</property>
-                      </packing>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
                     </child>
                   </object>
                   <packing>
@@ -701,83 +646,69 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="frame1">
+                  <object class="GtkFrame" id="KingPhisherClientConfigDialog.frame1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkAlignment" id="alignment1">
+                      <object class="GtkAlignment" id="KingPhisherClientConfigDialog.alignment1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="left_padding">5</property>
                         <child>
-                          <object class="GtkTable" id="table5">
+                          <object class="GtkGrid" id="grid4">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="border_width">5</property>
-                            <property name="n_rows">2</property>
-                            <property name="n_columns">2</property>
-                            <property name="column_spacing">5</property>
-                            <property name="row_spacing">5</property>
+                            <property name="row_homogeneous">True</property>
+                            <property name="column_homogeneous">True</property>
                             <child>
-                              <object class="GtkLabel" id="label12">
+                              <object class="GtkLabel" id="label6">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">SSH Server</property>
                               </object>
                               <packing>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">0</property>
+                                <property name="width">1</property>
+                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="entry_ssh_server">
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="tooltip_text" translatable="yes">Example: ssh.attacker.org:22</property>
-                                <property name="invisible_char">●</property>
-                                <property name="invisible_char_set">True</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                                <property name="primary_icon_sensitive">True</property>
-                                <property name="secondary_icon_sensitive">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="right_attach">2</property>
-                                <property name="y_options"/>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label13">
+                              <object class="GtkLabel" id="label7">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">SSH Username</property>
                               </object>
                               <packing>
+                                <property name="left_attach">0</property>
                                 <property name="top_attach">1</property>
-                                <property name="bottom_attach">2</property>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="width">1</property>
+                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="entry_ssh_username">
-                                <property name="sensitive">False</property>
+                              <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_ssh_server">
+                                <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">●</property>
-                                <property name="invisible_char_set">True</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                                <property name="primary_icon_sensitive">True</property>
-                                <property name="secondary_icon_sensitive">True</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="right_attach">2</property>
+                                <property name="top_attach">0</property>
+                                <property name="width">1</property>
+                                <property name="height">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_ssh_username">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
                                 <property name="top_attach">1</property>
-                                <property name="bottom_attach">2</property>
-                                <property name="y_options"/>
+                                <property name="width">1</property>
+                                <property name="height">1</property>
                               </packing>
                             </child>
                           </object>
@@ -785,7 +716,7 @@
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="label14">
+                      <object class="GtkLabel" id="KingPhisherClientConfigDialog.label14">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;SSH Settings&lt;/b&gt;</property>
@@ -805,7 +736,7 @@
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="label15">
+              <object class="GtkLabel" id="KingPhisherClientConfigDialog.label15">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">SMTP Server</property>
@@ -816,16 +747,21 @@
               </packing>
             </child>
             <child>
-              <object class="GtkVBox" id="vbox3">
+              <object class="GtkBox" id="box3">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="border_width">5</property>
+                <property name="margin_left">5</property>
+                <property name="margin_right">5</property>
+                <property name="margin_top">5</property>
+                <property name="margin_bottom">5</property>
+                <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkCheckButton" id="checkbutton_alert_subscribe">
+                  <object class="GtkCheckButton" id="KingPhisherClientConfigDialog.checkbutton_alert_subscribe">
                     <property name="label" translatable="yes">Subscribe To SMS Alerts</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
+                    <property name="xalign">0</property>
                     <property name="draw_indicator">True</property>
                     <signal name="toggled" handler="signal_alert_subscribe" swapped="no"/>
                   </object>
@@ -841,7 +777,7 @@
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="label4">
+              <object class="GtkLabel" id="KingPhisherClientConfigDialog.label4">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Campaign</property>
@@ -861,28 +797,26 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">button_cancel</action-widget>
-      <action-widget response="-10">button_apply</action-widget>
+      <action-widget response="-6">KingPhisherClientConfigDialog.button_cancel</action-widget>
+      <action-widget response="-10">KingPhisherClientConfigDialog.button_apply</action-widget>
     </action-widgets>
   </object>
   <object class="GtkDialog" id="KingPhisherClientLoginDialog">
-    <property name="width_request">350</property>
-    <property name="height_request">200</property>
     <property name="can_focus">False</property>
-    <property name="border_width">5</property>
+    <property name="default_width">300</property>
+    <property name="default_height">200</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox2">
-        <property name="visible">True</property>
+      <object class="GtkBox" id="KingPhisherClientLoginDialog.dialog-vbox5">
         <property name="can_focus">False</property>
-        <property name="spacing">5</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">3</property>
         <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area2">
-            <property name="visible">True</property>
+          <object class="GtkButtonBox" id="KingPhisherClientLoginDialog.dialog-action_area5">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="button_cancel">
+              <object class="GtkButton" id="KingPhisherClientLoginDialog.button_cancel">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -891,23 +825,21 @@
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">False</property>
+                <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="button_connect">
+              <object class="GtkButton" id="KingPhisherClientLoginDialog.button_connect">
                 <property name="label">gtk-connect</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="has_default">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">False</property>
+                <property name="fill">True</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -920,96 +852,91 @@
           </packing>
         </child>
         <child>
-          <object class="GtkTable" id="table3">
+          <object class="GtkGrid" id="KingPhisherClientLoginDialog.grid1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="n_rows">3</property>
-            <property name="n_columns">2</property>
-            <property name="column_spacing">5</property>
-            <property name="row_spacing">5</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="row_homogeneous">True</property>
+            <property name="column_homogeneous">True</property>
             <child>
-              <object class="GtkLabel" id="label17">
+              <object class="GtkLabel" id="KingPhisherClientLoginDialog.label11">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
               </object>
-            </child>
-            <child>
-              <object class="GtkEntry" id="entry_server">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="invisible_char">●</property>
-                <property name="invisible_char_set">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="right_attach">2</property>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label18">
+              <object class="GtkLabel" id="KingPhisherClientLoginDialog.label12">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Username</property>
               </object>
               <packing>
+                <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
-                <property name="bottom_attach">2</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_server_username">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="invisible_char">●</property>
-                <property name="invisible_char_set">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="right_attach">2</property>
-                <property name="top_attach">1</property>
-                <property name="bottom_attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label19">
+              <object class="GtkLabel" id="KingPhisherClientLoginDialog.label13">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Password</property>
               </object>
               <packing>
+                <property name="left_attach">0</property>
                 <property name="top_attach">2</property>
-                <property name="bottom_attach">3</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_server_password">
+              <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="has_focus">True</property>
-                <property name="visibility">False</property>
-                <property name="invisible_char">●</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="right_attach">2</property>
+                <property name="top_attach">0</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server_username">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">1</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server_password">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="visibility">False</property>
+                <property name="invisible_char">●</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
                 <property name="top_attach">2</property>
-                <property name="bottom_attach">3</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
               </packing>
             </child>
           </object>
@@ -1022,28 +949,26 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">button_cancel</action-widget>
-      <action-widget response="-10">button_connect</action-widget>
+      <action-widget response="-6">KingPhisherClientLoginDialog.button_cancel</action-widget>
+      <action-widget response="-10">KingPhisherClientLoginDialog.button_connect</action-widget>
     </action-widgets>
   </object>
   <object class="GtkDialog" id="KingPhisherClientSSHLoginDialog">
-    <property name="width_request">350</property>
-    <property name="height_request">200</property>
     <property name="can_focus">False</property>
-    <property name="border_width">5</property>
-    <property name="type_hint">dialog</property>
+    <property name="default_width">300</property>
+    <property name="default_height">200</property>
+    <property name="type_hint">splashscreen</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox6">
-        <property name="visible">True</property>
+      <object class="GtkBox" id="KingPhisherClientSSHLoginDialog.dialog-vbox5">
         <property name="can_focus">False</property>
-        <property name="spacing">5</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">3</property>
         <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area6">
-            <property name="visible">True</property>
+          <object class="GtkButtonBox" id="KingPhisherClientSSHLoginDialog.dialog-action_area5">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="button_cancel">
+              <object class="GtkButton" id="KingPhisherClientSSHLoginDialog.button_cancel">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -1052,23 +977,21 @@
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">False</property>
+                <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="button_connect">
+              <object class="GtkButton" id="KingPhisherClientSSHLoginDialog.button_connect">
                 <property name="label">gtk-connect</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="has_default">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">False</property>
+                <property name="fill">True</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -1081,97 +1004,91 @@
           </packing>
         </child>
         <child>
-          <object class="GtkTable" id="table6">
+          <object class="GtkGrid" id="KingPhisherClientSSHLoginDialog.grid1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="n_rows">3</property>
-            <property name="n_columns">2</property>
-            <property name="column_spacing">5</property>
-            <property name="row_spacing">5</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="row_homogeneous">True</property>
+            <property name="column_homogeneous">True</property>
             <child>
-              <object class="GtkLabel" id="label20">
+              <object class="GtkLabel" id="KingPhisherClientSSHLoginDialog.label11">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">SSH Server</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkEntry" id="entry_ssh_server">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="invisible_char">●</property>
-                <property name="invisible_char_set">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+                <property name="label" translatable="yes">Server</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="right_attach">2</property>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label21">
+              <object class="GtkLabel" id="KingPhisherClientSSHLoginDialog.label12">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">SSH Username</property>
+                <property name="label" translatable="yes">Username</property>
               </object>
               <packing>
+                <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
-                <property name="bottom_attach">2</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_ssh_username">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="invisible_char">●</property>
-                <property name="invisible_char_set">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="right_attach">2</property>
-                <property name="top_attach">1</property>
-                <property name="bottom_attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label22">
+              <object class="GtkLabel" id="KingPhisherClientSSHLoginDialog.label13">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">SSH Password</property>
+                <property name="label" translatable="yes">Password</property>
               </object>
               <packing>
+                <property name="left_attach">0</property>
                 <property name="top_attach">2</property>
-                <property name="bottom_attach">3</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry_ssh_password">
+              <object class="GtkEntry" id="KingPhisherClientSSHLoginDialog.entry_ssh_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="has_focus">True</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">0</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="KingPhisherClientSSHLoginDialog.entry_ssh_username">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">1</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="KingPhisherClientSSHLoginDialog.entry_ssh_password">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">●</property>
-                <property name="invisible_char_set">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="right_attach">2</property>
                 <property name="top_attach">2</property>
-                <property name="bottom_attach">3</property>
+                <property name="width">1</property>
+                <property name="height">1</property>
               </packing>
             </child>
           </object>
@@ -1184,417 +1101,179 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">button_cancel</action-widget>
-      <action-widget response="-10">button_connect</action-widget>
+      <action-widget response="-6">KingPhisherClientSSHLoginDialog.button_cancel</action-widget>
+      <action-widget response="-10">KingPhisherClientSSHLoginDialog.button_connect</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkVBox" id="MailSenderConfigTab">
+  <object class="GtkBox" id="MailSenderConfigTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="border_width">5</property>
+    <property name="margin_left">5</property>
+    <property name="margin_right">5</property>
+    <property name="margin_top">5</property>
+    <property name="margin_bottom">5</property>
+    <property name="orientation">vertical</property>
     <child>
-      <object class="GtkTable" id="table2">
+      <object class="GtkGrid" id="MailSenderConfigTab.grid">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="n_rows">10</property>
-        <property name="n_columns">2</property>
-        <property name="column_spacing">5</property>
-        <property name="row_spacing">5</property>
+        <property name="row_spacing">3</property>
+        <property name="column_spacing">3</property>
         <child>
-          <placeholder/>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Company Name*</property>
-          </object>
-          <packing>
-            <property name="top_attach">1</property>
-            <property name="bottom_attach">2</property>
-            <property name="x_options"/>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label2">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Source Email*</property>
-          </object>
-          <packing>
-            <property name="top_attach">2</property>
-            <property name="bottom_attach">3</property>
-            <property name="x_options"/>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label3">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Friendly Alias</property>
-          </object>
-          <packing>
-            <property name="top_attach">3</property>
-            <property name="bottom_attach">4</property>
-            <property name="x_options"/>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label4">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Subject*</property>
-          </object>
-          <packing>
-            <property name="top_attach">4</property>
-            <property name="bottom_attach">5</property>
-            <property name="x_options"/>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label5">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Reply To</property>
-          </object>
-          <packing>
-            <property name="top_attach">5</property>
-            <property name="bottom_attach">6</property>
-            <property name="x_options"/>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label6">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Message HTML File*</property>
-          </object>
-          <packing>
-            <property name="top_attach">6</property>
-            <property name="bottom_attach">7</property>
-            <property name="x_options"/>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label7">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Target CSV File*</property>
-          </object>
-          <packing>
-            <property name="top_attach">7</property>
-            <property name="bottom_attach">8</property>
-            <property name="x_options"/>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkEntry" id="entry_company_name">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="invisible_char">●</property>
-            <property name="primary_icon_activatable">False</property>
-            <property name="secondary_icon_activatable">False</property>
-            <property name="primary_icon_sensitive">True</property>
-            <property name="secondary_icon_sensitive">True</property>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
-            <property name="top_attach">1</property>
-            <property name="bottom_attach">2</property>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkEntry" id="entry_source_email">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="tooltip_text" translatable="yes">Example: trustme@clickme.com</property>
-            <property name="invisible_char">●</property>
-            <property name="primary_icon_activatable">False</property>
-            <property name="secondary_icon_activatable">False</property>
-            <property name="primary_icon_sensitive">True</property>
-            <property name="secondary_icon_sensitive">True</property>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
-            <property name="top_attach">2</property>
-            <property name="bottom_attach">3</property>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkEntry" id="entry_source_email_alias">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="invisible_char">●</property>
-            <property name="primary_icon_activatable">False</property>
-            <property name="secondary_icon_activatable">False</property>
-            <property name="primary_icon_sensitive">True</property>
-            <property name="secondary_icon_sensitive">True</property>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
-            <property name="top_attach">3</property>
-            <property name="bottom_attach">4</property>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkEntry" id="entry_subject">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="invisible_char">●</property>
-            <property name="primary_icon_activatable">False</property>
-            <property name="secondary_icon_activatable">False</property>
-            <property name="primary_icon_sensitive">True</property>
-            <property name="secondary_icon_sensitive">True</property>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
-            <property name="top_attach">4</property>
-            <property name="bottom_attach">5</property>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkEntry" id="entry_reply_to_email">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="tooltip_text" translatable="yes">Example: trustme@clickme.com</property>
-            <property name="invisible_char">●</property>
-            <property name="primary_icon_activatable">False</property>
-            <property name="secondary_icon_activatable">False</property>
-            <property name="primary_icon_sensitive">True</property>
-            <property name="secondary_icon_sensitive">True</property>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
-            <property name="top_attach">5</property>
-            <property name="bottom_attach">6</property>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkHBox" id="hbox1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="spacing">5</property>
-            <child>
-              <object class="GtkEntry" id="entry_html_file">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="editable">False</property>
-                <property name="invisible_char">●</property>
-                <property name="invisible_char_set">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
-                <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
-                <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button1">
-                <property name="label" translatable="yes">Select File</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="signal_entry_activate_open_file" object="entry_html_file" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
-            <property name="top_attach">6</property>
-            <property name="bottom_attach">7</property>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkHBox" id="hbox2">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="spacing">5</property>
-            <child>
-              <object class="GtkEntry" id="entry_target_file">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="editable">False</property>
-                <property name="invisible_char">●</property>
-                <property name="invisible_char_set">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
-                <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
-                <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button2">
-                <property name="label" translatable="yes">Select File</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="signal_entry_activate_open_file" object="entry_target_file" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
-            <property name="top_attach">7</property>
-            <property name="bottom_attach">8</property>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label23">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">* Required Options</property>
-          </object>
-          <packing>
-            <property name="top_attach">9</property>
-            <property name="bottom_attach">10</property>
-            <property name="x_options"/>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel" id="label24">
+          <object class="GtkLabel" id="MailSenderConfigTab.label1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Web Server URL*</property>
           </object>
           <packing>
-            <property name="x_options"/>
-            <property name="y_options"/>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="label8">
+          <object class="GtkLabel" id="MailSenderConfigTab.label2">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Company Name*</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">1</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="MailSenderConfigTab.label3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Source Email*</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">2</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="MailSenderConfigTab.label4">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Friendly Alias</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">3</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="MailSenderConfigTab.label5">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Subject*</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">4</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="MailSenderConfigTab.label6">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Reply To</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">5</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="MailSenderConfigTab.label7">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Message HTML File*</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">6</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="MailSenderConfigTab.label8">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Target CSV File*</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">7</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="MailSenderConfigTab.label9">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">File Attachment</property>
           </object>
           <packing>
+            <property name="left_attach">0</property>
             <property name="top_attach">8</property>
-            <property name="bottom_attach">9</property>
-            <property name="x_options"/>
-            <property name="y_options"/>
+            <property name="width">1</property>
+            <property name="height">1</property>
           </packing>
         </child>
         <child>
-          <object class="GtkHBox" id="hbox3">
+          <object class="GtkLabel" id="MailSenderConfigTab.label10">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="spacing">5</property>
+            <property name="label" translatable="yes">* Required Options</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">9</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="MailSenderConfigTab.box2">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="spacing">3</property>
             <child>
-              <object class="GtkEntry" id="entry_attachment_file">
+              <object class="GtkEntry" id="MailSenderConfigTab.entry_webserver_url">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="editable">False</property>
-                <property name="invisible_char">●</property>
-                <property name="invisible_char_set">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
-                <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
-                <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button3">
-                <property name="label" translatable="yes">Select File</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="signal_entry_activate_open_file" object="entry_attachment_file" swapped="no"/>
+                <property name="hexpand">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
-            <property name="top_attach">8</property>
-            <property name="bottom_attach">9</property>
-            <property name="y_options"/>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkHBox" id="hbox4">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="spacing">5</property>
-            <child>
-              <object class="GtkEntry" id="entry_webserver_url">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="invisible_char">●</property>
-                <property name="invisible_char_set">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="button4">
+              <object class="GtkButton" id="MailSenderConfigTab.button6">
                 <property name="label" translatable="yes">Verify URL</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="yalign">0.43000000715255737</property>
                 <signal name="clicked" handler="signal_button_clicked_verify" swapped="no"/>
               </object>
               <packing>
@@ -1606,71 +1285,246 @@
           </object>
           <packing>
             <property name="left_attach">1</property>
-            <property name="right_attach">2</property>
-            <property name="y_options"/>
+            <property name="top_attach">0</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
           </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="MailSenderConfigTab.box4">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkEntry" id="MailSenderConfigTab.entry_html_file">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
+                <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="MailSenderConfigTab.button1">
+                <property name="label" translatable="yes">Select File</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="signal_entry_activate_open_file" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">6</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="MailSenderConfigTab.box5">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkEntry" id="MailSenderConfigTab.entry_target_file">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="editable">False</property>
+                <property name="invisible_char">●</property>
+                <property name="primary_icon_activatable">False</property>
+                <property name="secondary_icon_activatable">False</property>
+                <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
+                <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="MailSenderConfigTab.button2">
+                <property name="label" translatable="yes">Select File</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="signal_entry_activate_open_file" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">7</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="MailSenderConfigTab.box6">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkEntry" id="MailSenderConfigTab.entry_attachment_file">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="editable">False</property>
+                <property name="invisible_char">●</property>
+                <property name="primary_icon_activatable">False</property>
+                <property name="secondary_icon_activatable">False</property>
+                <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
+                <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="MailSenderConfigTab.button3">
+                <property name="label" translatable="yes">Select File</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="signal_entry_activate_open_file" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">8</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="MailSenderConfigTab.entry_company_name">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">1</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="MailSenderConfigTab.entry_source_email">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">2</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="MailSenderConfigTab.entry_source_email_alias">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">3</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="MailSenderConfigTab.entry_subject">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">4</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="MailSenderConfigTab.entry_reply_to_email">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">5</property>
+            <property name="width">1</property>
+            <property name="height">1</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
         </child>
       </object>
       <packing>
-        <property name="expand">False</property>
-        <property name="fill">False</property>
-        <property name="padding">5</property>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
         <property name="position">0</property>
       </packing>
     </child>
   </object>
-  <object class="GtkVBox" id="MailSenderEditTab">
+  <object class="GtkBox" id="MailSenderEditTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="border_width">5</property>
+    <property name="margin_left">5</property>
+    <property name="margin_right">5</property>
+    <property name="margin_top">5</property>
+    <property name="margin_bottom">5</property>
+    <property name="orientation">vertical</property>
     <child>
-      <object class="GtkFrame" id="frame2">
+      <object class="GtkFrame" id="MailSenderEditTab.frame3">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label_xalign">0</property>
         <child>
-          <object class="GtkAlignment" id="alignment2">
+          <object class="GtkAlignment" id="MailSenderEditTab.alignment3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkVBox" id="vbox2">
+              <object class="GtkBox" id="MailSenderEditTab.box8">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="border_width">5</property>
-                <property name="spacing">5</property>
+                <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkHBox" id="hbox4">
+                  <object class="GtkButtonBox" id="MailSenderEditTab.buttonbox5">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkHButtonBox" id="hbuttonbox1">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="spacing">5</property>
+                    <property name="spacing">3</property>
                     <property name="layout_style">end</property>
                     <child>
-                      <object class="GtkButton" id="button_save_as_html_file">
-                        <property name="label" translatable="yes">Save As</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <signal name="clicked" handler="signal_button_save_as" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="button_save_html_file">
+                      <object class="GtkButton" id="MailSenderEditTab.button_save_html_file">
                         <property name="label" translatable="yes">Save</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -1681,6 +1535,20 @@
                         <property name="expand">False</property>
                         <property name="fill">False</property>
                         <property name="pack_type">end</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="MailSenderEditTab.button_save_as_html_file">
+                        <property name="label" translatable="yes">Save As</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <signal name="clicked" handler="signal_button_save_as" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
                         <property name="position">1</property>
                       </packing>
                     </child>
@@ -1688,18 +1556,16 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
-                    <property name="position">2</property>
+                    <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkScrolledWindow" id="scrolledwindow1">
+                  <object class="GtkScrolledWindow" id="MailSenderEditTab.scrolledwindow6">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="hscrollbar_policy">automatic</property>
-                    <property name="vscrollbar_policy">automatic</property>
                     <property name="shadow_type">etched-in</property>
                     <child>
-                      <object class="GtkTextView" id="textview_html_file">
+                      <object class="GtkTextView" id="MailSenderEditTab.textview_html_file">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                       </object>
@@ -1708,7 +1574,7 @@
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">2</property>
+                    <property name="position">1</property>
                   </packing>
                 </child>
               </object>
@@ -1716,7 +1582,7 @@
           </object>
         </child>
         <child type="label">
-          <object class="GtkLabel" id="label16">
+          <object class="GtkLabel" id="MailSenderEditTab.label29">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">&lt;b&gt;Message Editor&lt;/b&gt;</property>
@@ -1731,17 +1597,20 @@
       </packing>
     </child>
   </object>
-  <object class="GtkVBox" id="MailSenderSendMessagesTab">
+  <object class="GtkBox" id="MailSenderSendMessagesTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="border_width">5</property>
+    <property name="margin_left">5</property>
+    <property name="margin_right">5</property>
+    <property name="margin_top">5</property>
+    <property name="margin_bottom">5</property>
+    <property name="orientation">vertical</property>
     <child>
-      <object class="GtkScrolledWindow" id="scrolledwindow_mail_sender_progress">
+      <object class="GtkScrolledWindow" id="MailSenderSendMessagesTab.scrolledwindow_mail_sender_progress">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="hscrollbar_policy">automatic</property>
         <child>
-          <object class="GtkTextView" id="textview_mail_sender_progress">
+          <object class="GtkTextView" id="MailSenderSendMessagesTab.textview_mail_sender_progress">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="editable">False</property>
@@ -1757,7 +1626,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkProgressBar" id="progressbar_mail_sender">
+      <object class="GtkProgressBar" id="MailSenderSendMessagesTab.progressbar_mail_sender">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="show_text">True</property>
@@ -1769,30 +1638,17 @@
       </packing>
     </child>
     <child>
-      <object class="GtkHBox" id="hbox1">
+      <object class="GtkButtonBox" id="MailSenderSendMessagesTab.box1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="spacing">5</property>
         <child>
-          <object class="GtkHButtonBox" id="hbuttonbox1">
+          <object class="GtkButton" id="MailSenderSendMessagesTab.button_mail_sender_stop">
+            <property name="label" translatable="yes">Stop</property>
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">start</property>
-            <child>
-              <object class="GtkButton" id="button_mail_sender_stop">
-                <property name="label" translatable="yes">Stop</property>
-                <property name="visible">True</property>
-                <property name="sensitive">False</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="signal_button_clicked_sender_stop" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
+            <property name="sensitive">False</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="signal_button_clicked_sender_stop" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -1801,60 +1657,47 @@
           </packing>
         </child>
         <child>
-          <object class="GtkHButtonBox" id="hbuttonbox2">
+          <object class="GtkToggleButton" id="MailSenderSendMessagesTab.togglebutton_mail_sender_pause">
+            <property name="label" translatable="yes">Pause</property>
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="spacing">5</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkToggleButton" id="togglebutton_mail_sender_pause">
-                <property name="label" translatable="yes">Pause</property>
-                <property name="visible">True</property>
-                <property name="sensitive">False</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="toggled" handler="signal_button_toggled_sender_pause" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="pack_type">end</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button_mail_sender_start">
-                <property name="label" translatable="yes">Start</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="signal_button_clicked_sender_start" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="pack_type">end</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
+            <property name="sensitive">False</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="toggled" handler="signal_button_toggled_sender_pause" swapped="no"/>
           </object>
           <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="MailSenderSendMessagesTab.button_mail_sender_start">
+            <property name="label" translatable="yes">Start</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="signal_button_clicked_sender_start" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">2</property>
           </packing>
         </child>
       </object>
       <packing>
         <property name="expand">False</property>
-        <property name="fill">False</property>
+        <property name="fill">True</property>
         <property name="position">2</property>
       </packing>
     </child>
   </object>
   <object class="GtkListStore" id="SMSCarriers">
     <columns>
-      <!-- column-name carrier_names -->
+      <!-- column-name gchararray -->
       <column type="gchararray"/>
     </columns>
     <data>
@@ -1883,5 +1726,58 @@
         <col id="0" translatable="yes">Virgin Mobile</col>
       </row>
     </data>
+  </object>
+  <object class="GtkBox" id="CampaignViewCredentialsTab">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkScrolledWindow" id="CampaignViewCredentialsTab.scrolledwindow1">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <child>
+          <object class="GtkTreeView" id="CampaignViewCredentialsTab.treeview_campaign">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
+            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="treeview-selection5"/>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButtonBox" id="CampaignViewCredentialsTab.buttonbox1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="layout_style">end</property>
+        <child>
+          <object class="GtkButton" id="CampaignViewCredentialsTab.button_refresh">
+            <property name="label" translatable="yes">Refresh</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="signal_button_clicked_refresh" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
   </object>
 </interface>

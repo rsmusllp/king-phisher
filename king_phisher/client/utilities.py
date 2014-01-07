@@ -155,7 +155,8 @@ class UtilityGladeGObject(object):
 		builder = Gtk.Builder()
 		self.gtk_builder = builder
 
-		builder.add_objects_from_file(which_glade(os.environ['GLADE_FILE']), self.top_level_dependencies + [self.__class__.__name__])
+		glade_file = which_glade(os.environ['GLADE_FILE'])
+		builder.add_objects_from_file(glade_file, self.top_level_dependencies + [self.__class__.__name__])
 		builder.connect_signals(self)
 		gobject = builder.get_object(self.__class__.__name__)
 		if isinstance(gobject, Gtk.Window):
@@ -164,14 +165,21 @@ class UtilityGladeGObject(object):
 
 		self.gobjects = {}
 		for gobject_id in self.gobject_ids:
-			gobject = builder.get_object(gobject_id)
+			gobject = self.gtk_builder_get(gobject_id)
 			# The following three lines ensure that the types match up, this is
 			# primarily to enforce clean development.
 			gtype = gobject_id.split('_', 1)[0]
-			if gobject.__class__.__name__.lower() != gtype:
-				raise TypeError("gobject is of type {0} expected {1}".format(gobject.__class__.__name__, gtype))
+			if gobject == None:
+				raise TypeError("gobject {0} could not be found in the glade file".format(gtkbuilder_id))
+			elif gobject.__class__.__name__.lower() != gtype:
+				raise TypeError("gobject {0} is of type {1} expected {2}".format(gtkbuilder_id, gobject.__class__.__name__, gtype))
 			self.gobjects[gobject_id] = gobject
 		self.objects_load_from_config()
+
+	def gtk_builder_get(self, gobject_id):
+		gtkbuilder_id = "{0}.{1}".format(self.__class__.__name__, gobject_id)
+		self.logger.debug('loading GTK builder object with id: ' + gtkbuilder_id)
+		return self.gtk_builder.get_object(gtkbuilder_id)
 
 	def objects_load_from_config(self):
 		for gobject_id, gobject in self.gobjects.items():
