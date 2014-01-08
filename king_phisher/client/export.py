@@ -36,7 +36,7 @@ import xml.etree.ElementTree as ET
 
 def campaign_to_xml(rpc, campaign_id, xml_file):
 	root = ET.Element('kingphisher')
-	# generate export metadata
+	# Generate export metadata
 	metadata = ET.SubElement(root, 'metadata')
 	timestamp = ET.SubElement(metadata, 'timestamp')
 	timestamp.text = datetime.datetime.now().isoformat()

@@ -231,7 +231,8 @@ class KingPhisherClient(Gtk.Window):
 		self.config_file = (config_file or CONFIG_FILE_PATH)
 		self.load_config()
 		self.set_property('title', 'King Phisher')
-		vbox = Gtk.VBox()
+		vbox = Gtk.Box()
+		vbox.set_property('orientation', Gtk.Orientation.VERTICAL)
 		vbox.show()
 		self.add(vbox)
 
@@ -244,7 +245,8 @@ class KingPhisherClient(Gtk.Window):
 		self.uimanager = uimanager
 
 		# create notebook and tabs
-		hbox = Gtk.HBox()
+		hbox = Gtk.Box()
+		hbox.set_property('orientation', Gtk.Orientation.HORIZONTAL)
 		hbox.show()
 		self.notebook = Gtk.Notebook()
 		self.notebook.connect('switch-page', self._tab_changed)

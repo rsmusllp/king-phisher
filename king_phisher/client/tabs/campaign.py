@@ -233,7 +233,8 @@ class CampaignViewTab(object):
 	def __init__(self, config, parent):
 		self.config = config
 		self.parent = parent
-		self.box = Gtk.VBox()
+		self.box = Gtk.Box()
+		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
 		self.label = Gtk.Label('View Campaign')
 
