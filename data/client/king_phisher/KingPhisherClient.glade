@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.16.0 on Wed Jan  8 10:30:51 2014 -->
+<!-- Generated with glade 3.16.0 on Wed Jan  8 11:01:46 2014 -->
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
   <object class="GtkBox" id="CampaignViewDeaddropTab">
@@ -1761,7 +1761,20 @@
       <object class="GtkButtonBox" id="CampaignViewCredentialsTab.buttonbox1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="layout_style">end</property>
+        <child>
+          <object class="GtkToggleButton" id="CampaignViewCredentialsTab.togglebutton_show_passwords">
+            <property name="label" translatable="yes">Show Passwords</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="toggled" handler="signal_button_toggled_show_passwords" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
         <child>
           <object class="GtkButton" id="CampaignViewCredentialsTab.button_refresh">
             <property name="label" translatable="yes">Refresh</property>
@@ -1773,7 +1786,8 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">0</property>
+            <property name="position">1</property>
+            <property name="non_homogeneous">True</property>
           </packing>
         </child>
       </object>

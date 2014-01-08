@@ -58,12 +58,14 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		super(CampaignViewGenericTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		self.view_column_renderers = {}
 		columns = self.view_columns
 		for column_id in range(1, len(columns) + 1):
 			column_name = columns[column_id]
 			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
+			self.view_column_renderers[column_id] = column
 		self.last_load_time = float('-inf')
 		self.row_loader_thread = None
 		self.row_loader_thread_lock = threading.Lock()
@@ -191,6 +193,10 @@ class CampaignViewCredentialsTab(CampaignViewGenericTab):
 		3:'Password',
 		4:'Submitted'
 	}
+	def __init__(self, *args, **kwargs):
+		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
+		self.view_column_renderers[3].set_property('visible', False)
+
 	def format_row_data(self, credential):
 		msg_id = credential['message_id']
 		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache = True)
@@ -198,6 +204,9 @@ class CampaignViewCredentialsTab(CampaignViewGenericTab):
 			return None
 		credential_email = msg_details['target_email']
 		return [credential_email, credential['username'], credential['password'], credential['submitted']]
+
+	def signal_button_toggled_show_passwords(self, button):
+		self.view_column_renderers[3].set_property('visible', button.get_property('active'))
 
 class CampaignViewVisitsTab(CampaignViewGenericTab):
 	remote_table_name = 'visits'
