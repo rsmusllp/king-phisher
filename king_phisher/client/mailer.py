@@ -91,6 +91,7 @@ class MailSenderThread(threading.Thread):
 		self.running = threading.Event()
 		self.paused = threading.Event()
 		self.should_exit = threading.Event()
+		self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 
 	def server_ssh_connect(self):
 		server = utilities.server_parse(self.config['ssh_server'], 22)
@@ -161,6 +162,7 @@ class MailSenderThread(threading.Thread):
 		target_file_h = open(self.target_file, 'r')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
+			iteration_time = time.time()
 			if emails_done > 0 and (emails_done % max_messages_per_connection):
 				self.server_smtp_reconnect()
 			if self.should_exit.is_set():
@@ -177,6 +179,11 @@ class MailSenderThread(threading.Thread):
 			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
 			campaign_id = self.config['campaign_id']
 			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'])
+			if self.max_messages_per_minute:
+				iteration_time = (time.time() - iteration_time)
+				sleep_time = (60.0 / float(self.max_messages_per_minute)) - iteration_time
+				if sleep_time > 0:
+					time.sleep(sleep_time)
 		target_file_h.close()
 		GLib.idle_add(self.tab.notify_status, "Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
 		self.server_smtp_disconnect()
@@ -198,6 +205,7 @@ class MailSenderThread(threading.Thread):
 				GLib.idle_add(self.tab.notify_status, 'Sending Emails Cancelled\n')
 				return False
 			GLib.idle_add(self.tab.notify_status, 'Resuming Sending Emails\n')
+			self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		return True
 
 	def create_email(self, first_name, last_name, target_email, uid):

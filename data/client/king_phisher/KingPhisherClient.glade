@@ -1,7 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.16.0 on Wed Jan  8 11:01:46 2014 -->
+<!-- Generated with glade 3.16.0 on Wed Jan  8 13:07:28 2014 -->
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
+  <object class="GtkBox" id="CampaignViewCredentialsTab">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkScrolledWindow" id="CampaignViewCredentialsTab.scrolledwindow1">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <child>
+          <object class="GtkTreeView" id="CampaignViewCredentialsTab.treeview_campaign">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
+            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="treeview-selection5"/>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButtonBox" id="CampaignViewCredentialsTab.buttonbox1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkToggleButton" id="CampaignViewCredentialsTab.togglebutton_show_passwords">
+            <property name="label" translatable="yes">Show Passwords</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="toggled" handler="signal_button_toggled_show_passwords" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="CampaignViewCredentialsTab.button_refresh">
+            <property name="label" translatable="yes">Refresh</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="signal_button_clicked_refresh" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">1</property>
+            <property name="non_homogeneous">True</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+  </object>
   <object class="GtkBox" id="CampaignViewDeaddropTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -610,7 +677,7 @@
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
-                        <property name="top_attach">1</property>
+                        <property name="top_attach">2</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
@@ -627,7 +694,37 @@
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
-                        <property name="top_attach">2</property>
+                        <property name="top_attach">3</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSpinButton" id="KingPhisherClientConfigDialog.spinbutton_smtp_max_send_rate">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">Maximum emails to send per minute</property>
+                        <property name="adjustment">SMTPSendRate</property>
+                        <property name="climb_rate">1</property>
+                        <property name="digits">1</property>
+                        <property name="numeric">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label8">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Send Rate Limit</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
@@ -690,6 +787,7 @@
                             <child>
                               <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_ssh_server">
                                 <property name="visible">True</property>
+                                <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
                               </object>
                               <packing>
@@ -702,6 +800,7 @@
                             <child>
                               <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_ssh_username">
                                 <property name="visible">True</property>
+                                <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
                               </object>
                               <packing>
@@ -1731,71 +1830,9 @@
       </row>
     </data>
   </object>
-  <object class="GtkBox" id="CampaignViewCredentialsTab">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="orientation">vertical</property>
-    <child>
-      <object class="GtkScrolledWindow" id="CampaignViewCredentialsTab.scrolledwindow1">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <child>
-          <object class="GtkTreeView" id="CampaignViewCredentialsTab.treeview_campaign">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <signal name="button-press-event" handler="signal_treeview_button_pressed" swapped="no"/>
-            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
-            <child internal-child="selection">
-              <object class="GtkTreeSelection" id="treeview-selection5"/>
-            </child>
-          </object>
-        </child>
-      </object>
-      <packing>
-        <property name="expand">True</property>
-        <property name="fill">True</property>
-        <property name="position">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkButtonBox" id="CampaignViewCredentialsTab.buttonbox1">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <child>
-          <object class="GtkToggleButton" id="CampaignViewCredentialsTab.togglebutton_show_passwords">
-            <property name="label" translatable="yes">Show Passwords</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="toggled" handler="signal_button_toggled_show_passwords" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="CampaignViewCredentialsTab.button_refresh">
-            <property name="label" translatable="yes">Refresh</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="signal_button_clicked_refresh" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">1</property>
-            <property name="non_homogeneous">True</property>
-          </packing>
-        </child>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">1</property>
-      </packing>
-    </child>
+  <object class="GtkAdjustment" id="SMTPSendRate">
+    <property name="upper">180</property>
+    <property name="step_increment">0.5</property>
+    <property name="page_increment">10</property>
   </object>
 </interface>

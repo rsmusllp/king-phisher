@@ -40,16 +40,17 @@ from gi.repository import GObject
 from gi.repository import Gtk
 
 GOBJECT_PROPERTY_MAP = {
-	'entry': 'text',
-	'checkbutton': 'active',
 	'combobox': (
 		lambda c, v: c.set_active_iter(search_list_store(c.get_model(), v)),
 		lambda c: c.get_model().get_value(c.get_active_iter(), 0)
 	),
+	'entry': 'text',
+	'spinbutton': 'value',
+	'checkbutton': 'active',
 	'textview': (
 		lambda t, v: t.get_buffer().set_text(v),
 		lambda t: t.get_buffer().get_text(t.get_buffer().get_start_iter(), t.get_buffer().get_end_iter(), False)
-	)
+	),
 }
 
 def get_gobject_value(gobject, gtype = None):

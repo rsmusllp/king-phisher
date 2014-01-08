@@ -82,7 +82,11 @@ UI_INFO = """
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 DEFAULT_CONFIG = """
 {
-
+    "server": "localhost",
+    "smtp_max_send_rate": 45.0,
+    "smtp_server": "localhost",
+    "smtp_ssh_enable": false,
+    "smtp_ssl_enable": false
 }
 """
 
@@ -169,6 +173,7 @@ class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 			'combobox_sms_carrier',
 			# SMTP Server Tab
 			'entry_smtp_server',
+			'spinbutton_smtp_max_send_rate',
 			'checkbutton_smtp_ssl_enable',
 			'checkbutton_smtp_ssh_enable',
 			'entry_ssh_server',
@@ -176,7 +181,8 @@ class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 	]
 	top_gobject = 'dialog'
 	top_level_dependencies = [
-		'SMSCarriers'
+		'SMSCarriers',
+		'SMTPSendRate'
 	]
 	def signal_smtp_ssh_enable(self, cbutton):
 		active = cbutton.get_property('active')
@@ -440,7 +446,7 @@ class KingPhisherClient(Gtk.Window):
 		self.logger.info('loading the config from disk')
 		config_file = os.path.expanduser(self.config_file)
 		if not os.path.isfile(config_file):
-			self.config = {}
+			self.config = json.loads(DEFAULT_CONFIG)
 			self.save_config()
 		else:
 			self.config = json.load(open(config_file, 'rb'))
