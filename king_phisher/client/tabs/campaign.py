@@ -82,6 +82,9 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		menu_item.set_submenu(popup_copy_submenu)
 		self.popup_menu.append(menu_item)
 
+		menu_item = Gtk.SeparatorMenuItem()
+		self.popup_menu.append(menu_item)
+
 		menu_item = Gtk.MenuItem.new_with_label('Delete')
 		menu_item.connect('activate', self.signal_activate_popup_menu_delete)
 		self.popup_menu.append(menu_item)
