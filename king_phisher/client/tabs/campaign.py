@@ -58,6 +58,7 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		super(CampaignViewGenericTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		popup_copy_submenu = Gtk.Menu.new()
 		self.view_column_renderers = {}
 		columns = self.view_columns
 		for column_id in range(1, len(columns) + 1):
@@ -66,6 +67,10 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
 			self.view_column_renderers[column_id] = column
+
+			menu_item = Gtk.MenuItem.new_with_label(column_name)
+			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_id)
+			popup_copy_submenu.append(menu_item)
 		self.last_load_time = float('-inf')
 		self.row_loader_thread = None
 		self.row_loader_thread_lock = threading.Lock()
@@ -73,8 +78,12 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		getattr(self, self.top_gobject).connect('destroy', self.signal_destroy)
 
 		self.popup_menu = Gtk.Menu.new()
+		menu_item = Gtk.MenuItem.new_with_label('Copy')
+		menu_item.set_submenu(popup_copy_submenu)
+		self.popup_menu.append(menu_item)
+
 		menu_item = Gtk.MenuItem.new_with_label('Delete')
-		menu_item.connect('activate', self.signal_treeview_popup_menu_delete)
+		menu_item.connect('activate', self.signal_activate_popup_menu_delete)
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
 
@@ -138,6 +147,9 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 	def signal_treeview_button_pressed(self, widget, event):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
 			return
+		selection = self.gobjects['treeview_campaign'].get_selection()
+		if not selection.get_selected()[1]:
+			return
 		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
 		self.popup_menu.popup(None, None, pos_func, None, event.button, event.time)
 		return True
@@ -148,7 +160,17 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		if event.get_keyval()[1] == Gdk.KEY_F5:
 			self.load_campaign_information(force = True)
 
-	def signal_treeview_popup_menu_delete(self, action):
+	def signal_activate_popup_menu_copy(self, widget, column_id):
+		treeview = self.gobjects['treeview_campaign']
+		selection = treeview.get_selection()
+		(model, tree_iter) = selection.get_selected()
+		if not tree_iter:
+			return
+		selection_text = model.get_value(tree_iter, column_id)
+		clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+		clipboard.set_text(selection_text, -1)
+
+	def signal_activate_popup_menu_delete(self, action):
 		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
 			utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
 			return
