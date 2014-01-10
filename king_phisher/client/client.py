@@ -452,10 +452,7 @@ class KingPhisherClient(Gtk.Window):
 			self.config = json.load(open(config_file, 'rb'))
 
 	def load_server_config(self):
-		server_config = { }
-		server_config['tracking_image'] = self.rpc('config/get', 'tracking_image')
-		server_config['secret_id'] = self.rpc('config/get', 'secret_id')
-		self.config['server_config'] = server_config
+		self.config['server_config'] = self.rpc('config/get', ['secret_id', 'tracking_image'])
 		return
 
 	def save_config(self):
