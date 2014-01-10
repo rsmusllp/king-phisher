@@ -160,6 +160,10 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self._message_id = msg_id
 		return self._message_id
 
+	@property
+	def vhost(self):
+		return self.headers.get('Host')
+
 	def respond_file(self, file_path, attachment = False, query = {}):
 		file_path = os.path.abspath(file_path)
 		file_ext = os.path.splitext(file_path)[1].lstrip('.')
@@ -169,10 +173,16 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			self.respond_not_found()
 			return None
 
-		if self.config.getboolean('require_id') and not self.campaign_id and self.message_id != self.config.get('secret_id'):
-			self.server.logger.warning('denying request with not found due to lack of id')
-			self.respond_not_found()
-			return None
+		if self.config.getboolean('require_id') and self.message_id != self.config.get('secret_id'):
+			# A valid campaign_id requires a valid message_id
+			if not self.campaign_id:
+				self.server.logger.warning('denying request with not found due to lack of id')
+				self.respond_not_found()
+				return None
+			if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ?', (self.campaign_id, self.vhost)) == 0:
+				self.server.logger.warning('denying request with not found due to invalid hostname and/or page')
+				self.respond_not_found()
+				return None
 
 		self.send_response(200)
 		self.send_header('Content-Type', self.guess_mime_type(file_path))
@@ -281,8 +291,9 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 		else:
 			visit_id = self.cookies[kp_cookie_name].value
-			with self.get_cursor() as cursor:
-				cursor.execute('UPDATE visits SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (visit_id,))
+			if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ? AND page = ?', (self.campaign_id, self.vhost, self.path)):
+				with self.get_cursor() as cursor:
+					cursor.execute('UPDATE visits SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (visit_id,))
 
 		username = (self.get_query_parameter('username') or self.get_query_parameter('user') or self.get_query_parameter('u'))
 		if username:

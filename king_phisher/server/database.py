@@ -43,6 +43,7 @@ DATABASE_TABLES = {
 	'users':                ['id', 'phone_carrier', 'phone_number'],
 	'alert_subscriptions':  ['id', 'user_id', 'campaign_id'],
 	'campaigns':            ['id', 'name', 'creator', 'created'],
+	'landing_pages':        ['id', 'campaign_id', 'hostname', 'page'],
 	'messages':             ['id', 'campaign_id', 'target_email', 'opened', 'sent'],
 	'visits':               ['id', 'campaign_id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit'],
 	'credentials':          ['id', 'campaign_id', 'message_id', 'visit_id', 'username', 'password', 'submitted'],
@@ -75,6 +76,14 @@ def create_database(database_file):
 		name TEXT UNIQUE NOT NULL,
 		creator TEXT NOT NULL,
 		created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
+	""")
+	cursor.execute("""
+	CREATE TABLE landing_pages (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		campaign_id INTEGER NOT NULL,
+		hostname TEXT NOT NULL,
+		page TEXT NOT NULL
 	)
 	""")
 	cursor.execute("""

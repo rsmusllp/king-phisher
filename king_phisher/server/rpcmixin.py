@@ -50,6 +50,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		self.rpc_handler_map['/campaign/alerts/is_subscribed'] = self.rpc_campaign_is_subscribed
 		self.rpc_handler_map['/campaign/alerts/subscribe'] = self.rpc_campaign_alerts_subscribe
 		self.rpc_handler_map['/campaign/alerts/unsubscribe'] = self.rpc_campaign_alerts_unsubscribe
+		self.rpc_handler_map['/campaign/landing_page/new'] = self.rpc_campaign_landing_page_new
 		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
 		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
 		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
@@ -75,6 +76,12 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		yield cursor
 		self.database.commit()
 		self.database_lock.release()
+
+	def query_count(self, query, values):
+		with self.get_cursor() as cursor:
+			cursor.execute(query, values)
+			count = cursor.fetchone()[0]
+		return count
 
 	def rpc_ping(self):
 		return True
@@ -113,16 +120,14 @@ class KingPhisherRequestHandlerRPCMixin(object):
 	def rpc_campaign_is_subscribed(self, campaign_id):
 		username = self.basic_auth_user
 		with self.get_cursor() as cursor:
-			cursor.execute('SELECT id FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id))
-			if cursor.fetchone():
+			if self.query_count('SELECT id FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
 				return True
 		return False
 
 	def rpc_campaign_alerts_subscribe(self, campaign_id):
 		username = self.basic_auth_user
 		with self.get_cursor() as cursor:
-			cursor.execute('SELECT id FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id))
-			if cursor.fetchone():
+			if self.query_count('SELECT id FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
 				return
 			cursor.execute('INSERT INTO alert_subscriptions (user_id, campaign_id) VALUES (?, ?)', (username, campaign_id))
 		return
@@ -131,6 +136,14 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		username = self.basic_auth_user
 		with self.get_cursor() as cursor:
 			cursor.execute('DELETE FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id))
+
+	def rpc_campaign_landing_page_new(self, campaign_id, hostname, page):
+		page = page.lstrip('/')
+		if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ? AND page = ?', (campaign_id, hostname, page)):
+			return
+		with self.get_cursor() as cursor:
+			cursor.execute('INSERT INTO landing_pages (campaign_id, hostname, page) VALUES (?, ?, ?)', (campaign_id, hostname, page))
+		return
 
 	def rpc_campaign_message_new(self, campaign_id, email_id, email_target):
 		with self.get_cursor() as cursor:

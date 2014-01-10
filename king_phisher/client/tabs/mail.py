@@ -112,6 +112,13 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 			self.sender_start_failure('Failed to connect to SMTP', 'Failed.\n')
 			return
 		self.text_insert('Done.\n')
+
+		parsed_target_url = urlparse.urlparse(self.config['mailer.webserver_url'])
+		landing_page_hostname = parsed_target_url.netloc
+		landing_page = parsed_target_url.path
+		landing_page = landing_page.lstrip('/')
+		self.parent.rpc('campaign/landing_page/new', self.config['campaign_id'], landing_page_hostname, landing_page)
+
 		self.sender_thread.start()
 		self.gobjects['togglebutton_mail_sender_pause'].set_sensitive(True)
 
