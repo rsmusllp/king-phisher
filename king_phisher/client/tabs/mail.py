@@ -32,6 +32,7 @@
 
 import collections
 import os
+import urllib
 import urllib2
 import urlparse
 
@@ -242,6 +243,11 @@ class MailSenderConfigTab(utilities.UtilityGladeGObject):
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
 		try:
+			parsed_url = urlparse.urlparse(target_url)
+			query = urlparse.parse_qs(parsed_url.query)
+			query['id'] = [self.config['server_config']['secret_id']]
+			query = urllib.urlencode(query, True)
+			target_url = urlparse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
 			urllib2.urlopen(target_url)
 		except:
 			utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent)

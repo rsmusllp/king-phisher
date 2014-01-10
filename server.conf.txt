@@ -5,3 +5,4 @@ database = /var/kingphisher.db
 setuid_username = nobody
 pid_file = /var/run/kingphisher.pid
 web_root = /var/www
+require_id = True

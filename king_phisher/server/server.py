@@ -56,6 +56,7 @@ make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) f
 def build_king_phisher_server(config, section_name):
 	# set config defaults
 	config.set(section_name, 'tracking_image', 'email_logo_banner.gif')
+	config.set(section_name, 'secret_id', make_uid())
 
 	king_phisher_server = build_server_from_config(config, 'server', ServerClass = KingPhisherServer, HandlerClass = KingPhisherRequestHandler)
 	king_phisher_server.http_server.config = SectionConfigParser('server', config)
@@ -114,15 +115,50 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		finally:
 			self.server.throttle_semaphore.release()
 
+	def get_query_parameter(self, parameter):
+		return self.query_data.get(parameter, [None])[0]
+
 	def custom_authentication(self, username, password):
 		return self.server.forked_authenticator.authenticate(username, password)
 
 	def check_authorization(self):
+		# Dont require authentication for GET & POST requests
 		if self.command in ['GET', 'POST']:
 			return True
+		# Deny anything not GET or POST if it's not from 127.0.0.1
 		if self.client_address[0] != '127.0.0.1':
 			return False
 		return super(KingPhisherRequestHandler, self).check_authorization()
+
+	@property
+	def campaign_id(self):
+		if hasattr(self, '_campaign_id'):
+			return self._campaign_id
+		self._campaign_id = None
+		if self.message_id:
+			with self.get_cursor() as cursor:
+				cursor.execute('SELECT campaign_id FROM messages WHERE id = ?', (self.message_id,))
+				result = cursor.fetchone()
+			if result:
+				self._campaign_id = result[0]
+		return self._campaign_id
+
+	@property
+	def message_id(self):
+		if hasattr(self, '_message_id'):
+			return self._message_id
+		msg_id = self.get_query_parameter('id')
+		if not msg_id:
+			kp_cookie_name = self.config.get('cookie_name', 'KPID')
+			if kp_cookie_name in self.cookies:
+				visit_id = self.cookies[kp_cookie_name].value
+				with self.get_cursor() as cursor:
+					cursor.execute('SELECT message_id FROM visits WHERE id = ?', (visit_id,))
+					result = cursor.fetchone()
+				if result:
+					msg_id = result[0]
+		self._message_id = msg_id
+		return self._message_id
 
 	def respond_file(self, file_path, attachment = False, query = {}):
 		file_path = os.path.abspath(file_path)
@@ -132,6 +168,12 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		except IOError:
 			self.respond_not_found()
 			return None
+
+		if self.config.getboolean('require_id') and not self.campaign_id and self.message_id != self.config.get('secret_id'):
+			self.server.logger.warning('denying request with not found due to lack of id')
+			self.respond_not_found()
+			return None
+
 		self.send_response(200)
 		self.send_header('Content-Type', self.guess_mime_type(file_path))
 		fs = os.fstat(file_obj.fileno())
@@ -142,23 +184,11 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self.send_header('Last-Modified', self.date_time_string(fs.st_mtime))
 
 		if file_ext in ['', 'htm', 'html']:
-			get_query_parameter = lambda p: query.get(p, [None])[0]
-			msg_id = get_query_parameter('id')
-			if not msg_id:
-				kp_cookie_name = self.config.get('cookie_name', 'KPID')
-				if kp_cookie_name in self.cookies:
-					visit_id = self.cookies[kp_cookie_name].value
-					with self.get_cursor() as cursor:
-						cursor.execute('SELECT message_id FROM visits WHERE id = ?', (visit_id,))
-						result = cursor.fetchone()
-					if result:
-						msg_id = result[0]
-			if msg_id:
-				try:
-					self.handle_visit(query, msg_id)
-				except Exception as err:
-					# TODO: log execeptions here
-					pass
+			try:
+				self.handle_page_visit()
+			except Exception as err:
+				# TODO: log execeptions here
+				pass
 
 		self.end_headers()
 		shutil.copyfileobj(file_obj, self.wfile)
@@ -215,24 +245,23 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self.end_headers()
 		self.wfile.write(img_data)
 
-		get_query_parameter = lambda p: query.get(p, [None])[0]
-		msg_id = get_query_parameter('id')
+		msg_id = self.get_query_parameter('id')
 		if not msg_id:
 			return
 		with self.get_cursor() as cursor:
 			cursor.execute('UPDATE messages SET opened = CURRENT_TIMESTAMP WHERE id = ? AND opened IS NULL', (msg_id,))
 
-	def handle_visit(self, query, msg_id):
+	def handle_page_visit(self):
+		if not self.message_id:
+			return
+		if not self.campaign_id:
+			return
+		message_id = self.message_id
+		campaign_id = self.campaign_id
 		with self.get_cursor() as cursor:
 			# set the opened timestamp to the visit time if it's null
-			cursor.execute('UPDATE messages SET opened = CURRENT_TIMESTAMP WHERE id = ? AND opened IS NULL', (msg_id,))
-			cursor.execute('SELECT campaign_id FROM messages WHERE id = ?', (msg_id,))
-			campaign_id = cursor.fetchone()
-			if not campaign_id:
-				return
-			campaign_id = campaign_id[0]
+			cursor.execute('UPDATE messages SET opened = CURRENT_TIMESTAMP WHERE id = ? AND opened IS NULL', (self.message_id,))
 
-		get_query_parameter = lambda p: query.get(p, [None])[0]
 		kp_cookie_name = self.config.get('cookie_name', 'KPID')
 		if not kp_cookie_name in self.cookies:
 			visit_id = make_uid()
@@ -241,7 +270,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			with self.get_cursor() as cursor:
 				client_ip = self.client_address[0]
 				user_agent = (self.headers.getheader('user-agent') or '')
-				cursor.execute('INSERT INTO visits (id, message_id, campaign_id, visitor_ip, visitor_details) VALUES (?, ?, ?, ?, ?)', (visit_id, msg_id, campaign_id, client_ip, user_agent))
+				cursor.execute('INSERT INTO visits (id, message_id, campaign_id, visitor_ip, visitor_details) VALUES (?, ?, ?, ?, ?)', (visit_id, message_id, campaign_id, client_ip, user_agent))
 				cursor.execute('SELECT COUNT(id) FROM visits WHERE campaign_id = ?', (campaign_id,))
 				visit_count = cursor.fetchone()[0]
 			if (visit_count in [1, 10, 25]) or ((visit_count % 50) == 0):
@@ -255,14 +284,14 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			with self.get_cursor() as cursor:
 				cursor.execute('UPDATE visits SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (visit_id,))
 
-		username = (get_query_parameter('username') or get_query_parameter('user') or get_query_parameter('u'))
+		username = (self.get_query_parameter('username') or self.get_query_parameter('user') or self.get_query_parameter('u'))
 		if username:
-			password = (get_query_parameter('password') or get_query_parameter('pass') or get_query_parameter('p'))
+			password = (self.get_query_parameter('password') or self.get_query_parameter('pass') or self.get_query_parameter('p'))
 			password = (password or '')
 			with self.get_cursor() as cursor:
-				cursor.execute('SELECT COUNT(id) FROM credentials WHERE message_id = ? AND username = ? AND password = ?', (msg_id, username, password))
+				cursor.execute('SELECT COUNT(id) FROM credentials WHERE message_id = ? AND username = ? AND password = ?', (message_id, username, password))
 				if cursor.fetchone()[0] == 0:
-					cursor.execute('INSERT INTO credentials (visit_id, message_id, campaign_id, username, password) VALUES (?, ?, ?, ?, ?)', (visit_id, msg_id, campaign_id, username, password))
+					cursor.execute('INSERT INTO credentials (visit_id, message_id, campaign_id, username, password) VALUES (?, ?, ?, ?, ?)', (visit_id, message_id, campaign_id, username, password))
 
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):

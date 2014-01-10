@@ -454,6 +454,7 @@ class KingPhisherClient(Gtk.Window):
 	def load_server_config(self):
 		server_config = { }
 		server_config['tracking_image'] = self.rpc('config/get', 'tracking_image')
+		server_config['secret_id'] = self.rpc('config/get', 'secret_id')
 		self.config['server_config'] = server_config
 		return
 

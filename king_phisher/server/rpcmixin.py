@@ -132,7 +132,8 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		return
 
 	def rpc_campaign_delete(self, campaign_id):
-		tables = ['deaddrop_connections', 'deaddrop_deployments', 'credentials', 'visits', 'messages']
+		# All tables with a campaign_id column
+		tables = filter(lambda table: 'campaign_id' in DATABASE_TABLES[table], DATABASE_TABLES.keys())
 		with self.get_cursor() as cursor:
 			for table in tables:
 				sql_query = "DELETE FROM {0} WHERE campaign_id = ?".format(table)
