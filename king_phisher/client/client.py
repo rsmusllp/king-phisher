@@ -500,7 +500,7 @@ class KingPhisherClient(Gtk.Window):
 		about_dialog = Gtk.AboutDialog()
 		about_dialog.set_transient_for(self)
 		about_dialog_properties = {
-			'authors': ['Spencer McIntyre', 'Jeff McCutchan'],
+			'authors': ['Spencer McIntyre', 'Jeff McCutchan', 'Brandan Geise'],
 			'comments': 'Phishing Campaign Toolkit',
 			'copyright': '(c) 2013 SecureState',
 			'license': license_text,

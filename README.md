@@ -13,11 +13,11 @@ Special Thanks (QA / Beta Testing):
 
  - Jake Garlie - jagar
 
- - Brandan Geise - coldfusion
-
  - Ken Smith - p4tchw0rk
 
 King-Phisher Development Team:
+
+ - Brandan Geise - coldfusion
 
  - Jeff McCutchan - jamcut
 
