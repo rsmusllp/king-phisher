@@ -70,12 +70,17 @@ class ForkedAuthenticator(object):
 		self.wfile.write(json.dumps(request) + '\n')
 
 	def recv(self):
-		request = self.rfile.readline()[:-1]
-		return json.loads(request)
+		try:
+			request = self.rfile.readline()[:-1]
+			return json.loads(request)
+		except KeyboardInterrupt:
+			return {}
 
 	def child_routine(self):
 		while True:
 			request = self.recv()
+			if not 'action' in request:
+				continue
 			action = request['action']
 			if action == 'stop':
 				break
