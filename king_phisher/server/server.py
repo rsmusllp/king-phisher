@@ -85,12 +85,17 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self.handler_map['^' + tracking_image + '$'] = self.handle_email_opened
 
 	def issue_alert(self, alert_text, campaign_id = None):
+		campaign_name = None
 		with self.get_cursor() as cursor:
 			if campaign_id:
+				cursor.execute('SELECT name FROM campaigns WHERE id = ?', (campaign_id,))
+				campaign_name = cursor.fetchone()[0]
 				cursor.execute('SELECT user_id FROM alert_subscriptions WHERE campaign_id = ?', (campaign_id,))
 			else:
 				cursor.execute('SELECT id FROM users WHERE phone_number IS NOT NULL AND phone_carrier IS NOT NULL')
 			user_ids = map(lambda user_id: user_id[0], cursor.fetchall())
+		if campaign_name != None and '{campaign_name}' in alert_text:
+			alert_text = alert_text.format(campaign_name = campaign_name)
 		for user_id in user_ids:
 			with self.get_cursor() as cursor:
 				cursor.execute('SELECT phone_number, phone_carrier FROM users WHERE id = ?', (user_id,))
@@ -132,10 +137,10 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		return self.server.forked_authenticator.authenticate(username, password)
 
 	def check_authorization(self):
-		# Dont require authentication for GET & POST requests
+		# don't require authentication for GET & POST requests
 		if self.command in ['GET', 'POST']:
 			return True
-		# Deny anything not GET or POST if it's not from 127.0.0.1
+		# deny anything not GET or POST if it's not from 127.0.0.1
 		if self.client_address[0] != '127.0.0.1':
 			return False
 		return super(KingPhisherRequestHandler, self).check_authorization()
@@ -184,13 +189,13 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			return None
 
 		if self.config.getboolean('require_id') and self.message_id != self.config.get('secret_id'):
-			# A valid campaign_id requires a valid message_id
+			# a valid campaign_id requires a valid message_id
 			if not self.campaign_id:
 				self.server.logger.warning('denying request with not found due to lack of id')
 				self.respond_not_found()
 				return None
 			if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ?', (self.campaign_id, self.vhost)) == 0:
-				self.server.logger.warning('denying request with not found due to invalid hostname and/or page')
+				self.server.logger.warning('denying request with not found due to invalid hostname')
 				self.respond_not_found()
 				return None
 
@@ -266,7 +271,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		return
 
 	def handle_email_opened(self, query):
-		# Buffer Size:  49 Bytes
+		# image size: 49 Bytes
 		img_data  = '47494638396101000100910000000000ffffffffffff00000021f90401000002'
 		img_data += '002c00000000010001000002025401003b'
 		img_data  = img_data.decode('hex')
@@ -302,13 +307,9 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				client_ip = self.client_address[0]
 				user_agent = (self.headers.getheader('user-agent') or '')
 				cursor.execute('INSERT INTO visits (id, message_id, campaign_id, visitor_ip, visitor_details) VALUES (?, ?, ?, ?, ?)', (visit_id, message_id, campaign_id, client_ip, user_agent))
-				cursor.execute('SELECT COUNT(id) FROM visits WHERE campaign_id = ?', (campaign_id,))
-				visit_count = cursor.fetchone()[0]
-			if (visit_count in [1, 10, 25]) or ((visit_count % 50) == 0):
-				with self.get_cursor() as cursor:
-					cursor.execute('SELECT name FROM campaigns WHERE id = ?', (campaign_id,))
-					campaign_name = cursor.fetchone()[0]
-				alert_text = "{0} vists reached for campaign: {1}".format(visit_count, campaign_name)
+				visit_count = self.query_count('SELECT COUNT(id) FROM visits WHERE campaign_id = ?', (campaign_id,))
+			if visit_count > 0 and ((visit_count in [1, 10, 25]) or ((visit_count % 50) == 0)):
+				alert_text = "{0} vists reached for campaign: {{campaign_name}}".format(visit_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 		else:
 			visit_id = self.cookies[kp_cookie_name].value
@@ -320,10 +321,15 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		if username:
 			password = (self.get_query_parameter('password') or self.get_query_parameter('pass') or self.get_query_parameter('p'))
 			password = (password or '')
+			cred_count = 0
 			with self.get_cursor() as cursor:
 				cursor.execute('SELECT COUNT(id) FROM credentials WHERE message_id = ? AND username = ? AND password = ?', (message_id, username, password))
 				if cursor.fetchone()[0] == 0:
 					cursor.execute('INSERT INTO credentials (visit_id, message_id, campaign_id, username, password) VALUES (?, ?, ?, ?, ?)', (visit_id, message_id, campaign_id, username, password))
+					cred_count = self.query_count('SELECT COUNT(id) FROM credentials WHERE campaign_id = ?', (campaign_id,))
+			if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
+				alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
+				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):
