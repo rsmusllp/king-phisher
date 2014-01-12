@@ -317,9 +317,17 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				with self.get_cursor() as cursor:
 					cursor.execute('UPDATE visits SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (visit_id,))
 
-		username = (self.get_query_parameter('username') or self.get_query_parameter('user') or self.get_query_parameter('u'))
+		username = None
+		for pname in ['username', 'user', 'u']:
+			username = (self.get_query_parameter(pname) or self.get_query_parameter(pname.title()) or self.get_query_parameter(pname.upper()))
+			if username:
+				break
 		if username:
-			password = (self.get_query_parameter('password') or self.get_query_parameter('pass') or self.get_query_parameter('p'))
+			password = None
+			for pname in ['password', 'pass', 'p']:
+				password = (self.get_query_parameter(pname) or self.get_query_parameter(pname.title()) or self.get_query_parameter(pname.upper()))
+				if password:
+					break
 			password = (password or '')
 			cred_count = 0
 			with self.get_cursor() as cursor:
