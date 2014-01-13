@@ -47,7 +47,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		self.rpc_handler_map['/client/initialize'] = self.rpc_client_initialize
 		self.rpc_handler_map['/config/get'] = self.rpc_config_get
 
-		self.rpc_handler_map['/campaign/alerts/is_subscribed'] = self.rpc_campaign_is_subscribed
+		self.rpc_handler_map['/campaign/alerts/is_subscribed'] = self.rpc_campaign_alerts_is_subscribed
 		self.rpc_handler_map['/campaign/alerts/subscribe'] = self.rpc_campaign_alerts_subscribe
 		self.rpc_handler_map['/campaign/alerts/unsubscribe'] = self.rpc_campaign_alerts_unsubscribe
 		self.rpc_handler_map['/campaign/landing_page/new'] = self.rpc_campaign_landing_page_new
@@ -117,17 +117,17 @@ class KingPhisherRequestHandlerRPCMixin(object):
 			campaign_id = cursor.fetchone()[0]
 		return campaign_id
 
-	def rpc_campaign_is_subscribed(self, campaign_id):
+	def rpc_campaign_alerts_is_subscribed(self, campaign_id):
 		username = self.basic_auth_user
 		with self.get_cursor() as cursor:
-			if self.query_count('SELECT id FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
+			if self.query_count('SELECT COUNT(id) FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
 				return True
 		return False
 
 	def rpc_campaign_alerts_subscribe(self, campaign_id):
 		username = self.basic_auth_user
 		with self.get_cursor() as cursor:
-			if self.query_count('SELECT id FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
+			if self.query_count('SELECT COUNT(id) FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
 				return
 			cursor.execute('INSERT INTO alert_subscriptions (user_id, campaign_id) VALUES (?, ?)', (username, campaign_id))
 		return
