@@ -31,5 +31,19 @@ The following options will be honored but are not configurable through the GUI:
 * server_remote_port (Default: 80)
 * mailer.max_messages_per_connection (Default: 5)
 
+### Message Template Variables
+The client message template supports a number of variables each begining with $.
+
+* $webserver\_url (Phishing Site URL example: &lt;a href="$webserver\_url?id=$uid"&gt;)
+* $uid (Tracking User ID)
+* $first\_name (First Name)
+* $last\_name (Last Name)
+* $company\_name (Company Name)
+* $email\_address (Email Address)
+* $tracking\_dot\_url (Tracking Dot URL)
+* $tracking\_dot\_image\_tag (Tracking Dot Image Tag)
+
+The $webserver\_url and $uid variables are the most important and must be present in messages which are sent.
+
 ## Server Configuration
 The server configuration file is in the standard INI style.
