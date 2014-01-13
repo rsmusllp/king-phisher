@@ -77,6 +77,9 @@ class ForkedAuthenticator(object):
 			return {}
 
 	def child_routine(self):
+		service = 'login'
+		if os.path.isfile('/etc/pam.d/sshd'):
+			service = 'sshd'
 		while True:
 			request = self.recv()
 			if not 'action' in request:
@@ -89,7 +92,7 @@ class ForkedAuthenticator(object):
 			username = request['username']
 			password = request['password']
 			result = {}
-			result['result'] = pam.authenticate(username, password)
+			result['result'] = pam.authenticate(username, password, service = service)
 			self.send(result)
 
 	def authenticate(self, username, password):
