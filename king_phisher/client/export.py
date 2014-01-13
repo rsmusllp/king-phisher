@@ -49,7 +49,7 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 		ET.SubElement(campaign, key).text = str(value).encode('utf-8')
 
 	# Tables with a campaign_id field
-	for table_name in ['messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']:
+	for table_name in ['landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']:
 		table_element = ET.SubElement(campaign, table_name)
 		for table_row in rpc.remote_table('campaign/' + table_name, campaign_id):
 			table_row_element = ET.SubElement(table_element, table_name[:-1])

@@ -41,7 +41,7 @@ make_uid = lambda s: ''.join(random.choice(string.ascii_letters + string.digits)
 
 DATABASE_TABLES = {
 	'users':                ['id', 'phone_carrier', 'phone_number'],
-	'alert_subscriptions':  ['id', 'user_id', 'campaign_id'],
+	'alert_subscriptions':  ['id', 'campaign_id', 'user_id'],
 	'campaigns':            ['id', 'name', 'creator', 'created'],
 	'landing_pages':        ['id', 'campaign_id', 'hostname', 'page'],
 	'messages':             ['id', 'campaign_id', 'target_email', 'opened', 'sent'],
@@ -50,6 +50,9 @@ DATABASE_TABLES = {
 	'deaddrop_deployments': ['id', 'campaign_id', 'destination'],
 	'deaddrop_connections': ['id', 'campaign_id', 'deployment_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit'],
 }
+
+def get_tables_with_column_id(column_id):
+	return map(lambda x: x[0], filter(lambda x: column_id in x[1], DATABASE_TABLES.items()))
 
 def create_database(database_file):
 	if database_file != ':memory:' and os.path.exists(database_file):

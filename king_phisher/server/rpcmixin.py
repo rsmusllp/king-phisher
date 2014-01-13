@@ -62,11 +62,11 @@ class KingPhisherRequestHandlerRPCMixin(object):
 			self.rpc_handler_map['/' + table_name + '/view'] = self.rpc_database_get_rows
 
 		# Tables with a campaign_id field
-		for table_name in map(lambda x: x[0], filter(lambda x: 'campaign_id' in x[1], DATABASE_TABLES.items())):
+		for table_name in database.get_tables_with_column_id('campaign_id'):
 			self.rpc_handler_map['/campaign/' + table_name + '/view'] = self.rpc_database_get_rows
 
 		# Tables with a message_id field
-		for table_name in map(lambda x: x[0], filter(lambda x: 'message_id' in x[1], DATABASE_TABLES.items())):
+		for table_name in database.get_tables_with_column_id('message_id'):
 			self.rpc_handler_map['/message/' + table_name + '/view'] = self.rpc_database_get_rows
 
 	@contextlib.contextmanager
@@ -151,8 +151,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		return
 
 	def rpc_campaign_delete(self, campaign_id):
-		# All tables with a campaign_id column
-		tables = filter(lambda table: 'campaign_id' in DATABASE_TABLES[table], DATABASE_TABLES.keys())
+		tables = database.get_tables_with_column_id('campaign_id')
 		with self.get_cursor() as cursor:
 			for table in tables:
 				sql_query = "DELETE FROM {0} WHERE campaign_id = ?".format(table)
