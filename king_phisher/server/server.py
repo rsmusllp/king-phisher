@@ -338,6 +338,11 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 
+		trained = self.get_query_parameter('trained')
+		if trained.lower() in ['1', 'true', 'yes']:
+			with self.get_cursor() as cursor:
+				cursor.execute('UPDATE messages SET trained = 1 WHERE id = ?', (message_id,))
+
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, *args, **kwargs):
 		super(KingPhisherServer, self).__init__(*args, **kwargs)

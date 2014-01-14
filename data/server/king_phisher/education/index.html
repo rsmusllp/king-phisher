@@ -26,12 +26,14 @@
 			<p style="text-align: center;"><strong>Do not become a victim of phishing!</strong><p>
 		</div>
 		<div id="wrapper">
-			<form method="post" action="./trained.html">
+			<form action="./trained.html">
 				<p>
 					<strong>I understand what phishing is and why it is dangerous.  I will make every attempt to identify and report phishing scams in the future.</strong>
 				</p>
 				<p style="text-align: center;">
-					<em>Please click "I agree" to complete this education.</em> <input type="submit" value="I agree"/>
+					<em>Please click "I agree" to complete this education.</em>
+					<input type="hidden" name="trained" value="true">
+					<input type="submit" value="I agree"/>
 				</p>
 			</form>
 		</div>

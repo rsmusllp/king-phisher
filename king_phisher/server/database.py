@@ -44,7 +44,7 @@ DATABASE_TABLES = {
 	'alert_subscriptions':  ['id', 'campaign_id', 'user_id'],
 	'campaigns':            ['id', 'name', 'creator', 'created'],
 	'landing_pages':        ['id', 'campaign_id', 'hostname', 'page'],
-	'messages':             ['id', 'campaign_id', 'target_email', 'opened', 'sent'],
+	'messages':             ['id', 'campaign_id', 'target_email', 'opened', 'sent', 'trained'],
 	'visits':               ['id', 'campaign_id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit'],
 	'credentials':          ['id', 'campaign_id', 'message_id', 'visit_id', 'username', 'password', 'submitted'],
 	'deaddrop_deployments': ['id', 'campaign_id', 'destination'],
@@ -95,7 +95,8 @@ def create_database(database_file):
 		campaign_id INTEGER NOT NULL,
 		target_email TEXT,
 		opened TIMESTAMP DEFAULT NULL,
-		sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		trained BOOLEAN DEFAULT 0
 	)
 	""")
 	cursor.execute("""

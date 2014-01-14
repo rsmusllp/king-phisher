@@ -258,10 +258,11 @@ class CampaignViewMessagesTab(CampaignViewGenericTab):
 	view_columns = {
 		1:'Email',
 		2:'Sent',
-		3:'Opened'
+		3:'Opened',
+		4:'Trained'
 	}
 	def format_row_data(self, message):
-		return [message['target_email'], message['sent'], message['opened']]
+		return [message['target_email'], message['sent'], message['opened'], ('Yes' if message['trained'] else '')]
 
 class CampaignViewTab(object):
 	def __init__(self, config, parent):
