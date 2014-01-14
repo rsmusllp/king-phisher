@@ -211,8 +211,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			try:
 				self.handle_page_visit()
 			except Exception as err:
-				# TODO: log execeptions here
-				pass
+				self.server.logger.error('handle_page_visit raise error: ' + err.__class__.__name__)
 
 		self.end_headers()
 		shutil.copyfileobj(file_obj, self.wfile)
@@ -339,7 +338,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 
 		trained = self.get_query_parameter('trained')
-		if trained.lower() in ['1', 'true', 'yes']:
+		if isinstance(trained, (str, unicode)) and trained.lower() in ['1', 'true', 'yes']:
 			with self.get_cursor() as cursor:
 				cursor.execute('UPDATE messages SET trained = 1 WHERE id = ?', (message_id,))
 
