@@ -39,15 +39,14 @@ import sqlite3
 import string
 import threading
 
-from AdvancedHTTPServer import *
-from AdvancedHTTPServer import build_server_from_config
-from AdvancedHTTPServer import SectionConfigParser
-
 from king_phisher import job
 from king_phisher import sms
 from king_phisher import xor
 from king_phisher.server import authenticator
 from king_phisher.server import rpcmixin
+from king_phisher.third_party.AdvancedHTTPServer import *
+from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
+from king_phisher.third_party.AdvancedHTTPServer import SectionConfigParser
 
 __version__ = '0.0.1'
 DEFAULT_PAGE_PATH = '/usr/share:/usr/local/share:data/server:.'
