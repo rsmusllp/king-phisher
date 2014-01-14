@@ -56,6 +56,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
 
 		for table_name in DATABASE_TABLES.keys():
+			self.rpc_handler_map['/' + table_name + '/count'] = self.rpc_database_count_rows
 			self.rpc_handler_map['/' + table_name + '/delete'] = self.rpc_database_delete_row_by_id
 			self.rpc_handler_map['/' + table_name + '/get'] = self.rpc_database_get_row_by_id
 			self.rpc_handler_map['/' + table_name + '/set'] = self.rpc_database_set_row_value
@@ -63,10 +64,12 @@ class KingPhisherRequestHandlerRPCMixin(object):
 
 		# Tables with a campaign_id field
 		for table_name in database.get_tables_with_column_id('campaign_id'):
+			self.rpc_handler_map['/campaign/' + table_name + '/count'] = self.rpc_database_count_rows
 			self.rpc_handler_map['/campaign/' + table_name + '/view'] = self.rpc_database_get_rows
 
 		# Tables with a message_id field
 		for table_name in database.get_tables_with_column_id('message_id'):
+			self.rpc_handler_map['/message/' + table_name + '/count'] = self.rpc_database_count_rows
 			self.rpc_handler_map['/message/' + table_name + '/view'] = self.rpc_database_get_rows
 
 	@contextlib.contextmanager
@@ -159,9 +162,22 @@ class KingPhisherRequestHandlerRPCMixin(object):
 			cursor.execute("DELETE FROM campaigns WHERE id = ?", (campaign_id,))
 		return
 
+	def rpc_database_count_rows(self, *args):
+		args = list(args)
+		table = self.path.split('/')[-2]
+		fields = self.path.split('/')[1:-2]
+		assert(len(fields) == len(args))
+		sql_query = 'SELECT COUNT(id) FROM ' + table
+		if len(fields):
+			sql_query += ' WHERE ' + ' AND '.join(map(lambda f: f + '_id = ?', fields))
+		return self.query_count(sql_query, args)
+
 	def rpc_database_get_rows(self, *args):
 		args = list(args)
-		offset = (args.pop() * VIEW_ROW_COUNT)
+		if len(args):
+			offset = (args.pop() * VIEW_ROW_COUNT)
+		else:
+			offset = 0
 
 		table = self.path.split('/')[-2]
 		fields = self.path.split('/')[1:-2]
