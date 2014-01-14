@@ -38,7 +38,7 @@ import string
 import sys
 import time
 
-import pam
+from king_phisher.third_party import pam
 
 make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for x in range(random.randint(5, 8)))
 make_hash = lambda pw: hashlib.sha512(pw).digest()

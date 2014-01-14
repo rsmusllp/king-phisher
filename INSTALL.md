@@ -14,8 +14,6 @@ King Phisher uses a client server architecture.  The KingPhisherServer file runs
 ## Server Required Packages
 [AdvancedHTTPServer](https://gist.github.com/zeroSteiner/4502576)
 
-[PAM](http://atlee.ca/software/pam/)
-
 [Msgpack-Python](https://github.com/msgpack/msgpack-python)
 
 [dnspython](http://www.dnspython.org/)
@@ -37,11 +35,10 @@ King Phisher uses a client server architecture.  The KingPhisherServer file runs
 1. Start the client by running ```./KingPhisher```
 
 ### Server Ubuntu 13.04/13.10
-1. Install required packages: ```sudo apt-get install python-dnspython python-pam msgpack-python msgpack-python```
+1. Install required packages: ```sudo apt-get install python-dnspython msgpack-python msgpack-python```
 1. Download King-Phisher: ```git clone https://github.com/securestate/king-phisher.git```
 1. Get the AdvancedHTTPServer.py ```git clone https://gist.github.com/4502576.git```
 1. Put it in the root directory of king-phisher ```mv 4502576/AdvancedHTTPServer.py ./ && rm -R 4502576/```
-1. Get "pam.py", ```wget http://stuff.mit.edu/afs/sipb/project/zmobile/lib/python2.6/site-packages/pam-0.1.3-py2.6.egg/pam.py``` and put it in the root directory of king-phisher
 1. Open server.conf.txt with a text editor and change the "web_root" field to the location where you want to serve your phishing website html files. Save the file as server.conf.
 1. Start a screen session "screen -S KingPhisherServer"
 1. Run ```./KingPhisherServer -L INFO --foreground server.conf``` pointing to your modified server.conf file

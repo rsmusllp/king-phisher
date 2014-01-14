@@ -51,6 +51,7 @@ setup(
 	packages = [
 		'king_phisher',
 		'king_phisher.server',
+		'king_phisher.third_party',
 	],
 	scripts = ['KingPhisherServer'],
 	data_files = data_files,
