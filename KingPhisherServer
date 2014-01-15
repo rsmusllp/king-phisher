@@ -35,6 +35,7 @@ import ConfigParser
 import logging
 import os
 import pwd
+import signal
 import threading
 
 from king_phisher.server import server
@@ -103,11 +104,12 @@ def main():
 			logger.critical('sqlite3 requires write premissions to the folder containing the database')
 			king_phisher_server.shutdown()
 			return
+	sighup_handler = lambda: threading.Thread(target = king_phisher_server.shutdown).start()
+	signal.signal(signal.SIGHUP, lambda signum, frame: sighup_handler())
 	try:
 		king_phisher_server.serve_forever(fork = False)
 	except KeyboardInterrupt:
-		pass
-	king_phisher_server.shutdown()
+		king_phisher_server.shutdown()
 	return
 
 if __name__ == '__main__':

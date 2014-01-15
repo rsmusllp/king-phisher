@@ -98,8 +98,8 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		return True
 
 	def rpc_shutdown(self):
-		shutdown_thread = threading.Thread(target = lambda: self.server.shutdown())
-		shutdown_thread.run()
+		shutdown_thread = threading.Thread(target = self.server.shutdown)
+		shutdown_thread.start()
 		return
 
 	def rpc_config_get(self, option_name):

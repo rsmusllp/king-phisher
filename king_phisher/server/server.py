@@ -355,7 +355,8 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.throttle_semaphore = threading.Semaphore()
 		self.http_server.job_manager = job.JobManager()
 		self.http_server.job_manager.start()
-		self.serving = False
+		self.__is_shutdown = threading.Event()
+		self.__is_shutdown.clear()
 
 	def load_database(self, database_file):
 		if database_file == ':memory:':
@@ -366,8 +367,11 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.database = db
 
 	def shutdown(self, *args, **kwargs):
+		if self.__is_shutdown.is_set():
+			return
 		self.logger.warning('processing shutdown request')
 		super(KingPhisherServer, self).shutdown(*args, **kwargs)
 		self.http_server.forked_authenticator.stop()
 		self.logger.debug('stopped the forked authenticator process')
 		self.http_server.job_manager.stop()
+		self.__is_shutdown.set()

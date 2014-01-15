@@ -111,6 +111,8 @@ class ForkedAuthenticator(object):
 		return (cached_hash == pw_hash)
 
 	def stop(self):
+		if not os.path.exists("/proc/{0}".format(self.child_pid)):
+			return
 		request = {}
 		request['action'] = 'stop'
 		self.send(request)
