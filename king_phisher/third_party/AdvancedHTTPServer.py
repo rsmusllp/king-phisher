@@ -55,7 +55,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.2.51'
+__version__ = '0.2.52'
 __all__ = ['AdvancedHTTPServer', 'AdvancedHTTPServerRequestHandler', 'AdvancedHTTPServerRPCClient', 'AdvancedHTTPServerRPCError']
 
 import BaseHTTPServer
@@ -679,6 +679,7 @@ class AdvancedHTTPServer(object):
 		self.address = address
 		self.ssl_certfile = ssl_certfile
 		self.logger = logging.getLogger('AdvancedHTTPServer')
+		self.server_started = False
 
 		if use_threads:
 			self.http_server = AdvancedHTTPServerThreaded(address, RequestHandler)
@@ -702,11 +703,13 @@ class AdvancedHTTPServer(object):
 			if child_pid != 0:
 				self.logger.info(self.address[0] + ':' + str(self.address[1]) + ' - forked child process: ' + str(child_pid))
 				return child_pid
+		self.server_started = True
 		self.http_server.serve_forever()
 		return 0
 
 	def shutdown(self):
-		self.http_server.shutdown()
+		if self.server_started:
+			self.http_server.shutdown()
 
 	@property
 	def serve_files(self):
@@ -836,8 +839,9 @@ def main():
 	server.serve_files_root = web_root
 	try:
 		server.serve_forever()
-	except Exception as err:
+	except KeyboardInterrupt:
 		pass
+	server.shutdown()
 	logging.shutdown()
 	return 0
 

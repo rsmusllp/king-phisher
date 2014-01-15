@@ -55,6 +55,7 @@ def main():
 	logging.getLogger('').addHandler(console_log_handler)
 	config_file = arguments.config_file
 	del arguments, parser
+	logger = logging.getLogger('KingPhisher.Client.CLI')
 
 	# Configure environment variables
 	os.environ['GLADE_FILE'] = 'king_phisher/KingPhisherClient.glade'

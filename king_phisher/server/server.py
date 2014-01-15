@@ -211,7 +211,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			try:
 				self.handle_page_visit()
 			except Exception as err:
-				self.server.logger.error('handle_page_visit raise error: ' + err.__class__.__name__)
+				self.server.logger.error('handle_page_visit raised error: ' + err.__class__.__name__)
 
 		self.end_headers()
 		shutil.copyfileobj(file_obj, self.wfile)
@@ -355,6 +355,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.throttle_semaphore = threading.Semaphore()
 		self.http_server.job_manager = job.JobManager()
 		self.http_server.job_manager.start()
+		self.serving = False
 
 	def load_database(self, database_file):
 		if database_file == ':memory:':

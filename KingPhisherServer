@@ -61,6 +61,7 @@ def main():
 	logging.getLogger('').addHandler(console_log_handler)
 	config_file = arguments.config_file
 	del parser
+	logger = logging.getLogger('KingPhisher.Server.CLI')
 
 	if os.getuid():
 		print('[-] This must be executed as root')
@@ -82,10 +83,11 @@ def main():
 	database_file = config.get('server', 'database')
 	if database_file != ':memory:' and not os.path.exists(database_file):
 		database.create_database(database_file)
+		logger.info('created new sqlite3 database file')
 	king_phisher_server.load_database(database_file)
 
 	server_pid = os.getpid()
-	king_phisher_server.logger.info('server running in process: ' + str(server_pid))
+	logger.info('server running in process: ' + str(server_pid))
 
 	if config.has_option('server', 'pid_file'):
 		pid_file = open(config.get('server', 'pid_file'), 'w')
@@ -96,6 +98,11 @@ def main():
 		user_info = pwd.getpwnam(setuid_username)
 		os.setregid(user_info.pw_gid, user_info.pw_gid)
 		os.setreuid(user_info.pw_uid, user_info.pw_uid)
+		database_dir = os.path.dirname(database_file)
+		if not os.access(database_dir, os.W_OK):
+			logger.critical('sqlite3 requires write premissions to the folder containing the database')
+			king_phisher_server.shutdown()
+			return
 	try:
 		king_phisher_server.serve_forever(fork = False)
 	except KeyboardInterrupt:
