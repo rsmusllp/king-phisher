@@ -62,8 +62,6 @@ def main():
 	if not utilities.which_glade(os.environ['GLADE_FILE']):
 		print('[-] unable to locate the Glade data file')
 		return 0
-	if 'SSH_AUTH_SOCK' in os.environ:
-		del os.environ['SSH_AUTH_SOCK']
 
 	Gtk.init(sys.argv)
 	main_window = client.KingPhisherClient(config_file = config_file)

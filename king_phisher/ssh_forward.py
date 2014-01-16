@@ -79,7 +79,7 @@ class ForwardHandler(SocketServer.BaseRequestHandler):
 		self.request.close()
 
 class SSHTCPForwarder(threading.Thread):
-	def __init__(self, server, username, password, local_port, remote_server):
+	def __init__(self, server, username, password, local_port, remote_server, preferred_private_key = None):
 		super(SSHTCPForwarder, self).__init__()
 		self.local_port = local_port
 		self.server = server
@@ -87,8 +87,33 @@ class SSHTCPForwarder(threading.Thread):
 		client = paramiko.SSHClient()
 		client.load_system_host_keys()
 		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-		client.connect(server[0], server[1], username = username, look_for_keys = True, key_filename = None, password = password)
 		self.client = client
+		self.__connected = False
+
+		# an issue seems to exist in paramiko when multiple keys are present through the ssh-agent
+		ssh_agent = paramiko.Agent()
+		ssh_keys = ssh_agent.get_keys()
+		if len(ssh_keys) == 1:
+			self.__try_connect(username = username, look_for_keys = False, allow_agent = False, pkey = ssh_keys[0])
+
+		if not self.__connected and preferred_private_key:
+			preferred_private_key = preferred_private_key.strip()
+			preferred_private_key = preferred_private_key.replace(':', '')
+			preferred_private_key = preferred_private_key.lower()
+			preferred_private_key = filter(lambda k: k.get_fingerprint().encode('hex').lower() == preferred_private_key, ssh_keys)
+			if len(preferred_private_key) == 1:
+				self.__try_connect(username = username, look_for_keys = False, allow_agent = False, pkey = preferred_private_key[0])
+
+		if not self.__connected:
+			self.client.connect(self.server[0], self.server[1], username = username, password = password, allow_agent = False, look_for_keys = True)
+
+	def __try_connect(self, *args, **kwargs):
+		try:
+			self.client.connect(self.server[0], self.server[1], *args, **kwargs)
+		except paramiko.SSHException:
+			return False
+		self.__connected = True
+		return True
 
 	def run(self):
 		transport = self.client.get_transport()

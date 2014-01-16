@@ -404,7 +404,7 @@ class KingPhisherClient(Gtk.Window):
 			server_remote_port = self.config.get('server_remote_port', 80)
 			local_port = random.randint(2000, 6000)
 			try:
-				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port))
+				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key = self.config.get('ssh_preferred_key'))
 				self.ssh_forwarder.start()
 				time.sleep(0.5)
 				self.logger.info('started ssh port forwarding')
@@ -425,6 +425,7 @@ class KingPhisherClient(Gtk.Window):
 					utilities.show_dialog_error('Invalid Credentials', self)
 				else:
 					self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
+					utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self, 'The server responded with HTTP status: ' + str(err.status))
 				continue
 			except:
 				self.logger.warning('failed to connect to the remote rpc service')

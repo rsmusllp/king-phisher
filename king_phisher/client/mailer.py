@@ -100,7 +100,7 @@ class MailSenderThread(threading.Thread):
 		remote_server = utilities.server_parse(self.config['smtp_server'], 25)
 		local_port = random.randint(2000, 6000)
 		try:
-			self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server)
+			self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server, preferred_private_key = self.config.get('ssh_preferred_key'))
 			self.ssh_forwarder.start()
 			time.sleep(0.5)
 		except:
