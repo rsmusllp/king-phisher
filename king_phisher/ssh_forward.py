@@ -88,13 +88,14 @@ class SSHTCPForwarder(threading.Thread):
 		client.load_system_host_keys()
 		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 		self.client = client
+		self.username = username
 		self.__connected = False
 
 		# an issue seems to exist in paramiko when multiple keys are present through the ssh-agent
 		ssh_agent = paramiko.Agent()
 		ssh_keys = ssh_agent.get_keys()
 		if len(ssh_keys) == 1:
-			self.__try_connect(username = username, look_for_keys = False, allow_agent = False, pkey = ssh_keys[0])
+			self.__try_connect(look_for_keys = False, allow_agent = False, pkey = ssh_keys[0])
 
 		if not self.__connected and preferred_private_key:
 			preferred_private_key = preferred_private_key.strip()
@@ -102,15 +103,21 @@ class SSHTCPForwarder(threading.Thread):
 			preferred_private_key = preferred_private_key.lower()
 			preferred_private_key = filter(lambda k: k.get_fingerprint().encode('hex').lower() == preferred_private_key, ssh_keys)
 			if len(preferred_private_key) == 1:
-				self.__try_connect(username = username, look_for_keys = False, allow_agent = False, pkey = preferred_private_key[0])
+				self.__try_connect(look_for_keys = False, allow_agent = False, pkey = preferred_private_key[0])
 
 		if not self.__connected:
-			self.client.connect(self.server[0], self.server[1], username = username, password = password, allow_agent = False, look_for_keys = True)
+			self.__try_connect(password = password, allow_agent = False, look_for_keys = True, raise_error = True)
 
 	def __try_connect(self, *args, **kwargs):
+		raise_error = False
+		if 'raise_error' in kwargs:
+			raise_error = kwargs['raise_error']
+			del kwargs['raise_error']
 		try:
-			self.client.connect(self.server[0], self.server[1], *args, **kwargs)
-		except paramiko.SSHException:
+			self.client.connect(self.server[0], self.server[1], username = self.username, *args, **kwargs)
+		except paramiko.SSHException as error:
+			if raise_error:
+				raise error
 			return False
 		self.__connected = True
 		return True
