@@ -33,6 +33,7 @@
 import argparse
 import ConfigParser
 import logging
+import logging.handlers
 import os
 import pwd
 import signal
@@ -77,6 +78,15 @@ def main():
 	config = ConfigParser.ConfigParser()
 	config.readfp(config_file)
 
+	if config.has_section('logging'):
+		file_handler = logging.handlers.FileHandler(config.get('logging', 'file'))
+		file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-10s %(message)s"))
+		logging.getLogger('').addHandler(file_handler)
+		if config.has_option('logging', 'level'):
+			file_handler.setLevel(getattr(logging, config.get('logging', 'level')))
+		else:
+			file_handler.setLevel(logging.WARNING)
+
 	if (not arguments.foreground) and os.fork():
 		return
 
@@ -110,6 +120,7 @@ def main():
 		king_phisher_server.serve_forever(fork = False)
 	except KeyboardInterrupt:
 		king_phisher_server.shutdown()
+	logging.shutdown()
 	return
 
 if __name__ == '__main__':
