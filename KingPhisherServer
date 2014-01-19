@@ -33,7 +33,6 @@
 import argparse
 import ConfigParser
 import logging
-import logging.handlers
 import os
 import pwd
 import signal
@@ -41,6 +40,10 @@ import threading
 
 from king_phisher.server import server
 from king_phisher.server import database
+
+REQUIRED_CONFIG_OPTIONS = {
+	'server': ['database', 'port', 'web_root']
+}
 
 try:
 	import msgpack
@@ -67,19 +70,31 @@ def main():
 
 	if os.getuid():
 		print('[-] This must be executed as root')
-		print('[-] Configure the setuid_username option in the config file to drop privileges')
+		print('[-] Configure the setuid_username option in the config file to drop privileges.')
 		return
 
 	if not has_msgpack:
-		print('[-] This server requires the Python msgpack module to be installed')
-		print('[-] Please install it from http://msgpack.org/ or your package manager')
+		print('[-] This server requires the Python msgpack module to be installed.')
+		print('[-] Please install it from http://msgpack.org/ or your package manager.')
 		return
 
 	config = ConfigParser.ConfigParser()
 	config.readfp(config_file)
 
+	for section_name, option_names in REQUIRED_CONFIG_OPTIONS.items():
+		if not config.has_section(section_name):
+			print('[-] The config file is missing the required section: ' + section_name)
+			return
+		missing_options = filter(lambda option_name: not config.has_option(section_name, option_name), option_names)
+		if missing_options:
+			print("[-] The config file is missing the {0} {1}".format(', '.join(missing_options), ('options' if len(missing_options) > 1 else 'option')))
+			print("[-] from the {0} section.".format(section_name))
+			return
+
+	log_file_path = None
 	if config.has_section('logging'):
-		file_handler = logging.handlers.FileHandler(config.get('logging', 'file'))
+		log_file_path = config.get('logging', 'file')
+		file_handler = logging.FileHandler(log_file_path)
 		file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-10s %(message)s"))
 		logging.getLogger('').addHandler(file_handler)
 		if config.has_option('logging', 'level'):
@@ -107,6 +122,8 @@ def main():
 	if config.has_option('server', 'setuid_username'):
 		setuid_username = config.get('server', 'setuid_username')
 		user_info = pwd.getpwnam(setuid_username)
+		if log_file_path:
+			os.chown(log_file_path, user_info.pw_uid, user_info.pw_gid)
 		os.setregid(user_info.pw_gid, user_info.pw_gid)
 		os.setreuid(user_info.pw_uid, user_info.pw_uid)
 		database_dir = os.path.dirname(database_file)

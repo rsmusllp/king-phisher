@@ -187,7 +187,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			self.respond_not_found()
 			return None
 
-		if self.config.getboolean('require_id') and self.message_id != self.config.get('secret_id'):
+		if self.config.getboolean('require_id', True) and self.message_id != self.config.get('secret_id'):
 			# a valid campaign_id requires a valid message_id
 			if not self.campaign_id:
 				self.server.logger.warning('denying request with not found due to lack of id')
