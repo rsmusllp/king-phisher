@@ -30,7 +30,44 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
+import functools
 import os
+import time
+
+class cache(object):
+	def __init__(self, timeout):
+		self.cache_timeout = timeout
+		self.__cache = {}
+
+	def __call__(self, *args):
+		if not hasattr(self, '_target_function'):
+			self._target_function = args[0]
+			return self
+		self.clean_cache()
+		if not isinstance(args, collections.Hashable):
+			return self._target_function(*args)
+		result, expiration = self.__cache.get(args, (None, 0))
+		if expiration > time.time():
+			return result
+		result = self._target_function(*args)
+		self.__cache[args] = (result, time.time() + self.cache_timeout)
+		return result
+
+	def __repr__(self):
+		return "<cached function {0}>".format(self._target_function.__name__)
+
+	def clean_cache(self):
+		now = time.time()
+		keys_for_removal = []
+		for key, (value, expiration) in self.__cache.items():
+			if expiration < now:
+				keys_for_removal.append(key)
+		for key in keys_for_removal:
+			del self.__cache[key]
+
+	def clear_cache(self):
+		self.__cache = {}
 
 def server_parse(server, default_port):
 	server = server.split(':')
