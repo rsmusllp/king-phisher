@@ -45,8 +45,9 @@ from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
+from king_phisher import utilities
+from king_phisher.client import gui_utilities
 from king_phisher.ssh_forward import SSHTCPForwarder
-from king_phisher.client import utilities
 
 from gi.repository import GLib
 
@@ -196,7 +197,7 @@ class MailSenderThread(threading.Thread):
 
 	def process_pause(self, set_pause = False):
 		if set_pause:
-			utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
+			gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
 		if self.paused.is_set():
 			GLib.idle_add(self.tab.notify_status, 'Paused Sending Emails, Waiting To Resume\n')
 			self.running.wait()

@@ -36,14 +36,14 @@ import urllib
 import urllib2
 import urlparse
 
+from king_phisher.client import gui_utilities
 from king_phisher.client.login import KingPhisherClientSSHLoginDialog
 from king_phisher.client.mailer import format_message, MailSenderThread
-from king_phisher.client import utilities
 
 from gi.repository import Gtk
 from gi.repository import WebKit
 
-class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
+class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'button_mail_sender_start',
 		'button_mail_sender_stop',
@@ -74,16 +74,16 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		}
 		for setting, setting_name in required_settings.items():
 			if not self.config.get(setting):
-				utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
+				gui_utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
 				return
 			if not setting.endswith('_file'):
 				continue
 			file_path = self.config[setting]
 			if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
-				utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: File could not be read".format(setting_name))
+				gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: File could not be read".format(setting_name))
 				return
 		if not self.config.get('smtp_server'):
-			utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
+			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
 			return
 		if self.sender_thread:
 			return
@@ -125,7 +125,7 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 	def signal_button_clicked_sender_stop(self, button):
 		if not self.sender_thread:
 			return
-		if not utilities.show_dialog_yes_no('Are you sure you want to stop?', self.parent):
+		if not gui_utilities.show_dialog_yes_no('Are you sure you want to stop?', self.parent):
 			return
 		self.sender_thread.stop()
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
@@ -161,7 +161,7 @@ class MailSenderSendMessagesTab(utilities.UtilityGladeGObject):
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
 		self.gobjects['button_mail_sender_start'].set_sensitive(True)
 		if message:
-			utilities.show_dialog_error(message, self.parent)
+			gui_utilities.show_dialog_error(message, self.parent)
 		self.sender_thread = None
 
 	def notify_stopped(self):
@@ -188,7 +188,7 @@ class MailSenderPreviewTab(object):
 		scrolled_window.show()
 		self.box.pack_start(scrolled_window, True, True, 0)
 
-class MailSenderEditTab(utilities.UtilityGladeGObject):
+class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
 			'button_save_as_html_file',
 			'button_save_html_file',
@@ -206,7 +206,7 @@ class MailSenderEditTab(utilities.UtilityGladeGObject):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
 			return
-		dialog = utilities.UtilityFileChooser('Save HTML File', self.parent)
+		dialog = gui_utilities.UtilityFileChooser('Save HTML File', self.parent)
 		response = dialog.run_quick_save(current_name = os.path.basename(html_file))
 		dialog.destroy()
 		if not response:
@@ -222,14 +222,14 @@ class MailSenderEditTab(utilities.UtilityGladeGObject):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
 			return
-		if not utilities.show_dialog_yes_no("Save HTML File?", self.parent):
+		if not gui_utilities.show_dialog_yes_no("Save HTML File?", self.parent):
 			return
 		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
 		html_file_h = open(html_file, 'w')
 		html_file_h.write(text)
 		html_file_h.close()
 
-class MailSenderConfigTab(utilities.UtilityGladeGObject):
+class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
 			'entry_webserver_url',
 			'entry_company_name',
@@ -257,13 +257,13 @@ class MailSenderConfigTab(utilities.UtilityGladeGObject):
 			target_url = urlparse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
 			urllib2.urlopen(target_url)
 		except:
-			utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent)
+			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent)
 			return
-		utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
+		gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
 		return
 
 	def signal_entry_activate_open_file(self, entry):
-		dialog = utilities.UtilityFileChooser('Choose File')
+		dialog = gui_utilities.UtilityFileChooser('Choose File')
 		if entry == self.gobjects.get('entry_html_file'):
 			dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		elif entry == self.gobjects.get('entry_target_file'):
@@ -339,7 +339,7 @@ class MailSenderTab(object):
 				old_text = open(html_file, 'r').read()
 				if old_text == text:
 					break
-				if not utilities.show_dialog_yes_no("Save HTML File?", self.parent):
+				if not gui_utilities.show_dialog_yes_no("Save HTML File?", self.parent):
 					break
 				html_file_h = open(html_file, 'w')
 				html_file_h.write(text)

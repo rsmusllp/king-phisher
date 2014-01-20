@@ -37,11 +37,9 @@ import os
 import random
 import time
 
-from gi.repository import Gtk
-import paramiko
-
+from king_phisher import utilities
 from king_phisher.client import export
-from king_phisher.client import utilities
+from king_phisher.client import gui_utilities
 from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.rpcclient import KingPhisherRPCClient
 from king_phisher.client.tabs.campaign import CampaignViewTab
@@ -49,6 +47,9 @@ from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.client.tools import KingPhisherClientRPCTerminal
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
+
+from gi.repository import Gtk
+import paramiko
 
 __version__ = '0.0.1'
 
@@ -90,7 +91,7 @@ DEFAULT_CONFIG = """
 }
 """
 
-class KingPhisherClientCampaignSelectionDialog(utilities.UtilityGladeGObject):
+class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'button_new_campaign',
 		'entry_new_campaign_name',
@@ -124,12 +125,12 @@ class KingPhisherClientCampaignSelectionDialog(utilities.UtilityGladeGObject):
 		campaign_name_entry = self.gobjects['entry_new_campaign_name']
 		campaign_name = campaign_name_entry.get_property('text')
 		if not campaign_name:
-			utilities.show_dialog_warning('Invalid Campaign Name', self.dialog, 'Please specify a new campaign name')
+			gui_utilities.show_dialog_warning('Invalid Campaign Name', self.dialog, 'Please specify a new campaign name')
 			return
 		try:
 			self.parent.rpc('campaign/new', campaign_name)
 		except:
-			utilities.show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
+			gui_utilities.show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
 			return
 		campaign_name_entry.set_property('text', '')
 		self.load_campaigns()
@@ -154,7 +155,7 @@ class KingPhisherClientCampaignSelectionDialog(utilities.UtilityGladeGObject):
 			(model, tree_iter) = selection.get_selected()
 			if tree_iter:
 				break
-			utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one')
+			gui_utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one')
 			response = self.dialog.run()
 		if response != Gtk.ResponseType.CANCEL:
 			campaign_id = model.get_value(tree_iter, 0)
@@ -164,7 +165,7 @@ class KingPhisherClientCampaignSelectionDialog(utilities.UtilityGladeGObject):
 		self.dialog.destroy()
 		return response
 
-class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
+class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
 			# Server Tab
 			'entry_server',
@@ -199,7 +200,7 @@ class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 
 	def interact(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
-		with utilities.gtk_signal_blocked(cb_subscribed, 'toggled'):
+		with gui_utilities.gtk_signal_blocked(cb_subscribed, 'toggled'):
 			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
 
 		self.dialog.show_all()
@@ -211,11 +212,11 @@ class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 		return response
 
 	def verify_sms_settings(self):
-		phone_number = utilities.get_gobject_value(self.gobjects['entry_sms_phone_number'])
+		phone_number = gui_utilities.get_gobject_value(self.gobjects['entry_sms_phone_number'])
 		phone_number_set = bool(phone_number)
 		sms_carrier_set = bool(self.gobjects['combobox_sms_carrier'].get_active() > 0)
 		if phone_number_set ^ sms_carrier_set:
-			utilities.show_dialog_warning('Missing Information', self.parent, 'Both a phone number and a valid carrier must be specified')
+			gui_utilities.show_dialog_warning('Missing Information', self.parent, 'Both a phone number and a valid carrier must be specified')
 			if 'sms_phone_number' in self.config:
 				del self.config['sms_phone_number']
 			if 'sms_carrier' in self.config:
@@ -223,7 +224,7 @@ class KingPhisherClientConfigDialog(utilities.UtilityGladeGObject):
 		elif phone_number_set and sms_carrier_set:
 			phone_number = filter(lambda x: x in map(str, range(0, 10)), phone_number)
 			if len(phone_number) != 10:
-				utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must contain exactly 10 digits')
+				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must contain exactly 10 digits')
 				return
 			username = self.config['server_username']
 			self.parent.rpc('users/set', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))
@@ -358,7 +359,7 @@ class KingPhisherClient(Gtk.Window):
 
 	def signal_window_destroy(self, window):
 		map(lambda x: x.destroy(), self.get_children())
-		utilities.gtk_sync()
+		gui_utilities.gtk_sync()
 		self.server_disconnect()
 		self.save_config()
 		Gtk.main_quit()
@@ -410,11 +411,11 @@ class KingPhisherClient(Gtk.Window):
 				self.logger.info('started ssh port forwarding')
 			except paramiko.AuthenticationException:
 				self.logger.warning('failed to authenticate to the remote ssh server')
-				utilities.show_dialog_error('Invalid Credentials', self)
+				gui_utilities.show_dialog_error('Invalid Credentials', self)
 				continue
 			except:
 				self.logger.warning('failed to connect to the remote ssh server')
-				utilities.show_dialog_error('Failed To Connect To The SSH Service', self)
+				gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self)
 				continue
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
 			try:
@@ -422,14 +423,14 @@ class KingPhisherClient(Gtk.Window):
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
 					self.logger.warning('failed to authenticate to the remote king phisher service')
-					utilities.show_dialog_error('Invalid Credentials', self)
+					gui_utilities.show_dialog_error('Invalid Credentials', self)
 				else:
 					self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
-					utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self, 'The server responded with HTTP status: ' + str(err.status))
+					gui_utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self, 'The server responded with HTTP status: ' + str(err.status))
 				continue
 			except:
 				self.logger.warning('failed to connect to the remote rpc service')
-				utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self)
+				gui_utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self)
 				continue
 			break
 		self.logger.info('successfully connected to the server')
@@ -467,11 +468,11 @@ class KingPhisherClient(Gtk.Window):
 		json.dump(config, config_file_h, sort_keys = True, indent = 4)
 
 	def delete_campaign(self):
-		if not utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible. All campaign data will be lost.'):
+		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible. All campaign data will be lost.'):
 			return
 		self.rpc('campaign/delete', self.config['campaign_id'])
 		if not self.show_campaign_selection():
-			utilities.show_dialog_error('A Campaign Must Be Selected', self, 'Now exiting')
+			gui_utilities.show_dialog_error('A Campaign Must Be Selected', self, 'Now exiting')
 			self.client_quit()
 
 	def edit_preferences(self):
@@ -480,7 +481,7 @@ class KingPhisherClient(Gtk.Window):
 			self.save_config()
 
 	def export_xml(self):
-		dialog = utilities.UtilityFileChooser('Export Campaign XML Data', self)
+		dialog = gui_utilities.UtilityFileChooser('Export Campaign XML Data', self)
 		file_name = self.config['campaign_name'] + '.xml'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()
@@ -523,10 +524,10 @@ class KingPhisherClient(Gtk.Window):
 		return dialog.interact() != Gtk.ResponseType.CANCEL
 
 	def stop_remote_service(self):
-		if not utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self, 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
+		if not gui_utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self, 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
 			return
 		self.rpc('shutdown')
 		self.logger.info('the remote king phisher service has been stopped')
-		utilities.show_dialog_error('The Remote Service Has Been Stopped', self, 'Now exiting')
+		gui_utilities.show_dialog_error('The Remote Service Has Been Stopped', self, 'Now exiting')
 		self.client_quit()
 		return

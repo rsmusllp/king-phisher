@@ -35,11 +35,11 @@ import logging
 import os
 import sys
 
+from king_phisher.client import client
+from king_phisher.client import gui_utilities
+
 from gi.repository import GObject
 from gi.repository import Gtk
-
-from king_phisher.client import client
-from king_phisher.client import utilities
 
 def main():
 	parser = argparse.ArgumentParser(description = 'King Phisher', conflict_handler = 'resolve')
@@ -59,7 +59,7 @@ def main():
 
 	# Configure environment variables
 	os.environ['GLADE_FILE'] = 'king_phisher/KingPhisherClient.glade'
-	if not utilities.which_glade(os.environ['GLADE_FILE']):
+	if not gui_utilities.which_glade(os.environ['GLADE_FILE']):
 		print('[-] unable to locate the Glade data file')
 		return 0
 

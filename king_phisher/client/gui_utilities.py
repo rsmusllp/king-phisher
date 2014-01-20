@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/utilities.py
+#  king_phisher/client/gui_utilities.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -73,15 +73,6 @@ def which_glade(glade):
 			return glade_file
 	return None
 
-def which(program):
-	is_exe = lambda fpath: (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
-	for path in os.environ["PATH"].split(os.pathsep):
-		path = path.strip('"')
-		exe_file = os.path.join(path, program)
-		if is_exe(exe_file):
-			return exe_file
-	return None
-
 def gtk_sync():
 	while Gtk.events_pending():
 		Gtk.main_iteration()
@@ -107,19 +98,6 @@ def search_list_store(list_store, value):
 		if row[0] == value:
 			return row.iter
 	return None
-
-def server_parse(server, default_port):
-	server = server.split(':')
-	host = server[0]
-	if len(server) == 1:
-		return (host, default_port)
-	else:
-		port = server[1]
-		if not port:
-			port = default_port
-		else:
-			port = int(port)
-		return (host, port)
 
 def show_dialog(message_type, message, parent, secondary_text = None, message_buttons = Gtk.ButtonsType.OK):
 	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, message_type, message_buttons, message)

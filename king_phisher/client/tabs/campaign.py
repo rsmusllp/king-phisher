@@ -36,15 +36,15 @@ import threading
 import time
 import urlparse
 
-from king_phisher.client.mailer import MailSenderThread
 from king_phisher.client import export
-from king_phisher.client import utilities
+from king_phisher.client import gui_utilities
+from king_phisher.client.mailer import MailSenderThread
 
 from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import Gtk
 
-class CampaignViewGenericTab(utilities.UtilityGladeGObject):
+class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'button_refresh',
 		'treeview_campaign'
@@ -112,7 +112,7 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		return
 
 	def row_loader_thread_routine(self, store):
-		utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
+		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
 		for row_data in self.parent.rpc.remote_table('campaign/' + self.remote_table_name, self.config['campaign_id']):
 			row_id = row_data['id']
 			row_data = self.format_row_data(row_data)
@@ -123,17 +123,17 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 			row_data.insert(0, str(row_id))
 			if self.is_destroyed.is_set():
 				return
-			utilities.glib_idle_add_wait(store.append, row_data)
-		utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', True))
+			gui_utilities.glib_idle_add_wait(store.append, row_data)
+		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', True))
 
 	def signal_button_clicked_refresh(self, button):
 		self.load_campaign_information(force = True)
 
 	def signal_button_clicked_export(self, button):
 		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
-			utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
+			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
 			return
-		dialog = utilities.UtilityFileChooser('Export Data', self.parent)
+		dialog = gui_utilities.UtilityFileChooser('Export Data', self.parent)
 		file_name = self.config['campaign_name'] + '.csv'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()
@@ -175,7 +175,7 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 
 	def signal_activate_popup_menu_delete(self, action):
 		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
-			utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
+			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
 			return
 		treeview = self.gobjects['treeview_campaign']
 		selection = treeview.get_selection()
@@ -183,7 +183,7 @@ class CampaignViewGenericTab(utilities.UtilityGladeGObject):
 		if not tree_iter:
 			return
 		row_id = model.get_value(tree_iter, 0)
-		if not utilities.show_dialog_yes_no('Delete This Row?', self.parent, 'This information will be lost'):
+		if not gui_utilities.show_dialog_yes_no('Delete This Row?', self.parent, 'This information will be lost'):
 			return
 		self.parent.rpc(self.remote_table_name + '/delete', row_id)
 		self.load_campaign_information(force = True)

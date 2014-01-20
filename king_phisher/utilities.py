@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/login.py
+#  king_phisher/utilities.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,33 +30,26 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from king_phisher.client.gui_utilities import UtilityGladeGObject
+import os
 
-from gi.repository import Gtk
+def server_parse(server, default_port):
+	server = server.split(':')
+	host = server[0]
+	if len(server) == 1:
+		return (host, default_port)
+	else:
+		port = server[1]
+		if not port:
+			port = default_port
+		else:
+			port = int(port)
+		return (host, port)
 
-class KingPhisherClientLoginDialog(UtilityGladeGObject):
-	gobject_ids = [
-		'button_connect',
-		'entry_server',
-		'entry_server_username',
-		'entry_server_password'
-	]
-	top_gobject = 'dialog'
-	def interact(self):
-		self.dialog.show_all()
-		response = self.dialog.run()
-		if response != Gtk.ResponseType.CANCEL:
-			self.objects_save_to_config()
-		self.dialog.destroy()
-		return response
-
-	def signal_entry_activate(self, entry):
-		self.gobjects['button_connect'].emit('clicked')
-
-class KingPhisherClientSSHLoginDialog(KingPhisherClientLoginDialog):
-	gobject_ids = [
-		'button_connect',
-		'entry_ssh_server',
-		'entry_ssh_username',
-		'entry_ssh_password'
-	]
+def which(program):
+	is_exe = lambda fpath: (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
+	for path in os.environ["PATH"].split(os.pathsep):
+		path = path.strip('"')
+		exe_file = os.path.join(path, program)
+		if is_exe(exe_file):
+			return exe_file
+	return None

@@ -37,12 +37,11 @@ import pty
 import signal
 import sys
 
+from king_phisher.client.rpcclient import KingPhisherRPCClient
+
 from gi.repository import Gtk
 from gi.repository import GLib
 from gi.repository import Vte
-
-from king_phisher.client import utilities
-from king_phisher.client.rpcclient import KingPhisherRPCClient
 
 class KingPhisherClientRPCTerminal(object):
 	def __init__(self, config, client):
