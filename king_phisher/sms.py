@@ -34,6 +34,8 @@ import argparse
 import smtplib
 from email.MIMEText import MIMEText
 
+from king_phisher import utilities
+
 import dns.resolver
 
 __version__ = '0.1'
@@ -48,6 +50,7 @@ CARRIERS = {
 	'Virgin Mobile': 'vmobl.com',
 }
 
+@utilities.cache(21600)
 def get_smtp_servers(domain):
 	mx_records = dns.resolver.query(domain, 'MX')
 	return map(lambda r: str(r.exchange).rstrip('.'), mx_records)

@@ -35,6 +35,8 @@ import smtpd
 import logging
 import time
 
+from king_phisher import utilities
+
 import dns.resolver
 
 __version__ = '0.1.0'
@@ -47,20 +49,15 @@ class KingPhisherSMTPServer(smtpd.PureProxy, object):
 		self.logger.info("open relay listening on {0}:{1}".format(localaddr[0], localaddr[1]))
 		if self.debugging:
 			self.logger.warning('debugging mode is enabled, all messages will be dropped')
-		self.__smtp_servers = {}
-		self.cache_timeout = (60 * 60 * 12)
 
+	@utilities.cache(21600)
 	def get_smtp_servers(self, domain_name):
-		smtp_servers, timeout = self.__smtp_servers.get(domain_name, (None, 0))
-		if timeout < time.time():
-			return smtp_servers
 		try:
 			smtp_servers = dns.resolver.query(domain_name, 'MX')
 		except dns.resolver.NoAnswer:
 			smtp_servers = ()
 		else:
 			smtp_servers = tuple(map(lambda r: str(r.exchange).rstrip('.'), smtp_servers))
-		self.__smtp_servers[domain_name] = (smtp_servers, time.time() + self.cache_timeout)
 		return smtp_servers
 
 	def process_message(self, peer, mailfrom, rcpttos, data):
