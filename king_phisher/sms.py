@@ -50,7 +50,7 @@ CARRIERS = {
 	'Virgin Mobile': 'vmobl.com',
 }
 
-@utilities.cache(21600)
+@utilities.cache('6h')
 def get_smtp_servers(domain):
 	mx_records = dns.resolver.query(domain, 'MX')
 	return map(lambda r: str(r.exchange).rstrip('.'), mx_records)

@@ -50,7 +50,7 @@ class KingPhisherSMTPServer(smtpd.PureProxy, object):
 		if self.debugging:
 			self.logger.warning('debugging mode is enabled, all messages will be dropped')
 
-	@utilities.cache(21600)
+	@utilities.cache('6h')
 	def get_smtp_servers(self, domain_name):
 		try:
 			smtp_servers = dns.resolver.query(domain_name, 'MX')
