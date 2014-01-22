@@ -36,6 +36,7 @@ import threading
 import time
 import urlparse
 
+from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client.mailer import MailSenderThread
@@ -72,6 +73,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_id)
 			popup_copy_submenu.append(menu_item)
 		self.last_load_time = float('-inf')
+		self.load_lifetime = utilities.timedef_to_seconds('3m')
 		self.row_loader_thread = None
 		self.row_loader_thread_lock = threading.Lock()
 		self.is_destroyed = threading.Event()
@@ -91,7 +93,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		self.popup_menu.show_all()
 
 	def load_campaign_information(self, force = False):
-		if not force and ((time.time() - self.last_load_time) < 180):
+		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
 			return
 		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
 			return

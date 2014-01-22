@@ -51,10 +51,7 @@ def timedef_to_seconds(timedef):
 		if len(timedef) == 1:
 			timedef = timedef[0]
 			continue
-		elif len(timedef) > 2:
-			raise ValueError('invalid time format')
-		if not timedef[0].isdigit():
-			print timedef[0]
+		elif len(timedef) > 2 or not timedef[0].isdigit():
 			raise ValueError('invalid time format')
 		adjustment = converters[spec]
 		seconds += (int(timedef[0]) * adjustment)
