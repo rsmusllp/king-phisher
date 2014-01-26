@@ -73,7 +73,7 @@ class cache(object):
 		if not hasattr(self, '_target_function'):
 			self._target_function = args[0]
 			return self
-		self.clean_cache()
+		self.cache_clean()
 		if not isinstance(args, collections.Hashable):
 			return self._target_function(*args)
 		result, expiration = self.__cache.get(args, (None, 0))
@@ -86,7 +86,7 @@ class cache(object):
 	def __repr__(self):
 		return "<cached function {0}>".format(self._target_function.__name__)
 
-	def clean_cache(self):
+	def cache_clean(self):
 		now = time.time()
 		keys_for_removal = []
 		for key, (value, expiration) in self.__cache.items():
@@ -95,7 +95,7 @@ class cache(object):
 		for key in keys_for_removal:
 			del self.__cache[key]
 
-	def clear_cache(self):
+	def cache_clear(self):
 		self.__cache = {}
 
 def server_parse(server, default_port):
@@ -113,6 +113,8 @@ def server_parse(server, default_port):
 
 def which(program):
 	is_exe = lambda fpath: (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
+	if is_exe(program):
+		return program
 	for path in os.environ["PATH"].split(os.pathsep):
 		path = path.strip('"')
 		exe_file = os.path.join(path, program)
