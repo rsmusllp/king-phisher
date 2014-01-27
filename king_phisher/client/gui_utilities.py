@@ -39,6 +39,8 @@ from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
 
+# values are either properties (strings) or tuples containing two functions
+# the first is the setter, and the second is the getter.
 GOBJECT_PROPERTY_MAP = {
 	'combobox': (
 		lambda c, v: c.set_active_iter(search_list_store(c.get_model(), v)),
@@ -53,15 +55,6 @@ GOBJECT_PROPERTY_MAP = {
 	),
 }
 
-def get_gobject_value(gobject, gtype = None):
-	gtype = (gtype or gobject.__class__.__name__)
-	gtype = gtype.lower()
-	if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
-		value = GOBJECT_PROPERTY_MAP[gtype][1](gobject)
-	else:
-		value = gobject.get_property(GOBJECT_PROPERTY_MAP[gtype])
-	return value
-
 DEFAULT_GLADE_PATH = '/usr/share:/usr/local/share:data/client:.'
 def which_glade(glade):
 	is_readable = lambda gpath: (os.path.isfile(gpath) and os.access(gpath, os.R_OK))
@@ -73,18 +66,6 @@ def which_glade(glade):
 			return glade_file
 	return None
 
-def gtk_sync():
-	while Gtk.events_pending():
-		Gtk.main_iteration()
-
-@contextlib.contextmanager
-def gtk_signal_blocked(gobject, signal_name):
-	signal_id = GObject.signal_lookup(signal_name, gobject.__class__)
-	handler_id = GObject.signal_handler_find(gobject, GObject.SignalMatchType.ID, signal_id, 0, None, 0, 0)
-	GObject.signal_handler_block(gobject, handler_id)
-	yield
-	GObject.signal_handler_unblock(gobject, handler_id)
-
 def glib_idle_add_wait(function, *args):
 	gsource_completed = threading.Event()
 	def wrapper():
@@ -92,6 +73,27 @@ def glib_idle_add_wait(function, *args):
 		gsource_completed.set()
 	GLib.idle_add(wrapper)
 	gsource_completed.wait()
+
+def gobject_get_value(gobject, gtype = None):
+	gtype = (gtype or gobject.__class__.__name__)
+	gtype = gtype.lower()
+	if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
+		value = GOBJECT_PROPERTY_MAP[gtype][1](gobject)
+	else:
+		value = gobject.get_property(GOBJECT_PROPERTY_MAP[gtype])
+	return value
+
+@contextlib.contextmanager
+def gobject_signal_blocked(gobject, signal_name):
+	signal_id = GObject.signal_lookup(signal_name, gobject.__class__)
+	handler_id = GObject.signal_handler_find(gobject, GObject.SignalMatchType.ID, signal_id, 0, None, 0, 0)
+	GObject.signal_handler_block(gobject, handler_id)
+	yield
+	GObject.signal_handler_unblock(gobject, handler_id)
+
+def gtk_sync():
+	while Gtk.events_pending():
+		Gtk.main_iteration()
 
 def search_list_store(list_store, value):
 	for row in list_store:
@@ -145,7 +147,7 @@ class UtilityGladeGObject(object):
 		self.gobjects = {}
 		for gobject_id in self.gobject_ids:
 			gobject = self.gtk_builder_get(gobject_id)
-			# The following three lines ensure that the types match up, this is
+			# The following five lines ensure that the types match up, this is
 			# primarily to enforce clean development.
 			gtype = gobject_id.split('_', 1)[0]
 			if gobject == None:
@@ -178,7 +180,7 @@ class UtilityGladeGObject(object):
 			config_name = self.config_prefix + config_name
 			if not gtype in GOBJECT_PROPERTY_MAP:
 				continue
-			self.config[config_name] = get_gobject_value(gobject, gtype)
+			self.config[config_name] = gobject_get_value(gobject, gtype)
 
 class UtilityFileChooser(Gtk.FileChooserDialog):
 	def __init__(self, *args, **kwargs):

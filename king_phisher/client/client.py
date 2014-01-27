@@ -200,7 +200,7 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 
 	def interact(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
-		with gui_utilities.gtk_signal_blocked(cb_subscribed, 'toggled'):
+		with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
 			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
 
 		self.dialog.show_all()
@@ -212,7 +212,7 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 		return response
 
 	def verify_sms_settings(self):
-		phone_number = gui_utilities.get_gobject_value(self.gobjects['entry_sms_phone_number'])
+		phone_number = gui_utilities.gobject_get_value(self.gobjects['entry_sms_phone_number'])
 		phone_number_set = bool(phone_number)
 		sms_carrier_set = bool(self.gobjects['combobox_sms_carrier'].get_active() > 0)
 		if phone_number_set ^ sms_carrier_set:
