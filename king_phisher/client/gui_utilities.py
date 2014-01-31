@@ -44,7 +44,7 @@ from gi.repository import Gtk
 GOBJECT_PROPERTY_MAP = {
 	'combobox': (
 		lambda c, v: c.set_active_iter(search_list_store(c.get_model(), v)),
-		lambda c: c.get_model().get_value(c.get_active_iter(), 0)
+		lambda c: c.get_model().get_value(c.get_active_iter() or c.get_model().get_iter_first(), 0)
 	),
 	'entry': 'text',
 	'spinbutton': 'value',
