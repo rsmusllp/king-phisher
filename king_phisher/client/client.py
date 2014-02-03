@@ -48,6 +48,7 @@ from king_phisher.client.tools import KingPhisherClientRPCTerminal
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from gi.repository import GObject
 from gi.repository import Gtk
 import paramiko
 
@@ -200,8 +201,12 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 
 	def interact(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
-		with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
+		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
+		if GObject.pygobject_version < (3, 10):
 			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
+		else:
+			with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
+				cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
 
 		self.dialog.show_all()
 		response = self.dialog.run()
