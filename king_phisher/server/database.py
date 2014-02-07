@@ -37,7 +37,7 @@ import sqlite3
 import string
 
 __version__ = '0.0.1'
-make_uid = lambda s: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
+make_uid = lambda l: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(l))
 
 DATABASE_TABLES = {
 	'users':                ['id', 'phone_carrier', 'phone_number'],

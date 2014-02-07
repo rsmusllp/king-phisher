@@ -65,9 +65,20 @@ class KingPhisherClientRPCTerminal(object):
 			else:
 				readline.parse_and_bind('tab: complete')
 			rpc = pickle.loads(rpc_data)
-			console = code.InteractiveConsole({'os':os, 'rpc':rpc})
 			banner = "Python {0} on {1}".format(sys.version, sys.platform)
 			print(banner)
+			information = "Campaign Name: {0} ID: {1}".format(config['campaign_name'], config['campaign_id'])
+			print(information)
+			console_vars = {
+				'CAMPAIGN_NAME': config['campaign_name'],
+				'CAMPAIGN_ID': config['campaign_id'],
+				'os':os,
+				'rpc':rpc
+			}
+			export_to_builtins = ['CAMPAIGN_NAME', 'CAMPAIGN_ID', 'rpc']
+			console = code.InteractiveConsole(console_vars)
+			for var in export_to_builtins:
+				console.push("__builtins__['{0}'] = {0}".format(var))
 			console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
 			sys.exit(0)
 

@@ -59,6 +59,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 			self.rpc_handler_map['/' + table_name + '/count'] = self.rpc_database_count_rows
 			self.rpc_handler_map['/' + table_name + '/delete'] = self.rpc_database_delete_row_by_id
 			self.rpc_handler_map['/' + table_name + '/get'] = self.rpc_database_get_row_by_id
+			self.rpc_handler_map['/' + table_name + '/insert'] = self.rpc_database_insert_row
 			self.rpc_handler_map['/' + table_name + '/set'] = self.rpc_database_set_row_value
 			self.rpc_handler_map['/' + table_name + '/view'] = self.rpc_database_get_rows
 
@@ -211,6 +212,19 @@ class KingPhisherRequestHandlerRPCMixin(object):
 			if row:
 				row = dict(zip(columns, row))
 		return row
+
+	def rpc_database_insert_row(self, keys, values):
+		table = self.path.split('/')[-2]
+		if not isinstance(keys, (list, tuple)):
+			keys = (keys,)
+		if not isinstance(values, (list, tuple)):
+			values = (values,)
+		assert(len(keys) == len(values))
+		for key, value in zip(keys, values):
+			assert(key in DATABASE_TABLES[table])
+		with self.get_cursor() as cursor:
+			cursor.execute('INSERT INTO ' + table + ' (' + ', '.join(keys) + ') VALUES (' + ', '.join('?' * len(values)) + ')', values)
+		return
 
 	def rpc_database_set_row_value(self, row_id, keys, values):
 		table = self.path.split('/')[-2]
