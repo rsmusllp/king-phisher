@@ -39,6 +39,7 @@ import sys
 
 from king_phisher.client.rpcclient import KingPhisherRPCClient
 
+from gi.repository import Gdk
 from gi.repository import Gtk
 from gi.repository import GLib
 from gi.repository import Vte
@@ -51,6 +52,7 @@ class KingPhisherClientRPCTerminal(object):
 		self.window.set_destroy_with_parent(True)
 		self.window.connect('destroy', self.signal_window_destroy)
 		self.terminal = Vte.Terminal()
+		self.terminal.connect('key-press-event', self.signal_terminal_key_pressed)
 		self.window.add(self.terminal)
 		self.terminal.set_scroll_on_keystroke(True)
 
@@ -91,3 +93,15 @@ class KingPhisherClientRPCTerminal(object):
 	def signal_window_destroy(self, window):
 		if os.path.exists("/proc/{0}".format(self.child_pid)):
 			os.kill(self.child_pid, signal.SIGKILL)
+
+	def signal_terminal_key_pressed(self, terminal, event):
+		if event.type != Gdk.EventType.KEY_PRESS:
+			return
+		if (event.state & Gdk.ModifierType.CONTROL_MASK) == 0 or (event.state & Gdk.ModifierType.SHIFT_MASK) == 0:
+			return
+		key = event.get_keyval()[1]
+		if key == Gdk.KEY_C:
+			terminal.copy_clipboard()
+		elif key == Gdk.KEY_V:
+			terminal.paste_clipboard()
+		return False
