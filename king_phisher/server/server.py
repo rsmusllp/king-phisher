@@ -39,6 +39,7 @@ import sqlite3
 import string
 import threading
 
+from king_phisher import find
 from king_phisher import job
 from king_phisher import sms
 from king_phisher import xor
@@ -49,18 +50,8 @@ from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 from king_phisher.third_party.AdvancedHTTPServer import SectionConfigParser
 
 __version__ = '0.0.1'
-DEFAULT_PAGE_PATH = '/usr/share:/usr/local/share:data/server:.'
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
-
-def which_page(page):
-	is_readable = lambda ppath: (os.path.isfile(ppath) and os.access(ppath, os.R_OK))
-	for path in DEFAULT_PAGE_PATH.split(os.pathsep):
-		path = path.strip('"')
-		page_file = os.path.join(path, 'king_phisher', page)
-		if is_readable(page_file):
-			return page_file
-	return None
 
 def build_king_phisher_server(config, section_name):
 	# set config defaults
@@ -222,7 +213,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self.send_response(404, 'Resource Not Found')
 		self.send_header('Content-Type', 'text/html')
 		self.end_headers()
-		page_404 = which_page('error_404.html')
+		page_404 = find.find_data_file('error_404.html')
 		if page_404:
 			shutil.copyfileobj(open(page_404), self.wfile)
 		else:

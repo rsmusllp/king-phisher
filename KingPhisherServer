@@ -38,6 +38,7 @@ import pwd
 import signal
 import threading
 
+from king_phisher import find
 from king_phisher.server import server
 from king_phisher.server import database
 
@@ -104,6 +105,9 @@ def main():
 
 	if (not arguments.foreground) and os.fork():
 		return
+
+	# Configure environment variables
+	find.data_path_append('data/server')
 
 	king_phisher_server = server.build_king_phisher_server(config, 'server')
 	database_file = config.get('server', 'database')

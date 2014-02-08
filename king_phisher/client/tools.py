@@ -37,23 +37,13 @@ import pty
 import signal
 import sys
 
+from king_phisher import find
 from king_phisher.client.rpcclient import KingPhisherRPCClient
 
 from gi.repository import Gdk
 from gi.repository import Gtk
 from gi.repository import GLib
 from gi.repository import Vte
-
-RPC_TERMINAL_WINDOW_UI_INFO = """
-<ui>
-	<menubar name="MenuBar">
-		<menu action="EditMenu">
-			<menuitem action="EditCopy" />
-			<menuitem action="EditPaste" />
-		</menu>
-	</menubar>
-</ui>
-"""
 
 class KingPhisherClientRPCTerminal(object):
 	def __init__(self, config, client):
@@ -124,7 +114,9 @@ class KingPhisherClientRPCTerminal(object):
 
 	def _create_ui_manager(self):
 		uimanager = Gtk.UIManager()
-		uimanager.add_ui_from_string(RPC_TERMINAL_WINDOW_UI_INFO)
+		with open(find.find_data_file('ui_info/rpc_terminal_window.xml')) as ui_info_file:
+			ui_data = ui_info_file.read()
+		uimanager.add_ui_from_string(ui_data)
 		accelgroup = uimanager.get_accel_group()
 		self.window.add_accel_group(accelgroup)
 		return uimanager

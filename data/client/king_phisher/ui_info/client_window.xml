@@ -1,0 +1,24 @@
+<ui>
+	<menubar name="MenuBar">
+		<menu action="FileMenu">
+			<menuitem action="FileOpenCampaign" />
+			<menu action="FileExportMenu">
+				<menuitem action="FileExportXML" />
+			</menu>
+			<separator />
+			<menuitem action="FileQuit" />
+		</menu>
+		<menu action="EditMenu">
+			<menuitem action="EditPreferences" />
+			<separator />
+			<menuitem action="EditDeleteCampaign" />
+			<menuitem action="EditStopService" />
+		</menu>
+		<menu action="ToolsMenu">
+			<menuitem action="ToolsRPCTerminal" />
+		</menu>
+		<menu action="HelpMenu">
+			<menuitem action="HelpAbout" />
+		</menu>
+	</menubar>
+</ui>

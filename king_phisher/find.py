@@ -50,3 +50,11 @@ def find_data_file(data_file, access_mode = os.R_OK):
 		return test_file_path
 	return None
 
+def find_data_directory(data_directory):
+	search_path = os.environ[ENV_VAR]
+	for directory in search_path.split(os.pathsep):
+		test_path = os.path.join(directory, DATA_DIRECTORY_NAME, data_file)
+		if not os.path.isdir(test_path):
+			continue
+		return test_path
+	return None

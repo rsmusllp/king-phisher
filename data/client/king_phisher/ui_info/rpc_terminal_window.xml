@@ -1,0 +1,8 @@
+<ui>
+	<menubar name="MenuBar">
+		<menu action="EditMenu">
+			<menuitem action="EditCopy" />
+			<menuitem action="EditPaste" />
+		</menu>
+	</menubar>
+</ui>

@@ -37,6 +37,7 @@ import os
 import random
 import time
 
+from king_phisher import find
 from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
@@ -53,33 +54,6 @@ from gi.repository import Gtk
 import paramiko
 
 __version__ = '0.0.1'
-
-CLIENT_WINDOW_UI_INFO = """
-<ui>
-	<menubar name="MenuBar">
-		<menu action="FileMenu">
-			<menuitem action="FileOpenCampaign" />
-			<menu action="FileExportMenu">
-				<menuitem action="FileExportXML" />
-			</menu>
-			<separator />
-			<menuitem action="FileQuit" />
-		</menu>
-		<menu action="EditMenu">
-			<menuitem action="EditPreferences" />
-			<separator />
-			<menuitem action="EditDeleteCampaign" />
-			<menuitem action="EditStopService" />
-		</menu>
-		<menu action="ToolsMenu">
-			<menuitem action="ToolsRPCTerminal" />
-		</menu>
-		<menu action="HelpMenu">
-			<menuitem action="HelpAbout" />
-		</menu>
-	</menubar>
-</ui>
-"""
 
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 DEFAULT_CONFIG = """
@@ -341,7 +315,9 @@ class KingPhisherClient(Gtk.Window):
 
 	def _create_ui_manager(self):
 		uimanager = Gtk.UIManager()
-		uimanager.add_ui_from_string(CLIENT_WINDOW_UI_INFO)
+		with open(find.find_data_file('ui_info/client_window.xml')) as ui_info_file:
+			ui_data = ui_info_file.read()
+		uimanager.add_ui_from_string(ui_data)
 		accelgroup = uimanager.get_accel_group()
 		self.add_accel_group(accelgroup)
 		return uimanager
