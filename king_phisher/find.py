@@ -53,7 +53,7 @@ def find_data_file(data_file, access_mode = os.R_OK):
 def find_data_directory(data_directory):
 	search_path = os.environ[ENV_VAR]
 	for directory in search_path.split(os.pathsep):
-		test_path = os.path.join(directory, DATA_DIRECTORY_NAME, data_file)
+		test_path = os.path.join(directory, DATA_DIRECTORY_NAME, data_directory)
 		if not os.path.isdir(test_path):
 			continue
 		return test_path

@@ -67,37 +67,40 @@ class KingPhisherClientRPCTerminal(object):
 
 		rpc_data = pickle.dumps(client.rpc)
 		child_pid, child_fd = pty.fork()
-		if child_pid == 0:
-			try:
-				import readline
-				import rlcompleter
-			except ImportError:
-				pass
-			else:
-				readline.parse_and_bind('tab: complete')
-			rpc = pickle.loads(rpc_data)
-			banner = "Python {0} on {1}".format(sys.version, sys.platform)
-			print(banner)
-			information = "Campaign Name: {0} ID: {1}".format(config['campaign_name'], config['campaign_id'])
-			print(information)
-			console_vars = {
-				'CAMPAIGN_NAME': config['campaign_name'],
-				'CAMPAIGN_ID': config['campaign_id'],
-				'os':os,
-				'rpc':rpc
-			}
-			export_to_builtins = ['CAMPAIGN_NAME', 'CAMPAIGN_ID', 'rpc']
-			console = code.InteractiveConsole(console_vars)
-			for var in export_to_builtins:
-				console.push("__builtins__['{0}'] = {0}".format(var))
-			console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
-			sys.exit(0)
-
-		self.child_pid = child_pid
-		vte_pty = Vte.Pty.new_foreign(child_fd)
-		self.terminal.set_pty_object(vte_pty)
-		GLib.child_watch_add(child_pid, lambda pid, status: self.window.destroy())
-		self.window.show_all()
+		if child_pid != 0:
+			self.child_pid = child_pid
+			vte_pty = Vte.Pty.new_foreign(child_fd)
+			self.terminal.set_pty_object(vte_pty)
+			GLib.child_watch_add(child_pid, lambda pid, status: self.window.destroy())
+			self.window.show_all()
+			return
+		try:
+			import readline
+			import rlcompleter
+		except ImportError:
+			pass
+		else:
+			readline.parse_and_bind('tab: complete')
+		plugins_directory = find.find_data_directory('plugins')
+		if plugins_directory:
+			sys.path.append(plugins_directory)
+		rpc = pickle.loads(rpc_data)
+		banner = "Python {0} on {1}".format(sys.version, sys.platform)
+		print(banner)
+		information = "Campaign Name: {0} ID: {1}".format(config['campaign_name'], config['campaign_id'])
+		print(information)
+		console_vars = {
+			'CAMPAIGN_NAME': config['campaign_name'],
+			'CAMPAIGN_ID': config['campaign_id'],
+			'os':os,
+			'rpc':rpc
+		}
+		export_to_builtins = ['CAMPAIGN_NAME', 'CAMPAIGN_ID', 'rpc']
+		console = code.InteractiveConsole(console_vars)
+		for var in export_to_builtins:
+			console.push("__builtins__['{0}'] = {0}".format(var))
+		console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
+		sys.exit(0)
 
 	def _add_menu_actions(self, action_group):
 		# Edit Menu Actions

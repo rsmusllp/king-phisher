@@ -7,5 +7,7 @@
 *.html
 build/*
 
+data/*/king_phisher/plugins/*
+
 !data/server/king_phisher/error_*.html
 !data/*/king_phisher/*/*.html
