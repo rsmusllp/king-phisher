@@ -44,6 +44,17 @@ from gi.repository import Gtk
 from gi.repository import GLib
 from gi.repository import Vte
 
+RPC_TERMINAL_WINDOW_UI_INFO = """
+<ui>
+	<menubar name="MenuBar">
+		<menu action="EditMenu">
+			<menuitem action="EditCopy" />
+			<menuitem action="EditPaste" />
+		</menu>
+	</menubar>
+</ui>
+"""
+
 class KingPhisherClientRPCTerminal(object):
 	def __init__(self, config, client):
 		self.window = Gtk.Window()
@@ -52,9 +63,17 @@ class KingPhisherClientRPCTerminal(object):
 		self.window.set_destroy_with_parent(True)
 		self.window.connect('destroy', self.signal_window_destroy)
 		self.terminal = Vte.Terminal()
-		self.terminal.connect('key-press-event', self.signal_terminal_key_pressed)
-		self.window.add(self.terminal)
 		self.terminal.set_scroll_on_keystroke(True)
+		vbox = Gtk.VBox()
+		self.window.add(vbox)
+		vbox.pack_end(self.terminal, True, True, 0)
+
+		action_group = Gtk.ActionGroup("rpc_terminal_window_actions")
+		self._add_menu_actions(action_group)
+		uimanager = self._create_ui_manager()
+		uimanager.insert_action_group(action_group)
+		menubar = uimanager.get_widget("/MenuBar")
+		vbox.pack_start(menubar, False, False, 0)
 
 		rpc_data = pickle.dumps(client.rpc)
 		child_pid, child_fd = pty.fork()
@@ -90,18 +109,26 @@ class KingPhisherClientRPCTerminal(object):
 		GLib.child_watch_add(child_pid, lambda pid, status: self.window.destroy())
 		self.window.show_all()
 
+	def _add_menu_actions(self, action_group):
+		# Edit Menu Actions
+		action_editmenu = Gtk.Action("EditMenu", "Edit", None, None)
+		action_group.add_action(action_editmenu)
+
+		action_copy = Gtk.Action("EditCopy", "Copy", "Copy", None)
+		action_copy.connect("activate", lambda x: self.terminal.copy_clipboard())
+		action_group.add_action_with_accel(action_copy, "<control><shift>C")
+
+		action_paste = Gtk.Action("EditPaste", "Paste", "Paste", None)
+		action_paste.connect("activate", lambda x: self.terminal.paste_clipboard())
+		action_group.add_action_with_accel(action_paste, "<control><shift>V")
+
+	def _create_ui_manager(self):
+		uimanager = Gtk.UIManager()
+		uimanager.add_ui_from_string(RPC_TERMINAL_WINDOW_UI_INFO)
+		accelgroup = uimanager.get_accel_group()
+		self.window.add_accel_group(accelgroup)
+		return uimanager
+
 	def signal_window_destroy(self, window):
 		if os.path.exists("/proc/{0}".format(self.child_pid)):
 			os.kill(self.child_pid, signal.SIGKILL)
-
-	def signal_terminal_key_pressed(self, terminal, event):
-		if event.type != Gdk.EventType.KEY_PRESS:
-			return
-		if (event.state & Gdk.ModifierType.CONTROL_MASK) == 0 or (event.state & Gdk.ModifierType.SHIFT_MASK) == 0:
-			return
-		key = event.get_keyval()[1]
-		if key == Gdk.KEY_C:
-			terminal.copy_clipboard()
-		elif key == Gdk.KEY_V:
-			terminal.paste_clipboard()
-		return False

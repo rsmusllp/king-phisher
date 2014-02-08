@@ -54,7 +54,7 @@ import paramiko
 
 __version__ = '0.0.1'
 
-UI_INFO = """
+CLIENT_WINDOW_UI_INFO = """
 <ui>
 	<menubar name="MenuBar">
 		<menu action="FileMenu">
@@ -248,7 +248,7 @@ class KingPhisherClient(Gtk.Window):
 		vbox.show()
 		self.add(vbox)
 
-		action_group = Gtk.ActionGroup("my_actions")
+		action_group = Gtk.ActionGroup("client_window_actions")
 		self._add_menu_actions(action_group)
 		uimanager = self._create_ui_manager()
 		uimanager.insert_action_group(action_group)
@@ -341,7 +341,7 @@ class KingPhisherClient(Gtk.Window):
 
 	def _create_ui_manager(self):
 		uimanager = Gtk.UIManager()
-		uimanager.add_ui_from_string(UI_INFO)
+		uimanager.add_ui_from_string(CLIENT_WINDOW_UI_INFO)
 		accelgroup = uimanager.get_accel_group()
 		self.add_accel_group(accelgroup)
 		return uimanager
