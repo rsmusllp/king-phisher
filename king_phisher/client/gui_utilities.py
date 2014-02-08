@@ -35,6 +35,8 @@ import logging
 import os
 import threading
 
+from king_phisher import find
+
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -55,16 +57,8 @@ GOBJECT_PROPERTY_MAP = {
 	),
 }
 
-DEFAULT_GLADE_PATH = '/usr/share:/usr/local/share:data/client:.'
 def which_glade(glade):
-	is_readable = lambda gpath: (os.path.isfile(gpath) and os.access(gpath, os.R_OK))
-	glade_path = os.environ.get('GLADE_PATH', DEFAULT_GLADE_PATH)
-	for path in glade_path.split(os.pathsep):
-		path = path.strip('"')
-		glade_file = os.path.join(path, glade)
-		if is_readable(glade_file):
-			return glade_file
-	return None
+	return find.find_data_file(os.environ['KING_PHISHER_GLADE_FILE'])
 
 def glib_idle_add_wait(function, *args):
 	gsource_completed = threading.Event()
@@ -136,7 +130,7 @@ class UtilityGladeGObject(object):
 		builder = Gtk.Builder()
 		self.gtk_builder = builder
 
-		glade_file = which_glade(os.environ['GLADE_FILE'])
+		glade_file = which_glade(os.environ['KING_PHISHER_GLADE_FILE'])
 		builder.add_objects_from_file(glade_file, self.top_level_dependencies + [self.__class__.__name__])
 		builder.connect_signals(self)
 		gobject = builder.get_object(self.__class__.__name__)
