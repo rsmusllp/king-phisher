@@ -53,7 +53,7 @@ from gi.repository import GObject
 from gi.repository import Gtk
 import paramiko
 
-__version__ = '0.0.1'
+__version__ = '0.1.0'
 
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 DEFAULT_CONFIG = """

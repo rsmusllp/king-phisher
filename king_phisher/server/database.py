@@ -36,7 +36,7 @@ import random
 import sqlite3
 import string
 
-__version__ = '0.0.1'
+__version__ = '0.1.0'
 make_uid = lambda l: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(l))
 
 DATABASE_TABLES = {
