@@ -153,17 +153,24 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		if hasattr(self, '_message_id'):
 			return self._message_id
 		msg_id = self.get_query_parameter('id')
-		if not msg_id:
-			kp_cookie_name = self.config.get('cookie_name', 'KPID')
-			if kp_cookie_name in self.cookies:
-				visit_id = self.cookies[kp_cookie_name].value
-				with self.get_cursor() as cursor:
-					cursor.execute('SELECT message_id FROM visits WHERE id = ?', (visit_id,))
-					result = cursor.fetchone()
-				if result:
-					msg_id = result[0]
+		if not msg_id and self.visit_id:
+			with self.get_cursor() as cursor:
+				cursor.execute('SELECT message_id FROM visits WHERE id = ?', (self.visit_id,))
+				result = cursor.fetchone()
+			if result:
+				msg_id = result[0]
 		self._message_id = msg_id
 		return self._message_id
+
+	@property
+	def visit_id(self):
+		if hasattr(self, '_visit_id'):
+			return self._visit_id
+		self._visit_id = None
+		kp_cookie_name = self.config.get('cookie_name', 'KPID')
+		if kp_cookie_name in self.cookies:
+			self._visit_id = self.cookies[kp_cookie_name].value
+		return self._visit_id
 
 	@property
 	def vhost(self):
