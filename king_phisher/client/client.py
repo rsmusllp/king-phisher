@@ -165,7 +165,7 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 		self.gobjects['entry_ssh_server'].set_sensitive(active)
 		self.gobjects['entry_ssh_username'].set_sensitive(active)
 
-	def signal_alert_subscribe(self, cbutton):
+	def signal_toggle_alert_subscribe(self, cbutton):
 		active = cbutton.get_property('active')
 		if active:
 			remote_method = 'campaign/alerts/subscribe'
@@ -173,14 +173,22 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 			remote_method = 'campaign/alerts/unsubscribe'
 		self.parent.rpc(remote_method, self.config['campaign_id'])
 
+	def signal_toggle_reject_after_credentials(self, cbutton):
+		self.parent.rpc('campaigns/set', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
+
 	def interact(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
+		cb_reject_after_creds = self.gtk_builder_get('checkbutton_reject_after_credentials')
 		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
 		if GObject.pygobject_version < (3, 10):
 			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
+			cb_reject_after_creds.set_property('active', self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id'])['reject_after_credentials'])
 		else:
 			with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
 				cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
+				cb_reject_after_creds.set_property('active', self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id'])['reject_after_credentials'])
+
+		cb_reject_after_creds.set_sensitive(self.config['server_config']['require_id'])
 
 		self.dialog.show_all()
 		response = self.dialog.run()
@@ -435,7 +443,7 @@ class KingPhisherClient(Gtk.Window):
 			self.config = json.load(open(config_file, 'rb'))
 
 	def load_server_config(self):
-		self.config['server_config'] = self.rpc('config/get', ['secret_id', 'tracking_image'])
+		self.config['server_config'] = self.rpc('config/get', ['require_id', 'secret_id', 'tracking_image'])
 		return
 
 	def save_config(self):

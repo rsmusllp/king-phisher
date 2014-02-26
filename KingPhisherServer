@@ -99,7 +99,7 @@ def main():
 		file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-10s %(message)s"))
 		logging.getLogger('').addHandler(file_handler)
 		if config.has_option('logging', 'level'):
-			file_handler.setLevel(getattr(logging, config.get('logging', 'level')))
+			file_handler.setLevel(getattr(logging, config.get('logging', 'level').upper()))
 		else:
 			file_handler.setLevel(logging.WARNING)
 

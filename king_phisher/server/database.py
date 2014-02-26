@@ -42,7 +42,7 @@ make_uid = lambda l: ''.join(random.choice(string.ascii_letters + string.digits)
 DATABASE_TABLES = {
 	'users':                ['id', 'phone_carrier', 'phone_number'],
 	'alert_subscriptions':  ['id', 'campaign_id', 'user_id'],
-	'campaigns':            ['id', 'name', 'creator', 'created'],
+	'campaigns':            ['id', 'name', 'creator', 'created', 'reject_after_credentials'],
 	'landing_pages':        ['id', 'campaign_id', 'hostname', 'page'],
 	'messages':             ['id', 'campaign_id', 'target_email', 'opened', 'sent', 'trained'],
 	'visits':               ['id', 'campaign_id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit'],
@@ -78,7 +78,8 @@ def create_database(database_file):
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT UNIQUE NOT NULL,
 		creator TEXT NOT NULL,
-		created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		reject_after_credentials BOOLEAN DEFAULT 0
 	)
 	""")
 	cursor.execute("""

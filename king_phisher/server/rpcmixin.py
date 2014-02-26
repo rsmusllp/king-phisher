@@ -104,11 +104,13 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		return
 
 	def rpc_config_get(self, option_name):
+		value_types = {'port': 'int', 'require_id': 'boolean'}
 		if isinstance(option_name, (list, tuple)):
 			option_names = option_name
 			option_values = {}
 			for option_name in option_names:
-				option_values[option_name] = self.config.get(option_name)
+				value_type = value_types.get(option_name, '')
+				option_values[option_name] = getattr(self.config, 'get' + value_type)(option_name)
 			return option_values
 		elif self.config.has_option(option_name):
 			return self.config.get(option_name)

@@ -191,8 +191,17 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				self.server.logger.warning('denying request with not found due to lack of id')
 				self.respond_not_found()
 				return None
+
 			if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ?', (self.campaign_id, self.vhost)) == 0:
 				self.server.logger.warning('denying request with not found due to invalid hostname')
+				self.respond_not_found()
+				return None
+
+			with self.get_cursor() as cursor:
+				cursor.execute('SELECT reject_after_credentials FROM campaigns WHERE campaign_id = ?', (self.campaign_id))
+				reject_after_credentials = cursor.fetchone()[0]
+			if reject_after_credentials and self.query_count('SELECT COUNT(id) FROM credentials WHERE message_id = ? OR visit_id = ?', (self.message_id, (self.visit_id or ''))):
+				self.server.logger.warning('denying request because credentials were already harvested')
 				self.respond_not_found()
 				return None
 
@@ -294,8 +303,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			# set the opened timestamp to the visit time if it's null
 			cursor.execute('UPDATE messages SET opened = CURRENT_TIMESTAMP WHERE id = ? AND opened IS NULL', (self.message_id,))
 
-		kp_cookie_name = self.config.get('cookie_name', 'KPID')
-		if not kp_cookie_name in self.cookies:
+		if self.visit_id == None:
 			visit_id = make_uid()
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
 			self.send_header('Set-Cookie', cookie)
@@ -308,7 +316,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				alert_text = "{0} vists reached for campaign: {{campaign_name}}".format(visit_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 		else:
-			visit_id = self.cookies[kp_cookie_name].value
+			visit_id = self.visit_id
 			if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ? AND page = ?', (self.campaign_id, self.vhost, self.path)):
 				with self.get_cursor() as cursor:
 					cursor.execute('UPDATE visits SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (visit_id,))
