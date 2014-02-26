@@ -260,19 +260,22 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		if isinstance(local_ip_addresses, (list, tuple)):
 			local_ip_addresses = ' '.join(local_ip_addresses)
 
+		self.send_response(200)
+		self.end_headers()
 		with self.get_cursor() as cursor:
 			cursor.execute('SELECT id FROM deaddrop_connections WHERE deployment_id = ? AND local_username = ? AND local_hostname = ?', (deployment_id, local_username, local_hostname))
 			drop_id = cursor.fetchone()
 			if drop_id:
 				drop_id = drop_id[0]
 				cursor.execute('UPDATE deaddrop_connections SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (drop_id,))
-				self.send_response(200)
-				self.end_headers()
-				return
+			return
 			values = (deployment_id, campaign_id, self.client_address[0], local_username, local_hostname, local_ip_addresses)
 			cursor.execute('INSERT INTO deaddrop_connections (deployment_id, campaign_id, visitor_ip, local_username, local_hostname, local_ip_addresses) VALUES (?, ?, ?, ?, ?, ?)', values)
-		self.send_response(200)
-		self.end_headers()
+
+		visit_count = self.query_count('SELECT COUNT(id) FROM deaddrop_connections WHERE campaign_id = ?', (campaign_id,))
+		if visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
+			alert_text = "{0} deaddrop connections reached for campaign: {{campaign_name}}".format(visit_count)
+			self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 		return
 
 	def handle_email_opened(self, query):
