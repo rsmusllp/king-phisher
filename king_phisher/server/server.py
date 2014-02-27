@@ -198,9 +198,9 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				return None
 
 			with self.get_cursor() as cursor:
-				cursor.execute('SELECT reject_after_credentials FROM campaigns WHERE campaign_id = ?', (self.campaign_id))
+				cursor.execute('SELECT reject_after_credentials FROM campaigns WHERE id = ?', (self.campaign_id,))
 				reject_after_credentials = cursor.fetchone()[0]
-			if reject_after_credentials and self.query_count('SELECT COUNT(id) FROM credentials WHERE message_id = ? OR visit_id = ?', (self.message_id, (self.visit_id or ''))):
+			if reject_after_credentials and self.visit_id == None and self.query_count('SELECT COUNT(id) FROM credentials WHERE message_id = ?', (self.message_id,)):
 				self.server.logger.warning('denying request because credentials were already harvested')
 				self.respond_not_found()
 				return None
@@ -308,6 +308,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 
 		if self.visit_id == None:
 			visit_id = make_uid()
+			kp_cookie_name = self.config.get('cookie_name', 'KPID')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
 			self.send_header('Set-Cookie', cookie)
 			with self.get_cursor() as cursor:
