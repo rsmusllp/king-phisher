@@ -53,14 +53,25 @@ __version__ = '0.1.0'
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
+SERVER_DEFAULT_OPTIONS = {
+	'require_id': True,
+	'vhost_directories': False
+}
+
 def build_king_phisher_server(config, section_name):
 	# set config defaults
 	config.set(section_name, 'tracking_image', 'email_logo_banner.gif')
 	config.set(section_name, 'secret_id', make_uid())
+	for option_name, option_default_value in SERVER_DEFAULT_OPTIONS.items():
+		if not config.has_option(section_name, option_name):
+			config.set(section_name, option_name, str(option_default_value))
 
 	king_phisher_server = build_server_from_config(config, 'server', ServerClass = KingPhisherServer, HandlerClass = KingPhisherRequestHandler)
 	king_phisher_server.http_server.config = SectionConfigParser('server', config)
 	return king_phisher_server
+
+class KingPhisherErrorAbortRequest(Exception):
+	pass
 
 class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
@@ -93,10 +104,22 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			self.server.logger.debug("sending alert SMS message to {0} ({1})".format(number, carrier))
 			sms.send_sms(alert_text, number, carrier, 'donotreply@kingphisher.local')
 
+	def adjust_path(self):
+		if not self.config.getboolean('vhost_directories'):
+			return
+		if not self.vhost:
+			raise KingPhisherErrorAbortRequest()
+		if self.vhost in ['localhost', '127.0.0.1'] and self.client_address[0] != '127.0.0.1':
+			raise KingPhisherErrorAbortRequest()
+		self.path = '/' + self.vhost + self.path
+
 	def do_GET(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
 		try:
+			self.adjust_path()
 			super(KingPhisherRequestHandler, self).do_GET(*args, **kwargs)
+		except KingPhisherErrorAbortRequest:
+			self.respond_not_found()
 		except:
 			raise
 		finally:
@@ -105,7 +128,10 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 	def do_POST(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
 		try:
+			self.adjust_path()
 			super(KingPhisherRequestHandler, self).do_POST(*args, **kwargs)
+		except KingPhisherErrorAbortRequest:
+			self.respond_not_found()
 		except:
 			raise
 		finally:
@@ -185,7 +211,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			self.respond_not_found()
 			return None
 
-		if self.config.getboolean('require_id', True) and self.message_id != self.config.get('secret_id'):
+		if self.config.getboolean('require_id') and self.message_id != self.config.get('secret_id'):
 			# a valid campaign_id requires a valid message_id
 			if not self.campaign_id:
 				self.server.logger.warning('denying request with not found due to lack of id')
