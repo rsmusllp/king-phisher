@@ -208,28 +208,24 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		try:
 			file_obj = open(file_path, 'rb')
 		except IOError:
-			self.respond_not_found()
-			return None
+			raise KingPhisherErrorAbortRequest()
 
 		if self.config.getboolean('require_id') and self.message_id != self.config.get('secret_id'):
 			# a valid campaign_id requires a valid message_id
 			if not self.campaign_id:
-				self.server.logger.warning('denying request with not found due to lack of id')
-				self.respond_not_found()
-				return None
+				self.server.logger.warning('denying request due to lack of a valid id')
+				raise KingPhisherErrorAbortRequest()
 
 			if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ?', (self.campaign_id, self.vhost)) == 0:
 				self.server.logger.warning('denying request with not found due to invalid hostname')
-				self.respond_not_found()
-				return None
+				raise KingPhisherErrorAbortRequest()
 
 			with self.get_cursor() as cursor:
 				cursor.execute('SELECT reject_after_credentials FROM campaigns WHERE id = ?', (self.campaign_id,))
 				reject_after_credentials = cursor.fetchone()[0]
 			if reject_after_credentials and self.visit_id == None and self.query_count('SELECT COUNT(id) FROM credentials WHERE message_id = ?', (self.message_id,)):
 				self.server.logger.warning('denying request because credentials were already harvested')
-				self.respond_not_found()
-				return None
+				raise KingPhisherErrorAbortRequest()
 
 		self.send_response(200)
 		self.send_header('Content-Type', self.guess_mime_type(file_path))
