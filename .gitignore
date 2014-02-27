@@ -10,4 +10,5 @@ build/*
 data/*/king_phisher/plugins/*
 
 !data/server/king_phisher/error_*.html
+!data/server/service_files/*
 !data/*/king_phisher/*/*.html
