@@ -24,53 +24,9 @@ h1
 	text-align:justify;
 }
 
-#list
-{
-	text-align: center;
-}
-
-#list ul
-{
-	list-style: square;
-	list-style-position: inside;
-}
-
-#list ul li
-{
-	text-align: center;
-}
-
 #wrapper table
 {
 	width:100%;
-}
-
-#iframe
-{
-	text-align:center;
-}
-
-.right
-{
-	float:right;
-}
-
-.credits
-{
-	font-family:Helvetica, Arial, sans-serif;
-	font-size: 10px;
-	text-align: right;
-}
-
-a
-{
-	text-decoration: none;
-	color: #666;
-}
-
-a:hover
-{
-	color: #999;
 }
 
 img
