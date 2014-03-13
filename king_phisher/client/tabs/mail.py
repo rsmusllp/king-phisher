@@ -239,10 +239,16 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 			'entry_reply_to_email',
 			'entry_html_file',
 			'entry_target_file',
-			'entry_attachment_file'
+			'entry_attachment_file',
+			'combobox_importance',
+			'combobox_sensitivity'
 	]
 	config_prefix = 'mailer.'
 	top_gobject = 'box'
+	top_level_dependencies = [
+		'MsgImportance',
+		'MsgSensitivity'
+	]
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label('Config')
 		super(MailSenderConfigTab, self).__init__(*args, **kwargs)

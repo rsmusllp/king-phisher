@@ -219,6 +219,12 @@ class MailSenderThread(threading.Thread):
 		else:
 			msg['From'] = self.config['mailer.source_email']
 		msg['To'] = target_email
+		importance = self.config.get('mailer.importance', 'Normal')
+		if importance != 'Normal':
+			msg['Importance'] = importance
+		sensitivity = self.config.get('mailer.sensitivity', 'Normal')
+		if sensitivity != 'Normal':
+			msg['Sensitivity'] = sensitivity
 		msg.preamble = 'This is a multi-part message in MIME format.'
 		msg_alt = MIMEMultipart('alternative')
 		msg.attach(msg_alt)

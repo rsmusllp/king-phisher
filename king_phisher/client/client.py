@@ -142,18 +142,18 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 
 class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
-			# Server Tab
-			'entry_server',
-			'entry_server_username',
-			'entry_sms_phone_number',
-			'combobox_sms_carrier',
-			# SMTP Server Tab
-			'entry_smtp_server',
-			'spinbutton_smtp_max_send_rate',
-			'checkbutton_smtp_ssl_enable',
-			'checkbutton_smtp_ssh_enable',
-			'entry_ssh_server',
-			'entry_ssh_username'
+		# Server Tab
+		'entry_server',
+		'entry_server_username',
+		'entry_sms_phone_number',
+		'combobox_sms_carrier',
+		# SMTP Server Tab
+		'entry_smtp_server',
+		'spinbutton_smtp_max_send_rate',
+		'checkbutton_smtp_ssl_enable',
+		'checkbutton_smtp_ssh_enable',
+		'entry_ssh_server',
+		'entry_ssh_username'
 	]
 	top_gobject = 'dialog'
 	top_level_dependencies = [

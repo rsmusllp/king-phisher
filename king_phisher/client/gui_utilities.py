@@ -72,7 +72,10 @@ def gobject_get_value(gobject, gtype = None):
 	gtype = (gtype or gobject.__class__.__name__)
 	gtype = gtype.lower()
 	if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
-		value = GOBJECT_PROPERTY_MAP[gtype][1](gobject)
+		try:
+			value = GOBJECT_PROPERTY_MAP[gtype][1](gobject)
+		except AttributeError:
+			return None
 	else:
 		value = gobject.get_property(GOBJECT_PROPERTY_MAP[gtype])
 	return value
@@ -163,6 +166,8 @@ class UtilityGladeGObject(object):
 			if not gtype in GOBJECT_PROPERTY_MAP or not config_name in self.config:
 				continue
 			value = self.config[config_name]
+			if value == None:
+				continue
 			if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
 				GOBJECT_PROPERTY_MAP[gtype][0](gobject, value)
 			else:
