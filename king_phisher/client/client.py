@@ -347,7 +347,7 @@ class KingPhisherClient(Gtk.Window):
 			notebook.emit('switch-page', notebook.get_nth_page(index), index)
 
 	def signal_window_destroy(self, window):
-		map(lambda x: x.destroy(), self.get_children())
+		gui_utilities.gtk_widget_destroy_children(self)
 		gui_utilities.gtk_sync()
 		self.server_disconnect()
 		self.save_config()

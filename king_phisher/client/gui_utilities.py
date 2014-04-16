@@ -92,6 +92,9 @@ def gtk_sync():
 	while Gtk.events_pending():
 		Gtk.main_iteration()
 
+def gtk_widget_destroy_children(widget):
+	map(lambda child: child.destroy(), widget.get_children())
+
 def search_list_store(list_store, value):
 	for row in list_store:
 		if row[0] == value:

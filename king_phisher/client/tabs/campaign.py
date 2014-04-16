@@ -31,6 +31,7 @@
 #
 
 import collections
+import logging
 import os
 import threading
 import time
@@ -40,10 +41,18 @@ from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client.mailer import MailSenderThread
+from king_phisher.client.tabs.campaign_dashboard import CampaignViewDashboardTab
 
 from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import Gtk
+
+try:
+	import matplotlib
+except ImportError:
+	has_matplotlib = False
+else:
+	has_matplotlib = True
 
 class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
@@ -270,6 +279,7 @@ class CampaignViewTab(object):
 	def __init__(self, config, parent):
 		self.config = config
 		self.parent = parent
+		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
@@ -283,6 +293,14 @@ class CampaignViewTab(object):
 		self.tabs = {}
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
+
+		if has_matplotlib:
+			self.logger.info("matplotlib {0} is installed, dashboard will be available".format(matplotlib.__version__))
+			dashboard_tab = CampaignViewDashboardTab(self.config, self.parent)
+			self.tabs['dashboard'] = dashboard_tab
+			self.notebook.append_page(dashboard_tab.box, dashboard_tab.label)
+		else:
+			self.logger.warning('matplotlib is not installed, dashboard will not be available')
 
 		messages_tab = CampaignViewMessagesTab(self.config, self.parent)
 		self.tabs['messages'] = messages_tab
@@ -311,5 +329,7 @@ class CampaignViewTab(object):
 		self.last_page_id = index
 
 		for tab_name, tab in self.tabs.items():
-			if isinstance(tab, CampaignViewGenericTab) and current_page == tab.box:
+			if current_page != tab.box:
+				continue
+			if hasattr(tab, 'load_campaign_information'):
 				tab.load_campaign_information()
