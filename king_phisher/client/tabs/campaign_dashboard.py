@@ -33,6 +33,7 @@
 import datetime
 import time
 
+from king_phisher import ua_parser
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
@@ -101,7 +102,7 @@ class CampaignViewGraph(object):
 			self.navigation_toolbar.hide()
 
 class CampaignViewOverviewGraph(CampaignViewGraph):
-	size_request = (400, 200)
+	size_request = (380, 200)
 	def refresh(self, info_cache = None):
 		info_cache = (info_cache or {})
 		rpc = self.parent.rpc
@@ -130,15 +131,58 @@ class CampaignViewOverviewGraph(CampaignViewGraph):
 		ax.set_ylabel('Grand Total')
 		ax.set_title('Campaign Overview')
 		ax.set_xticks(map(lambda x: float(x) + (width / 2), range(len(bars))))
-		ax.set_xticklabels(('Messages', 'Visits', 'Unique Visits', 'Credentials', 'Unique Credentials')[:len(bars)])
+		ax.set_xticklabels(('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)], rotation=30)
 		for col in bars:
 			height = col.get_height()
 			ax.text(col.get_x()+col.get_width()/2.0, height, str(height), ha='center', va='bottom')
+		self.figure.subplots_adjust(bottom=0.25)
+		self.canvas.draw()
+		return info_cache
+
+class CampaignViewVisitorInfoGraph(CampaignViewGraph):
+	size_request = (380, 200)
+	def refresh(self, info_cache = None):
+		info_cache = (info_cache or {})
+		rpc = self.parent.rpc
+		cid = self.config['campaign_id']
+
+		visits = info_cache.get('visits')
+		if not visits:
+			visits = list(rpc.remote_table('campaign/visits', cid))
+			info_cache['visits'] = visits
+
+		operating_systems = {}
+		unknown_os = 'Unknown OS'
+		for visit in visits:
+			user_agent = ua_parser.parse_user_agent(visit['visitor_details'])
+			if user_agent:
+				operating_systems[user_agent.os_name] = operating_systems.get(user_agent.os_name, 0) + 1
+			else:
+				operating_systems[unknown_os] = operating_systems.get(unknown_os, 0) + 1
+		os_names = operating_systems.keys()
+		os_names.sort(key=lambda name: operating_systems[name])
+		os_names.reverse()
+
+		bars = []
+		for os_name in os_names:
+			bars.append(operating_systems[os_name])
+		width = 0.25
+		ax = self.axes[0]
+		ax.clear()
+		bars = ax.bar(range(len(bars)), bars, width)
+		ax.set_ylabel('Total Visits')
+		ax.set_title('Visitor OS Information')
+		ax.set_xticks(map(lambda x: float(x) + (width / 2), range(len(bars))))
+		ax.set_xticklabels(os_names, rotation=30)
+		for col in bars:
+			height = col.get_height()
+			ax.text(col.get_x()+col.get_width()/2.0, height, str(height), ha='center', va='bottom')
+		self.figure.subplots_adjust(bottom=0.25)
 		self.canvas.draw()
 		return info_cache
 
 class CampaignViewVisitsTimelineGraph(CampaignViewGraph):
-	size_request = (400, 200)
+	size_request = (600, 200)
 	def refresh(self, info_cache = None):
 		info_cache = (info_cache or {})
 		rpc = self.parent.rpc
@@ -169,8 +213,10 @@ class CampaignViewVisitsTimelineGraph(CampaignViewGraph):
 class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'box_overview',
+		'box_visitor_info',
 		'box_visits_timeline',
 		'scrolledwindow_overview',
+		'scrolledwindow_visitor_info',
 		'scrolledwindow_visits_timeline'
 	]
 	top_gobject = 'box'
@@ -186,6 +232,11 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		self.gobjects['scrolledwindow_overview'].add_with_viewport(overview_graph.canvas)
 		self.gobjects['box_overview'].pack_end(overview_graph.navigation_toolbar, False, False, 0)
 		self.graphs.append(overview_graph)
+
+		visitor_info_graph = CampaignViewVisitorInfoGraph(self.config, self.parent)
+		self.gobjects['scrolledwindow_visitor_info'].add_with_viewport(visitor_info_graph.canvas)
+		self.gobjects['box_visitor_info'].pack_end(visitor_info_graph.navigation_toolbar, False, False, 0)
+		self.graphs.append(visitor_info_graph)
 
 		visits_timeline_graph = CampaignViewVisitsTimelineGraph(self.config, self.parent)
 		self.gobjects['scrolledwindow_visits_timeline'].add_with_viewport(visits_timeline_graph.canvas)

@@ -9,6 +9,11 @@ King Phisher uses a client server architecture.  The KingPhisherServer file runs
 
 [PyGObject](https://wiki.gnome.org/PyGObject)
 
+## Client Optional Packages
+[Matplotlib](http://matplotlib.org/)
+
+[Msgpack-Python](https://github.com/msgpack/msgpack-python)
+
 ## Server Required Packages
 [Msgpack-Python](https://github.com/msgpack/msgpack-python)
 
