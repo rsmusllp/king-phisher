@@ -111,6 +111,20 @@ def server_parse(server, default_port):
 			port = int(port)
 		return (host, port)
 
+def unique(seq, key = None):
+	if key is None:
+		key = lambda x: x
+	preserved_type = type(seq)
+	seen = {}
+	result = []
+	for item in seq:
+		marker = key(item)
+		if marker in seen:
+			continue
+		seen[marker] = 1
+		result.append(item)
+	return preserved_type(result)
+
 def which(program):
 	is_exe = lambda fpath: (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
 	if is_exe(program):

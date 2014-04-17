@@ -102,38 +102,60 @@ class CampaignViewGraph(object):
 
 class CampaignViewOverviewGraph(CampaignViewGraph):
 	size_request = (400, 200)
-	def refresh(self):
+	def refresh(self, info_cache = None):
+		info_cache = (info_cache or {})
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
+
+		visits = info_cache.get('visits')
+		if not visits:
+			visits = list(rpc.remote_table('campaign/visits', cid))
+			info_cache['visits'] = visits
+		creds = info_cache.get('credentials')
+		if not creds:
+			creds = list(rpc.remote_table('campaign/credentials', cid))
+			info_cache['credentials'] = creds
+
 		bars = []
 		bars.append(rpc('campaign/messages/count', cid))
-		bars.append(rpc('campaign/visits/count', cid))
-		bars.append(rpc('campaign/credentials/count', cid))
-
+		bars.append(len(visits))
+		bars.append(len(utilities.unique(visits, key=lambda visit: visit['message_id'])))
+		if len(creds):
+			bars.append(len(creds))
+			bars.append(len(utilities.unique(creds, key=lambda cred: cred['message_id'])))
 		width = 0.25
 		ax = self.axes[0]
 		ax.clear()
-		ax.bar(range(len(bars)), bars, width)
+		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Grand Total')
 		ax.set_title('Campaign Overview')
 		ax.set_xticks(map(lambda x: float(x) + (width / 2), range(len(bars))))
-		ax.set_xticklabels(('Messages', 'Visits', 'Credentials'))
+		ax.set_xticklabels(('Messages', 'Visits', 'Unique Visits', 'Credentials', 'Unique Credentials')[:len(bars)])
+		for col in bars:
+			height = col.get_height()
+			ax.text(col.get_x()+col.get_width()/2.0, height, str(height), ha='center', va='bottom')
 		self.canvas.draw()
+		return info_cache
 
 class CampaignViewVisitsTimelineGraph(CampaignViewGraph):
 	size_request = (400, 200)
-	def refresh(self):
+	def refresh(self, info_cache = None):
+		info_cache = (info_cache or {})
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
 
-		# reads all the visits in for right now...
-		visits = list(rpc.remote_table('campaign/visits', cid))
+		visits = info_cache.get('visits')
+		if not visits:
+			visits = list(rpc.remote_table('campaign/visits', cid))
+			info_cache['visits'] = visits
 		first_visits = map(lambda visit: datetime.datetime.strptime(visit['first_visit'], '%Y-%m-%d %H:%M:%S'), visits)
 		first_visits.sort()
 
 		ax = self.axes[0]
 		ax.clear()
 		ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
+		ax.set_ylabel('Number of Visits')
+		ax.set_title('Visits Over Time')
 		ax.xaxis.set_major_locator(dates.DayLocator())
 		ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
 		ax.xaxis.set_minor_locator(dates.HourLocator())
@@ -142,6 +164,7 @@ class CampaignViewVisitsTimelineGraph(CampaignViewGraph):
 		ax.fmt_xdata = dates.DateFormatter('%Y-%m-%d')
 		self.figure.autofmt_xdate()
 		self.canvas.draw()
+		return info_cache
 
 class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
@@ -161,13 +184,13 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 
 		overview_graph = CampaignViewOverviewGraph(self.config, self.parent)
 		self.gobjects['scrolledwindow_overview'].add_with_viewport(overview_graph.canvas)
-		self.graphs.append(overview_graph)
 		self.gobjects['box_overview'].pack_end(overview_graph.navigation_toolbar, False, False, 0)
+		self.graphs.append(overview_graph)
 
 		visits_timeline_graph = CampaignViewVisitsTimelineGraph(self.config, self.parent)
 		self.gobjects['scrolledwindow_visits_timeline'].add_with_viewport(visits_timeline_graph.canvas)
-		self.graphs.append(visits_timeline_graph)
 		self.gobjects['box_visits_timeline'].pack_end(visits_timeline_graph.navigation_toolbar, False, False, 0)
+		self.graphs.append(visits_timeline_graph)
 
 	def load_campaign_information(self, force = False):
 		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
@@ -176,5 +199,6 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 			self.logger.warning('skipping load_campaign_information because rpc is not initialized')
 			return
 		self.last_load_time = time.time()
+		info_cache = {}
 		for graph in self.graphs:
-			graph.refresh()
+			info_cache = graph.refresh(info_cache)
