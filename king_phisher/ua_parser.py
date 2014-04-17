@@ -33,7 +33,7 @@
 import collections
 import re
 
-USER_AGENT_REGEX_OS = re.compile(r'(android|(ipad|iphone); cpu (ipad |iphone )?os|linux|mac os x|windows nt) (([\d\._\-]+)(;|\)| ))?', flags=re.IGNORECASE)
+USER_AGENT_REGEX_OS = re.compile(r'(android|blackberry|(ipad|iphone); cpu (ipad |iphone )?os|linux|mac os x|windows nt) (([\d\._\-]+)(;|\)| ))?', flags=re.IGNORECASE)
 USER_AGENT_REGEX_ARCH_X86 = re.compile(r'(x|(i[3456]))86[^-_]', flags=re.IGNORECASE)
 USER_AGENT_REGEX_ARCH_X86_64 = re.compile(r'(amd|wow|x(86[-_])?)?64', flags=re.IGNORECASE)
 
@@ -47,6 +47,8 @@ def parse_user_agent(user_agent):
 	os_name = os_parts.group(1).lower()
 	if 'android' in os_name:
 		os_name = 'Android'
+	elif 'blackberry' in os_name:
+		os_name = 'BlackBerry'
 	elif 'ipad' in os_name or 'iphone' in os_name:
 		os_name = 'iOS'
 	elif 'linux' in os_name:
