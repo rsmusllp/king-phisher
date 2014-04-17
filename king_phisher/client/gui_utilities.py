@@ -151,9 +151,9 @@ class UtilityGladeGObject(object):
 			# primarily to enforce clean development.
 			gtype = gobject_id.split('_', 1)[0]
 			if gobject == None:
-				raise TypeError("gobject {0} could not be found in the glade file".format(gtkbuilder_id))
+				raise TypeError("gobject {0} could not be found in the glade file".format(gobject_id))
 			elif gobject.__class__.__name__.lower() != gtype:
-				raise TypeError("gobject {0} is of type {1} expected {2}".format(gtkbuilder_id, gobject.__class__.__name__, gtype))
+				raise TypeError("gobject {0} is of type {1} expected {2}".format(gobject_id, gobject.__class__.__name__, gtype))
 			self.gobjects[gobject_id] = gobject
 		self.objects_load_from_config()
 
