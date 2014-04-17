@@ -31,12 +31,14 @@
 #
 
 import datetime
+import threading
 import time
 
 from king_phisher import ua_parser
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
+from gi.repository import GLib
 from gi.repository import Gtk
 
 try:
@@ -225,7 +227,9 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		self.label = Gtk.Label(self.label_text)
 		super(CampaignViewDashboardTab, self).__init__(*args, **kwargs)
 		self.last_load_time = float('-inf')
-		self.load_lifetime = utilities.timedef_to_seconds('3s')
+		self.load_lifetime = utilities.timedef_to_seconds('3m')
+		self.loader_thread = None
+		self.loader_thread_lock = threading.RLock()
 		self.graphs = []
 
 		overview_graph = CampaignViewOverviewGraph(self.config, self.parent)
@@ -242,6 +246,7 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		self.gobjects['scrolledwindow_visits_timeline'].add_with_viewport(visits_timeline_graph.canvas)
 		self.gobjects['box_visits_timeline'].pack_end(visits_timeline_graph.navigation_toolbar, False, False, 0)
 		self.graphs.append(visits_timeline_graph)
+		GLib.timeout_add_seconds(self.load_lifetime, self.loader_idle_routine)
 
 	def load_campaign_information(self, force = False):
 		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
@@ -249,7 +254,22 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		if not hasattr(self.parent, 'rpc'):
 			self.logger.warning('skipping load_campaign_information because rpc is not initialized')
 			return
-		self.last_load_time = time.time()
+		with self.loader_thread_lock:
+			if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
+				return
+			self.last_load_time = time.time()
+			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
+			self.loader_thread.start()
+
+	def loader_idle_routine(self):
+		self.logger.debug('idle loader routine called')
+		self.load_campaign_information(force=True)
+		return True
+
+	def loader_thread_routine(self):
 		info_cache = {}
 		for graph in self.graphs:
-			info_cache = graph.refresh(info_cache)
+			info_cache = gui_utilities.glib_idle_add_wait(graph.refresh, info_cache)
+
+	def signal_button_clicked_refresh(self, button):
+		self.load_campaign_information(force = True)
