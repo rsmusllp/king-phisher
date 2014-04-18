@@ -61,6 +61,9 @@ def export(klass):
 def get_graph(graph_name):
 	return EXPORTED_GRAPHS.get(graph_name)
 
+def get_graphs():
+	return sorted(EXPORTED_GRAPHS.keys())
+
 class CampaignGraph(object):
 	table_subscriptions = []
 	def __init__(self, config, parent, size_request = None):
