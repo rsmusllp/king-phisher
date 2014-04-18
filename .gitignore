@@ -6,7 +6,6 @@
 *.db
 *.html
 build/*
-tests/*
 data/*/king_phisher/plugins/*
 
 !data/server/king_phisher/error_*.html
