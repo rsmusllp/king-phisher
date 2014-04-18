@@ -33,7 +33,10 @@
 import collections
 import re
 
-USER_AGENT_REGEX_OS = re.compile(r'(android|blackberry|(ipad|iphone); cpu (ipad |iphone )?os|linux|mac os x|windows nt) (([\d\._\-]+)(;|\)| ))?', flags=re.IGNORECASE)
+__all__ = ['UserAgent', 'parse_user_agent']
+__version__ = '0.1'
+
+USER_AGENT_REGEX_OS = re.compile(r'(android|blackberry|(ipad|iphone)?; cpu (ipad |iphone )?os|linux|mac os x|windows nt) (([\d\._\-]+)(;|\)| ))?', flags=re.IGNORECASE)
 USER_AGENT_REGEX_ARCH_X86 = re.compile(r'(x|(i[3456]))86[^-_]', flags=re.IGNORECASE)
 USER_AGENT_REGEX_ARCH_X86_64 = re.compile(r'(amd|wow|x(86[-_])?)?64', flags=re.IGNORECASE)
 
