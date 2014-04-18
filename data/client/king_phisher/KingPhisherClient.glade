@@ -83,12 +83,12 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
-              <object class="GtkBox" id="CampaignViewDashboardTab.box_overview">
+              <object class="GtkBox" id="CampaignViewDashboardTab.box_top_left">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkScrolledWindow" id="CampaignViewDashboardTab.scrolledwindow_overview">
+                  <object class="GtkScrolledWindow" id="CampaignViewDashboardTab.scrolledwindow_top_left">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="shadow_type">in</property>
@@ -112,12 +112,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="CampaignViewDashboardTab.box_visitor_info">
+              <object class="GtkBox" id="CampaignViewDashboardTab.box_top_right">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkScrolledWindow" id="CampaignViewDashboardTab.scrolledwindow_visitor_info">
+                  <object class="GtkScrolledWindow" id="CampaignViewDashboardTab.scrolledwindow_top_right">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="shadow_type">in</property>
@@ -147,12 +147,12 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="CampaignViewDashboardTab.box_visits_timeline">
+          <object class="GtkBox" id="CampaignViewDashboardTab.box_bottom">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkScrolledWindow" id="CampaignViewDashboardTab.scrolledwindow_visits_timeline">
+              <object class="GtkScrolledWindow" id="CampaignViewDashboardTab.scrolledwindow_bottom">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="shadow_type">in</property>

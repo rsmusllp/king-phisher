@@ -39,9 +39,9 @@ import urlparse
 
 from king_phisher import utilities
 from king_phisher.client import export
+from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client.mailer import MailSenderThread
-from king_phisher.client.tabs.campaign_dashboard import CampaignViewDashboardTab
 
 from gi.repository import Gdk
 from gi.repository import GLib
@@ -243,6 +243,70 @@ class CampaignViewCredentialsTab(CampaignViewGenericTab):
 
 	def signal_button_toggled_show_passwords(self, button):
 		self.view_column_renderers[3].set_property('visible', button.get_property('active'))
+
+class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
+	gobject_ids = [
+		'box_top_left',
+		'box_top_right',
+		'box_bottom',
+		'scrolledwindow_top_left',
+		'scrolledwindow_top_right',
+		'scrolledwindow_bottom'
+	]
+	top_gobject = 'box'
+	label_text = 'Dashboard'
+	def __init__(self, *args, **kwargs):
+		self.label = Gtk.Label(self.label_text)
+		super(CampaignViewDashboardTab, self).__init__(*args, **kwargs)
+		self.last_load_time = float('-inf')
+		self.load_lifetime = utilities.timedef_to_seconds('3m')
+		self.loader_thread = None
+		self.loader_thread_lock = threading.RLock()
+		self.graphs = []
+
+		# Position: (DefaultGraphName, Size)
+		dash_ports = {
+			'top_left': ('Overview', (380, 200)),
+			'top_right': ('VisitorInfo', (380, 200)),
+			'bottom': ('VisitsTimeline', None)
+		}
+		for dash_port, details in dash_ports.items():
+			graph_name = self.config.get('dashboard.' + dash_port, details[0])
+			Klass = graphs.get_graph(graph_name)
+			if not Klass:
+				self.logger.warning('could not get graph: ' + graph_name)
+				continue
+			graph_inst = Klass(self.config, self.parent, details[1])
+			self.gobjects['scrolledwindow_' + dash_port].add_with_viewport(graph_inst.canvas)
+			self.gobjects['box_' + dash_port].pack_end(graph_inst.navigation_toolbar, False, False, 0)
+			self.graphs.append(graph_inst)
+		GLib.timeout_add_seconds(self.load_lifetime, self.loader_idle_routine)
+
+	def load_campaign_information(self, force = False):
+		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
+			return
+		if not hasattr(self.parent, 'rpc'):
+			self.logger.warning('skipping load_campaign_information because rpc is not initialized')
+			return
+		with self.loader_thread_lock:
+			if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
+				return
+			self.last_load_time = time.time()
+			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
+			self.loader_thread.start()
+
+	def loader_idle_routine(self):
+		self.logger.debug('idle loader routine called')
+		self.load_campaign_information(force=True)
+		return True
+
+	def loader_thread_routine(self):
+		info_cache = {}
+		for graph in self.graphs:
+			info_cache = gui_utilities.glib_idle_add_wait(graph.refresh, info_cache)
+
+	def signal_button_clicked_refresh(self, button):
+		self.load_campaign_information(force = True)
 
 class CampaignViewVisitsTab(CampaignViewGenericTab):
 	remote_table_name = 'visits'

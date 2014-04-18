@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/tabs/campaign_dashboard.py
+#  king_phisher/client/graphs.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -31,14 +31,12 @@
 #
 
 import datetime
-import threading
 import time
 
 from king_phisher import ua_parser
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
-from gi.repository import GLib
 from gi.repository import Gtk
 
 try:
@@ -53,14 +51,26 @@ else:
 	from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 	from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
 
-class CampaignViewGraph(object):
-	def __init__(self, config, parent):
+EXPORTED_GRAPHS = {}
+
+def export(klass):
+	graph_name = klass.__name__[13:]
+	EXPORTED_GRAPHS[graph_name] = klass
+	return klass
+
+def get_graph(graph_name):
+	return EXPORTED_GRAPHS.get(graph_name)
+
+class CampaignGraph(object):
+	table_subscriptions = []
+	def __init__(self, config, parent, size_request = None):
 		self.config = config
 		self.parent = parent
 		self.figure, ax = pyplot.subplots()
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
-		self.canvas.set_size_request(*self.size_request)
+		if size_request:
+			self.canvas.set_size_request(*size_request)
 		self.canvas.mpl_connect('button_press_event', self.mpl_signal_canvas_button_pressed)
 		self.canvas.show()
 		self.navigation_toolbar = NavigationToolbar(self.canvas, self.parent)
@@ -103,21 +113,25 @@ class CampaignViewGraph(object):
 		else:
 			self.navigation_toolbar.hide()
 
-class CampaignViewOverviewGraph(CampaignViewGraph):
-	size_request = (380, 200)
 	def refresh(self, info_cache = None):
 		info_cache = (info_cache or {})
+		for table in self.table_subscriptions:
+			if not table in info_cache:
+				info_cache[table] = list(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
+		map(lambda ax: ax.clear(), self.axes)
+		self.load_graph(info_cache)
+		self.canvas.draw()
+		return info_cache
+
+@export
+class CampaignGraphOverview(CampaignGraph):
+	table_subscriptions = ['credentials', 'visits']
+	def load_graph(self, info_cache):
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
 
-		visits = info_cache.get('visits')
-		if not visits:
-			visits = list(rpc.remote_table('campaign/visits', cid))
-			info_cache['visits'] = visits
-		creds = info_cache.get('credentials')
-		if not creds:
-			creds = list(rpc.remote_table('campaign/credentials', cid))
-			info_cache['credentials'] = creds
+		visits = info_cache['visits']
+		creds = info_cache['credentials']
 
 		bars = []
 		bars.append(rpc('campaign/messages/count', cid))
@@ -128,7 +142,6 @@ class CampaignViewOverviewGraph(CampaignViewGraph):
 			bars.append(len(utilities.unique(creds, key=lambda cred: cred['message_id'])))
 		width = 0.25
 		ax = self.axes[0]
-		ax.clear()
 		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Grand Total')
 		ax.set_title('Campaign Overview')
@@ -138,20 +151,15 @@ class CampaignViewOverviewGraph(CampaignViewGraph):
 			height = col.get_height()
 			ax.text(col.get_x()+col.get_width()/2.0, height, str(height), ha='center', va='bottom')
 		self.figure.subplots_adjust(bottom=0.25)
-		self.canvas.draw()
 		return info_cache
 
-class CampaignViewVisitorInfoGraph(CampaignViewGraph):
-	size_request = (380, 200)
-	def refresh(self, info_cache = None):
-		info_cache = (info_cache or {})
+@export
+class CampaignGraphVisitorInfo(CampaignGraph):
+	table_subscriptions = ['visits']
+	def load_graph(self, info_cache):
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
-
-		visits = info_cache.get('visits')
-		if not visits:
-			visits = list(rpc.remote_table('campaign/visits', cid))
-			info_cache['visits'] = visits
+		visits = info_cache['visits']
 
 		operating_systems = {}
 		unknown_os = 'Unknown OS'
@@ -170,7 +178,6 @@ class CampaignViewVisitorInfoGraph(CampaignViewGraph):
 			bars.append(operating_systems[os_name])
 		width = 0.25
 		ax = self.axes[0]
-		ax.clear()
 		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Total Visits')
 		ax.set_title('Visitor OS Information')
@@ -180,25 +187,19 @@ class CampaignViewVisitorInfoGraph(CampaignViewGraph):
 			height = col.get_height()
 			ax.text(col.get_x()+col.get_width()/2.0, height, str(height), ha='center', va='bottom')
 		self.figure.subplots_adjust(bottom=0.25)
-		self.canvas.draw()
 		return info_cache
 
-class CampaignViewVisitsTimelineGraph(CampaignViewGraph):
-	size_request = (600, 200)
-	def refresh(self, info_cache = None):
-		info_cache = (info_cache or {})
+@export
+class CampaignGraphVisitsTimeline(CampaignGraph):
+	table_subscriptions = ['visits']
+	def load_graph(self, info_cache):
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
-
-		visits = info_cache.get('visits')
-		if not visits:
-			visits = list(rpc.remote_table('campaign/visits', cid))
-			info_cache['visits'] = visits
+		visits = info_cache['visits']
 		first_visits = map(lambda visit: datetime.datetime.strptime(visit['first_visit'], '%Y-%m-%d %H:%M:%S'), visits)
 		first_visits.sort()
 
 		ax = self.axes[0]
-		ax.clear()
 		ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
 		ax.set_ylabel('Number of Visits')
 		ax.set_title('Visits Over Time')
@@ -206,70 +207,6 @@ class CampaignViewVisitsTimelineGraph(CampaignViewGraph):
 		ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
 		ax.xaxis.set_minor_locator(dates.HourLocator())
 		ax.autoscale_view()
-
 		ax.fmt_xdata = dates.DateFormatter('%Y-%m-%d')
 		self.figure.autofmt_xdate()
-		self.canvas.draw()
 		return info_cache
-
-class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
-	gobject_ids = [
-		'box_overview',
-		'box_visitor_info',
-		'box_visits_timeline',
-		'scrolledwindow_overview',
-		'scrolledwindow_visitor_info',
-		'scrolledwindow_visits_timeline'
-	]
-	top_gobject = 'box'
-	label_text = 'Dashboard'
-	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label(self.label_text)
-		super(CampaignViewDashboardTab, self).__init__(*args, **kwargs)
-		self.last_load_time = float('-inf')
-		self.load_lifetime = utilities.timedef_to_seconds('3m')
-		self.loader_thread = None
-		self.loader_thread_lock = threading.RLock()
-		self.graphs = []
-
-		overview_graph = CampaignViewOverviewGraph(self.config, self.parent)
-		self.gobjects['scrolledwindow_overview'].add_with_viewport(overview_graph.canvas)
-		self.gobjects['box_overview'].pack_end(overview_graph.navigation_toolbar, False, False, 0)
-		self.graphs.append(overview_graph)
-
-		visitor_info_graph = CampaignViewVisitorInfoGraph(self.config, self.parent)
-		self.gobjects['scrolledwindow_visitor_info'].add_with_viewport(visitor_info_graph.canvas)
-		self.gobjects['box_visitor_info'].pack_end(visitor_info_graph.navigation_toolbar, False, False, 0)
-		self.graphs.append(visitor_info_graph)
-
-		visits_timeline_graph = CampaignViewVisitsTimelineGraph(self.config, self.parent)
-		self.gobjects['scrolledwindow_visits_timeline'].add_with_viewport(visits_timeline_graph.canvas)
-		self.gobjects['box_visits_timeline'].pack_end(visits_timeline_graph.navigation_toolbar, False, False, 0)
-		self.graphs.append(visits_timeline_graph)
-		GLib.timeout_add_seconds(self.load_lifetime, self.loader_idle_routine)
-
-	def load_campaign_information(self, force = False):
-		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
-			return
-		if not hasattr(self.parent, 'rpc'):
-			self.logger.warning('skipping load_campaign_information because rpc is not initialized')
-			return
-		with self.loader_thread_lock:
-			if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
-				return
-			self.last_load_time = time.time()
-			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
-			self.loader_thread.start()
-
-	def loader_idle_routine(self):
-		self.logger.debug('idle loader routine called')
-		self.load_campaign_information(force=True)
-		return True
-
-	def loader_thread_routine(self):
-		info_cache = {}
-		for graph in self.graphs:
-			info_cache = gui_utilities.glib_idle_add_wait(graph.refresh, info_cache)
-
-	def signal_button_clicked_refresh(self, button):
-		self.load_campaign_information(force = True)

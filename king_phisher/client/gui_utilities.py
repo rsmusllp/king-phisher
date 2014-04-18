@@ -62,11 +62,14 @@ def which_glade(glade):
 
 def glib_idle_add_wait(function, *args):
 	gsource_completed = threading.Event()
+	results = []
 	def wrapper():
-		function(*args)
+		results.append(function(*args))
 		gsource_completed.set()
+		return False
 	GLib.idle_add(wrapper)
 	gsource_completed.wait()
+	return results.pop()
 
 def gobject_get_value(gobject, gtype = None):
 	gtype = (gtype or gobject.__class__.__name__)
