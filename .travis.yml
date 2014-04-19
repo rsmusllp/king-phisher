@@ -11,7 +11,7 @@ virtualenv:
 
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq python-gi python-gobject python-gobject-dev python-gobject-2 python-paramiko gir1.2-gtk-3.0
+  - sudo apt-get install -qq gir1.2-gtk-3.0 python-cairo python-gi python-gi-cairo python-gobject python-gobject-2 python-gobject-dev python-paramiko
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
 
