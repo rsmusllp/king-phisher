@@ -44,6 +44,7 @@ from king_phisher import job
 from king_phisher import sms
 from king_phisher import xor
 from king_phisher.server import authenticator
+from king_phisher.server import database
 from king_phisher.server import rpcmixin
 from king_phisher.third_party.AdvancedHTTPServer import *
 from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config

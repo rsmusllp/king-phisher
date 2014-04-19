@@ -1,4 +1,4 @@
-# King Phisher
+# King Phisher [![Build Status](https://travis-ci.org/securestate/king-phisher.png)](https://travis-ci.org/securestate/king-phisher)
 Python Phishing Campaign Toolkit
 
 # Summary

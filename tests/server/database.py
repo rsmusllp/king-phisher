@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/client/graphs.py
+#  tests/server/database.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,19 +30,39 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import sqlite3
 import unittest
 
-from king_phisher.client.graphs import *
+from king_phisher.server.database import *
 
-class ClientGraphsTests(unittest.TestCase):
-	def test_graphs_found(self):
-		self.assertGreaterEqual(get_graphs(), 3)
+class ServerDatabaseTests(unittest.TestCase):
+	def test_create_database(self):
+		try:
+			self.assertIsInstance(create_database(':memory:'), sqlite3.Connection)
+		except Exception as error:
+			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
 
-	def test_graph_classes(self):
-		graphs = get_graphs()
-		for graph in graphs:
-			self.assertTrue(isinstance(graph, (str, unicode)))
-			self.assertTrue(issubclass(get_graph(graph), CampaignGraph))
+	def test_get_tables_id(self):
+		tables = ['campaigns', 'deaddrop_deployments', 'users', 'alert_subscriptions', 'credentials', 'landing_pages', 'messages', 'deaddrop_connections', 'visits']
+		self.assertListEqual(get_tables_with_column_id('id'), tables)
+
+	def test_get_tables_campaign_id(self):
+		tables = ['deaddrop_deployments', 'alert_subscriptions', 'credentials', 'landing_pages', 'messages', 'deaddrop_connections', 'visits']
+		self.assertListEqual(get_tables_with_column_id('campaign_id'), tables)
+
+	def test_get_tables_message_id(self):
+		tables = ['credentials', 'visits']
+		self.assertListEqual(get_tables_with_column_id('message_id'), tables)
+
+class ServerDatabaseUIDTests(unittest.TestCase):
+	def test_create_uid_length(self):
+		self.assertEqual(len(make_uid(10)), 10)
+		self.assertEqual(len(make_uid(15)), 15)
+
+	def test_create_uid_random(self):
+		uid1 = make_uid(15)
+		uid2 = make_uid(15)
+		self.assertNotEqual(uid1, uid2)
 
 if __name__ == '__main__':
 	unittest.main()

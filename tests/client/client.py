@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/client/graphs.py
+#  tests/client/client.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,19 +30,26 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import sys
 import unittest
 
-from king_phisher.client.graphs import *
+from king_phisher import find
+from king_phisher.client.client import *
 
-class ClientGraphsTests(unittest.TestCase):
-	def test_graphs_found(self):
-		self.assertGreaterEqual(get_graphs(), 3)
+from gi.repository import GObject
+from gi.repository import Gtk
 
-	def test_graph_classes(self):
-		graphs = get_graphs()
-		for graph in graphs:
-			self.assertTrue(isinstance(graph, (str, unicode)))
-			self.assertTrue(issubclass(get_graph(graph), CampaignGraph))
+class ClientGUITests(unittest.TestCase):
+	def test_client_initialization(self):
+		find.data_path_append('data/client')
+		os.environ['KING_PHISHER_GLADE_FILE'] = 'KingPhisherClient.glade'
+		self.assertTrue(isinstance(gui_utilities.which_glade(os.environ['KING_PHISHER_GLADE_FILE']), (str, unicode)))
+		try:
+			Gtk.init(sys.argv)
+			main_window = KingPhisherClient()
+			main_window.set_position(Gtk.WindowPosition.CENTER)
+		except Exception as error:
+			self.fail("failed to initialize KingPhisherClient (error: {0})".format(error.__class__.__name__))
 
 if __name__ == '__main__':
 	unittest.main()

@@ -30,6 +30,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+from tests.client.client import ClientGUITests
 from tests.client.graphs import ClientGraphsTests
+from tests.server.database import ServerDatabaseTests
+from tests.server.database import ServerDatabaseUIDTests
 from tests.ua_parser import UserAgentParserTests
 from tests.utilities import UtilitiesTests
