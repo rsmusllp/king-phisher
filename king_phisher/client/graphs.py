@@ -55,6 +55,7 @@ EXPORTED_GRAPHS = {}
 
 def export(klass):
 	graph_name = klass.__name__[13:]
+	klass._graph_id = len(EXPORTED_GRAPHS)
 	EXPORTED_GRAPHS[graph_name] = klass
 	return klass
 
@@ -65,6 +66,7 @@ def get_graphs():
 	return sorted(EXPORTED_GRAPHS.keys())
 
 class CampaignGraph(object):
+	_graph_id = None
 	table_subscriptions = []
 	def __init__(self, config, parent, size_request = None):
 		self.config = config
@@ -92,6 +94,10 @@ class CampaignGraph(object):
 		menu_item.connect('toggled', self.signal_toggled_popup_menu_show_toolbar)
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
+
+	@classmethod
+	def get_graph_id(klass):
+		return klass._graph_id
 
 	def mpl_signal_canvas_button_pressed(self, event):
 		if event.button != 3:

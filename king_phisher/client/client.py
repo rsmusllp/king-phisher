@@ -40,6 +40,7 @@ import time
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher.client import export
+from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.rpcclient import KingPhisherRPCClient
@@ -234,9 +235,9 @@ class KingPhisherClient(Gtk.Window):
 		self._add_menu_actions(action_group)
 		uimanager = self._create_ui_manager()
 		uimanager.insert_action_group(action_group)
+		self.uimanager = uimanager
 		menubar = uimanager.get_widget("/MenuBar")
 		vbox.pack_start(menubar, False, False, 0)
-		self.uimanager = uimanager
 
 		# create notebook and tabs
 		hbox = Gtk.Box()
@@ -271,55 +272,55 @@ class KingPhisherClient(Gtk.Window):
 
 	def _add_menu_actions(self, action_group):
 		# File Menu Actions
-		action_filemenu = Gtk.Action("FileMenu", "File", None, None)
-		action_group.add_action(action_filemenu)
+		action = Gtk.Action('FileMenu', 'File', None, None)
+		action_group.add_action(action)
 
-		action_file_new_campaign = Gtk.Action("FileOpenCampaign", "_Open Campaign", "Open a Campaign", Gtk.STOCK_NEW)
-		action_file_new_campaign.connect("activate", lambda x: self.show_campaign_selection())
-		action_group.add_action_with_accel(action_file_new_campaign, "<control>O")
+		action = Gtk.Action('FileOpenCampaign', '_Open Campaign', 'Open a Campaign', Gtk.STOCK_NEW)
+		action.connect('activate', lambda x: self.show_campaign_selection())
+		action_group.add_action_with_accel(action, '<control>O')
 
-		action_fileexportmenu = Gtk.Action("FileExportMenu", "Export", None, None)
-		action_group.add_action(action_fileexportmenu)
+		action = Gtk.Action('FileExportMenu', 'Export', None, None)
+		action_group.add_action(action)
 
-		action_file_export_xml = Gtk.Action("FileExportXML", "Export XML", "Export XML", None)
-		action_file_export_xml.connect("activate", lambda x: self.export_xml())
-		action_group.add_action(action_file_export_xml)
+		action = Gtk.Action('FileExportXML', 'Export XML', 'Export XML', None)
+		action.connect('activate', lambda x: self.export_xml())
+		action_group.add_action(action)
 
-		action_file_quit = Gtk.Action("FileQuit", None, None, Gtk.STOCK_QUIT)
-		action_file_quit.connect("activate", lambda x: self.client_quit())
-		action_group.add_action_with_accel(action_file_quit, "<control>Q")
+		action = Gtk.Action('FileQuit', None, None, Gtk.STOCK_QUIT)
+		action.connect('activate', lambda x: self.client_quit())
+		action_group.add_action_with_accel(action, '<control>Q')
 
 		# Edit Menu Actions
-		action_editmenu = Gtk.Action("EditMenu", "Edit", None, None)
-		action_group.add_action(action_editmenu)
+		action = Gtk.Action('EditMenu', 'Edit', None, None)
+		action_group.add_action(action)
 
-		action_edit_preferences = Gtk.Action("EditPreferences", "Preferences", "Edit preferences", Gtk.STOCK_EDIT)
-		action_edit_preferences.connect("activate", lambda x: self.edit_preferences())
-		action_group.add_action(action_edit_preferences)
+		action = Gtk.Action('EditPreferences', 'Preferences', 'Edit preferences', Gtk.STOCK_EDIT)
+		action.connect('activate', lambda x: self.edit_preferences())
+		action_group.add_action(action)
 
-		action_edit_delete_campaign = Gtk.Action("EditDeleteCampaign", "Delete Campaign", "Delete Campaign", None)
-		action_edit_delete_campaign.connect("activate", lambda x: self.delete_campaign())
-		action_group.add_action(action_edit_delete_campaign)
+		action = Gtk.Action('EditDeleteCampaign', 'Delete Campaign', 'Delete Campaign', None)
+		action.connect('activate', lambda x: self.delete_campaign())
+		action_group.add_action(action)
 
-		action_edit_shutdown_server = Gtk.Action("EditStopService", "Stop Service", "Stop Remote King-Phisher Service", None)
-		action_edit_shutdown_server.connect("activate", lambda x: self.stop_remote_service())
-		action_group.add_action(action_edit_shutdown_server)
+		action = Gtk.Action('EditStopService', 'Stop Service', 'Stop Remote King-Phisher Service', None)
+		action.connect('activate', lambda x: self.stop_remote_service())
+		action_group.add_action(action)
 
 		# Tools Menu Action
-		action_toolsmenu = Gtk.Action("ToolsMenu", "Tools", None, None)
-		action_group.add_action(action_toolsmenu)
+		action = Gtk.Action('ToolsMenu', 'Tools', None, None)
+		action_group.add_action(action)
 
-		action_tools_rpc_terminal = Gtk.Action("ToolsRPCTerminal", "RPC Terminal", "RPC Terminal", None)
-		action_tools_rpc_terminal.connect("activate", lambda x: KingPhisherClientRPCTerminal(self.config, self))
-		action_group.add_action(action_tools_rpc_terminal)
+		action = Gtk.Action('ToolsRPCTerminal', 'RPC Terminal', 'RPC Terminal', None)
+		action.connect('activate', lambda x: KingPhisherClientRPCTerminal(self.config, self))
+		action_group.add_action(action)
 
 		# Help Menu Actions
-		action_helpmenu = Gtk.Action("HelpMenu", "Help", None, None)
-		action_group.add_action(action_helpmenu)
+		action = Gtk.Action('HelpMenu', 'Help', None, None)
+		action_group.add_action(action)
 
-		action_help_about = Gtk.Action("HelpAbout", "About", "About", None)
-		action_help_about.connect("activate", lambda x: self.show_about_dialog())
-		action_group.add_action(action_help_about)
+		action = Gtk.Action('HelpAbout', 'About', 'About', None)
+		action.connect('activate', lambda x: self.show_about_dialog())
+		action_group.add_action(action)
 
 	def _create_ui_manager(self):
 		uimanager = Gtk.UIManager()
