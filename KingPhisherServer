@@ -140,7 +140,8 @@ def main():
 	try:
 		king_phisher_server.serve_forever(fork = False)
 	except KeyboardInterrupt:
-		king_phisher_server.shutdown()
+		pass
+	king_phisher_server.shutdown()
 	logging.shutdown()
 	return
 
