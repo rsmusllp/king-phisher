@@ -13,7 +13,7 @@
 #    copyright notice, this list of conditions and the following disclaimer
 #    in the documentation and/or other materials provided with the
 #    distribution.
-#  * Neither the name of the  nor the names of its
+#  * Neither the name of the project nor the names of its
 #    contributors may be used to endorse or promote products derived from
 #    this software without specific prior written permission.
 #
@@ -56,7 +56,6 @@ def main():
 	logging.getLogger('').addHandler(console_log_handler)
 	config_file = arguments.config_file
 	del arguments, parser
-	logger = logging.getLogger('KingPhisher.Client.CLI')
 
 	# Configure environment variables
 	find.data_path_append('data/client')

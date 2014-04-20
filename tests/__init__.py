@@ -13,7 +13,7 @@
 #    copyright notice, this list of conditions and the following disclaimer
 #    in the documentation and/or other materials provided with the
 #    distribution.
-#  * Neither the name of the  nor the names of its
+#  * Neither the name of the project nor the names of its
 #    contributors may be used to endorse or promote products derived from
 #    this software without specific prior written permission.
 #
@@ -30,9 +30,16 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import logging
+
 from tests.client.client import ClientGUITests
 from tests.client.graphs import ClientGraphsTests
+from tests.server.authenticator import ServerAuthenticatorTests
 from tests.server.database import ServerDatabaseTests
 from tests.server.database import ServerDatabaseUIDTests
+from tests.server.server import ServerTests
 from tests.ua_parser import UserAgentParserTests
 from tests.utilities import UtilitiesTests
+
+if hasattr(logging, 'NullHandler'):
+	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())

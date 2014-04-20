@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  client-setup.py
+#  tests/server/authenticator.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,29 +30,20 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from distutils.core import setup
 import os
+import unittest
 
-from king_phisher.server import server
+from king_phisher.server.authenticator import *
 
-data_files_src_prefix = os.path.join('data', 'server', 'king_phisher')
-data_files = []
-for root, dirs, files in os.walk(data_files_src_prefix):
-	dest_dir = os.path.join('share', *root.split(os.path.sep)[2:])
-	files = map(lambda x: os.path.join(root, x), files)
-	data_files.append((dest_dir, files))
+class ServerAuthenticatorTests(unittest.TestCase):
+	def test_authenticator_bas_credentials(self):
+		try:
+			auth = ForkedAuthenticator()
+		except SystemExit:
+			os._exit(0)
+		self.assertFalse(auth.authenticate('fakeuser', 'FakePassword1'))
+		self.assertFalse(auth.authenticate('root', 'FakePassword1'))
+		auth.stop()
 
-setup(
-	name = 'King Phisher Server',
-	version = str(server.__version__),
-	description = 'King Phisher Server Backend',
-	author = 'Spencer McIntyre',
-	maintainer = 'Spencer McIntyre',
-	packages = [
-		'king_phisher',
-		'king_phisher.server',
-		'king_phisher.third_party',
-	],
-	scripts = ['KingPhisherServer'],
-	data_files = data_files,
-)
+if __name__ == '__main__':
+	unittest.main()
