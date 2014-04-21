@@ -209,7 +209,9 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 		first_visits.sort()
 
 		ax = self.axes[0]
-		ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
+		if len(first_visits):
+			ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
+			self.figure.autofmt_xdate()
 		ax.set_ylabel('Number of Visits')
 		ax.set_title('Visits Over Time')
 		ax.xaxis.set_major_locator(dates.DayLocator())
@@ -217,5 +219,4 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 		ax.xaxis.set_minor_locator(dates.HourLocator())
 		ax.autoscale_view()
 		ax.fmt_xdata = dates.DateFormatter('%Y-%m-%d')
-		self.figure.autofmt_xdate()
 		return info_cache

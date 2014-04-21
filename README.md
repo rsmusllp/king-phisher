@@ -30,6 +30,7 @@ The following options will be honored but are not configurable through the GUI:
 
 * server_remote_port (Default: 80)
 * mailer.max_messages_per_connection (Default: 5)
+* ssh_preferred_key (Default: N/A)
 
 ### Message Template Variables
 The client message template supports a number of variables each begining with $.
