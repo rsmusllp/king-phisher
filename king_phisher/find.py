@@ -37,7 +37,8 @@ ENV_VAR = 'KING_PHISHER_DATA_PATH'
 os.environ[ENV_VAR] = os.pathsep.join((os.getenv(ENV_VAR, ''), '/usr/share:/usr/local/share:.'))
 
 def data_path_append(path):
-	os.environ[ENV_VAR] = os.pathsep.join((os.environ[ENV_VAR], path))
+	if not path in os.environ[ENV_VAR].split(os.pathsep):
+		os.environ[ENV_VAR] = os.pathsep.join((os.environ[ENV_VAR], path))
 
 def find_data_file(data_file, access_mode = os.R_OK):
 	search_path = os.environ[ENV_VAR]

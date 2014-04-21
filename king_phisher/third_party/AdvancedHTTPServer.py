@@ -33,9 +33,19 @@
 #  Homepage: https://gist.github.com/zeroSteiner/4502576
 #  Author:   Spencer McIntyre (zeroSteiner)
 
+# Config File Example
 """
+[server]
+ip = 0.0.0.0
+port = 8080
+web_root = /var/www/html
+list_directories = True
+# Set an ssl_cert to enable SSL
+# ssl_cert = /path/to/cert.pem
+"""
+
 # The AdvancedHTTPServer systemd service unit file
-#
+"""
 # Quick How To:
 # 1. Copy this file to /etc/systemd/system/pyhttpd.service
 # 2. Edit <USER> and run parameters appropriately in the ExecStart option
@@ -55,8 +65,8 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.2.52'
-__all__ = ['AdvancedHTTPServer', 'AdvancedHTTPServerRequestHandler', 'AdvancedHTTPServerRPCClient', 'AdvancedHTTPServerRPCError']
+__version__ = '0.2.64'
+__all__ = ['AdvancedHTTPServer', 'AdvancedHTTPServerRegisterPath', 'AdvancedHTTPServerRequestHandler', 'AdvancedHTTPServerRPCClient', 'AdvancedHTTPServerRPCError']
 
 import BaseHTTPServer
 import cgi
@@ -72,6 +82,7 @@ import os
 import posixpath
 import re
 import shutil
+import socket
 import SocketServer
 import sqlite3
 import ssl
@@ -86,6 +97,7 @@ try:
 except ImportError:
 	from StringIO import StringIO
 
+GLOBAL_HANDLER_MAP = {}
 SERIALIZER_DRIVERS = {}
 SERIALIZER_DRIVERS['binary/json'] = {'loads':json.loads, 'dumps':json.dumps}
 SERIALIZER_DRIVERS['binary/json+zlib'] = {'loads':lambda d: json.loads(zlib.decompress(d)), 'dumps':lambda d: zlib.compress(json.dumps(d))}
@@ -137,6 +149,51 @@ class SectionConfigParser(object):
 	def items(self):
 		return self.config_parser.items(self.section_name)
 
+def build_server_from_argparser(description = None, ServerClass = None, HandlerClass = None):
+	import argparse
+	import ConfigParser
+
+	description = (description or 'AdvancedHTTPServer')
+	ServerClass = (ServerClass or AdvancedHTTPServer)
+	HandlerClass = (HandlerClass or AdvancedHTTPServerRequestHandler)
+
+	parser = argparse.ArgumentParser(description = description, conflict_handler = 'resolve')
+	parser.epilog = 'When a config file is specified with --config the --ip, --port and --web-root options are all ignored.'
+	parser.add_argument('-w', '--web-root', dest = 'web_root', action = 'store', default = '.', help = 'path to the web root directory')
+	parser.add_argument('-p', '--port', dest = 'port', action = 'store', default = 8080, type = int, help = 'port to serve on')
+	parser.add_argument('-i', '--ip', dest = 'ip', action = 'store', default = '0.0.0.0', help = 'the ip address to serve on')
+	parser.add_argument('--password', dest = 'password', action = 'store', default = None, help = 'password to use for basic authentication')
+	parser.add_argument('--log-file', dest = 'log_file', action = 'store', default = None, help = 'log information to a file')
+	parser.add_argument('-c', '--conf', dest = 'config', action = 'store', default = None, type = argparse.FileType('r'), help = 'read settings from a config file')
+	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + __version__)
+	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'INFO', help = 'set the logging level')
+	arguments = parser.parse_args()
+
+	logging.getLogger('').setLevel(logging.DEBUG)
+	console_log_handler = logging.StreamHandler()
+	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
+	console_log_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(message)s"))
+	logging.getLogger('').addHandler(console_log_handler)
+
+	if arguments.log_file:
+		main_file_handler = logging.handlers.RotatingFileHandler(arguments.log_file, maxBytes = 262144, backupCount = 5)
+		main_file_handler.setLevel(logging.DEBUG)
+		main_file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-30s %(levelname)-10s %(message)s"))
+		logging.getLogger('').setLevel(logging.DEBUG)
+		logging.getLogger('').addHandler(main_file_handler)
+
+	if arguments.config:
+		config = ConfigParser.ConfigParser()
+		config.readfp(arguments.config)
+		server = build_server_from_config(config, 'server')
+	else:
+		server = AdvancedHTTPServer(AdvancedHTTPServerRequestHandler, address = (arguments.ip, arguments.port))
+		server.serve_files_root = arguments.web_root
+
+	if arguments.password:
+		server.auth_add_creds('', arguments.password)
+	return server
+
 def build_server_from_config(config, section_name, ServerClass = None, HandlerClass = None):
 	ServerClass = (ServerClass or AdvancedHTTPServer)
 	HandlerClass = (HandlerClass or AdvancedHTTPServerRequestHandler)
@@ -150,22 +207,48 @@ def build_server_from_config(config, section_name, ServerClass = None, HandlerCl
 	ssl_certfile = None
 	if config.has_option('ssl_cert'):
 		ssl_certfile = config.get('ssl_cert')
+	server = ServerClass(HandlerClass, address = (ip, port), ssl_certfile = ssl_certfile)
 
-	password = None
+	password_type = config.get('password_type', 'md5')
 	if config.has_option('password'):
 		password = config.get('password')
-		password_type = config.get('password_type', 'md5')
-
-	server = ServerClass(HandlerClass, address = (ip, port), ssl_certfile = ssl_certfile)
-	if password:
 		username = config.get('username', '')
 		server.auth_add_creds(username, password, pwtype = password_type)
+	cred_idx = 0
+	while config.has_option('password' + str(cred_idx)):
+		password = config.get('password' + str(cred_idx))
+		if not config.has_option('username' + str(cred_idx)):
+			break
+		username = config.get('username' + str(cred_idx))
+		server.auth_add_creds(username, password, pwtype = password_type)
+		cred_idx += 1
+
 	if web_root == None:
 		server.serve_files = False
 	else:
 		server.serve_files = True
 		server.serve_files_root = web_root
+		if config.has_option('list_directories'):
+			server.serve_files_list_directories = config.getboolean('list_directories')
 	return server
+
+class AdvancedHTTPServerRegisterPath(object):
+	def __init__(self, path, handler = None):
+		self.path = path
+		if handler == None or isinstance(handler, (str, unicode)):
+			self.handler = handler
+		elif hasattr(handler, '__name__'):
+			self.handler = handler.__name__
+		elif hasattr(handler, '__class__'):
+			self.handler = handler.__class__.__name__
+		else:
+			raise ValueError('unknown handler: ' + repr(handler))
+
+	def __call__(self, function):
+		handler_map = GLOBAL_HANDLER_MAP.get(self.handler, {})
+		handler_map[self.path] = function
+		GLOBAL_HANDLER_MAP[self.handler] = handler_map
+		return function
 
 class AdvancedHTTPServerRPCError(Exception):
 	def __init__(self, message, status, remote_exception = None):
@@ -309,6 +392,14 @@ class AdvancedHTTPServerNonThreaded(BaseHTTPServer.HTTPServer, object):
 		self.server_version = 'HTTPServer/' + __version__
 		super(AdvancedHTTPServerNonThreaded, self).__init__(*args, **kwargs)
 
+	def server_bind(self, *args, **kwargs):
+		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		super(AdvancedHTTPServerNonThreaded, self).server_bind(*args, **kwargs)
+
+	def shutdown(self, *args, **kwargs):
+		super(AdvancedHTTPServerNonThreaded, self).shutdown(*args, **kwargs)
+		self.socket.close()
+
 class AdvancedHTTPServerThreaded(SocketServer.ThreadingMixIn, AdvancedHTTPServerNonThreaded):
 	pass
 
@@ -328,7 +419,14 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		self.handler_map = {}
 		self.rpc_handler_map = {}
 		self.server = args[2]
+		self.headers_active = False
+
+		for map_name in (None, self.__class__.__name__):
+			handler_map = GLOBAL_HANDLER_MAP.get(map_name, {})
+			for path, function in handler_map.items():
+				self.handler_map[path] = function
 		self.install_handlers()
+
 		self.basic_auth_user = None
 		super(AdvancedHTTPServerRequestHandler, self).__init__(*args, **kwargs)
 
@@ -408,7 +506,10 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		self.cookies = Cookie.SimpleCookie(self.headers.get('cookie', ''))
 		for (path_regex, handler) in self.handler_map.items():
 			if re.match(path_regex, self.path):
-				handler(query)
+				if hasattr(self, handler.__name__) and (handler == getattr(self, handler.__name__).__func__ or handler == getattr(self, handler.__name__)):
+					getattr(self, handler.__name__)(query)
+				else:
+					handler(self, query)
 				return
 
 		if not self.server.serve_files:
@@ -437,10 +538,12 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 			except os.error:
 				self.respond_not_found()
 				return None
+			if os.path.normpath(file_path) != self.server.serve_files_root:
+				dir_contents.append('..')
 			dir_contents.sort(key=lambda a: a.lower())
 			f = StringIO()
 			displaypath = cgi.escape(urllib.unquote(self.path))
-			f.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">')
+			f.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n')
 			f.write('<html>\n<title>Directory listing for ' + displaypath + '</title>\n')
 			f.write('<body>\n<h2>Directory listing for ' + displaypath + '</h2>\n')
 			f.write('<hr>\n<ul>\n')
@@ -469,6 +572,17 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 
 		self.respond_not_found()
 		return
+
+	def send_response(self, *args, **kwargs):
+		super(AdvancedHTTPServerRequestHandler, self).send_response(*args, **kwargs)
+		self.headers_active = True
+
+	def end_headers(self):
+		super(AdvancedHTTPServerRequestHandler, self).end_headers()
+		self.headers_active = False
+		if self.command == 'HEAD':
+			self.wfile.close()
+			self.wfile = open(os.devnull, 'wb')
 
 	def guess_mime_type(self, path):
 		base, ext = posixpath.splitext(path)
@@ -531,6 +645,19 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		except:
 			return False
 
+	def cookie_get(self, name):
+		if not hasattr(self, 'cookies'):
+			return None
+		if self.cookies.get(name):
+			return self.cookies.get(name).value
+		return None
+
+	def cookie_set(self, name, value):
+		if not self.headers_active:
+			raise RuntimeError('headers have already been ended')
+		cookie = "{0}={1}; Path=/; HttpOnly".format(name, value)
+		self.send_header('Set-Cookie', cookie)
+
 	def do_GET(self):
 		if not self.check_authorization():
 			self.respond_unauthorized(request_authentication = True)
@@ -541,6 +668,9 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 
 		self.dispatch_handler(self.query_data)
 		return
+
+	def do_HEAD(self):
+		self.do_GET()
 
 	def do_POST(self):
 		if not self.check_authorization():
@@ -558,7 +688,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		if 'RPC' in available_methods and len(self.rpc_handler_map) == 0:
 			available_methods.remove('RPC')
 		self.send_response(200)
-		self.send_header('Allow', ','.join(available_methods))
+		self.send_header('Allow', ', '.join(available_methods))
 		self.end_headers()
 
 	def do_RPC(self):
@@ -698,7 +828,7 @@ class AdvancedHTTPServer(object):
 	def serve_forever(self, fork = False):
 		if fork:
 			if not hasattr(os, 'fork'):
-				raise Exception('os.fork is not available')
+				raise OSError('os.fork is not available')
 			child_pid = os.fork()
 			if child_pid != 0:
 				self.logger.info(self.address[0] + ':' + str(self.address[1]) + ' - forked child process: ' + str(child_pid))
@@ -784,7 +914,7 @@ class AdvancedHTTPServer(object):
 	def auth_add_creds(self, username, password, pwtype = 'plain'):
 		pwtype = pwtype.lower()
 		if not pwtype in ('plain', 'md5', 'sha1'):
-			raise Exception('invalid password type, must be (\'plain\', \'md5\', \'sha1\')')
+			raise ValueError('invalid password type, must be (\'plain\', \'md5\', \'sha1\')')
 		if self.http_server.basic_auth == None:
 			self.http_server.basic_auth = {}
 			self.logger.info(self.address[0] + ':' + str(self.address[1]) + ' - basic authentication has been enabled')
@@ -794,49 +924,13 @@ class AdvancedHTTPServer(object):
 
 def main():
 	try:
-		import argparse
-		import ConfigParser
-		parser = argparse.ArgumentParser(description = 'AdvancedHTTPServer', conflict_handler='resolve')
-		parser.epilog = 'When a config file is specified with --config the --ip, --port and --web-root options are all ignored.'
-		parser.add_argument('-w', '--web-root', dest = 'web_root', action = 'store', default = '.', help = 'path to the web root directory')
-		parser.add_argument('-p', '--port', dest = 'port', action = 'store', default = 8080, type = int, help = 'port to serve on')
-		parser.add_argument('-i', '--ip', dest = 'ip', action = 'store', default = '0.0.0.0', help = 'the ip address to serve on')
-		parser.add_argument('--password', dest = 'password', action = 'store', default = None, help = 'password to use for basic authentication')
-		parser.add_argument('--log-file', dest = 'log_file', action = 'store', default = None, help = 'log information to a file')
-		parser.add_argument('-c', '--conf', dest = 'config', action = 'store', default = None, type = argparse.FileType('r'), help = 'read settings from a config file')
-		parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + __version__)
-		parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'INFO', help = 'set the logging level')
-		arguments = parser.parse_args()
-
-		logging.getLogger('').setLevel(logging.DEBUG)
-		console_log_handler = logging.StreamHandler()
-		console_log_handler.setLevel(getattr(logging, arguments.loglvl))
-		console_log_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(message)s"))
-		logging.getLogger('').addHandler(console_log_handler)
-
-		if arguments.log_file:
-			main_file_handler = logging.handlers.RotatingFileHandler(arguments.log_file, maxBytes = 262144, backupCount = 5)
-			main_file_handler.setLevel(logging.DEBUG)
-			main_file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-30s %(levelname)-10s %(message)s"))
-			logging.getLogger('').setLevel(logging.DEBUG)
-			logging.getLogger('').addHandler(main_file_handler)
-
-		if arguments.config:
-			config = ConfigParser.ConfigParser()
-			config.readfp(arguments.config)
-			server = build_server_from_config(config, 'server')
-			web_root = server.serve_files_root
-		else:
-			server = AdvancedHTTPServer(AdvancedHTTPServerRequestHandler, address = (arguments.ip, arguments.port))
-			web_root = arguments.web_root
-		if arguments.password:
-			server.auth_add_creds('', arguments.password)
+		server = build_server_from_argparser()
 	except ImportError:
 		server = AdvancedHTTPServer(AdvancedHTTPServerRequestHandler)
-		web_root = '.'
+		server.serve_files_root = '.'
 
+	server.serve_files_root = (server.serve_files_root or '.')
 	server.serve_files = True
-	server.serve_files_root = web_root
 	try:
 		server.serve_forever()
 	except KeyboardInterrupt:

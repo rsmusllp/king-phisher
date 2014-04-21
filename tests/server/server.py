@@ -31,12 +31,17 @@
 #
 
 import ConfigParser
+import httplib
 import os
+import random
+import string
 import threading
 import unittest
 
 from king_phisher import find
 from king_phisher.server.server import *
+
+random_string = lambda size: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(size))
 
 class ServerTests(unittest.TestCase):
 	def setUp(self):
@@ -45,6 +50,7 @@ class ServerTests(unittest.TestCase):
 		config.add_section('server')
 		config.set('server', 'database', ':memory:')
 		config.set('server', 'port', '8080')
+		config.set('server', 'require_id', 'False')
 		config.set('server', 'web_root', web_root)
 		self.config = config
 
@@ -55,16 +61,39 @@ class ServerTests(unittest.TestCase):
 			self.server = build_king_phisher_server(config, 'server')
 		except SystemExit:
 			os._exit(0)
+		self.assertIsInstance(self.server, KingPhisherServer)
 		self.server.load_database(config.get('server', 'database'))
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
 		self.server_thread.daemon = True
 		self.server_thread.start()
+		self.assertTrue(self.server_thread.is_alive())
 
-	def test_something(self):
-		self.assertTrue(True)
+	def http_request(self, resource, method = 'GET'):
+		conn = httplib.HTTPConnection('localhost', self.config.getint('server', 'port'))
+		conn.request(method, resource)
+		response = conn.getresponse()
+		conn.close()
+		return response
 
 	def tearDown(self):
 		self.server.shutdown()
+		self.server_thread.join(5.0)
+		self.assertFalse(self.server_thread.is_alive())
+		del self.server
+
+	def test_existing_resources(self):
+		web_root = self.config.get('server', 'web_root')
+		directories = filter(lambda p: os.path.isdir(os.path.join(web_root, p)), os.listdir(web_root))
+		for directory in directories:
+			full_directory = os.path.join(web_root, directory)
+			for phile in filter(lambda p: os.path.isfile(os.path.join(full_directory, p)), os.listdir(full_directory)):
+				phile = os.path.join(directory, phile)
+				http_response = self.http_request(phile)
+				self.assertEqual(http_response.status, 200)
+
+	def test_non_existing_resources(self):
+		http_response = self.http_request(random_string(30) + '.html')
+		self.assertEqual(http_response.status, 404)
 
 if __name__ == '__main__':
 	unittest.main()
