@@ -60,9 +60,11 @@ SERVER_DEFAULT_OPTIONS = {
 }
 
 def build_king_phisher_server(config, section_name):
-	# set config defaults
-	config.set(section_name, 'tracking_image', 'email_logo_banner.gif')
-	config.set(section_name, 'secret_id', make_uid())
+	# Set config defaults
+	if not config.has_option(section_name, 'tracking_image'):
+		config.set(section_name, 'tracking_image', 'email_logo_banner.gif')
+	if not config.has_option(section_name, 'secret_id'):
+		config.set(section_name, 'secret_id', make_uid())
 	for option_name, option_default_value in SERVER_DEFAULT_OPTIONS.items():
 		if not config.has_option(section_name, option_name):
 			config.set(section_name, option_name, str(option_default_value))

@@ -50,7 +50,9 @@ class ServerTests(unittest.TestCase):
 		config.add_section('server')
 		config.set('server', 'database', ':memory:')
 		config.set('server', 'port', '8080')
-		config.set('server', 'require_id', 'False')
+		config.set('server', 'require_id', 'True')
+		config.set('server', 'secret_id', random_string(20))
+		config.set('server', 'tracking_image', 'email_logo_banner.gif')
 		config.set('server', 'web_root', web_root)
 		self.config = config
 
@@ -65,12 +67,34 @@ class ServerTests(unittest.TestCase):
 		self.server_thread.start()
 		self.assertTrue(self.server_thread.is_alive())
 
-	def http_request(self, resource, method = 'GET'):
+	def assertHTTPStatus(self, http_response, status):
+		self.assertIsInstance(http_response, httplib.HTTPResponse)
+		error_message = "HTTP Response received status {0} when {1} was expected".format(http_response.status, status)
+		self.assertEqual(http_response.status, status, msg=error_message)
+
+	def http_request(self, resource, method = 'GET', include_id = True):
+		if include_id:
+			resource += "{0}id={1}".format('&' if '?' in resource else '?', self.config.get('server', 'secret_id'))
 		conn = httplib.HTTPConnection('localhost', self.config.getint('server', 'port'))
 		conn.request(method, resource)
 		response = conn.getresponse()
 		conn.close()
 		return response
+
+	def web_root_files(self, limit = None):
+		limit = (limit or float('inf'))
+		philes_yielded = 0
+		web_root = self.config.get('server', 'web_root')
+		self.assertTrue(os.path.isdir(web_root), msg='The test web root does not exist')
+		directories = filter(lambda p: os.path.isdir(os.path.join(web_root, p)), os.listdir(web_root))
+		for directory in directories:
+			full_directory = os.path.join(web_root, directory)
+			for phile in filter(lambda p: os.path.isfile(os.path.join(full_directory, p)), os.listdir(full_directory)):
+				phile = os.path.join(directory, phile)
+				if philes_yielded < limit:
+					yield phile
+				philes_yielded += 1
+		self.assertGreater(philes_yielded, 0, msg='No files were found in the web root')
 
 	def tearDown(self):
 		self.server.shutdown()
@@ -79,22 +103,37 @@ class ServerTests(unittest.TestCase):
 		del self.server
 
 	def test_existing_resources(self):
-		web_root = self.config.get('server', 'web_root')
-		directories = filter(lambda p: os.path.isdir(os.path.join(web_root, p)), os.listdir(web_root))
-		for directory in directories:
-			full_directory = os.path.join(web_root, directory)
-			for phile in filter(lambda p: os.path.isfile(os.path.join(full_directory, p)), os.listdir(full_directory)):
-				phile = os.path.join(directory, phile)
-				http_response = self.http_request(phile)
-				self.assertEqual(http_response.status, 200)
+		for phile in self.web_root_files(3):
+			http_response = self.http_request(phile)
+			self.assertHTTPStatus(http_response, 200)
 
 	def test_non_existing_resources(self):
 		http_response = self.http_request(random_string(30) + '.html')
-		self.assertEqual(http_response.status, 404)
+		self.assertHTTPStatus(http_response, 404)
 
 	def test_rpc_is_unauthorized(self):
 		http_response = self.http_request('/ping', method='RPC')
-		self.assertEqual(http_response.status, 401)
+		self.assertHTTPStatus(http_response, 401)
+
+	def test_secret_id(self):
+		old_require_id = self.config.get('server', 'require_id')
+		self.config.set('server', 'require_id', 'True')
+		for phile in self.web_root_files(3):
+			http_response = self.http_request(phile, include_id=True)
+			self.assertHTTPStatus(http_response, 200)
+			http_response = self.http_request(phile, include_id=False)
+			self.assertHTTPStatus(http_response, 404)
+		self.config.set('server', 'require_id', 'False')
+		for phile in self.web_root_files(3):
+			http_response = self.http_request(phile, include_id=False)
+			self.assertHTTPStatus(http_response, 200)
+		self.config.set('server', 'require_id', old_require_id)
+
+	def test_tracking_image(self):
+		http_response = self.http_request(self.config.get('server', 'tracking_image'), include_id=False)
+		self.assertHTTPStatus(http_response, 200)
+		image_data = http_response.read()
+		self.assertTrue(image_data.startswith('GIF'))
 
 if __name__ == '__main__':
 	unittest.main()
