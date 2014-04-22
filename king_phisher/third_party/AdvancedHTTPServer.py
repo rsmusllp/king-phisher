@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.2.64'
+__version__ = '0.2.66'
 __all__ = ['AdvancedHTTPServer', 'AdvancedHTTPServerRegisterPath', 'AdvancedHTTPServerRequestHandler', 'AdvancedHTTPServerRPCClient', 'AdvancedHTTPServerRPCError']
 
 import BaseHTTPServer
@@ -265,22 +265,19 @@ class AdvancedHTTPServerRPCError(Exception):
 
 class AdvancedHTTPServerRPCClient(object):
 	def __init__(self, address, use_ssl = False, username = None, password = None, uri_base = '/', hmac_key = None):
-		self.host = address[0]
-		self.port = address[1]
+		self.host = str(address[0])
+		self.port = int(address[1])
 		self.logger = logging.getLogger('AdvancedHTTPServerRPCClient')
 
-		self.use_ssl = use_ssl
-		self.uri_base = uri_base
-		self.username = username
-		self.password = password
-		self.hmac_key = hmac_key
-		if self.use_ssl:
-			self.client = httplib.HTTPSConnection(self.host, self.port)
-		else:
-			self.client = httplib.HTTPConnection(self.host, self.port)
+		self.use_ssl = bool(use_ssl)
+		self.uri_base = str(uri_base)
+		self.username = (str(username) if username != None else None)
+		self.password = (str(password) if password != None else None)
+		self.hmac_key = (str(hmac_key) if hmac_key != None else None)
+		self.lock = threading.RLock()
 		self.serializer_name = SERIALIZER_DRIVERS.keys()[-1]
 		self.serializer = SERIALIZER_DRIVERS[self.serializer_name]
-		self.lock = threading.RLock()
+		self.reconnect()
 
 	def __reduce__(self):
 		address = (self.host, self.port)
@@ -293,11 +290,19 @@ class AdvancedHTTPServerRPCClient(object):
 	def __call__(self, *args, **kwargs):
 		return self.call(*args, **kwargs)
 
-	def encode(self,data):
+	def encode(self, data):
 		return self.serializer['dumps'](data)
 
-	def decode(self,data):
+	def decode(self, data):
 		return self.serializer['loads'](data)
+
+	def reconnect(self):
+		self.lock.acquire()
+		if self.use_ssl:
+			self.client = httplib.HTTPSConnection(self.host, self.port)
+		else:
+			self.client = httplib.HTTPConnection(self.host, self.port)
+		self.lock.release()
 
 	def call(self, method, *options):
 		options = self.encode(options)

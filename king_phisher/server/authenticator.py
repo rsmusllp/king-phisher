@@ -61,7 +61,7 @@ class ForkedAuthenticator(object):
 			self.child_routine()
 			self.rfile.close()
 			self.wfile.close()
-			sys.exit(0)
+			os._exit(os.EX_OK)
 		self.cache_salt = make_salt()
 		self.cache = {}
 		return

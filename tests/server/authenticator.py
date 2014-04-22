@@ -37,10 +37,7 @@ from king_phisher.server.authenticator import *
 
 class ServerAuthenticatorTests(unittest.TestCase):
 	def test_authenticator_bas_credentials(self):
-		try:
-			auth = ForkedAuthenticator()
-		except SystemExit:
-			os._exit(0)
+		auth = ForkedAuthenticator()
 		self.assertFalse(auth.authenticate('fakeuser', 'FakePassword1'))
 		self.assertFalse(auth.authenticate('root', 'FakePassword1'))
 		auth.stop()

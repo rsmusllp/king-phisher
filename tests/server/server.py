@@ -57,10 +57,7 @@ class ServerTests(unittest.TestCase):
 		# Configure environment variables
 		find.data_path_append('data/server')
 
-		try:
-			self.server = build_king_phisher_server(config, 'server')
-		except SystemExit:
-			os._exit(0)
+		self.server = build_king_phisher_server(config, 'server')
 		self.assertIsInstance(self.server, KingPhisherServer)
 		self.server.load_database(config.get('server', 'database'))
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
