@@ -318,6 +318,16 @@ class KingPhisherClient(Gtk.Window):
 		action = Gtk.Action('HelpMenu', 'Help', None, None)
 		action_group.add_action(action)
 
+		if graphs.has_matplotlib:
+			action = Gtk.Action('ToolsGraphMenu', 'Create Graph', None, None)
+			action_group.add_action(action)
+
+			for graph_name in graphs.get_graphs():
+				action_name = 'ToolsGraph' + graph_name
+				action = Gtk.Action(action_name, graph_name, graph_name, None)
+				action.connect('activate', lambda _: self.show_campaign_graph(graph_name))
+				action_group.add_action(action)
+
 		action = Gtk.Action('HelpAbout', 'About', 'About', None)
 		action.connect('activate', lambda x: self.show_about_dialog())
 		action_group.add_action(action)
@@ -327,6 +337,12 @@ class KingPhisherClient(Gtk.Window):
 		with open(find.find_data_file('ui_info/client_window.xml')) as ui_info_file:
 			ui_data = ui_info_file.read()
 		uimanager.add_ui_from_string(ui_data)
+		if graphs.has_matplotlib:
+			merge_id = uimanager.new_merge_id()
+			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsGraphMenu', 'ToolsGraphMenu', Gtk.UIManagerItemType.MENU, False)
+			for graph_name in graphs.get_graphs():
+				action_name = 'ToolsGraph' + graph_name
+				uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu/ToolsGraphMenu', action_name, action_name, Gtk.UIManagerItemType.MENUITEM, False)
 		accelgroup = uimanager.get_accel_group()
 		self.add_accel_group(accelgroup)
 		return uimanager
@@ -508,6 +524,13 @@ class KingPhisherClient(Gtk.Window):
 		about_dialog.show_all()
 		about_dialog.run()
 		about_dialog.destroy()
+
+	def show_campaign_graph(self, graph_name):
+		Klass = graphs.get_graph(graph_name)
+		graph_inst = Klass(self.config, self)
+		graph_inst.load_graph()
+		window = graph_inst.make_window()
+		window.show_all()
 
 	def show_campaign_selection(self):
 		dialog = KingPhisherClientCampaignSelectionDialog(self.config, self)

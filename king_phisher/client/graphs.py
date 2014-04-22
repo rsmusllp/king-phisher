@@ -49,6 +49,7 @@ else:
 	from matplotlib import pyplot
 	from matplotlib.figure import Figure
 	from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
+	from matplotlib.backends.backend_gtk3agg import FigureManagerGTK3Agg as FigureManager
 	from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
 
 EXPORTED_GRAPHS = {}
@@ -56,6 +57,7 @@ EXPORTED_GRAPHS = {}
 def export(klass):
 	graph_name = klass.__name__[13:]
 	klass._graph_id = len(EXPORTED_GRAPHS)
+	klass.name = graph_name
 	EXPORTED_GRAPHS[graph_name] = klass
 	return klass
 
@@ -66,6 +68,7 @@ def get_graphs():
 	return sorted(EXPORTED_GRAPHS.keys())
 
 class CampaignGraph(object):
+	title = 'Unknown'
 	_graph_id = None
 	table_subscriptions = []
 	def __init__(self, config, parent, size_request = None):
@@ -74,6 +77,7 @@ class CampaignGraph(object):
 		self.figure, ax = pyplot.subplots()
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
+		self.manager = None
 		if size_request:
 			self.canvas.set_size_request(*size_request)
 		self.canvas.mpl_connect('button_press_event', self.mpl_signal_canvas_button_pressed)
@@ -99,6 +103,14 @@ class CampaignGraph(object):
 	def get_graph_id(klass):
 		return klass._graph_id
 
+	def make_window(self):
+		if self.manager == None:
+			self.manager = FigureManager(self.canvas, 0)
+		window = self.manager.window
+		window.set_transient_for(self.parent)
+		window.set_title(self.title)
+		return window
+
 	def mpl_signal_canvas_button_pressed(self, event):
 		if event.button != 3:
 			return
@@ -122,20 +134,24 @@ class CampaignGraph(object):
 		else:
 			self.navigation_toolbar.hide()
 
+	def load_graph(self):
+		self.refresh()
+
 	def refresh(self, info_cache = None):
 		info_cache = (info_cache or {})
 		for table in self.table_subscriptions:
 			if not table in info_cache:
 				info_cache[table] = list(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
 		map(lambda ax: ax.clear(), self.axes)
-		self.load_graph(info_cache)
+		self._load_graph(info_cache)
 		self.canvas.draw()
 		return info_cache
 
 @export
 class CampaignGraphOverview(CampaignGraph):
+	title = 'Overview'
 	table_subscriptions = ['credentials', 'visits']
-	def load_graph(self, info_cache):
+	def _load_graph(self, info_cache):
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
 
@@ -164,8 +180,9 @@ class CampaignGraphOverview(CampaignGraph):
 
 @export
 class CampaignGraphVisitorInfo(CampaignGraph):
+	title = 'Visitor Information'
 	table_subscriptions = ['visits']
-	def load_graph(self, info_cache):
+	def _load_graph(self, info_cache):
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
 		visits = info_cache['visits']
@@ -200,8 +217,9 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 
 @export
 class CampaignGraphVisitsTimeline(CampaignGraph):
+	title = 'Visits Timeline'
 	table_subscriptions = ['visits']
-	def load_graph(self, info_cache):
+	def _load_graph(self, info_cache):
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
 		visits = info_cache['visits']

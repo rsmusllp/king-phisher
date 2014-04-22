@@ -92,5 +92,9 @@ class ServerTests(unittest.TestCase):
 		http_response = self.http_request(random_string(30) + '.html')
 		self.assertEqual(http_response.status, 404)
 
+	def test_rpc_is_unauthorized(self):
+		http_response = self.http_request('/ping', method='RPC')
+		self.assertEqual(http_response.status, 401)
+
 if __name__ == '__main__':
 	unittest.main()

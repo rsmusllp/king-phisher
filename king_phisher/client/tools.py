@@ -95,7 +95,7 @@ class KingPhisherClientRPCTerminal(object):
 		self.terminal.connect('child-exited', lambda vt: self.window.destroy())
 		self.window.show_all()
 
-		# automatically enter the password
+		# Automatically enter the password
 		vte_pty = self.terminal.get_pty_object()
 		vte_pty_fd = vte_pty.get_fd()
 		if len(select.select([vte_pty_fd], [], [], 0.5)[0]):
