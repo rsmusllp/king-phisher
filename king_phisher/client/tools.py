@@ -35,6 +35,7 @@ import getpass
 import json
 import logging
 import os
+import select
 import signal
 import sys
 
@@ -93,6 +94,12 @@ class KingPhisherClientRPCTerminal(object):
 		self.child_pid = child_pid
 		self.terminal.connect('child-exited', lambda vt: self.window.destroy())
 		self.window.show_all()
+
+		# automatically enter the password
+		vte_pty = self.terminal.get_pty_object()
+		vte_pty_fd = vte_pty.get_fd()
+		if len(select.select([vte_pty_fd], [], [], 0.5)[0]):
+			os.write(vte_pty_fd, rpc.password + '\n')
 		return
 
 	@staticmethod
@@ -125,7 +132,7 @@ class KingPhisherClientRPCTerminal(object):
 
 		banner = "Python {0} on {1}".format(sys.version, sys.platform)
 		print(banner)
-		information = "Campaign Name: {0} ID: {1}".format(config['campaign_name'], config['campaign_id'])
+		information = "Campaign Name: '{0}'  ID: {1}".format(config['campaign_name'], config['campaign_id'])
 		print(information)
 		console_vars = {
 			'CAMPAIGN_NAME': config['campaign_name'],
