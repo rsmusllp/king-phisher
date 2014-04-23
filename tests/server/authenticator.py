@@ -36,7 +36,7 @@ import unittest
 from king_phisher.server.authenticator import *
 
 class ServerAuthenticatorTests(unittest.TestCase):
-	def test_authenticator_bas_credentials(self):
+	def test_authenticator_bad_credentials(self):
 		auth = ForkedAuthenticator()
 		self.assertFalse(auth.authenticate('fakeuser', 'FakePassword1'))
 		self.assertFalse(auth.authenticate('root', 'FakePassword1'))
