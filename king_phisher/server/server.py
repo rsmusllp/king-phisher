@@ -261,6 +261,14 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			self.wfile.write('Resource Not Found\n')
 		return
 
+	def respond_redirect(self, location = '/'):
+		location = location.lstrip('/')
+		if self.config.getboolean('vhost_directories') and location.startswith(self.vhost):
+			location = location[len(self.vhost):]
+		if not location.startswith('/'):
+			location = '/' + location
+		super(KingPhisherRequestHandler, self).respond_redirect(location)
+
 	def handle_deaddrop_visit(self, query):
 		data = query['token'][0]
 		data = data.decode('base64')

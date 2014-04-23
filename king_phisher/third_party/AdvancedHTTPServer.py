@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.2.66'
+__version__ = '0.2.67'
 __all__ = ['AdvancedHTTPServer', 'AdvancedHTTPServerRegisterPath', 'AdvancedHTTPServerRequestHandler', 'AdvancedHTTPServerRPCClient', 'AdvancedHTTPServerRPCError']
 
 import BaseHTTPServer
@@ -441,7 +441,8 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 	def install_handlers(self):
 		pass # over ride me
 
-	def respond_file(self, file_path, attachment = False, query = {}):
+	def respond_file(self, file_path, attachment = False, query = None):
+		query = (query or {})
 		file_path = os.path.abspath(file_path)
 		try:
 			file_obj = open(file_path, 'rb')
@@ -459,6 +460,45 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		self.end_headers()
 		shutil.copyfileobj(file_obj, self.wfile)
 		file_obj.close()
+		return
+
+	def respond_list_directory(self, dir_path, query = None):
+		query = (query or {})
+		try:
+			dir_contents = os.listdir(dir_path)
+		except os.error:
+			self.respond_not_found()
+			return None
+		if os.path.normpath(dir_path) != self.server.serve_files_root:
+			dir_contents.append('..')
+		dir_contents.sort(key=lambda a: a.lower())
+		f = StringIO()
+		displaypath = cgi.escape(urllib.unquote(self.path))
+		f.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n')
+		f.write('<html>\n<title>Directory listing for ' + displaypath + '</title>\n')
+		f.write('<body>\n<h2>Directory listing for ' + displaypath + '</h2>\n')
+		f.write('<hr>\n<ul>\n')
+		for name in dir_contents:
+			fullname = os.path.join(dir_path, name)
+			displayname = linkname = name
+			# Append / for directories or @ for symbolic links
+			if os.path.isdir(fullname):
+				displayname = name + "/"
+				linkname = name + "/"
+			if os.path.islink(fullname):
+				displayname = name + "@"
+				# Note: a link to a directory displays with @ and links with /
+			f.write('<li><a href="' + urllib.quote(linkname) + '">' + cgi.escape(displayname) + '</a>\n')
+		f.write('</ul>\n<hr>\n</body>\n</html>\n')
+		length = f.tell()
+		f.seek(0)
+		self.send_response(200)
+		encoding = sys.getfilesystemencoding()
+		self.send_header('Content-Type', 'text/html; charset=' + encoding)
+		self.send_header('Content-Length', str(length))
+		self.end_headers()
+		shutil.copyfileobj(f, self.wfile)
+		f.close()
 		return
 
 	def respond_not_found(self):
@@ -483,7 +523,8 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		self.wfile.write('Unauthorized\n')
 		return
 
-	def dispatch_handler(self, query = {}):
+	def dispatch_handler(self, query = None):
+		query = (query or {})
 		# normalize the path
 		# abandon query parameters
 		self.path = self.path.split('?', 1)[0]
@@ -526,54 +567,22 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		if os.path.isfile(file_path):
 			self.respond_file(file_path, query = query)
 			return
-		elif os.path.isdir(file_path) and self.server.serve_files_list_directories:
+		elif os.path.isdir(file_path):
 			if not self.original_path.endswith('/'):
 				# redirect browser, doing what apache does
-				self.send_response(301)
-				self.send_header('Location', self.path + '/')
-				self.end_headers()
+				destination = self.path + '/'
+				if self.command == 'GET':
+					destination += '?' + urllib.urlencode(self.query_data, True)
+				self.respond_redirect(destination)
+				return
+			if self.server.serve_files_list_directories:
+				self.respond_list_directory(file_path, query = query)
 				return
 			for index in ['index.html', 'index.htm']:
 				index = os.path.join(file_path, index)
 				if os.path.exists(index):
 					self.respond_file(index, query = query)
 					return
-			try:
-				dir_contents = os.listdir(file_path)
-			except os.error:
-				self.respond_not_found()
-				return None
-			if os.path.normpath(file_path) != self.server.serve_files_root:
-				dir_contents.append('..')
-			dir_contents.sort(key=lambda a: a.lower())
-			f = StringIO()
-			displaypath = cgi.escape(urllib.unquote(self.path))
-			f.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n')
-			f.write('<html>\n<title>Directory listing for ' + displaypath + '</title>\n')
-			f.write('<body>\n<h2>Directory listing for ' + displaypath + '</h2>\n')
-			f.write('<hr>\n<ul>\n')
-			for name in dir_contents:
-				fullname = os.path.join(file_path, name)
-				displayname = linkname = name
-				# Append / for directories or @ for symbolic links
-				if os.path.isdir(fullname):
-					displayname = name + "/"
-					linkname = name + "/"
-				if os.path.islink(fullname):
-					displayname = name + "@"
-					# Note: a link to a directory displays with @ and links with /
-				f.write('<li><a href="' + urllib.quote(linkname) + '">' + cgi.escape(displayname) + '</a>\n')
-			f.write('</ul>\n<hr>\n</body>\n</html>\n')
-			length = f.tell()
-			f.seek(0)
-			self.send_response(200)
-			encoding = sys.getfilesystemencoding()
-			self.send_header('Content-Type', 'text/html; charset=' + encoding)
-			self.send_header('Content-Length', str(length))
-			self.end_headers()
-			shutil.copyfileobj(f, self.wfile)
-			f.close()
-			return
 
 		self.respond_not_found()
 		return

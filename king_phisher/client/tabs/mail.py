@@ -261,7 +261,7 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 			query['id'] = [self.config['server_config']['secret_id']]
 			query = urllib.urlencode(query, True)
 			target_url = urlparse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
-			urllib2.urlopen(target_url)
+			urllib2.urlopen(target_url, timeout=5)
 		except:
 			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent)
 			return
