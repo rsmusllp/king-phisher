@@ -107,6 +107,13 @@ class ServerTests(unittest.TestCase):
 			http_response = self.http_request(phile)
 			self.assertHTTPStatus(http_response, 200)
 
+	def test_javascript_hook(self):
+		http_response = self.http_request('kp.js')
+		self.assertHTTPStatus(http_response, 200)
+		content_type = http_response.getheader('Content-Type')
+		error_message = "HTTP Response received Content-Type {0} when {1} was expected".format(content_type, 'text/javascript')
+		self.assertEqual(content_type, 'text/javascript', msg=error_message)
+
 	def test_non_existing_resources(self):
 		http_response = self.http_request(random_string(30) + '.html')
 		self.assertHTTPStatus(http_response, 404)

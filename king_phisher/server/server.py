@@ -82,11 +82,15 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self.database = self.server.database
 		self.database_lock = threading.RLock()
 		self.config = self.server.config
-		self.handler_map['^kpdd$'] = self.handle_deaddrop_visit
+		regex_prefix = '^'
+		if self.config.getboolean('vhost_directories'):
+			regex_prefix += '[\w\.\-]+\/'
+		self.handler_map[regex_prefix + 'kpdd$'] = self.handle_deaddrop_visit
+		self.handler_map[regex_prefix + 'kp\\.js$'] = self.handle_javascript_hook
 
 		tracking_image = self.config.get('tracking_image')
 		tracking_image = tracking_image.replace('.', '\\.')
-		self.handler_map['^' + tracking_image + '$'] = self.handle_email_opened
+		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
 
 	def issue_alert(self, alert_text, campaign_id = None):
 		campaign_name = None
@@ -327,6 +331,25 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			return
 		with self.get_cursor() as cursor:
 			cursor.execute('UPDATE messages SET opened = CURRENT_TIMESTAMP WHERE id = ? AND opened IS NULL', (msg_id,))
+
+	def handle_javascript_hook(self, query):
+		kp_hook_js = find.find_data_file('kp_hook.js')
+		if not kp_hook_js:
+			self.respond_not_found()
+			return
+		file_h = open(kp_hook_js)
+		self.send_response(200)
+		self.send_header('Content-Type', 'text/javascript')
+		self.send_header('Pragma', 'no-cache')
+		self.send_header('Cache-Control', 'no-cache')
+		self.send_header('Expires', '0')
+		self.send_header('Access-Control-Allow-Origin', '*')
+		self.send_header('Access-Control-Allow-Methods', 'POST, GET')
+		fs = os.fstat(file_h.fileno())
+		self.send_header('Content-Length', str(fs[6]))
+		self.end_headers()
+		shutil.copyfileobj(file_h, self.wfile)
+		return
 
 	def handle_page_visit(self):
 		if not self.message_id:
