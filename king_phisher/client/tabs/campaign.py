@@ -138,7 +138,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', True))
 
 	def signal_button_clicked_refresh(self, button):
-		self.load_campaign_information(force = True)
+		self.load_campaign_information(force=True)
 
 	def signal_button_clicked_export(self, button):
 		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
@@ -172,7 +172,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		if event.type != Gdk.EventType.KEY_PRESS:
 			return
 		if event.get_keyval()[1] == Gdk.KEY_F5:
-			self.load_campaign_information(force = True)
+			self.load_campaign_information(force=True)
 
 	def signal_activate_popup_menu_copy(self, widget, column_id):
 		treeview = self.gobjects['treeview_campaign']
@@ -197,7 +197,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		if not gui_utilities.show_dialog_yes_no('Delete This Row?', self.parent, 'This information will be lost'):
 			return
 		self.parent.rpc(self.remote_table_name + '/delete', row_id)
-		self.load_campaign_information(force = True)
+		self.load_campaign_information(force=True)
 
 class CampaignViewDeaddropTab(CampaignViewGenericTab):
 	remote_table_name = 'deaddrop_connections'
@@ -306,7 +306,7 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 			info_cache = gui_utilities.glib_idle_add_wait(graph.refresh, info_cache)
 
 	def signal_button_clicked_refresh(self, button):
-		self.load_campaign_information(force = True)
+		self.load_campaign_information(force=True)
 
 class CampaignViewVisitsTab(CampaignViewGenericTab):
 	remote_table_name = 'visits'
@@ -385,6 +385,12 @@ class CampaignViewTab(object):
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()
+		self.parent.connect('campaign_set', self.signal_kpc_campaign_set)
+
+	def signal_kpc_campaign_set(self, kpc, cid):
+		for tab_name, tab in self.tabs.items():
+			if hasattr(tab, 'load_campaign_information'):
+				tab.load_campaign_information(force=True)
 
 	def _tab_changed(self, notebook, current_page, index):
 		if not hasattr(self.parent, 'rpc'):

@@ -125,6 +125,8 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 	def interact(self):
 		self.dialog.show_all()
 		response = self.dialog.run()
+		old_campaign_id = self.config.get('campaign_id')
+		old_campaign_name = self.config.get('campaign_name')
 		while response != Gtk.ResponseType.CANCEL:
 			treeview = self.gobjects['treeview_campaigns']
 			selection = treeview.get_selection()
@@ -138,6 +140,8 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 			self.config['campaign_id'] = campaign_id
 			campaign_name = model.get_value(tree_iter, 1)
 			self.config['campaign_name'] = campaign_name
+			if not (campaign_id == old_campaign_id and campaign_name == old_campaign_name):
+				self.parent.emit('campaign_set', campaign_id)
 		self.dialog.destroy()
 		return response
 
@@ -220,6 +224,9 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 # This is the top level class/window for the client side of the king-phisher
 # application
 class KingPhisherClient(Gtk.Window):
+	__gsignals__ = {
+		'campaign_set': (GObject.SIGNAL_RUN_FIRST, None, (str,))
+	}
 	def __init__(self, config_file = None):
 		super(KingPhisherClient, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client')
@@ -363,6 +370,9 @@ class KingPhisherClient(Gtk.Window):
 			index = notebook.get_current_page()
 			notebook.emit('switch-page', notebook.get_nth_page(index), index)
 
+	def do_campaign_set(self, campaign_id):
+		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
+
 	def signal_window_destroy(self, window):
 		gui_utilities.gtk_widget_destroy_children(self)
 		gui_utilities.gtk_sync()
@@ -387,6 +397,7 @@ class KingPhisherClient(Gtk.Window):
 				return False
 			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache = True, refresh = True)
 		self.config['campaign_name'] = campaign_info['name']
+		self.emit('campaign_set', self.config['campaign_id'])
 		return True
 
 	def client_quit(self, destroy = True):
