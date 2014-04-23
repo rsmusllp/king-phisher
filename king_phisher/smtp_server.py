@@ -39,7 +39,7 @@ from king_phisher import utilities
 
 import dns.resolver
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 class KingPhisherSMTPServer(smtpd.PureProxy, object):
 	def __init__(self, localaddr, remoteaddr, debugging = False):
