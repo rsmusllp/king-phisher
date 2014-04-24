@@ -333,7 +333,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			cursor.execute('UPDATE messages SET opened = CURRENT_TIMESTAMP WHERE id = ? AND opened IS NULL', (msg_id,))
 
 	def handle_javascript_hook(self, query):
-		kp_hook_js = find.find_data_file('kp_hook.js')
+		kp_hook_js = find.find_data_file('javascript_hook.js')
 		if not kp_hook_js:
 			self.respond_not_found()
 			return

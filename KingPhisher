@@ -44,16 +44,17 @@ from gi.repository import Gtk
 
 def main():
 	parser = argparse.ArgumentParser(description = 'King Phisher', conflict_handler = 'resolve')
-	parser.add_argument('-c', '--config', dest = 'config_file', action = 'store', required = False, help = 'specify a configuration file to use')
+	parser.add_argument('-c', '--config', dest = 'config_file', required = False, help = 'specify a configuration file to use')
 	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + client.__version__)
-	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
+	parser.add_argument('-L', '--log', dest = 'loglvl', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
+	parser.add_argument('--logger', default = 'KingPhisher', help = 'specify the root logger')
 	arguments = parser.parse_args()
 
-	logging.getLogger('').setLevel(logging.DEBUG)
+	logging.getLogger(arguments.logger).setLevel(logging.DEBUG)
 	console_log_handler = logging.StreamHandler()
 	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
 	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
-	logging.getLogger('').addHandler(console_log_handler)
+	logging.getLogger(arguments.logger).addHandler(console_log_handler)
 	config_file = arguments.config_file
 	del arguments, parser
 
