@@ -113,6 +113,10 @@ class ServerTests(unittest.TestCase):
 		content_type = http_response.getheader('Content-Type')
 		error_message = "HTTP Response received Content-Type {0} when {1} was expected".format(content_type, 'text/javascript')
 		self.assertEqual(content_type, 'text/javascript', msg=error_message)
+		javascript = http_response.read()
+		load_script = 'function loadScript(url, callback) {'
+		error_message = "Javascript did not defined the loadScript function"
+		self.assertTrue(load_script in javascript, msg=error_message)
 
 	def test_non_existing_resources(self):
 		http_response = self.http_request(random_string(30) + '.html')

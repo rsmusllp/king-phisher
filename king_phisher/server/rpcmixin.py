@@ -46,6 +46,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 
 		self.rpc_handler_map['/client/initialize'] = self.rpc_client_initialize
 		self.rpc_handler_map['/config/get'] = self.rpc_config_get
+		self.rpc_handler_map['/config/set'] = self.rpc_config_set
 
 		self.rpc_handler_map['/campaign/alerts/is_subscribed'] = self.rpc_campaign_alerts_is_subscribed
 		self.rpc_handler_map['/campaign/alerts/subscribe'] = self.rpc_campaign_alerts_subscribe
@@ -115,7 +116,12 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		elif self.config.has_option(option_name):
 			value_type = value_types.get(option_name, '')
 			return getattr(self.config, 'get' + value_type)(option_name)
-		return None
+		return
+
+	def rpc_config_set(self, options):
+		for option_name, option_value in options.items():
+			self.config.set(option_name, str(option_value))
+		return
 
 	def rpc_campaign_new(self, name):
 		with self.get_cursor() as cursor:

