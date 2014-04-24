@@ -113,7 +113,8 @@ class KingPhisherRequestHandlerRPCMixin(object):
 				option_values[option_name] = getattr(self.config, 'get' + value_type)(option_name)
 			return option_values
 		elif self.config.has_option(option_name):
-			return self.config.get(option_name)
+			value_type = value_types.get(option_name, '')
+			return getattr(self.config, 'get' + value_type)(option_name)
 		return None
 
 	def rpc_campaign_new(self, name):
