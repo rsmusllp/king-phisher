@@ -184,6 +184,8 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 	def interact(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
 		cb_reject_after_creds = self.gtk_builder_get('checkbutton_reject_after_credentials')
+		entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
+		entry_beef_hook.set_property('text', self.parent.rpc('config/get', 'beef_hook') or '')
 		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
 		if GObject.pygobject_version < (3, 10):
 			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
@@ -200,6 +202,7 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
 			self.verify_sms_settings()
+			self.parent.rpc('config/set', {'beef_hook': entry_beef_hook.get_property('text').strip()})
 		self.dialog.destroy()
 		return response
 
