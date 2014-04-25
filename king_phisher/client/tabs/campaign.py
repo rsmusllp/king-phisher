@@ -266,17 +266,17 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 
 		# Position: (DefaultGraphName, Size)
 		dash_ports = {
-			'top_left': ('Overview', (380, 200)),
-			'top_right': ('VisitorInfo', (380, 200)),
-			'bottom': ('VisitsTimeline', None)
+			'top_left': (380, 200),
+			'top_right': (380, 200),
+			'bottom': None
 		}
 		for dash_port, details in dash_ports.items():
-			graph_name = self.config.get('dashboard.' + dash_port, details[0])
+			graph_name = self.config['dashboard.' + dash_port]
 			Klass = graphs.get_graph(graph_name)
 			if not Klass:
 				self.logger.warning('could not get graph: ' + graph_name)
 				continue
-			graph_inst = Klass(self.config, self.parent, details[1])
+			graph_inst = Klass(self.config, self.parent, details)
 			self.gobjects['scrolledwindow_' + dash_port].add_with_viewport(graph_inst.canvas)
 			self.gobjects['box_' + dash_port].pack_end(graph_inst.navigation_toolbar, False, False, 0)
 			self.graphs.append(graph_inst)

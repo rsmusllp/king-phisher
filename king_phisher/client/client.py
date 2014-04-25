@@ -35,6 +35,7 @@ import json
 import logging
 import os
 import random
+import shutil
 import time
 
 from king_phisher import find
@@ -57,15 +58,6 @@ import paramiko
 __version__ = '0.1.1'
 
 CONFIG_FILE_PATH = '~/.king_phisher.json'
-DEFAULT_CONFIG = """
-{
-    "server": "localhost",
-    "smtp_max_send_rate": 45.0,
-    "smtp_server": "localhost",
-    "smtp_ssh_enable": false,
-    "smtp_ssl_enable": false
-}
-"""
 
 class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
@@ -468,10 +460,8 @@ class KingPhisherClient(Gtk.Window):
 		self.logger.info('loading the config from disk')
 		config_file = os.path.expanduser(self.config_file)
 		if not os.path.isfile(config_file):
-			self.config = json.loads(DEFAULT_CONFIG)
-			self.save_config()
-		else:
-			self.config = json.load(open(config_file, 'rb'))
+			shutil.copy(find.find_data_file('client_config.json'), config_file)
+		self.config = json.load(open(config_file, 'rb'))
 
 	def load_server_config(self):
 		self.config['server_config'] = self.rpc('config/get', ['require_id', 'secret_id', 'tracking_image'])

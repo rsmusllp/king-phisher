@@ -1,0 +1,12 @@
+{
+    "dashboard.bottom": "VisitsTimeline",
+    "dashboard.top_left": "Overview",
+    "dashboard.top_right": "VisitorInfo",
+    "server": "localhost:22",
+    "server_remote_port": 80,
+    "ssh_preferred_key": null,
+    "smtp_max_send_rate": 45.0,
+    "smtp_server": "localhost:25",
+    "smtp_ssh_enable": false,
+    "smtp_ssl_enable": false
+}
