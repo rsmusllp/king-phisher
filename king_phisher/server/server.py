@@ -35,7 +35,6 @@ import logging
 import os
 import random
 import shutil
-import sqlite3
 import string
 import threading
 
@@ -429,7 +428,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		if database_file == ':memory:':
 			db = database.create_database(database_file)
 		else:
-			db = sqlite3.connect(database_file, check_same_thread = False)
+			db = database.KingPhisherDatabase(database_file)
 		self.database = db
 		self.http_server.database = db
 

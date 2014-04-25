@@ -30,7 +30,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import sqlite3
 import unittest
 
 from king_phisher.server.database import *
@@ -38,7 +37,7 @@ from king_phisher.server.database import *
 class ServerDatabaseTests(unittest.TestCase):
 	def test_create_database(self):
 		try:
-			self.assertIsInstance(create_database(':memory:'), sqlite3.Connection)
+			self.assertIsInstance(create_database(':memory:'), KingPhisherDatabase)
 		except Exception as error:
 			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
 

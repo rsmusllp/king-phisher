@@ -30,7 +30,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import contextlib
 import threading
 
 from king_phisher.server import database
@@ -74,16 +73,8 @@ class KingPhisherRequestHandlerRPCMixin(object):
 			self.rpc_handler_map['/message/' + table_name + '/count'] = self.rpc_database_count_rows
 			self.rpc_handler_map['/message/' + table_name + '/view'] = self.rpc_database_get_rows
 
-	@contextlib.contextmanager
-	def get_cursor(self):
-		self.database_lock.acquire()
-		cursor = self.database.cursor()
-		yield cursor
-		self.database.commit()
-		self.database_lock.release()
-
 	def query_count(self, query, values):
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			cursor.execute(query, values)
 			count = cursor.fetchone()[0]
 		return count
@@ -95,7 +86,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		username = self.basic_auth_user
 		if not username:
 			return True
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			cursor.execute('INSERT OR IGNORE INTO users (id) VALUES (?)', (username,))
 		return True
 
@@ -124,7 +115,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		return
 
 	def rpc_campaign_new(self, name):
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			cursor.execute('INSERT INTO campaigns (name, creator) VALUES (?, ?)', (name, self.basic_auth_user))
 			cursor.execute('SELECT id FROM campaigns WHERE name = ?', (name,))
 			campaign_id = cursor.fetchone()[0]
@@ -132,14 +123,14 @@ class KingPhisherRequestHandlerRPCMixin(object):
 
 	def rpc_campaign_alerts_is_subscribed(self, campaign_id):
 		username = self.basic_auth_user
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			if self.query_count('SELECT COUNT(id) FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
 				return True
 		return False
 
 	def rpc_campaign_alerts_subscribe(self, campaign_id):
 		username = self.basic_auth_user
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			if self.query_count('SELECT COUNT(id) FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
 				return
 			cursor.execute('INSERT INTO alert_subscriptions (user_id, campaign_id) VALUES (?, ?)', (username, campaign_id))
@@ -147,25 +138,25 @@ class KingPhisherRequestHandlerRPCMixin(object):
 
 	def rpc_campaign_alerts_unsubscribe(self, campaign_id):
 		username = self.basic_auth_user
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			cursor.execute('DELETE FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id))
 
 	def rpc_campaign_landing_page_new(self, campaign_id, hostname, page):
 		page = page.lstrip('/')
 		if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ? AND page = ?', (campaign_id, hostname, page)):
 			return
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			cursor.execute('INSERT INTO landing_pages (campaign_id, hostname, page) VALUES (?, ?, ?)', (campaign_id, hostname, page))
 		return
 
 	def rpc_campaign_message_new(self, campaign_id, email_id, email_target):
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			cursor.execute('INSERT INTO messages (id, campaign_id, target_email) VALUES (?, ?, ?)', (email_id, campaign_id, email_target))
 		return
 
 	def rpc_campaign_delete(self, campaign_id):
 		tables = database.get_tables_with_column_id('campaign_id')
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			for table in tables:
 				sql_query = "DELETE FROM {0} WHERE campaign_id = ?".format(table)
 				cursor.execute(sql_query, (campaign_id,))
@@ -199,7 +190,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 			sql_query += ' WHERE ' + ' AND '.join(map(lambda f: f + '_id = ?', fields))
 		sql_query += ' LIMIT ' + str(VIEW_ROW_COUNT) + ' OFFSET ?'
 		args.append(offset)
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			for row in cursor.execute(sql_query, args):
 				rows.append(row)
 		if not len(rows):
@@ -208,14 +199,14 @@ class KingPhisherRequestHandlerRPCMixin(object):
 
 	def rpc_database_delete_row_by_id(self, row_id):
 		table = self.path.split('/')[-2]
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			cursor.execute('DELETE FROM ' + table + ' WHERE id = ?', (row_id,))
 		return
 
 	def rpc_database_get_row_by_id(self, row_id):
 		table = self.path.split('/')[-2]
 		columns = DATABASE_TABLES[table]
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			cursor.execute('SELECT ' + ', '.join(columns) + ' FROM ' + table + ' WHERE id = ?', (row_id,))
 			row = cursor.fetchone()
 			if row:
@@ -231,7 +222,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		assert(len(keys) == len(values))
 		for key, value in zip(keys, values):
 			assert(key in DATABASE_TABLES[table])
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			cursor.execute('INSERT INTO ' + table + ' (' + ', '.join(keys) + ') VALUES (' + ', '.join('?' * len(values)) + ')', values)
 		return
 
@@ -242,7 +233,7 @@ class KingPhisherRequestHandlerRPCMixin(object):
 		if not isinstance(values, (list, tuple)):
 			values = (values,)
 		assert(len(keys) == len(values))
-		with self.get_cursor() as cursor:
+		with self.database.get_cursor() as cursor:
 			for key, value in zip(keys, values):
 				assert(key in DATABASE_TABLES[table])
 				cursor.execute('UPDATE ' + table + ' SET ' + key + ' = ? WHERE id = ?', (value, row_id))
