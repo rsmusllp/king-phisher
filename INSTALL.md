@@ -17,9 +17,11 @@ Additionally, the user logging in with the King-Phisher client will require a va
 [Msgpack-Python](https://github.com/msgpack/msgpack-python)
 
 ## Server Required Packages
+[dnspython](http://www.dnspython.org/)
+
 [Msgpack-Python](https://github.com/msgpack/msgpack-python)
 
-[dnspython](http://www.dnspython.org/)
+[PyYAML](http://pyyaml.org/)
 
 ## Install Steps
 1. Download King-Phisher from GitHub: ```git clone https://github.com/securestate/king-phisher.git```
@@ -38,5 +40,5 @@ Additionally, the user logging in with the King-Phisher client will require a va
 ### Server on Ubuntu 13.04 / 13.10 / 14.04
 1. Install the King-Phisher Server: ```sudo python server-setup.py build && sudo python server-setup.py install```
 1. Install the King-Phisher Service file: ```sudo cp data/server/service_files/king-phisher.conf /etc/init/```
-1. Open server.conf.txt with a text editor and change the "web_root" field to the location where you want to serve your phishing website html files. Save the file as ```/etc/king-phisher.conf```.
+1. Open data/server/king_phisher/server_config.yml with a text editor and change the "web_root" field to the location where you want to serve your phishing website html files. Save the file as ```/etc/king-phisher.yml```.
 1. Run ```sudo start king-phisher```

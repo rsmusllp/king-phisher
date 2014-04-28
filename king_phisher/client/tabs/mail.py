@@ -258,7 +258,7 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 		try:
 			parsed_url = urlparse.urlparse(target_url)
 			query = urlparse.parse_qs(parsed_url.query)
-			query['id'] = [self.config['server_config']['secret_id']]
+			query['id'] = [self.config['server_config']['server.secret_id']]
 			query = urllib.urlencode(query, True)
 			target_url = urlparse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
 			urllib2.urlopen(target_url, timeout=5)

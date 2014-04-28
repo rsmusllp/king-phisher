@@ -177,7 +177,7 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
 		cb_reject_after_creds = self.gtk_builder_get('checkbutton_reject_after_credentials')
 		entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
-		entry_beef_hook.set_property('text', self.parent.rpc('config/get', 'beef_hook') or '')
+		entry_beef_hook.set_property('text', self.parent.rpc('config/get', 'beef.hook_url') or '')
 		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
 		if GObject.pygobject_version < (3, 10):
 			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
@@ -187,14 +187,14 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 				cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
 				cb_reject_after_creds.set_property('active', self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id'])['reject_after_credentials'])
 
-		cb_reject_after_creds.set_sensitive(self.config['server_config']['require_id'])
+		cb_reject_after_creds.set_sensitive(self.config['server_config']['server.require_id'])
 
 		self.dialog.show_all()
 		response = self.dialog.run()
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
 			self.verify_sms_settings()
-			self.parent.rpc('config/set', {'beef_hook': entry_beef_hook.get_property('text').strip()})
+			self.parent.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
 		self.dialog.destroy()
 		return response
 
@@ -464,7 +464,7 @@ class KingPhisherClient(Gtk.Window):
 		self.config = json.load(open(config_file, 'rb'))
 
 	def load_server_config(self):
-		self.config['server_config'] = self.rpc('config/get', ['require_id', 'secret_id', 'tracking_image'])
+		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image'])
 		return
 
 	def save_config(self):

@@ -57,7 +57,7 @@ def format_message(template, config, first_name = None, last_name = None, uid = 
 	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
 	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
 	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, (str, unicode)) else target_email)
-	uid = (uid or config['server_config'].get('secret_id') or make_uid())
+	uid = (uid or config['server_config'].get('server.secret_id') or make_uid())
 
 	template = string.Template(template)
 	template_vars = {}
@@ -70,7 +70,7 @@ def format_message(template, config, first_name = None, last_name = None, uid = 
 
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urlparse.urlparse(webserver_url)
-	tracking_image = config['server_config']['tracking_image']
+	tracking_image = config['server_config']['server.tracking_image']
 	tracking_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, tracking_image, '', 'id=' + uid, ''))
 	webserver_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
 	template_vars['webserver_url'] = webserver_url

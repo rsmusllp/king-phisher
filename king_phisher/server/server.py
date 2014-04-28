@@ -53,24 +53,15 @@ __version__ = '0.1.1'
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
-SERVER_DEFAULT_OPTIONS = {
-	'require_id': True,
-	'vhost_directories': False
-}
-
-def build_king_phisher_server(config, section_name):
+def build_king_phisher_server(config):
 	# Set config defaults
-	if not config.has_option(section_name, 'tracking_image'):
-		config.set(section_name, 'tracking_image', 'email_logo_banner.gif')
-	if not config.has_option(section_name, 'secret_id'):
-		config.set(section_name, 'secret_id', make_uid())
-	for option_name, option_default_value in SERVER_DEFAULT_OPTIONS.items():
-		if not config.has_option(section_name, option_name):
-			config.set(section_name, option_name, str(option_default_value))
-
-	king_phisher_server = build_server_from_config(config, 'server', ServerClass = KingPhisherServer, HandlerClass = KingPhisherRequestHandler)
-	king_phisher_server.http_server.config = SectionConfigParser('server', config)
-	return king_phisher_server
+	if not config.has_option('server.secret_id'):
+		config.set('server.secret_id', make_uid())
+	address = (config.get('server.address.ip'), config.get('server.address.port'))
+	server = KingPhisherServer(config, KingPhisherRequestHandler, address = address)
+	server.serve_files = True
+	server.serve_files_root = config.get('server.web_root')
+	return server
 
 class KingPhisherErrorAbortRequest(Exception):
 	pass
@@ -82,12 +73,12 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		self.database_lock = threading.RLock()
 		self.config = self.server.config
 		regex_prefix = '^'
-		if self.config.getboolean('vhost_directories'):
+		if self.config.get('server.vhost_directories'):
 			regex_prefix += '[\w\.\-]+\/'
 		self.handler_map[regex_prefix + 'kpdd$'] = self.handle_deaddrop_visit
 		self.handler_map[regex_prefix + 'kp\\.js$'] = self.handle_javascript_hook
 
-		tracking_image = self.config.get('tracking_image')
+		tracking_image = self.config.get('server.tracking_image')
 		tracking_image = tracking_image.replace('.', '\\.')
 		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
 
@@ -111,7 +102,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			sms.send_sms(alert_text, number, carrier, 'donotreply@kingphisher.local')
 
 	def adjust_path(self):
-		if not self.config.getboolean('vhost_directories'):
+		if not self.config.get('server.vhost_directories'):
 			return
 		if not self.vhost:
 			raise KingPhisherErrorAbortRequest()
@@ -199,7 +190,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		if hasattr(self, '_visit_id'):
 			return self._visit_id
 		self._visit_id = None
-		kp_cookie_name = self.config.get('cookie_name', 'KPID')
+		kp_cookie_name = self.config.get('server.cookie_name')
 		if kp_cookie_name in self.cookies:
 			self._visit_id = self.cookies[kp_cookie_name].value
 		return self._visit_id
@@ -216,7 +207,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		except IOError:
 			raise KingPhisherErrorAbortRequest()
 
-		if self.config.getboolean('require_id') and self.message_id != self.config.get('secret_id'):
+		if self.config.get('server.require_id') and self.message_id != self.config.get('server.secret_id'):
 			# a valid campaign_id requires a valid message_id
 			if not self.campaign_id:
 				self.server.logger.warning('denying request due to lack of a valid id')
@@ -266,7 +257,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 
 	def respond_redirect(self, location = '/'):
 		location = location.lstrip('/')
-		if self.config.getboolean('vhost_directories') and location.startswith(self.vhost):
+		if self.config.get('server.vhost_directories') and location.startswith(self.vhost):
 			location = location[len(self.vhost):]
 		if not location.startswith('/'):
 			location = '/' + location
@@ -337,8 +328,8 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 			self.respond_not_found()
 			return
 		javascript = open(kp_hook_js).read()
-		if self.config.has_option('beef_hook'):
-			javascript += "\nloadScript('{0}');\n\n".format(self.config.get('beef_hook'))
+		if self.config.has_option('beef.hook_url'):
+			javascript += "\nloadScript('{0}');\n\n".format(self.config.get('beef.hook_url'))
 		self.send_response(200)
 		self.send_header('Content-Type', 'text/javascript')
 		self.send_header('Pragma', 'no-cache')
@@ -364,7 +355,7 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 
 		if self.visit_id == None:
 			visit_id = make_uid()
-			kp_cookie_name = self.config.get('cookie_name', 'KPID')
+			kp_cookie_name = self.config.get('server.cookie_name')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
 			self.send_header('Set-Cookie', cookie)
 			with self.get_cursor() as cursor:
@@ -409,13 +400,15 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 				cursor.execute('UPDATE messages SET trained = 1 WHERE id = ?', (message_id,))
 
 class KingPhisherServer(AdvancedHTTPServer):
-	def __init__(self, *args, **kwargs):
+	def __init__(self, config, *args, **kwargs):
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
+		self.config = config
 		self.database = None
 		self.logger = logging.getLogger('KingPhisher.Server')
 		self.serve_files = True
 		self.serve_files_list_directories = False
 		self.serve_robots_txt = True
+		self.http_server.config = config
 		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator()
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.http_server.throttle_semaphore = threading.Semaphore()

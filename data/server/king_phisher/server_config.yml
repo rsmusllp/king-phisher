@@ -1,0 +1,16 @@
+logging:
+  file: /var/log/king-phisher.log
+  level: warning
+
+server:
+  address:
+    ip: 0.0.0.0
+    port: 80
+  cookie_name: KPID
+  database: /var/king-phisher/king-phisher.db
+  pid_file: /var/run/kingphisher.pid
+  require_id: true
+  setuid_username: nobody
+  tracking_image: email_logo_banner.gif
+  vhost_directories: false
+  web_root: /var/www

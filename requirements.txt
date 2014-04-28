@@ -2,3 +2,4 @@ dnspython>=1.10.0
 matplotlib>=1.2.1
 msgpack-python>=0.4.2
 paramiko>=1.10.1
+PyYAML>=3.10

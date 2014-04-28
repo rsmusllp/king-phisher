@@ -1,13 +1,14 @@
-*.py[cod]
-# Geany
-*.geany
-*.log
 *.conf
 *.db
+*.geany
 *.html
+*.log
+*.py[cod]
+*.yml
 build/*
 data/*/king_phisher/plugins/*
 
 !data/server/king_phisher/error_*.html
-!data/server/service_files/*
+!data/server/king_phisher/server_config.yml
+!data/server/king_phisher/service_files/*
 !data/*/king_phisher/*/*.html

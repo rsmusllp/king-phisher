@@ -31,20 +31,16 @@
 #
 
 import argparse
-import ConfigParser
 import logging
 import os
 import pwd
 import signal
 import threading
 
+from king_phisher import configuration
 from king_phisher import find
 from king_phisher.server import server
 from king_phisher.server import database
-
-REQUIRED_CONFIG_OPTIONS = {
-	'server': ['database', 'port', 'web_root']
-}
 
 try:
 	import msgpack
@@ -79,29 +75,14 @@ def main():
 		print('[-] Please install it from http://msgpack.org/ or your package manager.')
 		return
 
-	config = ConfigParser.ConfigParser()
-	config.readfp(config_file)
-
-	for section_name, option_names in REQUIRED_CONFIG_OPTIONS.items():
-		if not config.has_section(section_name):
-			print('[-] The config file is missing the required section: ' + section_name)
-			return
-		missing_options = filter(lambda option_name: not config.has_option(section_name, option_name), option_names)
-		if missing_options:
-			print("[-] The config file is missing the {0} {1}".format(', '.join(missing_options), ('options' if len(missing_options) > 1 else 'option')))
-			print("[-] from the {0} section.".format(section_name))
-			return
-
+	config = configuration.Configuration(config_file.name)
 	log_file_path = None
 	if config.has_section('logging'):
-		log_file_path = config.get('logging', 'file')
+		log_file_path = config.get('logging.file')
 		file_handler = logging.FileHandler(log_file_path)
 		file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-10s %(message)s"))
 		logging.getLogger('').addHandler(file_handler)
-		if config.has_option('logging', 'level'):
-			file_handler.setLevel(getattr(logging, config.get('logging', 'level').upper()))
-		else:
-			file_handler.setLevel(logging.WARNING)
+		file_handler.setLevel(getattr(logging, config.get('logging.level').upper()))
 
 	if (not arguments.foreground) and os.fork():
 		return
@@ -109,8 +90,8 @@ def main():
 	# Configure environment variables
 	find.data_path_append('data/server')
 
-	king_phisher_server = server.build_king_phisher_server(config, 'server')
-	database_file = config.get('server', 'database')
+	king_phisher_server = server.build_king_phisher_server(config)
+	database_file = config.get('server.database')
 	if database_file != ':memory:' and not os.path.exists(database_file):
 		database.create_database(database_file)
 		logger.info('created new sqlite3 database file')
@@ -119,12 +100,12 @@ def main():
 	server_pid = os.getpid()
 	logger.info('server running in process: ' + str(server_pid))
 
-	if config.has_option('server', 'pid_file'):
-		pid_file = open(config.get('server', 'pid_file'), 'w')
+	if config.has_option('server.pid_file'):
+		pid_file = open(config.get('server.pid_file'), 'w')
 		pid_file.write(str(server_pid))
 		pid_file.close()
-	if config.has_option('server', 'setuid_username'):
-		setuid_username = config.get('server', 'setuid_username')
+	if config.has_option('server.setuid_username'):
+		setuid_username = config.get('server.setuid_username')
 		user_info = pwd.getpwnam(setuid_username)
 		if log_file_path:
 			os.chown(log_file_path, user_info.pw_uid, user_info.pw_gid)

@@ -38,6 +38,7 @@ import string
 import threading
 import unittest
 
+from king_phisher import configuration
 from king_phisher import find
 from king_phisher.server.server import *
 
@@ -45,23 +46,17 @@ random_string = lambda size: ''.join(random.choice(string.ascii_letters + string
 
 class ServerTests(unittest.TestCase):
 	def setUp(self):
-		web_root = os.path.join(os.getcwd(), 'data', 'server', 'king_phisher')
-		config = ConfigParser.ConfigParser()
-		config.add_section('server')
-		config.set('server', 'database', ':memory:')
-		config.set('server', 'port', '8080')
-		config.set('server', 'require_id', 'True')
-		config.set('server', 'secret_id', random_string(20))
-		config.set('server', 'tracking_image', 'email_logo_banner.gif')
-		config.set('server', 'web_root', web_root)
-		self.config = config
-
 		# Configure environment variables
 		find.data_path_append('data/server')
-
-		self.server = build_king_phisher_server(config, 'server')
+		web_root = os.path.join(os.getcwd(), 'data', 'server', 'king_phisher')
+		config = configuration.Configuration(find.find_data_file('server_config.yml'))
+		config.set('server.address.port', random.randint(2000, 10000))
+		config.set('server.database', ':memory:')
+		config.set('server.web_root', web_root)
+		self.config = config
+		self.server = build_king_phisher_server(config)
 		self.assertIsInstance(self.server, KingPhisherServer)
-		self.server.load_database(config.get('server', 'database'))
+		self.server.load_database(config.get('server.database'))
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
 		self.server_thread.daemon = True
 		self.server_thread.start()
@@ -74,8 +69,8 @@ class ServerTests(unittest.TestCase):
 
 	def http_request(self, resource, method = 'GET', include_id = True):
 		if include_id:
-			resource += "{0}id={1}".format('&' if '?' in resource else '?', self.config.get('server', 'secret_id'))
-		conn = httplib.HTTPConnection('localhost', self.config.getint('server', 'port'))
+			resource += "{0}id={1}".format('&' if '?' in resource else '?', self.config.get('server.secret_id'))
+		conn = httplib.HTTPConnection('localhost', self.config.get('server.address.port'))
 		conn.request(method, resource)
 		response = conn.getresponse()
 		conn.close()
@@ -84,7 +79,7 @@ class ServerTests(unittest.TestCase):
 	def web_root_files(self, limit = None):
 		limit = (limit or float('inf'))
 		philes_yielded = 0
-		web_root = self.config.get('server', 'web_root')
+		web_root = self.config.get('server.web_root')
 		self.assertTrue(os.path.isdir(web_root), msg='The test web root does not exist')
 		directories = filter(lambda p: os.path.isdir(os.path.join(web_root, p)), os.listdir(web_root))
 		for directory in directories:
@@ -127,21 +122,21 @@ class ServerTests(unittest.TestCase):
 		self.assertHTTPStatus(http_response, 401)
 
 	def test_secret_id(self):
-		old_require_id = self.config.get('server', 'require_id')
-		self.config.set('server', 'require_id', 'True')
+		old_require_id = self.config.get('server.require_id')
+		self.config.set('server.require_id', True)
 		for phile in self.web_root_files(3):
 			http_response = self.http_request(phile, include_id=True)
 			self.assertHTTPStatus(http_response, 200)
 			http_response = self.http_request(phile, include_id=False)
 			self.assertHTTPStatus(http_response, 404)
-		self.config.set('server', 'require_id', 'False')
+		self.config.set('server.require_id', False)
 		for phile in self.web_root_files(3):
 			http_response = self.http_request(phile, include_id=False)
 			self.assertHTTPStatus(http_response, 200)
-		self.config.set('server', 'require_id', old_require_id)
+		self.config.set('server.require_id', old_require_id)
 
 	def test_tracking_image(self):
-		http_response = self.http_request(self.config.get('server', 'tracking_image'), include_id=False)
+		http_response = self.http_request(self.config.get('server.tracking_image'), include_id=False)
 		self.assertHTTPStatus(http_response, 200)
 		image_data = http_response.read()
 		self.assertTrue(image_data.startswith('GIF'))
