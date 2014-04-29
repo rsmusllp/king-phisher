@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/configuration.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,17 +30,23 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
+import os
+import unittest
 
-from tests.client.client import ClientGUITests
-from tests.client.graphs import ClientGraphsTests
-from tests.server.authenticator import ServerAuthenticatorTests
-from tests.server.database import ServerDatabaseTests
-from tests.server.database import ServerDatabaseUIDTests
-from tests.server.server import ServerTests
-from tests.configuration import ServerConfigurationTests
-from tests.ua_parser import UserAgentParserTests
-from tests.utilities import UtilitiesTests
+from king_phisher import find
+from king_phisher.configuration import *
 
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
+class ServerConfigurationTests(unittest.TestCase):
+	def setUp(self):
+		find.data_path_append('data/server')
+
+	def test_server_config(self):
+		config_file = find.find_data_file('server_config.yml')
+		self.assertIsNotNone(config_file)
+		self.assertTrue(os.path.isfile(config_file))
+		config = Configuration(config_file)
+		self.assertTrue(config.has_section('server'))
+		self.assertTrue(config.has_section('server.address'))
+
+if __name__ == '__main__':
+	unittest.main()
