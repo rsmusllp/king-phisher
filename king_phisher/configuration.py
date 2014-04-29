@@ -68,6 +68,8 @@ class Configuration(object):
 		return True
 
 	def has_section(self, section_name):
+		if not self.has_option(section_name):
+			return False
 		return isinstance(self.get(section_name), dict)
 
 	def set(self, item_name, item_value):

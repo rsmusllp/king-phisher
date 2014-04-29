@@ -1,16 +1,35 @@
-logging:
-  file: /var/log/king-phisher.log
-  level: warning
+#
+# King-Phisher Server Configuration
+#
+
+#logging:
+#  file: /var/log/king-phisher.log
+#  level: warning
 
 server:
+  # Bind address information
   address:
-    ip: 0.0.0.0
+    host: 0.0.0.0
     port: 80
+
+  # The name of the cookie used to track users
   cookie_name: KPID
+
+  # The SQLite3 database file to use, the folder needs write permissions
   database: /var/king-phisher/king-phisher.db
-  pid_file: /var/run/kingphisher.pid
+
+  # Set a file to write the PID to
+  #pid_file: /var/run/kingphisher.pid
+
+  # Require an ID associated with a campaign to load pages
   require_id: true
+
+  # Drop privileges to the specified user
   setuid_username: nobody
+
+  # Configure the image file name used to track opened emails
   tracking_image: email_logo_banner.gif
+
+  # Use subfolders in the web_root which correspond to vhost names
   vhost_directories: false
   web_root: /var/www

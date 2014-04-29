@@ -57,7 +57,7 @@ def build_king_phisher_server(config):
 	# Set config defaults
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
-	address = (config.get('server.address.ip'), config.get('server.address.port'))
+	address = (config.get('server.address.host'), config.get('server.address.port'))
 	server = KingPhisherServer(config, KingPhisherRequestHandler, address = address)
 	server.serve_files = True
 	server.serve_files_root = config.get('server.web_root')

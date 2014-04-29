@@ -116,6 +116,7 @@ def main():
 			logger.critical('sqlite3 requires write premissions to the folder containing the database')
 			king_phisher_server.shutdown()
 			return
+		logger.info("dropped privileges to the {0} account".format(setuid_username))
 	sighup_handler = lambda: threading.Thread(target = king_phisher_server.shutdown).start()
 	signal.signal(signal.SIGHUP, lambda signum, frame: sighup_handler())
 	try:
