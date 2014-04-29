@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import binascii
 import json
 import logging
 import os
@@ -265,18 +266,30 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		super(KingPhisherRequestHandler, self).respond_redirect(location)
 
 	def handle_deaddrop_visit(self, query):
-		data = query['token'][0]
-		data = data.decode('base64')
+		self.send_response(200)
+		self.end_headers()
+
+		data = self.get_query_parameter('token')
+		if not data:
+			self.logger.warning('dead drop request received with no \'token\' parameter')
+			return
+		try:
+			data = data.decode('base64')
+		except binascii.Error:
+			self.logger.error('dead drop request received with invalid \'token\' data')
+			return
 		data = xor.xor_decode(data)
-		data = json.loads(data)
+		try:
+			data = json.loads(data)
+		except ValueError:
+			self.logger.error('dead drop request received with invalid \'token\' data')
+			return
 
 		deployment_id = data.get('deaddrop_id')
 		with self.get_cursor() as cursor:
 			cursor.execute('SELECT campaign_id FROM deaddrop_deployments WHERE id = ?', (deployment_id,))
 			campaign_id = cursor.fetchone()
 			if not campaign_id:
-				self.send_response(200)
-				self.end_headers()
 				return
 			campaign_id = campaign_id[0]
 
@@ -288,8 +301,6 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 		if isinstance(local_ip_addresses, (list, tuple)):
 			local_ip_addresses = ' '.join(local_ip_addresses)
 
-		self.send_response(200)
-		self.end_headers()
 		with self.get_cursor() as cursor:
 			cursor.execute('SELECT id FROM deaddrop_connections WHERE deployment_id = ? AND local_username = ? AND local_hostname = ?', (deployment_id, local_username, local_hostname))
 			drop_id = cursor.fetchone()

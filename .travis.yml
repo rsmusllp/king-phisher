@@ -16,4 +16,4 @@ before_install:
   - sh -e /etc/init.d/xvfb start
 
 script:
-  - python -m unittest tests
+  - python -m unittest -v tests

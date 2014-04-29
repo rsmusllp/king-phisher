@@ -116,6 +116,8 @@ class ServerTests(unittest.TestCase):
 	def test_non_existing_resources(self):
 		http_response = self.http_request(random_string(30) + '.html')
 		self.assertHTTPStatus(http_response, 404)
+		http_response = self.http_request(random_string(30) + '.html')
+		self.assertHTTPStatus(http_response, 404)
 
 	def test_rpc_is_unauthorized(self):
 		http_response = self.http_request('/ping', method='RPC')
@@ -140,6 +142,10 @@ class ServerTests(unittest.TestCase):
 		self.assertHTTPStatus(http_response, 200)
 		image_data = http_response.read()
 		self.assertTrue(image_data.startswith('GIF'))
+
+	def test_dead_drop(self):
+		http_response = self.http_request('kpdd', include_id=False)
+		self.assertHTTPStatus(http_response, 200)
 
 if __name__ == '__main__':
 	unittest.main()
