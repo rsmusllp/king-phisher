@@ -68,6 +68,7 @@ class KingPhisherErrorAbortRequest(Exception):
 
 class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
+		self.logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 		super(KingPhisherRequestHandler, self).install_handlers()
 		self.database = self.server.database
 		self.database_lock = threading.RLock()
@@ -401,10 +402,10 @@ class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, Adva
 
 class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, config, *args, **kwargs):
+		self.logger = logging.getLogger('KingPhisher.Server')
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
 		self.config = config
 		self.database = None
-		self.logger = logging.getLogger('KingPhisher.Server')
 		self.serve_files = True
 		self.serve_files_list_directories = False
 		self.serve_robots_txt = True

@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.2.68'
+__version__ = '0.2.69'
 __all__ = ['AdvancedHTTPServer', 'AdvancedHTTPServerRegisterPath', 'AdvancedHTTPServerRequestHandler', 'AdvancedHTTPServerRPCClient', 'AdvancedHTTPServerRPCError']
 
 import BaseHTTPServer
@@ -270,7 +270,8 @@ class AdvancedHTTPServerRPCClient(object):
 	def __init__(self, address, use_ssl = False, username = None, password = None, uri_base = '/', hmac_key = None):
 		self.host = str(address[0])
 		self.port = int(address[1])
-		self.logger = logging.getLogger('AdvancedHTTPServerRPCClient')
+		if not hasattr(self, 'logger'):
+			self.logger = logging.getLogger('AdvancedHTTPServerRPCClient')
 
 		self.use_ssl = bool(use_ssl)
 		self.uri_base = str(uri_base)
@@ -387,7 +388,8 @@ class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 
 class AdvancedHTTPServerNonThreaded(BaseHTTPServer.HTTPServer, object):
 	def __init__(self, *args, **kwargs):
-		self.logger = logging.getLogger('AdvancedHTTPServer')
+		if not hasattr(self, 'logger'):
+			self.logger = logging.getLogger('AdvancedHTTPServer')
 		self.allow_reuse_address = True
 		self.using_ssl = False
 		self.serve_files = False
@@ -825,7 +827,8 @@ class AdvancedHTTPServer(object):
 					address = ('0.0.0.0', 80)
 		self.address = address
 		self.ssl_certfile = ssl_certfile
-		self.logger = logging.getLogger('AdvancedHTTPServer')
+		if not hasattr(self, 'logger'):
+			self.logger = logging.getLogger('AdvancedHTTPServer')
 		self.server_started = False
 
 		if use_threads:

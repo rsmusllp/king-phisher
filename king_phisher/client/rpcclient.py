@@ -30,6 +30,8 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import logging
+
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPCClientCached
 
 try:
@@ -40,6 +42,7 @@ except ImportError:
 
 class KingPhisherRPCClient(AdvancedHTTPServerRPCClientCached):
 	def __init__(self, *args, **kwargs):
+		self.logger = logging.getLogger('KingPhisher.Client.RPC')
 		super(KingPhisherRPCClient, self).__init__(*args, **kwargs)
 		if has_msgpack:
 			serializer = 'binary/message-pack'
