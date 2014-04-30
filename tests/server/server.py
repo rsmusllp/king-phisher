@@ -92,6 +92,7 @@ class ServerTests(unittest.TestCase):
 		self.assertGreater(philes_yielded, 0, msg='No files were found in the web root')
 
 	def tearDown(self):
+		self.assertTrue(self.server_thread.is_alive())
 		self.server.shutdown()
 		self.server_thread.join(5.0)
 		self.assertFalse(self.server_thread.is_alive())

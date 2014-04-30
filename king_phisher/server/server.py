@@ -54,12 +54,14 @@ __version__ = '0.1.1'
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
-def build_king_phisher_server(config):
+def build_king_phisher_server(config, ServerClass = None, HandlerClass = None):
+	ServerClass = (ServerClass or KingPhisherServer)
+	HandlerClass = (HandlerClass or KingPhisherRequestHandler)
 	# Set config defaults
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
 	address = (config.get('server.address.host'), config.get('server.address.port'))
-	server = KingPhisherServer(config, KingPhisherRequestHandler, address = address)
+	server = ServerClass(config, HandlerClass, address = address)
 	server.serve_files = True
 	server.serve_files_root = config.get('server.web_root')
 	return server

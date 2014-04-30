@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/client/export.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,18 +30,17 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
+import unittest
 
-from tests.client.client import ClientGUITests
-from tests.client.export import ClientExportTests
-from tests.client.graphs import ClientGraphsTests
-from tests.server.authenticator import ServerAuthenticatorTests
-from tests.server.database import ServerDatabaseTests
-from tests.server.database import ServerDatabaseUIDTests
-from tests.server.server import ServerTests
-from tests.configuration import ServerConfigurationTests
-from tests.ua_parser import UserAgentParserTests
-from tests.utilities import UtilitiesTests
+from king_phisher.client.export import *
 
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
+class ClientExportTests(unittest.TestCase):
+	def test_value_conversions(self):
+		self.assertEqual(convert_value('campaigns', 'reject_after_credentials', 0), 'False')
+		self.assertEqual(convert_value('campaigns', 'reject_after_credentials', 1), 'True')
+		self.assertIsNone(convert_value('messages', 'opened', None))
+		self.assertEqual(convert_value('messages', 'trained', 0), 'False')
+		self.assertEqual(convert_value('messages', 'trained', 1), 'True')
+
+if __name__ == '__main__':
+	unittest.main()
