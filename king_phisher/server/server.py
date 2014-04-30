@@ -45,7 +45,7 @@ from king_phisher import sms
 from king_phisher import xor
 from king_phisher.server import authenticator
 from king_phisher.server import database
-from king_phisher.server import rpcmixin
+from king_phisher.server import server_rpc
 from king_phisher.third_party.AdvancedHTTPServer import *
 from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 from king_phisher.third_party.AdvancedHTTPServer import SectionConfigParser
@@ -69,7 +69,7 @@ def build_king_phisher_server(config, ServerClass = None, HandlerClass = None):
 class KingPhisherErrorAbortRequest(Exception):
 	pass
 
-class KingPhisherRequestHandler(rpcmixin.KingPhisherRequestHandlerRPCMixin, AdvancedHTTPServerRequestHandler):
+class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, AdvancedHTTPServerRequestHandler):
 	def install_handlers(self):
 		self.logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 		super(KingPhisherRequestHandler, self).install_handlers()

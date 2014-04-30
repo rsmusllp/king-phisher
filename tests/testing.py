@@ -64,6 +64,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		self.server_thread.daemon = True
 		self.server_thread.start()
 		self.assertTrue(self.server_thread.is_alive())
+		self.shutdown_requested = False
 
 	def assertHTTPStatus(self, http_response, status):
 		self.assertIsInstance(http_response, httplib.HTTPResponse)
@@ -95,7 +96,8 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		self.assertGreater(philes_yielded, 0, msg='No files were found in the web root')
 
 	def tearDown(self):
-		self.assertTrue(self.server_thread.is_alive())
+		if not self.shutdown_requested:
+			self.assertTrue(self.server_thread.is_alive())
 		self.server.shutdown()
 		self.server_thread.join(5.0)
 		self.assertFalse(self.server_thread.is_alive())

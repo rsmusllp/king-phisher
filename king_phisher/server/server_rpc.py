@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/server/rpcmixin.py
+#  king_phisher/server/server_rpc.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -38,9 +38,9 @@ from king_phisher.server import database
 VIEW_ROW_COUNT = 25
 DATABASE_TABLES = database.DATABASE_TABLES
 
-class KingPhisherRequestHandlerRPCMixin(object):
+class KingPhisherRequestHandlerRPC(object):
 	def install_handlers(self):
-		super(KingPhisherRequestHandlerRPCMixin, self).install_handlers()
+		super(KingPhisherRequestHandlerRPC, self).install_handlers()
 		self.rpc_handler_map['/ping'] = self.rpc_ping
 		self.rpc_handler_map['/shutdown'] = self.rpc_shutdown
 

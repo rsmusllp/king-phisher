@@ -30,13 +30,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import random
-import string
 import unittest
 
-from tests.testing import KingPhisherServerTestCase
-
-random_string = lambda size: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(size))
+from tests.testing import KingPhisherServerTestCase, random_string
 
 class ServerTests(KingPhisherServerTestCase):
 	def test_existing_resources(self):
@@ -44,26 +40,11 @@ class ServerTests(KingPhisherServerTestCase):
 			http_response = self.http_request(phile)
 			self.assertHTTPStatus(http_response, 200)
 
-	def test_javascript_hook(self):
-		http_response = self.http_request('kp.js')
-		self.assertHTTPStatus(http_response, 200)
-		content_type = http_response.getheader('Content-Type')
-		error_message = "HTTP Response received Content-Type {0} when {1} was expected".format(content_type, 'text/javascript')
-		self.assertEqual(content_type, 'text/javascript', msg=error_message)
-		javascript = http_response.read()
-		load_script = 'function loadScript(url, callback) {'
-		error_message = "Javascript did not defined the loadScript function"
-		self.assertTrue(load_script in javascript, msg=error_message)
-
 	def test_non_existing_resources(self):
 		http_response = self.http_request(random_string(30) + '.html')
 		self.assertHTTPStatus(http_response, 404)
 		http_response = self.http_request(random_string(30) + '.html')
 		self.assertHTTPStatus(http_response, 404)
-
-	def test_rpc_is_unauthorized(self):
-		http_response = self.http_request('/ping', method='RPC')
-		self.assertHTTPStatus(http_response, 401)
 
 	def test_secret_id(self):
 		old_require_id = self.config.get('server.require_id')
@@ -79,15 +60,26 @@ class ServerTests(KingPhisherServerTestCase):
 			self.assertHTTPStatus(http_response, 200)
 		self.config.set('server.require_id', old_require_id)
 
-	def test_tracking_image(self):
+	def test_static_resource_dead_drop(self):
+		http_response = self.http_request('kpdd', include_id=False)
+		self.assertHTTPStatus(http_response, 200)
+
+	def test_static_resource_javascript_hook(self):
+		http_response = self.http_request('kp.js')
+		self.assertHTTPStatus(http_response, 200)
+		content_type = http_response.getheader('Content-Type')
+		error_message = "HTTP Response received Content-Type {0} when {1} was expected".format(content_type, 'text/javascript')
+		self.assertEqual(content_type, 'text/javascript', msg=error_message)
+		javascript = http_response.read()
+		load_script = 'function loadScript(url, callback) {'
+		error_message = "Javascript did not defined the loadScript function"
+		self.assertTrue(load_script in javascript, msg=error_message)
+
+	def test_static_resource_tracking_image(self):
 		http_response = self.http_request(self.config.get('server.tracking_image'), include_id=False)
 		self.assertHTTPStatus(http_response, 200)
 		image_data = http_response.read()
 		self.assertTrue(image_data.startswith('GIF'))
-
-	def test_dead_drop(self):
-		http_response = self.http_request('kpdd', include_id=False)
-		self.assertHTTPStatus(http_response, 200)
 
 if __name__ == '__main__':
 	unittest.main()
