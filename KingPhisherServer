@@ -95,7 +95,7 @@ def main():
 	if database_file != ':memory:' and not os.path.exists(database_file):
 		database.create_database(database_file)
 		logger.info('created new sqlite3 database file')
-	king_phisher_server.load_database(database_file)
+	king_phisher_server.init_database(database_file)
 
 	server_pid = os.getpid()
 	logger.info('server running in process: ' + str(server_pid))

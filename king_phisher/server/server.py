@@ -426,12 +426,13 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator()
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.http_server.throttle_semaphore = threading.Semaphore()
-		self.http_server.job_manager = job.JobManager()
-		self.http_server.job_manager.start()
+		self.job_manager = job.JobManager()
+		self.job_manager.start()
+		self.http_server.job_manager = self.job_manager
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
 
-	def load_database(self, database_file):
+	def init_database(self, database_file):
 		if database_file == ':memory:':
 			db = database.create_database(database_file)
 		else:
@@ -446,5 +447,5 @@ class KingPhisherServer(AdvancedHTTPServer):
 		super(KingPhisherServer, self).shutdown(*args, **kwargs)
 		self.http_server.forked_authenticator.stop()
 		self.logger.debug('stopped the forked authenticator process')
-		self.http_server.job_manager.stop()
+		self.job_manager.stop()
 		self.__is_shutdown.set()

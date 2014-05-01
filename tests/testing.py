@@ -59,7 +59,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		self.config = config
 		self.server = build_king_phisher_server(config, HandlerClass = KingPhisherRequestHandlerTest)
 		self.assertIsInstance(self.server, KingPhisherServer)
-		self.server.load_database(config.get('server.database'))
+		self.server.init_database(config.get('server.database'))
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
 		self.server_thread.daemon = True
 		self.server_thread.start()
