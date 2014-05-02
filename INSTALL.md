@@ -31,14 +31,14 @@ Additionally, the user logging in with the King-Phisher client will require a va
 
 ### Client on Ubuntu 13.04 / 13.10 / 14.04
 1. Install required system packages: ```sudo apt-get install python-gobject python-gobject-dev```
-1. Install the King-Phisher Client: ```sudo python tools/setup-client.py build && sudo python tools/setup-client.py install```
+1. Install the King-Phisher Client: ```sudo python tools/setup_client.py build && sudo python tools/setup_client.py install```
 
 ### Client on Kali 1.04
 1. Install required packages: ```sudo apt-get install python-gobject python-gobject-dev gir1.2-vte-2.90 gir1.2-webkit-3.0```
-1. Install the King-Phisher Client: ```sudo python tools/setup-client.py build && sudo python tools/setup-client.py install```
+1. Install the King-Phisher Client: ```sudo python tools/setup_client.py build && sudo python tools/setup_client.py install```
 
 ### Server on Ubuntu 13.04 / 13.10 / 14.04
-1. Install the King-Phisher Server: ```sudo python tools/setup-server.py build && sudo python tools/setup-server.py install```
+1. Install the King-Phisher Server: ```sudo python tools/setup_server.py build && sudo python tools/setup_server.py install```
 1. Install the King-Phisher Service file: ```sudo cp data/server/service_files/king-phisher.conf /etc/init/```
 1. Open data/server/king_phisher/server_config.yml with a text editor and change the "web_root" field to the location where you want to serve your phishing website html files. Save the file as ```/etc/king-phisher.yml```.
 1. Run ```sudo start king-phisher```

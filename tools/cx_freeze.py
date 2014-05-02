@@ -127,8 +127,7 @@ executables = [
 
 build_exe_options = dict(
 	compressed = False,
-	includes = ['gi'],
-	packages = ['email', 'gi', 'matplotlib'],
+	packages = ['email', 'gi', 'matplotlib', 'msgpack', 'paramiko'],
 	include_files = include_files
 )
 
