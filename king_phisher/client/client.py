@@ -36,6 +36,7 @@ import logging
 import os
 import random
 import shutil
+import sys
 import time
 
 from king_phisher import find
@@ -500,21 +501,22 @@ class KingPhisherClient(Gtk.Window):
 		export.campaign_to_xml(self.rpc, self.config['campaign_id'], destination_file)
 
 	def show_about_dialog(self):
-		source_file_h = open(__file__, 'r')
-		source_code = []
-		source_code.append(source_file_h.readline())
-		while source_code[-1].startswith('#'):
+		license_text = None
+		if os.path.splitext(__file__)[1] == '.py':
+			source_file_h = open(__file__, 'r')
+			source_code = []
 			source_code.append(source_file_h.readline())
-		source_code = source_code[5:-1]
-		source_code = map(lambda x: x.strip('# '), source_code)
-		license_text = ''.join(source_code)
+			while source_code[-1].startswith('#'):
+				source_code.append(source_file_h.readline())
+			source_code = source_code[5:-1]
+			source_code = map(lambda x: x.strip('# '), source_code)
+			license_text = ''.join(source_code)
 		about_dialog = Gtk.AboutDialog()
 		about_dialog.set_transient_for(self)
 		about_dialog_properties = {
 			'authors': ['Spencer McIntyre', 'Jeff McCutchan', 'Brandan Geise'],
 			'comments': 'Phishing Campaign Toolkit',
 			'copyright': '(c) 2013 SecureState',
-			'license': license_text,
 			'license-type': Gtk.License.BSD,
 			'program-name': 'King Phisher',
 			'version': version.version,
@@ -522,8 +524,12 @@ class KingPhisherClient(Gtk.Window):
 			'website-label': 'GitHub Home Page',
 			'wrap-license': False,
 		}
+		if license_text:
+			about_dialog_properties['license'] = license_text
 		for property_name, property_value in about_dialog_properties.items():
 			about_dialog.set_property(property_name, property_value)
+		if sys.platform.startswith('win'):
+			about_dialog.connect('activate-link', lambda _,url: os.system("start {0}".format(url)) == 0)
 		about_dialog.show_all()
 		about_dialog.run()
 		about_dialog.destroy()

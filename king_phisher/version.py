@@ -36,5 +36,14 @@ version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'
 
 version_label = 'alpha'
 version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)
+
+# distutils_version is compatible with distutils.version classes
+distutils_version = version
+
 if version_label:
 	version += '-' + version_label
+	distutils_version += version_label[0]
+	if version_label[-1].isdigit():
+		distutils_version += version_label[-1]
+	else:
+		distutils_version += '0'
