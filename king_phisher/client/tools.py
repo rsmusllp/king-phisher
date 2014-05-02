@@ -41,18 +41,28 @@ import sys
 
 from king_phisher import find
 from king_phisher import utilities
+from king_phisher.client import gui_utilities
 from king_phisher.client.rpcclient import KingPhisherRPCClient
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
 from gi.repository import Gtk
 from gi.repository import GLib
-from gi.repository import Vte
+
+try:
+	from gi.repository import Vte
+except ImportError:
+	has_vte = False
+else:
+	has_vte = True
 
 class KingPhisherClientRPCTerminal(object):
 	def __init__(self, config, parent):
 		self.config = config
 		self.parent = parent
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
+		if not has_vte:
+			gui_utilities.show_dialog_error('RPC terminal is unavailable', parent, 'VTE is not installed')
+			return
 		self.window = Gtk.Window()
 		self.window.set_property('title', 'King Phisher RPC')
 		self.window.set_transient_for(parent)
