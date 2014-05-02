@@ -33,6 +33,7 @@
 import contextlib
 import threading
 
+from king_phisher import version
 from king_phisher.server import database
 
 VIEW_ROW_COUNT = 25
@@ -43,6 +44,7 @@ class KingPhisherRequestHandlerRPC(object):
 		super(KingPhisherRequestHandlerRPC, self).install_handlers()
 		self.rpc_handler_map['/ping'] = self.rpc_ping
 		self.rpc_handler_map['/shutdown'] = self.rpc_shutdown
+		self.rpc_handler_map['/version'] = self.rpc_version
 
 		self.rpc_handler_map['/client/initialize'] = self.rpc_client_initialize
 		self.rpc_handler_map['/config/get'] = self.rpc_config_get
@@ -100,6 +102,9 @@ class KingPhisherRequestHandlerRPC(object):
 		shutdown_thread = threading.Thread(target = self.server.shutdown)
 		shutdown_thread.start()
 		return
+
+	def rpc_version(self):
+		return {'version':version.version, 'version_info':version.version_info._asdict()}
 
 	def rpc_config_get(self, option_name):
 		if isinstance(option_name, (list, tuple)):

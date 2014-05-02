@@ -36,6 +36,7 @@ import time
 import types
 import unittest
 
+from king_phisher import version
 from king_phisher.client import rpcclient
 from tests.testing import KingPhisherServerTestCase, random_string
 
@@ -85,6 +86,15 @@ class ServerRPCTests(KingPhisherServerTestCase):
 	def test_rpc_shutdown(self):
 		self.assertIsNone(self.rpc('shutdown'))
 		self.shutdown_requested = True
+
+	def test_rpc_version(self):
+		response = self.rpc('version')
+		self.assertTrue('version' in response)
+		self.assertTrue('version_info' in response)
+		self.assertEqual(response['version'], version.version)
+		self.assertEqual(response['version_info']['major'], version.version_info.major)
+		self.assertEqual(response['version_info']['minor'], version.version_info.minor)
+		self.assertEqual(response['version_info']['micro'], version.version_info.micro)
 
 if __name__ == '__main__':
 	unittest.main()
