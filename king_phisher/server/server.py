@@ -50,8 +50,6 @@ from king_phisher.third_party.AdvancedHTTPServer import *
 from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 from king_phisher.third_party.AdvancedHTTPServer import SectionConfigParser
 
-__version__ = '0.1.1'
-
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
 def build_king_phisher_server(config, ServerClass = None, HandlerClass = None):

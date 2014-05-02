@@ -33,7 +33,7 @@
 from distutils.core import setup
 import os
 
-from king_phisher.server import server
+from king_phisher import version
 
 data_files_src_prefix = os.path.join('data', 'server', 'king_phisher')
 data_files = []
@@ -44,7 +44,7 @@ for root, dirs, files in os.walk(data_files_src_prefix):
 
 setup(
 	name = 'King Phisher Server',
-	version = str(server.__version__),
+	version = version.version,
 	description = 'King Phisher Server Backend',
 	author = 'Spencer McIntyre',
 	maintainer = 'Spencer McIntyre',

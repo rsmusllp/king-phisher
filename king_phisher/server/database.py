@@ -38,7 +38,6 @@ import sqlite3
 import string
 import threading
 
-__version__ = '0.1.1'
 make_uid = lambda l: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(l))
 
 DATABASE_TABLES = {
@@ -170,7 +169,6 @@ def create_database(database_file):
 
 def main():
 	parser = argparse.ArgumentParser(description = 'King Phisher Server Database Utility', conflict_handler = 'resolve')
-	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + __version__)
 	parser.add_argument('database_file', help = 'database file to use')
 	arguments = parser.parse_args()
 

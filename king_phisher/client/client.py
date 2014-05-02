@@ -40,6 +40,7 @@ import time
 
 from king_phisher import find
 from king_phisher import utilities
+from king_phisher import version
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
@@ -54,8 +55,6 @@ from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCErr
 from gi.repository import GObject
 from gi.repository import Gtk
 import paramiko
-
-__version__ = '0.1.1'
 
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 
@@ -518,7 +517,7 @@ class KingPhisherClient(Gtk.Window):
 			'license': license_text,
 			'license-type': Gtk.License.BSD,
 			'program-name': 'King Phisher',
-			'version': __version__,
+			'version': version.version,
 			'website': 'https://github.com/securestate/king-phisher',
 			'website-label': 'GitHub Home Page',
 			'wrap-license': False,

@@ -36,6 +36,7 @@ import os
 import sys
 
 from king_phisher import find
+from king_phisher import version
 from king_phisher.client import client
 from king_phisher.client import gui_utilities
 
@@ -45,7 +46,7 @@ from gi.repository import Gtk
 def main():
 	parser = argparse.ArgumentParser(description = 'King Phisher', conflict_handler = 'resolve')
 	parser.add_argument('-c', '--config', dest = 'config_file', required = False, help = 'specify a configuration file to use')
-	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + client.__version__)
+	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + version.version)
 	parser.add_argument('-L', '--log', dest = 'loglvl', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
 	parser.add_argument('--logger', default = 'KingPhisher', help = 'specify the root logger')
 	arguments = parser.parse_args()
