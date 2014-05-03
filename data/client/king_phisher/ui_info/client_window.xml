@@ -19,6 +19,7 @@
 		</menu>
 		<menu action="HelpMenu">
 			<menuitem action="HelpAbout" />
+			<menuitem action="HelpWiki" />
 		</menu>
 	</menubar>
 </ui>

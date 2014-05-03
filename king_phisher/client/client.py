@@ -333,6 +333,10 @@ class KingPhisherClient(Gtk.Window):
 		action.connect('activate', lambda x: self.show_about_dialog())
 		action_group.add_action(action)
 
+		action = Gtk.Action('HelpWiki', 'Wiki', 'Wiki', None)
+		action.connect('activate', lambda x: utilities.open_uri('https://github.com/securestate/king-phisher/wiki'))
+		action_group.add_action(action)
+
 	def _create_ui_manager(self):
 		uimanager = Gtk.UIManager()
 		with open(find.find_data_file('ui_info/client_window.xml')) as ui_info_file:
