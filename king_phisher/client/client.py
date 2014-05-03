@@ -36,7 +36,6 @@ import logging
 import os
 import random
 import shutil
-import sys
 import time
 
 from king_phisher import find
@@ -528,8 +527,7 @@ class KingPhisherClient(Gtk.Window):
 			about_dialog_properties['license'] = license_text
 		for property_name, property_value in about_dialog_properties.items():
 			about_dialog.set_property(property_name, property_value)
-		if sys.platform.startswith('win'):
-			about_dialog.connect('activate-link', lambda _,url: os.system("start {0}".format(url)) == 0)
+		about_dialog.connect('activate-link', lambda _,url: utilities.open_uri(url))
 		about_dialog.show_all()
 		about_dialog.run()
 		about_dialog.destroy()
