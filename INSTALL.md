@@ -1,4 +1,6 @@
 # Install
+The King Phisher server is only supported on Linux.  The King Phishser client is supported on both Windows and Linux. Windows executables are available from the [releases page](https://github.com/securestate/king-phisher/releases).
+
 Before getting started, install all of the required packages specified below.
 
 ## Overview
@@ -23,7 +25,7 @@ Additionally, the user logging in with the King-Phisher client will require a va
 
 [PyYAML](http://pyyaml.org/)
 
-## Install Steps
+## Linux Install Steps
 1. Download King-Phisher from GitHub: ```git clone https://github.com/securestate/king-phisher.git```
 1. Change directory into king-phisher: ```cd king-phisher```
 1. Install Python dependencies with PIP ```sudo pip install -r requirements.txt```
