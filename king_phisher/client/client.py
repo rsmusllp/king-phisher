@@ -379,7 +379,7 @@ class KingPhisherClient(Gtk.Window):
 		Gtk.main_quit()
 		return
 
-	def client_initialize(self):
+	def init_connection(self):
 		if not self.server_connect():
 			return False
 		self.load_server_config()

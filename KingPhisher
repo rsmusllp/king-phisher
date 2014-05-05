@@ -69,7 +69,7 @@ def main():
 	Gtk.init(sys.argv)
 	main_window = client.KingPhisherClient(config_file = config_file)
 	main_window.set_position(Gtk.WindowPosition.CENTER)
-	if main_window.client_initialize():
+	if main_window.init_connection():
 		GObject.threads_init()
 		Gtk.main()
 

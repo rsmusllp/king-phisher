@@ -85,8 +85,6 @@ class KingPhisherClientRPCTerminal(object):
 		config = {}
 		config['campaign_id'] = self.config['campaign_id']
 		config['campaign_name'] = self.config['campaign_name']
-		config['ssh_server'] = self.config['ssh_server']
-		config['ssh_username'] = self.config['ssh_username']
 		config['rpc_data'] = {
 			'address': (rpc.host, rpc.port),
 			'use_ssl': rpc.use_ssl,
@@ -129,7 +127,7 @@ class KingPhisherClientRPCTerminal(object):
 		rpc = KingPhisherRPCClient(**config['rpc_data'])
 		logged_in = False
 		for _ in range(0, 3):
-			rpc.password = getpass.getpass("{0}@{1}'s password: ".format(config['ssh_username'], config['ssh_server'].split(':', 1)[0]))
+			rpc.password = getpass.getpass("{0}@{1}'s password: ".format(rpc.username, rpc.host))
 			try:
 				logged_in = rpc('ping')
 			except AdvancedHTTPServerRPCError:
