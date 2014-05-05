@@ -75,6 +75,15 @@ class ServerTests(KingPhisherServerTestCase):
 		error_message = "Javascript did not defined the loadScript function"
 		self.assertTrue(load_script in javascript, msg=error_message)
 
+		beef_hook_url = "http://{0}:3000/hook.js".format(random_string(30))
+		self.config.set('beef.hook_url', beef_hook_url)
+		http_response = self.http_request('kp.js')
+		self.assertHTTPStatus(http_response, 200)
+		javascript = http_response.read()
+		load_script = "loadScript('{0}');".format(beef_hook_url)
+		error_message = "Javascript did not load the beef hook from the config"
+		self.assertTrue(load_script in javascript, msg=error_message)
+
 	def test_static_resource_tracking_image(self):
 		http_response = self.http_request(self.config.get('server.tracking_image'), include_id=False)
 		self.assertHTTPStatus(http_response, 200)
