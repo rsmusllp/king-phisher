@@ -176,7 +176,10 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
 		cb_reject_after_creds = self.gtk_builder_get('checkbutton_reject_after_credentials')
 		entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
-		entry_beef_hook.set_property('text', self.parent.rpc('config/get', 'beef.hook_url') or '')
+		server_config = self.parent.rpc('config/get', ['beef.hook_url', 'server.require_id', 'server.secret_id'])
+		entry_beef_hook.set_property('text', server_config.get('beef.hook_url', ''))
+		self.config['server_config']['server.require_id'] = server_config['server.require_id']
+		self.config['server_config']['server.secret_id'] = server_config['server.secret_id']
 		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
 		if GObject.pygobject_version < (3, 10):
 			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))

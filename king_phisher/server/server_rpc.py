@@ -111,7 +111,8 @@ class KingPhisherRequestHandlerRPC(object):
 			option_names = option_name
 			option_values = {}
 			for option_name in option_names:
-				option_values[option_name] = self.config.get(option_name)
+				if self.config.has_option(option_name):
+					option_values[option_name] = self.config.get(option_name)
 			return option_values
 		elif self.config.has_option(option_name):
 			return self.config.get(option_name)
