@@ -90,6 +90,8 @@ def main():
 
 	# Configure environment variables
 	find.data_path_append('data/server')
+	if config.has_option('server.data_path'):
+		find.data_path_append(config.get('server.data_path'))
 
 	king_phisher_server = server.build_king_phisher_server(config)
 	database_file = config.get('server.database')

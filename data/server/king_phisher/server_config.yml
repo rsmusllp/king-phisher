@@ -15,6 +15,9 @@ server:
   # The name of the cookie used to track users
   cookie_name: KPID
 
+  # Specify an additional search path for server data files
+  #data_path: /opt/king-phisher/data/server
+
   # The SQLite3 database file to use, the folder needs write permissions
   database: /var/king-phisher/king-phisher.db
 
