@@ -71,7 +71,7 @@ def glib_idle_add_wait(function, *args):
 	gsource_completed.wait()
 	return results.pop()
 
-def gobject_get_value(gobject, gtype = None):
+def gobject_get_value(gobject, gtype=None):
 	gtype = (gtype or gobject.__class__.__name__)
 	gtype = gtype.lower()
 	if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
@@ -104,7 +104,7 @@ def search_list_store(list_store, value):
 			return row.iter
 	return None
 
-def show_dialog(message_type, message, parent, secondary_text = None, message_buttons = Gtk.ButtonsType.OK):
+def show_dialog(message_type, message, parent, secondary_text=None, message_buttons=Gtk.ButtonsType.OK):
 	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, message_type, message_buttons, message)
 	if secondary_text:
 		dialog.format_secondary_text(secondary_text)
@@ -127,8 +127,8 @@ def show_dialog_yes_no(*args, **kwargs):
 	return show_dialog(Gtk.MessageType.QUESTION, *args, **kwargs) == Gtk.ResponseType.YES
 
 class UtilityGladeGObject(object):
-	gobject_ids = [ ]
-	top_level_dependencies = [ ]
+	gobject_ids = []
+	top_level_dependencies = []
 	config_prefix = ''
 	top_gobject = 'gobject'
 	def __init__(self, config, parent):
@@ -191,7 +191,7 @@ class UtilityFileChooser(Gtk.FileChooserDialog):
 	def __init__(self, *args, **kwargs):
 		super(UtilityFileChooser, self).__init__(*args, **kwargs)
 
-	def run_quick_save(self, current_name = None):
+	def run_quick_save(self, current_name=None):
 		self.set_action(Gtk.FileChooserAction.SAVE)
 		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
 		self.add_button(Gtk.STOCK_SAVE, Gtk.ResponseType.ACCEPT)
@@ -204,7 +204,7 @@ class UtilityFileChooser(Gtk.FileChooserDialog):
 			return None
 		target_uri = self.get_uri()
 		target_filename = self.get_filename()
-		return {'target_uri':target_uri, 'target_filename':target_filename}
+		return {'target_uri': target_uri, 'target_filename': target_filename}
 
 	def quick_add_filter(self, name, patterns):
 		if not isinstance(patterns, (list, tuple)):
@@ -225,4 +225,4 @@ class UtilityFileChooser(Gtk.FileChooserDialog):
 			return None
 		target_uri = self.get_uri()
 		target_filename = self.get_filename()
-		return {'target_uri':target_uri, 'target_filename':target_filename}
+		return {'target_uri': target_uri, 'target_filename': target_filename}

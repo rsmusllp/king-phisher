@@ -58,7 +58,7 @@ def get_smtp_servers(domain):
 def normalize_name(name):
 	return name.lower().replace('&', '').replace('-', '')
 
-def send_sms(message_text, phone_number, carrier, from_address = None):
+def send_sms(message_text, phone_number, carrier, from_address=None):
 	from_address = (from_address or 'donotreply@nowhere.com')
 	phone_number = phone_number.replace('-', '').replace(' ', '')
 	if len(message_text) > 160:
@@ -89,11 +89,11 @@ def send_sms(message_text, phone_number, carrier, from_address = None):
 	return message_sent
 
 def main():
-	parser = argparse.ArgumentParser(description = 'Send SMS Messages', conflict_handler = 'resolve')
-	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + __version__)
-	parser.add_argument('phone_number', help = 'destination phone number')
-	parser.add_argument('carrier', help = 'target carrier')
-	parser.add_argument('message', help = 'message text to send')
+	parser = argparse.ArgumentParser(description='Send SMS Messages', conflict_handler='resolve')
+	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + __version__)
+	parser.add_argument('phone_number', help='destination phone number')
+	parser.add_argument('carrier', help='target carrier')
+	parser.add_argument('message', help='message text to send')
 	results = parser.parse_args()
 
 	if send_sms(results.message, results.phone_number, results.carrier):

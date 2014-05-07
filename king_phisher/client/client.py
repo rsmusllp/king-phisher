@@ -68,10 +68,10 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 	def __init__(self, *args, **kwargs):
 		super(KingPhisherClientCampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
-		columns = {1:'Campaign Name', 2:'Created'}
+		columns = {1: 'Campaign Name', 2: 'Created'}
 		for column_id in range(1, len(columns) + 1):
 			column_name = columns[column_id]
-			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text = column_id)
+			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text=column_id)
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
@@ -224,7 +224,7 @@ class KingPhisherClient(Gtk.Window):
 	__gsignals__ = {
 		'campaign_set': (GObject.SIGNAL_RUN_FIRST, None, (str,))
 	}
-	def __init__(self, config_file = None):
+	def __init__(self, config_file=None):
 		super(KingPhisherClient, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client')
 		self.config_file = (config_file or CONFIG_FILE_PATH)
@@ -259,13 +259,13 @@ class KingPhisherClient(Gtk.Window):
 
 		mailer_tab = MailSenderTab(self.config, self)
 		self.tabs['mailer'] = mailer_tab
-		self.notebook.insert_page(mailer_tab.box, mailer_tab.label, current_page+1)
-		self.notebook.set_current_page(current_page+1)
+		self.notebook.insert_page(mailer_tab.box, mailer_tab.label, current_page + 1)
+		self.notebook.set_current_page(current_page + 1)
 
 		campaign_tab = CampaignViewTab(self.config, self)
 		campaign_tab.box.show()
 		self.tabs['campaign'] = campaign_tab
-		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page+2)
+		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page + 2)
 
 		self.set_size_request(800, 600)
 		self.connect('destroy', self.signal_window_destroy)
@@ -391,17 +391,17 @@ class KingPhisherClient(Gtk.Window):
 			if not self.show_campaign_selection():
 				self.server_disconnect()
 				return False
-		campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache = True)
+		campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True)
 		if campaign_info == None:
 			if not self.show_campaign_selection():
 				self.server_disconnect()
 				return False
-			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache = True, refresh = True)
+			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True, refresh=True)
 		self.config['campaign_name'] = campaign_info['name']
 		self.emit('campaign_set', self.config['campaign_id'])
 		return True
 
-	def client_quit(self, destroy = True):
+	def client_quit(self, destroy=True):
 		self.destroy()
 		return
 
@@ -423,7 +423,7 @@ class KingPhisherClient(Gtk.Window):
 			server_remote_port = self.config.get('server_remote_port', 80)
 			local_port = random.randint(2000, 6000)
 			try:
-				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key = self.config.get('ssh_preferred_key'))
+				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key=self.config.get('ssh_preferred_key'))
 				self.ssh_forwarder.start()
 				time.sleep(0.5)
 				self.logger.info('started ssh port forwarding')
@@ -435,7 +435,7 @@ class KingPhisherClient(Gtk.Window):
 				self.logger.warning('failed to connect to the remote ssh server')
 				gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self)
 				continue
-			self.rpc = KingPhisherRPCClient(('localhost', local_port), username = username, password = password)
+			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password)
 			try:
 				assert(self.rpc('client/initialize'))
 			except AdvancedHTTPServerRPCError as err:
@@ -481,7 +481,7 @@ class KingPhisherClient(Gtk.Window):
 				del config[key]
 		config_file = os.path.expanduser(self.config_file)
 		config_file_h = open(config_file, 'wb')
-		json.dump(config, config_file_h, sort_keys = True, indent = 4)
+		json.dump(config, config_file_h, sort_keys=True, indent=4)
 
 	def delete_campaign(self):
 		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible. All campaign data will be lost.'):
@@ -534,7 +534,7 @@ class KingPhisherClient(Gtk.Window):
 			about_dialog_properties['license'] = license_text
 		for property_name, property_value in about_dialog_properties.items():
 			about_dialog.set_property(property_name, property_value)
-		about_dialog.connect('activate-link', lambda _,url: utilities.open_uri(url))
+		about_dialog.connect('activate-link', lambda _, url: utilities.open_uri(url))
 		about_dialog.show_all()
 		about_dialog.run()
 		about_dialog.destroy()

@@ -52,14 +52,14 @@ from king_phisher.third_party.AdvancedHTTPServer import SectionConfigParser
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
-def build_king_phisher_server(config, ServerClass = None, HandlerClass = None):
+def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	ServerClass = (ServerClass or KingPhisherServer)
 	HandlerClass = (HandlerClass or KingPhisherRequestHandler)
 	# Set config defaults
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
 	address = (config.get('server.address.host'), config.get('server.address.port'))
-	server = ServerClass(config, HandlerClass, address = address)
+	server = ServerClass(config, HandlerClass, address=address)
 	server.serve_files = True
 	server.serve_files_root = config.get('server.web_root')
 	return server
@@ -84,7 +84,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		tracking_image = tracking_image.replace('.', '\\.')
 		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
 
-	def issue_alert(self, alert_text, campaign_id = None):
+	def issue_alert(self, alert_text, campaign_id=None):
 		campaign_name = None
 		with self.get_cursor() as cursor:
 			if campaign_id:
@@ -95,7 +95,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 				cursor.execute('SELECT id FROM users WHERE phone_number IS NOT NULL AND phone_carrier IS NOT NULL')
 			user_ids = map(lambda user_id: user_id[0], cursor.fetchall())
 		if campaign_name != None and '{campaign_name}' in alert_text:
-			alert_text = alert_text.format(campaign_name = campaign_name)
+			alert_text = alert_text.format(campaign_name=campaign_name)
 		for user_id in user_ids:
 			with self.get_cursor() as cursor:
 				cursor.execute('SELECT phone_number, phone_carrier FROM users WHERE id = ?', (user_id,))
@@ -201,7 +201,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	def vhost(self):
 		return self.headers.get('Host')
 
-	def respond_file(self, file_path, attachment = False, query = {}):
+	def respond_file(self, file_path, attachment=False, query={}):
 		file_path = os.path.abspath(file_path)
 		file_ext = os.path.splitext(file_path)[1].lstrip('.')
 		try:
@@ -257,7 +257,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.wfile.write('Resource Not Found\n')
 		return
 
-	def respond_redirect(self, location = '/'):
+	def respond_redirect(self, location='/'):
 		location = location.lstrip('/')
 		if self.config.get('server.vhost_directories') and location.startswith(self.vhost):
 			location = location[len(self.vhost):]
@@ -319,9 +319,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 	def handle_email_opened(self, query):
 		# image size: 49 Bytes
-		img_data  = '47494638396101000100910000000000ffffffffffff00000021f90401000002'
+		img_data = '47494638396101000100910000000000ffffffffffff00000021f90401000002'
 		img_data += '002c00000000010001000002025401003b'
-		img_data  = img_data.decode('hex')
+		img_data = img_data.decode('hex')
 		self.send_response(200)
 		self.send_header('Content-Type', 'image/gif')
 		self.send_header('Content-Length', str(len(img_data)))

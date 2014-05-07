@@ -54,7 +54,7 @@ DATABASE_TABLES = {
 
 class KingPhisherDatabase(object):
 	def __init__(self, database_file):
-		self._db = sqlite3.connect(database_file, check_same_thread = False)
+		self._db = sqlite3.connect(database_file, check_same_thread=False)
 		self._lock = threading.RLock()
 
 	def commit(self):
@@ -168,8 +168,8 @@ def create_database(database_file):
 	return db
 
 def main():
-	parser = argparse.ArgumentParser(description = 'King Phisher Server Database Utility', conflict_handler = 'resolve')
-	parser.add_argument('database_file', help = 'database file to use')
+	parser = argparse.ArgumentParser(description='King Phisher Server Database Utility', conflict_handler='resolve')
+	parser.add_argument('database_file', help='database file to use')
 	arguments = parser.parse_args()
 
 	database_file = arguments.database_file

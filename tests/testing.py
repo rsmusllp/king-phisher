@@ -57,7 +57,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		config.set('server.database', ':memory:')
 		config.set('server.web_root', web_root)
 		self.config = config
-		self.server = build_king_phisher_server(config, HandlerClass = KingPhisherRequestHandlerTest)
+		self.server = build_king_phisher_server(config, HandlerClass=KingPhisherRequestHandlerTest)
 		self.assertIsInstance(self.server, KingPhisherServer)
 		self.server.init_database(config.get('server.database'))
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
@@ -71,7 +71,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		error_message = "HTTP Response received status {0} when {1} was expected".format(http_response.status, status)
 		self.assertEqual(http_response.status, status, msg=error_message)
 
-	def http_request(self, resource, method = 'GET', include_id = True):
+	def http_request(self, resource, method='GET', include_id=True):
 		if include_id:
 			resource += "{0}id={1}".format('&' if '?' in resource else '?', self.config.get('server.secret_id'))
 		conn = httplib.HTTPConnection('localhost', self.config.get('server.address.port'))
@@ -80,7 +80,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		conn.close()
 		return response
 
-	def web_root_files(self, limit = None):
+	def web_root_files(self, limit=None):
 		limit = (limit or float('inf'))
 		philes_yielded = 0
 		web_root = self.config.get('server.web_root')

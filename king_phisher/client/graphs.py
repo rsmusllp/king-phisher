@@ -71,7 +71,7 @@ class CampaignGraph(object):
 	title = 'Unknown'
 	_graph_id = None
 	table_subscriptions = []
-	def __init__(self, config, parent, size_request = None):
+	def __init__(self, config, parent, size_request=None):
 		self.config = config
 		self.parent = parent
 		self.figure, ax = pyplot.subplots()
@@ -126,7 +126,7 @@ class CampaignGraph(object):
 		if not response:
 			return
 		destination_file = response['target_filename']
-		self.figure.savefig(destination_file, format = 'png')
+		self.figure.savefig(destination_file, format='png')
 
 	def signal_toggled_popup_menu_show_toolbar(self, widget):
 		if widget.get_property('active'):
@@ -137,7 +137,7 @@ class CampaignGraph(object):
 	def load_graph(self):
 		self.refresh()
 
-	def refresh(self, info_cache = None):
+	def refresh(self, info_cache=None):
 		info_cache = (info_cache or {})
 		for table in self.table_subscriptions:
 			if not table in info_cache:
@@ -174,7 +174,7 @@ class CampaignGraphOverview(CampaignGraph):
 		ax.set_xticklabels(('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)], rotation=30)
 		for col in bars:
 			height = col.get_height()
-			ax.text(col.get_x()+col.get_width()/2.0, height, str(height), ha='center', va='bottom')
+			ax.text(col.get_x() + col.get_width() / 2.0, height, str(height), ha='center', va='bottom')
 		self.figure.subplots_adjust(bottom=0.25)
 		return info_cache
 
@@ -211,7 +211,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		ax.set_xticklabels(os_names, rotation=30)
 		for col in bars:
 			height = col.get_height()
-			ax.text(col.get_x()+col.get_width()/2.0, height, str(height), ha='center', va='bottom')
+			ax.text(col.get_x() + col.get_width() / 2.0, height, str(height), ha='center', va='bottom')
 		self.figure.subplots_adjust(bottom=0.25)
 		return info_cache
 

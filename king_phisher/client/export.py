@@ -72,11 +72,11 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 				ET.SubElement(table_row_element, key).text = convert_value(table_name, key, value)
 
 	element_tree = ET.ElementTree(root)
-	element_tree.write(xml_file, encoding = 'utf-8', xml_declaration = True)
+	element_tree.write(xml_file, encoding='utf-8', xml_declaration=True)
 
 def treeview_liststore_to_csv(treeview, target_file):
 	target_file_h = open(target_file, 'wb')
-	writer = csv.writer(target_file_h, quoting = csv.QUOTE_ALL)
+	writer = csv.writer(target_file_h, quoting=csv.QUOTE_ALL)
 	column_names = map(lambda x: x.get_property('title'), treeview.get_columns())
 	column_names.insert(0, 'UID')
 	column_count = len(column_names)

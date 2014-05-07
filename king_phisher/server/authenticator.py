@@ -44,7 +44,7 @@ make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits +
 make_hash = lambda pw: hashlib.sha512(pw).digest()
 
 class ForkedAuthenticator(object):
-	def __init__(self, cache_timeout = 600):
+	def __init__(self, cache_timeout=600):
 		self.cache_timeout = cache_timeout
 		self.parent_rfile, self.child_wfile = os.pipe()
 		self.child_rfile, self.parent_wfile = os.pipe()
@@ -92,7 +92,7 @@ class ForkedAuthenticator(object):
 			username = request['username']
 			password = request['password']
 			result = {}
-			result['result'] = pam.authenticate(username, password, service = service)
+			result['result'] = pam.authenticate(username, password, service=service)
 			self.send(result)
 
 	def authenticate(self, username, password):

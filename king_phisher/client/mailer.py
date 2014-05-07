@@ -53,7 +53,7 @@ from gi.repository import GLib
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
 
-def format_message(template, config, first_name = None, last_name = None, uid = None, target_email = None):
+def format_message(template, config, first_name=None, last_name=None, uid=None, target_email=None):
 	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
 	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
 	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, (str, unicode)) else target_email)
@@ -101,7 +101,7 @@ class MailSenderThread(threading.Thread):
 		remote_server = utilities.server_parse(self.config['smtp_server'], 25)
 		local_port = random.randint(2000, 6000)
 		try:
-			self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server, preferred_private_key = self.config.get('ssh_preferred_key'))
+			self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server, preferred_private_key=self.config.get('ssh_preferred_key'))
 			self.ssh_forwarder.start()
 			time.sleep(0.5)
 		except:
@@ -195,7 +195,7 @@ class MailSenderThread(threading.Thread):
 		GLib.idle_add(self.tab.notify_stopped)
 		return
 
-	def process_pause(self, set_pause = False):
+	def process_pause(self, set_pause=False):
 		if set_pause:
 			gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
 		if self.paused.is_set():
@@ -229,7 +229,7 @@ class MailSenderThread(threading.Thread):
 		msg_alt = MIMEMultipart('alternative')
 		msg.attach(msg_alt)
 		msg_template = open(self.config['mailer.html_file'], 'r').read()
-		formatted_msg = format_message(msg_template, self.config, first_name = first_name, last_name = last_name, uid = uid, target_email = target_email)
+		formatted_msg = format_message(msg_template, self.config, first_name=first_name, last_name=last_name, uid=uid, target_email=target_email)
 		msg_body = MIMEText(formatted_msg, "html")
 		msg_alt.attach(msg_body)
 		if self.config.get('mailer.attachment_file'):

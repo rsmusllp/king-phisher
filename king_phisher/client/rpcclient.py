@@ -66,7 +66,7 @@ class KingPhisherRPCClient(AdvancedHTTPServerRPCClientCached):
 			args[-1] += 1
 			results = self.call(table_method, *args)
 
-	def remote_table_row(self, table, row_id, cache = False, refresh = False):
+	def remote_table_row(self, table, row_id, cache=False, refresh=False):
 		table_method = table + '/get'
 		if cache and refresh:
 			result = self.cache_call_refresh(table_method, row_id)

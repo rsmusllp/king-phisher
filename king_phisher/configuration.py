@@ -42,11 +42,11 @@ class Configuration(object):
 	def __init__(self, configuration_file):
 		self.configuration_file = configuration_file
 		file_h = open(self.configuration_file, 'r')
-		self._storage = dict(yaml.load(file_h, Loader = Loader))
+		self._storage = dict(yaml.load(file_h, Loader=Loader))
 		file_h.close()
 
 	def dumps(self, obj):
-		return yaml.dump(obj, default_flow_style = False, Dumper = Dumper)
+		return yaml.dump(obj, default_flow_style=False, Dumper=Dumper)
 
 	def get_storage(self):
 		return copy.deepcopy(self._storage)

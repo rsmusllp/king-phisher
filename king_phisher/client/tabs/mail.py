@@ -101,7 +101,7 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 				login_dialog.objects_load_from_config()
 				response = login_dialog.interact()
 				if response == Gtk.ResponseType.CANCEL:
-					self.sender_start_failure(text = 'Canceled.\n')
+					self.sender_start_failure(text='Canceled.\n')
 					return
 				if self.sender_thread.server_ssh_connect():
 					self.text_insert('Done.\n')
@@ -155,7 +155,7 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 	def notify_sent(self, emails_done, emails_total):
 		self.progressbar.set_fraction(float(emails_done) / float(emails_total))
 
-	def sender_start_failure(self, message = None, text = None):
+	def sender_start_failure(self, message=None, text=None):
 		if text:
 			self.text_insert(text)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
@@ -190,9 +190,9 @@ class MailSenderPreviewTab(object):
 
 class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
-			'button_save_as_html_file',
-			'button_save_html_file',
-			'textview_html_file'
+            'button_save_as_html_file',
+            'button_save_html_file',
+            'textview_html_file'
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
@@ -207,7 +207,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		if not html_file:
 			return
 		dialog = gui_utilities.UtilityFileChooser('Save HTML File', self.parent)
-		response = dialog.run_quick_save(current_name = os.path.basename(html_file))
+		response = dialog.run_quick_save(current_name=os.path.basename(html_file))
 		dialog.destroy()
 		if not response:
 			return
@@ -231,17 +231,17 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 
 class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
-			'entry_webserver_url',
-			'entry_company_name',
-			'entry_source_email',
-			'entry_source_email_alias',
-			'entry_subject',
-			'entry_reply_to_email',
-			'entry_html_file',
-			'entry_target_file',
-			'entry_attachment_file',
-			'combobox_importance',
-			'combobox_sensitivity'
+            'entry_webserver_url',
+            'entry_company_name',
+            'entry_source_email',
+            'entry_source_email_alias',
+            'entry_subject',
+            'entry_reply_to_email',
+            'entry_html_file',
+            'entry_target_file',
+            'entry_attachment_file',
+            'combobox_importance',
+            'combobox_sensitivity'
 	]
 	config_prefix = 'mailer.'
 	top_gobject = 'box'

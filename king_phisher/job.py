@@ -76,7 +76,7 @@ class JobRun(threading.Thread):
 #   run_count: number of times the job has been ran
 #   expiration: number of times to run a job, datetime.timedelta instance or None
 class JobManager(threading.Thread):
-	def __init__(self, use_utc = True):
+	def __init__(self, use_utc=True):
 		super(JobManager, self).__init__()
 		self.__jobs__ = {}
 		self.running = threading.Event()
@@ -177,7 +177,7 @@ class JobManager(threading.Thread):
 		self.job_lock.release()
 		self.shutdown.set()
 
-	def job_run(self, callback, parameters = []):
+	def job_run(self, callback, parameters=[]):
 		if not isinstance(parameters, (list, tuple)):
 			parameters = (parameters,)
 		job_desc = {}
@@ -197,7 +197,7 @@ class JobManager(threading.Thread):
 			self.__job_execute(job_id)
 		return job_id
 
-	def job_add(self, callback, parameters = [], hours = 0, minutes = 0, seconds = 0, tolerate_exceptions = True, expiration = None):
+	def job_add(self, callback, parameters=[], hours=0, minutes=0, seconds=0, tolerate_exceptions=True, expiration=None):
 		if not isinstance(parameters, (list, tuple)):
 			parameters = (parameters,)
 		job_desc = {}

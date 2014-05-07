@@ -40,7 +40,7 @@ def data_path_append(path):
 	if not path in os.environ[ENV_VAR].split(os.pathsep):
 		os.environ[ENV_VAR] = os.pathsep.join((os.environ[ENV_VAR], path))
 
-def find_data_file(data_file, access_mode = os.R_OK):
+def find_data_file(data_file, access_mode=os.R_OK):
 	search_path = os.environ[ENV_VAR]
 	for directory in search_path.split(os.pathsep):
 		test_file_path = os.path.join(directory, DATA_DIRECTORY_NAME, data_file)

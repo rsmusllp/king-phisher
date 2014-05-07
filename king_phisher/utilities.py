@@ -123,7 +123,7 @@ def open_uri(uri):
 	else:
 		raise RuntimeError('could not find suitable application to open uri')
 	proc_args.append(uri)
-	proc_h = subprocess.Popen(proc_args, stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, startupinfo=startupinfo)
+	proc_h = subprocess.Popen(proc_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
 	return proc_h.wait() == 0
 
 def server_parse(server, default_port):
@@ -139,7 +139,7 @@ def server_parse(server, default_port):
 			port = int(port)
 		return (host, port)
 
-def unique(seq, key = None):
+def unique(seq, key=None):
 	if key is None:
 		key = lambda x: x
 	preserved_type = type(seq)

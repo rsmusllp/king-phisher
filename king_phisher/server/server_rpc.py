@@ -99,12 +99,12 @@ class KingPhisherRequestHandlerRPC(object):
 		return True
 
 	def rpc_shutdown(self):
-		shutdown_thread = threading.Thread(target = self.server.shutdown)
+		shutdown_thread = threading.Thread(target=self.server.shutdown)
 		shutdown_thread.start()
 		return
 
 	def rpc_version(self):
-		return {'version':version.version, 'version_info':version.version_info._asdict()}
+		return {'version': version.version, 'version_info': version.version_info._asdict()}
 
 	def rpc_config_get(self, option_name):
 		if isinstance(option_name, (list, tuple)):

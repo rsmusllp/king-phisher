@@ -32,7 +32,7 @@
 
 import random
 
-def xor_encode(data, seed_key = None):
+def xor_encode(data, seed_key=None):
 	seed_key = (seed_key or random.randint(0, 255))
 	data = map(ord, data)
 	encoded_data = [seed_key]

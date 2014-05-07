@@ -40,7 +40,7 @@ from king_phisher import utilities
 import dns.resolver
 
 class KingPhisherSMTPServer(smtpd.PureProxy, object):
-	def __init__(self, localaddr, remoteaddr, debugging = False):
+	def __init__(self, localaddr, remoteaddr, debugging=False):
 		self.debugging = debugging
 		self.logger = logging.getLogger('KingPhisher.SMTPD')
 		super(KingPhisherSMTPServer, self).__init__(localaddr, remoteaddr)
