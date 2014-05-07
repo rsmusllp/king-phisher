@@ -50,11 +50,11 @@ except ImportError:
 	has_msgpack = False
 
 def main():
-	parser = argparse.ArgumentParser(description = 'King Phisher Server', conflict_handler = 'resolve')
-	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
-	parser.add_argument('-f', '--foreground', dest = 'foreground', action = 'store_true', default = False, help = 'run in forground (do not fork)')
-	parser.add_argument('config_file', action = 'store', type = argparse.FileType('r'), help = 'configuration file to use')
+	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
+	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
+	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
+	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in forground (do not fork)')
+	parser.add_argument('config_file', action='store', type=argparse.FileType('r'), help='configuration file to use')
 	arguments = parser.parse_args()
 
 	logging.getLogger('').setLevel(logging.DEBUG)
@@ -120,10 +120,10 @@ def main():
 			king_phisher_server.shutdown()
 			return
 		logger.info("dropped privileges to the {0} account".format(setuid_username))
-	sighup_handler = lambda: threading.Thread(target = king_phisher_server.shutdown).start()
+	sighup_handler = lambda: threading.Thread(target=king_phisher_server.shutdown).start()
 	signal.signal(signal.SIGHUP, lambda signum, frame: sighup_handler())
 	try:
-		king_phisher_server.serve_forever(fork = False)
+		king_phisher_server.serve_forever(fork=False)
 	except KeyboardInterrupt:
 		pass
 	king_phisher_server.shutdown()

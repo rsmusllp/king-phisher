@@ -38,11 +38,11 @@ from king_phisher import smtp_server
 from king_phisher import version
 
 def main():
-	parser = argparse.ArgumentParser(description = 'King Phisher SMTP Debug Server', conflict_handler = 'resolve')
-	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
-	parser.add_argument('-f', '--foreground', dest = 'foreground', action = 'store_true', default = False, help = 'run in forground (do not fork)')
-	parser.add_argument('-p', '--port', dest = 'port', type = int, default = 2525, help = 'port to listen on')
+	parser = argparse.ArgumentParser(description='King Phisher SMTP Debug Server', conflict_handler='resolve')
+	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
+	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
+	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in forground (do not fork)')
+	parser.add_argument('-p', '--port', dest='port', type=int, default=2525, help='port to listen on')
 	arguments = parser.parse_args()
 
 	logging.getLogger('').setLevel(logging.DEBUG)
@@ -55,7 +55,7 @@ def main():
 	if (not arguments.foreground) and os.fork():
 		return
 
-	server = smtp_server.KingPhisherSMTPServer(('localhost', arguments.port), None, debugging = True)
+	server = smtp_server.KingPhisherSMTPServer(('localhost', arguments.port), None, debugging=True)
 	server.serve_forever()
 
 if __name__ == '__main__':

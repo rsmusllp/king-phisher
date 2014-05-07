@@ -44,11 +44,11 @@ from gi.repository import GObject
 from gi.repository import Gtk
 
 def main():
-	parser = argparse.ArgumentParser(description = 'King Phisher', conflict_handler = 'resolve')
-	parser.add_argument('-c', '--config', dest = 'config_file', required = False, help = 'specify a configuration file to use')
-	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest = 'loglvl', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'CRITICAL', help = 'set the logging level')
-	parser.add_argument('--logger', default = 'KingPhisher', help = 'specify the root logger')
+	parser = argparse.ArgumentParser(description='King Phisher', conflict_handler='resolve')
+	parser.add_argument('-c', '--config', dest='config_file', required=False, help='specify a configuration file to use')
+	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
+	parser.add_argument('-L', '--log', dest='loglvl', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
+	parser.add_argument('--logger', default='KingPhisher', help='specify the root logger')
 	arguments = parser.parse_args()
 
 	logging.getLogger(arguments.logger).setLevel(logging.DEBUG)
@@ -67,7 +67,7 @@ def main():
 		return 0
 
 	Gtk.init(sys.argv)
-	main_window = client.KingPhisherClient(config_file = config_file)
+	main_window = client.KingPhisherClient(config_file=config_file)
 	main_window.set_position(Gtk.WindowPosition.CENTER)
 	if main_window.init_connection():
 		GObject.threads_init()
