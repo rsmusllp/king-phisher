@@ -36,22 +36,31 @@ import re
 __all__ = ['UserAgent', 'parse_user_agent']
 __version__ = '0.1'
 
-USER_AGENT_REGEX_OS = re.compile(r'(android|blackberry|(ipad|iphone)?; cpu (ipad |iphone )?os|linux|mac os x|windows nt) (([\d\._\-]+)(;|\)| ))?', flags=re.IGNORECASE)
 USER_AGENT_REGEX_ARCH_X86 = re.compile(r'(x|(i[3456]))86[^-_]', flags=re.IGNORECASE)
 USER_AGENT_REGEX_ARCH_X86_64 = re.compile(r'(amd|wow|x(86[-_])?)?64', flags=re.IGNORECASE)
+USER_AGENT_REGEX_OS = re.compile(r'(android|blackberry|(ipad|iphone)?; cpu (ipad |iphone )?os|linux|mac os x|windows nt) (([\d\._\-]+)(;|\)| ))?', flags=re.IGNORECASE)
+USER_AGENT_REGEX_VERSION = re.compile(r'Version/(([\d\._\-]+)(;|\)| ))')
 
 UserAgent = collections.namedtuple('UserAgent', ['os_name', 'os_version', 'os_arch'])
 
 def parse_user_agent(user_agent):
 	os_parts = USER_AGENT_REGEX_OS.search(user_agent)
 	if not os_parts:
-		return None
+		user_agent = re.sub(r'(BB)(\d+)', r'BlackBerry \2', user_agent)
+		os_parts = USER_AGENT_REGEX_OS.search(user_agent)
+		if not os_parts:
+			return None
+	os_arch = None
+	os_version = None
 	# OS Name
 	os_name = os_parts.group(1).lower()
 	if 'android' in os_name:
 		os_name = 'Android'
 	elif 'blackberry' in os_name:
 		os_name = 'BlackBerry'
+		version_tag = USER_AGENT_REGEX_VERSION.search(user_agent)
+		if version_tag:
+			os_version = version_tag.group(2)
 	elif 'ipad' in os_name or 'iphone' in os_name:
 		os_name = 'iOS'
 	elif 'linux' in os_name:
@@ -63,7 +72,7 @@ def parse_user_agent(user_agent):
 	else:
 		return None
 	# OS Version
-	os_version = os_parts.group(5)
+	os_version = (os_version or os_parts.group(5))
 	if os_version:
 		os_version = re.sub(r'[_-]', r'.', os_version)
 	# OS Arch
