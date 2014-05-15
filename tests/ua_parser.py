@@ -50,45 +50,44 @@ class UserAgentParserTests(unittest.TestCase):
 			ua = parse_user_agent(user_agent)
 			self.assertIsInstance(ua, UserAgent)
 
-	def test_os_android(self):
-		ua = parse_user_agent('Mozilla/5.0 (Linux; U; Android 4.1.2; en-us; DROID RAZR Build/9.8.2O-72_VZW-16-5) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30')
+	def _parse_user_agent(self, user_agent, os_name, os_version, os_arch):
+		ua = parse_user_agent(user_agent)
 		self.assertIsInstance(ua, UserAgent)
-		self.assertEqual(ua.os_name, 'Android')
-		self.assertEqual(ua.os_version, '4.1.2')
-		self.assertIsNone(ua.os_arch)
+		if os_version == None:
+			self.assertIsNone(ua.os_version)
+		else:
+			self.assertEqual(ua.os_version, os_version, msg='detected os version does not match')
+		if os_arch == None:
+			self.assertIsNone(ua.os_arch)
+		else:
+			self.assertEqual(ua.os_arch, os_arch, msg='detected os architecture does not match')
+		return ua
+
+	def test_os_android(self):
+		ua = 'Mozilla/5.0 (Linux; U; Android 4.1.2; en-us; DROID RAZR Build/9.8.2O-72_VZW-16-5) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30'
+		self._parse_user_agent(ua, 'Android', '4.1.2', None)
+
+	def test_os_blackberry(self):
+		ua = 'Mozilla/5.0 (BB10; Touch) AppleWebKit/537.35+ (KHTML, like Gecko) Version/10.2.1.2141 Mobile Safari/537.35+'
+		self._parse_user_agent(ua, 'BlackBerry', '10.2.1.2141', None)
 
 	def test_os_ios(self):
-		ua = parse_user_agent('Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_0 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7A341 Safari/528.1')
-		self.assertIsInstance(ua, UserAgent)
-		self.assertEqual(ua.os_name, 'iOS')
-		self.assertEqual(ua.os_version, '3.0')
-		self.assertIsNone(ua.os_arch)
-		ua = parse_user_agent('Mozilla/5.0 (iPad; CPU OS 7_0_4 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11B554a Safari/9537.53')
-		self.assertIsInstance(ua, UserAgent)
-		self.assertEqual(ua.os_name, 'iOS')
-		self.assertEqual(ua.os_version, '7.0.4')
-		self.assertIsNone(ua.os_arch)
+		ua = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_0 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7A341 Safari/528.1'
+		self._parse_user_agent(ua, 'iOS', '3.0', None)
+		ua = 'Mozilla/5.0 (iPad; CPU OS 7_0_4 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11B554a Safari/9537.53'
+		self._parse_user_agent(ua, 'iOS', '7.0.4', None)
 
 	def test_os_linux(self):
-		ua = parse_user_agent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36')
-		self.assertIsInstance(ua, UserAgent)
-		self.assertEqual(ua.os_name, 'Linux')
-		self.assertIsNone(ua.os_version)
-		self.assertEqual(ua.os_arch, 'x86-64')
+		ua = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36'
+		self._parse_user_agent(ua, 'Linux', None, 'x86-64')
 
 	def test_os_osx(self):
-		ua = parse_user_agent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.10 (KHTML, like Gecko) Version/5.1.9 Safari/534.59.10')
-		self.assertIsInstance(ua, UserAgent)
-		self.assertEqual(ua.os_name, 'OS X')
-		self.assertEqual(ua.os_version, '10.6.8')
-		self.assertIsNone(ua.os_arch)
+		ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.10 (KHTML, like Gecko) Version/5.1.9 Safari/534.59.10'
+		self._parse_user_agent(ua, 'OS X', '10.6.8', None)
 
 	def test_os_windows(self):
-		ua = parse_user_agent('Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)')
-		self.assertIsInstance(ua, UserAgent)
-		self.assertEqual(ua.os_name, 'Windows NT')
-		self.assertEqual(ua.os_version, '6.1')
-		self.assertEqual(ua.os_arch, 'x86-64')
+		ua = 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'
+		self._parse_user_agent(ua, 'Windows NT', '6.1', 'x86-64')
 
 if __name__ == '__main__':
 	unittest.main()
