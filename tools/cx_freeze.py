@@ -101,7 +101,6 @@ missing_dlls = [
 	'libzzz.dll',
 ]
 
-## Create the list of includes as cx_freeze likes
 include_files = []
 for dll in missing_dlls:
 	include_files.append((os.path.join(include_dll_path, dll), dll))
@@ -120,22 +119,23 @@ if is_debugging_build:
 executables = [
 	Executable(
 		'KingPhisher',
-		base = exe_base,
-		shortcutDir = 'DesktopFolder'
+		base=exe_base,
+		shortcutName='KingPhisher',
+		shortcutDir='ProgramMenuFolder'
 	)
 ]
 
 build_exe_options = dict(
-	compressed = False,
-	packages = ['email', 'gi', 'matplotlib', 'msgpack', 'paramiko'],
-	include_files = include_files
+	compressed=False,
+	packages=['email', 'gi', 'matplotlib', 'msgpack', 'paramiko'],
+	include_files=include_files
 )
 
 setup(
-	name = 'KingPhisher',
-	author = 'Spencer McIntyre',
-	version = version.distutils_version,
-	description = 'King Phisher Client',
-	options = dict(build_exe = build_exe_options),
-	executables = executables
+	name='KingPhisher',
+	author='Spencer McIntyre',
+	version=version.distutils_version,
+	description='King Phisher Client',
+	options=dict(build_exe=build_exe_options),
+	executables=executables
 )
