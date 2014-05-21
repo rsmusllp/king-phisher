@@ -32,9 +32,9 @@
 
 import collections
 
-version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(0, 1, 2)
+version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(0, 1, 3)
 
-version_label = ''
+version_label = 'alpha'
 version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)
 
 # distutils_version is compatible with distutils.version classes
