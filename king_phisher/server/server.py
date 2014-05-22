@@ -201,6 +201,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		return self.headers.get('Host')
 
 	def respond_file(self, file_path, attachment=False, query={}):
+		self._respond_file_check_id()
 		file_path = os.path.abspath(file_path)
 		file_ext = os.path.splitext(file_path)[1][1:]
 		if attachment or not file_ext in ['htm', 'html', 'txt']:
@@ -209,9 +210,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 		try:
 			template = self.server.template_env.get_template(os.path.relpath(file_path, self.server.serve_files_root))
-		except jinja2.exceptions.TemplateNotFound, IOError:
+		except jinja2.exceptions.TemplateError, IOError:
 			raise KingPhisherErrorAbortRequest()
-		self._respond_file_check_id()
 
 		template_vars = {
 			'server': {
@@ -240,7 +240,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			file_obj = open(file_path, 'rb')
 		except IOError:
 			raise KingPhisherErrorAbortRequest()
-		self._respond_file_check_id()
 		fs = os.fstat(file_obj.fileno())
 		self.send_response(200)
 		self.send_header('Content-Type', self.guess_mime_type(file_path))
@@ -457,8 +456,11 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.job_manager = job.JobManager()
 		self.job_manager.start()
 		self.http_server.job_manager = self.job_manager
+
+		autoescape = lambda name: isinstance(name, (str, unicode)) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
+		extensions = ['jinja2.ext.autoescape']
 		loader = jinja2.FileSystemLoader(self.serve_files_root)
-		self.http_server.template_env = jinja2.Environment(loader=loader)
+		self.http_server.template_env = jinja2.Environment(autoescape=autoescape, extensions=extensions, loader=loader)
 
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
