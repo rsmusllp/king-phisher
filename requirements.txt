@@ -1,4 +1,5 @@
 dnspython>=1.10.0
+Jinja2>=2.7.1
 matplotlib>=1.2.1
 msgpack-python>=0.4.2
 paramiko>=1.10.1

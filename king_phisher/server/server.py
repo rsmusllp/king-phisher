@@ -50,6 +50,8 @@ from king_phisher.third_party.AdvancedHTTPServer import *
 from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 from king_phisher.third_party.AdvancedHTTPServer import SectionConfigParser
 
+import jinja2
+
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
 
 def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
@@ -200,47 +202,76 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 	def respond_file(self, file_path, attachment=False, query={}):
 		file_path = os.path.abspath(file_path)
-		file_ext = os.path.splitext(file_path)[1].lstrip('.')
+		file_ext = os.path.splitext(file_path)[1][1:]
+		if attachment or not file_ext in ['htm', 'html', 'txt']:
+			self._respond_file_raw(file_path, attachment)
+			return
+
+		try:
+			template = self.server.template_env.get_template(os.path.relpath(file_path, self.server.serve_files_root))
+		except jinja2.exceptions.TemplateNotFound, IOError:
+			raise KingPhisherErrorAbortRequest()
+		self._respond_file_check_id()
+
+		template_vars = {
+			'server': {
+				'hostname': self.vhost,
+				'address': self.connection.getsockname()[0]
+			}
+		}
+		template_data = template.render(template_vars)
+		fs = os.stat(template.filename)
+		self.send_response(200)
+		self.send_header('Content-Type', self.guess_mime_type(file_path))
+		self.send_header('Content-Length', str(len(template_data)))
+		self.send_header('Last-Modified', self.date_time_string(fs.st_mtime))
+
+		try:
+			self.handle_page_visit()
+		except Exception as err:
+			self.server.logger.error('handle_page_visit raised error: ' + err.__class__.__name__)
+
+		self.end_headers()
+		self.wfile.write(template_data)
+		return
+
+	def _respond_file_raw(self, file_path, attachment):
 		try:
 			file_obj = open(file_path, 'rb')
 		except IOError:
 			raise KingPhisherErrorAbortRequest()
-
-		if self.config.get('server.require_id') and self.message_id != self.config.get('server.secret_id'):
-			# a valid campaign_id requires a valid message_id
-			if not self.campaign_id:
-				self.server.logger.warning('denying request due to lack of a valid id')
-				raise KingPhisherErrorAbortRequest()
-
-			if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ?', (self.campaign_id, self.vhost)) == 0:
-				self.server.logger.warning('denying request with not found due to invalid hostname')
-				raise KingPhisherErrorAbortRequest()
-
-			with self.get_cursor() as cursor:
-				cursor.execute('SELECT reject_after_credentials FROM campaigns WHERE id = ?', (self.campaign_id,))
-				reject_after_credentials = cursor.fetchone()[0]
-			if reject_after_credentials and self.visit_id == None and self.query_count('SELECT COUNT(id) FROM credentials WHERE message_id = ?', (self.message_id,)):
-				self.server.logger.warning('denying request because credentials were already harvested')
-				raise KingPhisherErrorAbortRequest()
-
+		self._respond_file_check_id()
+		fs = os.fstat(file_obj.fileno())
 		self.send_response(200)
 		self.send_header('Content-Type', self.guess_mime_type(file_path))
-		fs = os.fstat(file_obj.fileno())
 		self.send_header('Content-Length', str(fs[6]))
 		if attachment:
 			file_name = os.path.basename(file_path)
 			self.send_header('Content-Disposition', 'attachment; filename=' + file_name)
 		self.send_header('Last-Modified', self.date_time_string(fs.st_mtime))
-
-		if file_ext in ['', 'htm', 'html']:
-			try:
-				self.handle_page_visit()
-			except Exception as err:
-				self.server.logger.error('handle_page_visit raised error: ' + err.__class__.__name__)
-
 		self.end_headers()
 		shutil.copyfileobj(file_obj, self.wfile)
 		file_obj.close()
+		return
+
+	def _respond_file_check_id(self):
+		if not self.config.get('server.require_id'):
+			return
+		if self.message_id == self.config.get('server.secret_id'):
+			return
+		# a valid campaign_id requires a valid message_id
+		if not self.campaign_id:
+			self.server.logger.warning('denying request due to lack of a valid id')
+			raise KingPhisherErrorAbortRequest()
+		if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ?', (self.campaign_id, self.vhost)) == 0:
+			self.server.logger.warning('denying request with not found due to invalid hostname')
+			raise KingPhisherErrorAbortRequest()
+		with self.get_cursor() as cursor:
+			cursor.execute('SELECT reject_after_credentials FROM campaigns WHERE id = ?', (self.campaign_id,))
+			reject_after_credentials = cursor.fetchone()[0]
+		if reject_after_credentials and self.visit_id == None and self.query_count('SELECT COUNT(id) FROM credentials WHERE message_id = ?', (self.message_id,)):
+			self.server.logger.warning('denying request because credentials were already harvested')
+			raise KingPhisherErrorAbortRequest()
 		return
 
 	def respond_not_found(self):
@@ -426,6 +457,8 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.job_manager = job.JobManager()
 		self.job_manager.start()
 		self.http_server.job_manager = self.job_manager
+		loader = jinja2.FileSystemLoader(self.serve_files_root)
+		self.http_server.template_env = jinja2.Environment(loader=loader)
 
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()

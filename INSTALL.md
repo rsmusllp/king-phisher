@@ -9,21 +9,18 @@ King-Phisher uses a client server architecture.  The ```KingPhisherServer``` fil
 Additionally, the user logging in with the King-Phisher client will require a valid local account on the KingPhisherServer.
 
 ## Client Required Packages
-[Paramiko](https://github.com/paramiko/paramiko)
-
-[PyGObject](https://wiki.gnome.org/PyGObject)
+* [Paramiko](https://github.com/paramiko/paramiko)
+* [PyGObject](https://wiki.gnome.org/PyGObject)
 
 ## Client Optional Packages
-[Matplotlib](http://matplotlib.org/)
-
-[Msgpack-Python](https://github.com/msgpack/msgpack-python)
+* [Matplotlib](http://matplotlib.org/)
+* [Msgpack-Python](https://github.com/msgpack/msgpack-python)
 
 ## Server Required Packages
-[dnspython](http://www.dnspython.org/)
-
-[Msgpack-Python](https://github.com/msgpack/msgpack-python)
-
-[PyYAML](http://pyyaml.org/)
+* [dnspython](http://www.dnspython.org/)
+* [Jinja2](http://jinja.pocoo.org/)
+* [Msgpack-Python](https://github.com/msgpack/msgpack-python)
+* [PyYAML](http://pyyaml.org/)
 
 ## Linux Install Steps
 1. Download King-Phisher from GitHub: ```git clone https://github.com/securestate/king-phisher.git```
