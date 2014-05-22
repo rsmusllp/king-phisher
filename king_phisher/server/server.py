@@ -59,10 +59,7 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
 	address = (config.get('server.address.host'), config.get('server.address.port'))
-	server = ServerClass(config, HandlerClass, address=address)
-	server.serve_files = True
-	server.serve_files_root = config.get('server.web_root')
-	return server
+	return ServerClass(config, HandlerClass, address=address)
 
 class KingPhisherErrorAbortRequest(Exception):
 	pass
@@ -418,15 +415,18 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.config = config
 		self.database = None
 		self.serve_files = True
+		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
 		self.serve_robots_txt = True
+
 		self.http_server.config = config
+		self.http_server.throttle_semaphore = threading.Semaphore()
 		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator()
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
-		self.http_server.throttle_semaphore = threading.Semaphore()
 		self.job_manager = job.JobManager()
 		self.job_manager.start()
 		self.http_server.job_manager = self.job_manager
+
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
 
