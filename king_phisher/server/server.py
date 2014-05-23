@@ -31,6 +31,7 @@
 #
 
 import binascii
+import datetime
 import json
 import logging
 import os
@@ -147,6 +148,25 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	def get_query_parameter(self, parameter):
 		return self.query_data.get(parameter, [None])[0]
 
+	def get_template_vars_client(self):
+		if not self.message_id:
+			return None
+		with self.get_cursor() as cursor:
+			cursor.execute('SELECT target_email, company_name, first_name, last_name, trained FROM messages WHERE id = ?', (self.message_id,))
+			result = cursor.fetchone()
+		if not result:
+			return None
+		client_vars = {}
+		client_vars['email'] = result[0]
+		client_vars['company_name'] = result[1]
+		client_vars['first_name'] = result[2]
+		client_vars['last_name'] = result[3]
+		client_vars['is_trained'] = bool(result[4])
+		client_vars['message_id'] = self.message_id
+		if self.visit_id:
+			client_vars['visit_id'] = self.visit_id
+		return client_vars
+
 	def custom_authentication(self, username, password):
 		return self.server.forked_authenticator.authenticate(username, password)
 
@@ -214,11 +234,19 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			raise KingPhisherErrorAbortRequest()
 
 		template_vars = {
+			'client': {
+				'address': self.client_address[0]
+			},
 			'server': {
 				'hostname': self.vhost,
 				'address': self.connection.getsockname()[0]
+			},
+			'time': {
+				'local': datetime.datetime.now(),
+				'utc': datetime.datetime.utcnow()
 			}
 		}
+		template_vars['client'].update(self.get_template_vars_client() or {})
 		template_data = template.render(template_vars)
 		fs = os.stat(template.filename)
 		self.send_response(200)
@@ -461,7 +489,11 @@ class KingPhisherServer(AdvancedHTTPServer):
 		autoescape = lambda name: isinstance(name, (str, unicode)) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
 		extensions = ['jinja2.ext.autoescape']
 		loader = jinja2.FileSystemLoader(self.serve_files_root)
-		self.http_server.template_env = jinja2.Environment(autoescape=autoescape, extensions=extensions, loader=loader)
+		template_env = jinja2.Environment(autoescape=autoescape, extensions=extensions, loader=loader)
+		template_env.filters['strftime'] = lambda dt, f: dt.strftime(f)
+		template_env.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
+		template_env.filters['yesterday'] = lambda dt: dt + datetime.timedelta(days=-1)
+		self.http_server.template_env = template_env
 
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
