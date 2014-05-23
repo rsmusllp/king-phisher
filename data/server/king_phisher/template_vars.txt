@@ -3,26 +3,29 @@
 	filters are available.
 #}
 # Client Vars
-client.address:      {{ client.address }}
+client.address:         {{ client.address }}
 {% if client.message_id is defined %}
-client.company_name: {{ client.company_name }}
-client.email:        {{ client.email }}
-client.first_name:   {{ client.first_name }}
-client.is_trained:   {{ client.is_trained }}
-client.last_name:    {{ client.last_name }}
-client.message_id:   {{ client.message_id }}
-client.visit_id:     {{ client.visit_id }}
+## Client Session Vars
+client.company_name:    {{ client.company_name }}
+client.email:           {{ client.email }}
+client.first_name:      {{ client.first_name }}
+client.is_trained:      {{ client.is_trained }}
+client.last_name:       {{ client.last_name }}
+client.message_id:      {{ client.message_id }}
+client.visit_id:        {{ client.visit_id }}
 {% endif %}
-
 # Server Vars
-server.hostname:     {{ server.hostname }}
-server.address:      {{ server.address }}
+server.address:         {{ server.address }}
+server.hostname:        {{ server.hostname }}
 
 # Time Vars
-time.local:          {{ time.local }}
-time.utc:            {{ time.utc }}
+time.local:             {{ time.local }}
+time.utc:               {{ time.utc }}
 
-## Time Filters:
-yesterday:           {{ time.local | yesterday }}
-tomorrow:            {{ time.local | tomorrow }}
-strftime:            {{ time.local | strftime('%A, %d %B %Y %I:%M%p') }}
+## Time Filters
+yesterday:              {{ time.local | yesterday }}
+tomorrow:               {{ time.local | tomorrow }}
+strftime:               {{ time.local | strftime('%A, %d %B %Y %I:%M%p') }}
+
+# Miscellaneous
+version:                {{ version }}

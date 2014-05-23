@@ -43,6 +43,7 @@ import threading
 from king_phisher import find
 from king_phisher import job
 from king_phisher import sms
+from king_phisher import version
 from king_phisher import xor
 from king_phisher.server import authenticator
 from king_phisher.server import database
@@ -493,6 +494,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		template_env.filters['strftime'] = lambda dt, f: dt.strftime(f)
 		template_env.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
 		template_env.filters['yesterday'] = lambda dt: dt + datetime.timedelta(days=-1)
+		template_env.globals['version'] = version.version
 		self.http_server.template_env = template_env
 
 		self.__is_shutdown = threading.Event()
