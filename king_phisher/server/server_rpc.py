@@ -158,9 +158,10 @@ class KingPhisherRequestHandlerRPC(object):
 			cursor.execute('INSERT INTO landing_pages (campaign_id, hostname, page) VALUES (?, ?, ?)', (campaign_id, hostname, page))
 		return
 
-	def rpc_campaign_message_new(self, campaign_id, email_id, email_target):
+	def rpc_campaign_message_new(self, campaign_id, email_id, email_target, company_name, first_name, last_name):
+		values = (email_id, campaign_id, email_target, company_name, first_name, last_name)
 		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO messages (id, campaign_id, target_email) VALUES (?, ?, ?)', (email_id, campaign_id, email_target))
+			cursor.execute('INSERT INTO messages (id, campaign_id, target_email, company_name, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)', values)
 		return
 
 	def rpc_campaign_delete(self, campaign_id):

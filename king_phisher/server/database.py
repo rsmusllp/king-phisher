@@ -40,19 +40,22 @@ import threading
 
 make_uid = lambda l: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(l))
 
+SCHEMA_VERSION = 1
 DATABASE_TABLES = {
 	'users':                ['id', 'phone_carrier', 'phone_number'],
 	'alert_subscriptions':  ['id', 'campaign_id', 'user_id'],
 	'campaigns':            ['id', 'name', 'creator', 'created', 'reject_after_credentials'],
 	'landing_pages':        ['id', 'campaign_id', 'hostname', 'page'],
-	'messages':             ['id', 'campaign_id', 'target_email', 'opened', 'sent', 'trained'],
+	'messages':             ['id', 'campaign_id', 'target_email', 'company_name', 'first_name', 'last_name', 'opened', 'sent', 'trained'],
 	'visits':               ['id', 'campaign_id', 'message_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit'],
 	'credentials':          ['id', 'campaign_id', 'message_id', 'visit_id', 'username', 'password', 'submitted'],
 	'deaddrop_deployments': ['id', 'campaign_id', 'destination'],
 	'deaddrop_connections': ['id', 'campaign_id', 'deployment_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit'],
+	'meta_data':            ['id', 'value']
 }
 
 class KingPhisherDatabase(object):
+	_type_map = {'int': int, 'long': long, 'str': str}
 	def __init__(self, database_file):
 		self._db = sqlite3.connect(database_file, check_same_thread=False)
 		self._lock = threading.RLock()
@@ -70,6 +73,23 @@ class KingPhisherDatabase(object):
 		yield cursor
 		self._db.commit()
 		self._lock.release()
+
+	def get_meta_data(self, key, value):
+		with self.get_cursor() as cursor:
+			cursor.execute('SELECT value_type, value FROM meta_data WHERE id = ?', (key))
+			result = cursor.fetchone()
+		if not result:
+			raise ValueError('unknown data key: ' + key)
+		value_type, value = result
+		return self._type_map[value_type](value)
+
+	def set_meta_data(self, key, value):
+		value_type = type(value).__name__
+		if not value_type in self._type_map.keys():
+			raise ValueError('incompatible data type:' + value_type)
+		with self.get_cursor() as cursor:
+			cursor.execute('INSERT OR REPLACE INTO meta_data (id, value_type, value) VALUES (?, ?, ?)', (key, value_type, str(value)))
+		return
 
 def get_tables_with_column_id(column_id):
 	return map(lambda x: x[0], filter(lambda x: column_id in x[1], DATABASE_TABLES.items()))
@@ -115,6 +135,9 @@ def create_database(database_file):
 		id TEXT PRIMARY KEY UNIQUE NOT NULL,
 		campaign_id INTEGER NOT NULL,
 		target_email TEXT,
+		company_name TEXT,
+		first_name TEXT,
+		last_name TEXT,
 		opened TIMESTAMP DEFAULT NULL,
 		sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		trained BOOLEAN DEFAULT 0
@@ -164,7 +187,15 @@ def create_database(database_file):
 		last_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
 	""")
+	cursor.execute("""
+	CREATE TABLE meta_data (
+		id TEXT PRIMARY KEY UNIQUE NOT NULL,
+		value_type TEXT DEFAULT str,
+		value TEXT
+	)
+	""")
 	db.commit()
+	db.set_meta_data('schema_version', SCHEMA_VERSION)
 	return db
 
 def main():

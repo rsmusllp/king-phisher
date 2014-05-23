@@ -35,13 +35,13 @@ import logging
 import os
 import pwd
 import signal
+import sys
 import threading
 
 from king_phisher import configuration
 from king_phisher import find
 from king_phisher import version
 from king_phisher.server import server
-from king_phisher.server import database
 
 try:
 	import msgpack
@@ -69,12 +69,12 @@ def main():
 	if os.getuid():
 		print('[-] This must be executed as root')
 		print('[-] Configure the setuid_username option in the config file to drop privileges.')
-		return
+		return os.EX_NOPERM
 
 	if not has_msgpack:
 		print('[-] This server requires the Python msgpack module to be installed.')
 		print('[-] Please install it from http://msgpack.org/ or your package manager.')
-		return
+		return os.EX_UNAVAILABLE
 
 	config = configuration.Configuration(config_file.name)
 	log_file_path = None
@@ -86,7 +86,7 @@ def main():
 		file_handler.setLevel(getattr(logging, config.get('logging.level').upper()))
 
 	if (not arguments.foreground) and os.fork():
-		return
+		return os.EX_OK
 
 	# Configure environment variables
 	find.data_path_append('data/server')
@@ -94,11 +94,6 @@ def main():
 		find.data_path_append(config.get('server.data_path'))
 
 	king_phisher_server = server.build_king_phisher_server(config)
-	database_file = config.get('server.database')
-	if database_file != ':memory:' and not os.path.exists(database_file):
-		database.create_database(database_file)
-		logger.info('created new sqlite3 database file')
-	king_phisher_server.init_database(database_file)
 
 	server_pid = os.getpid()
 	logger.info('server running in process: ' + str(server_pid))
@@ -114,12 +109,12 @@ def main():
 			os.chown(log_file_path, user_info.pw_uid, user_info.pw_gid)
 		os.setregid(user_info.pw_gid, user_info.pw_gid)
 		os.setreuid(user_info.pw_uid, user_info.pw_uid)
-		database_dir = os.path.dirname(database_file)
-		if not os.access(database_dir, os.W_OK):
-			logger.critical('sqlite3 requires write premissions to the folder containing the database')
-			king_phisher_server.shutdown()
-			return
+		database_dir = os.path.dirname(config.get('server.database'))
 		logger.info("dropped privileges to the {0} account".format(setuid_username))
+	if not os.access(database_dir, os.W_OK):
+		logger.critical('sqlite3 requires write premissions to the folder containing the database')
+		king_phisher_server.shutdown()
+		return os.EX_NOPERM
 	sighup_handler = lambda: threading.Thread(target=king_phisher_server.shutdown).start()
 	signal.signal(signal.SIGHUP, lambda signum, frame: sighup_handler())
 	try:
@@ -128,7 +123,7 @@ def main():
 		pass
 	king_phisher_server.shutdown()
 	logging.shutdown()
-	return
+	return os.EX_OK
 
 if __name__ == '__main__':
-	main()
+	sys.exit(main())

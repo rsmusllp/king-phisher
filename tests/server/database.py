@@ -42,8 +42,11 @@ class ServerDatabaseTests(unittest.TestCase):
 			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
 
 	def test_get_tables_id(self):
-		tables = ['campaigns', 'deaddrop_deployments', 'users', 'alert_subscriptions', 'credentials', 'landing_pages', 'messages', 'deaddrop_connections', 'visits']
-		self.assertListEqual(get_tables_with_column_id('id'), tables)
+		tables = ['alert_subscriptions', 'campaigns', 'credentials', 'deaddrop_connections', 'deaddrop_deployments', 'landing_pages', 'messages', 'meta_data', 'users', 'visits']
+		tables_with_id = get_tables_with_column_id('id')
+		self.assertEqual(len(tables), len(tables_with_id))
+		for table in tables:
+			self.assertTrue(table in tables_with_id)
 
 	def test_get_tables_campaign_id(self):
 		tables = ['deaddrop_deployments', 'alert_subscriptions', 'credentials', 'landing_pages', 'messages', 'deaddrop_connections', 'visits']

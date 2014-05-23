@@ -179,7 +179,8 @@ class MailSenderThread(threading.Thread):
 				break
 			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
 			campaign_id = self.config['campaign_id']
-			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'])
+			company_name = self.config.get('mailer.company_name', '')
+			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], company_name, target['first_name'], target['last_name'])
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)
 				sleep_time = (60.0 / float(self.max_messages_per_minute)) - iteration_time

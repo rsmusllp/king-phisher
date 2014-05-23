@@ -448,6 +448,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
 		self.serve_robots_txt = True
+		self.init_database(config.get('server.database'))
 
 		self.http_server.config = config
 		self.http_server.throttle_semaphore = threading.Semaphore()
@@ -466,8 +467,9 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.__is_shutdown.clear()
 
 	def init_database(self, database_file):
-		if database_file == ':memory:':
+		if not os.path.exists(database_file) or database_file == ':memory:':
 			db = database.create_database(database_file)
+			self.logger.info('created new sqlite3 database file')
 		else:
 			db = database.KingPhisherDatabase(database_file)
 		self.database = db
