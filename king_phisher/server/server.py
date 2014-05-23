@@ -43,11 +43,11 @@ import threading
 from king_phisher import find
 from king_phisher import job
 from king_phisher import sms
-from king_phisher import version
 from king_phisher import xor
 from king_phisher.server import authenticator
 from king_phisher.server import database
 from king_phisher.server import server_rpc
+from king_phisher.server import templates
 from king_phisher.third_party.AdvancedHTTPServer import *
 from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 from king_phisher.third_party.AdvancedHTTPServer import SectionConfigParser
@@ -228,7 +228,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if attachment or not file_ext in ['htm', 'html', 'txt']:
 			self._respond_file_raw(file_path, attachment)
 			return
-
 		try:
 			template = self.server.template_env.get_template(os.path.relpath(file_path, self.server.serve_files_root))
 		except jinja2.exceptions.TemplateError, IOError:
@@ -472,7 +471,6 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.logger = logging.getLogger('KingPhisher.Server')
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
 		self.config = config
-		self.database = None
 		self.serve_files = True
 		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
@@ -486,16 +484,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.job_manager = job.JobManager()
 		self.job_manager.start()
 		self.http_server.job_manager = self.job_manager
-
-		autoescape = lambda name: isinstance(name, (str, unicode)) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
-		extensions = ['jinja2.ext.autoescape']
-		loader = jinja2.FileSystemLoader(self.serve_files_root)
-		template_env = jinja2.Environment(autoescape=autoescape, extensions=extensions, loader=loader)
-		template_env.filters['strftime'] = lambda dt, f: dt.strftime(f)
-		template_env.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
-		template_env.filters['yesterday'] = lambda dt: dt + datetime.timedelta(days=-1)
-		template_env.globals['version'] = version.version
-		self.http_server.template_env = template_env
+		self.http_server.template_env = templates.KingPhisherTemplateEnvironment(config, self.database)
 
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()

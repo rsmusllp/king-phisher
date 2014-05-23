@@ -49,7 +49,6 @@ class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
 
 class KingPhisherServerTestCase(unittest.TestCase):
 	def setUp(self):
-		# Configure environment variables
 		find.data_path_append('data/server')
 		web_root = os.path.join(os.getcwd(), 'data', 'server', 'king_phisher')
 		config = configuration.Configuration(find.find_data_file('server_config.yml'))
