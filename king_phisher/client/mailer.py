@@ -45,6 +45,7 @@ from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
+from king_phisher import templates
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.ssh_forward import SSHTCPForwarder
@@ -53,30 +54,38 @@ from gi.repository import GLib
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
 
+template_environment = templates.KingPhisherTemplateEnvironment()
+
 def format_message(template, config, first_name=None, last_name=None, uid=None, target_email=None):
 	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
 	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
 	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, (str, unicode)) else target_email)
 	uid = (uid or config['server_config'].get('server.secret_id') or make_uid())
 
-	template = string.Template(template)
+	template = template_environment.from_string(template)
 	template_vars = {}
 	template_vars['uid'] = uid
 	template_vars['first_name'] = first_name
 	template_vars['last_name'] = last_name
 	template_vars['email_address'] = target_email
 	template_vars['company_name'] = config.get('mailer.company_name', '')
-	template_vars['rickroll_url'] = 'http://www.youtube.com/watch?v=oHg5SJYRHA0'
 
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urlparse.urlparse(webserver_url)
 	tracking_image = config['server_config']['server.tracking_image']
+	template_vars['webserver'] = webserver_url.netloc
 	tracking_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, tracking_image, '', 'id=' + uid, ''))
 	webserver_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
-	template_vars['webserver_url'] = webserver_url
-	template_vars['tracking_dot_url'] = tracking_url
 	template_vars['tracking_dot_image_tag'] = "<img src=\"{0}\" style=\"display:none\" />".format(tracking_url)
-	return template.safe_substitute(**template_vars)
+
+	template_vars_url = {}
+	template_vars_url['rickroll'] = 'http://www.youtube.com/watch?v=oHg5SJYRHA0'
+	template_vars_url['webserver'] = webserver_url + '?id=' + uid
+	template_vars_url['webserver_raw'] = webserver_url
+	template_vars_url['tracking_dot'] = tracking_url
+	template_vars['url'] = template_vars_url
+	template_vars.update(template_environment.standard_variables)
+	return template.render(template_vars)
 
 class MailSenderThread(threading.Thread):
 	def __init__(self, config, target_file, tab, rpc):

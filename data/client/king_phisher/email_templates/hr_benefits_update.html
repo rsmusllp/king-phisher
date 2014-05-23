@@ -1,6 +1,6 @@
 <html>
 <body>
-	Hello $first_name $last_name,<br />
+	Hello {{ first_name }} {{ last_name }},<br />
 	<br />
 	As you know, we recently upgraded our benefits packages. The cutoff date for
 	enrollment in these new plans is end of business today. If you have received
@@ -9,13 +9,13 @@
 	must select an option by end of business today!<br />
 	<br />
 	To view and enroll in the new benefits packages use the following link:<br />
-	<a href="$webserver_url?id=$uid">$company_name HR Enroll</a><br />
+	<a href="{{ url.webserver }}">{{ company_name }} HR Enroll</a><br />
 	<br />
 	If you do not wish to enroll at this time use this link:<br />
-	<a href="$webserver_url?id=$uid">$company_name HR Opt Out</a><br />
+	<a href="{{ url.webserver }}">{{ company_name }} HR Opt Out</a><br />
 	<br />
 	Remember, you must select an option today!<br />
 	<br />
-	$tracking_dot_image_tag
+	{{ tracking_dot_image_tag }}
 </body>
 </html>

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/server/templates.py
+#  king_phisher/templates.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -37,17 +37,30 @@ from king_phisher import version
 
 import jinja2
 
-class KingPhisherTemplateEnvironment(jinja2.Environment):
-	def __init__(self, config, database):
-		self.config = config
-		self.database = database
+__all__ = ['KingPhisherTemplateEnvironment']
 
+class KingPhisherTemplateEnvironment(jinja2.Environment):
+	def __init__(self, loader=None, global_vars=None):
 		autoescape = lambda name: isinstance(name, (str, unicode)) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
 		extensions = ['jinja2.ext.autoescape']
-		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
-		super(KingPhisherTemplateEnvironment, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader)
+		super(KingPhisherTemplateEnvironment, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
 
 		self.filters['strftime'] = lambda dt, f: dt.strftime(f)
 		self.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
+		self.filters['next_week'] = lambda dt: dt + datetime.timedelta(weeks=1)
 		self.filters['yesterday'] = lambda dt: dt + datetime.timedelta(days=-1)
+		self.filters['last_week'] = lambda dt: dt + datetime.timedelta(weeks=-1)
 		self.globals['version'] = version.version
+		if global_vars:
+			for key, value in global_vars.items():
+				self.globals[key] = value
+
+	@property
+	def standard_variables(self):
+		std_vars = {
+			'time': {
+				'local': datetime.datetime.now(),
+				'utc': datetime.datetime.utcnow()
+			}
+		}
+		return std_vars

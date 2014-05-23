@@ -5,15 +5,17 @@
 # Client Vars
 client.address:         {{ client.address }}
 {% if client.message_id is defined %}
+
 ## Client Session Vars
 client.company_name:    {{ client.company_name }}
 client.email:           {{ client.email }}
 client.first_name:      {{ client.first_name }}
-client.is_trained:      {{ client.is_trained }}
 client.last_name:       {{ client.last_name }}
+client.is_trained:      {{ client.is_trained }}
 client.message_id:      {{ client.message_id }}
 client.visit_id:        {{ client.visit_id }}
 {% endif %}
+
 # Server Vars
 server.address:         {{ server.address }}
 server.hostname:        {{ server.hostname }}

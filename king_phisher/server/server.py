@@ -31,7 +31,6 @@
 #
 
 import binascii
-import datetime
 import json
 import logging
 import os
@@ -43,11 +42,11 @@ import threading
 from king_phisher import find
 from king_phisher import job
 from king_phisher import sms
+from king_phisher import templates
 from king_phisher import xor
 from king_phisher.server import authenticator
 from king_phisher.server import database
 from king_phisher.server import server_rpc
-from king_phisher.server import templates
 from king_phisher.third_party.AdvancedHTTPServer import *
 from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 from king_phisher.third_party.AdvancedHTTPServer import SectionConfigParser
@@ -240,12 +239,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			'server': {
 				'hostname': self.vhost,
 				'address': self.connection.getsockname()[0]
-			},
-			'time': {
-				'local': datetime.datetime.now(),
-				'utc': datetime.datetime.utcnow()
 			}
 		}
+		template_vars.update(self.server.template_env.standard_variables)
 		template_vars['client'].update(self.get_template_vars_client() or {})
 		template_data = template.render(template_vars)
 		fs = os.stat(template.filename)
@@ -484,7 +480,11 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.job_manager = job.JobManager()
 		self.job_manager.start()
 		self.http_server.job_manager = self.job_manager
-		self.http_server.template_env = templates.KingPhisherTemplateEnvironment(config, self.database)
+		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
+		global_vars = None
+		if config.has_section('server.page_variables'):
+			global_vars = config.get('server.page_variables')
+		self.http_server.template_env = templates.KingPhisherTemplateEnvironment(loader=loader, global_vars=global_vars)
 
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
