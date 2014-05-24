@@ -74,9 +74,9 @@ class KingPhisherDatabase(object):
 		self._db.commit()
 		self._lock.release()
 
-	def get_meta_data(self, key, value):
+	def get_meta_data(self, key):
 		with self.get_cursor() as cursor:
-			cursor.execute('SELECT value_type, value FROM meta_data WHERE id = ?', (key))
+			cursor.execute('SELECT value_type, value FROM meta_data WHERE id = ?', (key,))
 			result = cursor.fetchone()
 		if not result:
 			raise ValueError('unknown data key: ' + key)
@@ -90,6 +90,10 @@ class KingPhisherDatabase(object):
 		with self.get_cursor() as cursor:
 			cursor.execute('INSERT OR REPLACE INTO meta_data (id, value_type, value) VALUES (?, ?, ?)', (key, value_type, str(value)))
 		return
+
+	@property
+	def schema_version(self):
+		return self.get_meta_data('schema_version')
 
 def get_tables_with_column_id(column_id):
 	return map(lambda x: x[0], filter(lambda x: column_id in x[1], DATABASE_TABLES.items()))

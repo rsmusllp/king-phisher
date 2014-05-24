@@ -495,6 +495,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 			self.logger.info('created new sqlite3 database file')
 		else:
 			db = database.KingPhisherDatabase(database_file)
+		self.logger.debug("loaded database: {0} schema version: {1}".format(database_file, db.schema_version))
 		self.database = db
 		self.http_server.database = db
 

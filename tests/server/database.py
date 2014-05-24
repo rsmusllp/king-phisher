@@ -33,6 +33,7 @@
 import unittest
 
 from king_phisher.server.database import *
+from tests.testing import random_string
 
 class ServerDatabaseTests(unittest.TestCase):
 	def test_create_database(self):
@@ -55,6 +56,21 @@ class ServerDatabaseTests(unittest.TestCase):
 	def test_get_tables_message_id(self):
 		tables = ['credentials', 'visits']
 		self.assertListEqual(get_tables_with_column_id('message_id'), tables)
+
+	def test_meta_data(self):
+		try:
+			db = create_database(':memory:')
+		except Exception as error:
+			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
+		self.assertIsInstance(db, KingPhisherDatabase)
+		self.assertEqual(db.schema_version, SCHEMA_VERSION)
+		key = random_string(10)
+		value = random_string(20)
+		try:
+			db.set_meta_data(key, value)
+			self.assertEqual(db.get_meta_data(key), value)
+		except Exception as error:
+			self.fail("failed to set a database meta data (error: {0})".format(error.__class__.__name__))
 
 class ServerDatabaseUIDTests(unittest.TestCase):
 	def test_create_uid_length(self):
