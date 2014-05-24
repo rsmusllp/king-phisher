@@ -35,17 +35,18 @@ The following options will be honored but are not configurable through the GUI:
 * ssh_preferred_key (Default: N/A)
 
 ### Message Template Variables
-The client message template supports a number of variables each begining with $. These are included here as a reference.
+The client message templates are formatted using the Jinja engine and support a number of variables. These are included here as a reference.
 
 Variable Name              | Variable Value
 ---------------------------|---------------
-$webserver\_url            | Phishing Server URL
-$uid                       | Unique Tracking Identifier
-$first\_name               | The target's first name
-$last\_name                | The target's last name
-$company\_name             | Company Name
-$email\_address            | The target's email address
-$tracking\_dot\_url        | URL of an image used for message tracking
-$tracking\_dot\_image\_tag | The tracking image in a preformatted ```<img />``` tag
+uid                        | Unique Tracking Identifier
+first\_name                | The target's first name
+last\_name                 | The target's last name
+company\_name              | Company Name
+email\_address             | The target's email address
+tracking\_dot\_image\_tag  | The tracking image in a preformatted ```<img />``` tag
+url.tracking\_dot          | URL of an image used for message tracking
+url.webserver              | Phishing Server URL with the uid paramater
+url.webserver_raw          | Phishing Server URL without any parameters
 
-The $webserver\_url and $uid variables are the most important and must be present in messages which are sent.
+The uid is the most important, and must be present in links that the messages contain.
