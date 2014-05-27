@@ -51,7 +51,7 @@ DATABASE_TABLES = {
 	'credentials':          ['id', 'campaign_id', 'message_id', 'visit_id', 'username', 'password', 'submitted'],
 	'deaddrop_deployments': ['id', 'campaign_id', 'destination'],
 	'deaddrop_connections': ['id', 'campaign_id', 'deployment_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit'],
-	'meta_data':            ['id', 'value']
+	'meta_data':            ['id', 'value_type', 'value']
 }
 
 class KingPhisherDatabase(object):
