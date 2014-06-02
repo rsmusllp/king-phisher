@@ -79,11 +79,15 @@ def main():
 	config = configuration.Configuration(config_file.name)
 	log_file_path = None
 	if config.has_section('logging'):
-		log_file_path = config.get('logging.file')
-		file_handler = logging.FileHandler(log_file_path)
-		file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-10s %(message)s"))
-		logging.getLogger('').addHandler(file_handler)
-		file_handler.setLevel(getattr(logging, config.get('logging.level').upper()))
+		log_level = min(getattr(logging, arguments.loglvl), getattr(logging, config.get('logging.level').upper()))
+		if config.has_option('logging.file') and config.get('logging.file'):
+			log_file_path = config.get('logging.file')
+			file_handler = logging.FileHandler(log_file_path)
+			file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-10s %(message)s"))
+			logging.getLogger('').addHandler(file_handler)
+			file_handler.setLevel(log_level)
+		if config.has_option('logging.console') and config.get('logging.console'):
+			console_log_handler.setLevel(log_level)
 
 	if (not arguments.foreground) and os.fork():
 		return os.EX_OK

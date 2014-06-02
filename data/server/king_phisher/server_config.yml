@@ -5,6 +5,7 @@
 #logging:
 #  file: /var/log/king-phisher.log
 #  level: warning
+#  console: false
 
 server:
   # Bind address information
