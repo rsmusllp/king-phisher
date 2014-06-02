@@ -104,7 +104,9 @@ class KingPhisherRequestHandlerRPC(object):
 		return
 
 	def rpc_version(self):
-		return {'version': version.version, 'version_info': version.version_info._asdict()}
+		vinfo = {'version': version.version, 'version_info': version.version_info._asdict()}
+		vinfo['rpc_api_version'] = version.rpc_api_version
+		return vinfo
 
 	def rpc_config_get(self, option_name):
 		if isinstance(option_name, (list, tuple)):

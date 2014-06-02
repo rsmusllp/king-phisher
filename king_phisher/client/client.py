@@ -407,6 +407,7 @@ class KingPhisherClient(Gtk.Window):
 
 	def server_connect(self):
 		import socket
+		server_version_info = None
 		while True:
 			if self.ssh_forwarder:
 				self.ssh_forwarder.stop()
@@ -437,6 +438,7 @@ class KingPhisherClient(Gtk.Window):
 				continue
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password)
 			try:
+				server_version_info = self.rpc('version')
 				assert(self.rpc('client/initialize'))
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
@@ -451,8 +453,19 @@ class KingPhisherClient(Gtk.Window):
 				gui_utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self)
 				continue
 			break
-		self.logger.info('successfully connected to the server')
+		assert(server_version_info != None)
+		server_rpc_api_version = server_version_info.get('rpc_api_version', -1)
+		self.logger.info("successfully connected to the king phisher server (version: {0} rpc api version: {1})".format(server_version_info['version'], server_rpc_api_version))
 		self.server_local_port = local_port
+		if server_rpc_api_version != version.rpc_api_version:
+			if version.rpc_api_version < server_rpc_api_version:
+				secondary_text = 'The local client is not up to date with the server version.'
+			else:
+				secondary_text = 'The remote server is not up to date with the client version.'
+			secondary_text += '\nPlease ensure that both the client and server are fully up to date.'
+			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', self, secondary_text)
+			self.server_disconnect()
+			return False
 		return True
 
 	def server_disconnect(self):

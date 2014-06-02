@@ -47,3 +47,5 @@ if version_label:
 		distutils_version += version_label[-1]
 	else:
 		distutils_version += '0'
+
+rpc_api_version = 1
