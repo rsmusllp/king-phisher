@@ -31,6 +31,7 @@
 #
 
 import datetime
+import logging
 import os
 
 from king_phisher import version
@@ -41,11 +42,12 @@ __all__ = ['KingPhisherTemplateEnvironment']
 
 class KingPhisherTemplateEnvironment(jinja2.Environment):
 	def __init__(self, loader=None, global_vars=None):
+		self.logger = logging.getLogger('KingPhisher.TemplateEnvironment')
 		autoescape = lambda name: isinstance(name, (str, unicode)) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
 		extensions = ['jinja2.ext.autoescape']
 		super(KingPhisherTemplateEnvironment, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
 
-		self.filters['strftime'] = lambda dt, f: dt.strftime(f)
+		self.filters['strftime'] = self._filter_strftime
 		self.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
 		self.filters['next_week'] = lambda dt: dt + datetime.timedelta(weeks=1)
 		self.filters['yesterday'] = lambda dt: dt + datetime.timedelta(days=-1)
@@ -64,3 +66,11 @@ class KingPhisherTemplateEnvironment(jinja2.Environment):
 			}
 		}
 		return std_vars
+
+	def _filter_strftime(self, dt, fmt):
+		try:
+			result = dt.strftime(fmt)
+		except ValueError:
+			self.logger.error("invalid time format '{0}'".format(fmt))
+			result = ''
+		return result
