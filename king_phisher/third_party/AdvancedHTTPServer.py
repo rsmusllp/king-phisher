@@ -65,8 +65,15 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.2.69'
-__all__ = ['AdvancedHTTPServer', 'AdvancedHTTPServerRegisterPath', 'AdvancedHTTPServerRequestHandler', 'AdvancedHTTPServerRPCClient', 'AdvancedHTTPServerRPCError']
+__version__ = '0.2.80'
+__all__ = [
+	'AdvancedHTTPServer',
+	'AdvancedHTTPServerRegisterPath',
+	'AdvancedHTTPServerRequestHandler',
+	'AdvancedHTTPServerRESTAPI',
+	'AdvancedHTTPServerRPCClient',
+	'AdvancedHTTPServerRPCError'
+]
 
 import BaseHTTPServer
 import cgi
@@ -88,6 +95,7 @@ import sqlite3
 import ssl
 import sys
 import threading
+import traceback
 import urllib
 import urlparse
 import zlib
@@ -99,16 +107,17 @@ except ImportError:
 
 GLOBAL_HANDLER_MAP = {}
 SERIALIZER_DRIVERS = {}
-SERIALIZER_DRIVERS['binary/json'] = {'loads':json.loads, 'dumps':json.dumps}
-SERIALIZER_DRIVERS['binary/json+zlib'] = {'loads':lambda d: json.loads(zlib.decompress(d)), 'dumps':lambda d: zlib.compress(json.dumps(d))}
+SERIALIZER_DRIVERS['application/json'] = {'loads': json.loads, 'dumps': json.dumps}
+SERIALIZER_DRIVERS['binary/json'] = {'loads': json.loads, 'dumps': json.dumps}
+SERIALIZER_DRIVERS['binary/json+zlib'] = {'loads': lambda d: json.loads(zlib.decompress(d)), 'dumps': lambda d: zlib.compress(json.dumps(d))}
 
 try:
 	import msgpack
 except ImportError:
 	pass
 else:
-	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads':msgpack.loads, 'dumps':msgpack.dumps}
-	SERIALIZER_DRIVERS['binary/message-pack+zlib'] = {'loads':lambda d: msgpack.loads(zlib.decompress(d)), 'dumps':lambda d: zlib.compress(msgpack.dumps(d))}
+	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads': msgpack.loads, 'dumps': msgpack.dumps}
+	SERIALIZER_DRIVERS['binary/message-pack+zlib'] = {'loads': lambda d: msgpack.loads(zlib.decompress(d)), 'dumps': lambda d: zlib.compress(msgpack.dumps(d))}
 
 if hasattr(logging, 'NullHandler'):
 	logging.getLogger('AdvancedHTTPServer').addHandler(logging.NullHandler())
@@ -119,7 +128,7 @@ class SectionConfigParser(object):
 		self.section_name = section_name
 		self.config_parser = config_parser
 
-	def get_raw(self, option, opt_type, default = None):
+	def get_raw(self, option, opt_type, default=None):
 		get_func = getattr(self.config_parser, 'get' + opt_type)
 		if default == None:
 			return get_func(self.section_name, option)
@@ -128,16 +137,16 @@ class SectionConfigParser(object):
 		else:
 			return default
 
-	def get(self, option, default = None):
+	def get(self, option, default=None):
 		return self.get_raw(option, '', default)
 
-	def getint(self, option, default = None):
+	def getint(self, option, default=None):
 		return self.get_raw(option, 'int', default)
 
-	def getfloat(self, option, default = None):
+	def getfloat(self, option, default=None):
 		return self.get_raw(option, 'float', default)
 
-	def getboolean(self, option, default = None):
+	def getboolean(self, option, default=None):
 		return self.get_raw(option, 'boolean', default)
 
 	def has_option(self, option):
@@ -152,7 +161,7 @@ class SectionConfigParser(object):
 	def set(self, option, value):
 		self.config_parser.set(self.section_name, option, value)
 
-def build_server_from_argparser(description = None, ServerClass = None, HandlerClass = None):
+def build_server_from_argparser(description=None, ServerClass=None, HandlerClass=None):
 	import argparse
 	import ConfigParser
 
@@ -160,16 +169,16 @@ def build_server_from_argparser(description = None, ServerClass = None, HandlerC
 	ServerClass = (ServerClass or AdvancedHTTPServer)
 	HandlerClass = (HandlerClass or AdvancedHTTPServerRequestHandler)
 
-	parser = argparse.ArgumentParser(description = description, conflict_handler = 'resolve')
+	parser = argparse.ArgumentParser(description=description, conflict_handler='resolve')
 	parser.epilog = 'When a config file is specified with --config the --ip, --port and --web-root options are all ignored.'
-	parser.add_argument('-w', '--web-root', dest = 'web_root', action = 'store', default = '.', help = 'path to the web root directory')
-	parser.add_argument('-p', '--port', dest = 'port', action = 'store', default = 8080, type = int, help = 'port to serve on')
-	parser.add_argument('-i', '--ip', dest = 'ip', action = 'store', default = '0.0.0.0', help = 'the ip address to serve on')
-	parser.add_argument('--password', dest = 'password', action = 'store', default = None, help = 'password to use for basic authentication')
-	parser.add_argument('--log-file', dest = 'log_file', action = 'store', default = None, help = 'log information to a file')
-	parser.add_argument('-c', '--conf', dest = 'config', action = 'store', default = None, type = argparse.FileType('r'), help = 'read settings from a config file')
-	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + __version__)
-	parser.add_argument('-L', '--log', dest = 'loglvl', action = 'store', choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default = 'INFO', help = 'set the logging level')
+	parser.add_argument('-w', '--web-root', dest='web_root', action='store', default='.', help='path to the web root directory')
+	parser.add_argument('-p', '--port', dest='port', action='store', default=8080, type=int, help='port to serve on')
+	parser.add_argument('-i', '--ip', dest='ip', action='store', default='0.0.0.0', help='the ip address to serve on')
+	parser.add_argument('--password', dest='password', action='store', default=None, help='password to use for basic authentication')
+	parser.add_argument('--log-file', dest='log_file', action='store', default=None, help='log information to a file')
+	parser.add_argument('-c', '--conf', dest='config', action='store', default=None, type=argparse.FileType('r'), help='read settings from a config file')
+	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + __version__)
+	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='set the logging level')
 	arguments = parser.parse_args()
 
 	logging.getLogger('').setLevel(logging.DEBUG)
@@ -179,7 +188,7 @@ def build_server_from_argparser(description = None, ServerClass = None, HandlerC
 	logging.getLogger('').addHandler(console_log_handler)
 
 	if arguments.log_file:
-		main_file_handler = logging.handlers.RotatingFileHandler(arguments.log_file, maxBytes = 262144, backupCount = 5)
+		main_file_handler = logging.handlers.RotatingFileHandler(arguments.log_file, maxBytes=262144, backupCount=5)
 		main_file_handler.setLevel(logging.DEBUG)
 		main_file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-30s %(levelname)-10s %(message)s"))
 		logging.getLogger('').setLevel(logging.DEBUG)
@@ -188,16 +197,16 @@ def build_server_from_argparser(description = None, ServerClass = None, HandlerC
 	if arguments.config:
 		config = ConfigParser.ConfigParser()
 		config.readfp(arguments.config)
-		server = build_server_from_config(config, 'server')
+		server = build_server_from_config(config, 'server', ServerClass=ServerClass, HandlerClass=HandlerClass)
 	else:
-		server = AdvancedHTTPServer(AdvancedHTTPServerRequestHandler, address = (arguments.ip, arguments.port))
+		server = ServerClass(HandlerClass, address=(arguments.ip, arguments.port))
 		server.serve_files_root = arguments.web_root
 
 	if arguments.password:
 		server.auth_add_creds('', arguments.password)
 	return server
 
-def build_server_from_config(config, section_name, ServerClass = None, HandlerClass = None):
+def build_server_from_config(config, section_name, ServerClass=None, HandlerClass=None):
 	ServerClass = (ServerClass or AdvancedHTTPServer)
 	HandlerClass = (HandlerClass or AdvancedHTTPServerRequestHandler)
 	config = SectionConfigParser(section_name, config)
@@ -210,20 +219,20 @@ def build_server_from_config(config, section_name, ServerClass = None, HandlerCl
 	ssl_certfile = None
 	if config.has_option('ssl_cert'):
 		ssl_certfile = config.get('ssl_cert')
-	server = ServerClass(HandlerClass, address = (ip, port), ssl_certfile = ssl_certfile)
+	server = ServerClass(HandlerClass, address=(ip, port), ssl_certfile=ssl_certfile)
 
 	password_type = config.get('password_type', 'md5')
 	if config.has_option('password'):
 		password = config.get('password')
 		username = config.get('username', '')
-		server.auth_add_creds(username, password, pwtype = password_type)
+		server.auth_add_creds(username, password, pwtype=password_type)
 	cred_idx = 0
 	while config.has_option('password' + str(cred_idx)):
 		password = config.get('password' + str(cred_idx))
 		if not config.has_option('username' + str(cred_idx)):
 			break
 		username = config.get('username' + str(cred_idx))
-		server.auth_add_creds(username, password, pwtype = password_type)
+		server.auth_add_creds(username, password, pwtype=password_type)
 		cred_idx += 1
 
 	if web_root == None:
@@ -236,7 +245,7 @@ def build_server_from_config(config, section_name, ServerClass = None, HandlerCl
 	return server
 
 class AdvancedHTTPServerRegisterPath(object):
-	def __init__(self, path, handler = None):
+	def __init__(self, path, handler=None):
 		self.path = path
 		if handler == None or isinstance(handler, (str, unicode)):
 			self.handler = handler
@@ -254,7 +263,7 @@ class AdvancedHTTPServerRegisterPath(object):
 		return function
 
 class AdvancedHTTPServerRPCError(Exception):
-	def __init__(self, message, status, remote_exception = None):
+	def __init__(self, message, status, remote_exception=None):
 		self.message = message
 		self.status = status
 		self.remote_exception = remote_exception
@@ -267,7 +276,7 @@ class AdvancedHTTPServerRPCError(Exception):
 		return bool(self.remote_exception != None)
 
 class AdvancedHTTPServerRPCClient(object):
-	def __init__(self, address, use_ssl = False, username = None, password = None, uri_base = '/', hmac_key = None):
+	def __init__(self, address, use_ssl=False, username=None, password=None, uri_base='/', hmac_key=None):
 		self.host = str(address[0])
 		self.port = int(address[1])
 		if not hasattr(self, 'logger'):
@@ -288,8 +297,11 @@ class AdvancedHTTPServerRPCClient(object):
 		return (self.__class__, (address, self.use_ssl, self.username, self.password, self.uri_base, self.hmac_key))
 
 	def set_serializer(self, serializer_name):
+		if not serializer_name in SERIALIZER_DRIVERS:
+			raise ValueError('unknown serializer: ' + serializer_name)
 		self.serializer = SERIALIZER_DRIVERS[serializer_name]
 		self.serializer_name = serializer_name
+		self.logger.debug('using serializer: ' + serializer_name)
 
 	def __call__(self, *args, **kwargs):
 		return self.call(*args, **kwargs)
@@ -316,7 +328,7 @@ class AdvancedHTTPServerRPCClient(object):
 		headers['Content-Length'] = str(len(options))
 
 		if self.hmac_key != None:
-			hmac_calculator = hmac.new(self.hmac_key, digestmod = hashlib.sha1)
+			hmac_calculator = hmac.new(self.hmac_key, digestmod=hashlib.sha1)
 			hmac_calculator.update(options)
 			headers['HMAC'] = hmac_calculator.hexdigest()
 
@@ -337,7 +349,7 @@ class AdvancedHTTPServerRPCClient(object):
 			if not isinstance(hmac_digest, str):
 				raise AdvancedHTTPServerRPCError('hmac validation error', resp.status)
 			hmac_digest = hmac_digest.lower()
-			hmac_calculator = hmac.new(self.hmac_key, digestmod = hashlib.sha1)
+			hmac_calculator = hmac.new(self.hmac_key, digestmod=hashlib.sha1)
 			hmac_calculator.update(resp_data)
 			if hmac_digest != hmac_calculator.hexdigest():
 				raise AdvancedHTTPServerRPCError('hmac validation error', resp.status)
@@ -345,13 +357,13 @@ class AdvancedHTTPServerRPCClient(object):
 		if not ('exception_occurred' in resp_data and 'result' in resp_data):
 			raise AdvancedHTTPServerRPCError('missing response information', resp.status)
 		if resp_data['exception_occurred']:
-			raise AdvancedHTTPServerRPCError('remote method incured an exception', resp.status, remote_exception = resp_data['exception'])
+			raise AdvancedHTTPServerRPCError('remote method incured an exception', resp.status, remote_exception=resp_data['exception'])
 		return resp_data['result']
 
 class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 	def __init__(self, *args, **kwargs):
 		super(AdvancedHTTPServerRPCClientCached, self).__init__(*args, **kwargs)
-		self.cache_db = sqlite3.connect(':memory:', check_same_thread = False)
+		self.cache_db = sqlite3.connect(':memory:', check_same_thread=False)
 		cursor = self.cache_db.cursor()
 		cursor.execute('CREATE TABLE cache (method TEXT NOT NULL, options_hash TEXT NOT NULL, return_value TEXT NOT NULL)')
 		self.cache_db.commit()
@@ -430,7 +442,9 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		self.rpc_handler_map = {}
 		self.server = args[2]
 		self.headers_active = False
-
+		rest_api_handler = self.server.rest_api_handler
+		if rest_api_handler:
+			self.handler_map[rest_api_handler.api_path_regex] = rest_api_handler.dispatch_handler
 		for map_name in (None, self.__class__.__name__):
 			handler_map = GLOBAL_HANDLER_MAP.get(map_name, {})
 			for path, function in handler_map.items():
@@ -446,7 +460,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 	def install_handlers(self):
 		pass # over ride me
 
-	def respond_file(self, file_path, attachment = False, query = None):
+	def respond_file(self, file_path, attachment=False, query=None):
 		query = (query or {})
 		file_path = os.path.abspath(file_path)
 		try:
@@ -467,7 +481,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		file_obj.close()
 		return
 
-	def respond_list_directory(self, dir_path, query = None):
+	def respond_list_directory(self, dir_path, query=None):
 		query = (query or {})
 		try:
 			dir_contents = os.listdir(dir_path)
@@ -507,19 +521,43 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		return
 
 	def respond_not_found(self):
-		self.send_response(404, 'Resource Not Found')
+		self.send_response(404)
 		self.send_header('Content-Type', 'text/html')
 		self.end_headers()
 		self.wfile.write('Resource Not Found\n')
 		return
 
-	def respond_redirect(self, location = '/'):
+	def respond_redirect(self, location='/'):
 		self.send_response(301)
 		self.send_header('Location', location)
 		self.end_headers()
 		return
 
-	def respond_unauthorized(self, request_authentication = False):
+	def respond_server_error(self, status=None, status_line=None, message=None):
+		(ex_type, ex_value, ex_traceback) = sys.exc_info()
+		if ex_type:
+			(ex_file_name, ex_line, _, _) = traceback.extract_tb(ex_traceback)[-1]
+			line_info = "{0}:{1}".format(ex_file_name, ex_line)
+			log_msg = "encountered {0} in {1}".format(repr(ex_value), line_info)
+			self.server.logger.error(log_msg)
+		status = (status or 500)
+		status_line = (status_line or httplib.responses.get(status, 'Internal Server Error')).strip()
+		self.send_response(status, status_line)
+		message = (message or status_line)
+		if isinstance(message, (str, unicode)):
+			self.send_header('Content-Length', len(message))
+			self.end_headers()
+			self.wfile.write(message)
+		elif hasattr(message, 'fileno'):
+			fs = os.fstat(message.fileno())
+			self.send_header('Content-Length', str(fs[6]))
+			self.end_headers()
+			shutil.copyfileobj(message, self.wfile)
+		else:
+			self.end_headers()
+		return
+
+	def respond_unauthorized(self, request_authentication=False):
 		self.send_response(401)
 		if request_authentication:
 			self.send_header('WWW-Authenticate', 'Basic realm="' + self.server_version + '"')
@@ -528,7 +566,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		self.wfile.write('Unauthorized\n')
 		return
 
-	def dispatch_handler(self, query = None):
+	def dispatch_handler(self, query=None):
 		query = (query or {})
 		# normalize the path
 		# abandon query parameters
@@ -557,10 +595,13 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		self.cookies = Cookie.SimpleCookie(self.headers.get('cookie', ''))
 		for (path_regex, handler) in self.handler_map.items():
 			if re.match(path_regex, self.path):
-				if hasattr(self, handler.__name__) and (handler == getattr(self, handler.__name__).__func__ or handler == getattr(self, handler.__name__)):
-					getattr(self, handler.__name__)(query)
-				else:
-					handler(self, query)
+				try:
+					if hasattr(self, handler.__name__) and (handler == getattr(self, handler.__name__).__func__ or handler == getattr(self, handler.__name__)):
+						getattr(self, handler.__name__)(query)
+					else:
+						handler(self, query)
+				except:
+					self.respond_server_error()
 				return
 
 		if not self.server.serve_files:
@@ -569,10 +610,10 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 
 		file_path = self.server.serve_files_root
 		file_path = os.path.join(file_path, tmp_path)
-		if os.path.isfile(file_path):
-			self.respond_file(file_path, query = query)
+		if os.path.isfile(file_path) and os.access(file_path, os.R_OK):
+			self.respond_file(file_path, query=query)
 			return
-		elif os.path.isdir(file_path):
+		elif os.path.isdir(file_path) and os.access(file_path, os.R_OK):
 			if not self.original_path.endswith('/'):
 				# redirect browser, doing what apache does
 				destination = self.path + '/'
@@ -580,15 +621,14 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 					destination += '?' + urllib.urlencode(self.query_data, True)
 				self.respond_redirect(destination)
 				return
-			if self.server.serve_files_list_directories:
-				self.respond_list_directory(file_path, query = query)
-				return
 			for index in ['index.html', 'index.htm']:
 				index = os.path.join(file_path, index)
-				if os.path.exists(index):
-					self.respond_file(index, query = query)
+				if os.path.isfile(index) and os.access(index, os.R_OK):
+					self.respond_file(index, query=query)
 					return
-
+			if self.server.serve_files_list_directories:
+				self.respond_list_directory(file_path, query=query)
+				return
 		self.respond_not_found()
 		return
 
@@ -679,7 +719,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 
 	def do_GET(self):
 		if not self.check_authorization():
-			self.respond_unauthorized(request_authentication = True)
+			self.respond_unauthorized(request_authentication=True)
 			return
 		uri = urlparse.urlparse(self.path)
 		self.path = uri.path
@@ -693,13 +733,25 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 
 	def do_POST(self):
 		if not self.check_authorization():
-			self.respond_unauthorized(request_authentication = True)
+			self.respond_unauthorized(request_authentication=True)
 			return
 		content_length = int(self.headers.getheader('content-length') or 0)
 		data = self.rfile.read(content_length)
-		self.query_data = urlparse.parse_qs(data, keep_blank_values = 1)
-
-		self.dispatch_handler(self.query_data)
+		self.query_data_raw = data
+		content_type = self.headers.getheader('content-type') or ''
+		content_type = content_type.split(';', 1)[0]
+		self.query_data = {}
+		try:
+			if content_type.startswith('application/json'):
+				data = json.loads(data)
+				if isinstance(data, dict):
+					self.query_data = dict(map(lambda i: (i[0], [i[1]]), data.items()))
+			else:
+				self.query_data = urlparse.parse_qs(data, keep_blank_values=1)
+		except:
+			self.respond_server_error(400)
+		else:
+			self.dispatch_handler(self.query_data)
 		return
 
 	def do_OPTIONS(self):
@@ -712,7 +764,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 
 	def do_RPC(self):
 		if not self.check_authorization():
-			self.respond_unauthorized(request_authentication = True)
+			self.respond_unauthorized(request_authentication=True)
 			return
 
 		data_length = self.headers.getheader('content-length')
@@ -740,13 +792,14 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		if self.server.rpc_hmac_key != None:
 			hmac_digest = self.headers.getheader('hmac')
 			if not isinstance(hmac_digest, str):
-				self.respond_unauthorized(request_authentication = True)
+				self.respond_unauthorized(request_authentication=True)
 				return
 			hmac_digest = hmac_digest.lower()
-			hmac_calculator = hmac.new(self.server.rpc_hmac_key, digestmod = hashlib.sha1)
+			hmac_calculator = hmac.new(self.server.rpc_hmac_key, digestmod=hashlib.sha1)
 			hmac_calculator.update(data)
 			if hmac_digest != hmac_calculator.hexdigest():
-				self.respond_unauthorized(request_authentication = True)
+				self.server.logger.warning('failed to validate HMAC digest')
+				self.respond_unauthorized(request_authentication=True)
 				return
 
 		try:
@@ -755,6 +808,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 				data = tuple(data)
 			assert(type(data) == tuple)
 		except:
+			self.server.logger.warning('serializer failed to load data')
 			self.send_error(400, 'Invalid Data')
 			return
 
@@ -764,11 +818,11 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 				rpc_handler = handler
 				break
 		if not rpc_handler:
-			self.send_error(501, 'Method Not Implemented')
+			self.respond_server_error(501)
 			return
 
 		self.server.logger.info('running RPC method: ' + self.path)
-		response = { 'result':None, 'exception_occurred':False }
+		response = {'result': None, 'exception_occurred': False}
 		try:
 			result = rpc_handler(*data)
 			response['result'] = result
@@ -783,13 +837,13 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		try:
 			response = serializer['dumps'](response)
 		except:
-			self.send_error(500, 'Failed To Pack Response')
+			self.respond_server_error(message='Failed To Pack Response')
 			return
 
 		self.send_response(200)
 		self.send_header('Content-Type', data_type)
 		if self.server.rpc_hmac_key != None:
-			hmac_calculator = hmac.new(self.server.rpc_hmac_key, digestmod = hashlib.sha1)
+			hmac_calculator = hmac.new(self.server.rpc_hmac_key, digestmod=hashlib.sha1)
 			hmac_calculator.update(response)
 			self.send_header('HMAC', hmac_calculator.hexdigest())
 		self.end_headers()
@@ -802,6 +856,60 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 	def log_message(self, format, *args):
 		self.server.logger.info(self.address_string() + ' ' + format % args)
 
+class AdvancedHTTPServerRESTAPI(object):
+	def __init__(self, api_path=None):
+		self.api_path = (api_path or '/api/')
+		self.handler_map = {}
+		map_name = self.__class__.__name__
+		handler_map = GLOBAL_HANDLER_MAP.get(map_name, {})
+		for path, function in handler_map.items():
+			self.handler_map[path] = function
+		self.install_handlers()
+
+	@property
+	def api_path_regex(self):
+		return '^' + self.api_path.strip('/') + '/\S'
+
+	def install_handlers(self):
+		pass # over ride me
+
+	def dispatch_handler(self, request_handler, query):
+		path = request_handler.path
+		prefix_len = len(re.match(self.api_path_regex, path).group(0)) - 1
+		path = path[prefix_len:]
+		handler_found = False
+		result = None
+		arguments = []
+		if request_handler.command == 'GET':
+			arguments = dict(map(lambda i: (i[0], i[1][-1]), query.items()))
+		if request_handler.command == 'POST':
+			arguments = json.loads(request_handler.query_data_raw)
+		if not isinstance(arguments, (dict, list, tuple)):
+			arguments = [arguments]
+		for (path_regex, handler) in self.handler_map.items():
+			if re.match(path_regex, path):
+				handler_found = True
+				if hasattr(self, handler.__name__) and (handler == getattr(self, handler.__name__).__func__ or handler == getattr(self, handler.__name__)):
+					if isinstance(arguments, dict):
+						result = getattr(self, handler.__name__)(**arguments)
+					else:
+						result = getattr(self, handler.__name__)(*arguments)
+				else:
+					if isinstance(arguments, dict):
+						result = handler(self, **arguments)
+					else:
+						result = handler(self, *arguments)
+				break
+		if not handler_found:
+			request_handler.respond_server_error(501)
+			return
+		result = json.dumps(result) + '\n'
+		request_handler.send_response(200)
+		request_handler.send_header('Content-Type', 'application/json')
+		request_handler.send_header('Content-Length', len(result))
+		request_handler.end_headers()
+		request_handler.wfile.write(result)
+
 class AdvancedHTTPServer(object):
 	"""
 	Setable properties:
@@ -812,7 +920,7 @@ class AdvancedHTTPServer(object):
 		rpc_hmac_key (string)
 		server_version (string)
 	"""
-	def __init__(self, RequestHandler, address = None, use_threads = True, ssl_certfile = None):
+	def __init__(self, RequestHandler, address=None, use_threads=True, ssl_certfile=None):
 		self.use_ssl = bool(ssl_certfile)
 		if address == None:
 			if self.use_ssl:
@@ -836,16 +944,24 @@ class AdvancedHTTPServer(object):
 		else:
 			self.http_server = AdvancedHTTPServerNonThreaded(address, RequestHandler)
 		self.logger.info('listening on ' + address[0] + ':' + str(address[1]))
+		self.http_server.rest_api_handler = None
 
 		if self.use_ssl:
-			self.http_server.socket = ssl.wrap_socket(self.http_server.socket, certfile = ssl_certfile, server_side = True)
+			self.http_server.socket = ssl.wrap_socket(self.http_server.socket, certfile=ssl_certfile, server_side=True)
 			self.http_server.using_ssl = True
 			self.logger.info(address[0] + ':' + str(address[1]) + ' - ssl has been enabled')
 
 		if hasattr(RequestHandler, 'custom_authentication'):
+			self.logger.debug(address[0] + ':' + str(address[1]) + ' - a custom authentication function is being used')
 			self.auth_set(True)
 
-	def serve_forever(self, fork = False):
+	def init_rest_api(self, rest_api_handler):
+		if not isinstance(rest_api_handler, AdvancedHTTPServerRESTAPI):
+			raise ValueError('rest_api_handler must be an instance of AdvancedHTTPServerRESTAPI')
+		self.http_server.rest_api_handler = rest_api_handler
+		self.logger.debug(self.address[0] + ':' + str(self.address[1]) + ' - a REST API handler has been registered')
+
+	def serve_forever(self, fork=False):
 		if fork:
 			if not hasattr(os, 'fork'):
 				raise OSError('os.fork is not available')
@@ -924,14 +1040,14 @@ class AdvancedHTTPServer(object):
 			self.http_server.basic_auth = {}
 			self.logger.info(self.address[0] + ':' + str(self.address[1]) + ' - basic authentication has been enabled')
 
-	def auth_delete_creds(self, username = None):
+	def auth_delete_creds(self, username=None):
 		if not username:
 			self.http_server.basic_auth = {}
 			self.logger.info(self.address[0] + ':' + str(self.address[1]) + ' - basic authentication database has been cleared of all entries')
 			return
 		del self.http_server.basic_auth[username]
 
-	def auth_add_creds(self, username, password, pwtype = 'plain'):
+	def auth_add_creds(self, username, password, pwtype='plain'):
 		pwtype = pwtype.lower()
 		if not pwtype in ('plain', 'md5', 'sha1'):
 			raise ValueError('invalid password type, must be (\'plain\', \'md5\', \'sha1\')')
@@ -940,7 +1056,7 @@ class AdvancedHTTPServer(object):
 			self.logger.info(self.address[0] + ':' + str(self.address[1]) + ' - basic authentication has been enabled')
 		if pwtype != 'plain':
 			password = password.lower()
-		self.http_server.basic_auth[username] = {'value':password, 'type':pwtype}
+		self.http_server.basic_auth[username] = {'value': password, 'type': pwtype}
 
 def main():
 	try:
