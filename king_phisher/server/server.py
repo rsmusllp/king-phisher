@@ -49,7 +49,6 @@ from king_phisher.server import database
 from king_phisher.server import server_rpc
 from king_phisher.third_party.AdvancedHTTPServer import *
 from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
-from king_phisher.third_party.AdvancedHTTPServer import SectionConfigParser
 
 import jinja2
 
