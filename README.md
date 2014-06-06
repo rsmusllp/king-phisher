@@ -1,7 +1,6 @@
-# King Phisher [![Build Status](https://travis-ci.org/securestate/king-phisher.png)](https://travis-ci.org/securestate/king-phisher)
-
 ![alt text](https://github.com/securestate/king-phisher/raw/master/data/king-phisher-logo.png "King Phisher")
 
+# King Phisher [![Build Status](https://travis-ci.org/securestate/king-phisher.png)](https://travis-ci.org/securestate/king-phisher)
 Python Phishing Campaign Toolkit
 
 King Phisher facilitates running phishing-focused social engineering campaigns.
@@ -9,7 +8,6 @@ King Phisher facilitates running phishing-focused social engineering campaigns.
 For instructions on how to install please see the INSTALL.md file. After installing, for instructions on how to get started please see the [wiki](https://github.com/securestate/king-phisher/wiki).
 
 ## License
-
 King Phisher is released under the BSD 3-clause license, for more details see
 the COPYING file.
 

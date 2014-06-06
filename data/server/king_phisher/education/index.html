@@ -1,10 +1,12 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
 	<head>
-		<title>Phishing Awareness</title>
+		{% if client.is_trained %}
+		<meta http-equiv="refresh" content="0; url=./sorry.html" />
+		{% endif %}
+		<title>{{ client.company_name }} Phishing Awareness</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<link rel="stylesheet" href="./default.css" type="text/css" />
-		<script src="/kp.js" type="text/javascript"></script>
 	</head>
 	<body>
 		<div id="wrapper">
@@ -13,7 +15,7 @@
 					<td align="center"><h1>You've Been Phished!</h1></td>
 				</tr>
 			</table>
-			<p>The email you received was delivered as part of a security test. Phishing emails are realistic in appearence but often lie about their origin and are designed to entice you into clicking links which which can have very serious effects.  If you ever have doubts on the legitimacy of an email contact your security team immediately.</p>
+			<p>The email you received was delivered as part of a security test. Phishing emails are realistic in appearence but often lie about their origin and are designed to entice you into clicking links which which can have very serious effects.  If you ever have doubts on the legitimacy of an email contact {{ client.company_name|default('your company') }}'s security team immediately.</p>
 			<p style="text-align: center;"><em>There are several reasons why you should take phishing attempts seriously:</em></p>
 			<table>
 				<tr>
@@ -31,18 +33,18 @@
 				</tr>
 			</table>
 			<p style="text-align: center;"><img src="phishing.jpg" /></p>
-			<p>Everything is not always as it seems, and phishing attacks are getting increasingly more believable.<p>
+			<p style="text-align: center;">Everything is not always as it seems, and phishing attacks are getting increasingly more believable.<p>
 			<p style="text-align: center;"><strong>Do not become a victim of phishing!</strong><p>
 		</div>
 		<div id="wrapper">
 			<form action="./trained.html">
-				<p>
+				<p style="text-align: center;">
 					<strong>I understand what phishing is and why it is dangerous.  I will make every attempt to identify and report phishing scams in the future.</strong>
 				</p>
 				<p style="text-align: center;">
-					<em>Please click "I agree" to complete this education.</em>
+					<em>Please click "I Agree" to complete this education.</em>
 					<input type="hidden" name="trained" value="true">
-					<input type="submit" value="I agree"/>
+					<input type="submit" value="I Agree"/>
 				</p>
 			</form>
 		</div>
