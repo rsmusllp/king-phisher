@@ -32,6 +32,10 @@
 
 from distutils.core import setup
 import os
+import sys
+
+if os.path.split(__file__)[0] == 'tools':
+	sys.path.insert(1, os.getcwd())
 
 from king_phisher import version
 
