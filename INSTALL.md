@@ -24,21 +24,31 @@ Additionally, the user logging in with the King-Phisher client will require a va
 * [PyYAML](http://pyyaml.org/)
 
 ## Linux Install Steps
+The following steps walk through installing King-Phisher on Linux into a
+self contained directory. Installing King-Phisher into ```/opt/king-phisher```
+is recommended.
+
+### Download from Git
 1. Download King-Phisher from GitHub: ```git clone https://github.com/securestate/king-phisher.git```
 1. Change directory into king-phisher: ```cd king-phisher```
-1. Install Python dependencies with PIP ```sudo pip install -r requirements.txt```
-1. Skip to the next section depending on if you're install the client or server.
+1. Skip to the next section depending on if you're install the client or the server.
 
 ### Client on Ubuntu 13.04 / 13.10 / 14.04
-1. Install required system packages: ```sudo apt-get install python-gobject python-gobject-dev```
-1. Install the King-Phisher Client: ```sudo python tools/setup_client.py build && sudo python tools/setup_client.py install```
+1. Install required packages: ```sudo apt-get install -qq gir1.2-gtk-3.0 gir1.2-vte-2.90 gir1.2-webkit-3.0 python-cairo python-gi python-gi-cairo python-gobject python-gobject-2 python-gobject-dev python-paramiko```
+1. Install Python dependencies with PIP ```sudo pip install -r requirements.txt```
+1. Run the King-Phisher Client: ```./KingPhisher```
 
-### Client on Kali 1.04
-1. Install required packages: ```sudo apt-get install python-gobject python-gobject-dev gir1.2-vte-2.90 gir1.2-webkit-3.0```
-1. Install the King-Phisher Client: ```sudo python tools/setup_client.py build && sudo python tools/setup_client.py install```
+### Client on Kali
+1. Install required packages: ```sudo apt-get install python-gobject python-gobject-dev python-pip gir1.2-vte-2.90 gir1.2-webkit-3.0```
+1. Install Python dependencies with PIP ```sudo pip install -r requirements.txt```
+1. Run the King-Phisher Client: ```./KingPhisher```
 
 ### Server on Ubuntu 13.04 / 13.10 / 14.04
-1. Install the King-Phisher Server: ```sudo python tools/setup_server.py build && sudo python tools/setup_server.py install```
-1. Install the King-Phisher Service file: ```sudo cp data/server/service_files/king-phisher.conf /etc/init/```
-1. Open data/server/king_phisher/server_config.yml with a text editor and change the "web_root" field to the location where you want to serve your phishing website html files. Save the file as ```/etc/king-phisher.yml```.
-1. Run ```sudo start king-phisher```
+1. Install required packages: ```sudo apt-get install -qq gir1.2-gtk-3.0 gir1.2-vte-2.90 gir1.2-webkit-3.0 python-cairo python-gi python-gi-cairo python-gobject python-gobject-2 python-gobject-dev python-paramiko```
+1. Install Python dependencies with PIP ```sudo pip install -r requirements.txt```
+1. Copy the default server configuration file: ```cp data/server/king_phisher/server_config.yml .```
+1. Open server_config.yml with a text editor and change any settings. The remaining steps assume all the defaults are used.
+1. Create the database directory: ```sudo mkdir /var/king-phisher; chown nobody /var/king-phisher```
+ * SQLite requires write permissions to the directory containing the database file.
+1. Run the King-Phisher Server: ```sudo ./KingPhisherServer server_config.yml```
+ * Check the KingPhisherServer help menu for command line options.
