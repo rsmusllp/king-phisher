@@ -20,11 +20,11 @@ Special Thanks (QA / Beta Testing):
 
 King-Phisher Development Team:
 
- - Brandan Geise - coldfusion
+ - Brandan Geise - coldfusion ([@coldfusion39](https://twitter.com/coldfusion39))
 
- - Jeff McCutchan - jamcut
+ - Jeff McCutchan - jamcut ([@jamcut](https://twitter.com/jamcut))
 
- - Spencer McIntyre - [zeroSteiner](https://github.com/zeroSteiner) ([@zeroSteiner](https://twitter.com/zeroSteiner))
+ - Spencer McIntyre - zeroSteiner ([@zeroSteiner](https://twitter.com/zeroSteiner))
 
 ## Client Configuration
 The client configuration file is encoded in JSON and most options are configurable through the GUI interface.

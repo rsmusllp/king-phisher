@@ -34,7 +34,7 @@ is recommended.
 1. Skip to the next section depending on if you're install the client or the server.
 
 ### Client on Ubuntu 13.04 / 13.10 / 14.04
-1. Install required packages: ```sudo apt-get install -qq gir1.2-gtk-3.0 gir1.2-vte-2.90 gir1.2-webkit-3.0 python-cairo python-gi python-gi-cairo python-gobject python-gobject-2 python-gobject-dev python-paramiko```
+1. Install required packages: ```sudo apt-get install -qq gir1.2-gtk-3.0 gir1.2-vte-2.90 gir1.2-webkit-3.0 python-cairo python-gi python-gi-cairo python-gobject python-gobject-2 python-gobject-dev python-paramiko python-pip```
 1. Install Python dependencies with PIP ```sudo pip install -r requirements.txt```
 1. Run the King-Phisher Client: ```./KingPhisher```
 
@@ -44,7 +44,7 @@ is recommended.
 1. Run the King-Phisher Client: ```./KingPhisher```
 
 ### Server on Ubuntu 13.04 / 13.10 / 14.04
-1. Install required packages: ```sudo apt-get install -qq gir1.2-gtk-3.0 gir1.2-vte-2.90 gir1.2-webkit-3.0 python-cairo python-gi python-gi-cairo python-gobject python-gobject-2 python-gobject-dev python-paramiko```
+1. Install required packages: ```sudo apt-get install -qq gir1.2-gtk-3.0 gir1.2-vte-2.90 gir1.2-webkit-3.0 python-cairo python-gi python-gi-cairo python-gobject python-gobject-2 python-gobject-dev python-paramiko python-pip```
 1. Install Python dependencies with PIP ```sudo pip install -r requirements.txt```
 1. Copy the default server configuration file: ```cp data/server/king_phisher/server_config.yml .```
 1. Open server_config.yml with a text editor and change any settings. The remaining steps assume all the defaults are used.
