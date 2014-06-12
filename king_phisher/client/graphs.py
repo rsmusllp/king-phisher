@@ -45,6 +45,7 @@ except ImportError:
 	has_matplotlib = False
 else:
 	has_matplotlib = True
+	matplotlib.rcParams['backend'] = 'TkAgg'
 	from matplotlib import dates
 	from matplotlib import pyplot
 	from matplotlib.figure import Figure
@@ -139,6 +140,8 @@ class CampaignGraph(object):
 
 	def refresh(self, info_cache=None):
 		info_cache = (info_cache or {})
+		if not self.parent.rpc:
+			return info_cache
 		for table in self.table_subscriptions:
 			if not table in info_cache:
 				info_cache[table] = list(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
