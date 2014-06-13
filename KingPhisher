@@ -62,7 +62,7 @@ def main():
 	# Configure environment variables
 	find.data_path_append('data/client')
 	os.environ['KING_PHISHER_GLADE_FILE'] = 'KingPhisherClient.glade'
-	if not gui_utilities.which_glade(os.environ['KING_PHISHER_GLADE_FILE']):
+	if not gui_utilities.which_glade():
 		print('[-] unable to locate the Glade data file')
 		return 0
 

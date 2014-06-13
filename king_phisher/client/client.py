@@ -57,8 +57,13 @@ from gi.repository import Gtk
 import paramiko
 
 CONFIG_FILE_PATH = '~/.king_phisher.json'
+"""The default search location for the client configuration file."""
 
 class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
+	"""
+	Display a dialog which allows a new campaign to be created or an
+	existing campaign to be opened.
+	"""
 	gobject_ids = [
 		'button_new_campaign',
 		'entry_new_campaign_name',
@@ -78,6 +83,7 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 		self.load_campaigns()
 
 	def load_campaigns(self):
+		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
 		treeview = self.gobjects['treeview_campaigns']
 		store = treeview.get_model()
 		if store == None:
@@ -137,6 +143,11 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 		return response
 
 class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
+	"""
+	Display the King Phisher client configuration dialog. Running this
+	dialog via the :py:func:`.interact` method will cause some server
+	settings to be loaded.
+	"""
 	gobject_ids = [
 		# Server Tab
 		'entry_server',
@@ -221,13 +232,27 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 # This is the top level class/window for the client side of the king-phisher
 # application
 class KingPhisherClient(Gtk.Window):
+	"""
+	This is the top level King Phisher client object. It contains the
+	custom GObject signals, keeps all the GUI references, and manages
+	the RPC client object. This is also the parent window for most
+	GTK objects.
+	"""
 	__gsignals__ = {
 		'campaign_set': (GObject.SIGNAL_RUN_FIRST, None, (str,))
 	}
 	def __init__(self, config_file=None):
+		"""
+		:param str config_file: The path to the configuration file to load.
+		"""
 		super(KingPhisherClient, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client')
 		self.config_file = (config_file or CONFIG_FILE_PATH)
+		"""The file containing the King Phisher client configuration."""
+		self.ssh_forwarder = None
+		"""The :py:class:`SSHTCPForwarder` instance used for tunneling traffic."""
+		self.config = None
+		"""The main King Phisher client configuration."""
 		self.load_config()
 		self.set_property('title', 'King Phisher')
 		vbox = Gtk.Box()
@@ -248,6 +273,7 @@ class KingPhisherClient(Gtk.Window):
 		hbox.set_property('orientation', Gtk.Orientation.HORIZONTAL)
 		hbox.show()
 		self.notebook = Gtk.Notebook()
+		"""The primary :py:class:`Gtk.Notebook` that holds the top level taps of the client GUI."""
 		self.notebook.connect('switch-page', self._tab_changed)
 		self.notebook.set_scrollable(True)
 		hbox.pack_start(self.notebook, True, True, 0)
@@ -271,8 +297,8 @@ class KingPhisherClient(Gtk.Window):
 		self.connect('destroy', self.signal_window_destroy)
 		self.notebook.show()
 		self.show()
-		self.rpc = None
-		self.ssh_forwarder = None
+		self.rpc = None # needs to be initialized last
+		"""The :py:class:`KingPhisherRPCClient` instance."""
 
 	def _add_menu_actions(self, action_group):
 		# File Menu Actions
@@ -383,6 +409,13 @@ class KingPhisherClient(Gtk.Window):
 		return
 
 	def init_connection(self):
+		"""
+		Initialize a connection to the King Phisher server. This will
+		connect to the server and load necessary information from it.
+
+		:return: Whether or not the connection attempt was successful.
+		:rtype: bool
+		"""
 		if not self.server_connect():
 			return False
 		self.load_server_config()
@@ -402,10 +435,22 @@ class KingPhisherClient(Gtk.Window):
 		return True
 
 	def client_quit(self, destroy=True):
+		"""Quit the client and perform any necessary clean up operations."""
 		self.destroy()
 		return
 
 	def server_connect(self):
+		"""
+		Perform the connection setup as part of the server connection
+		initialization process. This will display a GUI window requesting
+		the connection information. An :py:class:`SSHTCPForwarder` instance
+		is created and configured for tunneling traffic to the King Phisher
+		server. This also verifies that the RPC API version running on
+		the server is compatible with the client.
+
+		:return: Whether or not the connection attempt was successful.
+		:rtype: bool
+		"""
 		import socket
 		server_version_info = None
 		while True:
@@ -469,6 +514,7 @@ class KingPhisherClient(Gtk.Window):
 		return True
 
 	def server_disconnect(self):
+		"""Clean up the SSH TCP connections and disconnect from the server."""
 		if self.ssh_forwarder:
 			self.ssh_forwarder.stop()
 			self.ssh_forwarder = None
@@ -476,6 +522,7 @@ class KingPhisherClient(Gtk.Window):
 		return
 
 	def load_config(self):
+		"""Load the client configuration from disk and set the :py:attr:`.config` attribute."""
 		self.logger.info('loading the config from disk')
 		config_file = os.path.expanduser(self.config_file)
 		if not os.path.isfile(config_file):
@@ -483,10 +530,12 @@ class KingPhisherClient(Gtk.Window):
 		self.config = json.load(open(config_file, 'rb'))
 
 	def load_server_config(self):
+		"""Load the necessary values from the server's configuration."""
 		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image'])
 		return
 
 	def save_config(self):
+		"""Write the client configuration to disk."""
 		self.logger.info('writing the config to disk')
 		config = copy.copy(self.config)
 		for key in self.config.keys():
@@ -497,6 +546,12 @@ class KingPhisherClient(Gtk.Window):
 		json.dump(config, config_file_h, sort_keys=True, indent=4)
 
 	def delete_campaign(self):
+		"""
+		Delete the campaign on the server. A confirmation dialog will be
+		displayed before the operation is performed. If the campaign is
+		deleted and a new campaign is not selected with
+		:py:class:`.show_campaign_selection`, the client will quit.
+		"""
 		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible. All campaign data will be lost.'):
 			return
 		self.rpc('campaign/delete', self.config['campaign_id'])
@@ -505,11 +560,16 @@ class KingPhisherClient(Gtk.Window):
 			self.client_quit()
 
 	def edit_preferences(self):
+		"""
+		Display a :py:class:`KingPhisherClientConfigDialog` instance and
+		save the config to disk if cancel is not selected.
+		"""
 		dialog = KingPhisherClientConfigDialog(self.config, self)
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
 			self.save_config()
 
 	def export_xml(self):
+		"""Export the current campaign to an XML data file."""
 		dialog = gui_utilities.UtilityFileChooser('Export Campaign XML Data', self)
 		file_name = self.config['campaign_name'] + '.xml'
 		response = dialog.run_quick_save(file_name)
@@ -520,6 +580,10 @@ class KingPhisherClient(Gtk.Window):
 		export.campaign_to_xml(self.rpc, self.config['campaign_id'], destination_file)
 
 	def show_about_dialog(self):
+		"""
+		Display the about dialog showing details about the programs version,
+		license etc.
+		"""
 		license_text = None
 		if os.path.splitext(__file__)[1] == '.py':
 			source_file_h = open(__file__, 'r')
@@ -553,6 +617,13 @@ class KingPhisherClient(Gtk.Window):
 		about_dialog.destroy()
 
 	def show_campaign_graph(self, graph_name):
+		"""
+		Create a new :py:class:`CampaignGraph` instance and make it into
+		a window. *graph_name* must be the name of a valid, exported
+		graph provider.
+
+		:param str graph_name: The name of the graph to make a window of.
+		"""
 		Klass = graphs.get_graph(graph_name)
 		graph_inst = Klass(self.config, self)
 		graph_inst.load_graph()
@@ -560,10 +631,23 @@ class KingPhisherClient(Gtk.Window):
 		window.show_all()
 
 	def show_campaign_selection(self):
+		"""
+		Display the campaign selection dialog in a new
+		:py:class:`.KingPhisherClientCampaignSelectionDialog` instance.
+
+		:return: The status of the dialog.
+		:rtype: bool
+		"""
 		dialog = KingPhisherClientCampaignSelectionDialog(self.config, self)
 		return dialog.interact() != Gtk.ResponseType.CANCEL
 
 	def stop_remote_service(self):
+		"""
+		Stop the remote King Phisher server. This will request that the
+		server stop processing new requests and exit. This will display
+		a confirmation dialog before performing the operation. If the
+		remote service is stopped, the client will quit.
+		"""
 		if not gui_utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self, 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
 			return
 		self.rpc('shutdown')
