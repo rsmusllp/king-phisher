@@ -42,8 +42,21 @@ USER_AGENT_REGEX_OS = re.compile(r'(android|blackberry|(ipad|iphone)?; cpu (ipad
 USER_AGENT_REGEX_VERSION = re.compile(r'Version/(([\d\._\-]+)(;|\)| ))')
 
 UserAgent = collections.namedtuple('UserAgent', ['os_name', 'os_version', 'os_arch'])
+"""
+A parsed representation of the information available from a browsers user
+agent string. Only the :py:attr:`.os_name` attribute is guaranteed to not
+be None.
+"""
 
 def parse_user_agent(user_agent):
+	"""
+	Parse a user agent string and return normalized information regarding
+	the operating system.
+
+	:param str user_agent: The user agent to parse.
+	:return: A parsed user agent, None is returned if the data can not be processed.
+	:rtype: :py:class:`.UserAgent`
+	"""
 	os_parts = USER_AGENT_REGEX_OS.search(user_agent)
 	if not os_parts:
 		user_agent = re.sub(r'(BB)(\d+)', r'BlackBerry \2', user_agent)

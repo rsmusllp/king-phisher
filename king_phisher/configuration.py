@@ -31,35 +31,93 @@
 #
 
 import copy
+import json
+import os
+import sys
 
-import yaml
 try:
-	from yaml import CLoader as Loader, CDumper as Dumper
+	import yaml
 except ImportError:
-	from yaml import Loader, Dumper
+	has_yaml = False
+else:
+	has_yaml = True
+	try:
+		from yaml import CLoader as Loader, CDumper as Dumper
+	except ImportError:
+		from yaml import Loader, Dumper
+
+SERIALIZER_DRIVERS = {}
+SERIALIZER_DRIVERS['json'] = {'load': json.load, 'dumps': lambda obj: json.dumps(obj, sort_keys=True, indent=4)}
+SERIALIZER_DRIVERS['jsn'] = {'load': json.load, 'dumps': lambda obj: json.dumps(obj, sort_keys=True, indent=4)}
+SERIALIZER_DRIVERS['yaml'] = {'load': lambda file_obj: yaml.load(file_obj, Loader=Loader), 'dumps': lambda obj: yaml.dumps(obj, default_flow_style=False, Dumper=Dumper)}
+SERIALIZER_DRIVERS['yml'] = {'load': lambda file_obj: yaml.load(file_obj, Loader=Loader), 'dumps': lambda obj: yaml.dumps(obj, default_flow_style=False, Dumper=Dumper)}
 
 class Configuration(object):
-	def __init__(self, configuration_file):
+	"""
+	This class provides a generic object for parsing configuration files
+	in multiple formats.
+	"""
+	def __init__(self, configuration_file, prefix=''):
+		"""
+		:param str configuration_file: The configuration file to parse.
+		:param str prefix: String to be prefixed to all option names.
+		"""
+		self.prefix = prefix
+		self.seperator = '.'
 		self.configuration_file = configuration_file
 		file_h = open(self.configuration_file, 'r')
-		self._storage = dict(yaml.load(file_h, Loader=Loader))
+		self._storage = dict(self._serializer('load', file_h))
 		file_h.close()
 
-	def dumps(self, obj):
-		return yaml.dump(obj, default_flow_style=False, Dumper=Dumper)
+	@property
+	def configuration_file_ext(self):
+		"""
+		The extension of the current configuration file.
+		"""
+		return os.path.splitext(self.configuration_file)[1][1:]
+
+	def _serializer(self, operation, *args):
+		if not self.configuration_file_ext in SERIALIZER_DRIVERS:
+			raise ValueError('unknown file type \'' + self.configuration_file_ext + '\'')
+		function = SERIALIZER_DRIVERS[self.configuration_file_ext][operation]
+		return function(*args)
 
 	def get_storage(self):
+		"""
+		Get a copy of the internal configuration. Changes made to the returned
+		copy will not affect this object.
+
+		:return: A copy of the internal storage object.
+		:rtype: dict
+		"""
 		return copy.deepcopy(self._storage)
 
 	def get(self, item_name):
-		item_names = item_name.split('.')
+		"""
+		Retrieve the value of an option.
+
+		:param str item_name: The name of the option to retreive.
+		:return: The value of *item_name* in the configuration.
+		"""
+		if self.prefix:
+			item_name = self.prefix + self.seperator + item_name
+		item_names = item_name.split(self.seperator)
 		node = self._storage
 		for item_name in item_names:
 			node = node[item_name]
 		return node
 
 	def has_option(self, option_name):
-		item_names = option_name.split('.')
+		"""
+		Check that an option exists.
+
+		:param str option_name: The name of the option to check.
+		:return: True of the option exists in the configuration.
+		:rtype: bool
+		"""
+		if self.prefix:
+			item_name = self.prefix + self.seperator + item_name
+		item_names = option_name.split(self.seperator)
 		node = self._storage
 		for item_name in item_names:
 			if not item_name in node:
@@ -68,12 +126,27 @@ class Configuration(object):
 		return True
 
 	def has_section(self, section_name):
+		"""
+		Checks that an option exists and that it contains sub options.
+
+		:param str section_name: The name of the section to check.
+		:return: True if the section exists.
+		:rtype: dict
+		"""
 		if not self.has_option(section_name):
 			return False
 		return isinstance(self.get(section_name), dict)
 
 	def set(self, item_name, item_value):
-		item_names = item_name.split('.')
+		"""
+		Sets the value of an option in the configuration.
+
+		:param str item_name: The name of the option to set.
+		:param item_value: The value of the option to set.
+		"""
+		if self.prefix:
+			item_name = self.prefix + self.seperator + item_name
+		item_names = item_name.split(self.seperator)
 		item_last = item_names.pop()
 		node = self._storage
 		for item_name in item_names:
@@ -84,6 +157,9 @@ class Configuration(object):
 		return
 
 	def save(self):
-		file_h = open(self.configuration_file, 'w')
-		file_h.write(self.dumps(self._storage))
+		"""
+		Save the current configuration to disk.
+		"""
+		file_h = open(self.configuration_file, 'wb')
+		file_h.write(self._serializer('dumps', self._storage))
 		file_h.close()

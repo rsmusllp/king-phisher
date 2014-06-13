@@ -33,6 +33,17 @@
 import random
 
 def xor_encode(data, seed_key=None):
+	"""
+	Encode data using the XOR algorithm. This is not suitable for encryption
+	purposes and should only be used for light obfuscation. The key is
+	prepended to the data as the first byte which is required to be decoded
+	py the :py:func:`.xor_decode` function.
+
+	:param str data: The data to encode.
+	:param int seed_key: The optional value to use as the for XOR key.
+	:return: The encoded data.
+	:rtype: str
+	"""
 	seed_key = (seed_key or random.randint(0, 255))
 	data = map(ord, data)
 	encoded_data = [seed_key]
@@ -44,6 +55,16 @@ def xor_encode(data, seed_key=None):
 	return ''.join(map(chr, encoded_data))
 
 def xor_decode(data):
+	"""
+	Decode data using the XOR algorithm. This is not suitable for encryption
+	purposes and should only be used for light obfuscation. This function
+	requires the key to be set as the first byte of *data* as done in the
+	:py:func:`.xor_encode` function.
+
+	:param str data: The data to decode.
+	:return: The decoded data.
+	:rtype: str
+	"""
 	data = map(ord, data)
 	last_key = data.pop(0)
 	decoded_data = []

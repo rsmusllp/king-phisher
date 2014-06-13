@@ -79,7 +79,20 @@ class ForwardHandler(SocketServer.BaseRequestHandler):
 		self.request.close()
 
 class SSHTCPForwarder(threading.Thread):
+	"""
+	Open an SSH connection and forward TCP traffic through it. This is
+	a :py:class:`threading.Thread` object and needs to be started after
+	it is initialized.
+	"""
 	def __init__(self, server, username, password, local_port, remote_server, preferred_private_key=None):
+		"""
+		:param tuple server: The server to connect to.
+		:param str username: The username to authenticate with.
+		:param str password: The password to authenticate with.
+		:param int local_port: The local port to forward.
+		:param tuple remote_server: The remote server to connect to through the SSH server.
+		:param str preferred_private_key: An RSA key prefer for authentication.
+		"""
 		super(SSHTCPForwarder, self).__init__()
 		self.local_port = local_port
 		self.server = server

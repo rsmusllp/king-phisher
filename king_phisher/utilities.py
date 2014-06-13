@@ -38,6 +38,14 @@ import sys
 import time
 
 def timedef_to_seconds(timedef):
+	"""
+	Convert a string timespan definition to seconds, for example converting
+	'1m30s' to 90.
+
+	:param str timedef: The timespan definition to convert to seconds.
+	:return: The converted value in seconds.
+	:rtype: int
+	"""
 	converter_order = ['w', 'd', 'h', 'm', 's']
 	converters = {
 		'w': 604800,
@@ -69,9 +77,17 @@ def timedef_to_seconds(timedef):
 	if seconds < 0:
 		raise ValueError('invalid time format')
 	return seconds
-
-class cache(object):
+class Cache(object):
+	"""
+	This class provides a simple to use cache object which can be applied
+	as a decorator.
+	"""
 	def __init__(self, timeout):
+		"""
+		:param timeout: The amount of time in seconds that a cached
+			result will be considered valid for.
+		:type timeout: int, str
+		"""
 		if isinstance(timeout, (str, unicode)):
 			timeout = timedef_to_seconds(timeout)
 		self.cache_timeout = timeout
@@ -95,6 +111,9 @@ class cache(object):
 		return "<cached function {0}>".format(self._target_function.__name__)
 
 	def cache_clean(self):
+		"""
+		Remove expired items from the cache.
+		"""
 		now = time.time()
 		keys_for_removal = []
 		for key, (value, expiration) in self.__cache.items():
@@ -104,9 +123,20 @@ class cache(object):
 			del self.__cache[key]
 
 	def cache_clear(self):
+		"""
+		Remove all items from the cache.
+		"""
 		self.__cache = {}
 
 def open_uri(uri):
+	"""
+	Open a URI in a platform intelligent way. On Winodws this will use
+	'cmd.exe /c start' and on Linux this will use gvfs-open or xdg-open
+	depending on which is available. If no suitable application can be
+	found to open the URI, a RuntimeError will be raised.
+
+	:param str uri: The URI to open.
+	"""
 	proc_args = []
 	startupinfo = None
 	if sys.platform.startswith('win'):
@@ -127,6 +157,16 @@ def open_uri(uri):
 	return proc_h.wait() == 0
 
 def server_parse(server, default_port):
+	"""
+	Convert a server string to a tuple suitable for passing to connect, for
+	example converting 'www.google.com:443' to ('www.google.com', 443).
+
+	:param str server: The server string to convert.
+	:param int default_port: The port to use in case one is not specified
+		in the server string.
+	:return: The parsed server information.
+	:rtype: tuple
+	"""
 	server = server.split(':')
 	host = server[0]
 	if len(server) == 1:
@@ -140,6 +180,15 @@ def server_parse(server, default_port):
 		return (host, port)
 
 def unique(seq, key=None):
+	"""
+	Unique a list or tuple and preserve the order.
+
+	:param seq: The list or tuple to preserve unique items from.
+	:type seq: list, tuple
+	:param key: If key is provided it will be called during the
+		comparison process.
+	:type key: function, None
+	"""
 	if key is None:
 		key = lambda x: x
 	preserved_type = type(seq)
@@ -154,10 +203,17 @@ def unique(seq, key=None):
 	return preserved_type(result)
 
 def which(program):
+	"""
+	Locate an executable binary's full path by its name.
+
+	:param str program: The executables name.
+	:return: The full path to the executable.
+	:rtype: str
+	"""
 	is_exe = lambda fpath: (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
 	if is_exe(program):
 		return program
-	for path in os.environ["PATH"].split(os.pathsep):
+	for path in os.environ['PATH'].split(os.pathsep):
 		path = path.strip('"')
 		exe_file = os.path.join(path, program)
 		if is_exe(exe_file):

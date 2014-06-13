@@ -41,7 +41,13 @@ import jinja2
 __all__ = ['KingPhisherTemplateEnvironment']
 
 class KingPhisherTemplateEnvironment(jinja2.Environment):
+	"""A configured Jinja2 environment with additional filters."""
 	def __init__(self, loader=None, global_vars=None):
+		"""
+		:param loader: The loader to supply to the environment.
+		:type loader: :py:class:`jinja2.BaseLoader`
+		:param dict global_vars: Additional global variables for the environment.
+		"""
 		self.logger = logging.getLogger('KingPhisher.TemplateEnvironment')
 		autoescape = lambda name: isinstance(name, (str, unicode)) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
 		extensions = ['jinja2.ext.autoescape']
@@ -59,6 +65,7 @@ class KingPhisherTemplateEnvironment(jinja2.Environment):
 
 	@property
 	def standard_variables(self):
+		"""Additional standard variables that can optionally be used for templates."""
 		std_vars = {
 			'time': {
 				'local': datetime.datetime.now(),

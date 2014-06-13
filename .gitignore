@@ -9,6 +9,9 @@ build/*
 data/*/king_phisher/plugins/*
 dist/*
 
+# temporary until docs are ready
+docs/*
+
 !data/server/king_phisher/error_*.html
 !data/server/king_phisher/server_config.yml
 !data/server/king_phisher/service_files/*

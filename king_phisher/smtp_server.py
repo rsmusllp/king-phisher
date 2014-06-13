@@ -40,7 +40,16 @@ from king_phisher import utilities
 import dns.resolver
 
 class KingPhisherSMTPServer(smtpd.PureProxy, object):
+	"""
+	An SMTP server useful for debugging. Messages handled by this server
+	are not forwarded anywhere.
+	"""
 	def __init__(self, localaddr, remoteaddr, debugging=False):
+		"""
+		:param tuple localaddr: The local address to bind to.
+		:param tuple remoteaddr: The remote address to use.
+		:param bool debugging: Whether to enable debugging messages.
+		"""
 		self.debugging = debugging
 		self.logger = logging.getLogger('KingPhisher.SMTPD')
 		super(KingPhisherSMTPServer, self).__init__(localaddr, remoteaddr)
@@ -48,8 +57,15 @@ class KingPhisherSMTPServer(smtpd.PureProxy, object):
 		if self.debugging:
 			self.logger.warning('debugging mode is enabled, all messages will be dropped')
 
-	@utilities.cache('6h')
+	@utilities.Cache('6h')
 	def get_smtp_servers(self, domain_name):
+		"""
+		Get a list of SMTP servers for the specified domain name.
+
+		:param str domain_name: The domain to get a list of SMTP servers for.
+		:return: A tuple of SMTP servers.
+		:rtype: tuple
+		"""
 		try:
 			smtp_servers = dns.resolver.query(domain_name, 'MX')
 		except dns.resolver.NoAnswer:

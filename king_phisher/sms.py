@@ -39,6 +39,7 @@ from king_phisher import utilities
 import dns.resolver
 
 __version__ = '0.1'
+__all__ = ['send_sms']
 
 CARRIERS = {
 	'Alltel':        'message.alltel.com',
@@ -49,8 +50,9 @@ CARRIERS = {
 	'Verizon':       'vtext.com',
 	'Virgin Mobile': 'vmobl.com',
 }
+"""A dictionary for mapping carrier names to SMS via email gateways."""
 
-@utilities.cache('6h')
+@utilities.Cache('6h')
 def get_smtp_servers(domain):
 	mx_records = dns.resolver.query(domain, 'MX')
 	return map(lambda r: str(r.exchange).rstrip('.'), mx_records)
@@ -59,6 +61,18 @@ def normalize_name(name):
 	return name.lower().replace('&', '').replace('-', '')
 
 def send_sms(message_text, phone_number, carrier, from_address=None):
+	"""
+	Send an SMS message by emailing the carriers SMS gateway. This method
+	requires no money however some networks are blocked by the carriers
+	due to being flagged for spam which can cause issues.
+
+	:param str message_text: The message to send.
+	:param str phone_number: The phone number to send the SMS to.
+	:param str carrier: The cellular carrier that the phone number belongs to.
+	:param str from_address: The optional address to display in the 'from' field of the SMS.
+	:return: This returns the status of the sent messsage.
+	:rtype: bool
+	"""
 	from_address = (from_address or 'donotreply@nowhere.com')
 	phone_number = phone_number.replace('-', '').replace(' ', '')
 	if len(message_text) > 160:
