@@ -190,9 +190,9 @@ class MailSenderPreviewTab(object):
 
 class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
-            'button_save_as_html_file',
-            'button_save_html_file',
-            'textview_html_file'
+		'button_save_as_html_file',
+		'button_save_html_file',
+		'textview_html_file'
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
@@ -231,17 +231,17 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 
 class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
-            'entry_webserver_url',
-            'entry_company_name',
-            'entry_source_email',
-            'entry_source_email_alias',
-            'entry_subject',
-            'entry_reply_to_email',
-            'entry_html_file',
-            'entry_target_file',
-            'entry_attachment_file',
-            'combobox_importance',
-            'combobox_sensitivity'
+		'entry_webserver_url',
+		'entry_company_name',
+		'entry_source_email',
+		'entry_source_email_alias',
+		'entry_subject',
+		'entry_reply_to_email',
+		'entry_html_file',
+		'entry_target_file',
+		'entry_attachment_file',
+		'combobox_importance',
+		'combobox_sensitivity'
 	]
 	config_prefix = 'mailer.'
 	top_gobject = 'box'

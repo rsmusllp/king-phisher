@@ -34,6 +34,8 @@ import csv
 import datetime
 import xml.etree.ElementTree as ET
 
+__all__ = ['campaign_to_xml', 'convert_value', 'treeview_liststore_to_csv']
+
 TABLE_VALUE_CONVERSIONS = {
 	'campaigns/created': lambda ts: datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S').isoformat(),
 	'campaigns/reject_after_credentials': bool,
@@ -42,6 +44,16 @@ TABLE_VALUE_CONVERSIONS = {
 }
 
 def convert_value(table_name, key, value):
+	"""
+	Perform any conversions necessary to neatly display the data in XML
+	format.
+
+	:param str table_name: The table name that the key and value pair are from.
+	:param str key: The data key.
+	:param value: The data value to convert.
+	:return: The converted value.
+	:rtype: str
+	"""
 	conversion_key = table_name + '/' + key
 	if conversion_key in TABLE_VALUE_CONVERSIONS:
 		value = TABLE_VALUE_CONVERSIONS[conversion_key](value)
@@ -50,6 +62,15 @@ def convert_value(table_name, key, value):
 	return value
 
 def campaign_to_xml(rpc, campaign_id, xml_file):
+	"""
+	Load all information for a particular campaign and dump it to an XML
+	file.
+
+	:param rpc: The connected RPC instance to load the information with.
+	:type rpc: :py:class:`.KingPhisherRPCClient`
+	:param campaign_id: The ID of the campaign to load the information for.
+	:param str xml_file: The destination file for the XML data.
+	"""
 	root = ET.Element('kingphisher')
 	# Generate export metadata
 	metadata = ET.SubElement(root, 'metadata')
@@ -75,6 +96,16 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	element_tree.write(xml_file, encoding='utf-8', xml_declaration=True)
 
 def treeview_liststore_to_csv(treeview, target_file):
+	"""
+	Convert a treeview object to a CSV file. The CSV column names are
+	loaded from the treeview.
+
+	:param treeview: The treeview to load the information from.
+	:type treeview: :py:class:`Gtk.TreeView`
+	:param str target_file: The destination file for the CSV data.
+	:return: The number of rows that were written.
+	:rtype: int
+	"""
 	target_file_h = open(target_file, 'wb')
 	writer = csv.writer(target_file_h, quoting=csv.QUOTE_ALL)
 	column_names = map(lambda x: x.get_property('title'), treeview.get_columns())

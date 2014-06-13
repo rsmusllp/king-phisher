@@ -57,10 +57,25 @@ GOBJECT_PROPERTY_MAP = {
 	),
 }
 
-def which_glade(glade):
+def which_glade():
+	"""
+	Locate the glade data file.
+
+	:return: The path to the glade data file.
+	:rtype: str
+	"""
 	return find.find_data_file(os.environ['KING_PHISHER_GLADE_FILE'])
 
 def glib_idle_add_wait(function, *args):
+	"""
+	Execute *function* in the main GTK loop using :py:func:`GLib.idle_add`
+	and block until it has completed. This is useful for threads that need
+	to update GUI data.
+
+	:param function function: The function to call.
+	:param args: The arguments to *functoin*.
+	:return: The result of the function call.
+	"""
 	gsource_completed = threading.Event()
 	results = []
 	def wrapper():
@@ -72,6 +87,17 @@ def glib_idle_add_wait(function, *args):
 	return results.pop()
 
 def gobject_get_value(gobject, gtype=None):
+	"""
+	Retreive the value of a GObject widget. Only objects with value
+	retrieving functions present in the :py:data:`.GOBJECT_PROPERTY_MAP`
+	can be processed by this function.
+
+	:param gobject: The object to get the value of.
+	:type gobject: :py:class:`GObject.GObject`
+	:param str gtype: An explicit type to treat *gobject* as.
+	:return: The value of *gobject*.
+	:rtype: str
+	"""
 	gtype = (gtype or gobject.__class__.__name__)
 	gtype = gtype.lower()
 	if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
@@ -85,6 +111,14 @@ def gobject_get_value(gobject, gtype=None):
 
 @contextlib.contextmanager
 def gobject_signal_blocked(gobject, signal_name):
+	"""
+	This is a context manager that can be used with the 'with' statement
+	to execute a block of code while *signal_name* is blocked.
+
+	:param gobject: The object to block the signal on.
+	:type gobject: :py:class:`GObject.GObject`
+	:param str signal_name: The name of the signal to block.
+	"""
 	signal_id = GObject.signal_lookup(signal_name, gobject.__class__)
 	handler_id = GObject.signal_handler_find(gobject, GObject.SignalMatchType.ID, signal_id, 0, None, 0, 0)
 	GObject.signal_handler_block(gobject, handler_id)
@@ -92,19 +126,50 @@ def gobject_signal_blocked(gobject, signal_name):
 	GObject.signal_handler_unblock(gobject, handler_id)
 
 def gtk_sync():
+	"""Process all pending GTK events."""
 	while Gtk.events_pending():
 		Gtk.main_iteration()
 
 def gtk_widget_destroy_children(widget):
+	"""
+	Destroy all GTK child objects of *widget*.
+
+	:param widget: The widget to destroy all the children of.
+	:type widget: :py:class:`Gtk.Widget`
+	"""
 	map(lambda child: child.destroy(), widget.get_children())
 
 def search_list_store(list_store, value):
+	"""
+	Search a GTK ListStore for a value.
+
+	:param list_store: The list store to search.
+	:type list_store: :py:class:`Gtk.ListStore`
+	:param value: The value to search for.
+	:return: The row on which the value was found.
+	:rtype: :py:class:`Gtk.TreeIter`
+	"""
 	for row in list_store:
 		if row[0] == value:
 			return row.iter
 	return None
 
 def show_dialog(message_type, message, parent, secondary_text=None, message_buttons=Gtk.ButtonsType.OK):
+	"""
+	Display a dialog and return the response. The response is dependent on
+	the value of *message_buttons*.
+
+	:param message_type: The GTK message type to display.
+	:type message_type: :py:class:`Gtk.MessageType`
+	:param str message: The text to display in the dialog.
+	:param parant: The parent window that the dialog should belong to.
+	:type parent: :py:class:`Gtk.Window`
+	:param str secondary_text: Optional subtext for the dialog.
+	:param message_buttons: The buttons to display in the dialog box.
+	:type message_buttons: :py:class:`Gtk.ButtonsType`
+	:return: The response of the dialog.
+	:rtype: int
+	"""
 	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, message_type, message_buttons, message)
 	if secondary_text:
 		dialog.format_secondary_text(secondary_text)
@@ -114,32 +179,62 @@ def show_dialog(message_type, message, parent, secondary_text=None, message_butt
 	return response
 
 def show_dialog_error(*args, **kwargs):
+	"""Display an error dialog with :py:func:`.show_dialog`."""
 	return show_dialog(Gtk.MessageType.ERROR, *args, **kwargs)
 
 def show_dialog_info(*args, **kwargs):
+	"""Display an informational dialog with :py:func:`.show_dialog`."""
 	return show_dialog(Gtk.MessageType.INFO, *args, **kwargs)
 
 def show_dialog_warning(*args, **kwargs):
+	"""Display an warning dialog with :py:func:`.show_dialog`."""
 	return show_dialog(Gtk.MessageType.WARNING, *args, **kwargs)
 
 def show_dialog_yes_no(*args, **kwargs):
+	"""
+	Display a dialog which asks a yes or no question with
+	:py:func:`.show_dialog`.
+
+	:return: True if the response is Yes.
+	:rtype: bool
+	"""
 	kwargs['message_buttons'] = Gtk.ButtonsType.YES_NO
 	return show_dialog(Gtk.MessageType.QUESTION, *args, **kwargs) == Gtk.ResponseType.YES
 
 class UtilityGladeGObject(object):
+	"""
+	A base object to wrap GTK widgets loaded from Glade data files. This
+	provides a number of convenience methods for managing the main widget
+	and child widgets. This class is meant to be subclassed by classes
+	representing objects from the Glade data file. The class names must
+	be identical to the name of the object they represent in the Glade
+	data file.
+	"""
 	gobject_ids = []
+	"""A list of children GObjects to load from the Glade data file."""
 	top_level_dependencies = []
+	"""Additional top level GObjects to load from the Glade data file."""
 	config_prefix = ''
+	"""A prefix to be used for keys when looking up value in the :py:attr:`.config`."""
 	top_gobject = 'gobject'
+	"""The name of the attribute to set a reference of the top level GObject to."""
 	def __init__(self, config, parent):
+		"""
+		:param dict config: The King Phisher client configuration.
+		:param parent: The parent window for this object.
+		:type parent: :py:class:`Gtk.Window`
+		"""
 		self.config = config
+		"""A reference to the King Phisher client configuration."""
 		self.parent = parent
+		"""The parent :py:class:`Gtk.Window` instance."""
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 
 		builder = Gtk.Builder()
 		self.gtk_builder = builder
+		"""A :py:class:`Gtk.Builder` instance used to load Glade data with."""
 
-		glade_file = which_glade(os.environ['KING_PHISHER_GLADE_FILE'])
+		glade_file = which_glade()
 		builder.add_objects_from_file(glade_file, self.top_level_dependencies + [self.__class__.__name__])
 		builder.connect_signals(self)
 		gobject = builder.get_object(self.__class__.__name__)
@@ -161,11 +256,22 @@ class UtilityGladeGObject(object):
 		self.objects_load_from_config()
 
 	def gtk_builder_get(self, gobject_id):
+		"""
+		Find the child GObject with name *gobject_id* from the GTK builder.
+
+		:param str gobject_id: The object name to look for.
+		:return: The GObject as found by the GTK builder.
+		:rtype: :py:class:`GObject.GObject`
+		"""
 		gtkbuilder_id = "{0}.{1}".format(self.__class__.__name__, gobject_id)
 		self.logger.debug('loading GTK builder object with id: ' + gtkbuilder_id)
 		return self.gtk_builder.get_object(gtkbuilder_id)
 
 	def objects_load_from_config(self):
+		"""
+		Iterate through :py:attr:`.gobjects` and set the GObject's value
+		from the corresponding value in the :py:attr:`.config`.
+		"""
 		for gobject_id, gobject in self.gobjects.items():
 			gtype, config_name = gobject_id.split('_', 1)
 			config_name = self.config_prefix + config_name
@@ -188,10 +294,18 @@ class UtilityGladeGObject(object):
 			self.config[config_name] = gobject_get_value(gobject, gtype)
 
 class UtilityFileChooser(Gtk.FileChooserDialog):
+	"""Display a file chooser dialog."""
 	def __init__(self, *args, **kwargs):
 		super(UtilityFileChooser, self).__init__(*args, **kwargs)
 
 	def run_quick_save(self, current_name=None):
+		"""
+		Show a save file dialog.
+
+		:param set current_name: The name of the file to save.
+		:return: A dictionary with 'target_uri' and 'target_filename' keys representing the path choosen.
+		:rtype: dict
+		"""
 		self.set_action(Gtk.FileChooserAction.SAVE)
 		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
 		self.add_button(Gtk.STOCK_SAVE, Gtk.ResponseType.ACCEPT)
@@ -207,6 +321,14 @@ class UtilityFileChooser(Gtk.FileChooserDialog):
 		return {'target_uri': target_uri, 'target_filename': target_filename}
 
 	def quick_add_filter(self, name, patterns):
+		"""
+		Add a filter for displaying files, this is useful in conjunction
+		with :py:func:`.run_quick_open`.
+
+		:param str name: The name of the filter.
+		:param patterns: The pattern(s) to match.
+		:type patterns: list, str
+		"""
 		if not isinstance(patterns, (list, tuple)):
 			patterns = (patterns,)
 		new_filter = Gtk.FileFilter()
@@ -216,6 +338,12 @@ class UtilityFileChooser(Gtk.FileChooserDialog):
 		self.add_filter(new_filter)
 
 	def run_quick_open(self):
+		"""
+		Display a dialog asking a user which file should be opened.
+
+		:return: A dictionary with 'target_uri' and 'target_filename' keys representing the path choosen.
+		:rtype: dict
+		"""
 		self.set_action(Gtk.FileChooserAction.OPEN)
 		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
 		self.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)

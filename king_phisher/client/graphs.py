@@ -56,6 +56,12 @@ else:
 EXPORTED_GRAPHS = {}
 
 def export(klass):
+	"""
+	Decorator for classes to mark them as valid graph providers.
+
+	:param class klass: The class to mark as a graph provider.
+	:return: The *klass* parameter is returned.
+	"""
 	graph_name = klass.__name__[13:]
 	klass._graph_id = len(EXPORTED_GRAPHS)
 	klass.name = graph_name
@@ -63,18 +69,46 @@ def export(klass):
 	return klass
 
 def get_graph(graph_name):
+	"""
+	Return the graph providing class for *graph_name*.
+
+	:param str graph_name: The name of the graph provider.
+	:return: The graph provider class.
+	:rtype: :py:class:`.CampaignGraph`
+	"""
 	return EXPORTED_GRAPHS.get(graph_name)
 
 def get_graphs():
+	"""
+	Get a list of all registered graph providers.
+
+	:return: All registered graph providers.
+	:rtype: list
+	"""
 	return sorted(EXPORTED_GRAPHS.keys())
 
 class CampaignGraph(object):
+	"""
+	A basic graph provider for using :py:mod:`matplotlib` to create graph
+	representations of campaign data. This class is meant to be subclassed
+	by real providers.
+	"""
 	title = 'Unknown'
+	"""The title of the graph."""
 	_graph_id = None
 	table_subscriptions = []
+	"""A list of tables from which information is needed to produce the graph."""
 	def __init__(self, config, parent, size_request=None):
+		"""
+		:param dict config: The King Phisher client configuration.
+		:param parent: The parent window for this object.
+		:type parent: :py:class:`Gtk.Window`
+		:param tuple size_request: The size to set for the canvas.
+		"""
 		self.config = config
+		"""A reference to the King Phisher client configuration."""
 		self.parent = parent
+		"""The parent :py:class:`Gtk.Window` instance."""
 		self.figure, ax = pyplot.subplots()
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
@@ -102,9 +136,23 @@ class CampaignGraph(object):
 
 	@classmethod
 	def get_graph_id(klass):
+		"""
+		The graph id of an exported :py:class:`.CampaignGraph`.
+
+		:param klass: The class to return the graph id of.
+		:type klass: :py:class:`.CampaignGraph`
+		:return: The id of the graph.
+		:rtype: int
+		"""
 		return klass._graph_id
 
 	def make_window(self):
+		"""
+		Create a window from the figure manager.
+
+		:return: The graph in a new dedicated window.
+		:rtype: :py:class:`Gtk.Window`
+		"""
 		if self.manager == None:
 			self.manager = FigureManager(self.canvas, 0)
 		window = self.manager.window
@@ -136,9 +184,18 @@ class CampaignGraph(object):
 			self.navigation_toolbar.hide()
 
 	def load_graph(self):
+		"""Load the graph information via :py:func:`.refresh`."""
 		self.refresh()
 
 	def refresh(self, info_cache=None):
+		"""
+		Refresh the graph data by retrieving the information from the
+		remote server.
+
+		:param dict info_cache: An optional cache of data tables.
+		:return: A dictionary of cached tables from the server.
+		:rtype: dict
+		"""
 		info_cache = (info_cache or {})
 		if not self.parent.rpc:
 			return info_cache
@@ -152,6 +209,7 @@ class CampaignGraph(object):
 
 @export
 class CampaignGraphOverview(CampaignGraph):
+	"""Display a graph which represents an over view of the campaign."""
 	title = 'Overview'
 	table_subscriptions = ['credentials', 'visits']
 	def _load_graph(self, info_cache):
@@ -183,6 +241,7 @@ class CampaignGraphOverview(CampaignGraph):
 
 @export
 class CampaignGraphVisitorInfo(CampaignGraph):
+	"""Display a graph which represents information regarding a campaign's visitors."""
 	title = 'Visitor Information'
 	table_subscriptions = ['visits']
 	def _load_graph(self, info_cache):
@@ -220,6 +279,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 
 @export
 class CampaignGraphVisitsTimeline(CampaignGraph):
+	"""Display a graph which represents the visits of a campaign over time."""
 	title = 'Visits Timeline'
 	table_subscriptions = ['visits']
 	def _load_graph(self, info_cache):
