@@ -40,15 +40,30 @@ import time
 
 from king_phisher.third_party import pam
 
+__all__ = ['ForkedAuthenticator']
+
 make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for x in range(random.randint(5, 8)))
 make_hash = lambda pw: hashlib.sha512(pw).digest()
 
 class ForkedAuthenticator(object):
+	"""
+	This provides authentication services to the King Phisher server
+	through PAM. It is initialized while the server is running as root
+	and forks into the background before the privileges are dropped. It
+	continues to run as root and forwards requests through a pipe to PAM.
+	The pipes use JSON to encoded the request data as a string before
+	sending it and using a newline character as the terminator.
+	"""
 	def __init__(self, cache_timeout=600):
+		"""
+		:param int cache_timeout: The life time of cached credentials in seconds.
+		"""
 		self.cache_timeout = cache_timeout
+		"""The timeout of the credential cache in seconds."""
 		self.parent_rfile, self.child_wfile = os.pipe()
 		self.child_rfile, self.parent_wfile = os.pipe()
 		self.child_pid = os.fork()
+		"""The PID of the forked child."""
 		if not self.child_pid:
 			self.rfile = self.child_rfile
 			self.wfile = self.child_wfile
@@ -63,13 +78,26 @@ class ForkedAuthenticator(object):
 			self.wfile.close()
 			os._exit(os.EX_OK)
 		self.cache_salt = make_salt()
+		"""The salt to be prepended to passwords before hashing them for the cache."""
 		self.cache = {}
+		"""The credential cache dictionary. Keys are usernames and values are tuples of password hashes and ages."""
 		return
 
 	def send(self, request):
+		"""
+		Encode an send a request through the pipe to the opposite end.
+
+		:param dict request: A request.
+		"""
 		self.wfile.write(json.dumps(request) + '\n')
 
 	def recv(self):
+		"""
+		Receive a request and decode it.
+
+		:return: The decoded request.
+		:rtype: dict
+		"""
 		try:
 			request = self.rfile.readline()[:-1]
 			return json.loads(request)
@@ -77,6 +105,10 @@ class ForkedAuthenticator(object):
 			return {}
 
 	def child_routine(self):
+		"""
+		The main routine that is executed by the child after the object
+		forks. This loop does not exit unless a stop request is made.
+		"""
 		service = 'login'
 		if os.path.isfile('/etc/pam.d/sshd'):
 			service = 'sshd'
@@ -96,6 +128,17 @@ class ForkedAuthenticator(object):
 			self.send(result)
 
 	def authenticate(self, username, password):
+		"""
+		Check if a uername and password are valid. If they are, the
+		password will be salted, hashed with SHA-512 and stored so the
+		next call with the same values will not require sending a
+		request to the forked child.
+
+		:param str username: The username to check.
+		:param str password: The password to check.
+		:return: Whether the credentials are valid or not.
+		:rtype: bool
+		"""
 		pw_hash = make_hash(self.cache_salt + password)
 		cached_hash, timeout = self.cache.get(username, (None, 0))
 		if timeout < time.time():
@@ -111,6 +154,9 @@ class ForkedAuthenticator(object):
 		return (cached_hash == pw_hash)
 
 	def stop(self):
+		"""
+		Send a stop request to the child process and wait for it to exit.
+		"""
 		if not os.path.exists("/proc/{0}".format(self.child_pid)):
 			return
 		request = {}

@@ -41,8 +41,6 @@ from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
 
-# values are either properties (strings) or tuples containing two functions
-# the first is the setter, and the second is the getter.
 GOBJECT_PROPERTY_MAP = {
 	'combobox': (
 		lambda c, v: c.set_active_iter(search_list_store(c.get_model(), v)),
@@ -56,6 +54,13 @@ GOBJECT_PROPERTY_MAP = {
 		lambda t: t.get_buffer().get_text(t.get_buffer().get_start_iter(), t.get_buffer().get_end_iter(), False)
 	),
 }
+"""
+The dictionary which maps GObjects to either the names of properties to
+store text or a tuple which contains a set and get function. If a tuple
+of two functions is specified the set function will be provided two
+parameters, the object and the value and the get function will just be
+provided the object.
+"""
 
 def which_glade():
 	"""

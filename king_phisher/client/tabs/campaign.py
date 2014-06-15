@@ -400,9 +400,9 @@ class CampaignViewMessagesTab(CampaignViewGenericTab):
 
 class CampaignViewTab(object):
 	"""
-	The King Phisher client top-level 'View' tab. This object manages
-	the sub-view tabs which display all the information regarding the
-	current campaign.
+	The King Phisher client top-level 'View Campaign' tab. This object
+	manages the sub-tabs which display all the information regarding
+	the current campaign.
 	"""
 	def __init__(self, config, parent):
 		"""
@@ -417,13 +417,16 @@ class CampaignViewTab(object):
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
 		self.label = Gtk.Label('View Campaign')
+		"""The :py:class:`Gtk.Label` representing this tabs name."""
 
 		self.notebook = Gtk.Notebook()
+		""" The :py:class:`Gtk.Notebook` for holding sub-tabs."""
 		self.notebook.connect('switch-page', self._tab_changed)
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
 		self.tabs = {}
+		"""A dict object holding the sub tabs managed by this object."""
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
 

@@ -44,6 +44,10 @@ from gi.repository import Gtk
 from gi.repository import WebKit
 
 class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
+	"""
+	This allows the :py:class:`.MailSenderThread` object to be managed
+	by the user through the GUI. These two classes are very interdependent
+	"""
 	gobject_ids = [
 		'button_mail_sender_start',
 		'button_mail_sender_stop',
@@ -55,13 +59,18 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label('Send Messages')
+		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderSendMessagesTab, self).__init__(*args, **kwargs)
 		self.textview = self.gobjects['textview_mail_sender_progress']
+		"""The :py:class:`Gtk.TextView` object that renders text status messages."""
 		self.textbuffer = self.textview.get_buffer()
+		"""The :py:class:`Gtk.TextBuffer` instance associated with :py:attr:`textview`."""
 		self.textbuffer_iter = self.textbuffer.get_start_iter()
 		self.progressbar = self.gobjects['progressbar_mail_sender']
+		"""The :py:class:`Gtk.ProgressBar` instance which is used to display progress of sending messages."""
 		self.pause_button = self.gobjects['togglebutton_mail_sender_pause']
 		self.sender_thread = None
+		"""The :py:class:`.MailSenderThread` instance that is being used to send messages."""
 
 	def signal_button_clicked_sender_start(self, button):
 		required_settings = {
@@ -147,15 +156,40 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 		adjustment.set_value(adjustment.get_upper() - adjustment.get_page_size())
 
 	def text_insert(self, message):
+		"""
+		Insert text into the :py:attr:`textbuffer`.
+
+		:param str message: The text to insert.
+		"""
 		self.textbuffer.insert(self.textbuffer_iter, message)
 
 	def notify_status(self, message):
+		"""
+		A call back use by :py:class:`.MailSenderThread` to update
+		general status information.
+
+		:param str message: The status message.
+		"""
 		self.text_insert(message)
 
 	def notify_sent(self, emails_done, emails_total):
+		"""
+		A call back use by :py:class:`.MailSenderThread` to notify when
+		an email has been successfully sent to the SMTP server.
+
+		:param int emails_done: The number of email messages that have been sent.
+		:param int emails_total: The total number of email messages that need to be sent.
+		"""
 		self.progressbar.set_fraction(float(emails_done) / float(emails_total))
 
 	def sender_start_failure(self, message=None, text=None):
+		"""
+		Handle a failure in starting the message sender thread and
+		perform any necessary clean up.
+
+		:param str message: A message to shown in an error popup dialog.
+		:param text message: A message to be inserted into the text buffer.
+		"""
 		if text:
 			self.text_insert(text)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
@@ -165,6 +199,10 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 		self.sender_thread = None
 
 	def notify_stopped(self):
+		"""
+		A call back use by :py:class:`.MailSenderThread` to notify when
+		the thread has stopped.
+		"""
 		self.progressbar.set_fraction(1)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
 		self.gobjects['togglebutton_mail_sender_pause'].set_property('active', False)
@@ -173,8 +211,18 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 		self.sender_thread = None
 
 class MailSenderPreviewTab(object):
+	"""
+	This tab uses webkit to render the HTML of an email so it can be
+	previewed before it is sent.
+	"""
 	def __init__(self, config, parent):
+		"""
+		:param dict config: The King Phisher client configuration.
+		:param parent: The parent window for this object.
+		:type parent: :py:class:`Gtk.Window`
+		"""
 		self.label = Gtk.Label('Preview')
+		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		self.config = config
 		self.parent = parent
 
@@ -182,6 +230,7 @@ class MailSenderPreviewTab(object):
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
 		self.webview = WebKit.WebView()
+		"""The :py:class:`WebKit.WebView` object used to render the message HTML."""
 		self.webview.show()
 		scrolled_window = Gtk.ScrolledWindow()
 		scrolled_window.add(self.webview)
@@ -189,6 +238,10 @@ class MailSenderPreviewTab(object):
 		self.box.pack_start(scrolled_window, True, True, 0)
 
 class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
+	"""
+	This is the tab which adds basic text edition for changing an email
+	template.
+	"""
 	gobject_ids = [
 		'button_save_as_html_file',
 		'button_save_html_file',
@@ -197,9 +250,12 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label('Edit')
+		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderEditTab, self).__init__(*args, **kwargs)
 		self.textview = self.gobjects['textview_html_file']
+		"""The :py:class:`Gtk.TextView` object of the editor."""
 		self.textbuffer = self.textview.get_buffer()
+		"""The :py:class:`Gtk.TextBuffer` used by the :py:attr:textview` attribute."""
 		self.button_save_html_file = self.gobjects['button_save_html_file']
 
 	def signal_button_save_as(self, button):
@@ -230,6 +286,10 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		html_file_h.close()
 
 class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
+	"""
+	This is the tab which allows the user to configure and set parameters
+	for sending messages as part of a campaign.
+	"""
 	gobject_ids = [
 		'entry_webserver_url',
 		'entry_company_name',
@@ -251,6 +311,7 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 	]
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label('Config')
+		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderConfigTab, self).__init__(*args, **kwargs)
 
 	def signal_button_clicked_verify(self, button):
@@ -287,20 +348,33 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 		return True
 
 class MailSenderTab(object):
+	"""
+	The King Phisher client top-level 'Send Messages' tab. This object
+	manages the sub-tabs which display useful information for
+	configuring, previewing and sending messages as part of a campaign.
+	"""
 	def __init__(self, config, parent):
+		"""
+		:param dict config: The King Phisher client configuration.
+		:param parent: The parent window for this object.
+		:type parent: :py:class:`Gtk.Window`
+		"""
 		self.config = config
 		self.parent = parent
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
 		self.label = Gtk.Label('Send Messages')
+		"""The :py:class:`Gtk.Label` representing this tabs name."""
 
 		self.notebook = Gtk.Notebook()
+		""" The :py:class:`Gtk.Notebook` for holding sub-tabs."""
 		self.notebook.connect('switch-page', self._tab_changed)
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
 		self.tabs = {}
+		"""A dict object holding the sub tabs managed by this object."""
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
 

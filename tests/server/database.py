@@ -72,15 +72,5 @@ class ServerDatabaseTests(unittest.TestCase):
 		except Exception as error:
 			self.fail("failed to set a database meta data (error: {0})".format(error.__class__.__name__))
 
-class ServerDatabaseUIDTests(unittest.TestCase):
-	def test_create_uid_length(self):
-		self.assertEqual(len(make_uid(10)), 10)
-		self.assertEqual(len(make_uid(15)), 15)
-
-	def test_create_uid_random(self):
-		uid1 = make_uid(15)
-		uid2 = make_uid(15)
-		self.assertNotEqual(uid1, uid2)
-
 if __name__ == '__main__':
 	unittest.main()

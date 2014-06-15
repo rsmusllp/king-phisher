@@ -38,9 +38,8 @@ import sqlite3
 import string
 import threading
 
-make_uid = lambda l: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(l))
-
 SCHEMA_VERSION = 1
+"""The schema version of the database, used for compatibility checks."""
 DATABASE_TABLES = {
 	'users':                ['id', 'phone_carrier', 'phone_number'],
 	'alert_subscriptions':  ['id', 'campaign_id', 'user_id'],
@@ -53,21 +52,35 @@ DATABASE_TABLES = {
 	'deaddrop_connections': ['id', 'campaign_id', 'deployment_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit'],
 	'meta_data':            ['id', 'value_type', 'value']
 }
+"""A dictionary which contains all the database tables and their columns."""
 
 class KingPhisherDatabase(object):
+	"""
+	This is a thread-safe direct connection to the King Phisher SQLite3
+	database.
+	"""
 	_type_map = {'int': int, 'long': long, 'str': str}
 	def __init__(self, database_file):
+		"""
+		:param str database_file: The SQLite3 database to use.
+		"""
 		self._db = sqlite3.connect(database_file, check_same_thread=False)
 		self._lock = threading.RLock()
 
 	def commit(self):
+		"""Commit changes to the database file."""
 		return self._db.commit()
 
 	def cursor(self):
+		"""Get the database cursor for executing queries."""
 		return self._db.cursor()
 
 	@contextlib.contextmanager
 	def get_cursor(self):
+		"""
+		A context manager that yields the :py:attr:`cursor` object and
+		allows queries to be executed while the thread lock is held.
+		"""
 		self._lock.acquire()
 		cursor = self._db.cursor()
 		yield cursor
@@ -75,6 +88,13 @@ class KingPhisherDatabase(object):
 		self._lock.release()
 
 	def get_meta_data(self, key):
+		"""
+		Retreive the value from the database meta_data table. The value
+		will be the same as the type when it was set.
+
+		:param str key: The name of the value to retrieve.
+		:return: The meta data value.
+		"""
 		with self.get_cursor() as cursor:
 			cursor.execute('SELECT value_type, value FROM meta_data WHERE id = ?', (key,))
 			result = cursor.fetchone()
@@ -84,6 +104,13 @@ class KingPhisherDatabase(object):
 		return self._type_map[value_type](value)
 
 	def set_meta_data(self, key, value):
+		"""
+		Store a piece of metadata regarding the King Phisher database.
+
+		:param str key: The name of the data.
+		:param value: The value to store.
+		:type value: int, str
+		"""
 		value_type = type(value).__name__
 		if not value_type in self._type_map.keys():
 			raise ValueError('incompatible data type:' + value_type)
@@ -93,12 +120,28 @@ class KingPhisherDatabase(object):
 
 	@property
 	def schema_version(self):
+		"""The schema version of the current database."""
 		return self.get_meta_data('schema_version')
 
 def get_tables_with_column_id(column_id):
+	"""
+	Get all tables which contain a column named *column_id*.
+
+	:param str column_id: The column name to get all the tables of.
+	:return: The list of matching tables.
+	:rtype: list
+	"""
 	return map(lambda x: x[0], filter(lambda x: column_id in x[1], DATABASE_TABLES.items()))
 
 def create_database(database_file):
+	"""
+	Initialize a new King Phisher database, creating all the necessary
+	tables and setting the initial schema version number.
+
+	:param str database_file: The path to the database file to initialize.
+	:return: The initialized database.
+	:rtype: :py:class:`.KingPhisherDatabase`
+	"""
 	if database_file != ':memory:' and os.path.exists(database_file):
 		os.unlink(database_file)
 	db = KingPhisherDatabase(database_file)

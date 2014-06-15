@@ -37,7 +37,6 @@ from tests.client.export import ClientExportTests
 from tests.client.graphs import ClientGraphsTests
 from tests.server.authenticator import ServerAuthenticatorTests
 from tests.server.database import ServerDatabaseTests
-from tests.server.database import ServerDatabaseUIDTests
 from tests.server.server import ServerTests
 from tests.server.server_rpc import ServerRPCTests
 from tests.configuration import ServerConfigurationTests
