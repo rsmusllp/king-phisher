@@ -42,7 +42,7 @@ version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_i
 
 # distutils_version is compatible with distutils.version classes
 distutils_version = version
-"""A string sutiable for being parsed by :py:module:`distutils.version` classes."""
+"""A string sutiable for being parsed by :py:mod:`distutils.version` classes."""
 
 if version_label:
 	version += '-' + version_label

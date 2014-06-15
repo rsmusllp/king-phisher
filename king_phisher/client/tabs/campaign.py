@@ -47,24 +47,28 @@ from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import Gtk
 
-try:
-	import matplotlib
-except ImportError:
-	has_matplotlib = False
-else:
-	has_matplotlib = True
-
 class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
+	"""
+	This object is meant to be subclassed by tabs which will display
+	campaign information of different types from a specific database
+	table. The data in this object is refreshed when multiple events
+	occur and it uses an internal timer to represent the last time the
+	data was refreshed.
+	"""
 	gobject_ids = [
 		'button_refresh',
 		'treeview_campaign'
 	]
 	top_gobject = 'box'
 	remote_table_name = ''
+	"""The database table represented by this tab."""
 	label_text = 'Unknown'
+	"""The label of the tab for display in the GUI."""
 	view_columns = {}
+	"""The dictionary map of column numbers to column names starting at column 1."""
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(self.label_text)
+		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`label_text`."""
 		super(CampaignViewGenericTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
@@ -82,13 +86,18 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_id)
 			popup_copy_submenu.append(menu_item)
 		self.last_load_time = float('-inf')
+		"""The last time the data was loaded from the server."""
 		self.load_lifetime = utilities.timedef_to_seconds('3m')
+		"""The lifetime in seconds to wait before refreshing the data from the server."""
 		self.row_loader_thread = None
+		"""The thread object which loads the data from the server."""
 		self.row_loader_thread_lock = threading.Lock()
+		"""The :py:class:`threading.Lock` object used for synchronization between the loader and main threads."""
 		self.is_destroyed = threading.Event()
 		getattr(self, self.top_gobject).connect('destroy', self.signal_destroy)
 
 		self.popup_menu = Gtk.Menu.new()
+		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
 		menu_item = Gtk.MenuItem.new_with_label('Copy')
 		menu_item.set_submenu(popup_copy_submenu)
 		self.popup_menu.append(menu_item)
@@ -101,7 +110,28 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
 
+	def format_row_data(self, row):
+		"""
+		This method is overridden by subclasses to format the raw row
+		data returned from the server. The length of the list must equal
+		the number of columns in the table. This method is called for
+		each row in the remote table by the loader thread.
+
+		:return: The formated row data.
+		:rtype: list
+		"""
+		raise NotImplementedError()
+
 	def load_campaign_information(self, force=False):
+		"""
+		Load the necessary campaign information from the remote server.
+		Unless *force* is True, the :py:attr:`last_load_time` is compared
+		with the :py:attr:`load_lifetime` to check if the information is
+		stale. If the local data is not stale, this function will return
+		without updating the table.
+
+		:param bool force: Whether to ignore the load life time and force loading the remote data.
+		"""
 		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
 			return
 		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
@@ -123,6 +153,12 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		return
 
 	def row_loader_thread_routine(self, store):
+		"""
+		The loading routine to be executed within a thread.
+
+		:param store: The store object to place the new data.
+		:type store: :py:class:`Gtk.ListStore`
+		"""
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
 		for row_data in self.parent.rpc.remote_table('campaign/' + self.remote_table_name, self.config['campaign_id']):
 			row_id = row_data['id']
@@ -200,6 +236,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		self.load_campaign_information(force=True)
 
 class CampaignViewDeaddropTab(CampaignViewGenericTab):
+	"""Display campaign information regarding dead drop connections."""
 	remote_table_name = 'deaddrop_connections'
 	label_text = 'Deaddrop'
 	view_columns = {
@@ -221,6 +258,7 @@ class CampaignViewDeaddropTab(CampaignViewGenericTab):
 		return [deploy_dest, connection['visit_count'], connection['visitor_ip'], connection['local_username'], connection['local_hostname'], connection['local_ip_addresses'], connection['first_visit'], connection['last_visit']]
 
 class CampaignViewCredentialsTab(CampaignViewGenericTab):
+	"""Display campaign information regarding submitted credentials."""
 	remote_table_name = 'credentials'
 	label_text = 'Credentials'
 	view_columns = {
@@ -245,6 +283,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTab):
 		self.view_column_renderers[3].set_property('visible', button.get_property('active'))
 
 class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
+	"""Display campaign information on a graphical dash board."""
 	gobject_ids = [
 		'box_top_left',
 		'box_top_right',
@@ -255,14 +294,21 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 	]
 	top_gobject = 'box'
 	label_text = 'Dashboard'
+	"""The tabs label for display in the GUI."""
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(self.label_text)
+		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`label_text`."""
 		super(CampaignViewDashboardTab, self).__init__(*args, **kwargs)
 		self.last_load_time = float('-inf')
+		"""The last time the data was loaded from the server."""
 		self.load_lifetime = utilities.timedef_to_seconds('3m')
+		"""The lifetime in seconds to wait before refreshing the data from the server."""
 		self.loader_thread = None
+		"""The thread object which loads the data from the server."""
 		self.loader_thread_lock = threading.RLock()
+		"""The :py:class:`threading.Lock` object used for synchronization between the loader and main threads."""
 		self.graphs = []
+		"""The :py:class:`.CampaignGraph` classes represented on the dash board."""
 
 		# Position: (DefaultGraphName, Size)
 		dash_ports = {
@@ -283,6 +329,15 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		GLib.timeout_add_seconds(self.load_lifetime, self.loader_idle_routine)
 
 	def load_campaign_information(self, force=False):
+		"""
+		Load the necessary campaign information from the remote server.
+		Unless *force* is True, the :py:attr:`last_load_time` is compared
+		with the :py:attr:`load_lifetime` to check if the information is
+		stale. If the local data is not stale, this function will return
+		without updating the table.
+
+		:param bool force: Whether to ignore the load life time and force loading the remote data.
+		"""
 		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
 			return
 		if not hasattr(self.parent, 'rpc'):
@@ -296,11 +351,13 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 			self.loader_thread.start()
 
 	def loader_idle_routine(self):
+		"""The routine which refreshes the campaign data at a regular interval."""
 		self.logger.debug('idle loader routine called')
 		self.load_campaign_information(force=True)
 		return True
 
 	def loader_thread_routine(self):
+		"""The loading routine to be executed within a thread."""
 		info_cache = {}
 		for graph in self.graphs:
 			info_cache = gui_utilities.glib_idle_add_wait(graph.refresh, info_cache)
@@ -309,6 +366,7 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		self.load_campaign_information(force=True)
 
 class CampaignViewVisitsTab(CampaignViewGenericTab):
+	"""Display campaign information regarding incoming visitors."""
 	remote_table_name = 'visits'
 	label_text = 'Visits'
 	view_columns = {
@@ -328,6 +386,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTab):
 		return [visitor_email, visit['visitor_ip'], visit['visitor_details'], visit['visit_count'], visit['first_visit'], visit['last_visit']]
 
 class CampaignViewMessagesTab(CampaignViewGenericTab):
+	"""Display campaign information regarding sent messages."""
 	remote_table_name = 'messages'
 	label_text = 'Messages'
 	view_columns = {
@@ -340,7 +399,17 @@ class CampaignViewMessagesTab(CampaignViewGenericTab):
 		return [message['target_email'], message['sent'], message['opened'], ('Yes' if message['trained'] else '')]
 
 class CampaignViewTab(object):
+	"""
+	The King Phisher client top-level 'View' tab. This object manages
+	the sub-view tabs which display all the information regarding the
+	current campaign.
+	"""
 	def __init__(self, config, parent):
+		"""
+		:param dict config: The King Phisher client configuration.
+		:param parent: The parent window for this object.
+		:type parent: :py:class:`Gtk.Window`
+		"""
 		self.config = config
 		self.parent = parent
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
@@ -358,8 +427,8 @@ class CampaignViewTab(object):
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
 
-		if has_matplotlib:
-			self.logger.info("matplotlib {0} is installed, dashboard will be available".format(matplotlib.__version__))
+		if graphs.has_matplotlib:
+			self.logger.info("matplotlib {0} is installed, dashboard will be available".format(graphs.matplotlib.__version__))
 			dashboard_tab = CampaignViewDashboardTab(self.config, self.parent)
 			self.tabs['dashboard'] = dashboard_tab
 			self.notebook.append_page(dashboard_tab.box, dashboard_tab.label)

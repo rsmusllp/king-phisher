@@ -39,6 +39,7 @@ try:
 	import yaml
 except ImportError:
 	has_yaml = False
+	"""Whether the :py:mod:`yaml` module is available."""
 else:
 	has_yaml = True
 	try:

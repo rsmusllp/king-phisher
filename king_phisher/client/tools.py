@@ -52,11 +52,22 @@ try:
 	from gi.repository import Vte
 except ImportError:
 	has_vte = False
+	"""Whether the :py:mod:`gi.repository.Vte` module is available."""
 else:
 	has_vte = True
 
 class KingPhisherClientRPCTerminal(object):
+	"""
+	A terminal using VTE that allows raw RPC methods to be called from
+	within the King Phisher client. This is primarily useful for
+	unofficial and advanced features or debugging and development.
+	"""
 	def __init__(self, config, parent):
+		"""
+		:param dict config: The King Phisher client configuration.
+		:param parent: The parent window for this object.
+		:type parent: :py:class:`Gtk.Window`
+		"""
 		self.config = config
 		self.parent = parent
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
@@ -112,6 +123,14 @@ class KingPhisherClientRPCTerminal(object):
 
 	@staticmethod
 	def child_routine(config):
+		"""
+		This is the method which is executed in the child process spawned
+		by VTE. It expects additional values to be set in the *config*
+		object so it can initialize a new :py:class:`.KingPhisherRPCClient`
+		instance.
+
+		:param str config: A JSON encoded client configuration.
+		"""
 		config = json.loads(config)
 		try:
 			import readline
