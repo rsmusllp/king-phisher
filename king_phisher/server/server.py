@@ -53,8 +53,24 @@ from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 import jinja2
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
+"""Create a unique identifier string."""
 
 def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
+	"""
+	Build a server from a provided :py:class:`.Configuration`
+	instance. If a ServerClass or HandlerClass is specified, then the
+	object must inherit from the corresponding KingPhisherServer base
+	class.
+
+	:param config: Configuration to retrieve settings from.
+	:type config: :py:class:`.Configuration`
+	:param ServerClass: Alternative server class to use.
+	:type ServerClass: :py:class:`.KingPhisherServer`
+	:param HandlerClass: Alternative handler class to use.
+	:type HandlerClass: :py:class:`.KingPhisherServerRequestHandler`
+	:return: A configured server instance.
+	:rtype: :py:class:`.KingPhisherServer`
+	"""
 	ServerClass = (ServerClass or KingPhisherServer)
 	HandlerClass = (HandlerClass or KingPhisherRequestHandler)
 	# Set config defaults
@@ -64,14 +80,27 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	return ServerClass(config, HandlerClass, address=address)
 
 class KingPhisherErrorAbortRequest(Exception):
+	"""
+	An exception that can be raised which when caught will cause abort
+	the processing of the current request.
+	"""
 	pass
 
 class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, AdvancedHTTPServerRequestHandler):
+	def __init__(self, *args, **kwargs):
+		# this is for attribute documentation
+		self.config = None
+		"""The main King Phisher server :py:class:`.Configuration` instance."""
+		self.database = None
+		"""The :py:class:`.KingPhisherDatabase` instance."""
+		self.path = None
+		"""The resource path of the current HTTP request."""
+		super(KingPhisherRequestHandler, self).__init__(*args, **kwargs)
+
 	def install_handlers(self):
 		self.logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 		super(KingPhisherRequestHandler, self).install_handlers()
 		self.database = self.server.database
-		self.database_lock = threading.RLock()
 		self.config = self.server.config
 		regex_prefix = '^'
 		if self.config.get('server.vhost_directories'):
@@ -84,6 +113,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
 
 	def issue_alert(self, alert_text, campaign_id=None):
+		"""
+		Send an SMS alert. If no *campaign_id* is specified all users
+		with registered SMS information will receive the alert otherwise
+		only users subscribbed to the campaign specified.
+
+		:param str alert_text: The message to send to subscribers.
+		:param int campaign_id: The campaign subscribers to send the aler to.
+		"""
 		campaign_name = None
 		with self.get_cursor() as cursor:
 			if campaign_id:
@@ -103,6 +140,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			sms.send_sms(alert_text, number, carrier, 'donotreply@kingphisher.local')
 
 	def adjust_path(self):
+		"""Adjust the :py:attr:`path` attribute based on multiple factors."""
 		if not self.config.get('server.vhost_directories'):
 			return
 		if not self.vhost:
@@ -145,9 +183,23 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.server.throttle_semaphore.release()
 
 	def get_query_parameter(self, parameter):
+		"""
+		Get a parameter from the current request's query information.
+
+		:param str parameter: The parameter to retrieve the value for.
+		:return: The value of it exists.
+		:rtype: str
+		"""
 		return self.query_data.get(parameter, [None])[0]
 
 	def get_template_vars_client(self):
+		"""
+		Build a dictionary of variables for a client with an associated
+		campaign.
+
+		:return: The client specific template variables.
+		:rtype: dict
+		"""
 		if not self.message_id:
 			return None
 		with self.get_cursor() as cursor:
@@ -180,6 +232,12 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 	@property
 	def campaign_id(self):
+		"""
+		The campaign id that is associated with the current request's
+		visitor. This is retrieved by looking up the :py:attr:`message_id`
+		value in the database. If no campaign is associated, this value
+		is None.
+		"""
 		if hasattr(self, '_campaign_id'):
 			return self._campaign_id
 		self._campaign_id = None
@@ -193,6 +251,12 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 	@property
 	def message_id(self):
+		"""
+		The message id that is associated with the current request's
+		visitor. This is retrieved by looking at an 'id' parameter in the
+		query and then by checking the :py:attr:`visit_id` value in the
+		database. If no message id is associated, this value is None.
+		"""
 		if hasattr(self, '_message_id'):
 			return self._message_id
 		msg_id = self.get_query_parameter('id')
@@ -207,6 +271,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 	@property
 	def visit_id(self):
+		"""
+		The visit id that is associated with the current request's
+		visitor. This is retrieved by looking for the King Phisher cookie.
+		If no cookie is set, this value is None.
+		"""
 		if hasattr(self, '_visit_id'):
 			return self._visit_id
 		self._visit_id = None
@@ -217,6 +286,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 	@property
 	def vhost(self):
+		"""The value of the Host HTTP header."""
 		return self.headers.get('Host')
 
 	def respond_file(self, file_path, attachment=False, query={}):
@@ -462,10 +532,18 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 				cursor.execute('UPDATE messages SET trained = 1 WHERE id = ?', (message_id,))
 
 class KingPhisherServer(AdvancedHTTPServer):
+	"""
+	The main HTTP and RPC server for King Phisher.
+	"""
 	def __init__(self, config, *args, **kwargs):
+		"""
+		:param config: Configuration to retrieve settings from.
+		:type config: :py:class:`.Configuration`
+		"""
 		self.logger = logging.getLogger('KingPhisher.Server')
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
 		self.config = config
+		"""The main King Phisher server configuration."""
 		self.serve_files = True
 		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
@@ -477,6 +555,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator()
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.job_manager = job.JobManager()
+		"""A :py:class:`.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
 		self.http_server.job_manager = self.job_manager
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
@@ -489,6 +568,12 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.__is_shutdown.clear()
 
 	def init_database(self, database_file):
+		"""
+		Initialize the servers database connection, creating a new one
+		if the file does not exist.
+
+		:param str database_file: The SQLite3 database file to use.
+		"""
 		if not os.path.exists(database_file) or database_file == ':memory:':
 			db = database.create_database(database_file)
 			self.logger.info('created new sqlite3 database file')
@@ -499,6 +584,11 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.database = db
 
 	def shutdown(self, *args, **kwargs):
+		"""
+		Request that the server perform any cleanup necessary and then
+		shut down. This will wait for the server to stop before it
+		returns.
+		"""
 		if self.__is_shutdown.is_set():
 			return
 		self.logger.warning('processing shutdown request')
