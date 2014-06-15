@@ -250,7 +250,7 @@ class KingPhisherClient(Gtk.Window):
 		self.config_file = (config_file or CONFIG_FILE_PATH)
 		"""The file containing the King Phisher client configuration."""
 		self.ssh_forwarder = None
-		"""The :py:class:`SSHTCPForwarder` instance used for tunneling traffic."""
+		"""The :py:class:`.SSHTCPForwarder` instance used for tunneling traffic."""
 		self.config = None
 		"""The main King Phisher client configuration."""
 		self.load_config()
@@ -298,7 +298,7 @@ class KingPhisherClient(Gtk.Window):
 		self.notebook.show()
 		self.show()
 		self.rpc = None # needs to be initialized last
-		"""The :py:class:`KingPhisherRPCClient` instance."""
+		"""The :py:class:`.KingPhisherRPCClient` instance."""
 
 	def _add_menu_actions(self, action_group):
 		# File Menu Actions
@@ -443,7 +443,7 @@ class KingPhisherClient(Gtk.Window):
 		"""
 		Perform the connection setup as part of the server connection
 		initialization process. This will display a GUI window requesting
-		the connection information. An :py:class:`SSHTCPForwarder` instance
+		the connection information. An :py:class:`.SSHTCPForwarder` instance
 		is created and configured for tunneling traffic to the King Phisher
 		server. This also verifies that the RPC API version running on
 		the server is compatible with the client.
@@ -550,7 +550,7 @@ class KingPhisherClient(Gtk.Window):
 		Delete the campaign on the server. A confirmation dialog will be
 		displayed before the operation is performed. If the campaign is
 		deleted and a new campaign is not selected with
-		:py:class:`.show_campaign_selection`, the client will quit.
+		:py:func:`show_campaign_selection`, the client will quit.
 		"""
 		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible. All campaign data will be lost.'):
 			return

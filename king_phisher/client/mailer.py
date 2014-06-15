@@ -52,11 +52,26 @@ from king_phisher.ssh_forward import SSHTCPForwarder
 
 from gi.repository import GLib
 
+__all__ = ['format_message', 'MailSenderThread']
+
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
 
 template_environment = templates.KingPhisherTemplateEnvironment()
 
 def format_message(template, config, first_name=None, last_name=None, uid=None, target_email=None):
+	"""
+	Take a message from a template and format it to be sent by replacing
+	variables and processing other template directives.
+
+	:param str template: The message template.
+	:param dict config: The King Phisher client configuration.
+	:param str first_name: The first name of the messages recipient.
+	:param str last_name: The last name of the messages recipient.
+	:param str uid: The messages unique identifier.
+	:param str target_email: The messages destination email address.
+	:return: The formatted message.
+	:rtype: str
+	"""
 	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
 	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
 	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, (str, unicode)) else target_email)
@@ -88,7 +103,19 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	return template.render(template_vars)
 
 class MailSenderThread(threading.Thread):
+	"""
+	The King Phisher threaded email message sender. This object manages
+	the sending of emails for campaigns and supports pausing sending
+	messages which can later be resumed by unpausing.
+	"""
 	def __init__(self, config, target_file, tab, rpc):
+		"""
+		:param dict config: The King Phisher client configuration.
+		:param str target_file: The CSV formatted file to read message targets from.
+		:param tab: The GUI tab to report information to.
+		:param rpc: The client's connected RPC instance.
+		:type rpc: :py:class:`.KingPhisherRPCClient`
+		"""
 		super(MailSenderThread, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		self.config = config
@@ -99,11 +126,21 @@ class MailSenderThread(threading.Thread):
 		self.smtp_connection = None
 		self.smtp_server = utilities.server_parse(self.config['smtp_server'], 25)
 		self.running = threading.Event()
+		"""A :py:class:`threading.Event` object indicating if emails are being sent."""
 		self.paused = threading.Event()
+		"""A :py:class:`threading.Event` object indicating if the email sending operation is or should be paused."""
 		self.should_exit = threading.Event()
 		self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 
 	def server_ssh_connect(self):
+		"""
+		Connect to the remote SMTP server over SSH and configure port
+		forwarding with :py:class:`.SSHTCPForwarder` for tunneling SMTP
+		traffic.
+
+		:return: The connection status.
+		:rtype: bool
+		"""
 		server = utilities.server_parse(self.config['ssh_server'], 22)
 		username = self.config['ssh_username']
 		password = self.config['ssh_password']
@@ -120,6 +157,12 @@ class MailSenderThread(threading.Thread):
 		return True
 
 	def server_smtp_connect(self):
+		"""
+		Connect to the configured SMTP server.
+
+		:return: The connection status.
+		:rtype: bool
+		"""
 		if self.config.get('smtp_ssl_enable', False):
 			SMTP_CLASS = smtplib.SMTP_SSL
 		else:
@@ -131,6 +174,7 @@ class MailSenderThread(threading.Thread):
 		return True
 
 	def server_smtp_disconnect(self):
+		"""Clean up and close the connection to the remote SMTP server."""
 		if self.smtp_connection:
 			try:
 				self.smtp_connection.quit()
@@ -140,6 +184,13 @@ class MailSenderThread(threading.Thread):
 			GLib.idle_add(self.tab.notify_status, 'Disconnected From SMTP Server\n')
 
 	def server_smtp_reconnect(self):
+		"""
+		Disconnect from the remote SMTP server and then attempt to open
+		a new connection to it.
+
+		:return: The reconnection status.
+		:rtype: bool
+		"""
 		if self.smtp_connection:
 			try:
 				self.smtp_connection.quit()
@@ -152,9 +203,15 @@ class MailSenderThread(threading.Thread):
 				return False
 		return True
 
-	def count_emails(self, target_file):
+	def count_emails(self):
+		"""
+		Count the emails contained in the target CSV file.
+
+		:return: The number of targets in the file.
+		:rtype: int
+		"""
 		targets = 0
-		target_file_h = open(target_file, 'r')
+		target_file_h = open(self.target_file, 'r')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
 			targets += 1
@@ -163,7 +220,7 @@ class MailSenderThread(threading.Thread):
 
 	def run(self):
 		emails_done = 0
-		emails_total = self.count_emails(self.target_file)
+		emails_total = self.count_emails()
 		max_messages_per_connection = self.config.get('mailer.max_messages_per_connection', 5)
 		self.running.set()
 		self.should_exit.clear()
@@ -184,7 +241,7 @@ class MailSenderThread(threading.Thread):
 			emails_done += 1
 			GLib.idle_add(self.tab.notify_status, "Sending Email {0} of {1} To {2} With UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
 			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
-			if not self.try_send_email(target['email_address'], msg):
+			if not self._try_send_email(target['email_address'], msg):
 				break
 			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
 			campaign_id = self.config['campaign_id']
@@ -206,6 +263,13 @@ class MailSenderThread(threading.Thread):
 		return
 
 	def process_pause(self, set_pause=False):
+		"""
+		Pause sending emails if a pause request has been set.
+
+		:param bool set_pause: Whether to request a pause before processing it.
+		:return: Whether or not the sending operation was cancelled during the pause.
+		:rtype: bool
+		"""
 		if set_pause:
 			gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
 		if self.paused.is_set():
@@ -220,6 +284,16 @@ class MailSenderThread(threading.Thread):
 		return True
 
 	def create_email(self, first_name, last_name, target_email, uid):
+		"""
+		Create a MIME email to be sent from a set of parameters.
+
+		:param str first_name: The first name of the messages recipient.
+		:param str last_name: The last name of the messages recipient.
+		:param str target_email: The messages destination email address.
+		:param str uid: The messages unique identifier.
+		:return: The new MIME message.
+		:rtype: :py:class:`email.MIMEMultipart.MIMEMultipart`
+		"""
 		msg = MIMEMultipart()
 		msg['Subject'] = self.config['mailer.subject']
 		if self.config.get('mailer.reply_to_email'):
@@ -251,7 +325,7 @@ class MailSenderThread(threading.Thread):
 			msg.attach(attachfile)
 		return msg
 
-	def try_send_email(self, *args, **kwargs):
+	def _try_send_email(self, *args, **kwargs):
 		message_sent = False
 		while not message_sent:
 			for i in xrange(0, 3):
@@ -270,17 +344,37 @@ class MailSenderThread(threading.Thread):
 		return True
 
 	def send_email(self, target_email, msg):
+		"""
+		Send an email using the connected SMTP server.
+
+		:param str target_email: The email address to send the message to.
+		:param msg: The formatted message to be sent.
+		:type msg: :py:class:`email.MIMEMultipart.MIMEMultipart`
+		"""
 		source_email = self.config['mailer.source_email']
 		self.smtp_connection.sendmail(source_email, target_email, msg.as_string())
 
 	def pause(self):
+		"""
+		Sets the :py:attr:`running` and :py:attr:`paused` flags correctly
+		to indicate that the object is paused.
+		"""
 		self.running.clear()
 		self.paused.set()
 
 	def unpause(self):
+		"""
+		Sets the :py:attr:`running` and :py:attr:`paused` flags correctly
+		to indicate that the object is no longer paused.
+		"""
 		self.running.set()
 
 	def stop(self):
+		"""
+		Requests that the email sending operation stop. It can not be
+		resumed from the same position. This function blocks until the
+		stop request has been processed and the thread exits.
+		"""
 		self.should_exit.set()
 		self.unpause()
 		if self.is_alive():

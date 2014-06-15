@@ -35,6 +35,13 @@ from king_phisher.client.gui_utilities import UtilityGladeGObject
 from gi.repository import Gtk
 
 class KingPhisherClientLoginDialog(UtilityGladeGObject):
+	"""
+	This object is the main King Phisher login dialog, it is used to
+	prompt for connection information for the King Phisher server.
+
+	It allows the user to specify the host and port to connect to and
+	credentials for authentication.
+	"""
 	gobject_ids = [
 		'button_connect',
 		'entry_server',
@@ -54,6 +61,13 @@ class KingPhisherClientLoginDialog(UtilityGladeGObject):
 		self.gobjects['button_connect'].emit('clicked')
 
 class KingPhisherClientSSHLoginDialog(KingPhisherClientLoginDialog):
+	"""
+	This object is the King Phisher SSH login dialog, it is used to
+	prompt for connection information to an SSH server.
+
+	It allows the user to specify the host and port to connect to and
+	credentials for authentication.
+	"""
 	gobject_ids = [
 		'button_connect',
 		'entry_ssh_server',
