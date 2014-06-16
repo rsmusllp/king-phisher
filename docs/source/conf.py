@@ -18,6 +18,7 @@ _path = os.path.dirname(__file__)
 _path = os.path.relpath('../..', _path)
 _path = os.path.abspath(_path)
 sys.path.insert(1, _path)
+del _path
 
 import king_phisher.version
 
@@ -35,10 +36,10 @@ import king_phisher.version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.coverage',
-    'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode',
+	'sphinx.ext.autodoc',
+	'sphinx.ext.coverage',
+	'sphinx.ext.ifconfig',
+	'sphinx.ext.viewcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -207,8 +208,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'KingPhisher.tex', u'King Phisher Documentation',
-   u'Spencer McIntyre', 'manual'),
+	('index', 'KingPhisher.tex', u'King Phisher Documentation', u'Spencer McIntyre', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -237,8 +237,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'kingphisher', u'King Phisher Documentation',
-     [u'Spencer McIntyre'], 1)
+	('index', 'kingphisher', u'King Phisher Documentation', [u'Spencer McIntyre'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -251,9 +250,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'KingPhisher', u'King Phisher Documentation',
-   u'Spencer McIntyre', 'KingPhisher', 'One line description of project.',
-   'Miscellaneous'),
+	('index', 'KingPhisher', u'King Phisher Documentation', u'Spencer McIntyre', 'KingPhisher', 'One line description of project.', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -269,29 +266,29 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 class Mock(object):
-    __all__ = []
-    def __init__(self, *args, **kwargs):
-        pass
+	__all__ = []
+	def __init__(self, *args, **kwargs):
+		pass
 
-    def __call__(self, *args, **kwargs):
-        return Mock()
+	def __call__(self, *args, **kwargs):
+		return Mock()
 
-    @classmethod
-    def __getattr__(cls, name):
-        if name in ('__file__', '__path__'):
-            return '/dev/null'
-        else:
-            return Mock()
+	@classmethod
+	def __getattr__(cls, name):
+		if name in ('__file__', '__path__'):
+			return '/dev/null'
+		else:
+			return Mock()
 
-    @classmethod
-    def __setattr__(cls, name):
-        pass
+	@classmethod
+	def __setattr__(cls, name):
+		pass
 
-    def __getitem__(self, name):
-        return Mock()
+	def __getitem__(self, name):
+		return Mock()
 
-    def __setitem__(self, name, value):
-        pass
+	def __setitem__(self, name, value):
+		pass
 
 # mock specific external packages
 sys.modules['dns.resolver'] = Mock()
