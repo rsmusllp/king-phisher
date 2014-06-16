@@ -43,6 +43,7 @@ try:
 	import matplotlib
 except ImportError:
 	has_matplotlib = False
+	"""Whether the :py:mod:`matplotlib` module is available."""
 else:
 	has_matplotlib = True
 	matplotlib.rcParams['backend'] = 'TkAgg'

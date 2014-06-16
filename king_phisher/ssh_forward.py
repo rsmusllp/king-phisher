@@ -91,7 +91,7 @@ class SSHTCPForwarder(threading.Thread):
 		:param str password: The password to authenticate with.
 		:param int local_port: The local port to forward.
 		:param tuple remote_server: The remote server to connect to through the SSH server.
-		:param str preferred_private_key: An RSA key prefer for authentication.
+		:param str preferred_private_key: An RSA key to prefer for authentication.
 		"""
 		super(SSHTCPForwarder, self).__init__()
 		self.local_port = local_port

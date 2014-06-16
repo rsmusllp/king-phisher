@@ -48,7 +48,7 @@ else:
 		from yaml import Loader, Dumper
 
 SERIALIZER_DRIVERS = {}
-"""A dictionary containing a mapping of driver names."""
+"""A dictionary containing a mapping of driver names to serialization function data."""
 SERIALIZER_DRIVERS['json'] = {'load': json.load, 'dumps': lambda obj: json.dumps(obj, sort_keys=True, indent=4)}
 SERIALIZER_DRIVERS['jsn'] = {'load': json.load, 'dumps': lambda obj: json.dumps(obj, sort_keys=True, indent=4)}
 SERIALIZER_DRIVERS['yaml'] = {'load': lambda file_obj: yaml.load(file_obj, Loader=Loader), 'dumps': lambda obj: yaml.dumps(obj, default_flow_style=False, Dumper=Dumper)}
