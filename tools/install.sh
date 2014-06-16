@@ -58,7 +58,6 @@ else
 		echo "Successfully cloned the git repo"
 	fi
 fi
-exit 0
 cd $KING_PHISHER_DIR
 
 if [ "$LINUX_VERSION" == "Ubuntu" ]; then
