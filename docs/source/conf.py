@@ -292,6 +292,7 @@ class Mock(object):
 
 # mock specific external packages
 sys.modules['dns.resolver'] = Mock()
+sys.modules['gi'] = Mock()
 sys.modules['gi.repository'] = Mock()
 sys.modules['matplotlib'] = Mock()
 sys.modules['matplotlib.backends'] = Mock()
