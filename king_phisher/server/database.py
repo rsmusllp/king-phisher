@@ -78,7 +78,7 @@ class KingPhisherDatabase(object):
 	@contextlib.contextmanager
 	def get_cursor(self):
 		"""
-		A context manager that yields the :py:attr:`cursor` object and
+		A context manager that yields the *cursor* object and
 		allows queries to be executed while the thread lock is held.
 		"""
 		self._lock.acquire()

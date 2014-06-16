@@ -64,7 +64,7 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 		self.textview = self.gobjects['textview_mail_sender_progress']
 		"""The :py:class:`Gtk.TextView` object that renders text status messages."""
 		self.textbuffer = self.textview.get_buffer()
-		"""The :py:class:`Gtk.TextBuffer` instance associated with :py:attr:`textview`."""
+		"""The :py:class:`Gtk.TextBuffer` instance associated with :py:attr:`~.MailSenderSendMessagesTab.textview`."""
 		self.textbuffer_iter = self.textbuffer.get_start_iter()
 		self.progressbar = self.gobjects['progressbar_mail_sender']
 		"""The :py:class:`Gtk.ProgressBar` instance which is used to display progress of sending messages."""
@@ -157,7 +157,7 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 
 	def text_insert(self, message):
 		"""
-		Insert text into the :py:attr:`textbuffer`.
+		Insert text into the :py:attr:`~.MailSenderSendMessagesTab.textbuffer`.
 
 		:param str message: The text to insert.
 		"""

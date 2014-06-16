@@ -220,7 +220,7 @@ class UtilityGladeGObject(object):
 	top_level_dependencies = []
 	"""Additional top level GObjects to load from the Glade data file."""
 	config_prefix = ''
-	"""A prefix to be used for keys when looking up value in the :py:attr:`.config`."""
+	"""A prefix to be used for keys when looking up value in the :py:attr:`~.UtilityGladeGObject.config`."""
 	top_gobject = 'gobject'
 	"""The name of the attribute to set a reference of the top level GObject to."""
 	def __init__(self, config, parent):
@@ -275,7 +275,7 @@ class UtilityGladeGObject(object):
 	def objects_load_from_config(self):
 		"""
 		Iterate through :py:attr:`.gobjects` and set the GObject's value
-		from the corresponding value in the :py:attr:`.config`.
+		from the corresponding value in the :py:attr:`~.UtilityGladeGObject.config`.
 		"""
 		for gobject_id, gobject in self.gobjects.items():
 			gtype, config_name = gobject_id.split('_', 1)
@@ -308,7 +308,7 @@ class UtilityFileChooser(Gtk.FileChooserDialog):
 		Show a save file dialog.
 
 		:param set current_name: The name of the file to save.
-		:return: A dictionary with 'target_uri' and 'target_filename' keys representing the path choosen.
+		:return: A dictionary with target_uri and target_filename keys representing the path choosen.
 		:rtype: dict
 		"""
 		self.set_action(Gtk.FileChooserAction.SAVE)
@@ -328,7 +328,7 @@ class UtilityFileChooser(Gtk.FileChooserDialog):
 	def quick_add_filter(self, name, patterns):
 		"""
 		Add a filter for displaying files, this is useful in conjunction
-		with :py:func:`.run_quick_open`.
+		with :py:meth:`.run_quick_open`.
 
 		:param str name: The name of the filter.
 		:param patterns: The pattern(s) to match.
@@ -346,7 +346,7 @@ class UtilityFileChooser(Gtk.FileChooserDialog):
 		"""
 		Display a dialog asking a user which file should be opened.
 
-		:return: A dictionary with 'target_uri' and 'target_filename' keys representing the path choosen.
+		:return: A dictionary with target_uri and target_filename keys representing the path choosen.
 		:rtype: dict
 		"""
 		self.set_action(Gtk.FileChooserAction.OPEN)

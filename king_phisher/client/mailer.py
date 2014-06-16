@@ -364,16 +364,18 @@ class MailSenderThread(threading.Thread):
 
 	def pause(self):
 		"""
-		Sets the :py:attr:`running` and :py:attr:`paused` flags correctly
-		to indicate that the object is paused.
+		Sets the :py:attr:`~.MailSenderThread.running` and
+		:py:attr:`~.MailSenderThread.paused` flags correctly to indicate
+		that the object is paused.
 		"""
 		self.running.clear()
 		self.paused.set()
 
 	def unpause(self):
 		"""
-		Sets the :py:attr:`running` and :py:attr:`paused` flags correctly
-		to indicate that the object is no longer paused.
+		Sets the :py:attr:`~.MailSenderThread.running` and
+		:py:attr:`~.MailSenderThread.paused` flags correctly to indicate
+		that the object is no longer paused.
 		"""
 		self.running.set()
 

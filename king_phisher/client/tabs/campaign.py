@@ -68,7 +68,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 	"""The dictionary map of column numbers to column names starting at column 1."""
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(self.label_text)
-		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`label_text`."""
+		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`~.CampaignViewGenericTab.label_text`."""
 		super(CampaignViewGenericTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
@@ -125,10 +125,11 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 	def load_campaign_information(self, force=False):
 		"""
 		Load the necessary campaign information from the remote server.
-		Unless *force* is True, the :py:attr:`last_load_time` is compared
-		with the :py:attr:`load_lifetime` to check if the information is
-		stale. If the local data is not stale, this function will return
-		without updating the table.
+		Unless *force* is True, the
+		:py:attr:`~.CampaignViewGenericTab.last_load_time` is compared
+		with the :py:attr:`~.CampaignViewGenericTab.load_lifetime` to
+		check if the information is stale. If the local data is not stale,
+		this function will return without updating the table.
 
 		:param bool force: Whether to ignore the load life time and force loading the remote data.
 		"""
@@ -297,7 +298,7 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 	"""The tabs label for display in the GUI."""
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(self.label_text)
-		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`label_text`."""
+		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`~.CampaignViewDashboardTab.label_text`."""
 		super(CampaignViewDashboardTab, self).__init__(*args, **kwargs)
 		self.last_load_time = float('-inf')
 		"""The last time the data was loaded from the server."""
@@ -331,10 +332,11 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 	def load_campaign_information(self, force=False):
 		"""
 		Load the necessary campaign information from the remote server.
-		Unless *force* is True, the :py:attr:`last_load_time` is compared
-		with the :py:attr:`load_lifetime` to check if the information is
-		stale. If the local data is not stale, this function will return
-		without updating the table.
+		Unless *force* is True, the
+		:py:attr:`~.CampaignViewDashboardTab.last_load_time` is compared
+		with the :py:attr:`~.CampaignViewDashboardTab.load_lifetime` to
+		check if the information is stale. If the local data is not
+		stale, this function will return without updating the table.
 
 		:param bool force: Whether to ignore the load life time and force loading the remote data.
 		"""

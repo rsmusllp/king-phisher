@@ -140,7 +140,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			sms.send_sms(alert_text, number, carrier, 'donotreply@kingphisher.local')
 
 	def adjust_path(self):
-		"""Adjust the :py:attr:`path` attribute based on multiple factors."""
+		"""Adjust the :py:attr:`~.KingPhisherRequestHandler.path` attribute based on multiple factors."""
 		if not self.config.get('server.vhost_directories'):
 			return
 		if not self.vhost:
@@ -234,9 +234,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	def campaign_id(self):
 		"""
 		The campaign id that is associated with the current request's
-		visitor. This is retrieved by looking up the :py:attr:`message_id`
-		value in the database. If no campaign is associated, this value
-		is None.
+		visitor. This is retrieved by looking up the
+		:py:attr:`~.KingPhisherRequestHandler.message_id` value in the
+		database. If no campaign is associated, this value is None.
 		"""
 		if hasattr(self, '_campaign_id'):
 			return self._campaign_id
@@ -254,7 +254,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		"""
 		The message id that is associated with the current request's
 		visitor. This is retrieved by looking at an 'id' parameter in the
-		query and then by checking the :py:attr:`visit_id` value in the
+		query and then by checking the
+		:py:attr:`~.KingPhisherRequestHandler.visit_id` value in the
 		database. If no message id is associated, this value is None.
 		"""
 		if hasattr(self, '_message_id'):

@@ -185,7 +185,7 @@ class CampaignGraph(object):
 			self.navigation_toolbar.hide()
 
 	def load_graph(self):
-		"""Load the graph information via :py:func:`.refresh`."""
+		"""Load the graph information via :py:meth:`.refresh`."""
 		self.refresh()
 
 	def refresh(self, info_cache=None):

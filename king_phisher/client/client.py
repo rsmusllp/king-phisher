@@ -522,7 +522,7 @@ class KingPhisherClient(Gtk.Window):
 		return
 
 	def load_config(self):
-		"""Load the client configuration from disk and set the :py:attr:`.config` attribute."""
+		"""Load the client configuration from disk and set the :py:attr:`~.KingPhisherClient.config` attribute."""
 		self.logger.info('loading the config from disk')
 		config_file = os.path.expanduser(self.config_file)
 		if not os.path.isfile(config_file):
@@ -550,7 +550,7 @@ class KingPhisherClient(Gtk.Window):
 		Delete the campaign on the server. A confirmation dialog will be
 		displayed before the operation is performed. If the campaign is
 		deleted and a new campaign is not selected with
-		:py:func:`show_campaign_selection`, the client will quit.
+		:py:meth:`.show_campaign_selection`, the client will quit.
 		"""
 		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible. All campaign data will be lost.'):
 			return
@@ -561,7 +561,7 @@ class KingPhisherClient(Gtk.Window):
 
 	def edit_preferences(self):
 		"""
-		Display a :py:class:`KingPhisherClientConfigDialog` instance and
+		Display a :py:class:`.KingPhisherClientConfigDialog` instance and
 		save the config to disk if cancel is not selected.
 		"""
 		dialog = KingPhisherClientConfigDialog(self.config, self)
@@ -618,7 +618,7 @@ class KingPhisherClient(Gtk.Window):
 
 	def show_campaign_graph(self, graph_name):
 		"""
-		Create a new :py:class:`CampaignGraph` instance and make it into
+		Create a new :py:class:`.CampaignGraph` instance and make it into
 		a window. *graph_name* must be the name of a valid, exported
 		graph provider.
 
