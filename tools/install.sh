@@ -6,7 +6,7 @@
 # Project Home Page: https://github.com/securestate/king-phisher/
 # Author: Spencer McIntyre
 #
-# curl -s https://raw.githubusercontent.com/securestate/king-phisher/master/tools/install.sh | sudo bash
+# wget -q https://github.com/securestate/king-phisher/raw/master/tools/install.sh && sudo bash ./install.sh
 ########################################################################
 
 E_NOTROOT=87
@@ -21,21 +21,6 @@ if [ "$(id -u)" != "0" ]; then
 	echo "This must be run as root"
 	exit $E_NOTROOT
 fi
-
-if [ "$(basename $FILE_NAME)" == "bash" ]; then
-	echo "Downloading and installing the King Phisher server to $KING_PHISHER_DIR"
-	if [ ! -d "$KING_PHISHER_DIR" ]; then
-		git clone $GIT_CLONE_URL $KING_PHISHER_DIR > /dev/null 2>&1
-		if [ $? -ne 0 ]; then
-			echo "Failed to clone the Git Repo"
-			exit $?
-		fi
-		echo "Successfully cloned the git repo"
-	fi
-elif [ "$(basename $FILE_NAME)" == "install.sh" ]; then
-	KING_PHISHER_DIR="$(dirname $(dirname $FILE_NAME))"
-fi
-cd $KING_PHISHER_DIR
 
 grep -E "Ubuntu 1[34].(04|10)" /etc/issue > /dev/null 2>&1
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
@@ -54,24 +39,49 @@ if [ -z "$LINUX_VERSION" ]; then
 fi
 echo "Linux version detected as $LINUX_VERSION"
 
+apt-get install -y -qq git
+
+if git status > /dev/null 2>&1; then
+	KING_PHISHER_DIR="$(git rev-parse --show-toplevel)"
+	echo "Git repo found at $KING_PHISHER_DIR"
+elif [ -d "$(dirname $(dirname $FILE_NAME))/king_phisher" ]; then
+	KING_PHISHER_DIR="$(dirname $(dirname $FILE_NAME))"
+	echo "Project directory found at $KING_PHISHER_DIR"
+else
+	echo "Downloading and installing the King Phisher server to $KING_PHISHER_DIR"
+	if [ ! -d "$KING_PHISHER_DIR" ]; then
+		git clone $GIT_CLONE_URL $KING_PHISHER_DIR > /dev/null 2>&1
+		if [ $? -ne 0 ]; then
+			echo "Failed to clone the Git repo"
+			exit $?
+		fi
+		echo "Successfully cloned the git repo"
+	fi
+fi
+exit 0
+cd $KING_PHISHER_DIR
+
 if [ "$LINUX_VERSION" == "Ubuntu" ]; then
 	echo "Installing Ubuntu dependencies"
 	apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
 		gir1.2-webkit-3.0 libfreetype6-dev python-cairo python-dev \
 		libgtk-3-dev python-gi python-gi-cairo \
 		python-gobject python-gobject-dev python-paramiko \
-		python-pip python-tk tk-dev > /dev/null 2>&1
-	echo "apt-get exited with status: $0"
+		python-pip python-tk tk-dev
 fi
 
 if [ "$LINUX_VERSION" == "Kali" ]; then
 	echo "Installing Kali dependencies"
-	apt-get install -y python-gobject python-gobject-dev python-pip \
-		gir1.2-vte-2.90 gir1.2-webkit-3.0 > /dev/null 2>&1
+	apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
+		gir1.2-webkit-3.0 libfreetype6-dev python-cairo python-dev \
+		libgtk-3-dev python-gi python-gi-cairo \
+		python-gobject python-gobject-dev python-paramiko \
+		python-pip python-tk tk-dev
+	easy_install -U distribute
 fi
 
 echo "Installing PyPi dependencies"
-pip install -r requirements.txt > /dev/null
+pip install -r requirements.txt
 
 egrep "^${KING_PHISHER_GROUP}:" /etc/group > /dev/null 2>&1
 if [ $? -ne 0 ]; then
