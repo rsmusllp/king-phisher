@@ -86,6 +86,7 @@ egrep "^${KING_PHISHER_GROUP}:" /etc/group > /dev/null 2>&1
 if [ $? -ne 0 ]; then
 	echo "Creating King Phisher Admin Group: '$KING_PHISHER_GROUP'"
 	groupadd $KING_PHISHER_GROUP
+	chown -R :$KING_PHISHER_GROUP $KING_PHISHER_DIR
 fi
 
 if [ ! -d /var/king-phisher ]; then
