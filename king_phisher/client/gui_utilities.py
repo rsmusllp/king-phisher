@@ -104,7 +104,7 @@ def gobject_get_value(gobject, gtype=None):
 	retrieving functions present in the :py:data:`.GOBJECT_PROPERTY_MAP`
 	can be processed by this function.
 
-	:param gobject: The object to get the value of.
+	:param gobject: The object to retrieve the value for.
 	:type gobject: :py:class:`GObject.GObject`
 	:param str gtype: An explicit type to treat *gobject* as.
 	:return: The value of *gobject*.
@@ -174,7 +174,7 @@ def show_dialog(message_type, message, parent, secondary_text=None, message_butt
 	:param message_type: The GTK message type to display.
 	:type message_type: :py:class:`Gtk.MessageType`
 	:param str message: The text to display in the dialog.
-	:param parant: The parent window that the dialog should belong to.
+	:param parent: The parent window that the dialog should belong to.
 	:type parent: :py:class:`Gtk.Window`
 	:param str secondary_text: Optional subtext for the dialog.
 	:param message_buttons: The buttons to display in the dialog box.

@@ -127,8 +127,8 @@ class KingPhisherRequestHandlerRPC(object):
 
 	def rpc_shutdown(self):
 		"""
-		This method can be used to shut down the server. It will return
-		but not requests after that will be processed.
+		This method can be used to shut down the server. This function will
+		return, however no subsequent requests will be processed.
 		"""
 		shutdown_thread = threading.Thread(target=self.server.shutdown)
 		shutdown_thread.start()
@@ -182,7 +182,7 @@ class KingPhisherRequestHandlerRPC(object):
 		Create a new King Phisher campaign and initialize the database
 		information.
 
-		:param str name: The new campaigns name.
+		:param str name: The new campaign's name.
 		:return: The ID of the new campaign.
 		:rtype: int
 		"""
@@ -194,8 +194,7 @@ class KingPhisherRequestHandlerRPC(object):
 
 	def rpc_campaign_alerts_is_subscribed(self, campaign_id):
 		"""
-		Check if the users is subscribed to alerts for the specified
-		campaign.
+		Check if the user is subscribed to alerts for the specified campaign.
 
 		:param int campaign_id: The ID of the campaign.
 		:return: The alert subscription status.
@@ -257,8 +256,8 @@ class KingPhisherRequestHandlerRPC(object):
 		:param str email_id: The message id of the sent email.
 		:param str email_target: The email address that the message was sent to.
 		:param str company_name: The company name value for the message.
-		:param str first_name: The first name of the messages recipient.
-		:param str last_name: The last name of the messages recipient.
+		:param str first_name: The first name of the message's recipient.
+		:param str last_name: The last name of the message's recipient.
 		"""
 		values = (email_id, campaign_id, email_target, company_name, first_name, last_name)
 		with self.get_cursor() as cursor:
@@ -268,8 +267,11 @@ class KingPhisherRequestHandlerRPC(object):
 	def rpc_campaign_delete(self, campaign_id):
 		"""
 		Remove a campaign from the database and delete all associated
-		information with it. This action can not be reversed and there
-		is no confirmation.
+		information with it.
+
+		.. warning::
+			This action can not be reversed and there is no confirmation before it
+			takes place.
 		"""
 		tables = database.get_tables_with_column_id('campaign_id')
 		with self.get_cursor() as cursor:

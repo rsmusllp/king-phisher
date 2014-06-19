@@ -53,8 +53,8 @@ def data_path_append(path):
 
 def find_data_file(data_file, access_mode=os.R_OK):
 	"""
-	Locate a data file by searching the directorys specified in
-	:py:data`ENV_VAR`. If *access_mode* is specified, it needs to be a
+	Locate a data file by searching the directories specified in
+	:py:data:`.ENV_VAR`. If *access_mode* is specified, it needs to be a
 	value suitable for use with :py:func:`os.access`.
 
 	:param str data_file: The name of the file to locate.

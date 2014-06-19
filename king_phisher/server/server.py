@@ -81,8 +81,8 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 
 class KingPhisherErrorAbortRequest(Exception):
 	"""
-	An exception that can be raised which when caught will cause abort
-	the processing of the current request.
+	An exception that can be raised which when caught will cause the handler to
+	immediately stop processing the current request.
 	"""
 	pass
 
@@ -116,10 +116,10 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		"""
 		Send an SMS alert. If no *campaign_id* is specified all users
 		with registered SMS information will receive the alert otherwise
-		only users subscribbed to the campaign specified.
+		only users subscribed to the campaign specified.
 
 		:param str alert_text: The message to send to subscribers.
-		:param int campaign_id: The campaign subscribers to send the aler to.
+		:param int campaign_id: The campaign subscribers to send the alert to.
 		"""
 		campaign_name = None
 		with self.get_cursor() as cursor:

@@ -241,6 +241,8 @@ class KingPhisherClient(_Gtk_Window):
 	custom GObject signals, keeps all the GUI references, and manages
 	the RPC client object. This is also the parent window for most
 	GTK objects.
+
+	:GObject Signals: :ref:`gobject-signals-kingphisher-client-label`
 	"""
 	__gsignals__ = {
 		'campaign_set': (GObject.SIGNAL_RUN_FIRST, None, (str,))

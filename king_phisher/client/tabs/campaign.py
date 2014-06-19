@@ -131,7 +131,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		check if the information is stale. If the local data is not stale,
 		this function will return without updating the table.
 
-		:param bool force: Whether to ignore the load life time and force loading the remote data.
+		:param bool force: Ignore the load life time and force loading the remote data.
 		"""
 		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
 			return
@@ -338,7 +338,7 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		check if the information is stale. If the local data is not
 		stale, this function will return without updating the table.
 
-		:param bool force: Whether to ignore the load life time and force loading the remote data.
+		:param bool force: Ignore the load life time and force loading the remote data.
 		"""
 		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
 			return

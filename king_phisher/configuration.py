@@ -98,7 +98,7 @@ class Configuration(object):
 		"""
 		Retrieve the value of an option.
 
-		:param str item_name: The name of the option to retreive.
+		:param str item_name: The name of the option to retrieve.
 		:return: The value of *item_name* in the configuration.
 		"""
 		if self.prefix:

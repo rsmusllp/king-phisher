@@ -20,7 +20,9 @@ Special Thanks (QA / Beta Testing):
 
  - Ken Smith - p4tchw0rk
 
-King-Phisher Development Team:
+ - Brianna Whittaker
+
+King Phisher Development Team:
 
  - Brandan Geise - coldfusion ([@coldfusion39](https://twitter.com/coldfusion39))
 

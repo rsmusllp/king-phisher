@@ -158,7 +158,7 @@ class Mock(object):
 
 def open_uri(uri):
 	"""
-	Open a URI in a platform intelligent way. On Winodws this will use
+	Open a URI in a platform intelligent way. On Windows this will use
 	'cmd.exe /c start' and on Linux this will use gvfs-open or xdg-open
 	depending on which is available. If no suitable application can be
 	found to open the URI, a RuntimeError will be raised.
@@ -209,13 +209,14 @@ def server_parse(server, default_port):
 
 def unique(seq, key=None):
 	"""
-	Unique a list or tuple and preserve the order.
+	Create a list or tuple consisting of the unique elements of *seq* and
+	preserve their order.
 
 	:param seq: The list or tuple to preserve unique items from.
 	:type seq: list, tuple
-	:param key: If key is provided it will be called during the
+	:param function key: If key is provided it will be called during the
 		comparison process.
-	:type key: function, None
+	:return: An object of the same type as *seq* and contaning its unique elements.
 	"""
 	if key is None:
 		key = lambda x: x
@@ -234,7 +235,7 @@ def which(program):
 	"""
 	Locate an executable binary's full path by its name.
 
-	:param str program: The executables name.
+	:param str program: The executable's name.
 	:return: The full path to the executable.
 	:rtype: str
 	"""

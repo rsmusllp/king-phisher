@@ -151,7 +151,7 @@ class CampaignGraph(object):
 		"""
 		Create a window from the figure manager.
 
-		:return: The graph in a new dedicated window.
+		:return: The graph in a new, dedicated window.
 		:rtype: :py:class:`Gtk.Window`
 		"""
 		if self.manager == None:
@@ -210,7 +210,7 @@ class CampaignGraph(object):
 
 @export
 class CampaignGraphOverview(CampaignGraph):
-	"""Display a graph which represents an over view of the campaign."""
+	"""Display a graph which represents an overview of the campaign."""
 	title = 'Overview'
 	table_subscriptions = ['credentials', 'visits']
 	def _load_graph(self, info_cache):

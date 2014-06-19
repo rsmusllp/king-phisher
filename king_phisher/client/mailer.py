@@ -65,10 +65,10 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 
 	:param str template: The message template.
 	:param dict config: The King Phisher client configuration.
-	:param str first_name: The first name of the messages recipient.
-	:param str last_name: The last name of the messages recipient.
+	:param str first_name: The first name of the message's recipient.
+	:param str last_name: The last name of the message's recipient.
 	:param str uid: The messages unique identifier.
-	:param str target_email: The messages destination email address.
+	:param str target_email: The message's destination email address.
 	:return: The formatted message.
 	:rtype: str
 	"""
@@ -107,7 +107,7 @@ class MailSenderThread(threading.Thread):
 	The King Phisher threaded email message sender. This object manages
 	the sending of emails for campaigns and supports pausing sending
 	messages which can later be resumed by unpausing. This object reports
-	it's information to the GUI through an
+	its information to the GUI through an
 	:py:class:`.MailSenderSendMessagesTab` instance, these two objects
 	are very interdependent.
 	"""
@@ -295,10 +295,10 @@ class MailSenderThread(threading.Thread):
 		"""
 		Create a MIME email to be sent from a set of parameters.
 
-		:param str first_name: The first name of the messages recipient.
-		:param str last_name: The last name of the messages recipient.
-		:param str target_email: The messages destination email address.
-		:param str uid: The messages unique identifier.
+		:param str first_name: The first name of the message's recipient.
+		:param str last_name: The last name of the message's recipient.
+		:param str target_email: The message's destination email address.
+		:param str uid: The message's unique identifier.
 		:return: The new MIME message.
 		:rtype: :py:class:`email.MIMEMultipart.MIMEMultipart`
 		"""

@@ -85,7 +85,7 @@ class ForkedAuthenticator(object):
 
 	def send(self, request):
 		"""
-		Encode an send a request through the pipe to the opposite end.
+		Encode and send a request through the pipe to the opposite end.
 
 		:param dict request: A request.
 		"""
