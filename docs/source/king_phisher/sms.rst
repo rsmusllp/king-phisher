@@ -1,8 +1,8 @@
-:mod:`king_phisher.sms` --- 
-==============================================================
+:mod:`sms`
+==========
 
-.. module:: king_phisher.sms
-   :synopsis: 
+.. module:: sms
+   :synopsis:
 
 
 

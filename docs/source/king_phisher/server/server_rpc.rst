@@ -1,5 +1,5 @@
-:mod:`server.server_rpc` ---
-============================
+:mod:`server.server_rpc`
+========================
 
 .. module:: server.server_rpc
    :synopsis:

@@ -1,5 +1,5 @@
-:mod:`server.server` ---
-========================
+:mod:`server.server`
+====================
 
 .. module:: server.server
    :synopsis:

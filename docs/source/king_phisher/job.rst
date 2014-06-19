@@ -1,8 +1,8 @@
-:mod:`king_phisher.job` --- 
-==============================================================
+:mod:`job`
+==========
 
-.. module:: king_phisher.job
-   :synopsis: 
+.. module:: job
+   :synopsis:
 
 
 

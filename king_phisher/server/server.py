@@ -67,7 +67,7 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	:param ServerClass: Alternative server class to use.
 	:type ServerClass: :py:class:`.KingPhisherServer`
 	:param HandlerClass: Alternative handler class to use.
-	:type HandlerClass: :py:class:`.KingPhisherServerRequestHandler`
+	:type HandlerClass: :py:class:`.KingPhisherRequestHandler`
 	:return: A configured server instance.
 	:rtype: :py:class:`.KingPhisherServer`
 	"""

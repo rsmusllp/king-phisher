@@ -1,5 +1,5 @@
-:mod:`client.gui_utilities` ---
-===============================
+:mod:`client.gui_utilities`
+===========================
 
 .. module:: client.gui_utilities
    :synopsis:

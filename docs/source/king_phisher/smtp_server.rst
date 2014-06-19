@@ -1,7 +1,7 @@
-:mod:`king_phisher.smtp_server` ---
-==============================================================
+:mod:`smtp_server`
+==================
 
-.. module:: king_phisher.smtp_server
+.. module:: smtp_server
    :synopsis:
 
 

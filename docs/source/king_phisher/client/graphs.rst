@@ -1,5 +1,5 @@
-:mod:`client.graphs` ---
-========================
+:mod:`client.graphs`
+====================
 
 .. module:: client.graphs
    :synopsis:

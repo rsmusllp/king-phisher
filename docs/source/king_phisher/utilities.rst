@@ -1,8 +1,8 @@
-:mod:`king_phisher.utilities` --- 
-==============================================================
+:mod:`utilities`
+================
 
-.. module:: king_phisher.utilities
-   :synopsis: 
+.. module:: utilities
+   :synopsis:
 
 
 
@@ -27,3 +27,6 @@ Classes
    :members:
    :special-members: __init__
    :undoc-members:
+
+.. autoclass:: king_phisher.utilities.Mock
+   :show-inheritance:

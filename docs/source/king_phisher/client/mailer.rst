@@ -1,5 +1,5 @@
-:mod:`client.mailer` ---
-========================
+:mod:`client.mailer`
+====================
 
 .. module:: client.mailer
    :synopsis:

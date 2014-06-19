@@ -59,6 +59,12 @@ import paramiko
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 """The default search location for the client configuration file."""
 
+if isinstance(Gtk.Window, utilities.Mock):
+	_Gtk_Window = type('Gtk.Window', (object,), {})
+	_Gtk_Window.__module__ = ''
+else:
+	_Gtk_Window = Gtk.Window
+
 class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 	"""
 	Display a dialog which allows a new campaign to be created or an
@@ -229,9 +235,7 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 			username = self.config['server_username']
 			self.parent.rpc('users/set', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))
 
-# This is the top level class/window for the client side of the king-phisher
-# application
-class KingPhisherClient(Gtk.Window):
+class KingPhisherClient(_Gtk_Window):
 	"""
 	This is the top level King Phisher client object. It contains the
 	custom GObject signals, keeps all the GUI references, and manages

@@ -1,5 +1,5 @@
-:mod:`client.client` ---
-========================
+:mod:`client.client`
+====================
 
 .. module:: client.client
    :synopsis:

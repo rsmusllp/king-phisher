@@ -1,5 +1,5 @@
-:mod:`server.authenticator` ---
-===============================
+:mod:`server.authenticator`
+===========================
 
 .. module:: server.authenticator
    :synopsis:

@@ -1,5 +1,5 @@
-:mod:`server.database` ---
-==========================
+:mod:`server.database`
+======================
 
 .. module:: server.database
    :synopsis:

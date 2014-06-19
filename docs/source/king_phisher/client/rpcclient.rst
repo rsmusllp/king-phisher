@@ -1,5 +1,5 @@
-:mod:`client.rpcclient` ---
-===========================
+:mod:`client.rpcclient`
+=======================
 
 .. module:: client.rpcclient
    :synopsis:

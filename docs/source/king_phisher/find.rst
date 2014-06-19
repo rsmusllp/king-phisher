@@ -1,8 +1,8 @@
-:mod:`king_phisher.find` --- 
-==============================================================
+:mod:`find`
+===========
 
-.. module:: king_phisher.find
-   :synopsis: 
+.. module:: find
+   :synopsis:
 
 
 

@@ -36,6 +36,7 @@ import os
 import threading
 
 from king_phisher import find
+from king_phisher import utilities
 
 from gi.repository import GLib
 from gi.repository import GObject
@@ -61,6 +62,12 @@ of two functions is specified the set function will be provided two
 parameters, the object and the value and the get function will just be
 provided the object.
 """
+
+if isinstance(Gtk.Window, utilities.Mock):
+	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {})
+	_Gtk_FileChooserDialog.__module__ = ''
+else:
+	_Gtk_FileChooserDialog = Gtk.FileChooserDialog
 
 def which_glade():
 	"""
@@ -298,7 +305,7 @@ class UtilityGladeGObject(object):
 				continue
 			self.config[config_name] = gobject_get_value(gobject, gtype)
 
-class UtilityFileChooser(Gtk.FileChooserDialog):
+class UtilityFileChooser(_Gtk_FileChooserDialog):
 	"""Display a file chooser dialog."""
 	def __init__(self, *args, **kwargs):
 		super(UtilityFileChooser, self).__init__(*args, **kwargs)

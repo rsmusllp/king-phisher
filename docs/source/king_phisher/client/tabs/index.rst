@@ -1,5 +1,5 @@
-The client.tabs Package
-=======================
+:mod:`client.tabs`
+==================
 
 .. toctree::
    :maxdepth: 2

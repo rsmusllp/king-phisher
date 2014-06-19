@@ -1,8 +1,8 @@
-:mod:`king_phisher.templates` --- 
-==============================================================
+:mod:`templates`
+================
 
-.. module:: king_phisher.templates
-   :synopsis: 
+.. module:: templates
+   :synopsis:
 
 
 

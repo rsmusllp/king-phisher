@@ -1,7 +1,7 @@
-:mod:`king_phisher.ssh_forward` ---
-==============================================================
+:mod:`ssh_forward`
+==================
 
-.. module:: king_phisher.ssh_forward
+.. module:: ssh_forward
    :synopsis:
 
 

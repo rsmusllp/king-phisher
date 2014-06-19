@@ -1,7 +1,7 @@
-:mod:`king_phisher.configuration` ---
-==============================================================
+:mod:`configuration`
+====================
 
-.. module:: king_phisher.configuration
+.. module:: configuration
    :synopsis:
 
 

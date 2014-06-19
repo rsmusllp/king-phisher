@@ -1,8 +1,8 @@
-:mod:`king_phisher.version` --- 
-==============================================================
+:mod:`version`
+==============
 
-.. module:: king_phisher.version
-   :synopsis: 
+.. module:: version
+   :synopsis:
 
 
 

@@ -128,6 +128,34 @@ class Cache(object):
 		"""
 		self.__cache = {}
 
+class Mock(object):
+	"""
+	A fake object to replace missing imports when generating documentation.
+	"""
+	__all__ = []
+	def __init__(self, *args, **kwargs):
+		pass
+
+	def __call__(self, *args, **kwargs):
+		return Mock()
+
+	@classmethod
+	def __getattr__(cls, name):
+		if name in ('__file__', '__path__'):
+			return os.devnull
+		else:
+			return Mock()
+
+	@classmethod
+	def __setattr__(cls, name):
+		pass
+
+	def __getitem__(self, name):
+		return Mock()
+
+	def __setitem__(self, name, value):
+		pass
+
 def open_uri(uri):
 	"""
 	Open a URI in a platform intelligent way. On Winodws this will use

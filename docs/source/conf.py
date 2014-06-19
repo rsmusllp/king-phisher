@@ -21,6 +21,7 @@ sys.path.insert(1, _path)
 del _path
 
 import king_phisher.version
+import king_phisher.utilities
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -265,38 +266,13 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-class Mock(object):
-	__all__ = []
-	def __init__(self, *args, **kwargs):
-		pass
-
-	def __call__(self, *args, **kwargs):
-		return Mock()
-
-	@classmethod
-	def __getattr__(cls, name):
-		if name in ('__file__', '__path__'):
-			return '/dev/null'
-		else:
-			return Mock()
-
-	@classmethod
-	def __setattr__(cls, name):
-		pass
-
-	def __getitem__(self, name):
-		return Mock()
-
-	def __setitem__(self, name, value):
-		pass
-
 # mock specific external packages
-sys.modules['dns.resolver'] = Mock()
-sys.modules['gi'] = Mock()
-sys.modules['gi.repository'] = Mock()
-sys.modules['matplotlib'] = Mock()
-sys.modules['matplotlib.backends'] = Mock()
-sys.modules['matplotlib.backends.backend_gtk3'] = Mock()
-sys.modules['matplotlib.backends.backend_gtk3agg'] = Mock()
-sys.modules['matplotlib.figure'] = Mock()
-sys.modules['paramiko'] = Mock()
+sys.modules['dns.resolver'] = king_phisher.utilities.Mock()
+sys.modules['gi'] = king_phisher.utilities.Mock()
+sys.modules['gi.repository'] = king_phisher.utilities.Mock()
+sys.modules['matplotlib'] = king_phisher.utilities.Mock()
+sys.modules['matplotlib.backends'] = king_phisher.utilities.Mock()
+sys.modules['matplotlib.backends.backend_gtk3'] = king_phisher.utilities.Mock()
+sys.modules['matplotlib.backends.backend_gtk3agg'] = king_phisher.utilities.Mock()
+sys.modules['matplotlib.figure'] = king_phisher.utilities.Mock()
+sys.modules['paramiko'] = king_phisher.utilities.Mock()

@@ -1,5 +1,5 @@
-:mod:`client.export` ---
-========================
+:mod:`client.export`
+====================
 
 .. module:: client.export
    :synopsis:

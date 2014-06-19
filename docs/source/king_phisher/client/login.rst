@@ -1,5 +1,5 @@
-:mod:`client.login` ---
-=======================
+:mod:`client.login`
+===================
 
 .. module:: client.login
    :synopsis:

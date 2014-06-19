@@ -1,8 +1,8 @@
-:mod:`king_phisher.ua_parser` --- 
-==============================================================
+:mod:`ua_parser`
+================
 
-.. module:: king_phisher.ua_parser
-   :synopsis: 
+.. module:: ua_parser
+   :synopsis:
 
 
 

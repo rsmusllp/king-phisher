@@ -1,5 +1,5 @@
-:mod:`tabs.campaign` ---
-========================
+:mod:`client.tabs.campaign`
+===========================
 
 .. module:: tabs.campaign
    :synopsis:

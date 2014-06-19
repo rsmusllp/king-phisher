@@ -1,8 +1,8 @@
-:mod:`king_phisher.xor` --- 
-==============================================================
+:mod:`xor`
+==========
 
-.. module:: king_phisher.xor
-   :synopsis: 
+.. module:: xor
+   :synopsis:
 
 
 

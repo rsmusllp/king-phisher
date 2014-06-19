@@ -1,5 +1,5 @@
-The king_phisher.server Package
-===============================
+:mod:`server`
+=============
 
 .. toctree::
    :maxdepth: 2

@@ -1,5 +1,5 @@
-:mod:`tabs.mail` ---
-====================
+:mod:`client.tabs.mail`
+=======================
 
 .. module:: tabs.mail
    :synopsis:
