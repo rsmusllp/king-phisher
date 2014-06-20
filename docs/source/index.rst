@@ -8,6 +8,7 @@ King Phisher Documentation
 
    king_phisher_api.rst
    gobject_signals.rst
+   rpc_api.rst
 
 Indices and tables
 ==================

@@ -44,6 +44,8 @@ class KingPhisherRequestHandlerRPC(object):
 	"""
 	This superclass of :py:class:`.KingPhisherRequestHandler` maintains
 	all of the RPC call back functions.
+
+	:RPC API: :ref:`rpc-api-label`
 	"""
 	def install_handlers(self):
 		super(KingPhisherRequestHandlerRPC, self).install_handlers()
@@ -307,13 +309,12 @@ class KingPhisherRequestHandlerRPC(object):
 		:rtype: dict
 		"""
 		args = list(args)
-		if len(args):
-			offset = (args.pop() * VIEW_ROW_COUNT)
-		else:
-			offset = 0
+		offset = 0
 
 		table = self.path.split('/')[-2]
 		fields = self.path.split('/')[1:-2]
+		if len(args) == (len(fields) + 1):
+			offset = (args.pop() * VIEW_ROW_COUNT)
 		assert(len(fields) == len(args))
 		columns = DATABASE_TABLES[table]
 		rows = []
