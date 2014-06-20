@@ -45,7 +45,7 @@ from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client.login import KingPhisherClientLoginDialog
-from king_phisher.client.rpcclient import KingPhisherRPCClient
+from king_phisher.client.client_rpc import KingPhisherRPCClient
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.client.tools import KingPhisherClientRPCTerminal

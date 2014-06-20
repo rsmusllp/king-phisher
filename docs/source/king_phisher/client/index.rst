@@ -13,5 +13,5 @@
    gui_utilities.rst
    login.rst
    mailer.rst
-   rpcclient.rst
+   client_rpc.rst
    tools.rst

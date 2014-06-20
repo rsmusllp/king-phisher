@@ -37,13 +37,13 @@ import types
 import unittest
 
 from king_phisher import version
-from king_phisher.client import rpcclient
+from king_phisher.client import client_rpc
 from tests.testing import KingPhisherServerTestCase, random_string
 
 class ServerRPCTests(KingPhisherServerTestCase):
 	def setUp(self, *args, **kwargs):
 		super(ServerRPCTests, self).setUp(*args, **kwargs)
-		self.rpc = rpcclient.KingPhisherRPCClient(('localhost', self.config.get('server.address.port')), username='test', password='test')
+		self.rpc = client_rpc.KingPhisherRPCClient(('localhost', self.config.get('server.address.port')), username='test', password='test')
 
 	def test_rpc_client_initialize(self):
 		self.assertTrue(self.rpc('client/initialize'))

@@ -42,7 +42,7 @@ import sys
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
-from king_phisher.client.rpcclient import KingPhisherRPCClient
+from king_phisher.client.client_rpc import KingPhisherRPCClient
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
 from gi.repository import Gtk
