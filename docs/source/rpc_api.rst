@@ -4,18 +4,22 @@ RPC API
 =======
 
 .. py:function:: client/initialize()
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_client_initialize`
 
 .. py:function:: ping()
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_ping`
 
 .. py:function:: shutdown()
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_shutdown`
 
 .. py:function:: version()
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_version`
 
@@ -25,30 +29,37 @@ Campaign API
 ------------
 
 .. py:function:: campaign/alerts/is_subscribed(campaign_id)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_is_subscribed`
 
 .. py:function:: campaign/alerts/subscribe(campaign_id)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_subscribe`
 
 .. py:function:: campaign/alerts/unsubscribe(campaign_id)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_unsubscribe`
 
 .. py:function:: campaign/delete(campaign_id)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_delete`
 
 .. py:function:: campaign/landing_page/new(campaign_id, hostname, page)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_landing_page_new`
 
 .. py:function:: campaign/message/new(campaign_id, email_id, email_target, company_name, first_name, last_name)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_message_new`
 
 .. py:function:: campaign/new(name)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_new`
 
@@ -56,10 +67,12 @@ Campaign Table API
 ^^^^^^^^^^^^^^^^^^
 
 .. py:function:: campaign/< table_name >/count(campaign_id)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
 .. py:function:: campaign/< table_name >/view(campaign_id, page=0)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
 
@@ -69,10 +82,12 @@ Configuration API
 -----------------
 
 .. py:function:: config/get(option_name)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_config_get`
 
 .. py:function:: config/set(options)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_config_set`
 
@@ -82,18 +97,22 @@ Message API
 -----------
 
 .. py:function:: message/credentials/count(message_id)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
 .. py:function:: message/credentials/view(message_id, page=0)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
 
 .. py:function:: message/visits/count(message_id)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
 .. py:function:: message/visits/view(message_id, page=0)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
 
@@ -103,25 +122,31 @@ Table API
 ---------
 
 .. py:function:: < table_name >/count()
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
 .. py:function:: < table_name >/delete(row_id)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_row_by_id`
 
 .. py:function:: < table_name >/get(row_id)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_row_by_id`
 
 .. py:function:: < table_name >/insert(keys, values)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_insert_row`
 
 .. py:function:: < table_name >/set(row_id, keys, values)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_set_row_value`
 
 .. py:function:: < table_name >/view(page=0)
+   :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`

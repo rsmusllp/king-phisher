@@ -14,11 +14,16 @@
 
 import sys
 import os
-_path = os.path.dirname(__file__)
-_path = os.path.relpath('../..', _path)
-_path = os.path.abspath(_path)
-sys.path.insert(1, _path)
-del _path
+
+_prj_root = os.path.dirname(__file__)
+_prj_root = os.path.relpath(os.path.join('..', '..'), _prj_root)
+_prj_root = os.path.abspath(_prj_root)
+sys.path.insert(1, _prj_root)
+
+_pkg = os.path.join(_prj_root, 'king_phisher', 'third_party')
+sys.path.insert(2, _pkg)
+
+del _prj_root, _pkg
 
 import king_phisher.version
 import king_phisher.utilities
