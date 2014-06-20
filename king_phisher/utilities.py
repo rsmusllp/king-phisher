@@ -77,6 +77,7 @@ def timedef_to_seconds(timedef):
 	if seconds < 0:
 		raise ValueError('invalid time format')
 	return seconds
+
 class Cache(object):
 	"""
 	This class provides a simple to use cache object which can be applied

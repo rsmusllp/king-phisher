@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/xor.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,20 +30,23 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
+import unittest
 
-from tests.client.client import ClientGUITests
-from tests.client.export import ClientExportTests
-from tests.client.graphs import ClientGraphsTests
-from tests.server.authenticator import ServerAuthenticatorTests
-from tests.server.database import ServerDatabaseTests
-from tests.server.server import ServerTests
-from tests.server.server_rpc import ServerRPCTests
-from tests.configuration import ServerConfigurationTests
-from tests.templates import TemplatesTests
-from tests.ua_parser import UserAgentParserTests
-from tests.utilities import UtilitiesTests
-from tests.xor import XORTests
+from king_phisher.xor import *
+from testing import random_string
 
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
+class XORTests(unittest.TestCase):
+	def test_xor_encode(self):
+		plain_string = random_string(16)
+		encoded_string = xor_encode(plain_string)
+		self.assertNotEqual(plain_string, encoded_string)
+
+	def test_xor_decode(self):
+		plain_string = random_string(16)
+		encoded_string = xor_encode(plain_string)
+		self.assertNotEqual(plain_string, encoded_string)
+		decoded_string = xor_decode(encoded_string)
+		self.assertEqual(plain_string, decoded_string)
+
+if __name__ == '__main__':
+	unittest.main()
