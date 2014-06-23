@@ -93,7 +93,16 @@ def main():
 		return os.EX_OK
 
 	# Configure environment variables
-	find.data_path_append('data/server')
+	data_path = os.path.dirname(__file__)
+	data_path = os.path.join(data_path, 'data', 'server')
+	data_path = os.path.abspath(data_path)
+	find.data_path_append(data_path)
+
+	data_path = os.getcwd()
+	data_path = os.path.join(data_path, 'data', 'server')
+	data_path = os.path.abspath(data_path)
+	find.data_path_append(data_path)
+
 	if config.has_option('server.data_path'):
 		find.data_path_append(config.get('server.data_path'))
 
