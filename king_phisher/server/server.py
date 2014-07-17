@@ -315,8 +315,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		template_vars['client'].update(self.get_template_vars_client() or {})
 		template_data = template.render(template_vars)
 		fs = os.stat(template.filename)
+		mime_type = self.guess_mime_type(file_path)
+		if mime_type.startswith('text'):
+			mime_type = mime_type + '; charset=utf-8'
 		self.send_response(200)
-		self.send_header('Content-Type', self.guess_mime_type(file_path))
+		self.send_header('Content-Type', mime_type)
 		self.send_header('Content-Length', str(len(template_data)))
 		self.send_header('Last-Modified', self.date_time_string(fs.st_mtime))
 
@@ -326,7 +329,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.server.logger.error('handle_page_visit raised error: ' + err.__class__.__name__)
 
 		self.end_headers()
-		self.wfile.write(template_data)
+		self.wfile.write(template_data.encode('utf-8', 'ignore'))
 		return
 
 	def _respond_file_raw(self, file_path, attachment):
