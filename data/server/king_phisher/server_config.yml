@@ -28,6 +28,9 @@ server:
   # Require an ID associated with a campaign to load pages
   require_id: true
 
+  # Configure the server header value
+  #server_header: Apache/2.4.9 (Unix)
+
   # Drop privileges to the specified user
   setuid_username: nobody
 

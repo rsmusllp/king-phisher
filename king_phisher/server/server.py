@@ -77,7 +77,10 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
 	address = (config.get('server.address.host'), config.get('server.address.port'))
-	return ServerClass(config, HandlerClass, address=address)
+	server = ServerClass(config, HandlerClass, address=address)
+	if config.has_option('server.server_header'):
+		server.server_version = config.get('server.server_header')
+	return server
 
 class KingPhisherErrorAbortRequest(Exception):
 	"""
@@ -165,10 +168,10 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			raise
 		finally:
 			self.server.throttle_semaphore.release()
-	do_GET  = _do_http_method
+	do_GET = _do_http_method
 	do_HEAD = _do_http_method
 	do_POST = _do_http_method
-	do_RPC  = _do_http_method
+	do_RPC = _do_http_method
 
 	def get_query_parameter(self, parameter):
 		"""
