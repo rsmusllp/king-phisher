@@ -149,38 +149,26 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			raise KingPhisherErrorAbortRequest()
 		self.path = '/' + self.vhost + self.path
 
-	def do_GET(self, *args, **kwargs):
+	def _do_http_method(self, *args, **kwargs):
 		self.server.throttle_semaphore.acquire()
 		try:
-			self.adjust_path()
-			super(KingPhisherRequestHandler, self).do_GET(*args, **kwargs)
+			if self.command != 'RPC':
+				self.adjust_path()
+			if self.command == 'HEAD':
+				http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_GET')
+			else:
+				http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
+			http_method_handler(*args, **kwargs)
 		except KingPhisherErrorAbortRequest:
 			self.respond_not_found()
 		except:
 			raise
 		finally:
 			self.server.throttle_semaphore.release()
-
-	def do_POST(self, *args, **kwargs):
-		self.server.throttle_semaphore.acquire()
-		try:
-			self.adjust_path()
-			super(KingPhisherRequestHandler, self).do_POST(*args, **kwargs)
-		except KingPhisherErrorAbortRequest:
-			self.respond_not_found()
-		except:
-			raise
-		finally:
-			self.server.throttle_semaphore.release()
-
-	def do_RPC(self, *args, **kwargs):
-		self.server.throttle_semaphore.acquire()
-		try:
-			super(KingPhisherRequestHandler, self).do_RPC(*args, **kwargs)
-		except:
-			raise
-		finally:
-			self.server.throttle_semaphore.release()
+	do_GET  = _do_http_method
+	do_HEAD = _do_http_method
+	do_POST = _do_http_method
+	do_RPC  = _do_http_method
 
 	def get_query_parameter(self, parameter):
 		"""
@@ -222,8 +210,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		return self.server.forked_authenticator.authenticate(username, password)
 
 	def check_authorization(self):
-		# don't require authentication for GET & POST requests
-		if self.command in ['GET', 'POST']:
+		# don't require authentication for non-RPC requests
+		if self.command != 'RPC':
 			return True
 		# deny anything not GET or POST if it's not from 127.0.0.1
 		if self.client_address[0] != '127.0.0.1':
