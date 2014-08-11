@@ -285,7 +285,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self._respond_file_check_id()
 		file_path = os.path.abspath(file_path)
 		file_ext = os.path.splitext(file_path)[1][1:]
-		if attachment or not file_ext in ['htm', 'html', 'txt']:
+		if attachment or not file_ext in ['hta', 'htm', 'html', 'txt']:
 			self._respond_file_raw(file_path, attachment)
 			return
 		try:
