@@ -193,9 +193,13 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		"""
 		if not self.message_id:
 			return None
+		visit_count = 0
 		with self.get_cursor() as cursor:
 			cursor.execute('SELECT target_email, company_name, first_name, last_name, trained FROM messages WHERE id = ?', (self.message_id,))
 			result = cursor.fetchone()
+			visit_count = self.query_count('SELECT COUNT(id) FROM visits WHERE message_id = ?', (self.message_id,))
+		if not result and self.message_id == self.config.get('server.secret_id'):
+			result = ['aliddle@wonderland.com', 'Wonderland Inc.', 'Alice', 'Liddle', 0]
 		if not result:
 			return None
 		client_vars = {}
@@ -205,7 +209,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		client_vars['last_name'] = result[3]
 		client_vars['is_trained'] = bool(result[4])
 		client_vars['message_id'] = self.message_id
-		client_vars['visit_count'] = self.query_count('SELECT COUNT(id) FROM visits WHERE message_id = ?', (self.message_id,))
+		client_vars['visit_count'] = visit_count
 		if self.visit_id:
 			client_vars['visit_id'] = self.visit_id
 		else:

@@ -83,7 +83,7 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	template_vars['first_name'] = first_name
 	template_vars['last_name'] = last_name
 	template_vars['email_address'] = target_email
-	template_vars['company_name'] = config.get('mailer.company_name', '')
+	template_vars['company_name'] = config.get('mailer.company_name', 'Wonderland Inc.')
 
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urlparse.urlparse(webserver_url)

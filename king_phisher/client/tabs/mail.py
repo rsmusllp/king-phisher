@@ -32,6 +32,7 @@
 
 import collections
 import os
+import socket
 import urllib
 import urllib2
 import urlparse
@@ -328,6 +329,9 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 			if isinstance(error, urllib2.HTTPError) and error.getcode():
 				self.logger.warning("verify url HTTPError: {0} {1}".format(error.getcode(), error.reason))
 				error_description = "HTTP Status {0} {1}".format(error.getcode(), error.reason)
+			elif isinstance(error, socket.timeout):
+				self.logger.warning('verify url attempt failed, connection timeout occurred')
+				error_description = 'Connection Timed Out'
 			else:
 				self.logger.warning('unknown verify url exception: ' + repr(error))
 			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent, error_description)
