@@ -205,8 +205,12 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		client_vars['last_name'] = result[3]
 		client_vars['is_trained'] = bool(result[4])
 		client_vars['message_id'] = self.message_id
+		client_vars['visit_count'] = self.query_count('SELECT COUNT(id) FROM visits WHERE message_id = ?', (self.message_id,))
 		if self.visit_id:
 			client_vars['visit_id'] = self.visit_id
+		else:
+			# If the visit_id is not set then this is a new visit so increment the count preemptively
+			client_vars['visit_count'] += 1
 		return client_vars
 
 	def custom_authentication(self, username, password):

@@ -13,6 +13,7 @@ client.first_name:      {{ client.first_name }}
 client.last_name:       {{ client.last_name }}
 client.is_trained:      {{ client.is_trained }}
 client.message_id:      {{ client.message_id }}
+client.visit_count:     {{ client.visit_count }}
 client.visit_id:        {{ client.visit_id }}
 {% endif %}
 
