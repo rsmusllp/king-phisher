@@ -33,6 +33,7 @@
 import datetime
 import logging
 import os
+import random
 
 from king_phisher import version
 
@@ -58,6 +59,7 @@ class KingPhisherTemplateEnvironment(jinja2.Environment):
 		self.filters['next_week'] = lambda dt: dt + datetime.timedelta(weeks=1)
 		self.filters['yesterday'] = lambda dt: dt + datetime.timedelta(days=-1)
 		self.filters['last_week'] = lambda dt: dt + datetime.timedelta(weeks=-1)
+		self.globals['random_integer'] = random.randint
 		self.globals['version'] = version.version
 		if global_vars:
 			for key, value in global_vars.items():
