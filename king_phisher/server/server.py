@@ -308,7 +308,12 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		}
 		template_vars.update(self.server.template_env.standard_variables)
 		template_vars['client'].update(self.get_template_vars_client() or {})
-		template_data = template.render(template_vars)
+		try:
+			template_data = template.render(template_vars)
+		except jinja2.TemplateError as error:
+			self.server.logger.error("jinja2 template '{0}' render failed: {1} {2}".format(template.name, error.__class__.__name__, error.message))
+			raise KingPhisherErrorAbortRequest()
+
 		fs = os.stat(template.filename)
 		mime_type = self.guess_mime_type(file_path)
 		if mime_type.startswith('text'):
@@ -320,8 +325,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 		try:
 			self.handle_page_visit()
-		except Exception as err:
-			self.server.logger.error('handle_page_visit raised error: ' + err.__class__.__name__)
+		except Exception as error:
+			self.server.logger.error('handle_page_visit raised error: ' + error.__class__.__name__)
 
 		self.end_headers()
 		self.wfile.write(template_data.encode('utf-8', 'ignore'))

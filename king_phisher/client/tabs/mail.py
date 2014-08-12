@@ -323,8 +323,14 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 			query = urllib.urlencode(query, True)
 			target_url = urlparse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
 			urllib2.urlopen(target_url, timeout=5)
-		except:
-			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent)
+		except Exception as error:
+			error_description = None
+			if isinstance(error, urllib2.HTTPError) and error.getcode():
+				self.logger.warning("verify url HTTPError: {0} {1}".format(error.getcode(), error.reason))
+				error_description = "HTTP Status {0} {1}".format(error.getcode(), error.reason)
+			else:
+				self.logger.warning('unknown verify url exception: ' + repr(error))
+			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent, error_description)
 			return
 		gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
 		return
