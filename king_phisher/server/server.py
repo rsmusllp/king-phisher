@@ -203,7 +203,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not result:
 			return None
 		client_vars = {}
-		client_vars['email'] = result[0]
+		client_vars['email_address'] = result[0]
 		client_vars['company_name'] = result[1]
 		client_vars['first_name'] = result[2]
 		client_vars['last_name'] = result[3]

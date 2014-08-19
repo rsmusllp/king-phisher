@@ -79,11 +79,16 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 
 	template = template_environment.from_string(template)
 	template_vars = {}
+	template_client_vars = {}
+
+	template_client_vars['first_name'] = first_name
+	template_client_vars['last_name'] = last_name
+	template_client_vars['email_address'] = target_email
+	template_client_vars['company_name'] = config.get('mailer.company_name', 'Wonderland Inc.')
+	template_client_vars['message_id'] = uid
+
+	template_vars['client'] = template_client_vars
 	template_vars['uid'] = uid
-	template_vars['first_name'] = first_name
-	template_vars['last_name'] = last_name
-	template_vars['email_address'] = target_email
-	template_vars['company_name'] = config.get('mailer.company_name', 'Wonderland Inc.')
 
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urlparse.urlparse(webserver_url)
