@@ -433,7 +433,7 @@ class CampaignViewTab(object):
 		self.last_page_id = current_page
 
 		if graphs.has_matplotlib:
-			self.logger.info("matplotlib {0} is installed, dashboard will be available".format(graphs.matplotlib.__version__))
+			self.logger.info('matplotlib is installed, dashboard will be available')
 			dashboard_tab = CampaignViewDashboardTab(self.config, self.parent)
 			self.tabs['dashboard'] = dashboard_tab
 			self.notebook.append_page(dashboard_tab.box, dashboard_tab.label)

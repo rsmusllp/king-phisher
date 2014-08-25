@@ -44,14 +44,15 @@ from king_phisher import version
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
+from king_phisher.client import tools
 from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.client_rpc import KingPhisherRPCClient
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.mail import MailSenderTab
-from king_phisher.client.tools import KingPhisherClientRPCTerminal
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
 import paramiko
@@ -253,6 +254,13 @@ class KingPhisherClient(_Gtk_Window):
 		"""
 		super(KingPhisherClient, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client')
+		# print version information for debugging purposes
+		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
+		self.logger.debug("gi.repository GObject version: {0}".format('.'.join(map(str, GObject.pygobject_version))))
+		if tools.has_vte:
+			self.logger.debug("gi.repository VTE version: {0}".format(tools.Vte._version))
+		if graphs.has_matplotlib:
+			self.logger.debug("matplotlib version: {0}".format(graphs.matplotlib.__version__))
 		self.config_file = (config_file or CONFIG_FILE_PATH)
 		"""The file containing the King Phisher client configuration."""
 		self.ssh_forwarder = None
@@ -347,7 +355,7 @@ class KingPhisherClient(_Gtk_Window):
 		action_group.add_action(action)
 
 		action = Gtk.Action('ToolsRPCTerminal', 'RPC Terminal', 'RPC Terminal', None)
-		action.connect('activate', lambda x: KingPhisherClientRPCTerminal(self.config, self))
+		action.connect('activate', lambda x: tools.KingPhisherClientRPCTerminal(self.config, self))
 		action_group.add_action(action)
 
 		# Help Menu Actions

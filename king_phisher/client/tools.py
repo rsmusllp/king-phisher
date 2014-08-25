@@ -108,7 +108,8 @@ class KingPhisherClientRPCTerminal(object):
 		argv.append(utilities.which('python'))
 		argv.append('-c')
 		argv.append("import {0}; {0}.{1}.child_routine('{2}')".format(self.__module__, self.__class__.__name__, config))
-		_, child_pid = self.terminal.fork_command_full(Vte.PtyFlags.DEFAULT, os.getcwd(), argv, None, GLib.SpawnFlags.DEFAULT, None, None)
+		# _, child_pid = self.terminal.fork_command_full(Vte.PtyFlags.DEFAULT, os.getcwd(), argv, None, GLib.SpawnFlags.DEFAULT, None, None)
+		_, child_pid = self.terminal.fork_command_full(0, os.getcwd(), argv, None, 0, None, None)
 		self.logger.info("vte spawned child process with pid: {0}".format(child_pid))
 		self.child_pid = child_pid
 		self.terminal.connect('child-exited', lambda vt: self.window.destroy())
