@@ -80,6 +80,8 @@ if [ "$LINUX_VERSION" == "Kali" ]; then
 fi
 
 echo "Installing PyPi dependencies"
+# six needs to be installed before requirements.txt for matplotlib
+pip install "six>=1.7.0"
 pip install -r requirements.txt
 
 egrep "^${KING_PHISHER_GROUP}:" /etc/group > /dev/null 2>&1

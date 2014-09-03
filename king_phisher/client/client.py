@@ -412,6 +412,7 @@ class KingPhisherClient(_Gtk_Window):
 			notebook.emit('switch-page', notebook.get_nth_page(index), index)
 
 	def do_campaign_set(self, campaign_id):
+		self.rpc.cache_clear()
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
 
 	def signal_window_destroy(self, window):
