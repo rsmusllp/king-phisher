@@ -103,7 +103,14 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 		self.progressbar.set_fraction(0)
 		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self, self.parent.rpc)
 
-		# Connect to the SMTP server
+		# verify settings
+		missing_files = self.sender_thread.missing_files()
+		if missing_files:
+			text = ''.join(map(lambda f: "Missing required file: '{0}'\n".format(f), missing_files))
+			self.sender_start_failure('Missing required files', text)
+			return
+
+		# connect to the smtp server
 		if self.config['smtp_ssh_enable']:
 			while True:
 				self.text_insert('Connecting To SSH... ')
@@ -258,6 +265,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		self.textbuffer = self.textview.get_buffer()
 		"""The :py:class:`Gtk.TextBuffer` used by the :py:attr:textview` attribute."""
 		self.button_save_html_file = self.gobjects['button_save_html_file']
+		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 
 	def signal_button_save_as(self, button):
 		html_file = self.config.get('mailer.html_file')
@@ -285,6 +293,31 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		html_file_h = open(html_file, 'w')
 		html_file_h.write(text)
 		html_file_h.close()
+
+	def signal_textview_populate_popup(self, textview, menu):
+		insert_submenu = Gtk.Menu.new()
+		menu_item = Gtk.MenuItem.new_with_label('Insert')
+		menu_item.set_submenu(insert_submenu)
+		menu.append(menu_item)
+		menu_item.show()
+
+		menu_item = Gtk.MenuItem.new_with_label('Inline Image')
+		menu_item.connect('activate', self.signal_activate_popup_menu_insert_image)
+		insert_submenu.append(menu_item)
+		insert_submenu.show_all()
+		return True
+
+	def signal_activate_popup_menu_insert_image(self, widget):
+		dialog = gui_utilities.UtilityFileChooser('Choose Image')
+		dialog.quick_add_filter('Images', ['*.gif', '*.jpeg', '*.jpg', '*.png'])
+		dialog.quick_add_filter('All Files', '*')
+		response = dialog.run_quick_open()
+		dialog.destroy()
+		if not response:
+			return False
+		tag = "{{{{ inline_image('{0}') }}}}".format(response['target_filename'])
+		self.textbuffer.insert_at_cursor(tag)
+		return True
 
 class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 	"""
