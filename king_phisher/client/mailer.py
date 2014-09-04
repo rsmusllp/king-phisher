@@ -42,6 +42,7 @@ import time
 import urlparse
 from email import Encoders
 from email.MIMEBase import MIMEBase
+from email.MIMEImage import MIMEImage
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
@@ -56,12 +57,37 @@ __all__ = ['format_message', 'MailSenderThread']
 
 make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
 
-template_environment = templates.KingPhisherTemplateEnvironment()
+class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
+	MODE_PREVIEW = 0
+	MODE_COUNT = 1
+	MODE_SEND = 2
+	def __init__(self, *args, **kwargs):
+		super(ClientTemplateEnvironment, self).__init__(*args, **kwargs)
+		self.set_mode(self.MODE_PREVIEW)
+		self.globals['inline_image'] = self._inline_image_handler
+		self.attachment_images = []
+
+	def set_mode(self, mode):
+		assert(mode in [self.MODE_PREVIEW, self.MODE_COUNT, self.MODE_SEND])
+		self._mode = mode
+		if mode == self.MODE_COUNT:
+			self.attachment_images = []
+
+	def _inline_image_handler(self, image_path):
+		if self._mode == self.MODE_PREVIEW:
+			return "<img src=\"{0}\">".format(image_path)
+		if not image_path in self.attachment_images:
+			self.attachment_images.append(image_path)
+		attachment_name = os.path.basename(image_path)
+		return "<img src=\"cid:{0}\">".format(attachment_name)
+
+template_environment = ClientTemplateEnvironment()
 
 def format_message(template, config, first_name=None, last_name=None, uid=None, target_email=None):
 	"""
 	Take a message from a template and format it to be sent by replacing
-	variables and processing other template directives.
+	variables and processing other template directives. If the *uid* parameter
+	is not set, then the message is formatted to be previewed.
 
 	:param str template: The message template.
 	:param dict config: The King Phisher client configuration.
@@ -72,6 +98,8 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	:return: The formatted message.
 	:rtype: str
 	"""
+	if uid == None:
+		template_environment.set_mode(ClientTemplateEnvironment.MODE_PREVIEW)
 	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
 	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
 	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, (str, unicode)) else target_email)
@@ -238,6 +266,7 @@ class MailSenderThread(threading.Thread):
 		self.running.set()
 		self.should_exit.clear()
 		self.paused.clear()
+		self._prepare_env()
 
 		target_file_h = open(self.target_file, 'r')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
@@ -329,6 +358,8 @@ class MailSenderThread(threading.Thread):
 		formatted_msg = format_message(msg_template, self.config, first_name=first_name, last_name=last_name, uid=uid, target_email=target_email)
 		msg_body = MIMEText(formatted_msg, "html")
 		msg_alt.attach(msg_body)
+
+		# process attachments
 		if self.config.get('mailer.attachment_file'):
 			attachment = self.config['mailer.attachment_file']
 			attachfile = MIMEBase(*mimetypes.guess_type(attachment))
@@ -336,7 +367,18 @@ class MailSenderThread(threading.Thread):
 			Encoders.encode_base64(attachfile)
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
 			msg.attach(attachfile)
+		for attachment in template_environment.attachment_images:
+			attachfile = MIMEImage(open(attachment, 'rb').read())
+			attachfile.add_header('Content-ID', "<{0}>".format(os.path.basename(attachment)))
+			attachfile.add_header('Content-Disposition', "inline; filename=\"{0}\"".format(os.path.basename(attachment)))
+			msg.attach(attachfile)
 		return msg
+
+	def _prepare_env(self):
+		msg_template = open(self.config['mailer.html_file'], 'r').read()
+		template_environment.set_mode(ClientTemplateEnvironment.MODE_COUNT)
+		format_message(msg_template, self.config, uid=make_uid())
+		template_environment.set_mode(ClientTemplateEnvironment.MODE_SEND)
 
 	def _try_send_email(self, *args, **kwargs):
 		message_sent = False
@@ -394,3 +436,23 @@ class MailSenderThread(threading.Thread):
 		self.unpause()
 		if self.is_alive():
 			self.join()
+
+	def missing_files(self):
+		"""
+		Return a list of all missing or unreadable files which are referenced by
+		the message template.
+
+		:return: The list of unusable files.
+		:rtype: list
+		"""
+		missing = []
+		attachment = self.config.get('mailer.attachment_file')
+		if attachment and not os.access(attachment, os.R_OK):
+			missing.append(attachment)
+		msg_template = self.config['mailer.html_file']
+		if not os.access(msg_template, os.R_OK):
+			missing.append(msg_template)
+			return missing
+		self._prepare_env()
+		missing.extend(filter(lambda f: not os.access(f, os.R_OK), template_environment.attachment_images))
+		return missing
