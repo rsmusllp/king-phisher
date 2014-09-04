@@ -14,3 +14,11 @@ KingPhisherClient Signals
 
    :object: :py:class:`~king_phisher.client.client.KingPhisherClient`
    :param str campaign_id: The ID of the new campaign.
+
+.. py:function:: exit()
+
+   This signal is emitted with the client is exiting. Subscribers can use it as
+   a chance to clean up and save any remaining data. It is emitted before the
+   client is disconnected from the server.
+
+   :object: :py:class:`~king_phisher.client.client.KingPhisherClient`

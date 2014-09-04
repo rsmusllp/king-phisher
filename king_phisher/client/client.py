@@ -246,7 +246,8 @@ class KingPhisherClient(_Gtk_Window):
 	:GObject Signals: :ref:`gobject-signals-kingphisher-client-label`
 	"""
 	__gsignals__ = {
-		'campaign_set': (GObject.SIGNAL_RUN_FIRST, None, (str,))
+		'campaign_set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'exit': (GObject.SIGNAL_RUN_CLEANUP, None, ())
 	}
 	def __init__(self, config_file=None):
 		"""
@@ -308,7 +309,7 @@ class KingPhisherClient(_Gtk_Window):
 		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page + 2)
 
 		self.set_size_request(800, 600)
-		self.connect('destroy', self.signal_window_destroy)
+		self.connect('destroy', lambda _: self.emit('exit'))
 		self.notebook.show()
 		self.show()
 		self.rpc = None # needs to be initialized last
@@ -415,7 +416,7 @@ class KingPhisherClient(_Gtk_Window):
 		self.rpc.cache_clear()
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
 
-	def signal_window_destroy(self, window):
+	def do_exit(self):
 		gui_utilities.gtk_widget_destroy_children(self)
 		gui_utilities.gtk_sync()
 		self.server_disconnect()

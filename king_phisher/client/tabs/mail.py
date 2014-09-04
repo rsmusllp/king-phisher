@@ -347,6 +347,7 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 		self.label = Gtk.Label('Config')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderConfigTab, self).__init__(*args, **kwargs)
+		self.parent.connect('exit', self.signal_kpc_exit)
 
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
@@ -389,6 +390,9 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 	def signal_entry_backspace(self, entry):
 		entry.set_text('')
 		return True
+
+	def signal_kpc_exit(self, kpc):
+		self.objects_save_to_config()
 
 class MailSenderTab(object):
 	"""
