@@ -304,7 +304,19 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		menu_item = Gtk.MenuItem.new_with_label('Inline Image')
 		menu_item.connect('activate', self.signal_activate_popup_menu_insert_image)
 		insert_submenu.append(menu_item)
+
+		menu_item = Gtk.MenuItem.new_with_label('Tracking Image Tag')
+		menu_item.connect('activate', self.signal_activate_popup_menu_insert, '{{ tracking_dot_image_tag }}')
+		insert_submenu.append(menu_item)
+
+		menu_item = Gtk.MenuItem.new_with_label('Webserver URL')
+		menu_item.connect('activate', self.signal_activate_popup_menu_insert, '{{ url.webserver }}')
+		insert_submenu.append(menu_item)
 		insert_submenu.show_all()
+		return True
+
+	def signal_activate_popup_menu_insert(self, widget, text):
+		self.textbuffer.insert_at_cursor(text)
 		return True
 
 	def signal_activate_popup_menu_insert_image(self, widget):
@@ -315,9 +327,8 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		dialog.destroy()
 		if not response:
 			return False
-		tag = "{{{{ inline_image('{0}') }}}}".format(response['target_filename'])
-		self.textbuffer.insert_at_cursor(tag)
-		return True
+		text = "{{{{ inline_image('{0}') }}}}".format(response['target_filename'])
+		return self.signal_activate_popup_menu_insert(widget, text)
 
 class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 	"""

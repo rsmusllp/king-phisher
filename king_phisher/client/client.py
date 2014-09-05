@@ -327,7 +327,7 @@ class KingPhisherClient(_Gtk_Window):
 		action = Gtk.Action('FileExportMenu', 'Export', None, None)
 		action_group.add_action(action)
 
-		action = Gtk.Action('FileExportXML', 'Export XML', 'Export XML', None)
+		action = Gtk.Action('FileExportXML', 'Campaign XML', 'Campaign XML', None)
 		action.connect('activate', lambda x: self.export_xml())
 		action_group.add_action(action)
 
