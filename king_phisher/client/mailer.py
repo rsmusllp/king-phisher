@@ -59,7 +59,7 @@ make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) f
 
 class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
 	MODE_PREVIEW = 0
-	MODE_COUNT = 1
+	MODE_ANALYZE = 1
 	MODE_SEND = 2
 	def __init__(self, *args, **kwargs):
 		super(ClientTemplateEnvironment, self).__init__(*args, **kwargs)
@@ -68,9 +68,9 @@ class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
 		self.attachment_images = []
 
 	def set_mode(self, mode):
-		assert(mode in [self.MODE_PREVIEW, self.MODE_COUNT, self.MODE_SEND])
+		assert(mode in [self.MODE_PREVIEW, self.MODE_ANALYZE, self.MODE_SEND])
 		self._mode = mode
-		if mode == self.MODE_COUNT:
+		if mode == self.MODE_ANALYZE:
 			self.attachment_images = []
 
 	def _inline_image_handler(self, image_path):
@@ -172,6 +172,7 @@ class MailSenderThread(threading.Thread):
 		"""A :py:class:`threading.Event` object indicating if the email sending operation is or should be paused."""
 		self.should_exit = threading.Event()
 		self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
+		self._mime_attachments = None
 
 	def server_ssh_connect(self):
 		"""
@@ -268,6 +269,9 @@ class MailSenderThread(threading.Thread):
 		self.paused.clear()
 		self._prepare_env()
 
+		self._mime_attachments = self._get_mime_attachments()
+		self.logger.debug("loaded {0:,} MIME attachments".format(len(self._mime_attachments)))
+
 		target_file_h = open(self.target_file, 'r')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
@@ -295,6 +299,8 @@ class MailSenderThread(threading.Thread):
 				if sleep_time > 0:
 					time.sleep(sleep_time)
 		target_file_h.close()
+		self._mime_attachments = None
+
 		GLib.idle_add(self.tab.notify_status, "Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
 		self.server_smtp_disconnect()
 		if self.ssh_forwarder:
@@ -360,23 +366,33 @@ class MailSenderThread(threading.Thread):
 		msg_alt.attach(msg_body)
 
 		# process attachments
+		if isinstance(self._mime_attachments, list):
+			attachfiles = self._mime_attachments
+		else:
+			attachfiles = self._get_mime_attachments()
+		for attachfile in self._mime_attachments:
+			msg.attach(attachfile)
+		return msg
+
+	def _get_mime_attachments(self):
+		attachments = []
 		if self.config.get('mailer.attachment_file'):
 			attachment = self.config['mailer.attachment_file']
 			attachfile = MIMEBase(*mimetypes.guess_type(attachment))
 			attachfile.set_payload(open(attachment, 'rb').read())
 			Encoders.encode_base64(attachfile)
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
-			msg.attach(attachfile)
+			attachments.append(attachfile)
 		for attachment in template_environment.attachment_images:
 			attachfile = MIMEImage(open(attachment, 'rb').read())
 			attachfile.add_header('Content-ID', "<{0}>".format(os.path.basename(attachment)))
 			attachfile.add_header('Content-Disposition', "inline; filename=\"{0}\"".format(os.path.basename(attachment)))
-			msg.attach(attachfile)
-		return msg
+			attachments.append(attachfile)
+		return attachments
 
 	def _prepare_env(self):
 		msg_template = open(self.config['mailer.html_file'], 'r').read()
-		template_environment.set_mode(ClientTemplateEnvironment.MODE_COUNT)
+		template_environment.set_mode(ClientTemplateEnvironment.MODE_ANALYZE)
 		format_message(msg_template, self.config, uid=make_uid())
 		template_environment.set_mode(ClientTemplateEnvironment.MODE_SEND)
 
