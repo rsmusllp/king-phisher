@@ -37,6 +37,7 @@ import urllib
 import urllib2
 import urlparse
 
+from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client.login import KingPhisherClientSSHLoginDialog
 from king_phisher.client.mailer import format_message, MailSenderThread
@@ -512,3 +513,10 @@ class MailSenderTab(object):
 		dialog.destroy()
 		if not response:
 			return
+		message_data = {}
+		config_keys = filter(lambda k: k.startswith('mailer.'), self.config.keys())
+		for config_key in config_keys:
+			message_data[config_key[7:]] = self.config[config_key]
+		attachments = []
+		# TODO fill in attachments here
+		export.message_data_to_kpm(message_data, attachments, response['target_filename'])

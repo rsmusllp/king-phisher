@@ -32,9 +32,11 @@
 
 import csv
 import datetime
+import json
+import tarfile
 import xml.etree.ElementTree as ET
 
-__all__ = ['campaign_to_xml', 'convert_value', 'treeview_liststore_to_csv']
+__all__ = ['campaign_to_xml', 'convert_value', 'message_data_to_kpm', 'treeview_liststore_to_csv']
 
 TABLE_VALUE_CONVERSIONS = {
 	'campaigns/created': lambda ts: datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S').isoformat(),
@@ -95,10 +97,20 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	element_tree = ET.ElementTree(root)
 	element_tree.write(xml_file, encoding='utf-8', xml_declaration=True)
 
+def message_data_to_kpm(message_data, attachments, target_file):
+	"""
+	Save details describing a message to the target file.
+
+	:param dict message_data: The message details from the :py:attr:`~.KingPhisherClient.config`.
+	:param list attachments: A list of attachments for the message to be inserted into the archive.
+	:param str target_file: The file to write the data to.
+	"""
+	pass
+
 def treeview_liststore_to_csv(treeview, target_file):
 	"""
-	Convert a treeview object to a CSV file. The CSV column names are
-	loaded from the treeview.
+	Convert a treeview object to a CSV file. The CSV column names are loaded
+	from the treeview.
 
 	:param treeview: The treeview to load the information from.
 	:type treeview: :py:class:`Gtk.TreeView`
