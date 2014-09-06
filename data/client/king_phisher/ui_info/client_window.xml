@@ -3,7 +3,8 @@
 		<menu action="FileMenu">
 			<menuitem action="FileOpenCampaign" />
 			<menu action="FileExportMenu">
-				<menuitem action="FileExportXML" />
+				<menuitem action="FileExportCampaignXML" />
+				<menuitem action="FileExportMessageData" />
 			</menu>
 			<separator />
 			<menuitem action="FileQuit" />

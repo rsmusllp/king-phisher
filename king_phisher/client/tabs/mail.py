@@ -467,7 +467,7 @@ class MailSenderTab(object):
 		if config_tab and previous_page == config_tab.box:
 			config_tab.objects_save_to_config()
 		elif edit_tab and previous_page == edit_tab.box:
-			for i in xrange(1):
+			for _ in xrange(1):
 				html_file = self.config.get('mailer.html_file')
 				if not html_file:
 					break
@@ -502,3 +502,13 @@ class MailSenderTab(object):
 			html_data = open(html_file, 'r').read()
 			html_data = format_message(html_data, self.config)
 			preview_tab.webview.load_html_string(html_data, html_file_uri)
+
+	def export_message_data(self):
+		config_tab = self.tabs.get('config')
+		if config_tab:
+			config_tab.objects_save_to_config()
+		dialog = gui_utilities.UtilityFileChooser('Export Message Data', self.parent)
+		response = dialog.run_quick_save('message.kpm')
+		dialog.destroy()
+		if not response:
+			return

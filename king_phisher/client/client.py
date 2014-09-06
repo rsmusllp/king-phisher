@@ -327,8 +327,12 @@ class KingPhisherClient(_Gtk_Window):
 		action = Gtk.Action('FileExportMenu', 'Export', None, None)
 		action_group.add_action(action)
 
-		action = Gtk.Action('FileExportXML', 'Campaign XML', 'Campaign XML', None)
-		action.connect('activate', lambda x: self.export_xml())
+		action = Gtk.Action('FileExportCampaignXML', 'Campaign XML', 'Campaign XML', None)
+		action.connect('activate', lambda x: self.export_campaign_xml())
+		action_group.add_action(action)
+
+		action = Gtk.Action('FileExportMessageData', 'Message Data', 'Message Data', None)
+		action.connect('activate', lambda x: self.tabs['mailer'].export_message_data())
 		action_group.add_action(action)
 
 		action = Gtk.Action('FileQuit', None, None, Gtk.STOCK_QUIT)
@@ -584,7 +588,7 @@ class KingPhisherClient(_Gtk_Window):
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
 			self.save_config()
 
-	def export_xml(self):
+	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""
 		dialog = gui_utilities.UtilityFileChooser('Export Campaign XML Data', self)
 		file_name = self.config['campaign_name'] + '.xml'
