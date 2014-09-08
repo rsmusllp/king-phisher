@@ -2,6 +2,9 @@
 	<menubar name="MenuBar">
 		<menu action="FileMenu">
 			<menuitem action="FileOpenCampaign" />
+			<menu action="FileImportMenu">
+				<menuitem action="FileImportMessageData" />
+			</menu>
 			<menu action="FileExportMenu">
 				<menuitem action="FileExportCampaignXML" />
 				<menuitem action="FileExportMessageData" />

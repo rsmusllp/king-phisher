@@ -520,3 +520,6 @@ class MailSenderTab(object):
 		attachments = []
 		# TODO fill in attachments here
 		export.message_data_to_kpm(message_data, attachments, response['target_filename'])
+
+	def import_message_data(self):
+		pass

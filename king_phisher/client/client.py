@@ -324,6 +324,13 @@ class KingPhisherClient(_Gtk_Window):
 		action.connect('activate', lambda x: self.show_campaign_selection())
 		action_group.add_action_with_accel(action, '<control>O')
 
+		action = Gtk.Action('FileImportMenu', 'Import', None, None)
+		action_group.add_action(action)
+
+		action = Gtk.Action('FileImportMessageData', 'Message Data', 'Message Data', None)
+		action.connect('activate', lambda x: self.tabs['mailer'].import_message_data())
+		action_group.add_action(action)
+
 		action = Gtk.Action('FileExportMenu', 'Export', None, None)
 		action_group.add_action(action)
 

@@ -30,11 +30,18 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import copy
 import csv
 import datetime
 import json
+import os
 import tarfile
 import xml.etree.ElementTree as ET
+
+try:
+	import cStringIO as StringIO
+except ImportError:
+	import StringIO
 
 __all__ = ['campaign_to_xml', 'convert_value', 'message_data_to_kpm', 'treeview_liststore_to_csv']
 
@@ -97,15 +104,36 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	element_tree = ET.ElementTree(root)
 	element_tree.write(xml_file, encoding='utf-8', xml_declaration=True)
 
-def message_data_to_kpm(message_data, attachments, target_file):
+def message_data_to_kpm(message_config, attachments, target_file):
 	"""
 	Save details describing a message to the target file.
 
-	:param dict message_data: The message details from the :py:attr:`~.KingPhisherClient.config`.
+	:param dict message_config: The message details from the :py:attr:`~.KingPhisherClient.config`.
 	:param list attachments: A list of attachments for the message to be inserted into the archive.
 	:param str target_file: The file to write the data to.
 	"""
-	pass
+	message_config = copy.copy(message_config)
+	del message_config['target_file']
+	epoch = datetime.datetime.utcfromtimestamp(0)
+	mtime = (datetime.datetime.utcnow() - epoch).total_seconds()
+	tar_h = tarfile.open(target_file, 'w:bz2')
+
+	if os.path.isfile(message_config.get('html_file', '')):
+		tar_h.add(message_config['html_file'], arcname='message_content.html')
+		message_config['html_file'] = os.path.basename(message_config['html_file'])
+	else:
+		del message_config['html_file']
+
+	msg_strio = StringIO.StringIO()
+	msg_strio.write(json.dumps(message_config, sort_keys=True, indent=4))
+	tarinfo_h = tarfile.TarInfo(name='message_settings.json')
+	tarinfo_h.mtime = mtime
+	tarinfo_h.size = msg_strio.tell()
+	msg_strio.seek(os.SEEK_SET)
+	tar_h.addfile(tarinfo=tarinfo_h, fileobj=msg_strio)
+
+	tar_h.close()
+	return
 
 def treeview_liststore_to_csv(treeview, target_file):
 	"""
