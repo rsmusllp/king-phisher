@@ -46,6 +46,12 @@ except ImportError:
 
 __all__ = ['campaign_to_xml', 'convert_value', 'message_data_to_kpm', 'treeview_liststore_to_csv']
 
+KPM_ARCHIVE_FILES = {
+	'attachment_file': 'message_attachment.bin',
+	'html_file': 'message_content.html',
+	'target_file': 'target_file.csv'
+}
+
 TABLE_VALUE_CONVERSIONS = {
 	'campaigns/created': lambda ts: datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S').isoformat(),
 	'campaigns/reject_after_credentials': bool,
@@ -122,10 +128,21 @@ def message_data_from_kpm(target_file, dest_dir):
 	message_config = tar_get_file('message_config.json').read()
 	message_config = json.loads(message_config)
 
-	if 'message_content.html' in member_names:
-		msg_content = tar_get_file('message_content.html')
-		with open(os.path.join(dest_dir, message_config['html_file']), 'wb') as file_h:
-			shutil.copyfileobj(msg_content, file_h)
+	for config_name, file_name in KPM_ARCHIVE_FILES.items():
+		if not file_name in member_names:
+			if config_name in message_config:
+				del message_config[config_name]
+			continue
+		if not config_name in message_config:
+			continue
+		if not message_config[config_name]:
+			del message_config[config_name]
+			continue
+		tarfile_h = tar_get_file(file_name)
+		file_path = os.path.join(dest_dir, message_config[config_name])
+		with open(file_path, 'wb') as file_h:
+			shutil.copyfileobj(tarfile_h, file_h)
+		message_config[config_name] = file_path
 
 	return message_config
 
@@ -134,7 +151,7 @@ def message_data_to_kpm(message_config, attachments, target_file):
 	Save details describing a message to the target file.
 
 	:param dict message_config: The message details from the :py:attr:`~.KingPhisherClient.config`.
-	:param list attachments: A list of attachments for the message to be inserted into the archive.
+	:param list attachments: A list of additional attachment files for the message to be inserted into the archive.
 	:param str target_file: The file to write the data to.
 	"""
 	message_config = copy.copy(message_config)
@@ -142,17 +159,12 @@ def message_data_to_kpm(message_config, attachments, target_file):
 	mtime = (datetime.datetime.utcnow() - epoch).total_seconds()
 	tar_h = tarfile.open(target_file, 'w:bz2')
 
-	if os.path.isfile(message_config.get('html_file', '')):
-		tar_h.add(message_config['html_file'], arcname='message_content.html')
-		message_config['html_file'] = os.path.basename(message_config['html_file'])
-	elif 'html_file' in message_config:
-		del message_config['html_file']
-
-	if os.path.isfile(message_config.get('target_file', '')):
-		tar_h.add(message_config['target_file'], arcname='target_file.csv')
-		message_config['target_file'] = os.path.basename(message_config['target_file'])
-	elif 'target_file' in message_config:
-		del message_config['target_file']
+	for config_name, file_name in KPM_ARCHIVE_FILES.items():
+		if os.access(message_config.get(config_name, ''), os.R_OK):
+			tar_h.add(message_config[config_name], arcname=file_name)
+			message_config[config_name] = os.path.basename(message_config[config_name])
+		elif config_name in message_config:
+			del message_config[config_name]
 
 	msg_strio = StringIO.StringIO()
 	msg_strio.write(json.dumps(message_config, sort_keys=True, indent=4))
@@ -161,7 +173,6 @@ def message_data_to_kpm(message_config, attachments, target_file):
 	tarinfo_h.size = msg_strio.tell()
 	msg_strio.seek(os.SEEK_SET)
 	tar_h.addfile(tarinfo=tarinfo_h, fileobj=msg_strio)
-
 	tar_h.close()
 	return
 

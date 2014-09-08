@@ -505,6 +505,10 @@ class MailSenderTab(object):
 			preview_tab.webview.load_html_string(html_data, html_file_uri)
 
 	def export_message_data(self):
+		"""
+		Gather and prepare the components of the mailer tab to be exported into
+		a message archive file suitable for restoring at a later point in time.
+		"""
 		config_tab = self.tabs.get('config')
 		if config_tab:
 			config_tab.objects_save_to_config()
@@ -525,6 +529,10 @@ class MailSenderTab(object):
 		export.message_data_to_kpm(message_config, attachments, response['target_path'])
 
 	def import_message_data(self):
+		"""
+		Process a previously exported message archive file and restore the
+		message data, settings, and applicable files from it.
+		"""
 		dialog = gui_utilities.UtilityFileChooser('Import Message Data', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
 		response = dialog.run_quick_open()
@@ -540,3 +548,13 @@ class MailSenderTab(object):
 			return
 		dest_dir = response['target_path']
 		message_data = export.message_data_from_kpm(target_file, dest_dir)
+		config_keys = filter(lambda k: k.startswith('mailer.'), self.config.keys())
+		for key, value in message_data.items():
+			key = 'mailer.' + key
+			if not key in config_keys:
+				continue
+			self.config[key] = value
+		config_tab = self.tabs.get('config')
+		if config_tab:
+			config_tab.objects_load_from_config()
+		gui_utilities.show_dialog_info('Successfully imported message file', self.parent)
