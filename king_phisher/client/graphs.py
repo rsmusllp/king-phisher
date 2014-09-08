@@ -175,7 +175,7 @@ class CampaignGraph(object):
 		dialog.destroy()
 		if not response:
 			return
-		destination_file = response['target_filename']
+		destination_file = response['target_path']
 		self.figure.savefig(destination_file, format='png')
 
 	def signal_toggled_popup_menu_show_toolbar(self, widget):

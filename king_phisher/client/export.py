@@ -35,6 +35,7 @@ import csv
 import datetime
 import json
 import os
+import shutil
 import tarfile
 import xml.etree.ElementTree as ET
 
@@ -104,6 +105,30 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	element_tree = ET.ElementTree(root)
 	element_tree.write(xml_file, encoding='utf-8', xml_declaration=True)
 
+def message_data_from_kpm(target_file, dest_dir):
+	"""
+	Retrieve the stored details describing a message from a previously exported
+	file.
+
+	:param str target_file: The file to load as a message archive.
+	:param str dest_dir: The directory to extract data and attachment files to.
+	:return: The restored details from the message config.
+	:rtype: dict
+	"""
+	tar_h = tarfile.open(target_file)
+	member_names = tar_h.getnames()
+	tar_get_file = lambda name: tar_h.extractfile(tar_h.getmember(name))
+
+	message_config = tar_get_file('message_config.json').read()
+	message_config = json.loads(message_config)
+
+	if 'message_content.html' in member_names:
+		msg_content = tar_get_file('message_content.html')
+		with open(os.path.join(dest_dir, message_config['html_file']), 'wb') as file_h:
+			shutil.copyfileobj(msg_content, file_h)
+
+	return message_config
+
 def message_data_to_kpm(message_config, attachments, target_file):
 	"""
 	Save details describing a message to the target file.
@@ -113,7 +138,6 @@ def message_data_to_kpm(message_config, attachments, target_file):
 	:param str target_file: The file to write the data to.
 	"""
 	message_config = copy.copy(message_config)
-	del message_config['target_file']
 	epoch = datetime.datetime.utcfromtimestamp(0)
 	mtime = (datetime.datetime.utcnow() - epoch).total_seconds()
 	tar_h = tarfile.open(target_file, 'w:bz2')
@@ -121,12 +145,18 @@ def message_data_to_kpm(message_config, attachments, target_file):
 	if os.path.isfile(message_config.get('html_file', '')):
 		tar_h.add(message_config['html_file'], arcname='message_content.html')
 		message_config['html_file'] = os.path.basename(message_config['html_file'])
-	else:
+	elif 'html_file' in message_config:
 		del message_config['html_file']
+
+	if os.path.isfile(message_config.get('target_file', '')):
+		tar_h.add(message_config['target_file'], arcname='target_file.csv')
+		message_config['target_file'] = os.path.basename(message_config['target_file'])
+	elif 'target_file' in message_config:
+		del message_config['target_file']
 
 	msg_strio = StringIO.StringIO()
 	msg_strio.write(json.dumps(message_config, sort_keys=True, indent=4))
-	tarinfo_h = tarfile.TarInfo(name='message_settings.json')
+	tarinfo_h = tarfile.TarInfo(name='message_config.json')
 	tarinfo_h.mtime = mtime
 	tarinfo_h.size = msg_strio.tell()
 	msg_strio.seek(os.SEEK_SET)

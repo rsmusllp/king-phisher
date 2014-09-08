@@ -277,7 +277,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		dialog.destroy()
 		if not response:
 			return
-		destination_file = response['target_filename']
+		destination_file = response['target_path']
 		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
 		html_file_h = open(destination_file, 'w')
 		html_file_h.write(text)
@@ -327,8 +327,8 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		response = dialog.run_quick_open()
 		dialog.destroy()
 		if not response:
-			return False
-		text = "{{{{ inline_image('{0}') }}}}".format(response['target_filename'])
+			return
+		text = "{{{{ inline_image('{0}') }}}}".format(response['target_path'])
 		return self.signal_activate_popup_menu_insert(widget, text)
 
 class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
@@ -396,7 +396,7 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 		dialog.destroy()
 		if not response:
 			return False
-		entry.set_text(response['target_filename'])
+		entry.set_text(response['target_path'])
 		return True
 
 	def signal_entry_backspace(self, entry):
@@ -513,13 +513,30 @@ class MailSenderTab(object):
 		dialog.destroy()
 		if not response:
 			return
-		message_data = {}
+		message_config = {}
 		config_keys = filter(lambda k: k.startswith('mailer.'), self.config.keys())
 		for config_key in config_keys:
-			message_data[config_key[7:]] = self.config[config_key]
+			message_config[config_key[7:]] = self.config[config_key]
+		if message_config['target_file']:
+			if not gui_utilities.show_dialog_yes_no('Export the target file?', self.parent):
+				del message_config['target_file']
 		attachments = []
 		# TODO fill in attachments here
-		export.message_data_to_kpm(message_data, attachments, response['target_filename'])
+		export.message_data_to_kpm(message_config, attachments, response['target_path'])
 
 	def import_message_data(self):
-		pass
+		dialog = gui_utilities.UtilityFileChooser('Import Message Data', self.parent)
+		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
+		response = dialog.run_quick_open()
+		dialog.destroy()
+		if not response:
+			return
+		target_file = response['target_path']
+
+		dialog = gui_utilities.UtilityFileChooser('Destination Directory', self.parent)
+		response = dialog.run_quick_select_directory()
+		dialog.destroy()
+		if not response:
+			return
+		dest_dir = response['target_path']
+		message_data = export.message_data_from_kpm(target_file, dest_dir)

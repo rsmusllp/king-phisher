@@ -603,7 +603,7 @@ class KingPhisherClient(_Gtk_Window):
 		dialog.destroy()
 		if not response:
 			return
-		destination_file = response['target_filename']
+		destination_file = response['target_path']
 		export.campaign_to_xml(self.rpc, self.config['campaign_id'], destination_file)
 
 	def show_about_dialog(self):

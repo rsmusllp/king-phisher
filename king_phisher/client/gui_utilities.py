@@ -309,28 +309,7 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 	"""Display a file chooser dialog."""
 	def __init__(self, *args, **kwargs):
 		super(UtilityFileChooser, self).__init__(*args, **kwargs)
-
-	def run_quick_save(self, current_name=None):
-		"""
-		Show a save file dialog.
-
-		:param set current_name: The name of the file to save.
-		:return: A dictionary with target_uri and target_filename keys representing the path choosen.
-		:rtype: dict
-		"""
-		self.set_action(Gtk.FileChooserAction.SAVE)
-		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
-		self.add_button(Gtk.STOCK_SAVE, Gtk.ResponseType.ACCEPT)
-		self.set_do_overwrite_confirmation(True)
-		if current_name:
-			self.set_current_name(current_name)
-		self.show_all()
-		response = self.run()
-		if response == Gtk.ResponseType.CANCEL:
-			return None
-		target_uri = self.get_uri()
-		target_filename = self.get_filename()
-		return {'target_uri': target_uri, 'target_filename': target_filename}
+		self.parent = self.get_parent_window()
 
 	def quick_add_filter(self, name, patterns):
 		"""
@@ -351,9 +330,10 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 
 	def run_quick_open(self):
 		"""
-		Display a dialog asking a user which file should be opened.
+		Display a dialog asking a user which file should be opened. The
+		value of target_path in the returned dictionary is an absolute path.
 
-		:return: A dictionary with target_uri and target_filename keys representing the path choosen.
+		:return: A dictionary with target_uri and target_path keys representing the path choosen.
 		:rtype: dict
 		"""
 		self.set_action(Gtk.FileChooserAction.OPEN)
@@ -363,6 +343,58 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 		response = self.run()
 		if response == Gtk.ResponseType.CANCEL:
 			return None
+		target_path = self.get_filename()
+		if not os.access(target_path, os.R_OK):
+			show_dialog_error('Can not read the selected file', self.parent)
+			return None
 		target_uri = self.get_uri()
-		target_filename = self.get_filename()
-		return {'target_uri': target_uri, 'target_filename': target_filename}
+		return {'target_uri': target_uri, 'target_path': target_path}
+
+	def run_quick_save(self, current_name=None):
+		"""
+		Display a dialog which asks the user where a file should be saved. The
+		value of target_path in the returned dictionary is an absolute path.
+
+		:param set current_name: The name of the file to save.
+		:return: A dictionary with target_uri and target_path keys representing the path choosen.
+		:rtype: dict
+		"""
+		self.set_action(Gtk.FileChooserAction.SAVE)
+		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
+		self.add_button(Gtk.STOCK_SAVE, Gtk.ResponseType.ACCEPT)
+		self.set_do_overwrite_confirmation(True)
+		if current_name:
+			self.set_current_name(current_name)
+		self.show_all()
+		response = self.run()
+		if response == Gtk.ResponseType.CANCEL:
+			return None
+		target_path = self.get_filename()
+		if os.path.isfile(target_path):
+			if not os.access(target_path, os.W_OK):
+				show_dialog_error('Can not write to the selected file', self.parent)
+				return None
+		elif not os.access(os.path.dirname(target_path), os.W_OK):
+			show_dialog_error('Can not create the selected file', self.parent)
+			return None
+		target_uri = self.get_uri()
+		return {'target_uri': target_uri, 'target_path': target_path}
+
+	def run_quick_select_directory(self):
+		"""
+		Display a dialog which asks the user to select a directory to use. The
+		value of target_path in the returned dictionary is an absolute path.
+
+		:return: A dictionary with target_uri and target_path keys representing the path choosen.
+		:rtype: dict
+		"""
+		self.set_action(Gtk.FileChooserAction.SELECT_FOLDER)
+		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
+		self.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
+		self.show_all()
+		response = self.run()
+		if response == Gtk.ResponseType.CANCEL:
+			return None
+		target_uri = self.get_uri()
+		target_path = self.get_filename()
+		return {'target_uri': target_uri, 'target_path': target_path}

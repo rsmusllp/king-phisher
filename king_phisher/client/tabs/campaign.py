@@ -187,7 +187,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		dialog.destroy()
 		if not response:
 			return
-		destination_file = response['target_filename']
+		destination_file = response['target_path']
 		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
 
 	def signal_destroy(self, gobject):
