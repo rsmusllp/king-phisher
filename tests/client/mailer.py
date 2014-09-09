@@ -73,9 +73,9 @@ class ClientMailerTests(unittest.TestCase):
 		tracking_image = re.escape(self.config['server_config']['server.tracking_image'])
 
 		formatted_msg = format_message(TEST_MESSAGE, self.config)
-		regexp = """(<a href=['"]https?://king-phisher.local/foobar\?id={0}['"]>)""".format(secret_id)
+		regexp = """(<a href="https?://king-phisher.local/foobar\?id={0}">)""".format(secret_id)
 		self.assertRegexpMatches(formatted_msg, regexp, msg='The web server URL was not inserted correctly')
-		regexp = """(<img src=['"]https?://king-phisher.local/{0}\?id={1}['"] style=['"]display:none['"] />)""".format(tracking_image, secret_id)
+		regexp = """(<img src="https?://king-phisher.local/{0}\?id={1}" style="display:none" />)""".format(tracking_image, secret_id)
 		self.assertRegexpMatches(formatted_msg, regexp, msg='The tracking image tag was not inserted correctly')
 
 if __name__ == '__main__':

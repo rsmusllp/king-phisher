@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import cgi
 import csv
 import logging
 import mimetypes
@@ -81,11 +82,11 @@ class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
 			if not image_path.startswith('/'):
 				image_path = '/' + image_path
 			image_path = 'file://' + image_path
-			return "<img src=\"{0}\">".format(image_path)
+			return "<img src=\"{0}\">".format(cgi.escape(image_path, quote=True))
 		if not image_path in self.attachment_images:
 			self.attachment_images.append(image_path)
 		attachment_name = os.path.basename(image_path)
-		return "<img src=\"cid:{0}\">".format(attachment_name)
+		return "<img src=\"cid:{0}\">".format(cgi.escape(attachment_name, quote=True))
 
 template_environment = ClientTemplateEnvironment()
 
