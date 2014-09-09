@@ -74,7 +74,13 @@ class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
 			self.attachment_images = []
 
 	def _inline_image_handler(self, image_path):
+		image_path = os.path.abspath(image_path)
 		if self._mode == self.MODE_PREVIEW:
+			if os.path.sep == '\\':
+				image_path = '/'.join(image_path.split('\\'))
+			if not image_path.startswith('/'):
+				image_path = '/' + image_path
+			image_path = 'file://' + image_path
 			return "<img src=\"{0}\">".format(image_path)
 		if not image_path in self.attachment_images:
 			self.attachment_images.append(image_path)

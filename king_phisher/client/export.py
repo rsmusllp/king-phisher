@@ -39,12 +39,19 @@ import shutil
 import tarfile
 import xml.etree.ElementTree as ET
 
+from king_phisher.errors import KingPhisherInputValidationError
+
 try:
 	import cStringIO as StringIO
 except ImportError:
 	import StringIO
 
-__all__ = ['campaign_to_xml', 'convert_value', 'message_data_to_kpm', 'treeview_liststore_to_csv']
+__all__ = [
+	'campaign_to_xml',
+	'convert_value',
+	'message_data_to_kpm',
+	'treeview_liststore_to_csv'
+]
 
 KPM_ARCHIVE_FILES = {
 	'attachment_file': 'message_attachment.bin',
@@ -121,23 +128,24 @@ def message_data_from_kpm(target_file, dest_dir):
 	:return: The restored details from the message config.
 	:rtype: dict
 	"""
+	if not tarfile.is_tarfile(target_file):
+		raise KingPhisherInputValidationError('file is not in the correct format')
 	tar_h = tarfile.open(target_file)
 	member_names = tar_h.getnames()
 	tar_get_file = lambda name: tar_h.extractfile(tar_h.getmember(name))
 
+	if not 'message_config.json' in member_names:
+		raise KingPhisherInputValidationError('data is missing from the message archive')
 	message_config = tar_get_file('message_config.json').read()
 	message_config = json.loads(message_config)
 
 	for config_name, file_name in KPM_ARCHIVE_FILES.items():
 		if not file_name in member_names:
 			if config_name in message_config:
-				del message_config[config_name]
+				raise KingPhisherInputValidationError('data is missing from the message archive')
 			continue
-		if not config_name in message_config:
-			continue
-		if not message_config[config_name]:
-			del message_config[config_name]
-			continue
+		if not message_config.get(config_name):
+			raise KingPhisherInputValidationError('data is missing from the message archive')
 		tarfile_h = tar_get_file(file_name)
 		file_path = os.path.join(dest_dir, message_config[config_name])
 		with open(file_path, 'wb') as file_h:

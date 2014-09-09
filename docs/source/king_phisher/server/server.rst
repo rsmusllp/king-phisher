@@ -25,10 +25,3 @@ Classes
    :members:
    :special-members: __init__
    :undoc-members:
-
-Exceptions
-----------
-
-.. autoexception:: king_phisher.server.server.KingPhisherErrorAbortRequest
-   :members:
-   :undoc-members:

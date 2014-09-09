@@ -33,6 +33,7 @@
 import collections
 import functools
 import os
+import re
 import subprocess
 import sys
 import time
@@ -156,6 +157,17 @@ class Mock(object):
 
 	def __setitem__(self, name, value):
 		pass
+
+def escape_single_quote(string):
+	"""
+	Escape a string containing single quotes and backslashes with backslashes.
+	This is useful when a string is evaluated in some way.
+
+	:param str string: The string to escape.
+	:return: The escaped string.
+	:rtype: str
+	"""
+	return re.sub('(\'|\\\)', r'\\\1', string)
 
 def open_uri(uri):
 	"""

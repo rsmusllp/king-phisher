@@ -37,10 +37,12 @@ import urllib
 import urllib2
 import urlparse
 
+from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client.login import KingPhisherClientSSHLoginDialog
 from king_phisher.client.mailer import format_message, MailSenderThread
+from king_phisher.errors import KingPhisherInputValidationError
 
 from gi.repository import Gtk
 from gi.repository import WebKit
@@ -288,7 +290,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
 			return
-		if not gui_utilities.show_dialog_yes_no("Save HTML File?", self.parent):
+		if not gui_utilities.show_dialog_yes_no('Save HTML the file?', self.parent):
 			return
 		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
 		html_file_h = open(html_file, 'w')
@@ -328,7 +330,9 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		dialog.destroy()
 		if not response:
 			return
-		text = "{{{{ inline_image('{0}') }}}}".format(response['target_path'])
+		target_path = response['target_path']
+		target_path = utilities.escape_single_quote(target_path)
+		text = "{{{{ inline_image('{0}') }}}}".format(target_path)
 		return self.signal_activate_popup_menu_insert(widget, text)
 
 class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
@@ -478,7 +482,7 @@ class MailSenderTab(object):
 				old_text = open(html_file, 'r').read()
 				if old_text == text:
 					break
-				if not gui_utilities.show_dialog_yes_no("Save HTML File?", self.parent):
+				if not gui_utilities.show_dialog_yes_no('Save HTML the file?', self.parent):
 					break
 				html_file_h = open(html_file, 'w')
 				html_file_h.write(text)
@@ -499,9 +503,11 @@ class MailSenderTab(object):
 			html_file = self.config.get('mailer.html_file')
 			if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 				return
-			html_file_uri = urlparse.urlparse(html_file, 'file').geturl()
 			html_data = open(html_file, 'r').read()
 			html_data = format_message(html_data, self.config)
+			html_file_uri = urlparse.urlparse(html_file, 'file').geturl()
+			if not html_file_uri.startswith('file://'):
+				html_file_uri = 'file://' + html_file_uri
 			preview_tab.webview.load_html_string(html_data, html_file_uri)
 
 	def export_message_data(self):
@@ -521,9 +527,6 @@ class MailSenderTab(object):
 		config_keys = filter(lambda k: k.startswith('mailer.'), self.config.keys())
 		for config_key in config_keys:
 			message_config[config_key[7:]] = self.config[config_key]
-		if message_config['target_file']:
-			if not gui_utilities.show_dialog_yes_no('Export the target file?', self.parent):
-				del message_config['target_file']
 		attachments = []
 		# TODO fill in attachments here
 		export.message_data_to_kpm(message_config, attachments, response['target_path'])
@@ -535,6 +538,7 @@ class MailSenderTab(object):
 		"""
 		dialog = gui_utilities.UtilityFileChooser('Import Message Data', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
+		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
 		dialog.destroy()
 		if not response:
@@ -547,7 +551,11 @@ class MailSenderTab(object):
 		if not response:
 			return
 		dest_dir = response['target_path']
-		message_data = export.message_data_from_kpm(target_file, dest_dir)
+		try:
+			message_data = export.message_data_from_kpm(target_file, dest_dir)
+		except KingPhisherInputValidationError as error:
+			gui_utilities.show_dialog_error('Import Error', self.parent, error.message.capitalize() + '.')
+			return
 		config_keys = filter(lambda k: k.startswith('mailer.'), self.config.keys())
 		for key, value in message_data.items():
 			key = 'mailer.' + key

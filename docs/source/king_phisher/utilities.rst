@@ -9,6 +9,8 @@
 Functions
 ---------
 
+.. autofunction:: king_phisher.utilities.escape_single_quote
+
 .. autofunction:: king_phisher.utilities.open_uri
 
 .. autofunction:: king_phisher.utilities.server_parse

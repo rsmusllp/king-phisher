@@ -44,6 +44,7 @@ from king_phisher import job
 from king_phisher import sms
 from king_phisher import templates
 from king_phisher import xor
+from king_phisher.errors import KingPhisherAbortRequestError
 from king_phisher.server import authenticator
 from king_phisher.server import database
 from king_phisher.server import server_rpc
@@ -81,13 +82,6 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
 	return server
-
-class KingPhisherErrorAbortRequest(Exception):
-	"""
-	An exception that can be raised which when caught will cause the handler to
-	immediately stop processing the current request.
-	"""
-	pass
 
 class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, AdvancedHTTPServerRequestHandler):
 	def __init__(self, *args, **kwargs):
@@ -147,9 +141,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not self.config.get('server.vhost_directories'):
 			return
 		if not self.vhost:
-			raise KingPhisherErrorAbortRequest()
+			raise KingPhisherAbortRequestError()
 		if self.vhost in ['localhost', '127.0.0.1'] and self.client_address[0] != '127.0.0.1':
-			raise KingPhisherErrorAbortRequest()
+			raise KingPhisherAbortRequestError()
 		self.path = '/' + self.vhost + self.path
 
 	def _do_http_method(self, *args, **kwargs):
@@ -162,7 +156,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			else:
 				http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
 			http_method_handler(*args, **kwargs)
-		except KingPhisherErrorAbortRequest:
+		except KingPhisherAbortRequestError:
 			self.respond_not_found()
 		except:
 			raise
@@ -299,7 +293,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		try:
 			template = self.server.template_env.get_template(os.path.relpath(file_path, self.server.serve_files_root))
 		except jinja2.exceptions.TemplateError, IOError:
-			raise KingPhisherErrorAbortRequest()
+			raise KingPhisherAbortRequestError()
 
 		template_vars = {
 			'client': {
@@ -316,7 +310,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			template_data = template.render(template_vars)
 		except jinja2.TemplateError as error:
 			self.server.logger.error("jinja2 template '{0}' render failed: {1} {2}".format(template.name, error.__class__.__name__, error.message))
-			raise KingPhisherErrorAbortRequest()
+			raise KingPhisherAbortRequestError()
 
 		fs = os.stat(template.filename)
 		mime_type = self.guess_mime_type(file_path)
@@ -340,7 +334,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		try:
 			file_obj = open(file_path, 'rb')
 		except IOError:
-			raise KingPhisherErrorAbortRequest()
+			raise KingPhisherAbortRequestError()
 		fs = os.fstat(file_obj.fileno())
 		self.send_response(200)
 		self.send_header('Content-Type', self.guess_mime_type(file_path))
@@ -362,16 +356,16 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		# a valid campaign_id requires a valid message_id
 		if not self.campaign_id:
 			self.server.logger.warning('denying request due to lack of a valid id')
-			raise KingPhisherErrorAbortRequest()
+			raise KingPhisherAbortRequestError()
 		if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ?', (self.campaign_id, self.vhost)) == 0:
 			self.server.logger.warning('denying request with not found due to invalid hostname')
-			raise KingPhisherErrorAbortRequest()
+			raise KingPhisherAbortRequestError()
 		with self.get_cursor() as cursor:
 			cursor.execute('SELECT reject_after_credentials FROM campaigns WHERE id = ?', (self.campaign_id,))
 			reject_after_credentials = cursor.fetchone()[0]
 		if reject_after_credentials and self.visit_id == None and self.query_count('SELECT COUNT(id) FROM credentials WHERE message_id = ?', (self.message_id,)):
 			self.server.logger.warning('denying request because credentials were already harvested')
-			raise KingPhisherErrorAbortRequest()
+			raise KingPhisherAbortRequestError()
 		return
 
 	def respond_not_found(self):
