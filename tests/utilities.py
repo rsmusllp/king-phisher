@@ -30,11 +30,33 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
 import unittest
 
 from king_phisher.utilities import *
 
 class UtilitiesTests(unittest.TestCase):
+	def test_escape_single_quote(self):
+		good_string = """C:\\\\Users\\\\Alice\\\\Desktop\\\\Alice\\\'s Secret File.txt"""
+		bad_string = """C:\\Users\\Alice\\Desktop\\Alice's Secret File.txt"""
+		escaped_string = escape_single_quote(bad_string)
+		self.assertEqual(escaped_string, good_string)
+
+	def test_mock_attributes(self):
+		mock = Mock()
+		self.assertIsInstance(mock.foo, Mock)
+		self.assertIsInstance(mock.foo.bar, Mock)
+		self.assertEqual(mock.__file__, os.devnull)
+		self.assertEqual(mock.__path__, os.devnull)
+		mock_cls = Mock
+		mock_cls.foobar = 123
+		self.assertEqual(mock_cls.foobar, 123)
+
+	def test_mock_calls(self):
+		mock = Mock()
+		result = mock()
+		self.assertIsInstance(result, Mock)
+
 	def test_server_parse(self):
 		parsed = server_parse('127.0.0.1', 80)
 		self.assertIsInstance(parsed, tuple)

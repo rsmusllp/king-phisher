@@ -132,7 +132,7 @@ class Cache(object):
 
 class Mock(object):
 	"""
-	A fake object to replace missing imports when generating documentation.
+	A fake object used to replace missing imports when generating documentation.
 	"""
 	__all__ = []
 	def __init__(self, *args, **kwargs):

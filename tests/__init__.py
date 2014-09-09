@@ -35,6 +35,7 @@ import logging
 from tests.client.client import ClientGUITests
 from tests.client.export import ClientExportTests
 from tests.client.graphs import ClientGraphsTests
+from tests.client.mailer import ClientMailerTests
 from tests.server.authenticator import ServerAuthenticatorTests
 from tests.server.database import ServerDatabaseTests
 from tests.server.server import ServerTests
