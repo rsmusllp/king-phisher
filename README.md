@@ -49,20 +49,23 @@ the GUI:
 * ssh_preferred_key (Default: N/A)
 
 ### Message Template Variables
-The client message templates are formatted using the Jinja engine and
-support a number of variables. These are included here as a reference.
+The client message templates are formatted using the Jinja2 templating engine
+and support a number of variables. These are included here as a reference, check
+the templates [wiki page](https://github.com/securestate/king-phisher/wiki/Templates)
+for comprehensive documentation.
 
 Variable Name              | Variable Value
 ---------------------------|---------------
-uid                        | Unique Tracking Identifier
-first\_name                | The target's first name
-last\_name                 | The target's last name
-company\_name              | Company Name
-email\_address             | The target's email address
-tracking\_dot\_image\_tag  | The tracking image in a preformatted ```<img />``` tag
+client.company\_name       | The target's company name
+client.email\_address      | The target's email address
+client.first\_name         | The target's first name
+client.last\_name          | The target's last name
+client.message_id          | The unique tracking identifier (this is the same as uid)
 url.tracking\_dot          | URL of an image used for message tracking
-url.webserver              | Phishing Server URL with the uid paramater
-url.webserver_raw          | Phishing Server URL without any parameters
+url.webserver              | Phishing server URL with the uid parameter
+url.webserver_raw          | Phishing server URL without any parameters
+tracking\_dot\_image\_tag  | The tracking image in a preformatted ```<img />``` tag
+uid                        | The unique tracking identifier (this is the same as client.message_id)
 
-The uid is the most important, and must be present in links that the
-messages contain.
+The uid is the most important, and must be present in links that the messages
+contain.

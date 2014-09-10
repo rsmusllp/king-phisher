@@ -35,10 +35,12 @@ import csv
 import datetime
 import json
 import os
+import re
 import shutil
 import tarfile
 import xml.etree.ElementTree as ET
 
+from king_phisher import utilities
 from king_phisher.errors import KingPhisherInputValidationError
 
 try:
@@ -55,9 +57,10 @@ __all__ = [
 
 KPM_ARCHIVE_FILES = {
 	'attachment_file': 'message_attachment.bin',
-	'html_file': 'message_content.html',
 	'target_file': 'target_file.csv'
 }
+
+KPM_INLINE_IMAGE_REGEXP = re.compile(r"""{{\s*inline_image\(\s*(('(?:[^'\\]|\\.)+')|("(?:[^"\\]|\\.)+"))\s*\)\s*}}""")
 
 TABLE_VALUE_CONVERSIONS = {
 	'campaigns/created': lambda ts: datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S').isoformat(),
@@ -65,6 +68,44 @@ TABLE_VALUE_CONVERSIONS = {
 	'messages/opened': lambda value: (None if value == None else value),
 	'messages/trained': bool
 }
+
+def message_template_to_kpm(template):
+	files = []
+	cursor = 0
+	match = True
+	while match:
+		match = KPM_INLINE_IMAGE_REGEXP.search(template[cursor:])
+		if not match:
+			break
+		file_path = utilities.unescape_single_quote(match.group(1)[1:-1])
+		files.append(file_path)
+		file_name = os.path.basename(file_path)
+		start = cursor + match.start()
+		end = cursor + match.end()
+		inline_tag = "{{{{ inline_image('{0}') }}}}".format(utilities.escape_single_quote(file_name))
+		template = template[:start] + inline_tag + template[end:]
+		cursor = start + len(inline_tag)
+	return template, files
+
+def message_template_from_kpm(template, files):
+	files = dict(zip(map(os.path.basename, files), files))
+	cursor = 0
+	match = True
+	while match:
+		match = KPM_INLINE_IMAGE_REGEXP.search(template[cursor:])
+		if not match:
+			break
+		file_name = utilities.unescape_single_quote(match.group(1)[1:-1])
+		file_path = files.get(file_name)
+		start = cursor + match.start()
+		end = cursor + match.end()
+		if not file_path:
+			cursor = end
+			continue
+		insert_tag = "{{{{ inline_image('{0}') }}}}".format(utilities.escape_single_quote(file_path))
+		template = template[:start] + insert_tag + template[end:]
+		cursor = start + len(insert_tag)
+	return template
 
 def convert_value(table_name, key, value):
 	"""
@@ -132,12 +173,26 @@ def message_data_from_kpm(target_file, dest_dir):
 		raise KingPhisherInputValidationError('file is not in the correct format')
 	tar_h = tarfile.open(target_file)
 	member_names = tar_h.getnames()
+	attachment_member_names = filter(lambda n: n.startswith('attachments' + os.path.sep), member_names)
 	tar_get_file = lambda name: tar_h.extractfile(tar_h.getmember(name))
+	attachments = []
 
 	if not 'message_config.json' in member_names:
 		raise KingPhisherInputValidationError('data is missing from the message archive')
 	message_config = tar_get_file('message_config.json').read()
 	message_config = json.loads(message_config)
+
+	if attachment_member_names:
+		attachment_dir = os.path.join(dest_dir, 'attachments')
+		if not os.path.isdir(attachment_dir):
+			os.mkdir(attachment_dir)
+		for file_name in attachment_member_names:
+			tarfile_h = tar_get_file(file_name)
+			file_name = os.path.basename(file_name)
+			file_path = os.path.join(attachment_dir, file_name)
+			with open(file_path, 'wb') as file_h:
+				shutil.copyfileobj(tarfile_h, file_h)
+			attachments.append(file_path)
 
 	for config_name, file_name in KPM_ARCHIVE_FILES.items():
 		if not file_name in member_names:
@@ -152,14 +207,29 @@ def message_data_from_kpm(target_file, dest_dir):
 			shutil.copyfileobj(tarfile_h, file_h)
 		message_config[config_name] = file_path
 
+	if 'message_content.html' in member_names:
+		if not 'html_file' in message_config:
+			raise KingPhisherInputValidationError('data is missing from the message archive')
+		tarfile_h = tar_get_file('message_content.html')
+		file_path = os.path.join(dest_dir, message_config['html_file'])
+		template = tarfile_h.read()
+		template = message_template_from_kpm(template, attachments)
+		template_strio = StringIO.StringIO()
+		template_strio.write(template)
+		template_strio.seek(os.SEEK_SET)
+		with open(file_path, 'wb') as file_h:
+			shutil.copyfileobj(template_strio, file_h)
+		message_config['html_file'] = file_path
+	elif 'html_file' in message_config:
+		raise KingPhisherInputValidationError('data is missing from the message archive')
+
 	return message_config
 
-def message_data_to_kpm(message_config, attachments, target_file):
+def message_data_to_kpm(message_config, target_file):
 	"""
 	Save details describing a message to the target file.
 
 	:param dict message_config: The message details from the :py:attr:`~.KingPhisherClient.config`.
-	:param list attachments: A list of additional attachment files for the message to be inserted into the archive.
 	:param str target_file: The file to write the data to.
 	"""
 	message_config = copy.copy(message_config)
@@ -173,6 +243,23 @@ def message_data_to_kpm(message_config, attachments, target_file):
 			message_config[config_name] = os.path.basename(message_config[config_name])
 		elif config_name in message_config:
 			del message_config[config_name]
+
+	if os.access(message_config.get('html_file', ''), os.R_OK):
+		template = open(message_config['html_file'], 'rb').read()
+		message_config['html_file'] = os.path.basename(message_config['html_file'])
+		template, files = message_template_to_kpm(template)
+		for attachment in files:
+			if os.access(attachment, os.R_OK):
+				tar_h.add(attachment, arcname=os.path.join('attachments', os.path.basename(attachment)))
+		template_strio = StringIO.StringIO()
+		template_strio.write(template)
+		tarinfo_h = tarfile.TarInfo(name='message_content.html')
+		tarinfo_h.mtime = mtime
+		tarinfo_h.size = template_strio.tell()
+		template_strio.seek(os.SEEK_SET)
+		tar_h.addfile(tarinfo=tarinfo_h, fileobj=template_strio)
+	elif 'html_file' in message_config:
+		del message_config['html_file']
 
 	msg_strio = StringIO.StringIO()
 	msg_strio.write(json.dumps(message_config, sort_keys=True, indent=4))

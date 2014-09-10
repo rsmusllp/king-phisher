@@ -220,6 +220,18 @@ def server_parse(server, default_port):
 			port = int(port)
 		return (host, port)
 
+def unescape_single_quote(string):
+	"""
+	Unescape a string which uses backslashes to escape single quotes.
+
+	:param str string: The string to unescape.
+	:return: The unescaped string.
+	:rtype: str
+	"""
+	string = string.replace('\\\\', '\\')
+	string = string.replace('\\\'', '\'')
+	return string
+
 def unique(seq, key=None):
 	"""
 	Create a list or tuple consisting of the unique elements of *seq* and

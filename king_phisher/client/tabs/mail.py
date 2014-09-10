@@ -527,9 +527,7 @@ class MailSenderTab(object):
 		config_keys = filter(lambda k: k.startswith('mailer.'), self.config.keys())
 		for config_key in config_keys:
 			message_config[config_key[7:]] = self.config[config_key]
-		attachments = []
-		# TODO fill in attachments here
-		export.message_data_to_kpm(message_config, attachments, response['target_path'])
+		export.message_data_to_kpm(message_config, response['target_path'])
 
 	def import_message_data(self):
 		"""
