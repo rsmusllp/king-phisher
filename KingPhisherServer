@@ -40,6 +40,7 @@ import threading
 
 from king_phisher import configuration
 from king_phisher import find
+from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import server
 
@@ -48,6 +49,14 @@ try:
 	has_msgpack = True
 except ImportError:
 	has_msgpack = False
+
+__requirements__ = [
+	'dnspython>=1.10.0',
+	'Jinja2>=2.7.1',
+	'msgpack-python>=0.4.2',
+	'paramiko>=1.10.1',
+	'PyYAML>=3.10',
+]
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
@@ -65,6 +74,14 @@ def main():
 	config_file = arguments.config_file
 	del parser
 	logger = logging.getLogger('KingPhisher.Server.CLI')
+
+	missing_requirements = utilities.check_requirements(__requirements__)
+	if missing_requirements:
+		print('[-] the following package requirements are missing or incompatible:')
+		for missing_req in missing_requirements:
+			print('[-]   - ' + missing_req)
+		print('[-] please install the missing requirements with pip')
+		return os.EX_SOFTWARE
 
 	if os.getuid():
 		print('[-] This must be executed as root')

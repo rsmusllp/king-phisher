@@ -31,12 +31,15 @@
 #
 
 import collections
+import distutils.version
 import functools
 import os
 import re
 import subprocess
 import sys
 import time
+
+import pkg_resources
 
 def timedef_to_seconds(timedef):
 	"""
@@ -157,6 +160,56 @@ class Mock(object):
 
 	def __setitem__(self, name, value):
 		pass
+
+def check_requirements(requirements, ignore=None):
+	"""
+	Parse requirements for package information to determine if all requirements
+	are met. The *requirements* argument can be a string to a requirements file,
+	a file like object to be read, or a list of strings representing the package
+	requirements.
+
+	:param requirements: The file to parse.
+	:type requirements: file obj, list, str, tuple
+	:param ignore: A sequence of packages to ignore.
+	:type ignore: list, tuple
+	:return: A list of missing or incompatible packages.
+	:rtype: list
+	"""
+	ignore = (ignore or [])
+	not_satisfied = []
+	installed_packages = dict(map(lambda p: (p.project_name, p), pkg_resources.working_set))
+
+	if isinstance(requirements, str):
+		with open(requirements, 'r') as file_h:
+			requirements = file_h.readlines()
+	elif hasattr(requirements, 'readlines'):
+		requirements = requirements.readlines()
+	elif not isinstance(requirements, (list, tuple)):
+		raise TypeError('invalid type for argument requirements')
+	requirements = map(lambda req: req.strip(), requirements)
+
+	for req_line in requirements:
+		parts = re.match('^([\w\-]+)(([<>=]=)(\d+(\.\d+)*))?$', req_line)
+		if not parts:
+			continue
+		req_pkg = parts.group(1)
+		if req_pkg in ignore:
+			continue
+		if req_pkg not in installed_packages:
+			not_satisfied.append(req_pkg)
+			continue
+		if not parts.group(2):
+			continue
+		req_version = distutils.version.StrictVersion(parts.group(4))
+		installed_pkg = installed_packages[req_pkg]
+		installed_version = distutils.version.StrictVersion(installed_pkg.version)
+		if parts.group(3) == '==' and not (installed_version == req_version):
+			not_satisfied.append(req_pkg)
+		elif parts.group(3) == '>=' and not (installed_version >= req_version):
+			not_satisfied.append(req_pkg)
+		elif parts.group(3) == '<=' and not (installed_version <= req_version):
+			not_satisfied.append(req_pkg)
+	return not_satisfied
 
 def escape_single_quote(string):
 	"""

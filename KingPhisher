@@ -36,12 +36,18 @@ import os
 import sys
 
 from king_phisher import find
+from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import client
 from king_phisher.client import gui_utilities
 
 from gi.repository import GObject
 from gi.repository import Gtk
+
+__requirements__ = [
+	'Jinja2>=2.7.1',
+	'paramiko>=1.10.1',
+]
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher', conflict_handler='resolve')
@@ -58,6 +64,14 @@ def main():
 	logging.getLogger(arguments.logger).addHandler(console_log_handler)
 	config_file = arguments.config_file
 	del arguments, parser
+
+	missing_requirements = utilities.check_requirements(__requirements__)
+	if missing_requirements:
+		print('[-] the following package requirements are missing or incompatible:')
+		for missing_req in missing_requirements:
+			print('[-]   - ' + missing_req)
+		print('[-] please install the missing requirements with pip')
+		return os.EX_SOFTWARE
 
 	# Configure environment variables
 	if getattr(sys, 'frozen', False):
@@ -86,4 +100,4 @@ def main():
 		Gtk.main()
 
 if __name__ == '__main__':
-	main()
+	sys.exit(main())
