@@ -54,7 +54,6 @@ __requirements__ = [
 	'dnspython>=1.10.0',
 	'Jinja2>=2.7.1',
 	'msgpack-python>=0.4.2',
-	'paramiko>=1.10.1',
 	'PyYAML>=3.10',
 ]
 

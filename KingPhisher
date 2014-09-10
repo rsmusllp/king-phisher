@@ -65,19 +65,19 @@ def main():
 	config_file = arguments.config_file
 	del arguments, parser
 
-	missing_requirements = utilities.check_requirements(__requirements__)
-	if missing_requirements:
-		print('[-] the following package requirements are missing or incompatible:')
-		for missing_req in missing_requirements:
-			print('[-]   - ' + missing_req)
-		print('[-] please install the missing requirements with pip')
-		return os.EX_SOFTWARE
-
-	# Configure environment variables
+	# check and configure the environment
 	if getattr(sys, 'frozen', False):
 		data_path = os.path.dirname(sys.executable)
 	else:
 		data_path = os.path.dirname(__file__)
+		missing_requirements = utilities.check_requirements(__requirements__)
+		if missing_requirements:
+			print('[-] the following package requirements are missing or incompatible:')
+			for missing_req in missing_requirements:
+				print('[-]   - ' + missing_req)
+			print('[-] please install the missing requirements with pip')
+			return os.EX_SOFTWARE
+
 	data_path = os.path.join(data_path, 'data', 'client')
 	data_path = os.path.abspath(data_path)
 	find.data_path_append(data_path)
