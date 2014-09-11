@@ -518,8 +518,10 @@ class MailSenderTab(object):
 		a message archive file suitable for restoring at a later point in time.
 		"""
 		config_tab = self.tabs.get('config')
-		if config_tab:
-			config_tab.objects_save_to_config()
+		if not config_tab:
+			self.logger.warning('attempted to export message data while the config tab was unavailable')
+			return
+		config_tab.objects_save_to_config()
 		dialog = gui_utilities.UtilityFileChooser('Export Message Data', self.parent)
 		response = dialog.run_quick_save('message.kpm')
 		dialog.destroy()
@@ -536,6 +538,11 @@ class MailSenderTab(object):
 		Process a previously exported message archive file and restore the
 		message data, settings, and applicable files from it.
 		"""
+		config_tab = self.tabs.get('config')
+		if not config_tab:
+			self.logger.warning('attempted to import message data while the config tab was unavailable')
+			return
+		config_tab.objects_save_to_config()
 		dialog = gui_utilities.UtilityFileChooser('Import Message Data', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
 		dialog.quick_add_filter('All Files', '*')
@@ -556,13 +563,19 @@ class MailSenderTab(object):
 		except KingPhisherInputValidationError as error:
 			gui_utilities.show_dialog_error('Import Error', self.parent, error.message.capitalize() + '.')
 			return
-		config_keys = filter(lambda k: k.startswith('mailer.'), self.config.keys())
+
+		config_keys = set(filter(lambda k: k.startswith('mailer.'), self.config.keys()))
+		config_types = dict(zip(config_keys, map(type, config_keys)))
 		for key, value in message_data.items():
 			key = 'mailer.' + key
 			if not key in config_keys:
 				continue
 			self.config[key] = value
-		config_tab = self.tabs.get('config')
-		if config_tab:
-			config_tab.objects_load_from_config()
-		gui_utilities.show_dialog_info('Successfully imported message file', self.parent)
+			config_keys.remove(key)
+		for unset_key in config_keys:
+			config_type = config_types[unset_key]
+			if not config_type in (bool, dict, int, list, long, str, tuple, unicode):
+				continue
+			self.config[unset_key] = config_type()
+		config_tab.objects_load_from_config()
+		gui_utilities.show_dialog_info('Successfully imported the message', self.parent)

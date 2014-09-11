@@ -34,6 +34,7 @@ import copy
 import csv
 import datetime
 import json
+import logging
 import os
 import re
 import shutil
@@ -68,6 +69,8 @@ TABLE_VALUE_CONVERSIONS = {
 	'messages/opened': lambda value: (None if value == None else value),
 	'messages/trained': bool
 }
+
+logger = logging.getLogger('KingPhisher.Client.export')
 
 def message_template_to_kpm(template):
 	files = []
@@ -170,6 +173,7 @@ def message_data_from_kpm(target_file, dest_dir):
 	:rtype: dict
 	"""
 	if not tarfile.is_tarfile(target_file):
+		logger.warning('the file is no recognized as a valid tar archive')
 		raise KingPhisherInputValidationError('file is not in the correct format')
 	tar_h = tarfile.open(target_file)
 	member_names = tar_h.getnames()
@@ -178,6 +182,7 @@ def message_data_from_kpm(target_file, dest_dir):
 	attachments = []
 
 	if not 'message_config.json' in member_names:
+		logger.warning('the kpm archive is missing the message_config.json file')
 		raise KingPhisherInputValidationError('data is missing from the message archive')
 	message_config = tar_get_file('message_config.json').read()
 	message_config = json.loads(message_config)
@@ -193,13 +198,16 @@ def message_data_from_kpm(target_file, dest_dir):
 			with open(file_path, 'wb') as file_h:
 				shutil.copyfileobj(tarfile_h, file_h)
 			attachments.append(file_path)
+		logger.debug("extracted {0} attachment file{1} from the archive".format(len(attachments), 's' if len(attachments) > 1 else ''))
 
 	for config_name, file_name in KPM_ARCHIVE_FILES.items():
 		if not file_name in member_names:
 			if config_name in message_config:
+				logger.warning("the kpm archive is missing the {0} file".format(file_name))
 				raise KingPhisherInputValidationError('data is missing from the message archive')
 			continue
 		if not message_config.get(config_name):
+			logger.warning("the kpm message configuration is missing the {0} setting".format(config_name))
 			raise KingPhisherInputValidationError('data is missing from the message archive')
 		tarfile_h = tar_get_file(file_name)
 		file_path = os.path.join(dest_dir, message_config[config_name])
@@ -209,6 +217,7 @@ def message_data_from_kpm(target_file, dest_dir):
 
 	if 'message_content.html' in member_names:
 		if not 'html_file' in message_config:
+			logger.warning('the kpm message configuration is missing the html_file setting')
 			raise KingPhisherInputValidationError('data is missing from the message archive')
 		tarfile_h = tar_get_file('message_content.html')
 		file_path = os.path.join(dest_dir, message_config['html_file'])
@@ -221,6 +230,7 @@ def message_data_from_kpm(target_file, dest_dir):
 			shutil.copyfileobj(template_strio, file_h)
 		message_config['html_file'] = file_path
 	elif 'html_file' in message_config:
+		logger.warning('the kpm archive is missing the message_content.html file')
 		raise KingPhisherInputValidationError('data is missing from the message archive')
 
 	return message_config
@@ -241,14 +251,18 @@ def message_data_to_kpm(message_config, target_file):
 		if os.access(message_config.get(config_name, ''), os.R_OK):
 			tar_h.add(message_config[config_name], arcname=file_name)
 			message_config[config_name] = os.path.basename(message_config[config_name])
-		elif config_name in message_config:
+			continue
+		if len(message_config.get(config_name, '')):
+			logger.info("the specified {0} '{1}' is not readable, the setting will be removed".format(config_name, message_config[config_name]))
+		if config_name in message_config:
 			del message_config[config_name]
 
 	if os.access(message_config.get('html_file', ''), os.R_OK):
 		template = open(message_config['html_file'], 'rb').read()
 		message_config['html_file'] = os.path.basename(message_config['html_file'])
-		template, files = message_template_to_kpm(template)
-		for attachment in files:
+		template, attachments = message_template_to_kpm(template)
+		logger.debug("identified {0} attachment file{1} to be archived".format(len(attachments), 's' if len(attachments) > 1 else ''))
+		for attachment in attachments:
 			if os.access(attachment, os.R_OK):
 				tar_h.add(attachment, arcname=os.path.join('attachments', os.path.basename(attachment)))
 		template_strio = StringIO.StringIO()
@@ -258,8 +272,11 @@ def message_data_to_kpm(message_config, target_file):
 		tarinfo_h.size = template_strio.tell()
 		template_strio.seek(os.SEEK_SET)
 		tar_h.addfile(tarinfo=tarinfo_h, fileobj=template_strio)
-	elif 'html_file' in message_config:
-		del message_config['html_file']
+	else:
+		if len(message_config.get('html_file', '')):
+			logger.info("the specified html_file '{0}' is not readable, the setting will be removed".format(message_config['html_file']))
+		if 'html_file' in message_config:
+			del message_config['html_file']
 
 	msg_strio = StringIO.StringIO()
 	msg_strio.write(json.dumps(message_config, sort_keys=True, indent=4))
