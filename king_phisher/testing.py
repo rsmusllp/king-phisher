@@ -47,6 +47,9 @@ __all__ = [
 	'KingPhisherServerTestCase'
 ]
 
+TEST_MESSAGE_TEMPLATE_INLINE_IMAGE = '/path/to/fake/image.png'
+"""A string with the path to a file used as an inline image in the :py:data:`.TEST_MESSAGE_TEMPLATE`."""
+
 TEST_MESSAGE_TEMPLATE = """
 <html>
 <body>
@@ -64,15 +67,12 @@ TEST_MESSAGE_TEMPLATE = """
 	Mundi similique persequeris vim no, usu at natum philosophia.
 	<a href="{{ url.webserver }}">{{ client.company_name }} HR Enroll</a><br />
 	<br />
-	{{ inline_image('/path/to/fake/image.png') }}
+	{{ inline_image('""" + TEST_MESSAGE_TEMPLATE_INLINE_IMAGE + """') }}
 	{{ tracking_dot_image_tag }}
 </body>
 </html>
 """
-"""A string representing a message template that can be used for testing"""
-
-TEST_MESSAGE_TEMPLATE_INLINE_IMAGE = '/path/to/fake/image.png'
-"""A string with the path to a file used as an inline image in the :py:data:`.TEST_MESSAGE_TEMPLATE`"""
+"""A string representing a message template that can be used for testing."""
 
 class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
 	def custom_authentication(self, *args, **kwargs):

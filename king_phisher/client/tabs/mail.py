@@ -126,7 +126,7 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 				if self.sender_thread.server_ssh_connect():
 					self.text_insert('Done.\n')
 					break
-				self.sender_start_failure('Failed to connect to SSH', 'Failed.\n')
+				self.sender_start_failure('Failed to connect to SSH', 'Failed.\n', retry=True)
 		self.text_insert('Connecting To SMTP Server... ')
 		if not self.sender_thread.server_smtp_connect():
 			self.sender_start_failure('Failed to connect to SMTP', 'Failed.\n')
@@ -193,13 +193,14 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 		"""
 		self.progressbar.set_fraction(float(emails_done) / float(emails_total))
 
-	def sender_start_failure(self, message=None, text=None):
+	def sender_start_failure(self, message=None, text=None, retry=False):
 		"""
 		Handle a failure in starting the message sender thread and
 		perform any necessary clean up.
 
 		:param str message: A message to shown in an error popup dialog.
 		:param text message: A message to be inserted into the text buffer.
+		:param bool retry: The operation will be attempted again.
 		"""
 		if text:
 			self.text_insert(text)
@@ -207,7 +208,8 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 		self.gobjects['button_mail_sender_start'].set_sensitive(True)
 		if message:
 			gui_utilities.show_dialog_error(message, self.parent)
-		self.sender_thread = None
+		if not retry:
+			self.sender_thread = None
 
 	def notify_stopped(self):
 		"""
