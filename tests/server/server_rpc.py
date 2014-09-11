@@ -39,7 +39,8 @@ import unittest
 from king_phisher import version
 from king_phisher.client import client_rpc
 from king_phisher.server import database
-from tests.testing import KingPhisherServerTestCase, random_string
+from king_phisher.testing import KingPhisherServerTestCase
+from king_phisher.utilities import random_string
 
 class ServerRPCTests(KingPhisherServerTestCase):
 	def setUp(self, *args, **kwargs):

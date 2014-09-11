@@ -30,33 +30,14 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
 import re
 import unittest
 
 from king_phisher.client.mailer import *
-from tests.testing import random_string
-
-TEST_MESSAGE = """
-<html>
-<body>
-	Hello {{ client.first_name }} {{ client.last_name }},<br />
-	<br />
-	Lorem ipsum dolor sit amet, inani assueverit duo ei. Exerci eruditi nominavi
-	ei eum, vim erant recusabo ex, nostro vocibus minimum no his. Omnesque
-	officiis his eu, sensibus consequat per cu. Id modo vidit quo, an has
-	detracto intellegat deseruisse. Vis ut novum solet complectitur, ei mucius
-	tacimates sit.
-	<br />
-	Duo veniam epicuri cotidieque an, usu vivendum adolescens ei, eu ius soluta
-	minimum voluptua. Eu duo numquam nominavi deterruisset. No pro dico nibh
-	luptatum. Ex eos iriure invenire disputando, sint mutat delenit mei ex.
-	Mundi similique persequeris vim no, usu at natum philosophia.
-	<a href="{{ url.webserver }}">{{ client.company_name }} HR Enroll</a><br />
-	<br />
-	{{ tracking_dot_image_tag }}
-</body>
-</html>
-"""
+from king_phisher.client.mailer import ClientTemplateEnvironment
+from king_phisher.testing import TEST_MESSAGE_TEMPLATE, TEST_MESSAGE_TEMPLATE_INLINE_IMAGE
+from king_phisher.utilities import random_string
 
 class ClientMailerTests(unittest.TestCase):
 	def setUp(self):
@@ -72,11 +53,43 @@ class ClientMailerTests(unittest.TestCase):
 		secret_id = re.escape(self.config['server_config']['server.secret_id'])
 		tracking_image = re.escape(self.config['server_config']['server.tracking_image'])
 
-		formatted_msg = format_message(TEST_MESSAGE, self.config)
+		formatted_msg = format_message(TEST_MESSAGE_TEMPLATE, self.config)
 		regexp = """(<a href="https?://king-phisher.local/foobar\?id={0}">)""".format(secret_id)
 		self.assertRegexpMatches(formatted_msg, regexp, msg='The web server URL was not inserted correctly')
 		regexp = """(<img src="https?://king-phisher.local/{0}\?id={1}" style="display:none" />)""".format(tracking_image, secret_id)
 		self.assertRegexpMatches(formatted_msg, regexp, msg='The tracking image tag was not inserted correctly')
+
+	def test_client_template_environment_mode_analyze(self):
+		tenv = ClientTemplateEnvironment()
+		self.assertTrue(hasattr(tenv, 'attachment_images'))
+		self.assertIsInstance(tenv.attachment_images, list)
+		self.assertEqual(len(tenv.attachment_images), 0)
+
+		tenv.set_mode(ClientTemplateEnvironment.MODE_ANALYZE)
+		template = tenv.from_string(TEST_MESSAGE_TEMPLATE)
+		template.render(dict(client=dict(), url=dict()))
+		msg = 'The analysis mode failed to identify the inline image'
+		self.assertListEqual(tenv.attachment_images, [TEST_MESSAGE_TEMPLATE_INLINE_IMAGE], msg=msg)
+
+	def test_client_template_environment_mode_preview(self):
+		tenv = ClientTemplateEnvironment()
+		tenv.set_mode(ClientTemplateEnvironment.MODE_PREVIEW)
+		self.assertTrue('inline_image' in tenv.globals)
+		inline_image = tenv.globals['inline_image']
+		img_tag_result = inline_image(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)
+		img_tag_test = "<img src=\"file://{0}\">".format(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)
+		msg = 'The preview mode failed to properly format the img HTML tag'
+		self.assertEqual(img_tag_result, img_tag_test, msg=msg)
+
+	def test_client_template_environment_mode_send(self):
+		tenv = ClientTemplateEnvironment()
+		tenv.set_mode(ClientTemplateEnvironment.MODE_SEND)
+		self.assertTrue('inline_image' in tenv.globals)
+		inline_image = tenv.globals['inline_image']
+		img_tag_result = inline_image(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)
+		img_tag_test = "<img src=\"cid:{0}\">".format(os.path.basename(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE))
+		msg = 'The send mode failed to properly format the img HTML tag'
+		self.assertEqual(img_tag_result, img_tag_test, msg=msg)
 
 if __name__ == '__main__':
 	unittest.main()

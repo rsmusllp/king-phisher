@@ -32,7 +32,8 @@
 
 import unittest
 
-from tests.testing import KingPhisherServerTestCase, random_string
+from king_phisher.testing import KingPhisherServerTestCase
+from king_phisher.utilities import random_string
 
 class ServerTests(KingPhisherServerTestCase):
 	def test_existing_resources(self):

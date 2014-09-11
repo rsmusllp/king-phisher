@@ -34,7 +34,9 @@ import collections
 import distutils.version
 import functools
 import os
+import random
 import re
+import string
 import subprocess
 import sys
 import time
@@ -249,6 +251,17 @@ def open_uri(uri):
 	proc_args.append(uri)
 	proc_h = subprocess.Popen(proc_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
 	return proc_h.wait() == 0
+
+def random_string(size):
+	"""
+	Generate a random string consisting of letters and numbers of the specified
+	size.
+
+	:param int size: The size of the string to make.
+	:return: The string containing the random characters.
+	:rtype: str
+	"""
+	return ''.join(random.choice(string.ascii_letters + string.digits) for x in range(size))
 
 def server_parse(server, default_port):
 	"""

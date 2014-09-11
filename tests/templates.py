@@ -33,7 +33,7 @@
 import unittest
 
 from king_phisher.templates import *
-from testing import random_string
+from king_phisher.utilities import random_string
 
 class TemplatesTests(unittest.TestCase):
 	def test_global_variables(self):

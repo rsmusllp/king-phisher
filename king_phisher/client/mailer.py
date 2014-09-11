@@ -37,7 +37,6 @@ import mimetypes
 import os
 import random
 import smtplib
-import string
 import threading
 import time
 import urlparse
@@ -56,7 +55,7 @@ from gi.repository import GLib
 
 __all__ = ['format_message', 'MailSenderThread']
 
-make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(16))
+make_uid = lambda: utilities.random_string(16)
 
 class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
 	MODE_PREVIEW = 0

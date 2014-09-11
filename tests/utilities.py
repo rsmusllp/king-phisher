@@ -35,12 +35,21 @@ import unittest
 
 from king_phisher.utilities import *
 
+SINGLE_QUOTE_STRING_ESCAPED = """C:\\\\Users\\\\Alice\\\\Desktop\\\\Alice\\\'s Secret File.txt"""
+SINGLE_QUOTE_STRING_UNESCAPED = """C:\\Users\\Alice\\Desktop\\Alice's Secret File.txt"""
+
 class UtilitiesTests(unittest.TestCase):
+	def test_check_requirements(self):
+		fake_pkg = 'a' + random_string(16)
+		real_pkg = 'Jinja2'
+		missing_pkgs = check_requirements([real_pkg + '>=2.0', fake_pkg + '>=1.0'])
+		self.assertNotIn(real_pkg, missing_pkgs, msg='A valid package is marked as missing or incompatible')
+		self.assertIn(fake_pkg, missing_pkgs, msg='An invalid package is not marked as missing or incompatible')
+		self.assertEqual(len(missing_pkgs), 1)
+
 	def test_escape_single_quote(self):
-		good_string = """C:\\\\Users\\\\Alice\\\\Desktop\\\\Alice\\\'s Secret File.txt"""
-		bad_string = """C:\\Users\\Alice\\Desktop\\Alice's Secret File.txt"""
-		escaped_string = escape_single_quote(bad_string)
-		self.assertEqual(escaped_string, good_string)
+		escaped_string = escape_single_quote(SINGLE_QUOTE_STRING_UNESCAPED)
+		self.assertEqual(escaped_string, SINGLE_QUOTE_STRING_ESCAPED)
 
 	def test_mock_attributes(self):
 		mock = Mock()
@@ -76,6 +85,10 @@ class UtilitiesTests(unittest.TestCase):
 		self.assertEqual(timedef_to_seconds('1m30s'), 90)
 		self.assertEqual(timedef_to_seconds('2h1m30s'), 7290)
 		self.assertEqual(timedef_to_seconds('3d2h1m30s'), 266490)
+
+	def test_unescape_single_quote(self):
+		unescaped_string = unescape_single_quote(SINGLE_QUOTE_STRING_ESCAPED)
+		self.assertEqual(unescaped_string, SINGLE_QUOTE_STRING_UNESCAPED)
 
 if __name__ == '__main__':
 	unittest.main()

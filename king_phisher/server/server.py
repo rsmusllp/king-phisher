@@ -34,15 +34,14 @@ import binascii
 import json
 import logging
 import os
-import random
 import shutil
-import string
 import threading
 
 from king_phisher import find
 from king_phisher import job
 from king_phisher import sms
 from king_phisher import templates
+from king_phisher import utilities
 from king_phisher import xor
 from king_phisher.errors import KingPhisherAbortRequestError
 from king_phisher.server import authenticator
@@ -53,8 +52,7 @@ from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 
 import jinja2
 
-make_uid = lambda: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(24))
-"""Create a unique identifier string."""
+make_uid = lambda: utilities.random_string(24)
 
 def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	"""

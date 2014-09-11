@@ -19,6 +19,7 @@ The King Phisher Package
    king_phisher/smtp_server.rst
    king_phisher/ssh_forward.rst
    king_phisher/templates.rst
+   king_phisher/testing.rst
    king_phisher/ua_parser.rst
    king_phisher/utilities.rst
    king_phisher/version.rst

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/testing.py
+#  king_phisher/testing.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -41,13 +41,48 @@ from king_phisher import configuration
 from king_phisher import find
 from king_phisher.server.server import *
 
-random_string = lambda size: ''.join(random.choice(string.ascii_letters + string.digits) for x in range(size))
+__all__ = [
+	'TEST_MESSAGE_TEMPLATE',
+	'TEST_MESSAGE_TEMPLATE_INLINE_IMAGE',
+	'KingPhisherServerTestCase'
+]
+
+TEST_MESSAGE_TEMPLATE = """
+<html>
+<body>
+	Hello {{ client.first_name }} {{ client.last_name }},<br />
+	<br />
+	Lorem ipsum dolor sit amet, inani assueverit duo ei. Exerci eruditi nominavi
+	ei eum, vim erant recusabo ex, nostro vocibus minimum no his. Omnesque
+	officiis his eu, sensibus consequat per cu. Id modo vidit quo, an has
+	detracto intellegat deseruisse. Vis ut novum solet complectitur, ei mucius
+	tacimates sit.
+	<br />
+	Duo veniam epicuri cotidieque an, usu vivendum adolescens ei, eu ius soluta
+	minimum voluptua. Eu duo numquam nominavi deterruisset. No pro dico nibh
+	luptatum. Ex eos iriure invenire disputando, sint mutat delenit mei ex.
+	Mundi similique persequeris vim no, usu at natum philosophia.
+	<a href="{{ url.webserver }}">{{ client.company_name }} HR Enroll</a><br />
+	<br />
+	{{ inline_image('/path/to/fake/image.png') }}
+	{{ tracking_dot_image_tag }}
+</body>
+</html>
+"""
+"""A string representing a message template that can be used for testing"""
+
+TEST_MESSAGE_TEMPLATE_INLINE_IMAGE = '/path/to/fake/image.png'
+"""A string with the path to a file used as an inline image in the :py:data:`.TEST_MESSAGE_TEMPLATE`"""
 
 class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
 	def custom_authentication(self, *args, **kwargs):
 		return True
 
 class KingPhisherServerTestCase(unittest.TestCase):
+	"""
+	This class can be inherited to automatically set up a King Phisher server
+	instance configured in a way to be suitable for testing purposes.
+	"""
 	def setUp(self):
 		find.data_path_append('data/server')
 		web_root = os.path.join(os.getcwd(), 'data', 'server', 'king_phisher')
@@ -66,11 +101,28 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		self.shutdown_requested = False
 
 	def assertHTTPStatus(self, http_response, status):
+		"""
+		Check an HTTP response to ensure that the correct HTTP status code is
+		specified.
+
+		:param http_response: The response object to check.
+		:type http_response: :py:class:`httplib.HTTPResponse`
+		:param int status: The status to check for.
+		"""
 		self.assertIsInstance(http_response, httplib.HTTPResponse)
 		error_message = "HTTP Response received status {0} when {1} was expected".format(http_response.status, status)
 		self.assertEqual(http_response.status, status, msg=error_message)
 
 	def http_request(self, resource, method='GET', include_id=True):
+		"""
+		Make an HTTP request to the specified resource on the test server.
+
+		:param str resource: The resource to send the request to.
+		:param str method: The HTTP method to use for the request.
+		:param bool include_id: Whether to include the the id parameter.
+		:return: The servers HTTP response.
+		:rtype: :py:class:`httplib.HTTPResponse`
+		"""
 		if include_id:
 			resource += "{0}id={1}".format('&' if '?' in resource else '?', self.config.get('server.secret_id'))
 		conn = httplib.HTTPConnection('localhost', self.config.get('server.address.port'))
@@ -80,6 +132,14 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		return response
 
 	def web_root_files(self, limit=None):
+		"""
+		A generator object that yeilds valid files which are contained in the
+		web root of the test server instance. This can be used to find resources
+		which the server should process as files. The function will fail if
+		no files can be found in the web root.
+
+		:param int limit: A limit to the number of files to return.
+		"""
 		limit = (limit or float('inf'))
 		philes_yielded = 0
 		web_root = self.config.get('server.web_root')

@@ -69,7 +69,6 @@ def main():
 	if getattr(sys, 'frozen', False):
 		data_path = os.path.dirname(sys.executable)
 	else:
-		data_path = os.path.dirname(__file__)
 		missing_requirements = utilities.check_requirements(__requirements__)
 		if missing_requirements:
 			print('[-] the following package requirements are missing or incompatible:')
@@ -77,6 +76,7 @@ def main():
 				print('[-]   - ' + missing_req)
 			print('[-] please install the missing requirements with pip')
 			return os.EX_SOFTWARE
+		data_path = os.path.dirname(__file__)
 
 	data_path = os.path.join(data_path, 'data', 'client')
 	data_path = os.path.abspath(data_path)

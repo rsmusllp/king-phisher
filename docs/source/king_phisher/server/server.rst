@@ -11,8 +11,6 @@ Functions
 
 .. autofunction:: king_phisher.server.server.build_king_phisher_server
 
-.. autofunction:: king_phisher.server.server.make_uid
-
 Classes
 -------
 

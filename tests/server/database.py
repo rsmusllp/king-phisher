@@ -33,7 +33,7 @@
 import unittest
 
 from king_phisher.server.database import *
-from tests.testing import random_string
+from king_phisher.utilities import random_string
 
 class ServerDatabaseTests(unittest.TestCase):
 	def test_create_database(self):

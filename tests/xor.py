@@ -32,8 +32,8 @@
 
 import unittest
 
+from king_phisher.utilities import random_string
 from king_phisher.xor import *
-from testing import random_string
 
 class XORTests(unittest.TestCase):
 	def test_xor_encode(self):
