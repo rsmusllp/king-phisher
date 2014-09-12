@@ -521,6 +521,7 @@ class MailSenderTab(object):
 		if not config_tab:
 			self.logger.warning('attempted to export message data while the config tab was unavailable')
 			return
+		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
 		dialog = gui_utilities.UtilityFileChooser('Export Message Data', self.parent)
 		response = dialog.run_quick_save('message.kpm')
@@ -528,7 +529,7 @@ class MailSenderTab(object):
 		if not response:
 			return
 		message_config = {}
-		config_keys = filter(lambda k: k.startswith('mailer.'), self.config.keys())
+		config_keys = filter(lambda k: k.startswith(config_prefix), self.config.keys())
 		for config_key in config_keys:
 			message_config[config_key[7:]] = self.config[config_key]
 		export.message_data_to_kpm(message_config, response['target_path'])
@@ -542,6 +543,7 @@ class MailSenderTab(object):
 		if not config_tab:
 			self.logger.warning('attempted to import message data while the config tab was unavailable')
 			return
+		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
 		dialog = gui_utilities.UtilityFileChooser('Import Message Data', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
@@ -564,10 +566,10 @@ class MailSenderTab(object):
 			gui_utilities.show_dialog_error('Import Error', self.parent, error.message.capitalize() + '.')
 			return
 
-		config_keys = set(filter(lambda k: k.startswith('mailer.'), self.config.keys()))
+		config_keys = set(filter(lambda k: k.startswith(config_prefix), self.config.keys()))
 		config_types = dict(zip(config_keys, map(type, config_keys)))
 		for key, value in message_data.items():
-			key = 'mailer.' + key
+			key = config_prefix + key
 			if not key in config_keys:
 				continue
 			self.config[key] = value

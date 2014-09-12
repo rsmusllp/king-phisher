@@ -173,7 +173,7 @@ def message_data_from_kpm(target_file, dest_dir):
 	:rtype: dict
 	"""
 	if not tarfile.is_tarfile(target_file):
-		logger.warning('the file is no recognized as a valid tar archive')
+		logger.warning('the file is not recognized as a valid tar archive')
 		raise KingPhisherInputValidationError('file is not in the correct format')
 	tar_h = tarfile.open(target_file)
 	member_names = tar_h.getnames()
