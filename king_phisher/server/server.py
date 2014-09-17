@@ -410,12 +410,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			cursor.execute('SELECT campaign_id FROM deaddrop_deployments WHERE id = ?', (deployment_id,))
 			campaign_id = cursor.fetchone()
 			if not campaign_id:
+				self.logger.error('dead drop request received for an unknown campaign')
 				return
 			campaign_id = campaign_id[0]
 
 		local_username = data.get('local_username')
 		local_hostname = data.get('local_hostname')
 		if campaign_id == None or local_username == None or local_hostname == None:
+			self.logger.error('dead drop request received with missing data')
 			return
 		local_ip_addresses = data.get('local_ip_addresses')
 		if isinstance(local_ip_addresses, (list, tuple)):
@@ -427,9 +429,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			if drop_id:
 				drop_id = drop_id[0]
 				cursor.execute('UPDATE deaddrop_connections SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (drop_id,))
-			return
-			values = (deployment_id, campaign_id, self.client_address[0], local_username, local_hostname, local_ip_addresses)
-			cursor.execute('INSERT INTO deaddrop_connections (deployment_id, campaign_id, visitor_ip, local_username, local_hostname, local_ip_addresses) VALUES (?, ?, ?, ?, ?, ?)', values)
+			else:
+				values = (deployment_id, campaign_id, self.client_address[0], local_username, local_hostname, local_ip_addresses)
+				cursor.execute('INSERT INTO deaddrop_connections (deployment_id, campaign_id, visitor_ip, local_username, local_hostname, local_ip_addresses) VALUES (?, ?, ?, ?, ?, ?)', values)
 
 		visit_count = self.query_count('SELECT COUNT(id) FROM deaddrop_connections WHERE campaign_id = ?', (campaign_id,))
 		if visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
