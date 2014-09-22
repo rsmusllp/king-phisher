@@ -289,15 +289,11 @@ class KingPhisherClient(_Gtk_Window):
 		vbox.pack_start(menubar, False, False, 0)
 
 		# create notebook and tabs
-		hbox = Gtk.Box()
-		hbox.set_property('orientation', Gtk.Orientation.HORIZONTAL)
-		hbox.show()
 		self.notebook = Gtk.Notebook()
 		"""The primary :py:class:`Gtk.Notebook` that holds the top level taps of the client GUI."""
 		self.notebook.connect('switch-page', self._tab_changed)
 		self.notebook.set_scrollable(True)
-		hbox.pack_start(self.notebook, True, True, 0)
-		vbox.pack_start(hbox, True, True, 0)
+		vbox.pack_start(self.notebook, True, True, 0)
 
 		self.tabs = {}
 		current_page = self.notebook.get_current_page()
