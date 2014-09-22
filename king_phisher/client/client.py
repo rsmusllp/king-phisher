@@ -80,9 +80,10 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 	def __init__(self, *args, **kwargs):
 		super(KingPhisherClientCampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
-		columns = {1: 'Campaign Name', 2: 'Created'}
-		for column_id in range(1, len(columns) + 1):
+		columns = ['Campaign Name', 'Created By', 'Creation Date']
+		for column_id in range(len(columns)):
 			column_name = columns[column_id]
+			column_id += 1
 			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text=column_id)
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
@@ -105,12 +106,12 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 		treeview = self.gobjects['treeview_campaigns']
 		store = treeview.get_model()
 		if store == None:
-			store = Gtk.ListStore(str, str, str)
+			store = Gtk.ListStore(str, str, str, str)
 			treeview.set_model(store)
 		else:
 			store.clear()
 		for campaign in self.parent.rpc.remote_table('campaigns'):
-			store.append([str(campaign['id']), campaign['name'], campaign['created']])
+			store.append([str(campaign['id']), campaign['name'], campaign['creator'], campaign['created']])
 
 	def signal_button_clicked(self, button):
 		campaign_name_entry = self.gobjects['entry_new_campaign_name']
