@@ -106,9 +106,24 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		self.popup_menu.append(menu_item)
 
 		menu_item = Gtk.MenuItem.new_with_label('Delete')
-		menu_item.connect('activate', self.signal_activate_popup_menu_delete)
+		menu_item.connect('activate', lambda _: self._prompt_to_delete_row())
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
+
+	def _prompt_to_delete_row(self):
+		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
+			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
+			return
+		treeview = self.gobjects['treeview_campaign']
+		selection = treeview.get_selection()
+		(model, tree_iter) = selection.get_selected()
+		if not tree_iter:
+			return
+		row_id = model.get_value(tree_iter, 0)
+		if not gui_utilities.show_dialog_yes_no('Delete This Row?', self.parent, 'This information will be lost.'):
+			return
+		self.parent.rpc(self.remote_table_name + '/delete', row_id)
+		self.load_campaign_information(force=True)
 
 	def format_row_data(self, row):
 		"""
@@ -208,8 +223,11 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 	def signal_treeview_key_pressed(self, widget, event):
 		if event.type != Gdk.EventType.KEY_PRESS:
 			return
-		if event.get_keyval()[1] == Gdk.KEY_F5:
+		keyval = event.get_keyval()[1]
+		if keyval == Gdk.KEY_F5:
 			self.load_campaign_information(force=True)
+		elif keyval == Gdk.KEY_Delete:
+			self._prompt_to_delete_row()
 
 	def signal_activate_popup_menu_copy(self, widget, column_id):
 		treeview = self.gobjects['treeview_campaign']
@@ -220,21 +238,6 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		selection_text = model.get_value(tree_iter, column_id)
 		clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 		clipboard.set_text(selection_text, -1)
-
-	def signal_activate_popup_menu_delete(self, action):
-		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
-			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
-			return
-		treeview = self.gobjects['treeview_campaign']
-		selection = treeview.get_selection()
-		(model, tree_iter) = selection.get_selected()
-		if not tree_iter:
-			return
-		row_id = model.get_value(tree_iter, 0)
-		if not gui_utilities.show_dialog_yes_no('Delete This Row?', self.parent, 'This information will be lost'):
-			return
-		self.parent.rpc(self.remote_table_name + '/delete', row_id)
-		self.load_campaign_information(force=True)
 
 class CampaignViewDeaddropTab(CampaignViewGenericTab):
 	"""Display campaign information regarding dead drop connections."""

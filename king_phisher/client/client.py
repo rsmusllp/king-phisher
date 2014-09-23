@@ -52,6 +52,7 @@ from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -131,6 +132,29 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 	def signal_entry_new_campaign_name_activate(self, entry):
 		self.gobjects['button_new_campaign'].emit('clicked')
 
+	def signal_treeview_key_pressed(self, widget, event):
+		if event.type != Gdk.EventType.KEY_PRESS:
+			return
+		keyval = event.get_keyval()[1]
+		if keyval == Gdk.KEY_F5:
+			self.load_campaigns()
+			self._highlight_campaign(self.config.get('campaign_name'))
+		elif keyval == Gdk.KEY_Delete:
+			treeview = self.gobjects['treeview_campaigns']
+			selection = treeview.get_selection()
+			(model, tree_iter) = selection.get_selected()
+			if not tree_iter:
+				return
+			campaign_id = model.get_value(tree_iter, 0)
+			if self.config.get('campaign_id') == campaign_id:
+				gui_utilities.show_dialog_warning('Can Not Delete Campaign', self.dialog, 'Can not delete the current campaign.')
+				return
+			if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.dialog, 'This action is irreversible, all campaign data will be lost.'):
+				return
+			self.parent.rpc('campaign/delete', campaign_id)
+			self.load_campaigns()
+			self._highlight_campaign(self.config.get('campaign_name'))
+
 	def interact(self):
 		self._highlight_campaign(self.config.get('campaign_name'))
 		self.dialog.show_all()
@@ -143,7 +167,7 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 			(model, tree_iter) = selection.get_selected()
 			if tree_iter:
 				break
-			gui_utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one')
+			gui_utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one.')
 			response = self.dialog.run()
 		if response != Gtk.ResponseType.CANCEL:
 			campaign_id = model.get_value(tree_iter, 0)
@@ -581,7 +605,7 @@ class KingPhisherClient(_Gtk_Window):
 		deleted and a new campaign is not selected with
 		:py:meth:`.show_campaign_selection`, the client will quit.
 		"""
-		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible. All campaign data will be lost.'):
+		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible, all campaign data will be lost.'):
 			return
 		self.rpc('campaign/delete', self.config['campaign_id'])
 		if not self.show_campaign_selection():

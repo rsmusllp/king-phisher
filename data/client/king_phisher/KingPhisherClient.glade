@@ -427,6 +427,7 @@
               <object class="GtkTreeView" id="KingPhisherClientCampaignSelectionDialog.treeview_campaigns">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection" id="treeview-selection4"/>
                 </child>
