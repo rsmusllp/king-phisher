@@ -1,0 +1,15 @@
+# KingPhisherServer systemd config file
+# This file goes in /lib/systemd/system/
+
+[Unit]
+Description=King Phisher Server
+After=syslog.target network.target auditd.service
+
+[Service]
+Type=forking
+PIDFile=/var/run/kingphisher.pid
+ExecStart=/opt/king-phisher/KingPhisherServer /opt/king-phisher/server_config.yml
+ExecStop=/bin/kill -INT $MAINPID
+
+[Install]
+WantedBy=multi-user.target
