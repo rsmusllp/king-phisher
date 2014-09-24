@@ -55,6 +55,7 @@ __requirements__ = [
 	'Jinja2>=2.7.1',
 	'msgpack-python>=0.4.2',
 	'PyYAML>=3.10',
+	'SQLAlchemy>=0.9'
 ]
 
 def main():
