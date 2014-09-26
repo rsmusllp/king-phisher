@@ -32,6 +32,8 @@
 
 import logging
 
+from . import models
+
 import sqlalchemy
 import sqlalchemy.engine.url
 import sqlalchemy.orm
@@ -44,16 +46,8 @@ __all__ = [
 	'initialize_database'
 ]
 
-DATABASE_TABLES = {}
 Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 logger = logging.getLogger('KingPhisher.Server.database')
-
-def register_table(table):
-	columns = tuple(map(lambda c: c.name, table.__table__.columns))
-	DATABASE_TABLES[table.__tablename__] = columns
-	return table
-
-from . import models
 
 def get_tables_with_column_id(column_id):
 	"""
@@ -63,7 +57,7 @@ def get_tables_with_column_id(column_id):
 	:return: The list of matching tables.
 	:rtype: list
 	"""
-	return map(lambda x: x[0], filter(lambda x: column_id in x[1], DATABASE_TABLES.items()))
+	return map(lambda x: x[0], filter(lambda x: column_id in x[1], models.DATABASE_TABLES.items()))
 
 def init_database(connection_url):
 	connection_url = sqlalchemy.engine.url.make_url(connection_url)

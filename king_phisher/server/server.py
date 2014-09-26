@@ -45,8 +45,9 @@ from king_phisher import utilities
 from king_phisher import xor
 from king_phisher.errors import KingPhisherAbortRequestError
 from king_phisher.server import authenticator
-from king_phisher.server import database
 from king_phisher.server import server_rpc
+from king_phisher.server.database import manager as db_manager
+from king_phisher.server.database import models as db_models
 from king_phisher.third_party.AdvancedHTTPServer import *
 from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 
@@ -86,8 +87,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		# this is for attribute documentation
 		self.config = None
 		"""The main King Phisher server :py:class:`.Configuration` instance."""
-		self.database = None
-		"""The :py:class:`.KingPhisherDatabase` instance."""
 		self.path = None
 		"""The resource path of the current HTTP request."""
 		super(KingPhisherRequestHandler, self).__init__(*args, **kwargs)
@@ -95,7 +94,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	def install_handlers(self):
 		self.logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 		super(KingPhisherRequestHandler, self).install_handlers()
-		self.database = self.server.database
 		self.config = self.server.config
 		regex_prefix = '^'
 		if self.config.get('server.vhost_directories'):
@@ -107,7 +105,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		tracking_image = tracking_image.replace('.', '\\.')
 		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
 
-	def issue_alert(self, alert_text, campaign_id=None):
+	def issue_alert(self, alert_text, campaign_id):
 		"""
 		Send an SMS alert. If no *campaign_id* is specified all users
 		with registered SMS information will receive the alert otherwise
@@ -116,21 +114,20 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		:param str alert_text: The message to send to subscribers.
 		:param int campaign_id: The campaign subscribers to send the alert to.
 		"""
-		campaign_name = None
-		with self.get_cursor() as cursor:
-			if campaign_id:
-				cursor.execute('SELECT name FROM campaigns WHERE id = ?', (campaign_id,))
-				campaign_name = cursor.fetchone()[0]
-				cursor.execute('SELECT user_id FROM alert_subscriptions WHERE campaign_id = ?', (campaign_id,))
-			else:
-				cursor.execute('SELECT id FROM users WHERE phone_number IS NOT NULL AND phone_carrier IS NOT NULL')
-			user_ids = map(lambda user_id: user_id[0], cursor.fetchall())
-		if campaign_name != None and '{campaign_name}' in alert_text:
-			alert_text = alert_text.format(campaign_name=campaign_name)
-		for user_id in user_ids:
-			with self.get_cursor() as cursor:
-				cursor.execute('SELECT phone_number, phone_carrier FROM users WHERE id = ?', (user_id,))
-				number, carrier = cursor.fetchone()
+		session = db_manager.Session()
+		query = session.query(db_models.Campaign)
+		query = query.filter_by(id=campaign_id)
+		campaign = query.first()
+
+		if '{campaign_name}' in alert_text:
+			alert_text = alert_text.format(campaign_name=campaign.name)
+		for subscription in campaign.alert_subscriptions:
+			user = subscription.user
+			carrier = user.phone_carrier
+			number = user.phone_number
+			if carrier == None or number == None:
+				self.server.logger.warning("skipping alert because user {0} has missing information".format(user.id))
+				continue
 			self.server.logger.debug("sending alert SMS message to {0} ({1})".format(number, carrier))
 			sms.send_sms(alert_text, number, carrier, 'donotreply@kingphisher.local')
 
@@ -186,20 +183,22 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not self.message_id:
 			return None
 		visit_count = 0
-		with self.get_cursor() as cursor:
-			cursor.execute('SELECT target_email, company_name, first_name, last_name, trained FROM messages WHERE id = ?', (self.message_id,))
-			result = cursor.fetchone()
-			visit_count = self.query_count('SELECT COUNT(id) FROM visits WHERE message_id = ?', (self.message_id,))
-		if not result and self.message_id == self.config.get('server.secret_id'):
+		session = db_manager.Session()
+		query = session.query(db_models.Message)
+		query = query.filter_by(id=self.message_id)
+		if message:
+			visit_count = len(message.visits)
+			result = [message.target_email, message.company_name, message.first_name, message.last_name, message.trained]
+		elif self.message_id == self.config.get('server.secret_id'):
 			result = ['aliddle@wonderland.com', 'Wonderland Inc.', 'Alice', 'Liddle', 0]
-		if not result:
+		else:
 			return None
 		client_vars = {}
 		client_vars['email_address'] = result[0]
 		client_vars['company_name'] = result[1]
 		client_vars['first_name'] = result[2]
 		client_vars['last_name'] = result[3]
-		client_vars['is_trained'] = bool(result[4])
+		client_vars['is_trained'] = result[4]
 		client_vars['message_id'] = self.message_id
 		client_vars['visit_count'] = visit_count
 		if self.visit_id:
@@ -233,12 +232,28 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return self._campaign_id
 		self._campaign_id = None
 		if self.message_id:
-			with self.get_cursor() as cursor:
-				cursor.execute('SELECT campaign_id FROM messages WHERE id = ?', (self.message_id,))
-				result = cursor.fetchone()
-			if result:
-				self._campaign_id = result[0]
+			session = db_manager.Session()
+			query = session.query(db_models.Message)
+			query = query.filter_by(id=self.message_id)
+			campaign = query.first()
+			if campaign:
+				self._campaign_id = campaign.id
 		return self._campaign_id
+
+	@property
+	def campaign_object(self):
+		"""
+		The campaign object representing the data within the database.
+		"""
+		if hasattr(self, '_campaign_object'):
+			return self._campaign_object
+		self._campaign_object = None
+		if self.campaign_id:
+			session = db_manager.Session()
+			query = session.query(db_models.Campaign)
+			query = query.filter_by(id=self.campaign_id)
+			self._campaign_object = query.first()
+		return self._campaign_object
 
 	@property
 	def message_id(self):
@@ -251,14 +266,20 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		"""
 		if hasattr(self, '_message_id'):
 			return self._message_id
+		self._message_id = None
+		session = db_manager.Session()
 		msg_id = self.get_query_parameter('id')
-		if not msg_id and self.visit_id:
-			with self.get_cursor() as cursor:
-				cursor.execute('SELECT message_id FROM visits WHERE id = ?', (self.visit_id,))
-				result = cursor.fetchone()
-			if result:
-				msg_id = result[0]
-		self._message_id = msg_id
+		if msg_id:
+			query = session.query(db_models.Message)
+			query = query.filter_by(id=msg_id)
+			if query.count() == 0:
+				self._message_id = msg_id
+		elif self.visit_id:
+			query = session.query(db_models.Visit)
+			query = query.filter_by(id=self.visit_id)
+			visit = query.first()
+			if visit:
+				self._message_id = visit.message_id
 		return self._message_id
 
 	@property
@@ -273,7 +294,12 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self._visit_id = None
 		kp_cookie_name = self.config.get('server.cookie_name')
 		if kp_cookie_name in self.cookies:
-			self._visit_id = self.cookies[kp_cookie_name].value
+			value = self.cookies[kp_cookie_name].value
+			session = db_manager.Session()
+			session.query(db_models.Visit)
+			query = query.filter_by(id=value)
+			if query.count():
+				self._visit_id = value
 		return self._visit_id
 
 	@property
@@ -355,15 +381,19 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not self.campaign_id:
 			self.server.logger.warning('denying request due to lack of a valid id')
 			raise KingPhisherAbortRequestError()
-		if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ?', (self.campaign_id, self.vhost)) == 0:
+
+		session = db_manager.Session()
+		query = session.query(db_models.LandingPage)
+		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost)
+		if query.count() == 0:
 			self.server.logger.warning('denying request with not found due to invalid hostname')
 			raise KingPhisherAbortRequestError()
-		with self.get_cursor() as cursor:
-			cursor.execute('SELECT reject_after_credentials FROM campaigns WHERE id = ?', (self.campaign_id,))
-			reject_after_credentials = cursor.fetchone()[0]
-		if reject_after_credentials and self.visit_id == None and self.query_count('SELECT COUNT(id) FROM credentials WHERE message_id = ?', (self.message_id,)):
-			self.server.logger.warning('denying request because credentials were already harvested')
-			raise KingPhisherAbortRequestError()
+		if self.campaign_object.reject_after_credentials and self.visit_id == None:
+			query = session.query(db_models.Credential)
+			query = query.filter_by(message_id=self.message_id)
+			if query.count() > 0:
+				self.server.logger.warning('denying request because credentials were already harvested')
+				raise KingPhisherAbortRequestError()
 		return
 
 	def respond_not_found(self):
@@ -405,35 +435,41 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.logger.error('dead drop request received with invalid \'token\' data')
 			return
 
+		session = db_manager.Session()
 		deployment_id = data.get('deaddrop_id')
-		with self.get_cursor() as cursor:
-			cursor.execute('SELECT campaign_id FROM deaddrop_deployments WHERE id = ?', (deployment_id,))
-			campaign_id = cursor.fetchone()
-			if not campaign_id:
-				self.logger.error('dead drop request received for an unknown campaign')
-				return
-			campaign_id = campaign_id[0]
+		query = session.query(db_models.DeaddropDeployment)
+		query = query.filter_by(id=deployment_id)
+		deployment = query.first()
+		if not deployment:
+			self.logger.error('dead drop request received for an unknown campaign')
+			return
 
 		local_username = data.get('local_username')
 		local_hostname = data.get('local_hostname')
-		if campaign_id == None or local_username == None or local_hostname == None:
+		if local_username == None or local_hostname == None:
 			self.logger.error('dead drop request received with missing data')
 			return
 		local_ip_addresses = data.get('local_ip_addresses')
 		if isinstance(local_ip_addresses, (list, tuple)):
 			local_ip_addresses = ' '.join(local_ip_addresses)
 
-		with self.get_cursor() as cursor:
-			cursor.execute('SELECT id FROM deaddrop_connections WHERE deployment_id = ? AND local_username = ? AND local_hostname = ?', (deployment_id, local_username, local_hostname))
-			drop_id = cursor.fetchone()
-			if drop_id:
-				drop_id = drop_id[0]
-				cursor.execute('UPDATE deaddrop_connections SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (drop_id,))
-			else:
-				values = (deployment_id, campaign_id, self.client_address[0], local_username, local_hostname, local_ip_addresses)
-				cursor.execute('INSERT INTO deaddrop_connections (deployment_id, campaign_id, visitor_ip, local_username, local_hostname, local_ip_addresses) VALUES (?, ?, ?, ?, ?, ?)', values)
+		query = session.query(db_models.DeaddropConnection)
+		query = query.filter_by(id=deployment_id, local_username=local_username, local_hostname=local_hostname)
+		connection = query.first()
+		if connection:
+			connection.visit_count += 1
+		else:
+			connection = db_models.Connection(campaign_id=deployment.campaign_id, deployment_id=deployment_id)
+			connection.visitor_ip = self.client_address
+			connection.local_username = local_username
+			connection.local_hostname = local_hostname
+			connection.local_ip_addresses = local_ip_addresses
+			session.add(connection)
+		session.commit()
 
-		visit_count = self.query_count('SELECT COUNT(id) FROM deaddrop_connections WHERE campaign_id = ?', (campaign_id,))
+		query = session.query(db_models.DeaddropConnection)
+		query = query.filter_by(campaign_id=deployment.campaign_id)
+		visit_count = query.count()
 		if visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
 			alert_text = "{0} deaddrop connections reached for campaign: {{campaign_name}}".format(visit_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
@@ -453,8 +489,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		msg_id = self.get_query_parameter('id')
 		if not msg_id:
 			return
-		with self.get_cursor() as cursor:
-			cursor.execute('UPDATE messages SET opened = CURRENT_TIMESTAMP WHERE id = ? AND opened IS NULL', (msg_id,))
+		session = db_manager.Session()
+		query = session.query(db_models.Message)
+		query = query.filter_by(id=msg_id, opened=None)
+		message = query.first()
+		if not message:
+			return
+		message.opened = db_models.current_timestamp()
+		session.commit()
 
 	def handle_javascript_hook(self, query):
 		kp_hook_js = find.find_data_file('javascript_hook.js')
@@ -483,28 +525,34 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return
 		message_id = self.message_id
 		campaign_id = self.campaign_id
-		with self.get_cursor() as cursor:
-			# set the opened timestamp to the visit time if it's null
-			cursor.execute('UPDATE messages SET opened = CURRENT_TIMESTAMP WHERE id = ? AND opened IS NULL', (self.message_id,))
+		session = db_manager.Session()
+		query = session.query(db_models.Message)
+		query = query.filter_by(id=self.message_id, opened=None)
+		message = query.first()
+		message.opened = db_models.current_timestamp()
 
 		if self.visit_id == None:
 			visit_id = make_uid()
 			kp_cookie_name = self.config.get('server.cookie_name')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
 			self.send_header('Set-Cookie', cookie)
-			with self.get_cursor() as cursor:
-				client_ip = self.client_address[0]
-				user_agent = (self.headers.getheader('user-agent') or '')
-				cursor.execute('INSERT INTO visits (id, message_id, campaign_id, visitor_ip, visitor_details) VALUES (?, ?, ?, ?, ?)', (visit_id, message_id, campaign_id, client_ip, user_agent))
-				visit_count = self.query_count('SELECT COUNT(id) FROM visits WHERE campaign_id = ?', (campaign_id,))
+			visit = db_models.Visit(id=visit_id, campaign_id=campaign_id, message_id=message_id)
+			visit.visitor_ip = self.client_address[0]
+			visit.visitor_details = (self.headers.getheader('user-agent') or '')
+			session.add(visit)
+			visit_count = len(self.campaign_object.visits)
 			if visit_count > 0 and ((visit_count in [1, 10, 25]) or ((visit_count % 50) == 0)):
 				alert_text = "{0} vists reached for campaign: {{campaign_name}}".format(visit_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 		else:
 			visit_id = self.visit_id
-			if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ? AND page = ?', (self.campaign_id, self.vhost, self.path)):
-				with self.get_cursor() as cursor:
-					cursor.execute('UPDATE visits SET visit_count = visit_count + 1, last_visit = CURRENT_TIMESTAMP WHERE id = ?', (visit_id,))
+			query = session.query(db_models.LandingPage)
+			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.path)
+			if query.count():
+				query = session.query(db_models.Visit)
+				query = query.filter_by(id=visit_id)
+				visit = query.first()
+				visit.visit_count += 1
 
 		username = None
 		for pname in ['username', 'user', 'u']:
@@ -519,19 +567,22 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 					break
 			password = (password or '')
 			cred_count = 0
-			with self.get_cursor() as cursor:
-				cursor.execute('SELECT COUNT(id) FROM credentials WHERE message_id = ? AND username = ? AND password = ?', (message_id, username, password))
-				if cursor.fetchone()[0] == 0:
-					cursor.execute('INSERT INTO credentials (visit_id, message_id, campaign_id, username, password) VALUES (?, ?, ?, ?, ?)', (visit_id, message_id, campaign_id, username, password))
-					cred_count = self.query_count('SELECT COUNT(id) FROM credentials WHERE campaign_id = ?', (campaign_id,))
+			query = session.query(db_models.Credential)
+			query = query.filter_by(message_id=message_id, username=username, password=password)
+			if query.count() == 0:
+				cred = db_models.Credential(campaign_id=campaign_id, message_id=message_id, visit_id=visit_id)
+				cred.username = username
+				cred.password = password
+				session.add(cred)
+				cred_count = len(self.campaign_object.credentials)
 			if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
 				alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 
 		trained = self.get_query_parameter('trained')
 		if isinstance(trained, (str, unicode)) and trained.lower() in ['1', 'true', 'yes']:
-			with self.get_cursor() as cursor:
-				cursor.execute('UPDATE messages SET trained = 1 WHERE id = ?', (message_id,))
+			message.trained = True
+		session.commit()
 
 class KingPhisherServer(AdvancedHTTPServer):
 	"""
@@ -550,7 +601,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
 		self.serve_robots_txt = True
-		self.init_database(config.get('server.database'))
+		self.database_engine = db_manager.init_database(config.get('server.database'))
 
 		self.http_server.config = config
 		self.http_server.throttle_semaphore = threading.Semaphore()
@@ -568,22 +619,6 @@ class KingPhisherServer(AdvancedHTTPServer):
 
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
-
-	def init_database(self, database_file):
-		"""
-		Initialize the servers database connection, creating a new one
-		if the file does not exist.
-
-		:param str database_file: The SQLite3 database file to use.
-		"""
-		if not os.path.exists(database_file) or database_file == ':memory:':
-			db = database.create_database(database_file)
-			self.logger.info('created new sqlite3 database file')
-		else:
-			db = database.KingPhisherDatabase(database_file)
-		self.logger.debug("loaded database: {0} schema version: {1}".format(database_file, db.schema_version))
-		self.database = db
-		self.http_server.database = db
 
 	def shutdown(self, *args, **kwargs):
 		"""

@@ -32,27 +32,38 @@
 
 import datetime
 
-from . import register_table
-
 import sqlalchemy
 import sqlalchemy.ext.declarative
+import sqlalchemy.orm
 
+DATABASE_TABLES = {}
 Base = sqlalchemy.ext.declarative.declarative_base()
+
+def current_timestamp(_=None):
+	return datetime.datetime.utcnow()
+
+def register_table(table):
+	columns = tuple(map(lambda c: c.name, table.__table__.columns))
+	DATABASE_TABLES[table.__tablename__] = columns
+	return table
 
 @register_table
 class AlertSubscription(Base):
 	__tablename__ = 'alert_subscriptions'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
-	campaign_id = sqlalchemy.Column(sqlalchemy.Integer)
+	user = sqlalchemy.orm.relationship('User', backref=sqlalchemy.orm.backref('alert_subscriptions', order_by=id))
+	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
+	campaign = sqlalchemy.orm.relationship('Campaign', backref=sqlalchemy.orm.backref('alert_subscriptions', order_by=id))
 
 @register_table
 class Campaign(Base):
 	__tablename__ = 'campaigns'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
-	creator = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
-	created = sqlalchemy.Column(sqlalchemy.DateTime, default=lambda _: datetime.datetime.utcnow())
+	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
+	user = sqlalchemy.orm.relationship('User', backref=sqlalchemy.orm.backref('campaigns', order_by=id))
+	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	reject_after_credentials = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
 @register_table
@@ -60,17 +71,21 @@ class Credential(Base):
 	__tablename__ = 'credentials'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	visit_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('visits.id'), nullable=False)
+	visit = sqlalchemy.orm.relationship('Visit', backref=sqlalchemy.orm.backref('credentials', order_by=id))
 	message_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('messages.id'), nullable=False)
+	message = sqlalchemy.orm.relationship('Message', backref=sqlalchemy.orm.backref('credentials', order_by=id))
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
+	campaign = sqlalchemy.orm.relationship('Campaign', backref=sqlalchemy.orm.backref('credentials', order_by=id))
 	username = sqlalchemy.Column(sqlalchemy.String)
 	password = sqlalchemy.Column(sqlalchemy.String)
-	submitted = sqlalchemy.Column(sqlalchemy.DateTime, default=lambda _: datetime.datetime.utcnow())
+	submitted = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 
 @register_table
 class DeaddropDeployment(Base):
 	__tablename__ = 'deaddrop_deployments'
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
+	campaign = sqlalchemy.orm.relationship('Campaign', backref=sqlalchemy.orm.backref('deaddrop_deployments', order_by=id))
 	destination = sqlalchemy.Column(sqlalchemy.String)
 
 @register_table
@@ -78,20 +93,23 @@ class DeaddropConnection(Base):
 	__tablename__ = 'deaddrop_connections'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	deployment_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('deaddrop_deployments.id'), nullable=False)
+	deployment = sqlalchemy.orm.relationship('DeaddropDeployment', backref=sqlalchemy.orm.backref('deaddrop_connections', order_by=id))
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
+	campaign = sqlalchemy.orm.relationship('Campaign', backref=sqlalchemy.orm.backref('deaddrop_connections', order_by=id))
 	visit_count = sqlalchemy.Column(sqlalchemy.Integer, default=1)
 	visitor_ip = sqlalchemy.Column(sqlalchemy.String)
 	local_username = sqlalchemy.Column(sqlalchemy.String)
 	local_hostname = sqlalchemy.Column(sqlalchemy.String)
 	local_ip_addresses = sqlalchemy.Column(sqlalchemy.String)
-	first_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=lambda _: datetime.datetime.utcnow())
-	last_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=lambda _: datetime.datetime.utcnow())
+	first_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	last_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 
 @register_table
 class LandingPage(Base):
 	__tablename__ = 'landing_pages'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
+	campaign = sqlalchemy.orm.relationship('Campaign', backref=sqlalchemy.orm.backref('landing_pages', order_by=id))
 	hostname = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 	page = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
@@ -100,12 +118,13 @@ class Message(Base):
 	__tablename__ = 'messages'
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
+	campaign = sqlalchemy.orm.relationship('Campaign', backref=sqlalchemy.orm.backref('messages', order_by=id))
 	target_email = sqlalchemy.Column(sqlalchemy.String)
 	company_name = sqlalchemy.Column(sqlalchemy.String)
 	first_name = sqlalchemy.Column(sqlalchemy.String)
 	last_name = sqlalchemy.Column(sqlalchemy.String)
 	opened = sqlalchemy.Column(sqlalchemy.DateTime)
-	sent = sqlalchemy.Column(sqlalchemy.DateTime, default=lambda _: datetime.datetime.utcnow())
+	sent = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	trained = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
 @register_table
@@ -120,9 +139,11 @@ class Visit(Base):
 	__tablename__ = 'visits'
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	message_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('messages.id'), nullable=False)
+	messages = sqlalchemy.orm.relationship('Message', backref=sqlalchemy.orm.backref('visits', order_by=id))
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
+	campaign = sqlalchemy.orm.relationship('Campaign', backref=sqlalchemy.orm.backref('visits', order_by=id))
 	visit_count = sqlalchemy.Column(sqlalchemy.Integer, default=1)
 	visitor_ip = sqlalchemy.Column(sqlalchemy.String)
 	visitor_details = sqlalchemy.Column(sqlalchemy.String)
-	first_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=lambda _: datetime.datetime.utcnow())
-	last_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=lambda _: datetime.datetime.utcnow())
+	first_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	last_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
