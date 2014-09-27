@@ -130,6 +130,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 				continue
 			self.server.logger.debug("sending alert SMS message to {0} ({1})".format(number, carrier))
 			sms.send_sms(alert_text, number, carrier, 'donotreply@kingphisher.local')
+		session.close()
 
 	def adjust_path(self):
 		"""Adjust the :py:attr:`~.KingPhisherRequestHandler.path` attribute based on multiple factors."""
@@ -189,6 +190,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if message:
 			visit_count = len(message.visits)
 			result = [message.target_email, message.company_name, message.first_name, message.last_name, message.trained]
+		session.close()
 		elif self.message_id == self.config.get('server.secret_id'):
 			result = ['aliddle@wonderland.com', 'Wonderland Inc.', 'Alice', 'Liddle', 0]
 		else:
@@ -238,6 +240,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			campaign = query.first()
 			if campaign:
 				self._campaign_id = campaign.id
+			session.close()
 		return self._campaign_id
 
 	@property
@@ -253,6 +256,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			query = session.query(db_models.Campaign)
 			query = query.filter_by(id=self.campaign_id)
 			self._campaign_object = query.first()
+			session.close()
 		return self._campaign_object
 
 	@property
@@ -280,6 +284,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			visit = query.first()
 			if visit:
 				self._message_id = visit.message_id
+		session.close()
 		return self._message_id
 
 	@property
@@ -300,6 +305,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			query = query.filter_by(id=value)
 			if query.count():
 				self._visit_id = value
+			session.close()
 		return self._visit_id
 
 	@property
@@ -387,13 +393,16 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost)
 		if query.count() == 0:
 			self.server.logger.warning('denying request with not found due to invalid hostname')
+			session.close()
 			raise KingPhisherAbortRequestError()
 		if self.campaign_object.reject_after_credentials and self.visit_id == None:
 			query = session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
 			if query.count() > 0:
 				self.server.logger.warning('denying request because credentials were already harvested')
+				session.close()
 				raise KingPhisherAbortRequestError()
+		session.close()
 		return
 
 	def respond_not_found(self):
@@ -441,12 +450,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		query = query.filter_by(id=deployment_id)
 		deployment = query.first()
 		if not deployment:
+			session.close()
 			self.logger.error('dead drop request received for an unknown campaign')
 			return
 
 		local_username = data.get('local_username')
 		local_hostname = data.get('local_hostname')
 		if local_username == None or local_hostname == None:
+			session.close()
 			self.logger.error('dead drop request received with missing data')
 			return
 		local_ip_addresses = data.get('local_ip_addresses')
@@ -470,6 +481,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		query = session.query(db_models.DeaddropConnection)
 		query = query.filter_by(campaign_id=deployment.campaign_id)
 		visit_count = query.count()
+		session.close()
 		if visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
 			alert_text = "{0} deaddrop connections reached for campaign: {{campaign_name}}".format(visit_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
@@ -493,10 +505,10 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		query = session.query(db_models.Message)
 		query = query.filter_by(id=msg_id, opened=None)
 		message = query.first()
-		if not message:
-			return
-		message.opened = db_models.current_timestamp()
-		session.commit()
+		if message:
+			message.opened = db_models.current_timestamp()
+			session.commit()
+		session.close()
 
 	def handle_javascript_hook(self, query):
 		kp_hook_js = find.find_data_file('javascript_hook.js')
@@ -583,6 +595,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if isinstance(trained, (str, unicode)) and trained.lower() in ['1', 'true', 'yes']:
 			message.trained = True
 		session.commit()
+		session.close()
 
 class KingPhisherServer(AdvancedHTTPServer):
 	"""

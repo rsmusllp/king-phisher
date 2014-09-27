@@ -39,10 +39,22 @@ import sqlalchemy.orm
 DATABASE_TABLES = {}
 Base = sqlalchemy.ext.declarative.declarative_base()
 
-def current_timestamp(_=None):
+def current_timestamp(*args, **kwargs):
+	"""
+	The function used for creating the timestamp used by database objects.
+
+	:return: The current timestamp.
+	:rtype: :py:class:`datetime.datetime`
+	"""
 	return datetime.datetime.utcnow()
 
 def register_table(table):
+	"""
+	Register a database table. This will populate the information provided in
+	DATABASE_TABLES dictionary.
+
+	:param table: The table to register.
+	"""
 	columns = tuple(map(lambda c: c.name, table.__table__.columns))
 	DATABASE_TABLES[table.__tablename__] = columns
 	return table

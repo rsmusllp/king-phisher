@@ -60,6 +60,13 @@ def get_tables_with_column_id(column_id):
 	return map(lambda x: x[0], filter(lambda x: column_id in x[1], models.DATABASE_TABLES.items()))
 
 def init_database(connection_url):
+	"""
+	Create and initialize the database engine. This must be done before the
+	session object can be used.
+
+	:param str connection_url: The url for the database connection.
+	:return: The initialized database engine.
+	"""
 	connection_url = sqlalchemy.engine.url.make_url(connection_url)
 	if connection_url.drivername == 'sqlite':
 		engine = sqlalchemy.create_engine(connection_url, connect_args={'check_same_thread': False}, poolclass=sqlalchemy.pool.StaticPool)
