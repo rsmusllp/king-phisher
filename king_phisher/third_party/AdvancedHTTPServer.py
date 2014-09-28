@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __all__ = [
 	'AdvancedHTTPServer',
 	'AdvancedHTTPServerRegisterPath',
@@ -79,6 +79,7 @@ import BaseHTTPServer
 import cgi
 import ConfigParser
 import Cookie
+import datetime
 import hashlib
 import hmac
 import httplib
@@ -110,19 +111,40 @@ except ImportError:
 	from StringIO import StringIO
 
 GLOBAL_HANDLER_MAP = {}
+
+def _json_default(obj):
+	if isinstance(obj, datetime.datetime):
+		return {'__complex_type__': 'datetime.datetime', 'value': obj.isoformat()}
+	raise TypeError('Unknown type: ' + repr(obj))
+
+def _json_object_hook(obj):
+	if obj.get('__complex_type__') == 'datetime.datetime':
+		return datetime.datetime.strptime(obj['value'], '%Y-%m-%dT%H:%M:%S.%f')
+	return obj
+
 SERIALIZER_DRIVERS = {}
 """Dictionary of available drivers for serialization."""
-SERIALIZER_DRIVERS['application/json'] = {'loads': json.loads, 'dumps': json.dumps}
-SERIALIZER_DRIVERS['binary/json'] = {'loads': json.loads, 'dumps': json.dumps}
-SERIALIZER_DRIVERS['binary/json+zlib'] = {'loads': lambda d: json.loads(zlib.decompress(d)), 'dumps': lambda d: zlib.compress(json.dumps(d))}
+SERIALIZER_DRIVERS['application/json'] = {'loads': lambda d: json.loads(d, object_hook=_json_object_hook), 'dumps': lambda d: json.dumps(d, default=_json_default)}
+SERIALIZER_DRIVERS['binary/json'] = SERIALIZER_DRIVERS['application/json']
+SERIALIZER_DRIVERS['binary/json+zlib'] = {'loads': lambda d: json.loads(zlib.decompress(d, object_hook=_json_object_hook)), 'dumps': lambda d: zlib.compress(json.dumps(d, default=_json_default))}
 
 try:
 	import msgpack
 except ImportError:
 	pass
 else:
-	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads': msgpack.loads, 'dumps': msgpack.dumps}
-	SERIALIZER_DRIVERS['binary/message-pack+zlib'] = {'loads': lambda d: msgpack.loads(zlib.decompress(d)), 'dumps': lambda d: zlib.compress(msgpack.dumps(d))}
+	def _msgpack_default(obj):
+		if isinstance(obj, datetime.datetime):
+			return msgpack.ExtType(10, obj.isoformat())
+		raise TypeError('Unknown type: ' + repr(obj))
+
+	def _msgpack_ext_hook(code, data):
+		if code == 10:
+			return datetime.datetime.strptime(data, '%Y-%m-%dT%H:%M:%S.%f')
+		return msfpack.ExtType(code, data)
+
+	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads': lambda d: msgpack.loads(d, ext_hook=_msgpack_ext_hook), 'dumps': lambda d: msgpack.dumps(d, default=_msgpack_default)}
+	SERIALIZER_DRIVERS['binary/message-pack+zlib'] = {'loads': lambda d: msgpack.loads(zlib.decompress(d), ext_hook=_msgpack_ext_hook), 'dumps': lambda d: zlib.compress(msgpack.dumps(d, default=_msgpack_default))}
 
 if hasattr(logging, 'NullHandler'):
 	logging.getLogger('AdvancedHTTPServer').addHandler(logging.NullHandler())
