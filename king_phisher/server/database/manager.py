@@ -57,7 +57,7 @@ def init_database(connection_url):
 		engine = sqlalchemy.create_engine(connection_url)
 	else:
 		raise ValueError('only sqlite and postgresql database drivers are supported')
-	logger.debug("connected to database: {0} using driver: {1}".format(connection_url.database, connection_url.drivername))
+	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
 	Session.configure(bind=engine)
 	models.Base.metadata.create_all(engine)
 	return engine

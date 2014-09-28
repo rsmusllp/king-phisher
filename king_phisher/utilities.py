@@ -31,6 +31,7 @@
 #
 
 import collections
+import datetime
 import distutils.version
 import functools
 import os
@@ -223,6 +224,21 @@ def escape_single_quote(string):
 	:rtype: str
 	"""
 	return re.sub('(\'|\\\)', r'\\\1', string)
+
+def format_datetime(dt):
+	"""
+	Format a date time object into a string. If the object *dt* is not an
+	instance of :py:class:`datetime.datetime` then an empty string will be
+	returned.
+
+	:param dt: The object to format.
+	:type dt: :py:class:`datetime.datetime`
+	:return: The string representing the formatted time.
+	:rtype: str
+	"""
+	if not isinstance(dt, datetime.datetime):
+		return ''
+	return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 def open_uri(uri):
 	"""

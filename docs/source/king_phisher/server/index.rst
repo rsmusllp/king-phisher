@@ -5,7 +5,8 @@
    :maxdepth: 2
    :titlesonly:
 
+   database/index.rst
+
    authenticator.rst
-   database.rst
    server.rst
    server_rpc.rst

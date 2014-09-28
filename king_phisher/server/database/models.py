@@ -37,7 +37,9 @@ import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 
 DATABASE_TABLES = {}
+"""A dictionary which contains all the database tables and their columns."""
 DATABASE_TABLE_OBJECTS = {}
+"""A dictionary which contains all the database tables and their primitive objects."""
 Base = sqlalchemy.ext.declarative.declarative_base()
 
 def current_timestamp(*args, **kwargs):

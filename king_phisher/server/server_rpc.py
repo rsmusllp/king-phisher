@@ -314,7 +314,7 @@ class KingPhisherRequestHandlerRPC(object):
 		assert(table)
 		session = db_manager.Session()
 		query = session.query(table)
-		query = query.filter_by(**dict(zip(map(lambda f: f + '_id = ?', fields), args)))
+		query = query.filter_by(**dict(zip(map(lambda f: f + '_id', fields), args)))
 		result = query.count()
 		session.close()
 		return result
@@ -329,7 +329,6 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		args = list(args)
 		offset = 0
-
 		fields = self.path.split('/')[1:-2]
 		if len(args) == (len(fields) + 1):
 			offset = (args.pop() * VIEW_ROW_COUNT)
@@ -342,7 +341,7 @@ class KingPhisherRequestHandlerRPC(object):
 		rows = []
 		session = db_manager.Session()
 		query = session.query(table)
-		query = query.filter_by(**dict(zip(map(lambda f: f + '_id = ?', fields), args)))
+		query = query.filter_by(**dict(zip(map(lambda f: f + '_id', fields), args)))
 		for row in query[offset:offset + VIEW_ROW_COUNT]:
 			rows.append(map(lambda c: getattr(row, c), columns))
 		session.close()

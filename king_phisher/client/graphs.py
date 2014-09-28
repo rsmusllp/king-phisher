@@ -30,7 +30,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import datetime
 import time
 
 from king_phisher import ua_parser
@@ -287,7 +286,7 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
 		visits = info_cache['visits']
-		first_visits = map(lambda visit: datetime.datetime.strptime(visit['first_visit'], '%Y-%m-%d %H:%M:%S'), visits)
+		first_visits = map(lambda visit: visit['first_visit'], visits)
 		first_visits.sort()
 
 		ax = self.axes[0]
