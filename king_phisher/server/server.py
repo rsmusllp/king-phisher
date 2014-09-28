@@ -182,17 +182,18 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not self.message_id:
 			return
 		visit_count = 0
-		session = db_manager.Session()
-		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
-		if message:
-			visit_count = len(message.visits)
-			result = [message.target_email, message.company_name, message.first_name, message.last_name, message.trained]
-		elif self.message_id == self.config.get('server.secret_id'):
+		result = None
+		if self.message_id == self.config.get('server.secret_id'):
 			result = ['aliddle@wonderland.com', 'Wonderland Inc.', 'Alice', 'Liddle', 0]
-		else:
+		elif self.message_id:
+			session = db_manager.Session()
+			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
+			if message:
+				visit_count = len(message.visits)
+				result = [message.target_email, message.company_name, message.first_name, message.last_name, message.trained]
 			session.close()
+		if not result:
 			return
-		session.close()
 		client_vars = {}
 		client_vars['email_address'] = result[0]
 		client_vars['company_name'] = result[1]
@@ -231,7 +232,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if hasattr(self, '_campaign_id'):
 			return self._campaign_id
 		self._campaign_id = None
-		if self.message_id:
+		if self.message_id and self.message_id != self.config.get('server.secret_id'):
 			session = db_manager.Session()
 			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
 			if message:
@@ -246,13 +247,18 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		visitor. This is retrieved by looking at an 'id' parameter in the
 		query and then by checking the
 		:py:attr:`~.KingPhisherRequestHandler.visit_id` value in the
-		database. If no message id is associated, this value is None.
+		database. If no message id is associated, this value is None. The
+		resulting value will be either a confirmed valid value, or the value
+		of the configurations server.secret_id for testing purposes.
 		"""
 		if hasattr(self, '_message_id'):
 			return self._message_id
 		self._message_id = None
-		session = db_manager.Session()
 		msg_id = self.get_query_parameter('id')
+		if msg_id == self.config.get('server.secret_id'):
+			self._message_id = msg_id
+			return self._message_id
+		session = db_manager.Session()
 		if msg_id and db_manager.get_row_by_id(session, db_models.Message, msg_id):
 			self._message_id = msg_id
 		elif self.visit_id:
@@ -504,6 +510,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 	def handle_page_visit(self):
 		if not self.message_id:
+			return
+		if self.message_id == self.config.get('server.secret_id'):
 			return
 		if not self.campaign_id:
 			return
