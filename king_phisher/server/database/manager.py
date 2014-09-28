@@ -39,25 +39,8 @@ import sqlalchemy.engine.url
 import sqlalchemy.orm
 import sqlalchemy.pool
 
-__all__ = [
-	'DATABASE_TABLES',
-	'Session',
-	'get_tables_with_column_id',
-	'initialize_database'
-]
-
 Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 logger = logging.getLogger('KingPhisher.Server.database')
-
-def get_tables_with_column_id(column_id):
-	"""
-	Get all tables which contain a column named *column_id*.
-
-	:param str column_id: The column name to get all the tables of.
-	:return: The list of matching tables.
-	:rtype: list
-	"""
-	return map(lambda x: x[0], filter(lambda x: column_id in x[1], models.DATABASE_TABLES.items()))
 
 def init_database(connection_url):
 	"""

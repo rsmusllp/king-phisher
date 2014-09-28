@@ -37,6 +37,7 @@ import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 
 DATABASE_TABLES = {}
+DATABASE_TABLE_OBJECTS = {}
 Base = sqlalchemy.ext.declarative.declarative_base()
 
 def current_timestamp(*args, **kwargs):
@@ -48,6 +49,16 @@ def current_timestamp(*args, **kwargs):
 	"""
 	return datetime.datetime.utcnow()
 
+def get_tables_with_column_id(column_id):
+	"""
+	Get all tables which contain a column named *column_id*.
+
+	:param str column_id: The column name to get all the tables of.
+	:return: The list of matching tables.
+	:rtype: list
+	"""
+	return map(lambda x: x[0], filter(lambda x: column_id in x[1], DATABASE_TABLES.items()))
+
 def register_table(table):
 	"""
 	Register a database table. This will populate the information provided in
@@ -57,6 +68,7 @@ def register_table(table):
 	"""
 	columns = tuple(map(lambda c: c.name, table.__table__.columns))
 	DATABASE_TABLES[table.__tablename__] = columns
+	DATABASE_TABLE_OBJECTS[table.__tablename__] = table
 	return table
 
 @register_table

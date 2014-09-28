@@ -182,19 +182,21 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		:rtype: dict
 		"""
 		if not self.message_id:
-			return None
+			return
 		visit_count = 0
 		session = db_manager.Session()
 		query = session.query(db_models.Message)
 		query = query.filter_by(id=self.message_id)
+		message = query.first()
 		if message:
 			visit_count = len(message.visits)
 			result = [message.target_email, message.company_name, message.first_name, message.last_name, message.trained]
-		session.close()
 		elif self.message_id == self.config.get('server.secret_id'):
 			result = ['aliddle@wonderland.com', 'Wonderland Inc.', 'Alice', 'Liddle', 0]
 		else:
-			return None
+			session.close()
+			return
+		session.close()
 		client_vars = {}
 		client_vars['email_address'] = result[0]
 		client_vars['company_name'] = result[1]
@@ -398,7 +400,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if self.campaign_object.reject_after_credentials and self.visit_id == None:
 			query = session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
-			if query.count() > 0:
+			if query.count():
 				self.server.logger.warning('denying request because credentials were already harvested')
 				session.close()
 				raise KingPhisherAbortRequestError()
