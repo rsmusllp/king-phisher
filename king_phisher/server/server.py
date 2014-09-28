@@ -115,9 +115,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		:param int campaign_id: The campaign subscribers to send the alert to.
 		"""
 		session = db_manager.Session()
-		query = session.query(db_models.Campaign)
-		query = query.filter_by(id=campaign_id)
-		campaign = query.first()
+		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
 
 		if '{campaign_name}' in alert_text:
 			alert_text = alert_text.format(campaign_name=campaign.name)
@@ -185,9 +183,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return
 		visit_count = 0
 		session = db_manager.Session()
-		query = session.query(db_models.Message)
-		query = query.filter_by(id=self.message_id)
-		message = query.first()
+		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
 		if message:
 			visit_count = len(message.visits)
 			result = [message.target_email, message.company_name, message.first_name, message.last_name, message.trained]
@@ -237,29 +233,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self._campaign_id = None
 		if self.message_id:
 			session = db_manager.Session()
-			query = session.query(db_models.Message)
-			query = query.filter_by(id=self.message_id)
-			campaign = query.first()
-			if campaign:
-				self._campaign_id = campaign.id
+			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
+			if message:
+				self._campaign_id = message.campaign_id
 			session.close()
 		return self._campaign_id
-
-	@property
-	def campaign_object(self):
-		"""
-		The campaign object representing the data within the database.
-		"""
-		if hasattr(self, '_campaign_object'):
-			return self._campaign_object
-		self._campaign_object = None
-		if self.campaign_id:
-			session = db_manager.Session()
-			query = session.query(db_models.Campaign)
-			query = query.filter_by(id=self.campaign_id)
-			self._campaign_object = query.first()
-			session.close()
-		return self._campaign_object
 
 	@property
 	def message_id(self):
@@ -275,17 +253,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self._message_id = None
 		session = db_manager.Session()
 		msg_id = self.get_query_parameter('id')
-		if msg_id:
-			query = session.query(db_models.Message)
-			query = query.filter_by(id=msg_id)
-			if query.count() == 0:
-				self._message_id = msg_id
+		if msg_id and db_manager.get_row_by_id(session, db_models.Message, msg_id):
+			self._message_id = msg_id
 		elif self.visit_id:
-			query = session.query(db_models.Visit)
-			query = query.filter_by(id=self.visit_id)
-			visit = query.first()
-			if visit:
-				self._message_id = visit.message_id
+			visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
+			self._message_id = visit.message_id
 		session.close()
 		return self._message_id
 
@@ -303,9 +275,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if kp_cookie_name in self.cookies:
 			value = self.cookies[kp_cookie_name].value
 			session = db_manager.Session()
-			session.query(db_models.Visit)
-			query = query.filter_by(id=value)
-			if query.count():
+			if db_manager.get_row_by_id(session, db_models.Visit, value):
 				self._visit_id = value
 			session.close()
 		return self._visit_id
@@ -391,13 +361,16 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			raise KingPhisherAbortRequestError()
 
 		session = db_manager.Session()
+		query = session.query(db_models.Campaign)
+		query = filter_by(id=self.campaign_id)
+		campaign = query.first()
 		query = session.query(db_models.LandingPage)
 		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost)
 		if query.count() == 0:
 			self.server.logger.warning('denying request with not found due to invalid hostname')
 			session.close()
 			raise KingPhisherAbortRequestError()
-		if self.campaign_object.reject_after_credentials and self.visit_id == None:
+		if campaign.reject_after_credentials and self.visit_id == None:
 			query = session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
 			if query.count():
@@ -447,10 +420,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return
 
 		session = db_manager.Session()
-		deployment_id = data.get('deaddrop_id')
-		query = session.query(db_models.DeaddropDeployment)
-		query = query.filter_by(id=deployment_id)
-		deployment = query.first()
+		deployment = db_manager.get_row_by_id(session, db_models.DeaddropDeployment, data.get('deaddrop_id'))
 		if not deployment:
 			session.close()
 			self.logger.error('dead drop request received for an unknown campaign')
@@ -467,12 +437,12 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			local_ip_addresses = ' '.join(local_ip_addresses)
 
 		query = session.query(db_models.DeaddropConnection)
-		query = query.filter_by(id=deployment_id, local_username=local_username, local_hostname=local_hostname)
+		query = query.filter_by(id=deployment.id, local_username=local_username, local_hostname=local_hostname)
 		connection = query.first()
 		if connection:
 			connection.visit_count += 1
 		else:
-			connection = db_models.Connection(campaign_id=deployment.campaign_id, deployment_id=deployment_id)
+			connection = db_models.Connection(campaign_id=deployment.campaign_id, deployment_id=deployment.id)
 			connection.visitor_ip = self.client_address
 			connection.local_username = local_username
 			connection.local_hostname = local_hostname
@@ -537,13 +507,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return
 		if not self.campaign_id:
 			return
+		self.logger.info("handling a page visit for campaign id: {0} from IP address: {1}".format(self.campaign_id, self.client_address[0]))
 		message_id = self.message_id
 		campaign_id = self.campaign_id
 		session = db_manager.Session()
-		query = session.query(db_models.Message)
-		query = query.filter_by(id=self.message_id, opened=None)
-		message = query.first()
-		message.opened = db_models.current_timestamp()
+		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
+		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
+		if message.opened == None:
+			message.opened = db_models.current_timestamp()
 
 		if self.visit_id == None:
 			visit_id = make_uid()
@@ -554,7 +525,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			visit.visitor_ip = self.client_address[0]
 			visit.visitor_details = (self.headers.getheader('user-agent') or '')
 			session.add(visit)
-			visit_count = len(self.campaign_object.visits)
+			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in [1, 10, 25]) or ((visit_count % 50) == 0)):
 				alert_text = "{0} vists reached for campaign: {{campaign_name}}".format(visit_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
@@ -563,9 +534,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			query = session.query(db_models.LandingPage)
 			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.path)
 			if query.count():
-				query = session.query(db_models.Visit)
-				query = query.filter_by(id=visit_id)
-				visit = query.first()
+				visit = db_manager.get_row_by_id(session, db_models.Visit, visit_id)
 				visit.visit_count += 1
 
 		username = None
@@ -588,7 +557,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 				cred.username = username
 				cred.password = password
 				session.add(cred)
-				cred_count = len(self.campaign_object.credentials)
+				cred_count = len(campaign.credentials)
 			if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
 				alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))

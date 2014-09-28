@@ -39,6 +39,7 @@ from king_phisher.server.database import models as db_models
 VIEW_ROW_COUNT = 25
 """The default number of rows to return when one of the /view methods are called."""
 DATABASE_TABLES = db_models.DATABASE_TABLES
+DATABASE_TABLE_OBJECTS = db_models.DATABASE_TABLE_OBJECTS
 
 class KingPhisherRequestHandlerRPC(object):
 	"""
@@ -104,9 +105,7 @@ class KingPhisherRequestHandlerRPC(object):
 		if not username:
 			return True
 		session = db_manager.Session()
-		query = session.query(db_models.User)
-		query = query.filter_by(id=username)
-		if query.count() == 0:
+		if not db_manager.get_row_by_id(session, db_models.User, username):
 			user = db_models.User(id=username)
 			session.add(user)
 			session.commit()
@@ -220,7 +219,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:param int campaign_id: The ID of the campaign.
 		"""
 		username = self.basic_auth_user
-		session = db_models.Session()
+		session = db_manager.Session()
 		query = session.query(db_models.AlertSubscription)
 		query = query.filter_by(campaign_id=campaign_id, user_id=username)
 		subscription = query.first()
@@ -241,7 +240,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:param str page: The request resource.
 		"""
 		page = page.lstrip('/')
-		session = db_models.Session()
+		session = db_manager.Session()
 		query = session.query(db_models.LandingPage)
 		query = query.filter_by(campaign_id=campaign_id, hostname=hostname, page=page)
 		if query.count() == 0:
@@ -264,7 +263,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:param str first_name: The first name of the message's recipient.
 		:param str last_name: The last name of the message's recipient.
 		"""
-		session = db_models.Session()
+		session = db_manager.Session()
 		message = db_models.Message()
 		message.id = email_id
 		message.campaign_id = campaign_id
@@ -289,12 +288,10 @@ class KingPhisherRequestHandlerRPC(object):
 		tables = database.get_tables_with_column_id('campaign_id')
 		session = db_manager.Session()
 		for table in tables:
-			query = session.query(db_models.DATABASE_TABLE_OBJECTS[table])
+			query = session.query(DATABASE_TABLE_OBJECTS[table])
 			query = query.filter_by(campaign_id=campaign_id)
 			query.delete()
-		query = session.query(db_models.Campaign)
-		query = query.filter_by(id=campaign_id)
-		query.delete()
+		session.delete(db_manager.get_row_by_id(session, db_models.Campaign, campaign_id))
 		session.commit()
 		session.close()
 		return
@@ -310,7 +307,7 @@ class KingPhisherRequestHandlerRPC(object):
 		args = list(args)
 		fields = self.path.split('/')[1:-2]
 		assert(len(fields) == len(args))
-		table = db_models.DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
+		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
 		assert(table)
 		session = db_manager.Session()
 		query = session.query(table)
@@ -334,7 +331,7 @@ class KingPhisherRequestHandlerRPC(object):
 			offset = (args.pop() * VIEW_ROW_COUNT)
 		assert(len(fields) == len(args))
 		table_name = self.path.split('/')[-2]
-		table = db_models.DATABASE_TABLE_OBJECTS.get(table_name)
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert(table)
 
 		columns = DATABASE_TABLES[table_name]
@@ -355,12 +352,10 @@ class KingPhisherRequestHandlerRPC(object):
 
 		:param row_id: The id value.
 		"""
-		table = db_models.DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
+		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
 		assert(table)
 		session = db_manager.Session()
-		query = session.query(table)
-		query = query.filter_by(id=row_id)
-		query.delete()
+		session.delete(db_manager.get_row_by_id(session, table, row_id))
 		session.commit()
 		session.close()
 		return
@@ -375,13 +370,11 @@ class KingPhisherRequestHandlerRPC(object):
 		:rtype: dict
 		"""
 		table_name = self.path.split('/')[-2]
-		table = db_models.DATABASE_TABLE_OBJECTS.get(table_name)
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert(table)
 		columns = DATABASE_TABLES[table_name]
 		session = db_manager.Session()
-		query = session.query(table)
-		query = query.filter_by(id=row_id)
-		row = query.first()
+		row = db_manager.get_row_by_id(session, table, row_id)
 		if row:
 			row = dict(zip(columns, map(lambda c: getattr(row, c), columns)))
 		session.close()
@@ -402,7 +395,7 @@ class KingPhisherRequestHandlerRPC(object):
 		table_name = self.path.split('/')[-2]
 		for key, value in zip(keys, values):
 			assert(key in DATABASE_TABLES[table_name])
-		table = db_models.DATABASE_TABLE_OBJECTS.get(table_name)
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert(table)
 		session = db_manager.Session()
 		row = table()
@@ -430,9 +423,7 @@ class KingPhisherRequestHandlerRPC(object):
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert(table)
 		session = db_manager.Session()
-		query = session.query(table)
-		query = query.filter_by(id=row_id)
-		row = query.first()
+		row = db_manager.get_row_by_id(session, table, row_id)
 		if not row:
 			session.close()
 			assert(row)

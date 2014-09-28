@@ -42,6 +42,23 @@ import sqlalchemy.pool
 Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 logger = logging.getLogger('KingPhisher.Server.database')
 
+def get_row_by_id(session, table, row_id):
+	"""
+	Retrieve a database row fron the specified table by it's unique id.
+
+	:param session: The database session to use for the query.
+	:type session: `.Session`
+	:param table: The table object or the name of the database table where the row resides.
+	:param row_id: The id of the row to retrieve.
+	:return: The object representing the specified row or None if it does not exist.
+	"""
+	if not issubclass(table, models.Base):
+		table = models.DATABASE_TABLE_OBJECTS[table]
+	query = session.query(table)
+	query = query.filter_by(id=row_id)
+	result = query.first()
+	return result
+
 def init_database(connection_url):
 	"""
 	Create and initialize the database engine. This must be done before the
