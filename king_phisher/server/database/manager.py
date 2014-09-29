@@ -31,6 +31,7 @@
 #
 
 import logging
+import os
 
 from . import models
 
@@ -41,6 +42,24 @@ import sqlalchemy.pool
 
 Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 logger = logging.getLogger('KingPhisher.Server.database')
+_meta_data_type_map = {'int': int, 'long': long, 'str': str}
+
+def get_meta_data(key, session=None):
+	"""
+	Retreive the value from the database's metadata storage.
+
+	:param str key: The name of the value to retrieve.
+	:param session: The session to use to retrieve the value.
+	:return: The meta data value.
+	"""
+	close_session = session == None
+	session = (session or Session())
+	result = get_row_by_id(session, models.MetaData, key)
+	if close_session:
+		session.close()
+	if result == None:
+		return None
+	return _meta_data_type_map[result.value_type](result.value)
 
 def get_row_by_id(session, table, row_id):
 	"""
@@ -59,6 +78,32 @@ def get_row_by_id(session, table, row_id):
 	result = query.first()
 	return result
 
+def set_meta_data(key, value, session=None):
+	"""
+	Store a piece of metadata regarding the King Phisher database.
+
+	:param str key: The name of the data.
+	:param value: The value to store.
+	:type value: int, str
+	:param session: The session to use to store the value.
+	"""
+	value_type = type(value).__name__
+	if not value_type in _meta_data_type_map:
+		raise ValueError('incompatible data type:' + value_type)
+	close_session = session == None
+	session = (session or Session())
+	result = get_row_by_id(session, models.MetaData, key)
+	if result:
+		session.delete(result)
+	md = models.MetaData(id=key)
+	md.value_type = value_type
+	md.value = str(value)
+	session.add(md)
+	session.commit()
+	if close_session:
+		session.close()
+	return
+
 def init_database(connection_url):
 	"""
 	Create and initialize the database engine. This must be done before the
@@ -67,6 +112,11 @@ def init_database(connection_url):
 	:param str connection_url: The url for the database connection.
 	:return: The initialized database engine.
 	"""
+	if connection_url == ':memory:':
+		connection_url = 'sqlite://'
+	elif os.path.isfile(connection_url):
+		connection_url = 'sqlite:///' + os.path.abspath(connection_url)
+
 	connection_url = sqlalchemy.engine.url.make_url(connection_url)
 	if connection_url.drivername == 'sqlite':
 		engine = sqlalchemy.create_engine(connection_url, connect_args={'check_same_thread': False}, poolclass=sqlalchemy.pool.StaticPool)
@@ -74,7 +124,10 @@ def init_database(connection_url):
 		engine = sqlalchemy.create_engine(connection_url)
 	else:
 		raise ValueError('only sqlite and postgresql database drivers are supported')
-	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
 	Session.configure(bind=engine)
 	models.Base.metadata.create_all(engine)
+
+	set_meta_data('database_driver', connection_url.drivername)
+
+	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
 	return engine

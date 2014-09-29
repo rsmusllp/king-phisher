@@ -9,6 +9,6 @@
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.database.get_row_by_id
+.. autofunction:: king_phisher.server.database.manager.get_row_by_id
 
 .. autofunction:: king_phisher.server.database.manager.init_database

@@ -15,6 +15,9 @@ Data
 .. autodata:: king_phisher.server.database.models.DATABASE_TABLE_OBJECTS
    :annotation:
 
+.. autodata:: king_phisher.server.database.models.SCHEMA_VERSION
+   :annotation:
+
 Functions
 ---------
 

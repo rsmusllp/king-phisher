@@ -40,6 +40,9 @@ DATABASE_TABLES = {}
 """A dictionary which contains all the database tables and their columns."""
 DATABASE_TABLE_OBJECTS = {}
 """A dictionary which contains all the database tables and their primitive objects."""
+SCHEMA_VERSION = 2
+"""The schema version of the database, used for compatibility checks."""
+
 Base = sqlalchemy.ext.declarative.declarative_base()
 
 def current_timestamp(*args, **kwargs):
@@ -152,6 +155,13 @@ class Message(Base):
 	opened = sqlalchemy.Column(sqlalchemy.DateTime)
 	sent = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	trained = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
+
+@register_table
+class MetaData(Base):
+	__tablename__ = 'meta_data'
+	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
+	value_type = sqlalchemy.Column(sqlalchemy.String, default='str')
+	value = sqlalchemy.Column(sqlalchemy.String)
 
 @register_table
 class User(Base):

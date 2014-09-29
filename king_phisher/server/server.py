@@ -593,12 +593,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
 		self.serve_robots_txt = True
-		db_connection = config.get('server.database')
-		if db_connection == ':memory:':
-			db_connection = 'sqlite://'
-		elif os.path.isfile(db_connection):
-			db_connection = 'sqlite:///' + os.path.abspath(db_connection)
-		self.database_engine = db_manager.init_database(db_connection)
+		self.database_engine = db_manager.init_database(config.get('server.database'))
 
 		self.http_server.config = config
 		self.http_server.throttle_semaphore = threading.Semaphore()
