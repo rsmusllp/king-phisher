@@ -34,6 +34,7 @@ import logging
 import os
 
 from . import models
+from king_phisher import errors
 
 import sqlalchemy
 import sqlalchemy.engine.url
@@ -130,16 +131,18 @@ def init_database(connection_url):
 	connection_url = normalize_connection_url(connection_url)
 	connection_url = sqlalchemy.engine.url.make_url(connection_url)
 	if connection_url.drivername == 'sqlite':
-		logger.warning('SQLite is no longer fully supported, see https://github.com/securestate/king-phisher/wiki/Database#sqlite for more details')
 		engine = sqlalchemy.create_engine(connection_url, connect_args={'check_same_thread': False}, poolclass=sqlalchemy.pool.StaticPool)
 	elif connection_url.drivername == 'postgresql':
 		engine = sqlalchemy.create_engine(connection_url)
 	else:
-		raise ValueError('only sqlite and postgresql database drivers are supported')
+		raise errors.KingPhisherDatabaseError('only sqlite and postgresql database drivers are supported')
 	Session.configure(bind=engine)
 	models.Base.metadata.create_all(engine)
 
 	set_meta_data('database_driver', connection_url.drivername)
+	schema_version = get_meta_data('schema_version')
+	if schema_version > models.SCHEMA_VERSION:
+		raise errors.KingPhisherDatabaseError('the database schema is for a newer version, automatic downgrades are not supported')
 
 	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
 	return engine

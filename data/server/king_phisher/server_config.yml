@@ -20,8 +20,9 @@ server:
   #data_path: /opt/king-phisher/data/server
 
   # The SQLite3 database file to use, the folder needs write permissions
-  # WARNING: SQLite3 is not fully supported as of version 0.1.6, it is
-  # recommended that users use PostgreSQL instead
+  # WARNING: SQLite3 is not fully supported as of version 0.1.6, see
+  # https://github.com/securestate/king-phisher/wiki/Database#sqlite for more
+  # details
   #database: sqlite:////var/king-phisher/king-phisher.db
 
   # The Postgres database to use

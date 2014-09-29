@@ -39,6 +39,7 @@ import sys
 import threading
 
 from king_phisher import configuration
+from king_phisher import errors
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
@@ -51,9 +52,11 @@ except ImportError:
 	has_msgpack = False
 
 __requirements__ = [
+	'alembic>=0.6.7',
 	'dnspython>=1.10.0',
 	'Jinja2>=2.7.1',
 	'msgpack-python>=0.4.2',
+	'psycopg2>=2.5.4',
 	'PyYAML>=3.10',
 	'SQLAlchemy>=0.9'
 ]
@@ -123,7 +126,11 @@ def main():
 	if config.has_option('server.data_path'):
 		find.data_path_append(config.get('server.data_path'))
 
-	king_phisher_server = server.build_king_phisher_server(config)
+	try:
+		king_phisher_server = server.build_king_phisher_server(config)
+	except errors.KingPhisherDatabaseError as error:
+		logger.critical(error.message)
+		return os.EX_SOFTWARE
 
 	server_pid = os.getpid()
 	logger.info('server running in process: ' + str(server_pid))
@@ -143,9 +150,10 @@ def main():
 
 	db_engine_url = king_phisher_server.database_engine.url
 	if db_engine_url.drivername == 'sqlite':
+		logger.warning('sqlite is no longer fully supported, see https://github.com/securestate/king-phisher/wiki/Database#sqlite for more details')
 		database_dir = os.path.dirname(db_engine_url.database)
 		if not os.access(database_dir, os.W_OK):
-			logger.critical('sqlite3 requires write premissions to the folder containing the database')
+			logger.critical('sqlite requires write premissions to the folder containing the database')
 			king_phisher_server.shutdown()
 			return os.EX_NOPERM
 	sighup_handler = lambda: threading.Thread(target=king_phisher_server.shutdown).start()
