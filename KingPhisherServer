@@ -140,11 +140,14 @@ def main():
 		os.setregid(user_info.pw_gid, user_info.pw_gid)
 		os.setreuid(user_info.pw_uid, user_info.pw_uid)
 		logger.info("dropped privileges to the {0} account".format(setuid_username))
-	database_dir = os.path.dirname(config.get('server.database'))
-	if not os.access(database_dir, os.W_OK):
-		logger.critical('sqlite3 requires write premissions to the folder containing the database')
-		king_phisher_server.shutdown()
-		return os.EX_NOPERM
+
+	db_engine_url = king_phisher_server.database_engine.url
+	if db_engine_url.drivername == 'sqlite':
+		database_dir = os.path.dirname(db_engine_url.database)
+		if not os.access(database_dir, os.W_OK):
+			logger.critical('sqlite3 requires write premissions to the folder containing the database')
+			king_phisher_server.shutdown()
+			return os.EX_NOPERM
 	sighup_handler = lambda: threading.Thread(target=king_phisher_server.shutdown).start()
 	signal.signal(signal.SIGHUP, lambda signum, frame: sighup_handler())
 	try:

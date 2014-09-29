@@ -104,6 +104,21 @@ def set_meta_data(key, value, session=None):
 		session.close()
 	return
 
+def normalize_connection_url(connection_url):
+	"""
+	Normalize a connection url by performing any conversions necessary for it to
+	be used with the database API.
+
+	:param str connection_url: The connection url to normalize.
+	:return: The normalized connection url.
+	:rtype: str
+	"""
+	if connection_url == ':memory:':
+		connection_url = 'sqlite://'
+	elif os.path.isfile(connection_url) or os.path.isdir(os.path.dirname(connection_url)):
+		connection_url = 'sqlite:///' + os.path.abspath(connection_url)
+	return connection_url
+
 def init_database(connection_url):
 	"""
 	Create and initialize the database engine. This must be done before the
@@ -112,13 +127,10 @@ def init_database(connection_url):
 	:param str connection_url: The url for the database connection.
 	:return: The initialized database engine.
 	"""
-	if connection_url == ':memory:':
-		connection_url = 'sqlite://'
-	elif os.path.isfile(connection_url):
-		connection_url = 'sqlite:///' + os.path.abspath(connection_url)
-
+	connection_url = normalize_connection_url(connection_url)
 	connection_url = sqlalchemy.engine.url.make_url(connection_url)
 	if connection_url.drivername == 'sqlite':
+		logger.warning('SQLite is no longer fully supported, see https://github.com/securestate/king-phisher/wiki/Database#sqlite for more details')
 		engine = sqlalchemy.create_engine(connection_url, connect_args={'check_same_thread': False}, poolclass=sqlalchemy.pool.StaticPool)
 	elif connection_url.drivername == 'postgresql':
 		engine = sqlalchemy.create_engine(connection_url)
