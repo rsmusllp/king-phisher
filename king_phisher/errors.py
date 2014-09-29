@@ -44,6 +44,14 @@ class KingPhisherAbortRequestError(KingPhisherError):
 	"""
 	pass
 
+class KingPhisherDatabaseError(KingPhisherError):
+	"""
+	An exception that can be raised by King Phisher when there is any error
+	relating to the database, it's configuration or any action involving it. The
+	underlying database API will raise exceptions of it's own kind.
+	"""
+	pass
+
 class KingPhisherInputValidationError(KingPhisherError):
 	"""
 	An exception that is raised when any kind of input into King Phisher fails

@@ -52,5 +52,5 @@ if version_label:
 	else:
 		distutils_version += '0'
 
-rpc_api_version = 1
+rpc_api_version = 2
 """An integer representing the current version of the RPC API, used for compatibility checks."""

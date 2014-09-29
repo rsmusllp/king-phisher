@@ -88,12 +88,11 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		web_root = os.path.join(os.getcwd(), 'data', 'server', 'king_phisher')
 		config = configuration.Configuration(find.find_data_file('server_config.yml'))
 		config.set('server.address.port', random.randint(2000, 10000))
-		config.set('server.database', ':memory:')
+		config.set('server.database', 'sqlite://')
 		config.set('server.web_root', web_root)
 		self.config = config
 		self.server = build_king_phisher_server(config, HandlerClass=KingPhisherRequestHandlerTest)
 		self.assertIsInstance(self.server, KingPhisherServer)
-		self.server.init_database(config.get('server.database'))
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
 		self.server_thread.daemon = True
 		self.server_thread.start()

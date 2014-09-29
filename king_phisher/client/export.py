@@ -64,7 +64,6 @@ KPM_ARCHIVE_FILES = {
 KPM_INLINE_IMAGE_REGEXP = re.compile(r"""{{\s*inline_image\(\s*(('(?:[^'\\]|\\.)+')|("(?:[^"\\]|\\.)+"))\s*\)\s*}}""")
 
 TABLE_VALUE_CONVERSIONS = {
-	'campaigns/created': lambda ts: datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S').isoformat(),
 	'campaigns/reject_after_credentials': bool,
 	'messages/opened': lambda value: (None if value == None else value),
 	'messages/trained': bool
@@ -124,6 +123,8 @@ def convert_value(table_name, key, value):
 	conversion_key = table_name + '/' + key
 	if conversion_key in TABLE_VALUE_CONVERSIONS:
 		value = TABLE_VALUE_CONVERSIONS[conversion_key](value)
+	elif isinstance(value, datetime.datetime):
+		value = value.isoformat()
 	if value != None:
 		value = str(value).encode('utf-8')
 	return value

@@ -30,15 +30,16 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import contextlib
 import threading
 
 from king_phisher import version
-from king_phisher.server import database
+from king_phisher.server.database import manager as db_manager
+from king_phisher.server.database import models as db_models
 
 VIEW_ROW_COUNT = 25
 """The default number of rows to return when one of the /view methods are called."""
-DATABASE_TABLES = database.DATABASE_TABLES
+DATABASE_TABLES = db_models.DATABASE_TABLES
+DATABASE_TABLE_OBJECTS = db_models.DATABASE_TABLE_OBJECTS
 
 class KingPhisherRequestHandlerRPC(object):
 	"""
@@ -74,34 +75,14 @@ class KingPhisherRequestHandlerRPC(object):
 			self.rpc_handler_map['/' + table_name + '/view'] = self.rpc_database_get_rows
 
 		# Tables with a campaign_id field
-		for table_name in database.get_tables_with_column_id('campaign_id'):
+		for table_name in db_models.get_tables_with_column_id('campaign_id'):
 			self.rpc_handler_map['/campaign/' + table_name + '/count'] = self.rpc_database_count_rows
 			self.rpc_handler_map['/campaign/' + table_name + '/view'] = self.rpc_database_get_rows
 
 		# Tables with a message_id field
-		for table_name in database.get_tables_with_column_id('message_id'):
+		for table_name in db_models.get_tables_with_column_id('message_id'):
 			self.rpc_handler_map['/message/' + table_name + '/count'] = self.rpc_database_count_rows
 			self.rpc_handler_map['/message/' + table_name + '/view'] = self.rpc_database_get_rows
-
-	@contextlib.contextmanager
-	def get_cursor(self):
-		"""Acquire the database cursor context and yield it."""
-		with self.database.get_cursor() as cursor:
-			yield cursor
-
-	def query_count(self, query, values):
-		"""
-		Execute an SQL COUNT query and return the result.
-
-		:param str query: The SQL query to execute, this must be a COUNT query.
-		:param tuple values: Values to insert into the query string.
-		:return: The result of the COUNT query.
-		:rtype: int
-		"""
-		with self.get_cursor() as cursor:
-			cursor.execute(query, values)
-			count = cursor.fetchone()[0]
-		return count
 
 	def rpc_ping(self):
 		"""
@@ -123,8 +104,12 @@ class KingPhisherRequestHandlerRPC(object):
 		username = self.basic_auth_user
 		if not username:
 			return True
-		with self.get_cursor() as cursor:
-			cursor.execute('INSERT OR IGNORE INTO users (id) VALUES (?)', (username,))
+		session = db_manager.Session()
+		if not db_manager.get_row_by_id(session, db_models.User, username):
+			user = db_models.User(id=username)
+			session.add(user)
+			session.commit()
+		session.close()
 		return True
 
 	def rpc_shutdown(self):
@@ -188,11 +173,11 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: The ID of the new campaign.
 		:rtype: int
 		"""
-		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO campaigns (name, creator) VALUES (?, ?)', (name, self.basic_auth_user))
-			cursor.execute('SELECT id FROM campaigns WHERE name = ?', (name,))
-			campaign_id = cursor.fetchone()[0]
-		return campaign_id
+		session = db_manager.Session()
+		campaign = db_models.Campaign(name=name, user_id=self.basic_auth_user)
+		session.add(campaign)
+		session.commit()
+		return campaign.id
 
 	def rpc_campaign_alerts_is_subscribed(self, campaign_id):
 		"""
@@ -203,10 +188,12 @@ class KingPhisherRequestHandlerRPC(object):
 		:rtype: bool
 		"""
 		username = self.basic_auth_user
-		with self.get_cursor() as cursor:
-			if self.query_count('SELECT COUNT(id) FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
-				return True
-		return False
+		session = db_manager.Session()
+		query = session.query(db_models.AlertSubscription)
+		query = query.filter_by(campaign_id=campaign_id, user_id=username)
+		result = query.count()
+		session.close()
+		return result
 
 	def rpc_campaign_alerts_subscribe(self, campaign_id):
 		"""
@@ -215,10 +202,14 @@ class KingPhisherRequestHandlerRPC(object):
 		:param int campaign_id: The ID of the campaign.
 		"""
 		username = self.basic_auth_user
-		with self.get_cursor() as cursor:
-			if self.query_count('SELECT COUNT(id) FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id)):
-				return
-			cursor.execute('INSERT INTO alert_subscriptions (user_id, campaign_id) VALUES (?, ?)', (username, campaign_id))
+		session = db_manager.Session()
+		query = session.query(db_models.AlertSubscription)
+		query = query.filter_by(campaign_id=campaign_id, user_id=username)
+		if query.count() == 0:
+			subscription = db_models.AlertSubscription(campaign_id=campaign_id, user_id=username)
+			session.add(subscription)
+			session.commit()
+		session.close()
 		return
 
 	def rpc_campaign_alerts_unsubscribe(self, campaign_id):
@@ -228,8 +219,15 @@ class KingPhisherRequestHandlerRPC(object):
 		:param int campaign_id: The ID of the campaign.
 		"""
 		username = self.basic_auth_user
-		with self.get_cursor() as cursor:
-			cursor.execute('DELETE FROM alert_subscriptions WHERE user_id = ? AND campaign_id = ?', (username, campaign_id))
+		session = db_manager.Session()
+		query = session.query(db_models.AlertSubscription)
+		query = query.filter_by(campaign_id=campaign_id, user_id=username)
+		subscription = query.first()
+		if subscription:
+			session.delete(subscription)
+			session.commit()
+		session.close()
+		return
 
 	def rpc_campaign_landing_page_new(self, campaign_id, hostname, page):
 		"""
@@ -242,13 +240,17 @@ class KingPhisherRequestHandlerRPC(object):
 		:param str page: The request resource.
 		"""
 		page = page.lstrip('/')
-		if self.query_count('SELECT COUNT(id) FROM landing_pages WHERE campaign_id = ? AND hostname = ? AND page = ?', (campaign_id, hostname, page)):
-			return
-		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO landing_pages (campaign_id, hostname, page) VALUES (?, ?, ?)', (campaign_id, hostname, page))
+		session = db_manager.Session()
+		query = session.query(db_models.LandingPage)
+		query = query.filter_by(campaign_id=campaign_id, hostname=hostname, page=page)
+		if query.count() == 0:
+			landing_page = db_models.LandingPage(campaign_id=campaign_id, hostname=hostname, page=page)
+			session.add(landing_page)
+			session.commit()
+		session.close()
 		return
 
-	def rpc_campaign_message_new(self, campaign_id, email_id, email_target, company_name, first_name, last_name):
+	def rpc_campaign_message_new(self, campaign_id, email_id, target_email, company_name, first_name, last_name):
 		"""
 		Record a message that has been sent as part of a campaign. These
 		details can be retrieved later for value substitution in template
@@ -256,14 +258,22 @@ class KingPhisherRequestHandlerRPC(object):
 
 		:param int campaign_id: The ID of the campaign.
 		:param str email_id: The message id of the sent email.
-		:param str email_target: The email address that the message was sent to.
+		:param str target_email: The email address that the message was sent to.
 		:param str company_name: The company name value for the message.
 		:param str first_name: The first name of the message's recipient.
 		:param str last_name: The last name of the message's recipient.
 		"""
-		values = (email_id, campaign_id, email_target, company_name, first_name, last_name)
-		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO messages (id, campaign_id, target_email, company_name, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)', values)
+		session = db_manager.Session()
+		message = db_models.Message()
+		message.id = email_id
+		message.campaign_id = campaign_id
+		message.target_email = target_email
+		message.company_name = company_name
+		message.first_name = first_name
+		message.last_name = last_name
+		session.add(message)
+		session.commit()
+		session.close()
 		return
 
 	def rpc_campaign_delete(self, campaign_id):
@@ -276,11 +286,14 @@ class KingPhisherRequestHandlerRPC(object):
 			takes place.
 		"""
 		tables = database.get_tables_with_column_id('campaign_id')
-		with self.get_cursor() as cursor:
-			for table in tables:
-				sql_query = "DELETE FROM {0} WHERE campaign_id = ?".format(table)
-				cursor.execute(sql_query, (campaign_id,))
-			cursor.execute("DELETE FROM campaigns WHERE id = ?", (campaign_id,))
+		session = db_manager.Session()
+		for table in tables:
+			query = session.query(DATABASE_TABLE_OBJECTS[table])
+			query = query.filter_by(campaign_id=campaign_id)
+			query.delete()
+		session.delete(db_manager.get_row_by_id(session, db_models.Campaign, campaign_id))
+		session.commit()
+		session.close()
 		return
 
 	def rpc_database_count_rows(self, *args):
@@ -292,13 +305,16 @@ class KingPhisherRequestHandlerRPC(object):
 		:rtype: int
 		"""
 		args = list(args)
-		table = self.path.split('/')[-2]
 		fields = self.path.split('/')[1:-2]
 		assert(len(fields) == len(args))
-		sql_query = 'SELECT COUNT(id) FROM ' + table
-		if len(fields):
-			sql_query += ' WHERE ' + ' AND '.join(map(lambda f: f + '_id = ?', fields))
-		return self.query_count(sql_query, args)
+		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
+		assert(table)
+		session = db_manager.Session()
+		query = session.query(table)
+		query = query.filter_by(**dict(zip(map(lambda f: f + '_id', fields), args)))
+		result = query.count()
+		session.close()
+		return result
 
 	def rpc_database_get_rows(self, *args):
 		"""
@@ -310,22 +326,22 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		args = list(args)
 		offset = 0
-
-		table = self.path.split('/')[-2]
 		fields = self.path.split('/')[1:-2]
 		if len(args) == (len(fields) + 1):
 			offset = (args.pop() * VIEW_ROW_COUNT)
 		assert(len(fields) == len(args))
-		columns = DATABASE_TABLES[table]
+		table_name = self.path.split('/')[-2]
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
+		assert(table)
+
+		columns = DATABASE_TABLES[table_name]
 		rows = []
-		sql_query = 'SELECT ' + ', '.join(columns) + ' FROM ' + table
-		if len(fields):
-			sql_query += ' WHERE ' + ' AND '.join(map(lambda f: f + '_id = ?', fields))
-		sql_query += ' LIMIT ' + str(VIEW_ROW_COUNT) + ' OFFSET ?'
-		args.append(offset)
-		with self.get_cursor() as cursor:
-			for row in cursor.execute(sql_query, args):
-				rows.append(row)
+		session = db_manager.Session()
+		query = session.query(table)
+		query = query.filter_by(**dict(zip(map(lambda f: f + '_id', fields), args)))
+		for row in query[offset:offset + VIEW_ROW_COUNT]:
+			rows.append(map(lambda c: getattr(row, c), columns))
+		session.close()
 		if not len(rows):
 			return None
 		return {'columns': columns, 'rows': rows}
@@ -336,9 +352,12 @@ class KingPhisherRequestHandlerRPC(object):
 
 		:param row_id: The id value.
 		"""
-		table = self.path.split('/')[-2]
-		with self.get_cursor() as cursor:
-			cursor.execute('DELETE FROM ' + table + ' WHERE id = ?', (row_id,))
+		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
+		assert(table)
+		session = db_manager.Session()
+		session.delete(db_manager.get_row_by_id(session, table, row_id))
+		session.commit()
+		session.close()
 		return
 
 	def rpc_database_get_row_by_id(self, row_id):
@@ -350,13 +369,15 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: The specified row data.
 		:rtype: dict
 		"""
-		table = self.path.split('/')[-2]
-		columns = DATABASE_TABLES[table]
-		with self.get_cursor() as cursor:
-			cursor.execute('SELECT ' + ', '.join(columns) + ' FROM ' + table + ' WHERE id = ?', (row_id,))
-			row = cursor.fetchone()
-			if row:
-				row = dict(zip(columns, row))
+		table_name = self.path.split('/')[-2]
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
+		assert(table)
+		columns = DATABASE_TABLES[table_name]
+		session = db_manager.Session()
+		row = db_manager.get_row_by_id(session, table, row_id)
+		if row:
+			row = dict(zip(columns, map(lambda c: getattr(row, c), columns)))
+		session.close()
 		return row
 
 	def rpc_database_insert_row(self, keys, values):
@@ -366,16 +387,22 @@ class KingPhisherRequestHandlerRPC(object):
 		:param tuple keys: The column names of *values*.
 		:param tuple values: The values to be inserted in the row.
 		"""
-		table = self.path.split('/')[-2]
 		if not isinstance(keys, (list, tuple)):
 			keys = (keys,)
 		if not isinstance(values, (list, tuple)):
 			values = (values,)
 		assert(len(keys) == len(values))
+		table_name = self.path.split('/')[-2]
 		for key, value in zip(keys, values):
-			assert(key in DATABASE_TABLES[table])
-		with self.get_cursor() as cursor:
-			cursor.execute('INSERT INTO ' + table + ' (' + ', '.join(keys) + ') VALUES (' + ', '.join('?' * len(values)) + ')', values)
+			assert(key in DATABASE_TABLES[table_name])
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
+		assert(table)
+		session = db_manager.Session()
+		row = table()
+		for key, value in zip(keys, values):
+			setattr(row, key, value)
+		session.add(row)
+		session.close()
 		return
 
 	def rpc_database_set_row_value(self, row_id, keys, values):
@@ -385,13 +412,23 @@ class KingPhisherRequestHandlerRPC(object):
 		:param tuple keys: The column names of *values*.
 		:param tuple values: The values to be updated in the row.
 		"""
-		table = self.path.split('/')[-2]
 		if not isinstance(keys, (list, tuple)):
 			keys = (keys,)
 		if not isinstance(values, (list, tuple)):
 			values = (values,)
 		assert(len(keys) == len(values))
-		with self.get_cursor() as cursor:
-			for key, value in zip(keys, values):
-				assert(key in DATABASE_TABLES[table])
-				cursor.execute('UPDATE ' + table + ' SET ' + key + ' = ? WHERE id = ?', (value, row_id))
+		table_name = self.path.split('/')[-2]
+		for key, value in zip(keys, values):
+			assert(key in DATABASE_TABLES[table_name])
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
+		assert(table)
+		session = db_manager.Session()
+		row = db_manager.get_row_by_id(session, table, row_id)
+		if not row:
+			session.close()
+			assert(row)
+		for key, value in zip(keys, values):
+			setattr(row, key, value)
+		session.commit()
+		session.close()
+		return

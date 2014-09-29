@@ -38,7 +38,7 @@ import unittest
 
 from king_phisher import version
 from king_phisher.client import client_rpc
-from king_phisher.server import database
+from king_phisher.server.database import models as db_models
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
 
@@ -89,7 +89,7 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.test_rpc_campaign_new()
 		campaign = list(self.rpc.remote_table('campaigns'))[0]
 		self.assertTrue(isinstance(campaign, dict))
-		self.assertEqual(sorted(campaign.keys()), sorted(database.DATABASE_TABLES['campaigns']))
+		self.assertEqual(sorted(campaign.keys()), sorted(db_models.DATABASE_TABLES['campaigns']))
 
 	def test_rpc_shutdown(self):
 		self.assertIsNone(self.rpc('shutdown'))
@@ -107,8 +107,8 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		campaign = self.rpc('campaigns/view')
 		self.assertTrue(bool(campaign))
 		self.assertEqual(len(campaign['rows']), 1)
-		self.assertEqual(len(campaign['rows'][0]), len(database.DATABASE_TABLES['campaigns']))
-		self.assertEqual(sorted(campaign['columns']), sorted(database.DATABASE_TABLES['campaigns']))
+		self.assertEqual(len(campaign['rows'][0]), len(db_models.DATABASE_TABLES['campaigns']))
+		self.assertEqual(sorted(campaign['columns']), sorted(db_models.DATABASE_TABLES['campaigns']))
 
 	def test_rpc_version(self):
 		response = self.rpc('version')

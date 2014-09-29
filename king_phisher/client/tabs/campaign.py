@@ -258,8 +258,17 @@ class CampaignViewDeaddropTab(CampaignViewGenericTab):
 		deploy_details = self.parent.rpc.remote_table_row('deaddrop_deployments', deploy_id, cache=True)
 		if not deploy_details:
 			return None
-		deploy_dest = deploy_details['destination']
-		return [deploy_dest, connection['visit_count'], connection['visitor_ip'], connection['local_username'], connection['local_hostname'], connection['local_ip_addresses'], connection['first_visit'], connection['last_visit']]
+		row = (
+			deploy_details['destination'],
+			connection['visit_count'],
+			connection['visitor_ip'],
+			connection['local_username'],
+			connection['local_hostname'],
+			connection['local_ip_addresses'],
+			utilities.format_datetime(connection['first_visit']),
+			utilities.format_datetime(connection['last_visit'])
+		)
+		return row
 
 class CampaignViewCredentialsTab(CampaignViewGenericTab):
 	"""Display campaign information regarding submitted credentials."""
@@ -280,8 +289,13 @@ class CampaignViewCredentialsTab(CampaignViewGenericTab):
 		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache=True)
 		if not msg_details:
 			return None
-		credential_email = msg_details['target_email']
-		return [credential_email, credential['username'], credential['password'], credential['submitted']]
+		row = (
+			msg_details['target_email'],
+			credential['username'],
+			credential['password'],
+			utilities.format_datetime(credential['submitted'])
+		)
+		return row
 
 	def signal_button_toggled_show_passwords(self, button):
 		self.view_column_renderers[3].set_property('visible', button.get_property('active'))
@@ -387,8 +401,15 @@ class CampaignViewVisitsTab(CampaignViewGenericTab):
 		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache=True)
 		if not msg_details:
 			return None
-		visitor_email = msg_details['target_email']
-		return [visitor_email, visit['visitor_ip'], visit['visitor_details'], visit['visit_count'], visit['first_visit'], visit['last_visit']]
+		row = (
+			msg_details['target_email'],
+			visit['visitor_ip'],
+			visit['visitor_details'],
+			visit['visit_count'],
+			utilities.format_datetime(visit['first_visit']),
+			utilities.format_datetime(visit['last_visit'])
+		)
+		return row
 
 class CampaignViewMessagesTab(CampaignViewGenericTab):
 	"""Display campaign information regarding sent messages."""
@@ -401,7 +422,13 @@ class CampaignViewMessagesTab(CampaignViewGenericTab):
 		4: 'Trained'
 	}
 	def format_row_data(self, message):
-		return [message['target_email'], message['sent'], message['opened'], ('Yes' if message['trained'] else '')]
+		row = (
+			message['target_email'],
+			utilities.format_datetime(message['sent']),
+			utilities.format_datetime(message['opened']),
+			('Yes' if message['trained'] else '')
+		)
+		return row
 
 class CampaignViewTab(object):
 	"""

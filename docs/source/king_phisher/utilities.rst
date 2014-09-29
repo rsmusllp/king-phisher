@@ -13,6 +13,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.escape_single_quote
 
+.. autofunction:: king_phisher.utilities.format_datetime
+
 .. autofunction:: king_phisher.utilities.open_uri
 
 .. autofunction:: king_phisher.utilities.random_string

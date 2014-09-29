@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __all__ = [
 	'AdvancedHTTPServer',
 	'AdvancedHTTPServerRegisterPath',
@@ -79,6 +79,7 @@ import BaseHTTPServer
 import cgi
 import ConfigParser
 import Cookie
+import datetime
 import hashlib
 import hmac
 import httplib
@@ -110,19 +111,47 @@ except ImportError:
 	from StringIO import StringIO
 
 GLOBAL_HANDLER_MAP = {}
+
+def _json_default(obj):
+	if isinstance(obj, datetime.datetime):
+		return {'__complex_type__': 'datetime.datetime', 'value': obj.isoformat()}
+	raise TypeError('Unknown type: ' + repr(obj))
+
+def _json_object_hook(obj):
+	if obj.get('__complex_type__') == 'datetime.datetime':
+		value = obj['value']
+		if '.' in value:
+			return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
+		else:
+			return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S')
+	return obj
+
 SERIALIZER_DRIVERS = {}
 """Dictionary of available drivers for serialization."""
-SERIALIZER_DRIVERS['application/json'] = {'loads': json.loads, 'dumps': json.dumps}
-SERIALIZER_DRIVERS['binary/json'] = {'loads': json.loads, 'dumps': json.dumps}
-SERIALIZER_DRIVERS['binary/json+zlib'] = {'loads': lambda d: json.loads(zlib.decompress(d)), 'dumps': lambda d: zlib.compress(json.dumps(d))}
+SERIALIZER_DRIVERS['application/json'] = {'loads': lambda d: json.loads(d, object_hook=_json_object_hook), 'dumps': lambda d: json.dumps(d, default=_json_default)}
+SERIALIZER_DRIVERS['binary/json'] = SERIALIZER_DRIVERS['application/json']
+SERIALIZER_DRIVERS['binary/json+zlib'] = {'loads': lambda d: json.loads(zlib.decompress(d, object_hook=_json_object_hook)), 'dumps': lambda d: zlib.compress(json.dumps(d, default=_json_default))}
 
 try:
 	import msgpack
 except ImportError:
 	pass
 else:
-	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads': msgpack.loads, 'dumps': msgpack.dumps}
-	SERIALIZER_DRIVERS['binary/message-pack+zlib'] = {'loads': lambda d: msgpack.loads(zlib.decompress(d)), 'dumps': lambda d: zlib.compress(msgpack.dumps(d))}
+	def _msgpack_default(obj):
+		if isinstance(obj, datetime.datetime):
+			return msgpack.ExtType(10, obj.isoformat())
+		raise TypeError('Unknown type: ' + repr(obj))
+
+	def _msgpack_ext_hook(code, data):
+		if code == 10:
+			if '.' in data:
+				return datetime.datetime.strptime(data, '%Y-%m-%dT%H:%M:%S.%f')
+			else:
+				return datetime.datetime.strptime(data, '%Y-%m-%dT%H:%M:%S')
+		return msfpack.ExtType(code, data)
+
+	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads': lambda d: msgpack.loads(d, ext_hook=_msgpack_ext_hook), 'dumps': lambda d: msgpack.dumps(d, default=_msgpack_default)}
+	SERIALIZER_DRIVERS['binary/message-pack+zlib'] = {'loads': lambda d: msgpack.loads(zlib.decompress(d), ext_hook=_msgpack_ext_hook), 'dumps': lambda d: zlib.compress(msgpack.dumps(d, default=_msgpack_default))}
 
 if hasattr(logging, 'NullHandler'):
 	logging.getLogger('AdvancedHTTPServer').addHandler(logging.NullHandler())
@@ -444,6 +473,8 @@ class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 		cursor = self.cache_db.cursor()
 		cursor.execute('CREATE TABLE cache (method TEXT NOT NULL, options_hash TEXT NOT NULL, return_value TEXT NOT NULL)')
 		self.cache_db.commit()
+		self.cache_serializer_loads = SERIALIZER_DRIVERS['application/json']['loads']
+		self.cache_serializer_dumps = SERIALIZER_DRIVERS['application/json']['dumps']
 
 	def cache_call(self, method, *options):
 		"""
@@ -460,10 +491,10 @@ class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 		cursor.execute('SELECT return_value FROM cache WHERE method = ? AND options_hash = ?', (method, options_hash))
 		return_value = cursor.fetchone()
 		if return_value:
-			return_value = json.loads(return_value[0])
+			return_value = self.cache_serializer_loads(return_value[0])
 		else:
 			return_value = self.call(method, *options)
-			cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, json.dumps(return_value)))
+			cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, self.cache_serializer_dumps(return_value)))
 			self.cache_db.commit()
 		return return_value
 
@@ -479,7 +510,7 @@ class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 		cursor = self.cache_db.cursor()
 		cursor.execute('DELETE FROM cache WHERE method = ? AND options_hash = ?', (method, options_hash))
 		return_value = self.call(method, *options)
-		cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, json.dumps(return_value)))
+		cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, self.cache_serializer_dumps(return_value)))
 		self.cache_db.commit()
 		return return_value
 

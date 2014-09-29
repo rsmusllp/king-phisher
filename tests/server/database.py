@@ -32,45 +32,53 @@
 
 import unittest
 
-from king_phisher.server.database import *
+from king_phisher.server.database import manager as db_manager
+from king_phisher.server.database import models as db_models
 from king_phisher.utilities import random_string
+
+get_tables_with_column_id = db_models.get_tables_with_column_id
 
 class ServerDatabaseTests(unittest.TestCase):
 	def test_create_database(self):
 		try:
-			self.assertIsInstance(create_database(':memory:'), KingPhisherDatabase)
+			db_manager.init_database('sqlite://')
 		except Exception as error:
 			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
 
 	def test_get_tables_id(self):
-		tables = ['alert_subscriptions', 'campaigns', 'credentials', 'deaddrop_connections', 'deaddrop_deployments', 'landing_pages', 'messages', 'meta_data', 'users', 'visits']
+		tables = set([
+			'alert_subscriptions',
+			'campaigns',
+			'credentials',
+			'deaddrop_connections',
+			'deaddrop_deployments',
+			'landing_pages',
+			'messages',
+			'meta_data',
+			'users',
+			'visits'
+		])
 		tables_with_id = get_tables_with_column_id('id')
-		self.assertEqual(len(tables), len(tables_with_id))
-		for table in tables:
-			self.assertTrue(table in tables_with_id)
+		self.assertSetEqual(set(get_tables_with_column_id('id')), tables)
 
 	def test_get_tables_campaign_id(self):
-		tables = ['deaddrop_deployments', 'alert_subscriptions', 'credentials', 'landing_pages', 'messages', 'deaddrop_connections', 'visits']
-		self.assertListEqual(get_tables_with_column_id('campaign_id'), tables)
+		tables = set([
+			'alert_subscriptions',
+			'credentials',
+			'deaddrop_connections',
+			'deaddrop_deployments',
+			'landing_pages',
+			'messages',
+			'visits'
+		])
+		self.assertSetEqual(set(get_tables_with_column_id('campaign_id')), tables)
 
 	def test_get_tables_message_id(self):
-		tables = ['credentials', 'visits']
-		self.assertListEqual(get_tables_with_column_id('message_id'), tables)
-
-	def test_meta_data(self):
-		try:
-			db = create_database(':memory:')
-		except Exception as error:
-			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
-		self.assertIsInstance(db, KingPhisherDatabase)
-		self.assertEqual(db.schema_version, SCHEMA_VERSION)
-		key = random_string(10)
-		value = random_string(20)
-		try:
-			db.set_meta_data(key, value)
-			self.assertEqual(db.get_meta_data(key), value)
-		except Exception as error:
-			self.fail("failed to set a database meta data (error: {0})".format(error.__class__.__name__))
+		tables = set([
+			'credentials',
+			'visits'
+		])
+		self.assertSetEqual(set(get_tables_with_column_id('message_id')), tables)
 
 if __name__ == '__main__':
 	unittest.main()
