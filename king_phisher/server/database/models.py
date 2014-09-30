@@ -43,8 +43,6 @@ DATABASE_TABLE_OBJECTS = {}
 SCHEMA_VERSION = 2
 """The schema version of the database, used for compatibility checks."""
 
-Base = sqlalchemy.ext.declarative.declarative_base()
-
 def current_timestamp(*args, **kwargs):
 	"""
 	The function used for creating the timestamp used by database objects.
@@ -76,8 +74,19 @@ def register_table(table):
 	DATABASE_TABLE_OBJECTS[table.__tablename__] = table
 	return table
 
+class Base(object):
+	__repr_attributes__ = ()
+	def __repr__(self):
+		description = "<{0} id={1} ".format(self.__class__.__name__, repr(self.id))
+		for repr_attr in self.__repr_attributes__:
+			description += "{0}={1} ".format(repr_attr, repr(getattr(self, repr_attr)))
+		description += '>'
+		return description
+Base = sqlalchemy.ext.declarative.declarative_base(cls=Base)
+
 @register_table
 class AlertSubscription(Base):
+	__repr_attributes__ = ('campaign_id', 'user_id')
 	__tablename__ = 'alert_subscriptions'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
@@ -85,6 +94,7 @@ class AlertSubscription(Base):
 
 @register_table
 class Campaign(Base):
+	__repr_attributes__ = ('name',)
 	__tablename__ = 'campaigns'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
@@ -102,6 +112,7 @@ class Campaign(Base):
 
 @register_table
 class Credential(Base):
+	__repr_attributes__ = ('campaign_id', 'username')
 	__tablename__ = 'credentials'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	visit_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('visits.id'), nullable=False)
@@ -113,6 +124,7 @@ class Credential(Base):
 
 @register_table
 class DeaddropDeployment(Base):
+	__repr_attributes__ = ('campaign_id', 'destination')
 	__tablename__ = 'deaddrop_deployments'
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
@@ -122,6 +134,7 @@ class DeaddropDeployment(Base):
 
 @register_table
 class DeaddropConnection(Base):
+	__repr_attributes__ = ('campaign_id', 'deployment_id', 'visitor_ip')
 	__tablename__ = 'deaddrop_connections'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	deployment_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('deaddrop_deployments.id'), nullable=False)
@@ -136,6 +149,7 @@ class DeaddropConnection(Base):
 
 @register_table
 class LandingPage(Base):
+	__repr_attributes__ = ('campaign_id', 'hostname', 'page')
 	__tablename__ = 'landing_pages'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
@@ -144,6 +158,7 @@ class LandingPage(Base):
 
 @register_table
 class Message(Base):
+	__repr_attributes__ = ('campaign_id', 'target_email')
 	__tablename__ = 'messages'
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
@@ -160,6 +175,7 @@ class Message(Base):
 
 @register_table
 class MetaData(Base):
+	__repr_attributes__ = ('value_type', 'value')
 	__tablename__ = 'meta_data'
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	value_type = sqlalchemy.Column(sqlalchemy.String, default='str')
@@ -177,6 +193,7 @@ class User(Base):
 
 @register_table
 class Visit(Base):
+	__repr_attributes__ = ('campaign_id', 'message_id')
 	__tablename__ = 'visits'
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	message_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('messages.id'), nullable=False)
