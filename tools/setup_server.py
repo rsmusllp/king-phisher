@@ -47,16 +47,17 @@ for root, dirs, files in os.walk(data_files_src_prefix):
 	data_files.append((dest_dir, files))
 
 setup(
-	name = 'King Phisher Server',
-	version = version.version,
-	description = 'King Phisher Server Backend',
-	author = 'Spencer McIntyre',
-	maintainer = 'Spencer McIntyre',
-	packages = [
+	name='King Phisher Server',
+	version=version.version,
+	description='King Phisher Server Backend',
+	author='Spencer McIntyre',
+	maintainer='Spencer McIntyre',
+	packages=[
 		'king_phisher',
 		'king_phisher.server',
+		'king_phisher.server.database',
 		'king_phisher.third_party',
 	],
-	scripts = ['KingPhisherServer'],
-	data_files = data_files,
+	scripts=['KingPhisherServer'],
+	data_files=data_files,
 )

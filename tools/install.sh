@@ -64,7 +64,7 @@ if [ "$LINUX_VERSION" == "Ubuntu" ]; then
 	echo "Installing Ubuntu dependencies"
 	apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
 		gir1.2-webkit-3.0 libfreetype6-dev python-cairo python-dev \
-		libgtk-3-dev python-gi python-gi-cairo \
+		libpq-dev libgtk-3-dev python-gi python-gi-cairo \
 		python-gobject python-gobject-dev python-paramiko \
 		python-pip python-tk tk-dev
 fi
@@ -73,7 +73,7 @@ if [ "$LINUX_VERSION" == "Kali" ]; then
 	echo "Installing Kali dependencies"
 	apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
 		gir1.2-webkit-3.0 libfreetype6-dev python-cairo python-dev \
-		libgtk-3-dev python-gi python-gi-cairo \
+		libpq-dev libgtk-3-dev python-gi python-gi-cairo \
 		python-gobject python-gobject-dev python-paramiko \
 		python-pip python-tk tk-dev
 	easy_install -U distribute
