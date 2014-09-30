@@ -35,7 +35,13 @@ import os
 
 from . import models
 from king_phisher import errors
+from king_phisher import find
 
+
+import alembic.command
+import alembic.config
+import alembic.environment
+import alembic.script
 import sqlalchemy
 import sqlalchemy.engine.url
 import sqlalchemy.orm
@@ -100,8 +106,8 @@ def set_meta_data(key, value, session=None):
 	md.value_type = value_type
 	md.value = str(value)
 	session.add(md)
-	session.commit()
 	if close_session:
+		session.commit()
 		session.close()
 	return
 
@@ -123,7 +129,8 @@ def normalize_connection_url(connection_url):
 def init_database(connection_url):
 	"""
 	Create and initialize the database engine. This must be done before the
-	session object can be used.
+	session object can be used. This will also attempt to perform any updates to
+	the database schema if the backend support such operations.
 
 	:param str connection_url: The url for the database connection.
 	:return: The initialized database engine.
@@ -136,13 +143,39 @@ def init_database(connection_url):
 		engine = sqlalchemy.create_engine(connection_url)
 	else:
 		raise errors.KingPhisherDatabaseError('only sqlite and postgresql database drivers are supported')
+	Session.remove()
 	Session.configure(bind=engine)
 	models.Base.metadata.create_all(engine)
 
-	set_meta_data('database_driver', connection_url.drivername)
-	schema_version = get_meta_data('schema_version')
+	session = Session()
+	set_meta_data('database_driver', connection_url.drivername, session=session)
+	schema_version = (get_meta_data('schema_version', session=session) or models.SCHEMA_VERSION)
+	session.commit()
+	session.close()
+
 	if schema_version > models.SCHEMA_VERSION:
 		raise errors.KingPhisherDatabaseError('the database schema is for a newer version, automatic downgrades are not supported')
+	elif schema_version < models.SCHEMA_VERSION:
+		alembic_config_file = find.find_data_file('alembic.ini')
+		if not alembic_config_file:
+			raise errors.KingPhisherDatabaseError('cannot find the alembic.ini configuration file')
+		alembic_directory = find.find_data_directory('alembic')
+		if not alembic_directory:
+			raise errors.KingPhisherDatabaseError('cannot find the alembic data directory')
+
+		config = alembic.config.Config(alembic_config_file)
+		config.config_file_name = alembic_config_file
+		config.set_main_option('script_location', alembic_directory)
+		config.set_main_option('skip_logger_config', 'True')
+		config.set_main_option('sqlalchemy.url', str(connection_url))
+
+		logger.info("automatically updating the database schema to version {0}".format(models.SCHEMA_VERSION))
+		try:
+			alembic.command.upgrade(config, 'head')
+		except Exception as error:
+			logger.critical("database schema upgrade failed with exception: {0}.{1} {2}".format(error.__class__.__module__, error.__class__.__name__, getattr(error, 'message', '')).rstrip())
+			raise errors.KingPhisherDatabaseError('failed to upgrade to the latest database schema')
+	set_meta_data('schema_version', models.SCHEMA_VERSION)
 
 	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
 	return engine
