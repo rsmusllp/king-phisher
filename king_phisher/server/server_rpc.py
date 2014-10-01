@@ -285,12 +285,7 @@ class KingPhisherRequestHandlerRPC(object):
 			This action can not be reversed and there is no confirmation before it
 			takes place.
 		"""
-		tables = database.get_tables_with_column_id('campaign_id')
 		session = db_manager.Session()
-		for table in tables:
-			query = session.query(DATABASE_TABLE_OBJECTS[table])
-			query = query.filter_by(campaign_id=campaign_id)
-			query.delete()
 		session.delete(db_manager.get_row_by_id(session, db_models.Campaign, campaign_id))
 		session.commit()
 		session.close()
