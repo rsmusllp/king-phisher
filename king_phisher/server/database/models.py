@@ -171,7 +171,7 @@ class Message(Base):
 	trained = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 	# relationships
 	credentials = sqlalchemy.orm.relationship('Credential', backref='message', cascade='all, delete-orphan')
-	message = sqlalchemy.orm.relationship('Visit', backref='message', cascade='all, delete-orphan')
+	visits = sqlalchemy.orm.relationship('Visit', backref='message', cascade='all, delete-orphan')
 
 @register_table
 class MetaData(Base):

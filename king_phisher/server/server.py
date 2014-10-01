@@ -132,6 +132,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 	def adjust_path(self):
 		"""Adjust the :py:attr:`~.KingPhisherRequestHandler.path` attribute based on multiple factors."""
+		self.request_path = self.path.split('?', 1)[0]
 		if not self.config.get('server.vhost_directories'):
 			return
 		if not self.vhost:
@@ -368,7 +369,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 		session = db_manager.Session()
 		query = session.query(db_models.Campaign)
-		query = filter_by(id=self.campaign_id)
+		query = query.filter_by(id=self.campaign_id)
 		campaign = query.first()
 		query = session.query(db_models.LandingPage)
 		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost)
@@ -524,7 +525,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if message.opened == None:
 			message.opened = db_models.current_timestamp()
 
-		if self.visit_id == None:
+		if self.visit_id:
+			visit_id = self.visit_id
+			query = session.query(db_models.LandingPage)
+			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
+			if query.count():
+				visit = db_manager.get_row_by_id(session, db_models.Visit, visit_id)
+				visit.visit_count += 1
+		else:
 			visit_id = make_uid()
 			kp_cookie_name = self.config.get('server.cookie_name')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
@@ -537,13 +545,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			if visit_count > 0 and ((visit_count in [1, 10, 25]) or ((visit_count % 50) == 0)):
 				alert_text = "{0} vists reached for campaign: {{campaign_name}}".format(visit_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
-		else:
-			visit_id = self.visit_id
-			query = session.query(db_models.LandingPage)
-			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.path)
-			if query.count():
-				visit = db_manager.get_row_by_id(session, db_models.Visit, visit_id)
-				visit.visit_count += 1
 
 		username = None
 		for pname in ['username', 'user', 'u']:
