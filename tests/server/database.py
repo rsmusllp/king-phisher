@@ -45,6 +45,18 @@ class ServerDatabaseTests(unittest.TestCase):
 		except Exception as error:
 			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
 
+	def test_get_meta_data(self):
+		try:
+			db_manager.init_database('sqlite://')
+		except Exception as error:
+			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
+
+		database_driver = db_manager.get_meta_data('database_driver')
+		self.assertEqual(database_driver, 'sqlite')
+
+		schema_version = db_manager.get_meta_data('schema_version')
+		self.assertEqual(schema_version, db_models.SCHEMA_VERSION)
+
 	def test_get_tables_id(self):
 		tables = set([
 			'alert_subscriptions',
@@ -79,6 +91,23 @@ class ServerDatabaseTests(unittest.TestCase):
 			'visits'
 		])
 		self.assertSetEqual(set(get_tables_with_column_id('message_id')), tables)
+
+	def test_set_meta_data(self):
+		try:
+			db_manager.init_database('sqlite://')
+		except Exception as error:
+			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
+
+		# set a new value
+		key = random_string(10)
+		value = random_string(20)
+		db_manager.set_meta_data(key, value)
+		self.assertEqual(db_manager.get_meta_data(key), value)
+
+		# update an existing value
+		value = random_string(30)
+		db_manager.set_meta_data(key, value)
+		self.assertEqual(db_manager.get_meta_data(key), value)
 
 if __name__ == '__main__':
 	unittest.main()
