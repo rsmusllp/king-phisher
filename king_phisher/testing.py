@@ -39,6 +39,7 @@ import unittest
 
 from king_phisher import configuration
 from king_phisher import find
+from king_phisher.client import client_rpc
 from king_phisher.server.server import *
 
 __all__ = [
@@ -98,6 +99,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		self.server_thread.start()
 		self.assertTrue(self.server_thread.is_alive())
 		self.shutdown_requested = False
+		self.rpc = client_rpc.KingPhisherRPCClient(('localhost', self.config.get('server.address.port')), username='unittest', password='unittest')
 
 	def assertHTTPStatus(self, http_response, status):
 		"""
@@ -123,7 +125,11 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		:rtype: :py:class:`httplib.HTTPResponse`
 		"""
 		if include_id:
-			resource += "{0}id={1}".format('&' if '?' in resource else '?', self.config.get('server.secret_id'))
+			if isinstance(include_id, str):
+				id_value = include_id
+			else:
+				id_value = self.config.get('server.secret_id')
+			resource += "{0}id={1}".format('&' if '?' in resource else '?', id_value)
 		conn = httplib.HTTPConnection('localhost', self.config.get('server.address.port'))
 		conn.request(method, resource)
 		response = conn.getresponse()

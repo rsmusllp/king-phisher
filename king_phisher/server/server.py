@@ -290,7 +290,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	@property
 	def vhost(self):
 		"""The value of the Host HTTP header."""
-		return self.headers.get('Host')
+		return self.headers.get('Host', '').split(':')[0]
 
 	def respond_file(self, file_path, attachment=False, query={}):
 		self._respond_file_check_id()

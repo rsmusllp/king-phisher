@@ -37,16 +37,11 @@ import types
 import unittest
 
 from king_phisher import version
-from king_phisher.client import client_rpc
 from king_phisher.server.database import models as db_models
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
 
 class ServerRPCTests(KingPhisherServerTestCase):
-	def setUp(self, *args, **kwargs):
-		super(ServerRPCTests, self).setUp(*args, **kwargs)
-		self.rpc = client_rpc.KingPhisherRPCClient(('localhost', self.config.get('server.address.port')), username='test', password='test')
-
 	def test_rpc_client_initialize(self):
 		self.assertTrue(self.rpc('client/initialize'))
 
