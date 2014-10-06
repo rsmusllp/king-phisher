@@ -39,6 +39,7 @@ from tests.client.mailer import ClientMailerTests
 from tests.server.authenticator import ServerAuthenticatorTests
 from tests.server.database import ServerDatabaseTests
 from tests.server.server import ServerTests
+from tests.server.server import CampaignWorkflowTests
 from tests.server.server_rpc import ServerRPCTests
 from tests.configuration import ServerConfigurationTests
 from tests.templates import TemplatesTests

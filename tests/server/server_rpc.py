@@ -39,6 +39,7 @@ import unittest
 from king_phisher import version
 from king_phisher.server.database import models as db_models
 from king_phisher.testing import KingPhisherServerTestCase
+from king_phisher.third_party import AdvancedHTTPServer
 from king_phisher.utilities import random_string
 
 class ServerRPCTests(KingPhisherServerTestCase):
@@ -54,6 +55,11 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.assertEqual(server_address['server.address.host'], self.config.get('server.address.host'))
 		self.assertEqual(server_address['server.address.port'], self.config.get('server.address.port'))
 		self.assertIsNone(self.rpc('config/get', random_string(10)))
+
+	def test_rpc_campaign_delete(self):
+		campaign_name = random_string(10)
+		campaign_id = self.rpc('campaign/new', campaign_name)
+		self.rpc('campaign/delete', campaign_id)
 
 	def test_rpc_campaign_new(self):
 		campaign_name = random_string(10)
@@ -104,6 +110,16 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.assertEqual(len(campaign['rows']), 1)
 		self.assertEqual(len(campaign['rows'][0]), len(db_models.DATABASE_TABLES['campaigns']))
 		self.assertEqual(sorted(campaign['columns']), sorted(db_models.DATABASE_TABLES['campaigns']))
+
+	def test_rpc_set_value(self):
+		campaign_name = random_string(10)
+		new_campaign_name = random_string(10)
+		campaign_id = self.rpc('campaign/new', campaign_name)
+		campaign = self.rpc.remote_table_row('campaigns', campaign_id)
+		self.assertEqual(campaign['name'], campaign_name)
+		self.rpc('campaigns/set', campaign_id, 'name', new_campaign_name)
+		campaign = self.rpc.remote_table_row('campaigns', campaign_id)
+		self.assertEqual(campaign['name'], new_campaign_name)
 
 	def test_rpc_version(self):
 		response = self.rpc('version')
