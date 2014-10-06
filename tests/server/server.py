@@ -30,8 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
 import unittest
 
+from king_phisher.client import client_rpc
+from king_phisher.server.database import manager as db_manager
+from king_phisher.server.database import models as db_models
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
 
@@ -90,6 +94,75 @@ class ServerTests(KingPhisherServerTestCase):
 		self.assertHTTPStatus(http_response, 200)
 		image_data = http_response.read()
 		self.assertTrue(image_data.startswith('GIF'))
+
+class CampaignWorkflowTests(KingPhisherServerTestCase):
+	"""
+	This is a monolithic test broken down into steps which represent the basic
+	workflow of a normal campaign.
+	"""
+	def step_1_create_campaign(self):
+		self.campaign_id = self.rpc('campaign/new', 'Unit Test Campaign')
+
+	def step_2_send_messages(self):
+		self.landing_page = filter(lambda f: os.path.splitext(f)[1] == '.html', self.web_root_files())[0]
+		self.rpc('campaign/landing_page/new', self.campaign_id, 'localhost', self.landing_page)
+		message_count = self.rpc('campaign/messages/count', self.campaign_id)
+		self.assertEqual(message_count, 0)
+		self.message_id = random_string(16)
+		self.rpc('campaign/message/new', self.campaign_id, self.message_id, 'test@test.com', 'testers, inc.', 'test', 'test')
+		message_count = self.rpc('campaign/messages/count', self.campaign_id)
+		self.assertEqual(message_count, 1)
+
+	def step_3_get_visits(self):
+		visit_count = self.rpc('campaign/visits/count', self.campaign_id)
+		self.assertEqual(visit_count, 0)
+		response = self.http_request('/' + self.landing_page, include_id=self.message_id)
+		self.assertHTTPStatus(response, 200)
+		visit_count = self.rpc('campaign/visits/count', self.campaign_id)
+		self.assertEqual(visit_count, 1)
+		cookie = response.getheader('Set-Cookie')
+		self.assertIsNotNone(cookie)
+		cookie = cookie.split(';')[0]
+		cookie_name = self.config.get('server.cookie_name')
+		self.assertEqual(cookie[:len(cookie_name) + 1], cookie_name + '=')
+		self.visit_id = cookie[len(cookie_name) + 1:]
+
+	def step_4_get_passwords(self):
+		creds_count = self.rpc('campaign/credentials/count', self.campaign_id)
+		self.assertEqual(creds_count, 0)
+		username = random_string(8)
+		password = random_string(10)
+		body = {'username': username, 'password': password}
+		headers = {'Cookie': "{0}={1}".format(self.config.get('server.cookie_name'), self.visit_id)}
+		response = self.http_request('/' + self.landing_page, method='POST', include_id=False, body=body, headers=headers)
+		self.assertHTTPStatus(response, 200)
+		creds_count = self.rpc('campaign/credentials/count', self.campaign_id)
+		self.assertEqual(creds_count, 1)
+		cred = self.rpc.remote_table('campaign/credentials', self.campaign_id).next()
+		self.assertEqual(cred['username'], username)
+		self.assertEqual(cred['password'], password)
+		self.assertEqual(cred['message_id'], self.message_id)
+		self.assertEqual(cred['visit_id'], self.visit_id)
+
+	def step_5_get_repeat_visit(self):
+		visit = self.rpc.remote_table_row('visits', self.visit_id)
+		visit_count = visit['visit_count']
+		headers = {'Cookie': "{0}={1}".format(self.config.get('server.cookie_name'), self.visit_id)}
+		response = self.http_request('/' + self.landing_page, include_id=False, headers=headers)
+		self.assertHTTPStatus(response, 200)
+		visit = self.rpc.remote_table_row('visits', self.visit_id)
+		self.assertEqual(visit['visit_count'], visit_count + 1)
+
+	def steps(self):
+		steps = filter(lambda f: f.startswith('step_'), dir(self))
+		steps = sorted(steps, lambda x, y: cmp(int(x.split('_')[1]), int(y.split('_')[1])))
+		for name in steps:
+			yield name, getattr(self, name)
+
+	def test_campaign_workflow(self):
+		self.config.set('server.require_id', True)
+		for name, step in self.steps():
+			step()
 
 if __name__ == '__main__':
 	unittest.main()

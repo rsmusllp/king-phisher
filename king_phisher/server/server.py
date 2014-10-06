@@ -368,9 +368,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			raise KingPhisherAbortRequestError()
 
 		session = db_manager.Session()
-		query = session.query(db_models.Campaign)
-		query = query.filter_by(id=self.campaign_id)
-		campaign = query.first()
+		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 		query = session.query(db_models.LandingPage)
 		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost)
 		if query.count() == 0:

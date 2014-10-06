@@ -139,6 +139,7 @@ def init_database(connection_url):
 	connection_url = sqlalchemy.engine.url.make_url(connection_url)
 	if connection_url.drivername == 'sqlite':
 		engine = sqlalchemy.create_engine(connection_url, connect_args={'check_same_thread': False}, poolclass=sqlalchemy.pool.StaticPool)
+		sqlalchemy.event.listens_for(engine, 'begin')(lambda conn: conn.execute('BEGIN'))
 	elif connection_url.drivername == 'postgresql':
 		engine = sqlalchemy.create_engine(connection_url)
 	else:

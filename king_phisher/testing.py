@@ -35,6 +35,7 @@ import os
 import random
 import string
 import threading
+import urllib
 import unittest
 
 from king_phisher import configuration
@@ -114,13 +115,16 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		error_message = "HTTP Response received status {0} when {1} was expected".format(http_response.status, status)
 		self.assertEqual(http_response.status, status, msg=error_message)
 
-	def http_request(self, resource, method='GET', include_id=True):
+	def http_request(self, resource, method='GET', include_id=True, body=None, headers=None):
 		"""
 		Make an HTTP request to the specified resource on the test server.
 
 		:param str resource: The resource to send the request to.
 		:param str method: The HTTP method to use for the request.
 		:param bool include_id: Whether to include the the id parameter.
+		:param body: The data to include in the body of the request.
+		:type body: dict, str
+		:param dict headers: The headers to include in the request.
 		:return: The servers HTTP response.
 		:rtype: :py:class:`httplib.HTTPResponse`
 		"""
@@ -131,7 +135,14 @@ class KingPhisherServerTestCase(unittest.TestCase):
 				id_value = self.config.get('server.secret_id')
 			resource += "{0}id={1}".format('&' if '?' in resource else '?', id_value)
 		conn = httplib.HTTPConnection('localhost', self.config.get('server.address.port'))
-		conn.request(method, resource)
+		request_kwargs = {}
+		if isinstance(body, dict):
+			body = urllib.urlencode(body)
+		if body:
+			request_kwargs['body'] = body
+		if headers:
+			request_kwargs['headers'] = headers
+		conn.request(method, resource, **request_kwargs)
 		response = conn.getresponse()
 		conn.close()
 		return response
