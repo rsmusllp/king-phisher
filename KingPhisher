@@ -77,8 +77,8 @@ def main():
 			print('[-] please install the missing requirements with pip')
 			return os.EX_SOFTWARE
 		data_path = os.path.dirname(__file__)
+		data_path = os.path.join(data_path, 'data', 'client')
 
-	data_path = os.path.join(data_path, 'data', 'client')
 	data_path = os.path.abspath(data_path)
 	find.data_path_append(data_path)
 
