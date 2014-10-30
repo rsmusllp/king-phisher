@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.16.1 -->
 <interface>
-  <requires lib="gtk+" version="3.0"/>
+  <requires lib="gtk+" version="3.2"/>
   <object class="GtkBox" id="CampaignViewCredentialsTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -491,6 +491,7 @@
                 <property name="invisible_char">●</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
+                <property name="placeholder_text" translatable="yes">new campaign name</property>
                 <signal name="activate" handler="signal_entry_new_campaign_name_activate" swapped="no"/>
               </object>
               <packing>
@@ -628,6 +629,8 @@
               <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The King Phisher SSH server.</property>
+                <property name="placeholder_text" translatable="yes">server:port</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
               <packing>
@@ -641,6 +644,8 @@
               <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
+                <property name="placeholder_text" translatable="yes">server ssh username</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
               <packing>
@@ -657,6 +662,8 @@
                 <property name="has_focus">True</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">●</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH password to authenticate with.</property>
+                <property name="placeholder_text" translatable="yes">server ssh password</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
               <packing>
@@ -781,6 +788,8 @@
               <object class="GtkEntry" id="KingPhisherClientSSHLoginDialog.entry_ssh_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The SSH server.</property>
+                <property name="placeholder_text" translatable="yes">server:port</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
               <packing>
@@ -794,6 +803,8 @@
               <object class="GtkEntry" id="KingPhisherClientSSHLoginDialog.entry_ssh_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
+                <property name="placeholder_text" translatable="yes">username</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
               <packing>
@@ -810,6 +821,8 @@
                 <property name="has_focus">True</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">●</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH password to authenticate with.</property>
+                <property name="placeholder_text" translatable="yes">password</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
               <packing>
@@ -1238,7 +1251,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="yalign">0.43000000715255737</property>
+                <property name="tooltip_text" translatable="yes">Send a test request to the URL for verification.</property>
                 <signal name="clicked" handler="signal_button_clicked_verify" swapped="no"/>
               </object>
               <packing>
@@ -1360,6 +1373,7 @@
                 <property name="invisible_char">●</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">Attach a file to the messages.</property>
                 <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
                 <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
               </object>
@@ -1670,6 +1684,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="editable">False</property>
+                        <property name="placeholder_text" translatable="yes">server:port</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -1683,6 +1698,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="editable">False</property>
+                        <property name="placeholder_text" translatable="yes">username</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -1745,6 +1761,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="max_length">14</property>
+                                <property name="placeholder_text" translatable="yes">(###) ###-####</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -1826,6 +1843,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="hexpand">True</property>
+                                <property name="placeholder_text" translatable="yes">http://server:3000/hook.js</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -1897,7 +1915,9 @@
                       <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_smtp_server">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The SMTP server to use for sending messages.</property>
                         <property name="hexpand">True</property>
+                        <property name="placeholder_text" translatable="yes">server:port</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -1912,6 +1932,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Connect to the SMTP server with SSL.</property>
                         <property name="xalign">0</property>
                         <property name="draw_indicator">True</property>
                       </object>
@@ -1928,6 +1949,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Connect to the SMTP server over an SSH tunnel.</property>
                         <property name="xalign">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="signal_smtp_ssh_enable" swapped="no"/>
@@ -1943,7 +1965,7 @@
                       <object class="GtkSpinButton" id="KingPhisherClientConfigDialog.spinbutton_smtp_max_send_rate">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="tooltip_text" translatable="yes">Maximum emails to send per minute</property>
+                        <property name="tooltip_text" translatable="yes">Maximum messages to send per minute.</property>
                         <property name="adjustment">SMTPSendRate</property>
                         <property name="climb_rate">1</property>
                         <property name="digits">1</property>
@@ -2029,6 +2051,7 @@
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
+                                <property name="placeholder_text" translatable="yes">server:port</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -2042,6 +2065,7 @@
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
+                                <property name="placeholder_text" translatable="yes">username</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
