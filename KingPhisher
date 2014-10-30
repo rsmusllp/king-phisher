@@ -50,7 +50,7 @@ __requirements__ = [
 ]
 
 def main():
-	parser = argparse.ArgumentParser(description='King Phisher', conflict_handler='resolve')
+	parser = argparse.ArgumentParser(description='King Phisher Client GUI', conflict_handler='resolve')
 	parser.add_argument('-c', '--config', dest='config_file', required=False, help='specify a configuration file to use')
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
 	parser.add_argument('-L', '--log', dest='loglvl', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')

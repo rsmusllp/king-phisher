@@ -36,6 +36,7 @@ import logging
 import os
 import random
 import shutil
+import socket
 import time
 
 from king_phisher import find
@@ -528,9 +529,16 @@ class KingPhisherClient(_Gtk_Window):
 				self.logger.info('started ssh port forwarding')
 			except paramiko.AuthenticationException:
 				self.logger.warning('failed to authenticate to the remote ssh server')
-				gui_utilities.show_dialog_error('Invalid Credentials', self)
+				gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self, 'The server responded that the credentials are invalid')
 				continue
-			except:
+			except socket.error as error:
+				error_number, error_message = error.args
+				if error_number == 111:
+					gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self, 'The server refused the connection')
+				else:
+					gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self, "Socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
+				continue
+			except Exception:
 				self.logger.warning('failed to connect to the remote ssh server')
 				gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self)
 				continue
@@ -548,7 +556,7 @@ class KingPhisherClient(_Gtk_Window):
 				continue
 			except:
 				self.logger.warning('failed to connect to the remote rpc service')
-				gui_utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self)
+				gui_utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self, 'Ensure that the King Phisher Server is currently running')
 				continue
 			break
 		assert(server_version_info != None)
