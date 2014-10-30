@@ -128,7 +128,7 @@ def main():
 
 	try:
 		king_phisher_server = server.build_king_phisher_server(config)
-	except errors.KingPhisherDatabaseError as error:
+	except errors.KingPhisherError as error:
 		logger.critical(error.message)
 		return os.EX_SOFTWARE
 

@@ -35,15 +35,16 @@ import json
 import logging
 import os
 import shutil
+import socket
 import threading
 
+from king_phisher import errors
 from king_phisher import find
 from king_phisher import job
 from king_phisher import sms
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher import xor
-from king_phisher.errors import KingPhisherAbortRequestError
 from king_phisher.server import authenticator
 from king_phisher.server import server_rpc
 from king_phisher.server.database import manager as db_manager
@@ -71,13 +72,20 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	:return: A configured server instance.
 	:rtype: :py:class:`.KingPhisherServer`
 	"""
+	logger = logging.getLogger('KingPhisher.Server.build')
 	ServerClass = (ServerClass or KingPhisherServer)
 	HandlerClass = (HandlerClass or KingPhisherRequestHandler)
 	# Set config defaults
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
 	address = (config.get('server.address.host'), config.get('server.address.port'))
-	server = ServerClass(config, HandlerClass, address=address)
+	try:
+		server = ServerClass(config, HandlerClass, address=address)
+	except socket.error as error:
+		error_number, error_message = error.args
+		if error_number == 98:
+			logger.critical("failed to bind server to address {0}:{1} (socket error #98)".format(*address))
+		raise errors.KingPhisherError("socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
 	return server
@@ -136,9 +144,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not self.config.get('server.vhost_directories'):
 			return
 		if not self.vhost:
-			raise KingPhisherAbortRequestError()
+			raise errors.KingPhisherAbortRequestError()
 		if self.vhost in ['localhost', '127.0.0.1'] and self.client_address[0] != '127.0.0.1':
-			raise KingPhisherAbortRequestError()
+			raise errors.KingPhisherAbortRequestError()
 		self.path = '/' + self.vhost + self.path
 
 	def _do_http_method(self, *args, **kwargs):
@@ -151,7 +159,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			else:
 				http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
 			http_method_handler(*args, **kwargs)
-		except KingPhisherAbortRequestError:
+		except errors.KingPhisherAbortRequestError:
 			self.respond_not_found()
 		except:
 			raise
@@ -302,7 +310,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		try:
 			template = self.server.template_env.get_template(os.path.relpath(file_path, self.server.serve_files_root))
 		except jinja2.exceptions.TemplateError, IOError:
-			raise KingPhisherAbortRequestError()
+			raise errors.KingPhisherAbortRequestError()
 
 		template_vars = {
 			'client': {
@@ -319,7 +327,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			template_data = template.render(template_vars)
 		except jinja2.TemplateError as error:
 			self.server.logger.error("jinja2 template '{0}' render failed: {1} {2}".format(template.name, error.__class__.__name__, error.message))
-			raise KingPhisherAbortRequestError()
+			raise errors.KingPhisherAbortRequestError()
 
 		fs = os.stat(template.filename)
 		mime_type = self.guess_mime_type(file_path)
@@ -343,7 +351,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		try:
 			file_obj = open(file_path, 'rb')
 		except IOError:
-			raise KingPhisherAbortRequestError()
+			raise errors.KingPhisherAbortRequestError()
 		fs = os.fstat(file_obj.fileno())
 		self.send_response(200)
 		self.send_header('Content-Type', self.guess_mime_type(file_path))
@@ -365,7 +373,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		# a valid campaign_id requires a valid message_id
 		if not self.campaign_id:
 			self.server.logger.warning('denying request due to lack of a valid id')
-			raise KingPhisherAbortRequestError()
+			raise errors.KingPhisherAbortRequestError()
 
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
@@ -374,14 +382,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if query.count() == 0:
 			self.server.logger.warning('denying request with not found due to invalid hostname')
 			session.close()
-			raise KingPhisherAbortRequestError()
+			raise errors.KingPhisherAbortRequestError()
 		if campaign.reject_after_credentials and self.visit_id == None:
 			query = session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
 			if query.count():
 				self.server.logger.warning('denying request because credentials were already harvested')
 				session.close()
-				raise KingPhisherAbortRequestError()
+				raise errors.KingPhisherAbortRequestError()
 		session.close()
 		return
 
