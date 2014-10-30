@@ -44,6 +44,7 @@ import alembic.environment
 import alembic.script
 import sqlalchemy
 import sqlalchemy.engine.url
+import sqlalchemy.exc
 import sqlalchemy.orm
 import sqlalchemy.pool
 
@@ -137,6 +138,7 @@ def init_database(connection_url):
 	"""
 	connection_url = normalize_connection_url(connection_url)
 	connection_url = sqlalchemy.engine.url.make_url(connection_url)
+	logger.info("initializing database connection with driver {0}".format(connection_url.drivername))
 	if connection_url.drivername == 'sqlite':
 		engine = sqlalchemy.create_engine(connection_url, connect_args={'check_same_thread': False}, poolclass=sqlalchemy.pool.StaticPool)
 		sqlalchemy.event.listens_for(engine, 'begin')(lambda conn: conn.execute('BEGIN'))
@@ -144,9 +146,14 @@ def init_database(connection_url):
 		engine = sqlalchemy.create_engine(connection_url)
 	else:
 		raise errors.KingPhisherDatabaseError('only sqlite and postgresql database drivers are supported')
+
 	Session.remove()
 	Session.configure(bind=engine)
-	models.Base.metadata.create_all(engine)
+	try:
+		models.Base.metadata.create_all(engine)
+	except sqlalchemy.exc.SQLAlchemyError as error:
+		error_lines = map(lambda line: line.strip(), error.message.split('\n'))
+		raise errors.KingPhisherDatabaseError('SQLAlchemyError: ' + ' '.join(error_lines).strip())
 
 	session = Session()
 	set_meta_data('database_driver', connection_url.drivername, session=session)
@@ -154,6 +161,7 @@ def init_database(connection_url):
 	session.commit()
 	session.close()
 
+	logger.debug("current database schema version: {0} ({1}current)".format(schema_version, ('' if schema_version == models.SCHEMA_VERSION else 'not ')))
 	if schema_version > models.SCHEMA_VERSION:
 		raise errors.KingPhisherDatabaseError('the database schema is for a newer version, automatic downgrades are not supported')
 	elif schema_version < models.SCHEMA_VERSION:
@@ -170,7 +178,7 @@ def init_database(connection_url):
 		config.set_main_option('skip_logger_config', 'True')
 		config.set_main_option('sqlalchemy.url', str(connection_url))
 
-		logger.info("automatically updating the database schema to version {0}".format(models.SCHEMA_VERSION))
+		logger.warning("automatically updating the database schema to version {0}".format(models.SCHEMA_VERSION))
 		try:
 			alembic.command.upgrade(config, 'head')
 		except Exception as error:
