@@ -75,7 +75,7 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	logger = logging.getLogger('KingPhisher.Server.build')
 	ServerClass = (ServerClass or KingPhisherServer)
 	HandlerClass = (HandlerClass or KingPhisherRequestHandler)
-	# Set config defaults
+	# set config defaults
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
 	address = (config.get('server.address.host'), config.get('server.address.port'))
@@ -214,7 +214,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if self.visit_id:
 			client_vars['visit_id'] = self.visit_id
 		else:
-			# If the visit_id is not set then this is a new visit so increment the count preemptively
+			# if the visit_id is not set then this is a new visit so increment the count preemptively
 			client_vars['visit_count'] += 1
 		return client_vars
 

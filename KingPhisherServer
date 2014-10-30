@@ -112,7 +112,7 @@ def main():
 	if (not arguments.foreground) and os.fork():
 		return os.EX_OK
 
-	# Configure environment variables
+	# configure environment variables
 	data_path = os.path.dirname(__file__)
 	data_path = os.path.join(data_path, 'data', 'server')
 	data_path = os.path.abspath(data_path)

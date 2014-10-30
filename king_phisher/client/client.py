@@ -507,6 +507,8 @@ class KingPhisherClient(_Gtk_Window):
 		"""
 		import socket
 		server_version_info = None
+		title_ssh_error = 'Failed To Connect To The SSH Service'
+		title_rpc_error = 'Failed To Connect To The King Phisher RPC Service'
 		while True:
 			if self.ssh_forwarder:
 				self.ssh_forwarder.stop()
@@ -529,18 +531,18 @@ class KingPhisherClient(_Gtk_Window):
 				self.logger.info('started ssh port forwarding')
 			except paramiko.AuthenticationException:
 				self.logger.warning('failed to authenticate to the remote ssh server')
-				gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self, 'The server responded that the credentials are invalid')
+				gui_utilities.show_dialog_error(title_ssh_error, self, 'The server responded that the credentials are invalid')
 				continue
 			except socket.error as error:
 				error_number, error_message = error.args
 				if error_number == 111:
-					gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self, 'The server refused the connection')
+					gui_utilities.show_dialog_error(title_ssh_error, self, 'The server refused the connection')
 				else:
-					gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self, "Socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
+					gui_utilities.show_dialog_error(title_ssh_error, self, "Socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
 				continue
 			except Exception:
 				self.logger.warning('failed to connect to the remote ssh server')
-				gui_utilities.show_dialog_error('Failed To Connect To The SSH Service', self)
+				gui_utilities.show_dialog_error(title_ssh_error, self)
 				continue
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password)
 			try:
@@ -549,14 +551,14 @@ class KingPhisherClient(_Gtk_Window):
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
 					self.logger.warning('failed to authenticate to the remote king phisher service')
-					gui_utilities.show_dialog_error('Invalid Credentials', self)
+					gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded that the credentials are invalid')
 				else:
 					self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
-					gui_utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self, 'The server responded with HTTP status: ' + str(err.status))
+					gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded with HTTP status: ' + str(err.status))
 				continue
 			except:
 				self.logger.warning('failed to connect to the remote rpc service')
-				gui_utilities.show_dialog_error('Failed To Connect To The King Phisher RPC Service', self, 'Ensure that the King Phisher Server is currently running')
+				gui_utilities.show_dialog_error(title_rpc_error, self, 'Ensure that the King Phisher Server is currently running')
 				continue
 			break
 		assert(server_version_info != None)
