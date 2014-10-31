@@ -109,7 +109,12 @@ def main():
 		if config.has_option('logging.console') and config.get('logging.console'):
 			console_log_handler.setLevel(log_level)
 
-	if (not arguments.foreground) and os.fork():
+	should_fork = True
+	if arguments.foreground:
+		should_fork = False
+	elif config.has_option('server.fork'):
+		should_fork = bool(config.get('server.fork'))
+	if should_fork and os.fork():
 		return os.EX_OK
 
 	# configure environment variables

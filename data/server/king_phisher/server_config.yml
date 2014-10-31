@@ -28,6 +28,9 @@ server:
   # The Postgres database to use
   database: postgresql://user:pass@localhost/king_phisher
 
+  # Fork the server process into the background
+  #fork: true
+
   # Set a file to write the PID to
   #pid_file: /var/run/kingphisher.pid
 
