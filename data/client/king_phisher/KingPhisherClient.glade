@@ -949,7 +949,7 @@
       </packing>
     </child>
   </object>
-  <object class="GtkBox" id="MailSenderSendMessagesTab">
+  <object class="GtkBox" id="MailSenderSendTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="margin_left">5</property>
@@ -958,11 +958,11 @@
     <property name="margin_bottom">5</property>
     <property name="orientation">vertical</property>
     <child>
-      <object class="GtkScrolledWindow" id="MailSenderSendMessagesTab.scrolledwindow_mail_sender_progress">
+      <object class="GtkScrolledWindow" id="MailSenderSendTab.scrolledwindow_mail_sender_progress">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <child>
-          <object class="GtkTextView" id="MailSenderSendMessagesTab.textview_mail_sender_progress">
+          <object class="GtkTextView" id="MailSenderSendTab.textview_mail_sender_progress">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="editable">False</property>
@@ -978,7 +978,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkProgressBar" id="MailSenderSendMessagesTab.progressbar_mail_sender">
+      <object class="GtkProgressBar" id="MailSenderSendTab.progressbar_mail_sender">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="show_text">True</property>
@@ -990,11 +990,11 @@
       </packing>
     </child>
     <child>
-      <object class="GtkButtonBox" id="MailSenderSendMessagesTab.box1">
+      <object class="GtkButtonBox" id="MailSenderSendTab.box1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <child>
-          <object class="GtkButton" id="MailSenderSendMessagesTab.button_mail_sender_stop">
+          <object class="GtkButton" id="MailSenderSendTab.button_mail_sender_stop">
             <property name="label" translatable="yes">Stop</property>
             <property name="visible">True</property>
             <property name="sensitive">False</property>
@@ -1009,7 +1009,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkToggleButton" id="MailSenderSendMessagesTab.togglebutton_mail_sender_pause">
+          <object class="GtkToggleButton" id="MailSenderSendTab.togglebutton_mail_sender_pause">
             <property name="label" translatable="yes">Pause</property>
             <property name="visible">True</property>
             <property name="sensitive">False</property>
@@ -1025,7 +1025,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="MailSenderSendMessagesTab.button_mail_sender_start">
+          <object class="GtkButton" id="MailSenderSendTab.button_mail_sender_start">
             <property name="label" translatable="yes">Start</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -1084,7 +1084,7 @@
       </row>
     </data>
   </object>
-  <object class="GtkBox" id="MailSenderConfigTab">
+  <object class="GtkBox" id="MailSenderConfigurationTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="margin_left">5</property>
@@ -1093,13 +1093,13 @@
     <property name="margin_bottom">5</property>
     <property name="orientation">vertical</property>
     <child>
-      <object class="GtkGrid" id="MailSenderConfigTab.grid">
+      <object class="GtkGrid" id="MailSenderConfigurationTab.grid">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="row_spacing">3</property>
         <property name="column_spacing">5</property>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label1">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Web Server URL*</property>
@@ -1112,7 +1112,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label2">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Company Name*</property>
@@ -1125,7 +1125,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label3">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Source Email*</property>
@@ -1138,7 +1138,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label4">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label4">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Friendly Alias</property>
@@ -1151,7 +1151,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label5">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label5">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Subject*</property>
@@ -1164,7 +1164,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label6">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label6">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Reply To</property>
@@ -1177,7 +1177,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label7">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label7">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Message HTML File*</property>
@@ -1190,7 +1190,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label8">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label8">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Target CSV File*</property>
@@ -1203,7 +1203,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label9">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label9">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">File Attachment</property>
@@ -1216,7 +1216,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label12">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label12">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">* Required Options</property>
@@ -1229,13 +1229,13 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="MailSenderConfigTab.box2">
+          <object class="GtkBox" id="MailSenderConfigurationTab.box2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
             <property name="spacing">3</property>
             <child>
-              <object class="GtkEntry" id="MailSenderConfigTab.entry_webserver_url">
+              <object class="GtkEntry" id="MailSenderConfigurationTab.entry_webserver_url">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hexpand">True</property>
@@ -1247,7 +1247,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="MailSenderConfigTab.button6">
+              <object class="GtkButton" id="MailSenderConfigurationTab.button6">
                 <property name="label" translatable="yes">Verify URL</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -1270,13 +1270,13 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="MailSenderConfigTab.box4">
+          <object class="GtkBox" id="MailSenderConfigurationTab.box4">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
             <property name="spacing">3</property>
             <child>
-              <object class="GtkEntry" id="MailSenderConfigTab.entry_html_file">
+              <object class="GtkEntry" id="MailSenderConfigurationTab.entry_html_file">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hexpand">True</property>
@@ -1290,12 +1290,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="MailSenderConfigTab.button1">
+              <object class="GtkButton" id="MailSenderConfigurationTab.button1">
                 <property name="label" translatable="yes">Select File</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigTab.entry_html_file" swapped="no"/>
+                <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigurationTab.entry_html_file" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1312,13 +1312,13 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="MailSenderConfigTab.box5">
+          <object class="GtkBox" id="MailSenderConfigurationTab.box5">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
             <property name="spacing">3</property>
             <child>
-              <object class="GtkEntry" id="MailSenderConfigTab.entry_target_file">
+              <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_file">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">Format: first name, last name, email address</property>
@@ -1337,13 +1337,13 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="MailSenderConfigTab.button2">
+              <object class="GtkButton" id="MailSenderConfigurationTab.button2">
                 <property name="label" translatable="yes">Select File</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="tooltip_text" translatable="yes">Format: first name, last name, email address</property>
-                <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigTab.entry_target_file" swapped="no"/>
+                <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigurationTab.entry_target_file" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1360,13 +1360,13 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="MailSenderConfigTab.box6">
+          <object class="GtkBox" id="MailSenderConfigurationTab.box6">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
             <property name="spacing">3</property>
             <child>
-              <object class="GtkEntry" id="MailSenderConfigTab.entry_attachment_file">
+              <object class="GtkEntry" id="MailSenderConfigurationTab.entry_attachment_file">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hexpand">True</property>
@@ -1385,12 +1385,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="MailSenderConfigTab.button3">
+              <object class="GtkButton" id="MailSenderConfigurationTab.button3">
                 <property name="label" translatable="yes">Select File</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigTab.entry_attachment_file" swapped="no"/>
+                <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigurationTab.entry_attachment_file" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1407,7 +1407,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="MailSenderConfigTab.entry_company_name">
+          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_company_name">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
           </object>
@@ -1419,7 +1419,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="MailSenderConfigTab.entry_source_email">
+          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
           </object>
@@ -1431,7 +1431,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="MailSenderConfigTab.entry_source_email_alias">
+          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email_alias">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
           </object>
@@ -1443,7 +1443,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="MailSenderConfigTab.entry_subject">
+          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_subject">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
           </object>
@@ -1455,7 +1455,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="MailSenderConfigTab.entry_reply_to_email">
+          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_reply_to_email">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
           </object>
@@ -1467,7 +1467,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label10">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label10">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Message Importance</property>
@@ -1480,7 +1480,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MailSenderConfigTab.label11">
+          <object class="GtkLabel" id="MailSenderConfigurationTab.label11">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Message Sensitivity</property>
@@ -1493,7 +1493,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkComboBox" id="MailSenderConfigTab.combobox_importance">
+          <object class="GtkComboBox" id="MailSenderConfigurationTab.combobox_importance">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="model">MsgImportance</property>
@@ -1513,7 +1513,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkComboBox" id="MailSenderConfigTab.combobox_sensitivity">
+          <object class="GtkComboBox" id="MailSenderConfigurationTab.combobox_sensitivity">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="model">MsgSensitivity</property>

@@ -147,7 +147,7 @@ class MailSenderThread(threading.Thread):
 	the sending of emails for campaigns and supports pausing sending
 	messages which can later be resumed by unpausing. This object reports
 	its information to the GUI through an
-	:py:class:`.MailSenderSendMessagesTab` instance, these two objects
+	:py:class:`.MailSenderSendTab` instance, these two objects
 	are very interdependent.
 	"""
 	def __init__(self, config, target_file, tab, rpc):
@@ -155,7 +155,7 @@ class MailSenderThread(threading.Thread):
 		:param dict config: The King Phisher client configuration.
 		:param str target_file: The CSV formatted file to read message targets from.
 		:param tab: The GUI tab to report information to.
-		:type tab: :py:class:`.MailSenderSendMessagesTab`
+		:type tab: :py:class:`.MailSenderSendTab`
 		:param rpc: The client's connected RPC instance.
 		:type rpc: :py:class:`.KingPhisherRPCClient`
 		"""
@@ -165,7 +165,7 @@ class MailSenderThread(threading.Thread):
 		self.target_file = target_file
 		"""The name of the target file in CSV format."""
 		self.tab = tab
-		""":py:class:`.MailSenderSendMessagesTab` instance for reporting to the GUI."""
+		""":py:class:`.MailSenderSendTab` instance for reporting to the GUI."""
 		self.rpc = rpc
 		self.ssh_forwarder = None
 		"""The :py:class:`.SSHTCPForwarder` instance for tunneling traffic to the SMTP server."""

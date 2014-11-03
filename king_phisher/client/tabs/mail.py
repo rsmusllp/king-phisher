@@ -48,7 +48,7 @@ from king_phisher.errors import KingPhisherInputValidationError
 from gi.repository import Gtk
 from gi.repository import WebKit
 
-class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
+class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 	"""
 	This allows the :py:class:`.MailSenderThread` object to be managed
 	by the user through the GUI. These two classes are very interdependent
@@ -63,13 +63,13 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Send Messages')
+		self.label = Gtk.Label('Send')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
-		super(MailSenderSendMessagesTab, self).__init__(*args, **kwargs)
+		super(MailSenderSendTab, self).__init__(*args, **kwargs)
 		self.textview = self.gobjects['textview_mail_sender_progress']
 		"""The :py:class:`Gtk.TextView` object that renders text status messages."""
 		self.textbuffer = self.textview.get_buffer()
-		"""The :py:class:`Gtk.TextBuffer` instance associated with :py:attr:`~.MailSenderSendMessagesTab.textview`."""
+		"""The :py:class:`Gtk.TextBuffer` instance associated with :py:attr:`~.MailSenderSendTab.textview`."""
 		self.textbuffer_iter = self.textbuffer.get_start_iter()
 		self.progressbar = self.gobjects['progressbar_mail_sender']
 		"""The :py:class:`Gtk.ProgressBar` instance which is used to display progress of sending messages."""
@@ -169,7 +169,7 @@ class MailSenderSendMessagesTab(gui_utilities.UtilityGladeGObject):
 
 	def text_insert(self, message):
 		"""
-		Insert text into the :py:attr:`~.MailSenderSendMessagesTab.textbuffer`.
+		Insert text into the :py:attr:`~.MailSenderSendTab.textbuffer`.
 
 		:param str message: The text to insert.
 		"""
@@ -364,7 +364,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		text = "{{{{ inline_image('{0}') }}}}".format(target_path)
 		return self.signal_activate_popup_menu_insert(widget, text)
 
-class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
+class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 	"""
 	This is the tab which allows the user to configure and set parameters
 	for sending messages as part of a campaign.
@@ -389,9 +389,9 @@ class MailSenderConfigTab(gui_utilities.UtilityGladeGObject):
 		'MsgSensitivity'
 	]
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Config')
+		self.label = Gtk.Label('Configuration')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
-		super(MailSenderConfigTab, self).__init__(*args, **kwargs)
+		super(MailSenderConfigurationTab, self).__init__(*args, **kwargs)
 		self.parent.connect('exit', self.signal_kpc_exit)
 
 	def signal_button_clicked_verify(self, button):
@@ -470,7 +470,7 @@ class MailSenderTab(object):
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
 
-		config_tab = MailSenderConfigTab(self.config, self.parent)
+		config_tab = MailSenderConfigurationTab(self.config, self.parent)
 		self.tabs['config'] = config_tab
 		self.notebook.append_page(config_tab.box, config_tab.label)
 
@@ -482,7 +482,7 @@ class MailSenderTab(object):
 		self.tabs['preview'] = preview_tab
 		self.notebook.append_page(preview_tab.box, preview_tab.label)
 
-		send_messages_tab = MailSenderSendMessagesTab(self.config, self.parent)
+		send_messages_tab = MailSenderSendTab(self.config, self.parent)
 		self.tabs['send_messages'] = send_messages_tab
 		self.notebook.append_page(send_messages_tab.box, send_messages_tab.label)
 

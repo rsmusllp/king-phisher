@@ -9,7 +9,7 @@
 Classes
 -------
 
-.. autoclass:: king_phisher.client.tabs.mail.MailSenderConfigTab
+.. autoclass:: king_phisher.client.tabs.mail.MailSenderConfigurationTab
    :show-inheritance:
    :members:
 
@@ -23,7 +23,7 @@ Classes
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.tabs.mail.MailSenderSendMessagesTab
+.. autoclass:: king_phisher.client.tabs.mail.MailSenderSendTab
    :show-inheritance:
    :members:
 
