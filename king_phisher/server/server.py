@@ -528,7 +528,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
-		if message.opened == None:
+
+		if message.opened == None and self.config.get_if_exists('server.set_message_opened_on_visit', True):
 			message.opened = db_models.current_timestamp()
 
 		if self.visit_id:

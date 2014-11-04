@@ -84,16 +84,6 @@ class Configuration(object):
 		function = SERIALIZER_DRIVERS[self.configuration_file_ext][operation]
 		return function(*args)
 
-	def get_storage(self):
-		"""
-		Get a copy of the internal configuration. Changes made to the returned
-		copy will not affect this object.
-
-		:return: A copy of the internal storage object.
-		:rtype: dict
-		"""
-		return copy.deepcopy(self._storage)
-
 	def get(self, item_name):
 		"""
 		Retrieve the value of an option.
@@ -108,6 +98,29 @@ class Configuration(object):
 		for item_name in item_names:
 			node = node[item_name]
 		return node
+
+	def get_if_exists(self, item_name, default_value=None):
+		"""
+		Retrieve the value of an option if it exists, otherwise
+		return *default_value* instead of raising an error:
+
+		:param str item_name: The name of the option to retrieve.
+		:param default_value: The value to return if *item_name* does not exist.
+		:return: The value of *item_name* in the configuration.
+		"""
+		if self.has_option(item_name):
+			return self.get(item_name)
+		return default_value
+
+	def get_storage(self):
+		"""
+		Get a copy of the internal configuration. Changes made to the returned
+		copy will not affect this object.
+
+		:return: A copy of the internal storage object.
+		:rtype: dict
+		"""
+		return copy.deepcopy(self._storage)
 
 	def has_option(self, option_name):
 		"""
