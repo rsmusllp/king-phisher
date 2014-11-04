@@ -532,14 +532,20 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if message.opened == None and self.config.get_if_exists('server.set_message_opened_on_visit', True):
 			message.opened = db_models.current_timestamp()
 
+		set_new_visit = True
 		if self.visit_id:
+			set_new_visit = False
 			visit_id = self.visit_id
 			query = session.query(db_models.LandingPage)
 			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
 			if query.count():
 				visit = db_manager.get_row_by_id(session, db_models.Visit, visit_id)
-				visit.visit_count += 1
-		else:
+				if visit.message_id == message_id:
+					visit.visit_count += 1
+				else:
+					set_new_visit = True
+
+		if set_new_visit:
 			visit_id = make_uid()
 			kp_cookie_name = self.config.get('server.cookie_name')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
