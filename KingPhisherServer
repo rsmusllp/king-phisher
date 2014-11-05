@@ -66,6 +66,7 @@ def main():
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
 	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
 	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in forground (do not fork)')
+	parser.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='just verify the configuration')
 	parser.add_argument('config_file', action='store', type=argparse.FileType('r'), help='configuration file to use')
 	arguments = parser.parse_args()
 
@@ -128,6 +129,9 @@ def main():
 			for option in missing_options['incompatible']:
 				print("[-]   - {0} (type: {1})".format(option[0], option[1]))
 		return os.EX_CONFIG
+	if arguments.verify_config:
+		print('[+] configuration verification passed')
+		return os.EX_OK
 
 	# setup logging based on the configuration
 	log_file_path = None
