@@ -14,5 +14,6 @@ docs/build/*
 
 !data/server/king_phisher/error_*.html
 !data/server/king_phisher/server_config.yml
+!data/server/king_phisher/server_config_verification.yml
 !data/server/king_phisher/service_files/*
 !data/*/king_phisher/*/*.html

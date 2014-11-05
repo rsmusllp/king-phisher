@@ -122,6 +122,27 @@ class Configuration(object):
 		"""
 		return copy.deepcopy(self._storage)
 
+	def get_missing(self, verify_file):
+		"""
+		Use a verification configuration which has a list of required options
+		and their respective types. This information is used to identify missing
+		and incompatbile options in the loaded configuration.
+
+		:param str verify_file: The file to load for verification data.
+		:return: A dictionary of missing and incompatible settings.
+		:rtype: dict
+		"""
+		vconf = Configuration(verify_file)
+		missing = {}
+		for setting, setting_type in vconf.get('settings').items():
+			if not self.has_option(setting):
+				missing['missing'] = missing.get('settings', [])
+				missing['missing'].append(setting)
+			elif not type(self.get(setting)).__name__ == setting_type:
+				missing['incompatible'] = missing.get('incompatible', [])
+				missing['incompatible'].append((setting, setting_type))
+		return missing
+
 	def has_option(self, option_name):
 		"""
 		Check that an option exists.
