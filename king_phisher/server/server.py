@@ -79,8 +79,11 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
 	address = (config.get('server.address.host'), config.get('server.address.port'))
+	ssl_certfile = None
+	if config.has_option('server.ssl_cert'):
+		ssl_certfile = config.get('server.ssl_cert')
 	try:
-		server = ServerClass(config, HandlerClass, address=address)
+		server = ServerClass(config, HandlerClass, address=address, ssl_certfile=ssl_certfile)
 	except socket.error as error:
 		error_number, error_message = error.args
 		if error_number == 98:
