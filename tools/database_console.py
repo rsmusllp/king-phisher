@@ -36,8 +36,7 @@ import logging
 import os
 import sys
 
-if os.path.split(__file__)[0] == 'tools':
-	sys.path.insert(1, os.getcwd())
+sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from king_phisher import version
 from king_phisher.server.database import manager
