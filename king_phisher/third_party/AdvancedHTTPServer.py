@@ -257,7 +257,10 @@ def build_server_from_config(config, section_name, ServerClass=None, HandlerClas
 	ssl_certfile = None
 	if config.has_option(section_name, 'ssl_cert'):
 		ssl_certfile = config.get(section_name, 'ssl_cert')
-	server = ServerClass(HandlerClass, address=(ip, port), ssl_certfile=ssl_certfile)
+	ssl_keyfile = None
+	if config.has_option(section_name, 'ssl_key'):
+		ssl_keyfile = config.get(section_name, 'ssl_key')
+	server = ServerClass(HandlerClass, address=(ip, port), ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 	if config.has_option(section_name, 'password_type'):
 		password_type = config.get(section_name, 'password_type')
@@ -1161,13 +1164,14 @@ class AdvancedHTTPServer(object):
 	the port is guessed based on if the server is run as root or not and
 	SSL is used.
 	"""
-	def __init__(self, RequestHandler, address=None, use_threads=True, ssl_certfile=None):
+	def __init__(self, RequestHandler, address=None, use_threads=True, ssl_certfile=None, ssl_keyfile=None):
 		"""
 		:param RequestHandler: The request handler class to use.
 		:type RequestHandler: :py:class:`.AdvancedHTTPServerRequestHandler`
 		:param tuple address: The address to bind to in the format (host, port).
 		:param bool use_threads: Whether to enable the use of a threaded handler.
-		:param str ssl_certfile: A SSL certificate file to use, setting this enables SSL.
+		:param str ssl_certfile: An SSL certificate file to use, setting this enables SSL.
+		:param str ssl_keyfile: An SSL certificate file to use.
 		"""
 		self.use_ssl = bool(ssl_certfile)
 		if address == None:
@@ -1183,6 +1187,7 @@ class AdvancedHTTPServer(object):
 					address = ('0.0.0.0', 80)
 		self.address = address
 		self.ssl_certfile = ssl_certfile
+		self.ssl_keyfile = ssl_keyfile
 		if not hasattr(self, 'logger'):
 			self.logger = logging.getLogger('AdvancedHTTPServer')
 		self.server_started = False
@@ -1195,7 +1200,7 @@ class AdvancedHTTPServer(object):
 		self.http_server.rest_api_handler = None
 
 		if self.use_ssl:
-			self.http_server.socket = ssl.wrap_socket(self.http_server.socket, certfile=ssl_certfile, server_side=True)
+			self.http_server.socket = ssl.wrap_socket(self.http_server.socket, keyfile=ssl_keyfile, certfile=ssl_certfile, server_side=True)
 			self.http_server.using_ssl = True
 			self.logger.info(address[0] + ':' + str(address[1]) + ' - ssl has been enabled')
 

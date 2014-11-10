@@ -80,10 +80,12 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 		config.set('server.secret_id', make_uid())
 	address = (config.get('server.address.host'), config.get('server.address.port'))
 	ssl_certfile = None
+	ssl_keyfile = None
 	if config.has_option('server.ssl_cert'):
 		ssl_certfile = config.get('server.ssl_cert')
+		ssl_keyfile = config.get_if_exists('server.ssl_key')
 	try:
-		server = ServerClass(config, HandlerClass, address=address, ssl_certfile=ssl_certfile)
+		server = ServerClass(config, HandlerClass, address=address, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
 		error_number, error_message = error.args
 		if error_number == 98:
