@@ -103,13 +103,24 @@ class KingPhisherClientRPCTerminal(object):
 			'uri_base': rpc.uri_base,
 			'hmac_key': rpc.hmac_key,
 		}
-		config = json.dumps(config)
+
+		module_path = os.path.dirname(__file__) + (os.path.sep + '..') * self.__module__.count('.')
+		module_path = os.path.normpath(module_path)
+
+		python_command = [
+			"import {0}".format(self.__module__),
+			"{0}.{1}.child_routine('{2}')".format(self.__module__, self.__class__.__name__, json.dumps(config))
+		]
+		python_command = '; '.join(python_command)
+
 		argv = []
 		argv.append(utilities.which('python'))
 		argv.append('-c')
-		argv.append("import {0}; {0}.{1}.child_routine('{2}')".format(self.__module__, self.__class__.__name__, config))
+		argv.append(python_command)
+
+		env = ('PYTHONPATH=' + module_path,)
 		# _, child_pid = self.terminal.fork_command_full(Vte.PtyFlags.DEFAULT, os.getcwd(), argv, None, GLib.SpawnFlags.DEFAULT, None, None)
-		_, child_pid = self.terminal.fork_command_full(0, os.getcwd(), argv, None, 0, None, None)
+		_, child_pid = self.terminal.fork_command_full(0, os.getcwd(), argv, env, 0, None, None)
 		self.logger.info("vte spawned child process with pid: {0}".format(child_pid))
 		self.child_pid = child_pid
 		self.terminal.connect('child-exited', lambda vt: self.window.destroy())
