@@ -80,12 +80,14 @@ def main():
 		data_path = os.path.join(data_path, 'data', 'client')
 
 	data_path = os.path.abspath(data_path)
-	find.data_path_append(data_path)
+	if os.path.isdir(data_path):
+		find.data_path_append(data_path)
 
 	data_path = os.getcwd()
 	data_path = os.path.join(data_path, 'data', 'client')
 	data_path = os.path.abspath(data_path)
-	find.data_path_append(data_path)
+	if os.path.isdir(data_path):
+		find.data_path_append(data_path)
 
 	os.environ['KING_PHISHER_GLADE_FILE'] = 'KingPhisherClient.glade'
 	if not gui_utilities.which_glade():

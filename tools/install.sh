@@ -95,7 +95,7 @@ if [ -n "$DESKTOP_APPLICATIONS_DIR" ]; then
 	cp data/client/king-phisher.desktop $DESKTOP_APPLICATIONS_DIR
 	sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" $DESKTOP_APPLICATIONS_DIR/king-phisher.desktop
 	if [ -d /usr/share/icons/hicolor/scalable/apps ]; then
-		cp data/king-phisher-logo.svg /usr/share/icons/hicolor/scalable/apps
+		cp data/client/king_phisher/king-phisher-icon.svg /usr/share/icons/hicolor/scalable/apps
 	fi
 fi
 
