@@ -48,6 +48,20 @@ from king_phisher.errors import KingPhisherInputValidationError
 from gi.repository import Gtk
 from gi.repository import WebKit
 
+def test_webserver_url(target_url, secret_id):
+	"""
+	Test the target URL to ensure that it is valid and the server is responding.
+
+	:param str target_url: The URL to make a test request to.
+	:param str secret_id: The King Phisher Server secret id to include in the test request.
+	"""
+	parsed_url = urlparse.urlparse(target_url)
+	query = urlparse.parse_qs(parsed_url.query)
+	query['id'] = [secret_id]
+	query = urllib.urlencode(query, True)
+	target_url = urlparse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
+	urllib2.urlopen(target_url, timeout=5)
+
 class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 	"""
 	This allows the :py:class:`.MailSenderThread` object to be managed
@@ -99,6 +113,20 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if not self.config.get('smtp_server'):
 			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
 			return
+
+		self.text_insert('Testing the target URL... ')
+		try:
+			test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
+		except Exception as error:
+			self.text_insert('failed')
+			if not gui_utilities.show_dialog_yes_no('Unable To Open The Web Server URL', self.parent, 'The URL may be invalid, continue sending messages anyways?'):
+				self.text_insert(', sending aborted.\n')
+				return
+			self.text_insert(', error ignored.\n')
+		else:
+			self.text_insert('success, done.\n')
+
+		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:
 			return
 		self.parent.save_config()
@@ -117,22 +145,22 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		# connect to the smtp server
 		if self.config['smtp_ssh_enable']:
 			while True:
-				self.text_insert('Connecting To SSH... ')
+				self.text_insert('Connecting to SSH... ')
 				login_dialog = KingPhisherClientSSHLoginDialog(self.config, self.parent)
 				login_dialog.objects_load_from_config()
 				response = login_dialog.interact()
 				if response == Gtk.ResponseType.CANCEL:
-					self.sender_start_failure(text='Canceled.\n')
+					self.sender_start_failure(text='canceled.\n')
 					return
 				if self.sender_thread.server_ssh_connect():
-					self.text_insert('Done.\n')
+					self.text_insert('done.\n')
 					break
-				self.sender_start_failure('Failed to connect to SSH', 'Failed.\n', retry=True)
-		self.text_insert('Connecting To SMTP Server... ')
+				self.sender_start_failure('Failed to connect to SSH', 'failed.\n', retry=True)
+		self.text_insert('Connecting to SMTP server... ')
 		if not self.sender_thread.server_smtp_connect():
-			self.sender_start_failure('Failed to connect to SMTP', 'Failed.\n')
+			self.sender_start_failure('Failed to connect to SMTP', 'failed.\n')
 			return
-		self.text_insert('Done.\n')
+		self.text_insert('done.\n')
 
 		parsed_target_url = urlparse.urlparse(self.config['mailer.webserver_url'])
 		landing_page_hostname = parsed_target_url.netloc
@@ -397,20 +425,20 @@ class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
 		try:
-			parsed_url = urlparse.urlparse(target_url)
-			query = urlparse.parse_qs(parsed_url.query)
-			query['id'] = [self.config['server_config']['server.secret_id']]
-			query = urllib.urlencode(query, True)
-			target_url = urlparse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
-			urllib2.urlopen(target_url, timeout=5)
+			test_webserver_url(target_url, self.config['server_config']['server.secret_id'])
 		except Exception as error:
 			error_description = None
+			if isinstance(error, urllib2.URLError) and hasattr(error, 'reason') and isinstance(error.reason, Exception):
+				error = error.reason
 			if isinstance(error, urllib2.HTTPError) and error.getcode():
 				self.logger.warning("verify url HTTPError: {0} {1}".format(error.getcode(), error.reason))
-				error_description = "HTTP Status {0} {1}".format(error.getcode(), error.reason)
+				error_description = "HTTP status {0} {1}".format(error.getcode(), error.reason)
+			elif isinstance(error, socket.gaierror):
+				self.logger.warning('verify url attempt failed, socket.gaierror')
+				error_description = error.args[-1]
 			elif isinstance(error, socket.timeout):
 				self.logger.warning('verify url attempt failed, connection timeout occurred')
-				error_description = 'Connection Timed Out'
+				error_description = 'Connection timed out'
 			else:
 				self.logger.warning('unknown verify url exception: ' + repr(error))
 			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent, error_description)
