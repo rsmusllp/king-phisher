@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import functools
 import httplib
 import os
 import random
@@ -75,6 +76,17 @@ TEST_MESSAGE_TEMPLATE = """
 </html>
 """
 """A string representing a message template that can be used for testing."""
+
+def skip_on_travis(test_method):
+	"""
+	A decorator to skip running a test when executing in the travis-ci environment.
+	"""
+	@functools.wraps(test_method)
+	def decorated(self, *args, **kwargs):
+		if os.environ.get('TRAVIS'):
+			self.skipTest('due to running in travis-ci environment')
+		return test_method(self, *args, **kwargs)
+	return decorated
 
 class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
 	def custom_authentication(self, *args, **kwargs):

@@ -45,6 +45,7 @@ from tests.configuration import ServerConfigurationTests
 from tests.templates import TemplatesTests
 from tests.ua_parser import UserAgentParserTests
 from tests.utilities import UtilitiesTests
+from tests.version import VersionTests
 from tests.xor import XORTests
 
 if hasattr(logging, 'NullHandler'):
