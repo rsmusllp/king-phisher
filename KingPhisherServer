@@ -55,6 +55,7 @@ __requirements__ = [
 	'alembic>=0.6.7',
 	'dnspython>=1.10.0',
 	'Jinja2>=2.7.1',
+	'markupsafe>=0.18',
 	'msgpack-python>=0.4.2',
 	'psycopg2>=2.5.4',
 	'PyYAML>=3.10',
