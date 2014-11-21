@@ -315,6 +315,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return
 		try:
 			template = self.server.template_env.get_template(os.path.relpath(file_path, self.server.serve_files_root))
+		except jinja2.exceptions.TemplateSyntaxError as error:
+			self.server.logger.error("jinja2 syntax error in template {0}:{1} {2}".format(error.filename, error.lineno, error.message))
+			raise errors.KingPhisherAbortRequestError()
 		except jinja2.exceptions.TemplateError, IOError:
 			raise errors.KingPhisherAbortRequestError()
 
@@ -337,7 +340,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		try:
 			template_data = template.render(template_vars)
 		except jinja2.TemplateError as error:
-			self.server.logger.error("jinja2 template '{0}' render failed: {1} {2}".format(template.name, error.__class__.__name__, error.message))
+			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
 			raise errors.KingPhisherAbortRequestError()
 
 		fs = os.stat(template.filename)
