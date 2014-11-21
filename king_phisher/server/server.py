@@ -321,6 +321,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			'client': {
 				'address': self.client_address[0]
 			},
+			'request': {
+				'command': self.command,
+				'cookies': dict(map(lambda c: (c[0], c[1].value),  self.cookies.items())),
+				'parameters': dict(zip(self.query_data.keys(), map(self.get_query_parameter, self.query_data.keys())))
+			},
 			'server': {
 				'hostname': self.vhost,
 				'address': self.connection.getsockname()[0]

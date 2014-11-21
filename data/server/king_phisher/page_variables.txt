@@ -17,6 +17,25 @@ client.visit_count:     {{ client.visit_count }}
 client.visit_id:        {{ client.visit_id }}
 {% endif %}
 
+## Request Vars
+request.command         {{ request.command }}
+{% if request.cookies %}
+request.cookies:
+{% for key, value in request.cookies.iteritems() %}
+    {{ key }} = {{ value }}
+{% endfor %}
+{% else %}
+request.cookies:        N/A
+{% endif %}
+{% if request.parameters %}
+request.parameters:
+{% for key, value in request.parameters.iteritems() %}
+    {{ key }} = {{ value }}
+{% endfor %}
+{% else %}
+request.parameters:     N/A
+{% endif %}
+
 # Server Vars
 server.address:         {{ server.address }}
 server.hostname:        {{ server.hostname }}
