@@ -34,20 +34,11 @@ from king_phisher.client.gui_utilities import UtilityGladeGObject
 
 from gi.repository import Gtk
 
-class KingPhisherClientLoginDialog(UtilityGladeGObject):
+class KingPhisherClientLoginDialogBase(UtilityGladeGObject):
 	"""
-	This object is the main King Phisher login dialog, it is used to
-	prompt for connection information for the King Phisher server.
-
-	It allows the user to specify the host and port to connect to and
-	credentials for authentication.
+	This object is basic login dialog object that can be inherited from and
+	customized.
 	"""
-	gobject_ids = [
-		'button_connect',
-		'entry_server',
-		'entry_server_username',
-		'entry_server_password'
-	]
 	top_gobject = 'dialog'
 	def interact(self):
 		self.dialog.show_all()
@@ -60,7 +51,33 @@ class KingPhisherClientLoginDialog(UtilityGladeGObject):
 	def signal_entry_activate(self, entry):
 		self.gobjects['button_connect'].emit('clicked')
 
-class KingPhisherClientSSHLoginDialog(KingPhisherClientLoginDialog):
+class KingPhisherClientLoginDialog(KingPhisherClientLoginDialogBase):
+	"""
+	This object is the main King Phisher login dialog, it is used to
+	prompt for connection information for the King Phisher server.
+
+	It allows the user to specify the host and port to connect to and
+	credentials for authentication.
+	"""
+	gobject_ids = [
+		'button_connect',
+		'entry_server',
+		'entry_server_username',
+		'entry_server_password',
+		'spinbutton_server_remote_port',
+		'switch_server_use_ssl'
+	]
+	top_level_dependencies = [
+		'PortAdjustment'
+	]
+
+	def signal_switch_ssl(self, switch, _):
+		if switch.get_property('active'):
+			self.gobjects['spinbutton_server_remote_port'].set_value(443)
+		else:
+			self.gobjects['spinbutton_server_remote_port'].set_value(80)
+
+class KingPhisherClientSSHLoginDialog(KingPhisherClientLoginDialogBase):
 	"""
 	This object is the King Phisher SSH login dialog, it is used to
 	prompt for connection information to an SSH server.

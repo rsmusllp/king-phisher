@@ -549,7 +549,7 @@ class KingPhisherClient(_Gtk_Window):
 				self.logger.warning('failed to connect to the remote ssh server')
 				gui_utilities.show_dialog_error(title_ssh_error, self)
 				continue
-			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl', False))
+			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl'))
 			try:
 				server_version_info = self.rpc('version')
 				assert(self.rpc('client/initialize'))

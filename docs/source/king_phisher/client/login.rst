@@ -14,6 +14,11 @@ Classes
    :members:
    :special-members: __init__
 
+.. autoclass:: king_phisher.client.login.KingPhisherClientLoginDialogBase
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
 .. autoclass:: king_phisher.client.login.KingPhisherClientSSHLoginDialog
    :show-inheritance:
    :members:
