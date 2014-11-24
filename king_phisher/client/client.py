@@ -196,8 +196,8 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 		# SMTP Server Tab
 		'entry_smtp_server',
 		'spinbutton_smtp_max_send_rate',
-		'checkbutton_smtp_ssl_enable',
-		'checkbutton_smtp_ssh_enable',
+		'switch_smtp_ssl_enable',
+		'switch_smtp_ssh_enable',
 		'entry_ssh_server',
 		'entry_ssh_username'
 	]
@@ -206,8 +206,8 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 		'SMSCarriers',
 		'SMTPSendRate'
 	]
-	def signal_smtp_ssh_enable(self, cbutton):
-		active = cbutton.get_property('active')
+	def signal_switch_smtp_ssh(self, switch, _):
+		active = switch.get_property('active')
 		self.gobjects['entry_ssh_server'].set_sensitive(active)
 		self.gobjects['entry_ssh_username'].set_sensitive(active)
 
