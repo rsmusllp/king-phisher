@@ -6,6 +6,11 @@
 
 
 
+Functions
+---------
+
+.. autofunction:: king_phisher.client.tabs.mail.test_webserver_url
+
 Classes
 -------
 

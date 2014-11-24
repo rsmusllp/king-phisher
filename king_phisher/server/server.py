@@ -46,6 +46,7 @@ from king_phisher import templates
 from king_phisher import utilities
 from king_phisher import xor
 from king_phisher.server import authenticator
+from king_phisher.server import pages
 from king_phisher.server import server_rpc
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
@@ -79,8 +80,13 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
 	address = (config.get('server.address.host'), config.get('server.address.port'))
+	ssl_certfile = None
+	ssl_keyfile = None
+	if config.has_option('server.ssl_cert'):
+		ssl_certfile = config.get('server.ssl_cert')
+		ssl_keyfile = config.get_if_exists('server.ssl_key')
 	try:
-		server = ServerClass(config, HandlerClass, address=address)
+		server = ServerClass(config, HandlerClass, address=address, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
 		error_number, error_message = error.args
 		if error_number == 98:
@@ -309,12 +315,20 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return
 		try:
 			template = self.server.template_env.get_template(os.path.relpath(file_path, self.server.serve_files_root))
+		except jinja2.exceptions.TemplateSyntaxError as error:
+			self.server.logger.error("jinja2 syntax error in template {0}:{1} {2}".format(error.filename, error.lineno, error.message))
+			raise errors.KingPhisherAbortRequestError()
 		except jinja2.exceptions.TemplateError, IOError:
 			raise errors.KingPhisherAbortRequestError()
 
 		template_vars = {
 			'client': {
 				'address': self.client_address[0]
+			},
+			'request': {
+				'command': self.command,
+				'cookies': dict(map(lambda c: (c[0], c[1].value),  self.cookies.items())),
+				'parameters': dict(zip(self.query_data.keys(), map(self.get_query_parameter, self.query_data.keys())))
 			},
 			'server': {
 				'hostname': self.vhost,
@@ -326,7 +340,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		try:
 			template_data = template.render(template_vars)
 		except jinja2.TemplateError as error:
-			self.server.logger.error("jinja2 template '{0}' render failed: {1} {2}".format(template.name, error.__class__.__name__, error.message))
+			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
 			raise errors.KingPhisherAbortRequestError()
 
 		fs = os.stat(template.filename)
@@ -528,17 +542,24 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
-		if message.opened == None:
+
+		if message.opened == None and self.config.get_if_exists('server.set_message_opened_on_visit', True):
 			message.opened = db_models.current_timestamp()
 
+		set_new_visit = True
 		if self.visit_id:
+			set_new_visit = False
 			visit_id = self.visit_id
 			query = session.query(db_models.LandingPage)
 			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
 			if query.count():
 				visit = db_manager.get_row_by_id(session, db_models.Visit, visit_id)
-				visit.visit_count += 1
-		else:
+				if visit.message_id == message_id:
+					visit.visit_count += 1
+				else:
+					set_new_visit = True
+
+		if set_new_visit:
 			visit_id = make_uid()
 			kp_cookie_name = self.config.get('server.cookie_name')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
@@ -611,9 +632,10 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.job_manager.start()
 		self.http_server.job_manager = self.job_manager
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
-		global_vars = None
+		global_vars = {}
 		if config.has_section('server.page_variables'):
 			global_vars = config.get('server.page_variables')
+		global_vars['make_csrf_page'] = pages.make_csrf_page
 		self.http_server.template_env = templates.KingPhisherTemplateEnvironment(loader=loader, global_vars=global_vars)
 
 		self.__is_shutdown = threading.Event()

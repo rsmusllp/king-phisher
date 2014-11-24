@@ -84,6 +84,21 @@ echo "Installing PyPi dependencies"
 pip install "six>=1.7.0"
 pip install -r requirements.txt
 
+DESKTOP_APPLICATIONS_DIR=""
+if [ -d /usr/local/share/applications ]; then
+	DESKTOP_APPLICATIONS_DIR="/usr/local/share/applications"
+elif [ -d /usr/share/applications ]; then
+	DESKTOP_APPLICATIONS_DIR="/usr/share/applications"
+fi
+if [ -n "$DESKTOP_APPLICATIONS_DIR" ]; then
+	echo "Installing the client desktop application file"
+	cp data/client/king-phisher.desktop $DESKTOP_APPLICATIONS_DIR
+	sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" $DESKTOP_APPLICATIONS_DIR/king-phisher.desktop
+	if [ -d /usr/share/icons/hicolor/scalable/apps ]; then
+		cp data/client/king_phisher/king-phisher-icon.svg /usr/share/icons/hicolor/scalable/apps
+	fi
+fi
+
 egrep "^${KING_PHISHER_GROUP}:" /etc/group > /dev/null 2>&1
 if [ $? -ne 0 ]; then
 	echo "Creating King Phisher Admin Group: '$KING_PHISHER_GROUP'"

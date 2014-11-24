@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/version.py
+#  tests/version.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,27 +30,35 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
+import json
+import re
+import urllib2
+import unittest
 
-version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(0, 1, 7)
-"""A tuple representing the version information in the format ('major', 'minor', 'micro')"""
+from king_phisher.testing import skip_on_travis
+from king_phisher.version import *
 
-version_label = 'beta'
-"""A version lable such as alpha or beta."""
-version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)
-"""A string representing the full version information."""
+class VersionTests(unittest.TestCase):
+	def test_version_info(self):
+		if version_label:
+			self.assertIn(version_label, ('alpha', 'beta'), msg='the version label is invalid')
+		version_regex = r'^\d+\.\d+\.\d+(-(alpha|beta))?$'
+		self.assertRegexpMatches(version, version_regex, msg='the version format is invalid')
+		version_regex = r'^\d+\.\d+\.\d+((a|b)\d)?$'
+		self.assertRegexpMatches(distutils_version, version_regex, msg='the distutils version format is invalid')
 
-# distutils_version is compatible with distutils.version classes
-distutils_version = version
-"""A string sutiable for being parsed by :py:mod:`distutils.version` classes."""
+	@skip_on_travis
+	def test_github_releases(self):
+		url_h = urllib2.urlopen('https://api.github.com/repos/securestate/king-phisher/releases')
+		releases = json.load(url_h)
+		url_h.close()
+		releases = filter(lambda release: not release['draft'], releases)
+		for release in releases:
+			tag_name_regex = r'v\d+\.\d+\.\d+'
+			tag_name = release['tag_name']
+			self.assertRegexpMatches(tag_name, tag_name_regex, msg='the release tag name is invalid')
+			name = "{0}: Version {1}".format(tag_name, tag_name[1:])
+			self.assertEqual(name, release['name'], msg='the release name is invalid')
 
-if version_label:
-	version += '-' + version_label
-	distutils_version += version_label[0]
-	if version_label[-1].isdigit():
-		distutils_version += version_label[-1]
-	else:
-		distutils_version += '0'
-
-rpc_api_version = 2
-"""An integer representing the current version of the RPC API, used for compatibility checks."""
+if __name__ == '__main__':
+	unittest.main()

@@ -55,6 +55,7 @@ __requirements__ = [
 	'alembic>=0.6.7',
 	'dnspython>=1.10.0',
 	'Jinja2>=2.7.1',
+	'markupsafe>=0.18',
 	'msgpack-python>=0.4.2',
 	'psycopg2>=2.5.4',
 	'PyYAML>=3.10',
@@ -66,6 +67,7 @@ def main():
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
 	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
 	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in forground (do not fork)')
+	parser.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='just verify the configuration')
 	parser.add_argument('config_file', action='store', type=argparse.FileType('r'), help='configuration file to use')
 	arguments = parser.parse_args()
 
@@ -87,35 +89,16 @@ def main():
 		return os.EX_SOFTWARE
 
 	if os.getuid():
-		print('[-] This must be executed as root')
-		print('[-] Configure the setuid_username option in the config file to drop privileges.')
+		print('[-] this must be executed as root')
+		print('[-] configure the setuid_username option in the config file to drop privileges')
 		return os.EX_NOPERM
 
 	if not has_msgpack:
-		print('[-] This server requires the Python msgpack module to be installed.')
-		print('[-] Please install it from http://msgpack.org/ or your package manager.')
+		print('[-] this server requires the Python msgpack module to be installed')
+		print('[-] please install it from http://msgpack.org/ or your package manager')
 		return os.EX_UNAVAILABLE
 
 	config = configuration.Configuration(config_file.name)
-	log_file_path = None
-	if config.has_section('logging'):
-		log_level = min(getattr(logging, arguments.loglvl), getattr(logging, config.get('logging.level').upper()))
-		if config.has_option('logging.file') and config.get('logging.file'):
-			log_file_path = config.get('logging.file')
-			file_handler = logging.FileHandler(log_file_path)
-			file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-10s %(message)s"))
-			logging.getLogger('').addHandler(file_handler)
-			file_handler.setLevel(log_level)
-		if config.has_option('logging.console') and config.get('logging.console'):
-			console_log_handler.setLevel(log_level)
-
-	should_fork = True
-	if arguments.foreground:
-		should_fork = False
-	elif config.has_option('server.fork'):
-		should_fork = bool(config.get('server.fork'))
-	if should_fork and os.fork():
-		return os.EX_OK
 
 	# configure environment variables
 	data_path = os.path.dirname(__file__)
@@ -130,6 +113,48 @@ def main():
 
 	if config.has_option('server.data_path'):
 		find.data_path_append(config.get('server.data_path'))
+
+	# check the configuration for missing and incompatible options
+	verify_config = find.find_data_file('server_config_verification.yml')
+	if not verify_config:
+		print('[-] could not load server config verification data')
+		return os.EX_NOINPUT
+	missing_options = config.get_missing(verify_config)
+	if missing_options:
+		if 'missing' in missing_options:
+			print('[-] the following required options are missing from the server configuration:')
+			for option in missing_options['missing']:
+				print('[-]   - ' + option)
+		if 'incompatible' in missing_options:
+			print('[-] the following options are of an incompatible data type in the server configuraiton:')
+			for option in missing_options['incompatible']:
+				print("[-]   - {0} (type: {1})".format(option[0], option[1]))
+		return os.EX_CONFIG
+	if arguments.verify_config:
+		print('[+] configuration verification passed')
+		return os.EX_OK
+
+	# setup logging based on the configuration
+	log_file_path = None
+	if config.has_section('logging'):
+		log_level = min(getattr(logging, arguments.loglvl), getattr(logging, config.get('logging.level').upper()))
+		if config.has_option('logging.file') and config.get('logging.file'):
+			log_file_path = config.get('logging.file')
+			file_handler = logging.FileHandler(log_file_path)
+			file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-10s %(message)s"))
+			logging.getLogger('').addHandler(file_handler)
+			file_handler.setLevel(log_level)
+		if config.has_option('logging.console') and config.get('logging.console'):
+			console_log_handler.setLevel(log_level)
+
+	# fork into the background
+	should_fork = True
+	if arguments.foreground:
+		should_fork = False
+	elif config.has_option('server.fork'):
+		should_fork = bool(config.get('server.fork'))
+	if should_fork and os.fork():
+		return os.EX_OK
 
 	try:
 		king_phisher_server = server.build_king_phisher_server(config)

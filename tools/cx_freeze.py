@@ -34,8 +34,7 @@ import os
 import site
 import sys
 
-if sys.path[0] != os.getcwd():
-	sys.path.insert(0, os.getcwd())
+sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from king_phisher import version
 

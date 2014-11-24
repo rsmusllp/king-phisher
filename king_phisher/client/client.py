@@ -54,6 +54,7 @@ from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
 from gi.repository import Gdk
+from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -305,6 +306,10 @@ class KingPhisherClient(_Gtk_Window):
 		vbox.set_property('orientation', Gtk.Orientation.VERTICAL)
 		vbox.show()
 		self.add(vbox)
+		default_icon_file = find.find_data_file('king-phisher-icon.svg')
+		if default_icon_file:
+			icon_pixbuf = GdkPixbuf.Pixbuf.new_from_file(default_icon_file)
+			self.set_default_icon(icon_pixbuf)
 
 		action_group = Gtk.ActionGroup("client_window_actions")
 		self._add_menu_actions(action_group)
@@ -544,7 +549,7 @@ class KingPhisherClient(_Gtk_Window):
 				self.logger.warning('failed to connect to the remote ssh server')
 				gui_utilities.show_dialog_error(title_ssh_error, self)
 				continue
-			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password)
+			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl', False))
 			try:
 				server_version_info = self.rpc('version')
 				assert(self.rpc('client/initialize'))
@@ -657,6 +662,10 @@ class KingPhisherClient(_Gtk_Window):
 			source_code = source_code[5:-1]
 			source_code = map(lambda x: x.strip('# '), source_code)
 			license_text = ''.join(source_code)
+		logo_pixbuf = None
+		logo_file_path = find.find_data_file('king-phisher-icon.svg')
+		if logo_file_path:
+			logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(logo_file_path, 128, 128)
 		about_dialog = Gtk.AboutDialog()
 		about_dialog.set_transient_for(self)
 		about_dialog_properties = {
@@ -672,6 +681,8 @@ class KingPhisherClient(_Gtk_Window):
 		}
 		if license_text:
 			about_dialog_properties['license'] = license_text
+		if logo_pixbuf:
+			about_dialog_properties['logo'] = logo_pixbuf
 		for property_name, property_value in about_dialog_properties.items():
 			about_dialog.set_property(property_name, property_value)
 		about_dialog.connect('activate-link', lambda _, url: utilities.open_uri(url))

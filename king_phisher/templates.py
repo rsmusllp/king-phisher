@@ -51,7 +51,7 @@ class KingPhisherTemplateEnvironment(jinja2.Environment):
 		"""
 		self.logger = logging.getLogger('KingPhisher.TemplateEnvironment')
 		autoescape = lambda name: isinstance(name, (str, unicode)) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
-		extensions = ['jinja2.ext.autoescape']
+		extensions = ['jinja2.ext.autoescape', 'jinja2.ext.do']
 		super(KingPhisherTemplateEnvironment, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
 
 		self.filters['strftime'] = self._filter_strftime

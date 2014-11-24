@@ -29,7 +29,7 @@ server:
   database: postgresql://user:pass@localhost/king_phisher
 
   # Fork the server process into the background
-  #fork: true
+  fork: true
 
   # Set a file to write the PID to
   #pid_file: /var/run/kingphisher.pid
@@ -39,6 +39,9 @@ server:
 
   # Configure the server header value
   #server_header: Apache/2.4.9 (Unix)
+
+  # Set the opened timestamp on the first visit if it's null
+  set_message_opened_on_visit: true
 
   # Drop privileges to the specified user
   setuid_username: nobody

