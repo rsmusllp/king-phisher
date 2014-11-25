@@ -46,6 +46,10 @@ server:
   # Drop privileges to the specified user
   setuid_username: nobody
 
+  # SSL settings
+  #ssl_cert: /path/to/ssl.crt
+  #ssl_key: /path/to/ssl.key
+
   # Configure the image file name used to track opened emails
   tracking_image: email_logo_banner.gif
 

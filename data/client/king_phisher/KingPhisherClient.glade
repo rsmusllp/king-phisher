@@ -1493,7 +1493,7 @@
               <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">The King Phisher SSH server.</property>
+                <property name="tooltip_text" translatable="yes">The King Phisher SSH server.</property>
                 <property name="placeholder_text" translatable="yes">ssh server:port</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
@@ -1508,7 +1508,7 @@
               <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
+                <property name="tooltip_text" translatable="yes">The username to authenticate to SSH with.</property>
                 <property name="placeholder_text" translatable="yes">ssh username</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
@@ -1524,9 +1524,9 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="has_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The password to authenticate to SSH with.</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">●</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH password to authenticate with.</property>
                 <property name="placeholder_text" translatable="yes">ssh password</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
@@ -1541,6 +1541,7 @@
               <object class="GtkSpinButton" id="KingPhisherClientLoginDialog.spinbutton_server_remote_port">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The port on which the King Phisher server is listening.</property>
                 <property name="max_length">5</property>
                 <property name="adjustment">PortAdjustment</property>
                 <property name="numeric">True</property>
@@ -1557,6 +1558,7 @@
               <object class="GtkSwitch" id="KingPhisherClientLoginDialog.switch_server_use_ssl">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">Whether the King Phisher server is listening with SSL or not.</property>
                 <property name="halign">start</property>
                 <property name="valign">center</property>
                 <signal name="notify::active" handler="signal_switch_ssl" swapped="no"/>
