@@ -37,7 +37,7 @@ from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCErr
 try:
 	import msgpack
 	has_msgpack = True
-	"""Whether the :py:mod:`msgpack` module is available."""
+	"""Whether the :py:mod:`msgpack` module is available or not."""
 except ImportError:
 	has_msgpack = False
 

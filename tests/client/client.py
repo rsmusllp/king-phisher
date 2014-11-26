@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import json
 import sys
 import unittest
 
@@ -50,6 +51,16 @@ class ClientGUITests(unittest.TestCase):
 			main_window.set_position(Gtk.WindowPosition.CENTER)
 		except Exception as error:
 			self.fail("failed to initialize KingPhisherClient (error: {0})".format(error.__class__.__name__))
+
+	def test_client_template_config(self):
+		find.data_path_append('data/client')
+		config_h = open(find.find_data_file('client_config.json'))
+		try:
+			json.load(config_h)
+		except:
+			self.fail("failed to parse the client JSON configuration file")
+		finally:
+			config_h.close()
 
 if __name__ == '__main__':
 	unittest.main()

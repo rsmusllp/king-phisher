@@ -550,6 +550,11 @@ class KingPhisherClient(_Gtk_Window):
 				gui_utilities.show_dialog_error(title_ssh_error, self)
 				continue
 			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl'))
+			if self.config.get('rpc.serializer'):
+				try:
+					self.rpc.set_serializer(self.config['rpc.serializer'])
+				except ValueError as error:
+					self.logger.error("failed to set the rpc serializer, error: '{0}'".format(error.message))
 			try:
 				server_version_info = self.rpc('version')
 				assert(self.rpc('client/initialize'))

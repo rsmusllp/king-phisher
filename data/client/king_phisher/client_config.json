@@ -2,6 +2,7 @@
     "dashboard.bottom": "VisitsTimeline",
     "dashboard.top_left": "Overview",
     "dashboard.top_right": "VisitorInfo",
+    "rpc.serializer": null,
     "server": "localhost:22",
     "server_remote_port": 80,
     "server_use_ssl": false,

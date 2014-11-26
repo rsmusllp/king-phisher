@@ -54,6 +54,7 @@ The following options will be honored but are not configurable through
 the GUI:
 
 * mailer.max_messages_per_connection (Default: 5)
+* rpc.serializer (Default: Automatically determined)
 * ssh_preferred_key (Default: N/A)
 
 ### Message Template Variables
