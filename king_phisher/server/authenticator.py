@@ -121,8 +121,8 @@ class ForkedAuthenticator(object):
 				break
 			elif action != 'authenticate':
 				continue
-			username = request['username']
-			password = request['password']
+			username = str(request['username'])
+			password = str(request['password'])
 			result = {}
 			result['result'] = pam.authenticate(username, password, service=service)
 			self.send(result)
