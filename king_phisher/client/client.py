@@ -300,7 +300,11 @@ class KingPhisherClient(_Gtk_Window):
 		"""The :py:class:`.SSHTCPForwarder` instance used for tunneling traffic."""
 		self.config = None
 		"""The main King Phisher client configuration."""
-		self.load_config()
+		try:
+			self.load_config()
+		except Exception:
+			self.logger.critical('failed to load the client configuration')
+			raise
 		self.set_property('title', 'King Phisher')
 		vbox = Gtk.Box()
 		vbox.set_property('orientation', Gtk.Orientation.VERTICAL)

@@ -87,7 +87,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 			popup_copy_submenu.append(menu_item)
 		self.last_load_time = float('-inf')
 		"""The last time the data was loaded from the server."""
-		self.load_lifetime = utilities.timedef_to_seconds('3m')
+		self.refresh_frequency = utilities.timedef_to_seconds(str(self.config.get('gui.refresh_frequency', '5m')))
 		"""The lifetime in seconds to wait before refreshing the data from the server."""
 		self.row_loader_thread = None
 		"""The thread object which loads the data from the server."""
@@ -142,13 +142,13 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		Load the necessary campaign information from the remote server.
 		Unless *force* is True, the
 		:py:attr:`~.CampaignViewGenericTab.last_load_time` is compared
-		with the :py:attr:`~.CampaignViewGenericTab.load_lifetime` to
+		with the :py:attr:`~.CampaignViewGenericTab.refresh_frequency` to
 		check if the information is stale. If the local data is not stale,
 		this function will return without updating the table.
 
 		:param bool force: Ignore the load life time and force loading the remote data.
 		"""
-		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
+		if not force and ((time.time() - self.last_load_time) < self.refresh_frequency):
 			return
 		if isinstance(self.row_loader_thread, threading.Thread) and self.row_loader_thread.is_alive():
 			return
@@ -319,7 +319,7 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		super(CampaignViewDashboardTab, self).__init__(*args, **kwargs)
 		self.last_load_time = float('-inf')
 		"""The last time the data was loaded from the server."""
-		self.load_lifetime = utilities.timedef_to_seconds('3m')
+		self.refresh_frequency = utilities.timedef_to_seconds(str(self.config.get('gui.refresh_frequency', '5m')))
 		"""The lifetime in seconds to wait before refreshing the data from the server."""
 		self.loader_thread = None
 		"""The thread object which loads the data from the server."""
@@ -328,6 +328,7 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		self.graphs = []
 		"""The :py:class:`.CampaignGraph` classes represented on the dash board."""
 
+		self.logger.debug("dashboard refresh frequency set to {0} seconds".format(self.refresh_frequency))
 		# Position: (DefaultGraphName, Size)
 		dash_ports = {
 			'top_left': (380, 200),
@@ -344,20 +345,20 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 			self.gobjects['scrolledwindow_' + dash_port].add_with_viewport(graph_inst.canvas)
 			self.gobjects['box_' + dash_port].pack_end(graph_inst.navigation_toolbar, False, False, 0)
 			self.graphs.append(graph_inst)
-		GLib.timeout_add_seconds(self.load_lifetime, self.loader_idle_routine)
+		GLib.timeout_add_seconds(self.refresh_frequency, self.loader_idle_routine)
 
 	def load_campaign_information(self, force=False):
 		"""
 		Load the necessary campaign information from the remote server.
 		Unless *force* is True, the
 		:py:attr:`~.CampaignViewDashboardTab.last_load_time` is compared
-		with the :py:attr:`~.CampaignViewDashboardTab.load_lifetime` to
+		with the :py:attr:`~.CampaignViewDashboardTab.refresh_frequency` to
 		check if the information is stale. If the local data is not
 		stale, this function will return without updating the table.
 
 		:param bool force: Ignore the load life time and force loading the remote data.
 		"""
-		if not force and ((time.time() - self.last_load_time) < self.load_lifetime):
+		if not force and ((time.time() - self.last_load_time) < self.refresh_frequency):
 			return
 		if not hasattr(self.parent, 'rpc'):
 			self.logger.warning('skipping load_campaign_information because rpc is not initialized')

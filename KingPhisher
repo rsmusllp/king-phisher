@@ -95,7 +95,11 @@ def main():
 		return 0
 
 	Gtk.init(sys.argv)
-	main_window = client.KingPhisherClient(config_file=config_file)
+	try:
+		main_window = client.KingPhisherClient(config_file=config_file)
+	except Exception:
+		print('[-] failed to initialize the King Phisher Client')
+		return 0
 	main_window.set_position(Gtk.WindowPosition.CENTER)
 	if main_window.init_connection():
 		GObject.threads_init()
