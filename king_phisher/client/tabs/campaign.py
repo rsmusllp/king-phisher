@@ -162,7 +162,6 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		self.last_load_time = time.time()
 		self.row_loader_thread = threading.Thread(target=self.row_loader_thread_routine, args=(store,))
 		self.row_loader_thread.start()
 		self.row_loader_thread_lock.release()
@@ -188,6 +187,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 				return
 			gui_utilities.glib_idle_add_wait(store.append, row_data)
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', True))
+		self.last_load_time = time.time()
 
 	def signal_button_clicked_refresh(self, button):
 		self.load_campaign_information(force=True)
@@ -366,7 +366,6 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		with self.loader_thread_lock:
 			if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 				return
-			self.last_load_time = time.time()
 			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
 			self.loader_thread.start()
 
@@ -381,6 +380,7 @@ class CampaignViewDashboardTab(gui_utilities.UtilityGladeGObject):
 		info_cache = {}
 		for graph in self.graphs:
 			info_cache = gui_utilities.glib_idle_add_wait(graph.refresh, info_cache)
+		self.last_load_time = time.time()
 
 	def signal_button_clicked_refresh(self, button):
 		self.load_campaign_information(force=True)
