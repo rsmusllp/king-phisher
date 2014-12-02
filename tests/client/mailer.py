@@ -48,6 +48,7 @@ class ClientMailerTests(unittest.TestCase):
 				'server.tracking_image': "{0}.gif".format(random_string(32))
 			}
 		}
+		self.image_cid_regex = r'img_[a-z0-9]{8}' + re.escape(os.path.splitext(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)[-1])
 
 	def test_mailer_message_format(self):
 		secret_id = re.escape(self.config['server_config']['server.secret_id'])
@@ -62,14 +63,16 @@ class ClientMailerTests(unittest.TestCase):
 	def test_client_template_environment_mode_analyze(self):
 		tenv = ClientTemplateEnvironment()
 		self.assertTrue(hasattr(tenv, 'attachment_images'))
-		self.assertIsInstance(tenv.attachment_images, list)
+		self.assertIsInstance(tenv.attachment_images, dict)
 		self.assertEqual(len(tenv.attachment_images), 0)
 
 		tenv.set_mode(ClientTemplateEnvironment.MODE_ANALYZE)
 		template = tenv.from_string(TEST_MESSAGE_TEMPLATE)
 		template.render(dict(client=dict(), url=dict()))
 		msg = 'The analysis mode failed to identify the inline image'
-		self.assertListEqual(tenv.attachment_images, [TEST_MESSAGE_TEMPLATE_INLINE_IMAGE], msg=msg)
+		self.assertIn(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE, tenv.attachment_images, msg=msg)
+		cid_value = tenv.attachment_images[TEST_MESSAGE_TEMPLATE_INLINE_IMAGE]
+		self.assertRegexpMatches(cid_value, self.image_cid_regex)
 
 	def test_client_template_environment_mode_preview(self):
 		tenv = ClientTemplateEnvironment()
@@ -87,9 +90,11 @@ class ClientMailerTests(unittest.TestCase):
 		self.assertTrue('inline_image' in tenv.globals)
 		inline_image = tenv.globals['inline_image']
 		img_tag_result = inline_image(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)
-		img_tag_test = "<img src=\"cid:{0}\">".format(os.path.basename(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE))
+		img_tag_test = r'<img src="cid:'
+		img_tag_test += self.image_cid_regex
+		img_tag_test += r'">'
 		msg = 'The send mode failed to properly format the img HTML tag'
-		self.assertEqual(img_tag_result, img_tag_test, msg=msg)
+		self.assertRegexpMatches(img_tag_result, img_tag_test, msg=msg)
 
 if __name__ == '__main__':
 	unittest.main()

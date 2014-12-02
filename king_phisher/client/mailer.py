@@ -65,13 +65,13 @@ class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
 		super(ClientTemplateEnvironment, self).__init__(*args, **kwargs)
 		self.set_mode(self.MODE_PREVIEW)
 		self.globals['inline_image'] = self._inline_image_handler
-		self.attachment_images = []
+		self.attachment_images = {}
 
 	def set_mode(self, mode):
 		assert(mode in [self.MODE_PREVIEW, self.MODE_ANALYZE, self.MODE_SEND])
 		self._mode = mode
 		if mode == self.MODE_ANALYZE:
-			self.attachment_images = []
+			self.attachment_images = {}
 
 	def _inline_image_handler(self, image_path):
 		image_path = os.path.abspath(image_path)
@@ -82,9 +82,13 @@ class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
 				image_path = '/' + image_path
 			image_path = 'file://' + image_path
 			return "<img src=\"{0}\">".format(cgi.escape(image_path, quote=True))
-		if not image_path in self.attachment_images:
-			self.attachment_images.append(image_path)
-		attachment_name = os.path.basename(image_path)
+		if image_path in self.attachment_images:
+			attachment_name = self.attachment_images[image_path]
+		else:
+			attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
+			while attachment_name in self.attachment_images.values():
+				attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
+			self.attachment_images[image_path] = attachment_name
 		return "<img src=\"cid:{0}\">".format(cgi.escape(attachment_name, quote=True))
 
 template_environment = ClientTemplateEnvironment()
@@ -389,10 +393,10 @@ class MailSenderThread(threading.Thread):
 			Encoders.encode_base64(attachfile)
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
 			attachments.append(attachfile)
-		for attachment in template_environment.attachment_images:
-			attachfile = MIMEImage(open(attachment, 'rb').read())
-			attachfile.add_header('Content-ID', "<{0}>".format(os.path.basename(attachment)))
-			attachfile.add_header('Content-Disposition', "inline; filename=\"{0}\"".format(os.path.basename(attachment)))
+		for attachment_file, attachment_name in template_environment.attachment_images.items():
+			attachfile = MIMEImage(open(attachment_file, 'rb').read())
+			attachfile.add_header('Content-ID', "<{0}>".format(attachment_name))
+			attachfile.add_header('Content-Disposition', "inline; filename=\"{0}\"".format(attachment_name))
 			attachments.append(attachfile)
 		return attachments
 
@@ -476,5 +480,5 @@ class MailSenderThread(threading.Thread):
 			missing.append(msg_template)
 			return missing
 		self._prepare_env()
-		missing.extend(filter(lambda f: not os.access(f, os.R_OK), template_environment.attachment_images))
+		missing.extend(filter(lambda f: not os.access(f, os.R_OK), template_environment.attachment_images.keys()))
 		return missing

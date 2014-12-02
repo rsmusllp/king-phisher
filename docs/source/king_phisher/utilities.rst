@@ -19,6 +19,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.random_string
 
+.. autofunction:: king_phisher.utilities.random_string_lower_numeric
+
 .. autofunction:: king_phisher.utilities.server_parse
 
 .. autofunction:: king_phisher.utilities.timedef_to_seconds

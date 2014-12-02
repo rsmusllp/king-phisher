@@ -37,7 +37,6 @@ from . import models
 from king_phisher import errors
 from king_phisher import find
 
-
 import alembic.command
 import alembic.config
 import alembic.environment
