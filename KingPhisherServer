@@ -89,14 +89,9 @@ def main():
 		return os.EX_SOFTWARE
 
 	if os.getuid():
-		print('[-] this must be executed as root')
-		print('[-] configure the setuid_username option in the config file to drop privileges')
+		print('[-] the server must be started as root, configure the')
+		print('[-] \'server.setuid_username\' option in the config file to drop privileges')
 		return os.EX_NOPERM
-
-	if not has_msgpack:
-		print('[-] this server requires the Python msgpack module to be installed')
-		print('[-] please install it from http://msgpack.org/ or your package manager')
-		return os.EX_UNAVAILABLE
 
 	config = configuration.Configuration(config_file.name)
 
@@ -171,12 +166,19 @@ def main():
 		pid_file.close()
 	if config.has_option('server.setuid_username'):
 		setuid_username = config.get('server.setuid_username')
-		user_info = pwd.getpwnam(setuid_username)
+		try:
+			user_info = pwd.getpwnam(setuid_username)
+		except KeyError:
+			logger.critical('an invalid username was specified as \'server.setuid_username\'')
+			king_phisher_server.shutdown()
+			return os.EX_NOUSER
 		if log_file_path:
 			os.chown(log_file_path, user_info.pw_uid, user_info.pw_gid)
 		os.setregid(user_info.pw_gid, user_info.pw_gid)
 		os.setreuid(user_info.pw_uid, user_info.pw_uid)
 		logger.info("dropped privileges to the {0} account".format(setuid_username))
+	else:
+		logger.warning('running with root privileges is dangerous, drop them by configuring \'server.setuid_username\'')
 
 	db_engine_url = king_phisher_server.database_engine.url
 	if db_engine_url.drivername == 'sqlite':
