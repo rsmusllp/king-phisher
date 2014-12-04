@@ -17,7 +17,7 @@ KingPhisherClient Signals
 
 .. py:function:: exit()
 
-   This signal is emitted with the client is exiting. Subscribers can use it as
+   This signal is emitted when the client is exiting. Subscribers can use it as
    a chance to clean up and save any remaining data. It is emitted before the
    client is disconnected from the server.
 

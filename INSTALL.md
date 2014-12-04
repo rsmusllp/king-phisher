@@ -1,18 +1,16 @@
 # Install
-The King Phisher server is only supported on Linux. The King Phishser
+The King Phisher server is only supported on Linux. The King Phisher
 client is supported on both Windows and Linux. Windows executables are
-available from the
-[releases page](https://github.com/securestate/king-phisher/releases).
+available from the [releases page](https://github.com/securestate/king-phisher/releases).
 
 Before getting started, install all of the required packages specified below.
 
 ## Overview
-King-Phisher uses a client server architecture. The
-```KingPhisherServer``` file runs as a daemon on the phishing server.
-The ```KingPhisher``` client file is meant to connect to the daemon over
-SSH. The server must be running SSH and allow ports to be forwarded. The
-client, after connecting communicates via RPC to the server through the
-encrypted SSH tunnel.
+King Phisher uses a client server architecture. The ```KingPhisherServer```
+application runs as a daemon on the phishing server. The ```KingPhisher```
+client file is meant to connect to the daemon over SSH from a remote system. The
+server must be running SSH and allow ports to be forwarded. The client after
+connecting, communicates via RPC to the server through the encrypted SSH tunnel.
 
 Additionally, the user logging in with the King-Phisher client will
 require a valid local account on the KingPhisherServer.

@@ -578,7 +578,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.UtilityFileChooser('Export Message Data', self.parent)
+		dialog = gui_utilities.UtilityFileChooser('Export Message Configuration', self.parent)
 		response = dialog.run_quick_save('message.kpm')
 		dialog.destroy()
 		if not response:
@@ -600,7 +600,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.UtilityFileChooser('Import Message Data', self.parent)
+		dialog = gui_utilities.UtilityFileChooser('Import Message Configuration', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
