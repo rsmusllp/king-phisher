@@ -177,7 +177,7 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 			campaign_name = model.get_value(tree_iter, 1)
 			self.config['campaign_name'] = campaign_name
 			if not (campaign_id == old_campaign_id and campaign_name == old_campaign_name):
-				self.parent.emit('campaign_set', campaign_id)
+				self.parent.emit('campaign-set', campaign_id)
 		self.dialog.destroy()
 		return response
 
@@ -278,7 +278,7 @@ class KingPhisherClient(_Gtk_Window):
 	:GObject Signals: :ref:`gobject-signals-kingphisher-client-label`
 	"""
 	__gsignals__ = {
-		'campaign_set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'exit': (GObject.SIGNAL_RUN_CLEANUP, None, ())
 	}
 	def __init__(self, config_file=None):
@@ -494,7 +494,7 @@ class KingPhisherClient(_Gtk_Window):
 				return False
 			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True, refresh=True)
 		self.config['campaign_name'] = campaign_info['name']
-		self.emit('campaign_set', self.config['campaign_id'])
+		self.emit('campaign-set', self.config['campaign_id'])
 		return True
 
 	def client_quit(self, destroy=True):
@@ -613,7 +613,7 @@ class KingPhisherClient(_Gtk_Window):
 
 	def save_config(self):
 		"""Write the client configuration to disk."""
-		self.logger.info('writing the config to disk')
+		self.logger.info('writing the client configuration to disk')
 		config = copy.copy(self.config)
 		for key in self.config.keys():
 			if 'password' in key or key == 'server_config':

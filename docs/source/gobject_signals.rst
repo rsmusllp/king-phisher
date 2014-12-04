@@ -6,7 +6,7 @@ GObject Signals
 KingPhisherClient Signals
 -------------------------
 
-.. py:function:: campaign_set(campaign_id)
+.. py:function:: campaign-set(campaign_id)
 
    This signal is emitted when the user sets the current campaign. Subscribers
    to this signal can use it to update and refresh information for the current

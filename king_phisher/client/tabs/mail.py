@@ -90,6 +90,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.pause_button = self.gobjects['togglebutton_mail_sender_pause']
 		self.sender_thread = None
 		"""The :py:class:`.MailSenderThread` instance that is being used to send messages."""
+		self.parent.connect('exit', self.signal_kpc_exit)
 
 	def signal_button_clicked_sender_start(self, button):
 		required_settings = {
@@ -189,6 +190,11 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			self.sender_thread.pause()
 		else:
 			self.sender_thread.unpause()
+
+	def signal_kpc_exit(self, kpc):
+		if self.sender_thread and self.sender_thread.is_alive():
+			self.logger.info('stopping the sender thread because the client is exiting')
+			self.sender_thread.stop()
 
 	def signal_textview_size_allocate_autoscroll(self, textview, allocation):
 		scrolled_window = self.gobjects['scrolledwindow_mail_sender_progress']

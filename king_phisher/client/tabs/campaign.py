@@ -490,7 +490,7 @@ class CampaignViewTab(object):
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()
-		self.parent.connect('campaign_set', self.signal_kpc_campaign_set)
+		self.parent.connect('campaign-set', self.signal_kpc_campaign_set)
 
 	def signal_kpc_campaign_set(self, kpc, cid):
 		for tab_name, tab in self.tabs.items():

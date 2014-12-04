@@ -286,13 +286,14 @@ class MailSenderThread(threading.Thread):
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
 			iteration_time = time.time()
-			if emails_done > 0 and (emails_done % max_messages_per_connection):
-				self.server_smtp_reconnect()
 			if self.should_exit.is_set():
 				GLib.idle_add(self.tab.notify_status, 'Sending emails cancelled\n')
 				break
 			if not self.process_pause():
 				break
+			if emails_done > 0 and (emails_done % max_messages_per_connection):
+				self.server_smtp_reconnect()
+
 			uid = make_uid()
 			emails_done += 1
 			GLib.idle_add(self.tab.notify_status, "Sending email {0:,} of {1:,} to {2} with UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
@@ -303,11 +304,18 @@ class MailSenderThread(threading.Thread):
 			campaign_id = self.config['campaign_id']
 			company_name = self.config.get('mailer.company_name', '')
 			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], company_name, target['first_name'], target['last_name'])
+
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)
 				sleep_time = (60.0 / float(self.max_messages_per_minute)) - iteration_time
-				if sleep_time > 0:
-					time.sleep(sleep_time)
+				should_break = False
+				while sleep_time > 0:
+					sleep_chunk = min(sleep_time, 0.5)
+					time.sleep(sleep_chunk)
+					if self.should_exit.is_set():
+						break
+					sleep_time -= sleep_chunk
+
 		target_file_h.close()
 		self._mime_attachments = None
 
