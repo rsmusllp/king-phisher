@@ -91,6 +91,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.sender_thread = None
 		"""The :py:class:`.MailSenderThread` instance that is being used to send messages."""
 		self.parent.connect('exit', self.signal_kpc_exit)
+		self.parent.connect('exit-confirm', self.signal_kpc_exit_confirm)
 
 	def signal_button_clicked_sender_start(self, button):
 		required_settings = {
@@ -175,7 +176,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 	def signal_button_clicked_sender_stop(self, button):
 		if not self.sender_thread:
 			return
-		if not gui_utilities.show_dialog_yes_no('Are you sure you want to stop?', self.parent):
+		if not gui_utilities.show_dialog_yes_no('King Phisher Is Sending Messages', self.parent, 'Are you sure you want to stop?'):
 			return
 		self.sender_thread.stop()
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
@@ -195,6 +196,15 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if self.sender_thread and self.sender_thread.is_alive():
 			self.logger.info('stopping the sender thread because the client is exiting')
 			self.sender_thread.stop()
+
+	def signal_kpc_exit_confirm(self, kpc):
+		if not self.sender_thread:
+			return
+		if not self.sender_thread.is_alive():
+			return
+		if gui_utilities.show_dialog_yes_no('King Phisher Is Sending Messages', self.parent, 'Are you sure you want to exit?'):
+			return
+		kpc.emit_stop_by_name('exit-confirm')
 
 	def signal_textview_size_allocate_autoscroll(self, textview, allocation):
 		scrolled_window = self.gobjects['scrolledwindow_mail_sender_progress']

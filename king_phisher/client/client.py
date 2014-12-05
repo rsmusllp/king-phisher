@@ -279,7 +279,8 @@ class KingPhisherClient(_Gtk_Window):
 	"""
 	__gsignals__ = {
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
-		'exit': (GObject.SIGNAL_RUN_CLEANUP, None, ())
+		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
 	def __init__(self, config_file=None):
 		"""
@@ -345,7 +346,7 @@ class KingPhisherClient(_Gtk_Window):
 		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page + 2)
 
 		self.set_size_request(800, 600)
-		self.connect('destroy', lambda _: self.emit('exit'))
+		self.connect('delete-event', self.signal_delete_event)
 		self.notebook.show()
 		self.show()
 		self.rpc = None # needs to be initialized last
@@ -379,7 +380,7 @@ class KingPhisherClient(_Gtk_Window):
 		action_group.add_action(action)
 
 		action = Gtk.Action('FileQuit', None, None, Gtk.STOCK_QUIT)
-		action.connect('activate', lambda x: self.client_quit())
+		action.connect('activate', lambda x: self.emit('exit-confirm'))
 		action_group.add_action_with_accel(action, '<control>Q')
 
 		# Edit Menu Actions
@@ -459,17 +460,26 @@ class KingPhisherClient(_Gtk_Window):
 			index = notebook.get_current_page()
 			notebook.emit('switch-page', notebook.get_nth_page(index), index)
 
+	def signal_delete_event(self, x, y):
+		self.emit('exit-confirm')
+		return True
+
 	def do_campaign_set(self, campaign_id):
 		self.rpc.cache_clear()
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
 
 	def do_exit(self):
+		self.hide()
 		gui_utilities.gtk_widget_destroy_children(self)
 		gui_utilities.gtk_sync()
 		self.server_disconnect()
 		self.save_config()
+		self.destroy()
 		Gtk.main_quit()
 		return
+
+	def do_exit_confirm(self):
+		self.emit('exit')
 
 	def init_connection(self):
 		"""
@@ -497,10 +507,13 @@ class KingPhisherClient(_Gtk_Window):
 		self.emit('campaign-set', self.config['campaign_id'])
 		return True
 
-	def client_quit(self, destroy=True):
-		"""Quit the client and perform any necessary clean up operations."""
-		self.destroy()
-		return
+	def client_quit(self):
+		"""
+		Unconditionally quit the client and perform any necessary clean up
+		operations. The exit-confirm signal will not be sent so there will not
+		be any opportunities for the client to cancel the operation.
+		"""
+		self.emit('exit')
 
 	def server_connect(self):
 		"""
