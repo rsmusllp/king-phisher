@@ -187,12 +187,14 @@ class CampaignGraph(object):
 		"""Load the graph information via :py:meth:`.refresh`."""
 		self.refresh()
 
-	def refresh(self, info_cache=None):
+	def refresh(self, info_cache=None, stop_event=None):
 		"""
 		Refresh the graph data by retrieving the information from the
 		remote server.
 
 		:param dict info_cache: An optional cache of data tables.
+		:param stop_event: An optional object indicating that the operation should stop.
+		:type stop_event: :py:class:`threading.Event`
 		:return: A dictionary of cached tables from the server.
 		:rtype: dict
 		"""
@@ -200,6 +202,8 @@ class CampaignGraph(object):
 		if not self.parent.rpc:
 			return info_cache
 		for table in self.table_subscriptions:
+			if stop_event and stop_event.is_set():
+				return info_cache
 			if not table in info_cache:
 				info_cache[table] = list(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
 		map(lambda ax: ax.clear(), self.axes)
