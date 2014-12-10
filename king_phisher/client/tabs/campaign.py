@@ -80,10 +80,10 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 	def signal_destroy(self, gobject):
 		self.is_destroyed.set()
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
-			self.logger.debug("waiting on thread: {0}/0x{1:x}".format(self.__class__.__name__, self.loader_thread.ident))
+			self.logger.debug("waiting on thread: {0}.loader_thread (tid: 0x{1:x})".format(self.__class__.__name__, self.loader_thread.ident))
 			while self.loader_thread.is_alive():
 				gui_utilities.gtk_sync()
-			self.logger.debug("joined thread: {0}/0x{1:x}".format(self.__class__.__name__, self.loader_thread.ident))
+			self.logger.debug("joined thread: {0}.loader_thread (tid: 0x{1:x})".format(self.__class__.__name__, self.loader_thread.ident))
 
 class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	"""
