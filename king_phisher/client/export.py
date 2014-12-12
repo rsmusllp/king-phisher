@@ -33,6 +33,7 @@
 import copy
 import csv
 import datetime
+import io
 import json
 import logging
 import os
@@ -43,11 +44,6 @@ import xml.etree.ElementTree as ET
 
 from king_phisher import utilities
 from king_phisher.errors import KingPhisherInputValidationError
-
-try:
-	import cStringIO as StringIO
-except ImportError:
-	import StringIO
 
 __all__ = [
 	'campaign_to_xml',
@@ -224,7 +220,7 @@ def message_data_from_kpm(target_file, dest_dir):
 		file_path = os.path.join(dest_dir, message_config['html_file'])
 		template = tarfile_h.read()
 		template = message_template_from_kpm(template, attachments)
-		template_strio = StringIO.StringIO()
+		template_strio = io.StringIO()
 		template_strio.write(template)
 		template_strio.seek(os.SEEK_SET)
 		with open(file_path, 'wb') as file_h:
@@ -266,7 +262,7 @@ def message_data_to_kpm(message_config, target_file):
 		for attachment in attachments:
 			if os.access(attachment, os.R_OK):
 				tar_h.add(attachment, arcname=os.path.join('attachments', os.path.basename(attachment)))
-		template_strio = StringIO.StringIO()
+		template_strio = io.StringIO()
 		template_strio.write(template)
 		tarinfo_h = tarfile.TarInfo(name='message_content.html')
 		tarinfo_h.mtime = mtime
@@ -279,7 +275,7 @@ def message_data_to_kpm(message_config, target_file):
 		if 'html_file' in message_config:
 			del message_config['html_file']
 
-	msg_strio = StringIO.StringIO()
+	msg_strio = io.StringIO()
 	msg_strio.write(json.dumps(message_config, sort_keys=True, indent=4))
 	tarinfo_h = tarfile.TarInfo(name='message_config.json')
 	tarinfo_h.mtime = mtime

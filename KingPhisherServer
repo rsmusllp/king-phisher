@@ -151,6 +151,7 @@ def main():
 	if should_fork and os.fork():
 		return os.EX_OK
 
+	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
 	try:
 		king_phisher_server = server.build_king_phisher_server(config)
 	except errors.KingPhisherError as error:
@@ -158,7 +159,7 @@ def main():
 		return os.EX_SOFTWARE
 
 	server_pid = os.getpid()
-	logger.info('server running in process: ' + str(server_pid))
+	logger.info("server running in process: {0} main tid: 0x{1:x}".format(server_pid, threading.current_thread().ident))
 
 	if config.has_option('server.pid_file'):
 		pid_file = open(config.get('server.pid_file'), 'w')
