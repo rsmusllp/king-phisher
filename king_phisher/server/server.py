@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import base64
 import binascii
 import json
 import logging
@@ -435,7 +436,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.logger.warning('dead drop request received with no \'token\' parameter')
 			return
 		try:
-			data = data.decode('base64')
+			data = base64.b64decode('base64')
 		except binascii.Error:
 			self.logger.error('dead drop request received with invalid \'token\' data')
 			return
@@ -490,7 +491,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		# image size: 49 Bytes
 		img_data = '47494638396101000100910000000000ffffffffffff00000021f90401000002'
 		img_data += '002c00000000010001000002025401003b'
-		img_data = img_data.decode('hex')
+		img_data = binascii.a2b_hex(img_data)
 		self.send_response(200)
 		self.send_header('Content-Type', 'image/gif')
 		self.send_header('Content-Length', str(len(img_data)))
