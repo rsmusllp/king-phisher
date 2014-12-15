@@ -20,6 +20,8 @@ Data
 Functions
 ---------
 
+.. autofunction:: AdvancedHTTPServer.build_serializer_from_content_type
+
 .. autofunction:: AdvancedHTTPServer.build_server_from_argparser
 
 .. autofunction:: AdvancedHTTPServer.build_server_from_config
@@ -42,11 +44,6 @@ Classes
 .. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerRequestHandler
    :members:
 
-.. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerRESTAPI
-   :members:
-   :special-members: __init__
-   :undoc-members:
-
 .. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerRPCClient
    :members:
    :special-members: __init__
@@ -54,6 +51,11 @@ Classes
 
 .. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached
    :members:
+   :undoc-members:
+
+.. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerSerializer
+   :members:
+   :special-members: __init__
    :undoc-members:
 
 .. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerTestCase
