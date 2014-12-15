@@ -65,24 +65,26 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.3.1'
+__version__ = '0.4.0'
 __all__ = [
 	'AdvancedHTTPServer',
 	'AdvancedHTTPServerRegisterPath',
 	'AdvancedHTTPServerRequestHandler',
-	'AdvancedHTTPServerRESTAPI',
 	'AdvancedHTTPServerRPCClient',
-	'AdvancedHTTPServerRPCError'
+	'AdvancedHTTPServerRPCClientCached',
+	'AdvancedHTTPServerRPCError',
+	'AdvancedHTTPServerTestCase',
+	'build_server_from_argparser',
+	'build_server_from_config'
 ]
 
-import BaseHTTPServer
+import base64
+import binascii
 import cgi
-import ConfigParser
-import Cookie
 import datetime
 import hashlib
 import hmac
-import httplib
+import io
 import json
 import logging
 import logging.handlers
@@ -93,22 +95,35 @@ import random
 import re
 import shutil
 import socket
-import SocketServer
 import sqlite3
 import ssl
 import string
 import sys
 import threading
+import time
 import traceback
 import unittest
 import urllib
-import urlparse
 import zlib
 
-try:
-	from cStringIO import StringIO
-except ImportError:
-	from StringIO import StringIO
+if sys.version_info[0] < 3:
+	import BaseHTTPServer
+	import Cookie
+	import httplib
+	import SocketServer as socketserver
+	import urlparse
+	http = type('http', (), {'client': httplib, 'cookies': Cookie, 'server': BaseHTTPServer})
+	urllib.parse = urlparse
+	urllib.parse.quote = urllib.quote
+	urllib.parse.unquote = urllib.unquote
+	from ConfigParser import ConfigParser
+else:
+	import http.client
+	import http.cookies
+	import http.server
+	import socketserver
+	import urllib.parse
+	from configparser import ConfigParser
 
 GLOBAL_HANDLER_MAP = {}
 
@@ -129,8 +144,6 @@ def _json_object_hook(obj):
 SERIALIZER_DRIVERS = {}
 """Dictionary of available drivers for serialization."""
 SERIALIZER_DRIVERS['application/json'] = {'loads': lambda d: json.loads(d, object_hook=_json_object_hook), 'dumps': lambda d: json.dumps(d, default=_json_default)}
-SERIALIZER_DRIVERS['binary/json'] = SERIALIZER_DRIVERS['application/json']
-SERIALIZER_DRIVERS['binary/json+zlib'] = {'loads': lambda d: json.loads(zlib.decompress(d, object_hook=_json_object_hook)), 'dumps': lambda d: zlib.compress(json.dumps(d, default=_json_default))}
 
 try:
 	import msgpack
@@ -149,9 +162,8 @@ else:
 			else:
 				return datetime.datetime.strptime(data, '%Y-%m-%dT%H:%M:%S')
 		return msfpack.ExtType(code, data)
-
 	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads': lambda d: msgpack.loads(d, ext_hook=_msgpack_ext_hook), 'dumps': lambda d: msgpack.dumps(d, default=_msgpack_default)}
-	SERIALIZER_DRIVERS['binary/message-pack+zlib'] = {'loads': lambda d: msgpack.loads(zlib.decompress(d), ext_hook=_msgpack_ext_hook), 'dumps': lambda d: zlib.compress(msgpack.dumps(d, default=_msgpack_default))}
+
 
 if hasattr(logging, 'NullHandler'):
 	logging.getLogger('AdvancedHTTPServer').addHandler(logging.NullHandler())
@@ -168,6 +180,31 @@ def random_string(size):
 	"""
 	return ''.join(random.choice(string.ascii_letters + string.digits) for x in range(size))
 
+def build_serializer_from_content_type(content_type):
+	"""
+	Build a serializer object from a MIME Content-Type string.
+
+	:param str content_type: The Content-Type string to parse.
+	:return: A new configured serializer instance.
+	:rtype: :py:class:`.AdvancedHTTPServerSerializer`
+	"""
+	name = content_type
+	options = {}
+	if ';' in content_type:
+		name, options_str = content_type.split(';', 1)
+		for part in options_str.split(';'):
+			part = part.strip()
+			if '=' in part:
+				key, value = part.split('=')
+			else:
+				key, value = (part, None)
+			options[key] = value
+	# old style compatibility
+	if name.endswith('+zlib'):
+		options['compression'] = 'zlib'
+		name = name[:-5]
+	return AdvancedHTTPServerSerializer(name, charset=options.get('charset', 'UTF-8'), compression=options.get('compression'))
+
 def build_server_from_argparser(description=None, ServerClass=None, HandlerClass=None):
 	"""
 	Build a server from command line arguments. If a ServerClass or
@@ -183,7 +220,6 @@ def build_server_from_argparser(description=None, ServerClass=None, HandlerClass
 	:rtype: :py:class:`.AdvancedHTTPServer`
 	"""
 	import argparse
-	import ConfigParser
 
 	description = (description or 'AdvancedHTTPServer')
 	ServerClass = (ServerClass or AdvancedHTTPServer)
@@ -215,7 +251,7 @@ def build_server_from_argparser(description=None, ServerClass=None, HandlerClass
 		logging.getLogger('').addHandler(main_file_handler)
 
 	if arguments.config:
-		config = ConfigParser.ConfigParser()
+		config = ConfigParser()
 		config.readfp(arguments.config)
 		server = build_server_from_config(config, 'server', ServerClass=ServerClass, HandlerClass=HandlerClass)
 	else:
@@ -228,13 +264,13 @@ def build_server_from_argparser(description=None, ServerClass=None, HandlerClass
 
 def build_server_from_config(config, section_name, ServerClass=None, HandlerClass=None):
 	"""
-	Build a server from a provided :py:class:`ConfigParser.ConfigParser`
+	Build a server from a provided :py:class:`configparser.ConfigParser`
 	instance. If a ServerClass or HandlerClass is specified, then the
 	object must inherit from the corresponding AdvancedHTTPServer base
 	class.
 
 	:param config: Configuration to retrieve settings from.
-	:type config: :py:class:`ConfigParser.ConfigParser`
+	:type config: :py:class:`configparser.ConfigParser`
 	:param str section_name: The section name of the configuration to use.
 	:param ServerClass: Alternative server class to use.
 	:type ServerClass: :py:class:`.AdvancedHTTPServer`
@@ -304,13 +340,15 @@ class AdvancedHTTPServerRegisterPath(object):
 	  def handle_test(handler, query):
 	      pass
 	"""
-	def __init__(self, path, handler=None):
+	def __init__(self, path, handler=None, is_rpc=False):
 		"""
 		:param str path: The path regex to register the function to.
 		:param str handler: A specific :py:class:`.AdvancedHTTPServerRequestHandler` class to register the handler with.
+		:param bool is_rpc: Whether the handler is an RPC handler or not.
 		"""
 		self.path = path
-		if handler == None or isinstance(handler, (str, unicode)):
+		self.is_rpc = is_rpc
+		if handler == None or isinstance(handler, str):
 			self.handler = handler
 		elif hasattr(handler, '__name__'):
 			self.handler = handler.__name__
@@ -321,7 +359,7 @@ class AdvancedHTTPServerRegisterPath(object):
 
 	def __call__(self, function):
 		handler_map = GLOBAL_HANDLER_MAP.get(self.handler, {})
-		handler_map[self.path] = function
+		handler_map[self.path] = (function, self.is_rpc)
 		GLOBAL_HANDLER_MAP[self.handler] = handler_map
 		return function
 
@@ -336,7 +374,12 @@ class AdvancedHTTPServerRPCError(Exception):
 		self.remote_exception = remote_exception
 
 	def __repr__(self):
-		return "{0}(remote_exception={1})".format(self.__class__.__name__, self.is_remote_exception)
+		return "{0}(message='{1}', status={2}, remote_exception={3})".format(self.__class__.__name__, self.message, self.status, self.is_remote_exception)
+
+	def __str__(self):
+		if self.is_remote_exception:
+			return 'a remote exception occurred'
+		return "the server responded with {0} '{1}'".format(self.status, self.message)
 
 	@property
 	def is_remote_exception(self):
@@ -374,28 +417,27 @@ class AdvancedHTTPServerRPCClient(object):
 		self.uri_base = str(uri_base)
 		self.username = (str(username) if username != None else None)
 		self.password = (str(password) if password != None else None)
-		self.hmac_key = (str(hmac_key) if hmac_key != None else None)
+		if isinstance(hmac_key, str):
+			hmac_key = hmac_key.encode('UTF-8')
+		self.hmac_key = hmac_key
 		self.lock = threading.RLock()
-		self.serializer_name = SERIALIZER_DRIVERS.keys()[-1]
-		self.serializer = SERIALIZER_DRIVERS[self.serializer_name]
+		self.set_serializer('application/json')
 		self.reconnect()
 
 	def __reduce__(self):
 		address = (self.host, self.port)
 		return (self.__class__, (address, self.use_ssl, self.username, self.password, self.uri_base, self.hmac_key))
 
-	def set_serializer(self, serializer_name):
+	def set_serializer(self, serializer_name, compression=None):
 		"""
 		Configure the serializer to use for communication with the server.
 		The serializer specified must be valid and in the
 		:py:data:`.SERIALIZER_DRIVERS` map.
 
 		:param str serializer_name: The name of the serializer to use.
+		:param str compression: The name of a compression library to use.
 		"""
-		if not serializer_name in SERIALIZER_DRIVERS:
-			raise ValueError('unknown serializer: ' + serializer_name)
-		self.serializer = SERIALIZER_DRIVERS[serializer_name]
-		self.serializer_name = serializer_name
+		self.serializer = AdvancedHTTPServerSerializer(serializer_name, charset='UTF-8')
 		self.logger.debug('using serializer: ' + serializer_name)
 
 	def __call__(self, *args, **kwargs):
@@ -403,19 +445,19 @@ class AdvancedHTTPServerRPCClient(object):
 
 	def encode(self, data):
 		"""Encode data with the configured serializer."""
-		return self.serializer['dumps'](data)
+		return self.serializer.dumps(data)
 
 	def decode(self, data):
 		"""Decode data with the configured serializer."""
-		return self.serializer['loads'](data)
+		return self.serializer.loads(data)
 
 	def reconnect(self):
 		"""Reconnect to the remote server."""
 		self.lock.acquire()
 		if self.use_ssl:
-			self.client = httplib.HTTPSConnection(self.host, self.port)
+			self.client = http.client.HTTPSConnection(self.host, self.port)
 		else:
-			self.client = httplib.HTTPConnection(self.host, self.port)
+			self.client = http.client.HTTPConnection(self.host, self.port)
 		self.lock.release()
 
 	def call(self, method, *options):
@@ -429,7 +471,7 @@ class AdvancedHTTPServerRPCClient(object):
 		options = self.encode(options)
 
 		headers = {}
-		headers['Content-Type'] = self.serializer_name
+		headers['Content-Type'] = self.serializer.content_type
 		headers['Content-Length'] = str(len(options))
 
 		if self.hmac_key != None:
@@ -438,7 +480,7 @@ class AdvancedHTTPServerRPCClient(object):
 			headers['HMAC'] = hmac_calculator.hexdigest()
 
 		if self.username != None and self.password != None:
-			headers['Authorization'] = 'Basic ' + (self.username + ':' + self.password).encode('base64').strip()
+			headers['Authorization'] = 'Basic ' + base64.b64encode((self.username + ':' + self.password).encode('UTF-8')).decode('UTF-8')
 
 		method = os.path.join(self.uri_base, method)
 		self.logger.debug('calling RPC method: ' + method[1:])
@@ -525,7 +567,7 @@ class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 		self.logger.info('the RPC cache has been clared')
 		return
 
-class AdvancedHTTPServerNonThreaded(BaseHTTPServer.HTTPServer, object):
+class AdvancedHTTPServerNonThreaded(http.server.HTTPServer, object):
 	"""
 	This class is used internally by :py:class:`.AdvancedHTTPServer` and
 	is not intended for use by other classes or functions.
@@ -541,7 +583,7 @@ class AdvancedHTTPServerNonThreaded(BaseHTTPServer.HTTPServer, object):
 		self.serve_robots_txt = True
 		self.rpc_hmac_key = None
 		self.basic_auth = None
-		self.robots_txt = 'User-agent: *\nDisallow: /\n'
+		self.robots_txt = b'User-agent: *\nDisallow: /\n'
 		self.server_version = 'HTTPServer/' + __version__
 		super(AdvancedHTTPServerNonThreaded, self).__init__(*args, **kwargs)
 
@@ -559,14 +601,14 @@ class AdvancedHTTPServerNonThreaded(BaseHTTPServer.HTTPServer, object):
 		super(AdvancedHTTPServerNonThreaded, self).shutdown(*args, **kwargs)
 		self.socket.close()
 
-class AdvancedHTTPServerThreaded(SocketServer.ThreadingMixIn, AdvancedHTTPServerNonThreaded):
+class AdvancedHTTPServerThreaded(socketserver.ThreadingMixIn, AdvancedHTTPServerNonThreaded):
 	"""
 	This class is used internally by :py:class:`.AdvancedHTTPServer` and
 	is not intended for use by other classes or functions.
 	"""
 	pass
 
-class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, object):
+class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, object):
 	"""
 	This is the primary http request handler class of the
 	AdvancedHTTPServer framework. Custom request handlers must inherit
@@ -595,13 +637,14 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		self.rpc_handler_map = {}
 		self.server = args[2]
 		self.headers_active = False
-		rest_api_handler = self.server.rest_api_handler
-		if rest_api_handler:
-			self.handler_map[rest_api_handler.api_path_regex] = rest_api_handler.dispatch_handler
 		for map_name in (None, self.__class__.__name__):
 			handler_map = GLOBAL_HANDLER_MAP.get(map_name, {})
-			for path, function in handler_map.items():
-				self.handler_map[path] = function
+			for path, function_info in handler_map.items():
+				function, function_is_rpc = function_info
+				if function_is_rpc:
+					self.rpc_handler_map[path] = function
+				else:
+					self.handler_map[path] = function
 		self.install_handlers()
 
 		self.basic_auth_user = None
@@ -660,12 +703,14 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		if os.path.normpath(dir_path) != self.server.serve_files_root:
 			dir_contents.append('..')
 		dir_contents.sort(key=lambda a: a.lower())
-		f = StringIO()
-		displaypath = cgi.escape(urllib.unquote(self.path))
-		f.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n')
-		f.write('<html>\n<title>Directory listing for ' + displaypath + '</title>\n')
-		f.write('<body>\n<h2>Directory listing for ' + displaypath + '</h2>\n')
-		f.write('<hr>\n<ul>\n')
+		displaypath = cgi.escape(urllib.parse.unquote(self.path))
+
+		f = io.BytesIO()
+		encoding = sys.getfilesystemencoding()
+		f.write(b'<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n')
+		f.write(b'<html>\n<title>Directory listing for ' + displaypath.encode(encoding) + b'</title>\n')
+		f.write(b'<body>\n<h2>Directory listing for ' + displaypath.encode(encoding) + b'</h2>\n')
+		f.write(b'<hr>\n<ul>\n')
 		for name in dir_contents:
 			fullname = os.path.join(dir_path, name)
 			displayname = linkname = name
@@ -676,12 +721,12 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 			if os.path.islink(fullname):
 				displayname = name + "@"
 				# Note: a link to a directory displays with @ and links with /
-			f.write('<li><a href="' + urllib.quote(linkname) + '">' + cgi.escape(displayname) + '</a>\n')
-		f.write('</ul>\n<hr>\n</body>\n</html>\n')
+			f.write(('<li><a href="' + urllib.parse.quote(linkname) + '">' + cgi.escape(displayname) + '</a>\n').encode(encoding))
+		f.write(b'</ul>\n<hr>\n</body>\n</html>\n')
 		length = f.tell()
 		f.seek(0)
+
 		self.send_response(200)
-		encoding = sys.getfilesystemencoding()
 		self.send_header('Content-Type', 'text/html; charset=' + encoding)
 		self.send_header('Content-Length', str(length))
 		self.end_headers()
@@ -694,7 +739,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		self.send_response(404)
 		self.send_header('Content-Type', 'text/html')
 		self.end_headers()
-		self.wfile.write('Resource Not Found\n')
+		self.wfile.write(b'Resource Not Found\n')
 		return
 
 	def respond_redirect(self, location='/'):
@@ -725,13 +770,16 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 			log_msg = "encountered {0} in {1}".format(repr(ex_value), line_info)
 			self.server.logger.error(log_msg)
 		status = (status or 500)
-		status_line = (status_line or httplib.responses.get(status, 'Internal Server Error')).strip()
+		status_line = (status_line or http.client.responses.get(status, 'Internal Server Error')).strip()
 		self.send_response(status, status_line)
 		message = (message or status_line)
-		if isinstance(message, (str, unicode)):
+		if isinstance(message, (str, bytes)):
 			self.send_header('Content-Length', len(message))
 			self.end_headers()
-			self.wfile.write(message)
+			if isinstance(message, str):
+				self.wfile.write(message.encode(sys.getdefaultencoding()))
+			else:
+				self.wfile.write(message)
 		elif hasattr(message, 'fileno'):
 			fs = os.fstat(message.fileno())
 			self.send_header('Content-Length', str(fs[6]))
@@ -752,7 +800,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 			self.send_header('WWW-Authenticate', 'Basic realm="' + self.server_version + '"')
 		self.send_header('Content-Type', 'text/html')
 		self.end_headers()
-		self.wfile.write('Unauthorized\n')
+		self.wfile.write(b'Unauthorized\n')
 		return
 
 	def dispatch_handler(self, query=None):
@@ -770,7 +818,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		# abandon query parameters
 		self.path = self.path.split('?', 1)[0]
 		self.path = self.path.split('#', 1)[0]
-		self.original_path = urllib.unquote(self.path)
+		self.original_path = urllib.parse.unquote(self.path)
 		self.path = posixpath.normpath(self.original_path)
 		words = self.path.split('/')
 		words = filter(None, words)
@@ -790,7 +838,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 			self.wfile.write(self.server.robots_txt)
 			return
 
-		self.cookies = Cookie.SimpleCookie(self.headers.get('cookie', ''))
+		self.cookies = http.cookies.SimpleCookie(self.headers.get('cookie', ''))
 		for (path_regex, handler) in self.handler_map.items():
 			if re.match(path_regex, self.path):
 				try:
@@ -877,7 +925,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		try:
 			if self.server.basic_auth == None:
 				return True
-			auth_info = self.headers.getheader('Authorization')
+			auth_info = self.headers.get('Authorization')
 			if not auth_info:
 				return False
 			auth_info = auth_info.split()
@@ -886,9 +934,10 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 			if auth_info[0] != 'Basic':
 				return False
 
-			auth_info = auth_info[1].decode('base64')
+			auth_info = base64.b64decode(auth_info[1]).decode(sys.getdefaultencoding())
 			username = auth_info.split(':')[0]
 			password = ':'.join(auth_info.split(':')[1:])
+			password_bytes = password.encode(sys.getdefaultencoding())
 			if hasattr(self, 'custom_authentication'):
 				if self.custom_authentication(username, password):
 					self.basic_auth_user = username
@@ -903,14 +952,9 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 				if password == password_data['value']:
 					self.basic_auth_user = username
 					return True
-			elif password_data['type'] == 'md5':
-				if hashlib.new('md5', password).hexdigest() == password_data['value']:
-					self.basic_auth_user = username
-					return True
-			elif password_data['type'] == 'sha1':
-				if hashlib.new('sha1', password).hexdigest() == password_data['value']:
-					self.basic_auth_user = username
-					return True
+			elif hashlib.new(password_data['type'], password_bytes).digest() == password_data['value']:
+				self.basic_auth_user = username
+				return True
 			self.server.logger.warning('received invalid password from user: ' + username)
 			return False
 		except:
@@ -946,9 +990,9 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		if not self.check_authorization():
 			self.respond_unauthorized(request_authentication=True)
 			return
-		uri = urlparse.urlparse(self.path)
+		uri = urllib.parse.urlparse(self.path)
 		self.path = uri.path
-		self.query_data = urlparse.parse_qs(uri.query)
+		self.query_data = urllib.parse.parse_qs(uri.query)
 
 		self.dispatch_handler(self.query_data)
 		return
@@ -960,10 +1004,10 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 		if not self.check_authorization():
 			self.respond_unauthorized(request_authentication=True)
 			return
-		content_length = int(self.headers.getheader('content-length') or 0)
+		content_length = int(self.headers.get('content-length', 0))
 		data = self.rfile.read(content_length)
 		self.query_data_raw = data
-		content_type = self.headers.getheader('content-type') or ''
+		content_type = self.headers.get('content-type', '')
 		content_type = content_type.split(';', 1)[0]
 		self.query_data = {}
 		try:
@@ -972,7 +1016,7 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 				if isinstance(data, dict):
 					self.query_data = dict(map(lambda i: (i[0], [i[1]]), data.items()))
 			else:
-				self.query_data = urlparse.parse_qs(data, keep_blank_values=1)
+				self.query_data = urllib.parse.parse_qs(data, keep_blank_values=1)
 		except:
 			self.respond_server_error(400)
 		else:
@@ -992,30 +1036,25 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 			self.respond_unauthorized(request_authentication=True)
 			return
 
-		data_length = self.headers.getheader('content-length')
-		if self.headers.getheader('content-length') == None:
+		data_length = self.headers.get('content-length')
+		if data_length == None:
 			self.send_error(411)
 			return
 
-		data_type = self.headers.getheader('content-type')
-		if data_type == None:
+		content_type = self.headers.get('content-type')
+		if content_type == None:
 			self.send_error(400, 'Missing Header: Content-Type')
 			return
 
-		if not data_type in SERIALIZER_DRIVERS:
-			self.send_error(400, 'Invalid Content-Type')
-			return
-		serializer = SERIALIZER_DRIVERS[data_type]
-
 		try:
-			data_length = int(self.headers.getheader('content-length'))
+			data_length = int(self.headers.get('content-length'))
 			data = self.rfile.read(data_length)
 		except:
 			self.send_error(400, 'Invalid Data')
 			return
 
 		if self.server.rpc_hmac_key != None:
-			hmac_digest = self.headers.getheader('hmac')
+			hmac_digest = self.headers.get('hmac')
 			if not isinstance(hmac_digest, str):
 				self.respond_unauthorized(request_authentication=True)
 				return
@@ -1028,10 +1067,13 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 				return
 
 		try:
-			data = serializer['loads'](data)
-			if type(data) == list:
-				data = tuple(data)
-			assert(type(data) == tuple)
+			serializer = build_serializer_from_content_type(content_type)
+		except ValueError:
+			self.send_error(400, 'Invalid Content-Type')
+			return
+
+		try:
+			data = serializer.loads(data)
 		except:
 			self.server.logger.warning('serializer failed to load data')
 			self.send_error(400, 'Invalid Data')
@@ -1060,18 +1102,19 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 			self.server.logger.error('error: ' + error.__class__.__name__ + ' occurred while calling RPC method: ' + self.path)
 
 		try:
-			response = serializer['dumps'](response)
+			response = serializer.dumps(response)
 		except:
 			self.respond_server_error(message='Failed To Pack Response')
 			return
 
 		self.send_response(200)
-		self.send_header('Content-Type', data_type)
+		self.send_header('Content-Type', serializer.content_type)
 		if self.server.rpc_hmac_key != None:
 			hmac_calculator = hmac.new(self.server.rpc_hmac_key, digestmod=hashlib.sha1)
 			hmac_calculator.update(response)
 			self.send_header('HMAC', hmac_calculator.hexdigest())
 		self.end_headers()
+
 		self.wfile.write(response)
 		return
 
@@ -1081,80 +1124,58 @@ class AdvancedHTTPServerRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler, ob
 	def log_message(self, format, *args):
 		self.server.logger.info(self.address_string() + ' ' + format % args)
 
-class AdvancedHTTPServerRESTAPI(object):
+class AdvancedHTTPServerSerializer(object):
 	"""
-	This is a manager REST request handlers. It allows them to be grouped
-	together and to use a common base path, '/api/' by default. Handler
-	functions that are not class methods will be passed the instance of
-	the managing class as the first argument.
+	This class represents a serilizer object for use with the RPC system.
 	"""
-	def __init__(self, api_path='/api/'):
+	def __init__(self, name, charset='UTF-8', compression=None):
 		"""
-		:param str api_path: A base path to be prefixed to all handlers.
+		:param str name: The name of the serializer to use.
+		:param str charset: The name of the encoding to use.
+		:param str compression: The compression library to use.
 		"""
-		self.api_path = api_path
-		self.handler_map = {}
-		map_name = self.__class__.__name__
-		handler_map = GLOBAL_HANDLER_MAP.get(map_name, {})
-		for path, function in handler_map.items():
-			self.handler_map[path] = function
-		self.install_handlers()
+		if not name in SERIALIZER_DRIVERS:
+			raise ValueError("unknown serializer '{0}'".format(name))
+		self.name = name
+		self._charset = charset
+		self._compression = compression
+		self.content_type = "{0}; charset={1}".format(self.name, self._charset)
+		if self._compression:
+			self.content_type += '; compression=' + self._compression
 
-	@property
-	def api_path_regex(self):
-		return '^' + self.api_path.strip('/') + '/\S'
+	def dumps(self, data):
+		"""
+		Serialize a python data type for transmission or storage.
 
-	def install_handlers(self):
+		:param data: The python object to serialize.
+		:return: The serialized representation of the object.
+		:rtype: bytes
 		"""
-		This method is meant to be over ridden by custom classes. It is
-		called as part of the __init__ method and provides an opportunity
-		for the handler maps to be populated with entries.
-		"""
-		pass # over ride me
+		data = SERIALIZER_DRIVERS[self.name]['dumps'](data)
+		if sys.version_info[0] == 3 and isinstance(data, str):
+			data = data.encode(self._charset)
+		if self._compression == 'zlib':
+			data = zlib.compress(data)
+		assert(isinstance(data, bytes))
+		return data
 
-	def dispatch_handler(self, request_handler, query):
+	def loads(self, data):
 		"""
-		Dispatch functions based on the established handler_map. It is
-		generally not necessary to override this function and doing so
-		will prevent any handlers from being executed. This function is
-		executed automatically when requests are received that being with
-		the specified api base path.
+		Deserialize the data into it's original python object.
 
-		:param dict query: Parsed query parameters from the corresponding request.
+		:param bytes data: The serialized object to load.
+		:return: The original python object.
 		"""
-		path = request_handler.path
-		prefix_len = len(re.match(self.api_path_regex, path).group(0)) - 1
-		path = path[prefix_len:]
-		handler_found = False
-		result = None
-		arguments = query
-		if isinstance(arguments, (dict)):
-			arguments = dict(map(lambda i: (i[0], i[1][-1]), query.items()))
-		elif not isinstance(arguments, (list, tuple)):
-			arguments = [arguments]
-		for (path_regex, handler) in self.handler_map.items():
-			if re.match(path_regex, path):
-				handler_found = True
-				if hasattr(self, handler.__name__) and (handler == getattr(self, handler.__name__).__func__ or handler == getattr(self, handler.__name__)):
-					if isinstance(arguments, dict):
-						result = getattr(self, handler.__name__)(**arguments)
-					else:
-						result = getattr(self, handler.__name__)(*arguments)
-				else:
-					if isinstance(arguments, dict):
-						result = handler(self, **arguments)
-					else:
-						result = handler(self, *arguments)
-				break
-		if not handler_found:
-			request_handler.respond_server_error(501)
-			return
-		result = json.dumps(result) + '\n'
-		request_handler.send_response(200)
-		request_handler.send_header('Content-Type', 'application/json')
-		request_handler.send_header('Content-Length', len(result))
-		request_handler.end_headers()
-		request_handler.wfile.write(result)
+		if not isinstance(data, bytes):
+			raise TypeError("loads() argument 1 must be bytes, not {0}".format(type(data).__name__))
+		if self._compression == 'zlib':
+			data = zlib.decompress(data)
+		if sys.version_info[0] == 3 and self.name.startswith('application/'):
+			data = data.decode(self._charset)
+		data = SERIALIZER_DRIVERS[self.name]['loads'](data)
+		if isinstance(data, list):
+			data = tuple(data)
+		return data
 
 class AdvancedHTTPServer(object):
 	"""
@@ -1197,7 +1218,6 @@ class AdvancedHTTPServer(object):
 		else:
 			self.http_server = AdvancedHTTPServerNonThreaded(address, RequestHandler)
 		self.logger.info('listening on ' + address[0] + ':' + str(address[1]))
-		self.http_server.rest_api_handler = None
 
 		if self.use_ssl:
 			self.http_server.socket = ssl.wrap_socket(self.http_server.socket, keyfile=ssl_keyfile, certfile=ssl_certfile, server_side=True)
@@ -1207,18 +1227,6 @@ class AdvancedHTTPServer(object):
 		if hasattr(RequestHandler, 'custom_authentication'):
 			self.logger.debug(address[0] + ':' + str(address[1]) + ' - a custom authentication function is being used')
 			self.auth_set(True)
-
-	def init_rest_api(self, rest_api_handler):
-		"""
-		Initialize a REST API Handler.
-
-		:param rest_api_handler: The handler instance to register with the server.
-		:type rest_api_handler: :py:class:`.AdvancedHTTPServerRESTAPI`
-		"""
-		if not isinstance(rest_api_handler, AdvancedHTTPServerRESTAPI):
-			raise ValueError('rest_api_handler must be an instance of AdvancedHTTPServerRESTAPI')
-		self.http_server.rest_api_handler = rest_api_handler
-		self.logger.debug(self.address[0] + ':' + str(self.address[1]) + ' - a REST API handler has been registered')
 
 	def serve_forever(self, fork=False):
 		"""
@@ -1315,7 +1323,10 @@ class AdvancedHTTPServer(object):
 
 	@rpc_hmac_key.setter
 	def rpc_hmac_key(self, value):
-		self.http_server.rpc_hmac_key = str(value)
+		if not value:
+			self.http_server.rpc_hmac_key = None
+			return
+		self.http_server.rpc_hmac_key = value.encode('UTF-8')
 
 	@property
 	def server_version(self):
@@ -1364,17 +1375,30 @@ class AdvancedHTTPServer(object):
 		as a hash by specifying the hash type in the *pwtype* argument.
 
 		:param str username: The username of the credentials to be added.
-		:param str password: The password data of the credentials to be added.
-		:param str pwtype: The type of the *password* data, (plain, md5 or sha1).
+		:param bytes, str password: The password data of the credentials to be added.
+		:param str pwtype: The type of the *password* data, (plain, md5, sha1, etc.).
 		"""
+		if not isinstance(password, (bytes, str)):
+			raise TypeError("auth_add_creds() argument 2 must be bytes or str, not {0}".format(type(password).__name__))
 		pwtype = pwtype.lower()
-		if not pwtype in ('plain', 'md5', 'sha1'):
-			raise ValueError('invalid password type, must be (\'plain\', \'md5\', \'sha1\')')
+		if not pwtype in ('plain', 'md5', 'sha1', 'sha256', 'sha384', 'sha512'):
+			raise ValueError('invalid password type, must be \'plain\', or supported by hashlib')
 		if self.http_server.basic_auth == None:
 			self.http_server.basic_auth = {}
 			self.logger.info(self.address[0] + ':' + str(self.address[1]) + ' - basic authentication has been enabled')
 		if pwtype != 'plain':
-			password = password.lower()
+			algorithms_available = getattr(hashlib, 'algorithms_available', ()) or getattr(hashlib, 'algorithms', ())
+			if not pwtype in algorithms_available:
+				raise ValueError('hashlib does not support the desired algorithm')
+			# only md5 and sha1 hex for backwards compatibility
+			if pwtype == 'md5' and len(password) == 32:
+				password = binascii.unhexlify(password)
+			elif pwtype == 'sha1' and len(password) == 40:
+				password = binascii.unhexlify(password)
+			if not isinstance(password, bytes):
+				password = password.encode('UTF-8')
+			if len(hashlib.new(pwtype, b'foobar').digest()) != len(password):
+				raise ValueError('the length of the password hash does not match the type specified')
 		self.http_server.basic_auth[username] = {'value': password, 'type': pwtype}
 
 class AdvancedHTTPServerTestCase(unittest.TestCase):
@@ -1386,16 +1410,16 @@ class AdvancedHTTPServerTestCase(unittest.TestCase):
 	handler_class = AdvancedHTTPServerRequestHandler
 	"""The :py:class:`.AdvancedHTTPServerRequestHandler` class to use as the request handler, this can be overridden by subclasses."""
 	config_section = 'server'
-	"""The name of the :py:class:`ConfigParser.ConfigParser` section that the server is using."""
+	"""The name of the :py:class:`configparser.ConfigParser` section that the server is using."""
 	def __init__(self, *args, **kwargs):
 		super(AdvancedHTTPServerTestCase, self).__init__(*args, **kwargs)
-		config = ConfigParser.ConfigParser()
+		config = ConfigParser()
 		config.add_section(self.config_section)
 		config.set(self.config_section, 'ip', '127.0.0.1')
 		config.set(self.config_section, 'port', str(random.randint(30000, 50000)))
 		self.config = config
 		"""
-		The :py:class:`ConfigParser.ConfigParser` object used by the server.
+		The :py:class:`configparser.ConfigParser` object used by the server.
 		It has the ip and port options configured in the section named in
 		the :py:attr:`.config_section` attribute.
 		"""
@@ -1404,6 +1428,10 @@ class AdvancedHTTPServerTestCase(unittest.TestCase):
 		A resource which has a handler set to it which will respond with
 		a 200 status code and the message 'Hello World!'
 		"""
+		if hasattr(self, 'assertRegexpMatches') and not hasattr(self, 'assertRegexMatches'):
+			self.assertRegexMatches = self.assertRegexpMatches
+		if hasattr(self, 'assertRaisesRegexp') and not hasattr(self, 'assertRaisesRegex'):
+			self.assertRaisesRegex = self.assertRaisesRegexp
 
 	def setUp(self):
 		AdvancedHTTPServerRegisterPath("^{0}$".format(self.test_resource[1:]), self.handler_class.__name__)(self._test_resource_handler)
@@ -1414,12 +1442,13 @@ class AdvancedHTTPServerTestCase(unittest.TestCase):
 		self.server_thread.start()
 		self.assertTrue(self.server_thread.is_alive())
 		self.shutdown_requested = False
-		self.http_connection = httplib.HTTPConnection(self.config.get(self.config_section, 'ip'), self.config.getint(self.config_section, 'port'))
+		self.server_address = (self.config.get(self.config_section, 'ip'), self.config.getint(self.config_section, 'port'))
+		self.http_connection = http.client.HTTPConnection(self.server_address[0], self.server_address[1])
 
 	def _test_resource_handler(self, handler, query):
 		handler.send_response(200)
 		handler.end_headers()
-		message = 'Hello World!\r\n\r\n'
+		message = b'Hello World!\r\n\r\n'
 		handler.send_response(200)
 		handler.send_header('Content-Length', len(message))
 		handler.end_headers()
@@ -1431,10 +1460,10 @@ class AdvancedHTTPServerTestCase(unittest.TestCase):
 		Check an HTTP response object and ensure the status is correct.
 
 		:param http_response: The response object to check.
-		:type http_response: :py:class:`httplib.HTTPResponse`
+		:type http_response: :py:class:`http.client.HTTPResponse`
 		:param int status: The status code to expect for *http_response*.
 		"""
-		self.assertTrue(isinstance(http_response, httplib.HTTPResponse))
+		self.assertTrue(isinstance(http_response, http.client.HTTPResponse))
 		error_message = "HTTP Response received status {0} when {1} was expected".format(http_response.status, status)
 		self.assertEqual(http_response.status, status, msg=error_message)
 
@@ -1446,10 +1475,11 @@ class AdvancedHTTPServerTestCase(unittest.TestCase):
 		:param str method: The HTTP verb to use (GET, HEAD, POST etc.).
 		:param dict headers: The HTTP headers to provide in the request.
 		:return: The HTTP response object.
-		:rtype: :py:class:`httplib.HTTPResponse`
+		:rtype: :py:class:`http.client.HTTPResponse`
 		"""
 		headers = (headers or {})
 		self.http_connection.request(method, resource, headers=headers)
+		time.sleep(0.025)
 		response = self.http_connection.getresponse()
 		return response
 
