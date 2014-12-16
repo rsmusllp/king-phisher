@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import datetime
 import time
 
 from king_phisher import ua_parser
@@ -235,6 +236,7 @@ class CampaignGraphOverview(CampaignGraph):
 		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Grand Total')
 		ax.set_title('Campaign Overview')
+		ax.set_yticks((1,))
 		ax.set_xticks(map(lambda x: float(x) + (width / 2), range(len(bars))))
 		ax.set_xticklabels(('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)], rotation=30)
 		for col in bars:
@@ -273,6 +275,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Total Visits')
 		ax.set_title('Visitor OS Information')
+		ax.set_yticks((1,))
 		ax.set_xticks(map(lambda x: float(x) + (width / 2), range(len(bars))))
 		ax.set_xticklabels(os_names, rotation=30)
 		for col in bars:
@@ -291,17 +294,23 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 		cid = self.config['campaign_id']
 		visits = info_cache['visits']
 		first_visits = map(lambda visit: visit['first_visit'], visits)
-		first_visits.sort()
 
 		ax = self.axes[0]
-		if len(first_visits):
-			ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
-			self.figure.autofmt_xdate()
 		ax.set_ylabel('Number of Visits')
 		ax.set_title('Visits Over Time')
-		ax.xaxis.set_major_locator(dates.DayLocator())
+		if not len(first_visits):
+			ax.set_yticks((0,))
+			ax.set_xticks((0,))
+			return info_cache
+
+		ax.xaxis.set_major_locator(dates.AutoDateLocator())
 		ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
-		ax.xaxis.set_minor_locator(dates.HourLocator())
-		ax.autoscale_view()
-		ax.fmt_xdata = dates.DateFormatter('%Y-%m-%d')
+		first_visits.sort()
+		first_visit_span = first_visits[-1] - first_visits[0]
+		ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
+		self.figure.autofmt_xdate()
+		if first_visit_span < datetime.timedelta(7):
+			ax.xaxis.set_minor_locator(dates.DayLocator())
+			if first_visit_span < datetime.timedelta(3) and len(first_visits) > 1:
+				ax.xaxis.set_minor_locator(dates.HourLocator())
 		return info_cache
