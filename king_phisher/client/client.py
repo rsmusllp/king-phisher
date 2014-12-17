@@ -775,7 +775,9 @@ class KingPhisherClient(_Gtk_Window):
 			command = command.format(username=self.config['server_username'], server=self.config['server'])
 		except KeyError:
 			pass
-		return utilities.start_process(command)
+		self.logger.debug("starting sftp client command: {0}".format(command))
+		utilities.start_process(command, wait=False)
+		return
 
 	def stop_remote_service(self):
 		"""
