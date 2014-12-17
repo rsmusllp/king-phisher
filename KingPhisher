@@ -105,7 +105,8 @@ def main():
 	logger.debug('using gui data from glade file: ' + gui_utilities.which_glade())
 	try:
 		main_window = client.KingPhisherClient(config_file=config_file)
-	except Exception:
+	except Exception as error:
+		logger.critical("ititialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
 		print('[-] failed to initialize the King Phisher Client')
 		return 0
 	main_window.set_position(Gtk.WindowPosition.CENTER)

@@ -23,6 +23,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.server_parse
 
+.. autofunction:: king_phisher.utilities.start_process
+
 .. autofunction:: king_phisher.utilities.timedef_to_seconds
 
 .. autofunction:: king_phisher.utilities.unescape_single_quote

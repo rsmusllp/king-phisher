@@ -37,6 +37,7 @@ import functools
 import os
 import random
 import re
+import shlex
 import string
 import subprocess
 import sys
@@ -256,14 +257,10 @@ def open_uri(uri):
 	:param str uri: The URI to open.
 	"""
 	proc_args = []
-	startupinfo = None
 	if sys.platform.startswith('win'):
 		proc_args.append(which('cmd.exe'))
 		proc_args.append('/c')
 		proc_args.append('start')
-		startupinfo = subprocess.STARTUPINFO()
-		startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-		startupinfo.wShowWindow = subprocess.SW_HIDE
 	elif which('gvfs-open'):
 		proc_args.append(which('gvfs-open'))
 	elif which('xdg-open'):
@@ -271,8 +268,7 @@ def open_uri(uri):
 	else:
 		raise RuntimeError('could not find suitable application to open uri')
 	proc_args.append(uri)
-	proc_h = subprocess.Popen(proc_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
-	return proc_h.wait() == 0
+	return start_process(proc_args)
 
 def random_string(size):
 	"""
@@ -319,6 +315,23 @@ def server_parse(server, default_port):
 			port = int(port)
 		return (host, port)
 
+def start_process(proc_args):
+	"""
+	Start an external process.
+
+	:param proc_args: The arguments of the process to start.
+	:type proc_args: list, str
+	"""
+	if isinstance(proc_args, str):
+		proc_args = shlex.split(proc_args)
+	startupinfo = None
+	if sys.platform.startswith('win'):
+		startupinfo = subprocess.STARTUPINFO()
+		startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+		startupinfo.wShowWindow = subprocess.SW_HIDE
+	proc_h = subprocess.Popen(proc_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
+	return proc_h.wait() == 0
+
 def unescape_single_quote(string):
 	"""
 	Unescape a string which uses backslashes to escape single quotes.
@@ -364,11 +377,11 @@ def which(program):
 	:rtype: str
 	"""
 	is_exe = lambda fpath: (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
-	if is_exe(program):
-		return program
 	for path in os.environ['PATH'].split(os.pathsep):
 		path = path.strip('"')
 		exe_file = os.path.join(path, program)
 		if is_exe(exe_file):
 			return exe_file
+	if is_exe(program):
+		return os.path.abspath(program)
 	return None
