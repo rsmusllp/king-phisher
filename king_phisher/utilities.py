@@ -333,6 +333,7 @@ def start_process(proc_args, wait=True):
 		startupinfo = subprocess.STARTUPINFO()
 		startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 		startupinfo.wShowWindow = subprocess.SW_HIDE
+
 	proc_h = subprocess.Popen(proc_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=preexec_fn, close_fds=close_fds, startupinfo=startupinfo)
 	if not wait:
 		return proc_h

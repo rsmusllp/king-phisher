@@ -714,7 +714,7 @@ class KingPhisherClient(_Gtk_Window):
 		about_dialog_properties = {
 			'authors': ['Spencer McIntyre', 'Jeff McCutchan', 'Brandan Geise'],
 			'comments': 'Phishing Campaign Toolkit',
-			'copyright': '(c) 2013 SecureState',
+			'copyright': 'Copyright (c) 2013-2015, SecureState LLC',
 			'license-type': Gtk.License.BSD,
 			'program-name': 'King Phisher',
 			'version': version.version,
