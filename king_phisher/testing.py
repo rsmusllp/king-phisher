@@ -33,8 +33,6 @@
 import functools
 import httplib
 import os
-import random
-import string
 import threading
 import time
 import urllib

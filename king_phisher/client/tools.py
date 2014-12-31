@@ -46,7 +46,6 @@ from king_phisher.client.client_rpc import KingPhisherRPCClient
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
 from gi.repository import Gtk
-from gi.repository import GLib
 
 try:
 	from gi.repository import Vte
@@ -119,7 +118,6 @@ class KingPhisherClientRPCTerminal(object):
 		argv.append(python_command)
 
 		env = ('PYTHONPATH=' + module_path,)
-		# _, child_pid = self.terminal.fork_command_full(Vte.PtyFlags.DEFAULT, os.getcwd(), argv, None, GLib.SpawnFlags.DEFAULT, None, None)
 		_, child_pid = self.terminal.fork_command_full(0, os.getcwd(), argv, env, 0, None, None)
 		self.logger.info("vte spawned child process with pid: {0}".format(child_pid))
 		self.child_pid = child_pid

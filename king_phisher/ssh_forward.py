@@ -58,7 +58,7 @@ class ForwardHandler(SocketServer.BaseRequestHandler):
 	def handle(self):
 		try:
 			chan = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
-		except Exception as err:
+		except Exception:
 			return
 		if chan is None:
 			return
@@ -75,7 +75,6 @@ class ForwardHandler(SocketServer.BaseRequestHandler):
 					break
 				self.request.send(data)
 
-		peername = self.request.getpeername()
 		chan.close()
 		self.request.close()
 

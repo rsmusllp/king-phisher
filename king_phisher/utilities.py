@@ -33,7 +33,6 @@
 import collections
 import datetime
 import distutils.version
-import functools
 import os
 import random
 import re

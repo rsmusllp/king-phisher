@@ -32,7 +32,7 @@
 
 import logging
 
-from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPCClientCached
+from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCClientCached
 
 try:
 	import msgpack

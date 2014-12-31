@@ -455,7 +455,7 @@ class KingPhisherClient(_Gtk_Window):
 		return uimanager
 
 	def _tab_changed(self, notebook, current_page, index):
-		previous_page = notebook.get_nth_page(self.last_page_id)
+		#previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
 		mailer_tab = self.tabs.get('mailer')
 		campaign_tab = self.tabs.get('campaign')
@@ -537,7 +537,6 @@ class KingPhisherClient(_Gtk_Window):
 		:return: Whether or not the connection attempt was successful.
 		:rtype: bool
 		"""
-		import socket
 		server_version_info = None
 		title_ssh_error = 'Failed To Connect To The SSH Service'
 		title_rpc_error = 'Failed To Connect To The King Phisher RPC Service'

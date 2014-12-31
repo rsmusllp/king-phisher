@@ -308,7 +308,6 @@ class MailSenderThread(threading.Thread):
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)
 				sleep_time = (60.0 / float(self.max_messages_per_minute)) - iteration_time
-				should_break = False
 				while sleep_time > 0:
 					sleep_chunk = min(sleep_time, 0.5)
 					time.sleep(sleep_chunk)
@@ -384,11 +383,11 @@ class MailSenderThread(threading.Thread):
 		msg_alt.attach(msg_body)
 
 		# process attachments
-		if isinstance(self._mime_attachments, list):
+		if isinstance(self._mime_attachments, (list, tuple)):
 			attachfiles = self._mime_attachments
 		else:
 			attachfiles = self._get_mime_attachments()
-		for attachfile in self._mime_attachments:
+		for attachfile in attachfiles:
 			msg.attach(attachfile)
 		return msg
 

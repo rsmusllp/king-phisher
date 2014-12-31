@@ -33,7 +33,6 @@
 import copy
 import json
 import os
-import sys
 
 try:
 	import yaml
@@ -152,7 +151,7 @@ class Configuration(object):
 		:rtype: bool
 		"""
 		if self.prefix:
-			item_name = self.prefix + self.seperator + item_name
+			option_name = self.prefix + self.seperator + option_name
 		item_names = option_name.split(self.seperator)
 		node = self._storage
 		for item_name in item_names:

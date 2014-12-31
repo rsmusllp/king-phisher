@@ -30,18 +30,14 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
 import logging
-import os
 import threading
 import time
-import urlparse
 
 from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
-from king_phisher.client.mailer import MailSenderThread
 
 from gi.repository import Gdk
 from gi.repository import GLib
@@ -505,7 +501,7 @@ class CampaignViewTab(object):
 	def _tab_changed(self, notebook, current_page, index):
 		if not hasattr(self.parent, 'rpc'):
 			return
-		previous_page = notebook.get_nth_page(self.last_page_id)
+		#previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
 
 		for tab_name, tab in self.tabs.items():

@@ -30,7 +30,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
 import datetime
 import os
 import socket
@@ -119,7 +118,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.text_insert('Testing the target URL... ')
 		try:
 			test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
-		except Exception as error:
+		except Exception:
 			self.text_insert('failed')
 			if not gui_utilities.show_dialog_yes_no('Unable To Open The Web Server URL', self.parent, 'The URL may be invalid, continue sending messages anyways?'):
 				self.text_insert(', sending aborted.\n')
@@ -540,7 +539,6 @@ class MailSenderTab(object):
 		config_tab = self.tabs.get('config')
 		edit_tab = self.tabs.get('edit')
 		preview_tab = self.tabs.get('preview')
-		progress_tab = self.tabs.get('progress')
 
 		if config_tab and previous_page == config_tab.box:
 			config_tab.objects_save_to_config()

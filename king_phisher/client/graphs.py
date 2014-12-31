@@ -31,7 +31,6 @@
 #
 
 import datetime
-import time
 
 from king_phisher import ua_parser
 from king_phisher import utilities
@@ -44,7 +43,6 @@ try:
 	matplotlib.rcParams['backend'] = 'TkAgg'
 	from matplotlib import dates
 	from matplotlib import pyplot
-	from matplotlib.figure import Figure
 	from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 	from matplotlib.backends.backend_gtk3agg import FigureManagerGTK3Agg as FigureManager
 	from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
@@ -164,7 +162,6 @@ class CampaignGraph(object):
 	def mpl_signal_canvas_button_pressed(self, event):
 		if event.button != 3:
 			return
-		pos_func = lambda m, d: (event.x, event.y, True)
 		self.popup_menu.popup(None, None, None, None, event.button, Gtk.get_current_event_time())
 		return True
 
@@ -251,8 +248,6 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 	title = 'Visitor Information'
 	table_subscriptions = ['visits']
 	def _load_graph(self, info_cache):
-		rpc = self.parent.rpc
-		cid = self.config['campaign_id']
 		visits = info_cache['visits']
 
 		operating_systems = {}
@@ -290,8 +285,6 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 	title = 'Visits Timeline'
 	table_subscriptions = ['visits']
 	def _load_graph(self, info_cache):
-		rpc = self.parent.rpc
-		cid = self.config['campaign_id']
 		visits = info_cache['visits']
 		first_visits = map(lambda visit: visit['first_visit'], visits)
 

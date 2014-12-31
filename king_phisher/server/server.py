@@ -52,7 +52,6 @@ from king_phisher.server import server_rpc
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 from king_phisher.third_party.AdvancedHTTPServer import *
-from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 
 import jinja2
 
@@ -319,7 +318,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		except jinja2.exceptions.TemplateSyntaxError as error:
 			self.server.logger.error("jinja2 syntax error in template {0}:{1} {2}".format(error.filename, error.lineno, error.message))
 			raise errors.KingPhisherAbortRequestError()
-		except jinja2.exceptions.TemplateError, IOError:
+		except jinja2.exceptions.TemplateError:
 			raise errors.KingPhisherAbortRequestError()
 
 		template_vars = {

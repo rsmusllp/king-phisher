@@ -35,7 +35,6 @@ import json
 import os
 import random
 import string
-import sys
 import time
 
 from king_phisher.third_party import pam
