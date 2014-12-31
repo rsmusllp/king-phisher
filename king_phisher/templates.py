@@ -30,18 +30,20 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import cgi
 import datetime
 import logging
 import os
 import random
 
+from king_phisher import utilities
 from king_phisher import version
 
 import jinja2
 
-__all__ = ['KingPhisherTemplateEnvironment']
+__all__ = ['BaseTemplateEnvironment', 'MessageTemplateEnvironment']
 
-class KingPhisherTemplateEnvironment(jinja2.Environment):
+class BaseTemplateEnvironment(jinja2.Environment):
 	"""A configured Jinja2 environment with additional filters."""
 	def __init__(self, loader=None, global_vars=None):
 		"""
@@ -52,7 +54,7 @@ class KingPhisherTemplateEnvironment(jinja2.Environment):
 		self.logger = logging.getLogger('KingPhisher.TemplateEnvironment')
 		autoescape = lambda name: isinstance(name, (str, unicode)) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
 		extensions = ['jinja2.ext.autoescape', 'jinja2.ext.do']
-		super(KingPhisherTemplateEnvironment, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
+		super(BaseTemplateEnvironment, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
 
 		self.filters['strftime'] = self._filter_strftime
 		self.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
@@ -83,3 +85,44 @@ class KingPhisherTemplateEnvironment(jinja2.Environment):
 			self.logger.error("invalid time format '{0}'".format(fmt))
 			result = ''
 		return result
+
+class MessageTemplateEnvironment(BaseTemplateEnvironment):
+	"""A configured Jinja2 environment for formatting messages."""
+	MODE_PREVIEW = 0
+	MODE_ANALYZE = 1
+	MODE_SEND = 2
+	def __init__(self, *args, **kwargs):
+		super(MessageTemplateEnvironment, self).__init__(*args, **kwargs)
+		self.set_mode(self.MODE_PREVIEW)
+		self.globals['inline_image'] = self._inline_image_handler
+		self.attachment_images = {}
+
+	def set_mode(self, mode):
+		"""
+		Set the operation mode for the environment. Valid values are the MODE_*
+		constants.
+
+		:param int mode: The operation mode.
+		"""
+		assert(mode in [self.MODE_PREVIEW, self.MODE_ANALYZE, self.MODE_SEND])
+		self._mode = mode
+		if mode == self.MODE_ANALYZE:
+			self.attachment_images = {}
+
+	def _inline_image_handler(self, image_path):
+		image_path = os.path.abspath(image_path)
+		if self._mode == self.MODE_PREVIEW:
+			if os.path.sep == '\\':
+				image_path = '/'.join(image_path.split('\\'))
+			if not image_path.startswith('/'):
+				image_path = '/' + image_path
+			image_path = 'file://' + image_path
+			return "<img src=\"{0}\">".format(cgi.escape(image_path, quote=True))
+		if image_path in self.attachment_images:
+			attachment_name = self.attachment_images[image_path]
+		else:
+			attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
+			while attachment_name in self.attachment_images.values():
+				attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
+			self.attachment_images[image_path] = attachment_name
+		return "<img src=\"cid:{0}\">".format(cgi.escape(attachment_name, quote=True))

@@ -637,7 +637,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 			global_vars = config.get('server.page_variables')
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
-		self.http_server.template_env = templates.KingPhisherTemplateEnvironment(loader=loader, global_vars=global_vars)
+		self.http_server.template_env = templates.BaseTemplateEnvironment(loader=loader, global_vars=global_vars)
 
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()

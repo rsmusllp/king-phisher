@@ -30,7 +30,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import cgi
 import csv
 import logging
 import mimetypes
@@ -56,42 +55,7 @@ from gi.repository import GLib
 __all__ = ['format_message', 'MailSenderThread']
 
 make_uid = lambda: utilities.random_string(16)
-
-class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
-	MODE_PREVIEW = 0
-	MODE_ANALYZE = 1
-	MODE_SEND = 2
-	def __init__(self, *args, **kwargs):
-		super(ClientTemplateEnvironment, self).__init__(*args, **kwargs)
-		self.set_mode(self.MODE_PREVIEW)
-		self.globals['inline_image'] = self._inline_image_handler
-		self.attachment_images = {}
-
-	def set_mode(self, mode):
-		assert(mode in [self.MODE_PREVIEW, self.MODE_ANALYZE, self.MODE_SEND])
-		self._mode = mode
-		if mode == self.MODE_ANALYZE:
-			self.attachment_images = {}
-
-	def _inline_image_handler(self, image_path):
-		image_path = os.path.abspath(image_path)
-		if self._mode == self.MODE_PREVIEW:
-			if os.path.sep == '\\':
-				image_path = '/'.join(image_path.split('\\'))
-			if not image_path.startswith('/'):
-				image_path = '/' + image_path
-			image_path = 'file://' + image_path
-			return "<img src=\"{0}\">".format(cgi.escape(image_path, quote=True))
-		if image_path in self.attachment_images:
-			attachment_name = self.attachment_images[image_path]
-		else:
-			attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
-			while attachment_name in self.attachment_images.values():
-				attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
-			self.attachment_images[image_path] = attachment_name
-		return "<img src=\"cid:{0}\">".format(cgi.escape(attachment_name, quote=True))
-
-template_environment = ClientTemplateEnvironment()
+template_environment = templates.MessageTemplateEnvironment()
 
 def format_message(template, config, first_name=None, last_name=None, uid=None, target_email=None):
 	"""
@@ -109,7 +73,7 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	:rtype: str
 	"""
 	if uid == None:
-		template_environment.set_mode(ClientTemplateEnvironment.MODE_PREVIEW)
+		template_environment.set_mode(template_environment.MODE_PREVIEW)
 	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
 	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
 	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, (str, unicode)) else target_email)
@@ -409,9 +373,9 @@ class MailSenderThread(threading.Thread):
 
 	def _prepare_env(self):
 		msg_template = open(self.config['mailer.html_file'], 'r').read()
-		template_environment.set_mode(ClientTemplateEnvironment.MODE_ANALYZE)
+		template_environment.set_mode(template_environment.MODE_ANALYZE)
 		format_message(msg_template, self.config, uid=make_uid())
-		template_environment.set_mode(ClientTemplateEnvironment.MODE_SEND)
+		template_environment.set_mode(template_environment.MODE_SEND)
 
 	def _try_send_email(self, *args, **kwargs):
 		message_sent = False

@@ -35,7 +35,7 @@ import re
 import unittest
 
 from king_phisher.client.mailer import *
-from king_phisher.client.mailer import ClientTemplateEnvironment
+from king_phisher.templates import MessageTemplateEnvironment
 from king_phisher.testing import TEST_MESSAGE_TEMPLATE, TEST_MESSAGE_TEMPLATE_INLINE_IMAGE
 from king_phisher.utilities import random_string
 
@@ -61,12 +61,12 @@ class ClientMailerTests(unittest.TestCase):
 		self.assertRegexpMatches(formatted_msg, regexp, msg='The tracking image tag was not inserted correctly')
 
 	def test_client_template_environment_mode_analyze(self):
-		tenv = ClientTemplateEnvironment()
+		tenv = MessageTemplateEnvironment()
 		self.assertTrue(hasattr(tenv, 'attachment_images'))
 		self.assertIsInstance(tenv.attachment_images, dict)
 		self.assertEqual(len(tenv.attachment_images), 0)
 
-		tenv.set_mode(ClientTemplateEnvironment.MODE_ANALYZE)
+		tenv.set_mode(MessageTemplateEnvironment.MODE_ANALYZE)
 		template = tenv.from_string(TEST_MESSAGE_TEMPLATE)
 		template.render(dict(client=dict(), url=dict()))
 		msg = 'The analysis mode failed to identify the inline image'
@@ -75,8 +75,8 @@ class ClientMailerTests(unittest.TestCase):
 		self.assertRegexpMatches(cid_value, self.image_cid_regex)
 
 	def test_client_template_environment_mode_preview(self):
-		tenv = ClientTemplateEnvironment()
-		tenv.set_mode(ClientTemplateEnvironment.MODE_PREVIEW)
+		tenv = MessageTemplateEnvironment()
+		tenv.set_mode(MessageTemplateEnvironment.MODE_PREVIEW)
 		self.assertTrue('inline_image' in tenv.globals)
 		inline_image = tenv.globals['inline_image']
 		img_tag_result = inline_image(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)
@@ -85,8 +85,8 @@ class ClientMailerTests(unittest.TestCase):
 		self.assertEqual(img_tag_result, img_tag_test, msg=msg)
 
 	def test_client_template_environment_mode_send(self):
-		tenv = ClientTemplateEnvironment()
-		tenv.set_mode(ClientTemplateEnvironment.MODE_SEND)
+		tenv = MessageTemplateEnvironment()
+		tenv.set_mode(MessageTemplateEnvironment.MODE_SEND)
 		self.assertTrue('inline_image' in tenv.globals)
 		inline_image = tenv.globals['inline_image']
 		img_tag_result = inline_image(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)
