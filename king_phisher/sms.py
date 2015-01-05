@@ -42,7 +42,6 @@ __version__ = '0.1'
 __all__ = ['lookup_carrier_gateway', 'send_sms']
 
 CARRIERS = {
-	'Alltel':        'message.alltel.com',
 	'AT&T':          'txt.att.net',
 	'Boost':         'myboostmobile.com',
 	'Sprint':        'messaging.sprintpcs.com',

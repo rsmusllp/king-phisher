@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/sms.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,26 +30,18 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
+import unittest
 
-from tests.configuration import ServerConfigurationTests
-from tests.sms import SMSTests
-from tests.templates import TemplatesTests
-from tests.ua_parser import UserAgentParserTests
-from tests.utilities import UtilitiesTests
-from tests.version import VersionTests
-from tests.xor import XORTests
+from king_phisher.utilities import random_string
+from king_phisher.sms import *
 
-from tests.client.client import ClientGUITests
-from tests.client.export import ClientExportTests
-from tests.client.graphs import ClientGraphsTests
-from tests.client.mailer import ClientMailerTests
+class SMSTests(unittest.TestCase):
+	def test_lookup_carrier_gateway(self):
+		rstring = random_string(16)
+		self.assertIsNone(lookup_carrier_gateway(rstring))
+		self.assertEqual(lookup_carrier_gateway('att'), 'txt.att.net')
+		self.assertEqual(lookup_carrier_gateway('aTt'), 'txt.att.net')
+		self.assertEqual(lookup_carrier_gateway('AT&T'), 'txt.att.net')
 
-from tests.server.authenticator import ServerAuthenticatorTests
-from tests.server.database import ServerDatabaseTests
-from tests.server.server import ServerTests
-from tests.server.server import CampaignWorkflowTests
-from tests.server.server_rpc import ServerRPCTests
-
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
+if __name__ == '__main__':
+	unittest.main()
