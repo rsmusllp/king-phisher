@@ -34,6 +34,8 @@ import argparse
 import logging
 import os
 import sys
+import threading
+import time
 
 from king_phisher import find
 from king_phisher import utilities
@@ -64,6 +66,7 @@ def main():
 	logging.getLogger(arguments.logger).addHandler(console_log_handler)
 	config_file = arguments.config_file
 	del arguments, parser
+	logger = logging.getLogger('KingPhisher.Client.CLI')
 
 	# check and configure the environment
 	if getattr(sys, 'frozen', False):
@@ -94,9 +97,21 @@ def main():
 		print('[-] unable to locate the Glade data file')
 		return 0
 
+	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+	logger.debug("client running in process: {0} main tid: 0x{1:x}".format(os.getpid(), threading.current_thread().ident))
+
+	start_time = time.time()
 	Gtk.init(sys.argv)
-	main_window = client.KingPhisherClient(config_file=config_file)
+	logger.debug('using gui data from glade file: ' + gui_utilities.which_glade())
+	try:
+		main_window = client.KingPhisherClient(config_file=config_file)
+	except Exception as error:
+		logger.critical("ititialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
+		print('[-] failed to initialize the King Phisher Client')
+		return 0
 	main_window.set_position(Gtk.WindowPosition.CENTER)
+	logger.debug("client loaded in {0:.2f} seconds".format(time.time() - start_time))
+
 	if main_window.init_connection():
 		GObject.threads_init()
 		Gtk.main()

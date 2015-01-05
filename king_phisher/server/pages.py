@@ -60,3 +60,29 @@ def make_csrf_page(url, params, method='POST'):
 
 	page = '\n'.join(page)
 	return markupsafe.Markup(page)
+
+def make_redirect_page(url, title='Automatic Redirect'):
+	"""
+	A Jinja function which will create an HTML page that will automatically
+	redirect the viewer to a different url.
+
+	:param str url: The URL to redirect the user to.
+	:param str title: The title to use in the resulting HTML page.
+	"""
+	title = cgi.escape(title, quote=True)
+	url = cgi.escape(url, quote=True)
+
+	page = []
+	page.append('<!DOCTYPE html>')
+	page.append('<html lang="en-US">')
+	page.append('  <head>')
+	page.append("    <title>{0}</title>".format(title))
+	page.append("    <meta http-equiv=\"refresh\" content=\"0;url={0}\" />".format(url))
+	page.append('  </head>')
+	page.append('  <body>')
+	page.append("    <p>The content you are looking for has been moved. If you are not redirected automatically then <a href=\"{0}\">click here</a> to proceed.</p>".format(url))
+	page.append('  </body>')
+	page.append('</html>')
+
+	page = '\n'.join(page)
+	return markupsafe.Markup(page)

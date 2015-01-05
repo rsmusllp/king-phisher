@@ -33,9 +33,8 @@
 import functools
 import httplib
 import os
-import random
-import string
 import threading
+import time
 import urllib
 import unittest
 
@@ -156,6 +155,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		if headers:
 			request_kwargs['headers'] = headers
 		conn.request(method, resource, **request_kwargs)
+		time.sleep(0.025)
 		response = conn.getresponse()
 		conn.close()
 		return response

@@ -8,8 +8,6 @@
 build/*
 data/*/king_phisher/plugins/*
 dist/*
-
-# temporary until docs are ready
 docs/build/*
 
 !data/server/king_phisher/error_*.html

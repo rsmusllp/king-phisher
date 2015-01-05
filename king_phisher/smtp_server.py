@@ -33,7 +33,6 @@
 import asyncore
 import smtpd
 import logging
-import time
 
 from king_phisher import utilities
 

@@ -30,7 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import time
+import datetime
 
 from king_phisher import ua_parser
 from king_phisher import utilities
@@ -40,18 +40,17 @@ from gi.repository import Gtk
 
 try:
 	import matplotlib
+	matplotlib.rcParams['backend'] = 'TkAgg'
+	from matplotlib import dates
+	from matplotlib import pyplot
+	from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
+	from matplotlib.backends.backend_gtk3agg import FigureManagerGTK3Agg as FigureManager
+	from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
 except ImportError:
 	has_matplotlib = False
 	"""Whether the :py:mod:`matplotlib` module is available."""
 else:
 	has_matplotlib = True
-	matplotlib.rcParams['backend'] = 'TkAgg'
-	from matplotlib import dates
-	from matplotlib import pyplot
-	from matplotlib.figure import Figure
-	from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
-	from matplotlib.backends.backend_gtk3agg import FigureManagerGTK3Agg as FigureManager
-	from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
 
 EXPORTED_GRAPHS = {}
 
@@ -163,7 +162,6 @@ class CampaignGraph(object):
 	def mpl_signal_canvas_button_pressed(self, event):
 		if event.button != 3:
 			return
-		pos_func = lambda m, d: (event.x, event.y, True)
 		self.popup_menu.popup(None, None, None, None, event.button, Gtk.get_current_event_time())
 		return True
 
@@ -187,12 +185,14 @@ class CampaignGraph(object):
 		"""Load the graph information via :py:meth:`.refresh`."""
 		self.refresh()
 
-	def refresh(self, info_cache=None):
+	def refresh(self, info_cache=None, stop_event=None):
 		"""
 		Refresh the graph data by retrieving the information from the
 		remote server.
 
 		:param dict info_cache: An optional cache of data tables.
+		:param stop_event: An optional object indicating that the operation should stop.
+		:type stop_event: :py:class:`threading.Event`
 		:return: A dictionary of cached tables from the server.
 		:rtype: dict
 		"""
@@ -200,6 +200,8 @@ class CampaignGraph(object):
 		if not self.parent.rpc:
 			return info_cache
 		for table in self.table_subscriptions:
+			if stop_event and stop_event.is_set():
+				return info_cache
 			if not table in info_cache:
 				info_cache[table] = list(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
 		map(lambda ax: ax.clear(), self.axes)
@@ -231,6 +233,7 @@ class CampaignGraphOverview(CampaignGraph):
 		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Grand Total')
 		ax.set_title('Campaign Overview')
+		ax.set_yticks((1,))
 		ax.set_xticks(map(lambda x: float(x) + (width / 2), range(len(bars))))
 		ax.set_xticklabels(('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)], rotation=30)
 		for col in bars:
@@ -245,8 +248,6 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 	title = 'Visitor Information'
 	table_subscriptions = ['visits']
 	def _load_graph(self, info_cache):
-		rpc = self.parent.rpc
-		cid = self.config['campaign_id']
 		visits = info_cache['visits']
 
 		operating_systems = {}
@@ -269,6 +270,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Total Visits')
 		ax.set_title('Visitor OS Information')
+		ax.set_yticks((1,))
 		ax.set_xticks(map(lambda x: float(x) + (width / 2), range(len(bars))))
 		ax.set_xticklabels(os_names, rotation=30)
 		for col in bars:
@@ -283,21 +285,25 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 	title = 'Visits Timeline'
 	table_subscriptions = ['visits']
 	def _load_graph(self, info_cache):
-		rpc = self.parent.rpc
-		cid = self.config['campaign_id']
 		visits = info_cache['visits']
 		first_visits = map(lambda visit: visit['first_visit'], visits)
-		first_visits.sort()
 
 		ax = self.axes[0]
-		if len(first_visits):
-			ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
-			self.figure.autofmt_xdate()
 		ax.set_ylabel('Number of Visits')
 		ax.set_title('Visits Over Time')
-		ax.xaxis.set_major_locator(dates.DayLocator())
+		if not len(first_visits):
+			ax.set_yticks((0,))
+			ax.set_xticks((0,))
+			return info_cache
+
+		ax.xaxis.set_major_locator(dates.AutoDateLocator())
 		ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
-		ax.xaxis.set_minor_locator(dates.HourLocator())
-		ax.autoscale_view()
-		ax.fmt_xdata = dates.DateFormatter('%Y-%m-%d')
+		first_visits.sort()
+		first_visit_span = first_visits[-1] - first_visits[0]
+		ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
+		self.figure.autofmt_xdate()
+		if first_visit_span < datetime.timedelta(7):
+			ax.xaxis.set_minor_locator(dates.DayLocator())
+			if first_visit_span < datetime.timedelta(3) and len(first_visits) > 1:
+				ax.xaxis.set_minor_locator(dates.HourLocator())
 		return info_cache

@@ -35,7 +35,6 @@ import json
 import os
 import random
 import string
-import sys
 import time
 
 from king_phisher.third_party import pam
@@ -121,8 +120,8 @@ class ForkedAuthenticator(object):
 				break
 			elif action != 'authenticate':
 				continue
-			username = request['username']
-			password = request['password']
+			username = str(request['username'])
+			password = str(request['password'])
 			result = {}
 			result['result'] = pam.authenticate(username, password, service=service)
 			self.send(result)

@@ -25,6 +25,10 @@ Classes
    :show-inheritance:
    :members:
 
+.. autoclass:: king_phisher.client.tabs.campaign.CampaignViewGenericTableTab
+   :show-inheritance:
+   :members:
+
 .. autoclass:: king_phisher.client.tabs.campaign.CampaignViewMessagesTab
    :show-inheritance:
    :members:

@@ -35,8 +35,10 @@ import json
 import logging
 import os
 import random
+import shlex
 import shutil
 import socket
+import sys
 import time
 
 from king_phisher import find
@@ -177,7 +179,7 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 			campaign_name = model.get_value(tree_iter, 1)
 			self.config['campaign_name'] = campaign_name
 			if not (campaign_id == old_campaign_id and campaign_name == old_campaign_name):
-				self.parent.emit('campaign_set', campaign_id)
+				self.parent.emit('campaign-set', campaign_id)
 		self.dialog.destroy()
 		return response
 
@@ -196,8 +198,8 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 		# SMTP Server Tab
 		'entry_smtp_server',
 		'spinbutton_smtp_max_send_rate',
-		'checkbutton_smtp_ssl_enable',
-		'checkbutton_smtp_ssh_enable',
+		'switch_smtp_ssl_enable',
+		'switch_smtp_ssh_enable',
 		'entry_ssh_server',
 		'entry_ssh_username'
 	]
@@ -206,8 +208,8 @@ class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
 		'SMSCarriers',
 		'SMTPSendRate'
 	]
-	def signal_smtp_ssh_enable(self, cbutton):
-		active = cbutton.get_property('active')
+	def signal_switch_smtp_ssh(self, switch, _):
+		active = switch.get_property('active')
 		self.gobjects['entry_ssh_server'].set_sensitive(active)
 		self.gobjects['entry_ssh_username'].set_sensitive(active)
 
@@ -278,8 +280,9 @@ class KingPhisherClient(_Gtk_Window):
 	:GObject Signals: :ref:`gobject-signals-kingphisher-client-label`
 	"""
 	__gsignals__ = {
-		'campaign_set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
-		'exit': (GObject.SIGNAL_RUN_CLEANUP, None, ())
+		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
 	def __init__(self, config_file=None):
 		"""
@@ -300,7 +303,11 @@ class KingPhisherClient(_Gtk_Window):
 		"""The :py:class:`.SSHTCPForwarder` instance used for tunneling traffic."""
 		self.config = None
 		"""The main King Phisher client configuration."""
-		self.load_config()
+		try:
+			self.load_config(load_defaults=True)
+		except Exception:
+			self.logger.critical('failed to load the client configuration')
+			raise
 		self.set_property('title', 'King Phisher')
 		vbox = Gtk.Box()
 		vbox.set_property('orientation', Gtk.Orientation.VERTICAL)
@@ -314,6 +321,8 @@ class KingPhisherClient(_Gtk_Window):
 		action_group = Gtk.ActionGroup("client_window_actions")
 		self._add_menu_actions(action_group)
 		uimanager = self._create_ui_manager()
+		self._add_menu_optional_actions(action_group, uimanager)
+		self.add_accel_group(uimanager.get_accel_group())
 		uimanager.insert_action_group(action_group)
 		self.uimanager = uimanager
 		menubar = uimanager.get_widget("/MenuBar")
@@ -341,7 +350,7 @@ class KingPhisherClient(_Gtk_Window):
 		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page + 2)
 
 		self.set_size_request(800, 600)
-		self.connect('destroy', lambda _: self.emit('exit'))
+		self.connect('delete-event', self.signal_delete_event)
 		self.notebook.show()
 		self.show()
 		self.rpc = None # needs to be initialized last
@@ -359,7 +368,7 @@ class KingPhisherClient(_Gtk_Window):
 		action = Gtk.Action('FileImportMenu', 'Import', None, None)
 		action_group.add_action(action)
 
-		action = Gtk.Action('FileImportMessageData', 'Message Data', 'Message Data', None)
+		action = Gtk.Action('FileImportMessageConfiguration', 'Message Configuration', 'Message Configuration', None)
 		action.connect('activate', lambda x: self.tabs['mailer'].import_message_data())
 		action_group.add_action(action)
 
@@ -370,12 +379,12 @@ class KingPhisherClient(_Gtk_Window):
 		action.connect('activate', lambda x: self.export_campaign_xml())
 		action_group.add_action(action)
 
-		action = Gtk.Action('FileExportMessageData', 'Message Data', 'Message Data', None)
+		action = Gtk.Action('FileExportMessageConfiguration', 'Message Configuration', 'Message Configuration', None)
 		action.connect('activate', lambda x: self.tabs['mailer'].export_message_data())
 		action_group.add_action(action)
 
 		action = Gtk.Action('FileQuit', None, None, Gtk.STOCK_QUIT)
-		action.connect('activate', lambda x: self.client_quit())
+		action.connect('activate', lambda x: self.emit('exit-confirm'))
 		action_group.add_action_with_accel(action, '<control>Q')
 
 		# Edit Menu Actions
@@ -406,6 +415,15 @@ class KingPhisherClient(_Gtk_Window):
 		action = Gtk.Action('HelpMenu', 'Help', None, None)
 		action_group.add_action(action)
 
+		action = Gtk.Action('HelpAbout', 'About', 'About', None)
+		action.connect('activate', lambda x: self.show_about_dialog())
+		action_group.add_action(action)
+
+		action = Gtk.Action('HelpWiki', 'Wiki', 'Wiki', None)
+		action.connect('activate', lambda x: utilities.open_uri('https://github.com/securestate/king-phisher/wiki'))
+		action_group.add_action(action)
+
+	def _add_menu_optional_actions(self, action_group, uimanager):
 		if graphs.has_matplotlib:
 			action = Gtk.Action('ToolsGraphMenu', 'Create Graph', None, None)
 			action_group.add_action(action)
@@ -416,31 +434,28 @@ class KingPhisherClient(_Gtk_Window):
 				action.connect('activate', lambda _: self.show_campaign_graph(graph_name))
 				action_group.add_action(action)
 
-		action = Gtk.Action('HelpAbout', 'About', 'About', None)
-		action.connect('activate', lambda x: self.show_about_dialog())
-		action_group.add_action(action)
+			merge_id = uimanager.new_merge_id()
+			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsGraphMenu', 'ToolsGraphMenu', Gtk.UIManagerItemType.MENU, False)
+			for graph_name in graphs.get_graphs():
+				action_name = 'ToolsGraph' + graph_name
+				uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu/ToolsGraphMenu', action_name, action_name, Gtk.UIManagerItemType.MENUITEM, False)
 
-		action = Gtk.Action('HelpWiki', 'Wiki', 'Wiki', None)
-		action.connect('activate', lambda x: utilities.open_uri('https://github.com/securestate/king-phisher/wiki'))
-		action_group.add_action(action)
+		if sys.platform.startswith('linux'):
+			action = Gtk.Action('ToolsSFTPClient', 'SFTP Client', 'SFTP Client', None)
+			action.connect('activate', lambda x: self.start_sftp_client())
+			action_group.add_action(action)
+			merge_id = uimanager.new_merge_id()
+			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsSFTPClient', 'ToolsSFTPClient', Gtk.UIManagerItemType.MENUITEM, False)
 
 	def _create_ui_manager(self):
 		uimanager = Gtk.UIManager()
 		with open(find.find_data_file('ui_info/client_window.xml')) as ui_info_file:
 			ui_data = ui_info_file.read()
 		uimanager.add_ui_from_string(ui_data)
-		if graphs.has_matplotlib:
-			merge_id = uimanager.new_merge_id()
-			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsGraphMenu', 'ToolsGraphMenu', Gtk.UIManagerItemType.MENU, False)
-			for graph_name in graphs.get_graphs():
-				action_name = 'ToolsGraph' + graph_name
-				uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu/ToolsGraphMenu', action_name, action_name, Gtk.UIManagerItemType.MENUITEM, False)
-		accelgroup = uimanager.get_accel_group()
-		self.add_accel_group(accelgroup)
 		return uimanager
 
 	def _tab_changed(self, notebook, current_page, index):
-		previous_page = notebook.get_nth_page(self.last_page_id)
+		#previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
 		mailer_tab = self.tabs.get('mailer')
 		campaign_tab = self.tabs.get('campaign')
@@ -455,17 +470,26 @@ class KingPhisherClient(_Gtk_Window):
 			index = notebook.get_current_page()
 			notebook.emit('switch-page', notebook.get_nth_page(index), index)
 
+	def signal_delete_event(self, x, y):
+		self.emit('exit-confirm')
+		return True
+
 	def do_campaign_set(self, campaign_id):
 		self.rpc.cache_clear()
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
 
 	def do_exit(self):
+		self.hide()
 		gui_utilities.gtk_widget_destroy_children(self)
 		gui_utilities.gtk_sync()
 		self.server_disconnect()
 		self.save_config()
+		self.destroy()
 		Gtk.main_quit()
 		return
+
+	def do_exit_confirm(self):
+		self.emit('exit')
 
 	def init_connection(self):
 		"""
@@ -490,13 +514,16 @@ class KingPhisherClient(_Gtk_Window):
 				return False
 			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True, refresh=True)
 		self.config['campaign_name'] = campaign_info['name']
-		self.emit('campaign_set', self.config['campaign_id'])
+		self.emit('campaign-set', self.config['campaign_id'])
 		return True
 
-	def client_quit(self, destroy=True):
-		"""Quit the client and perform any necessary clean up operations."""
-		self.destroy()
-		return
+	def client_quit(self):
+		"""
+		Unconditionally quit the client and perform any necessary clean up
+		operations. The exit-confirm signal will not be sent so there will not
+		be any opportunities for the client to cancel the operation.
+		"""
+		self.emit('exit')
 
 	def server_connect(self):
 		"""
@@ -510,7 +537,6 @@ class KingPhisherClient(_Gtk_Window):
 		:return: Whether or not the connection attempt was successful.
 		:rtype: bool
 		"""
-		import socket
 		server_version_info = None
 		title_ssh_error = 'Failed To Connect To The SSH Service'
 		title_rpc_error = 'Failed To Connect To The King Phisher RPC Service'
@@ -527,10 +553,10 @@ class KingPhisherClient(_Gtk_Window):
 			server = utilities.server_parse(self.config['server'], 22)
 			username = self.config['server_username']
 			password = self.config['server_password']
-			server_remote_port = self.config.get('server_remote_port', 80)
+			server_remote_port = self.config['server_remote_port']
 			local_port = random.randint(2000, 6000)
 			try:
-				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key=self.config.get('ssh_preferred_key'))
+				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
 				self.ssh_forwarder.start()
 				time.sleep(0.5)
 				self.logger.info('started ssh port forwarding')
@@ -549,7 +575,12 @@ class KingPhisherClient(_Gtk_Window):
 				self.logger.warning('failed to connect to the remote ssh server')
 				gui_utilities.show_dialog_error(title_ssh_error, self)
 				continue
-			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl', False))
+			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl'))
+			if self.config.get('rpc.serializer'):
+				try:
+					self.rpc.set_serializer(self.config['rpc.serializer'])
+				except ValueError as error:
+					self.logger.error("failed to set the rpc serializer, error: '{0}'".format(error.message))
 			try:
 				server_version_info = self.rpc('version')
 				assert(self.rpc('client/initialize'))
@@ -589,13 +620,24 @@ class KingPhisherClient(_Gtk_Window):
 			self.logger.info('stopped ssh port forwarding')
 		return
 
-	def load_config(self):
-		"""Load the client configuration from disk and set the :py:attr:`~.KingPhisherClient.config` attribute."""
+	def load_config(self, load_defaults=False):
+		"""
+		Load the client configuration from disk and set the
+		:py:attr:`~.KingPhisherClient.config` attribute.
+
+		:param bool load_defaults: Load missing options from the template configuration file.
+		"""
 		self.logger.info('loading the config from disk')
 		config_file = os.path.expanduser(self.config_file)
+		client_template = find.find_data_file('client_config.json')
 		if not os.path.isfile(config_file):
-			shutil.copy(find.find_data_file('client_config.json'), config_file)
+			shutil.copy(client_template, config_file)
 		self.config = json.load(open(config_file, 'rb'))
+		if load_defaults:
+			client_template = json.load(open(client_template, 'rb'))
+			for key, value in client_template.items():
+				if not key in self.config:
+					self.config[key] = value
 
 	def load_server_config(self):
 		"""Load the necessary values from the server's configuration."""
@@ -604,7 +646,7 @@ class KingPhisherClient(_Gtk_Window):
 
 	def save_config(self):
 		"""Write the client configuration to disk."""
-		self.logger.info('writing the config to disk')
+		self.logger.info('writing the client configuration to disk')
 		config = copy.copy(self.config)
 		for key in self.config.keys():
 			if 'password' in key or key == 'server_config':
@@ -671,7 +713,7 @@ class KingPhisherClient(_Gtk_Window):
 		about_dialog_properties = {
 			'authors': ['Spencer McIntyre', 'Jeff McCutchan', 'Brandan Geise'],
 			'comments': 'Phishing Campaign Toolkit',
-			'copyright': '(c) 2013 SecureState',
+			'copyright': 'Copyright (c) 2013-2015, SecureState LLC',
 			'license-type': Gtk.License.BSD,
 			'program-name': 'King Phisher',
 			'version': version.version,
@@ -714,6 +756,27 @@ class KingPhisherClient(_Gtk_Window):
 		"""
 		dialog = KingPhisherClientCampaignSelectionDialog(self.config, self)
 		return dialog.interact() != Gtk.ResponseType.CANCEL
+
+	def start_sftp_client(self):
+		"""
+		Start the client's preferred sftp client application.
+		"""
+		if not self.config['sftp_client']:
+			gui_utilities.show_dialog_warning('Invalid SFTP Configuration', self, 'An SFTP client is not configured')
+			return False
+		command = str(self.config['sftp_client'])
+		sftp_bin = shlex.split(command)[0]
+		if not utilities.which(sftp_bin):
+			self.logger.warning('could not locate the sftp binary: ' + sftp_bin)
+			gui_utilities.show_dialog_warning('Invalid SFTP Configuration', self, "Could not find the SFTP binary '{0}'".format(sftp_bin))
+			return False
+		try:
+			command = command.format(username=self.config['server_username'], server=self.config['server'])
+		except KeyError:
+			pass
+		self.logger.debug("starting sftp client command: {0}".format(command))
+		utilities.start_process(command, wait=False)
+		return
 
 	def stop_remote_service(self):
 		"""

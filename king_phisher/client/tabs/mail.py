@@ -30,7 +30,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
 import datetime
 import os
 import socket
@@ -90,6 +89,8 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.pause_button = self.gobjects['togglebutton_mail_sender_pause']
 		self.sender_thread = None
 		"""The :py:class:`.MailSenderThread` instance that is being used to send messages."""
+		self.parent.connect('exit', self.signal_kpc_exit)
+		self.parent.connect('exit-confirm', self.signal_kpc_exit_confirm)
 
 	def signal_button_clicked_sender_start(self, button):
 		required_settings = {
@@ -117,7 +118,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.text_insert('Testing the target URL... ')
 		try:
 			test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
-		except Exception as error:
+		except Exception:
 			self.text_insert('failed')
 			if not gui_utilities.show_dialog_yes_no('Unable To Open The Web Server URL', self.parent, 'The URL may be invalid, continue sending messages anyways?'):
 				self.text_insert(', sending aborted.\n')
@@ -174,7 +175,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 	def signal_button_clicked_sender_stop(self, button):
 		if not self.sender_thread:
 			return
-		if not gui_utilities.show_dialog_yes_no('Are you sure you want to stop?', self.parent):
+		if not gui_utilities.show_dialog_yes_no('King Phisher Is Sending Messages', self.parent, 'Are you sure you want to stop?'):
 			return
 		self.sender_thread.stop()
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
@@ -189,6 +190,20 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			self.sender_thread.pause()
 		else:
 			self.sender_thread.unpause()
+
+	def signal_kpc_exit(self, kpc):
+		if self.sender_thread and self.sender_thread.is_alive():
+			self.logger.info('stopping the sender thread because the client is exiting')
+			self.sender_thread.stop()
+
+	def signal_kpc_exit_confirm(self, kpc):
+		if not self.sender_thread:
+			return
+		if not self.sender_thread.is_alive():
+			return
+		if gui_utilities.show_dialog_yes_no('King Phisher Is Sending Messages', self.parent, 'Are you sure you want to exit?'):
+			return
+		kpc.emit_stop_by_name('exit-confirm')
 
 	def signal_textview_size_allocate_autoscroll(self, textview, allocation):
 		scrolled_window = self.gobjects['scrolledwindow_mail_sender_progress']
@@ -524,7 +539,6 @@ class MailSenderTab(object):
 		config_tab = self.tabs.get('config')
 		edit_tab = self.tabs.get('edit')
 		preview_tab = self.tabs.get('preview')
-		progress_tab = self.tabs.get('progress')
 
 		if config_tab and previous_page == config_tab.box:
 			config_tab.objects_save_to_config()
@@ -578,7 +592,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.UtilityFileChooser('Export Message Data', self.parent)
+		dialog = gui_utilities.UtilityFileChooser('Export Message Configuration', self.parent)
 		response = dialog.run_quick_save('message.kpm')
 		dialog.destroy()
 		if not response:
@@ -600,7 +614,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.UtilityFileChooser('Import Message Data', self.parent)
+		dialog = gui_utilities.UtilityFileChooser('Import Message Configuration', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()

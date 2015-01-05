@@ -3,11 +3,11 @@
 		<menu action="FileMenu">
 			<menuitem action="FileOpenCampaign" />
 			<menu action="FileImportMenu">
-				<menuitem action="FileImportMessageData" />
+				<menuitem action="FileImportMessageConfiguration" />
 			</menu>
 			<menu action="FileExportMenu">
 				<menuitem action="FileExportCampaignXML" />
-				<menuitem action="FileExportMessageData" />
+				<menuitem action="FileExportMessageConfiguration" />
 			</menu>
 			<separator />
 			<menuitem action="FileQuit" />

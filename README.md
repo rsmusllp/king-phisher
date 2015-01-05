@@ -53,8 +53,9 @@ configurable through the GUI interface.
 The following options will be honored but are not configurable through
 the GUI:
 
-* server_remote_port (Default: 80)
+* gui.refresh_frequency (Default: 5 minutes)
 * mailer.max_messages_per_connection (Default: 5)
+* rpc.serializer (Default: Automatically determined)
 * ssh_preferred_key (Default: N/A)
 
 ### Message Template Variables

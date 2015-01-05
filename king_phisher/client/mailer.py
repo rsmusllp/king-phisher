@@ -65,13 +65,13 @@ class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
 		super(ClientTemplateEnvironment, self).__init__(*args, **kwargs)
 		self.set_mode(self.MODE_PREVIEW)
 		self.globals['inline_image'] = self._inline_image_handler
-		self.attachment_images = []
+		self.attachment_images = {}
 
 	def set_mode(self, mode):
 		assert(mode in [self.MODE_PREVIEW, self.MODE_ANALYZE, self.MODE_SEND])
 		self._mode = mode
 		if mode == self.MODE_ANALYZE:
-			self.attachment_images = []
+			self.attachment_images = {}
 
 	def _inline_image_handler(self, image_path):
 		image_path = os.path.abspath(image_path)
@@ -82,9 +82,13 @@ class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
 				image_path = '/' + image_path
 			image_path = 'file://' + image_path
 			return "<img src=\"{0}\">".format(cgi.escape(image_path, quote=True))
-		if not image_path in self.attachment_images:
-			self.attachment_images.append(image_path)
-		attachment_name = os.path.basename(image_path)
+		if image_path in self.attachment_images:
+			attachment_name = self.attachment_images[image_path]
+		else:
+			attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
+			while attachment_name in self.attachment_images.values():
+				attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
+			self.attachment_images[image_path] = attachment_name
 		return "<img src=\"cid:{0}\">".format(cgi.escape(attachment_name, quote=True))
 
 template_environment = ClientTemplateEnvironment()
@@ -229,7 +233,7 @@ class MailSenderThread(threading.Thread):
 			except smtplib.SMTPServerDisconnected:
 				pass
 			self.smtp_connection = None
-			GLib.idle_add(self.tab.notify_status, 'Disconnected From SMTP Server\n')
+			GLib.idle_add(self.tab.notify_status, 'Disconnected from the SMTP server\n')
 
 	def server_smtp_reconnect(self):
 		"""
@@ -246,7 +250,7 @@ class MailSenderThread(threading.Thread):
 				pass
 			self.smtp_connection = None
 		while not self.server_smtp_connect():
-			GLib.idle_add(self.tab.notify_status, 'Failed To Reconnect To The SMTP Server\n')
+			GLib.idle_add(self.tab.notify_status, 'Failed to reconnect to the SMTP server\n')
 			if not self.process_pause(True):
 				return False
 		return True
@@ -282,16 +286,17 @@ class MailSenderThread(threading.Thread):
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
 			iteration_time = time.time()
-			if emails_done > 0 and (emails_done % max_messages_per_connection):
-				self.server_smtp_reconnect()
 			if self.should_exit.is_set():
-				GLib.idle_add(self.tab.notify_status, 'Sending Emails Cancelled\n')
+				GLib.idle_add(self.tab.notify_status, 'Sending emails cancelled\n')
 				break
 			if not self.process_pause():
 				break
+			if emails_done > 0 and (emails_done % max_messages_per_connection):
+				self.server_smtp_reconnect()
+
 			uid = make_uid()
 			emails_done += 1
-			GLib.idle_add(self.tab.notify_status, "Sending Email {0} of {1} To {2} With UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
+			GLib.idle_add(self.tab.notify_status, "Sending email {0:,} of {1:,} to {2} with UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
 			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
 			if not self._try_send_email(target['email_address'], msg):
 				break
@@ -299,20 +304,26 @@ class MailSenderThread(threading.Thread):
 			campaign_id = self.config['campaign_id']
 			company_name = self.config.get('mailer.company_name', '')
 			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], company_name, target['first_name'], target['last_name'])
+
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)
 				sleep_time = (60.0 / float(self.max_messages_per_minute)) - iteration_time
-				if sleep_time > 0:
-					time.sleep(sleep_time)
+				while sleep_time > 0:
+					sleep_chunk = min(sleep_time, 0.5)
+					time.sleep(sleep_chunk)
+					if self.should_exit.is_set():
+						break
+					sleep_time -= sleep_chunk
+
 		target_file_h.close()
 		self._mime_attachments = None
 
-		GLib.idle_add(self.tab.notify_status, "Finished Sending Emails, Successfully Sent {0} Emails\n".format(emails_done))
+		GLib.idle_add(self.tab.notify_status, "Finished sending emails, successfully sent {0:,} emails\n".format(emails_done))
 		self.server_smtp_disconnect()
 		if self.ssh_forwarder:
 			self.ssh_forwarder.stop()
 			self.ssh_forwarder = None
-			GLib.idle_add(self.tab.notify_status, 'Disconnected From SSH Server\n')
+			GLib.idle_add(self.tab.notify_status, 'Disconnected from the SSH server\n')
 		GLib.idle_add(self.tab.notify_stopped)
 		return
 
@@ -327,13 +338,13 @@ class MailSenderThread(threading.Thread):
 		if set_pause:
 			gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
 		if self.paused.is_set():
-			GLib.idle_add(self.tab.notify_status, 'Paused Sending Emails, Waiting To Resume\n')
+			GLib.idle_add(self.tab.notify_status, 'Paused sending emails, waiting to resume\n')
 			self.running.wait()
 			self.paused.clear()
 			if self.should_exit.is_set():
-				GLib.idle_add(self.tab.notify_status, 'Sending Emails Cancelled\n')
+				GLib.idle_add(self.tab.notify_status, 'Sending emails cancelled\n')
 				return False
-			GLib.idle_add(self.tab.notify_status, 'Resuming Sending Emails\n')
+			GLib.idle_add(self.tab.notify_status, 'Resuming sending emails\n')
 			self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		return True
 
@@ -372,11 +383,11 @@ class MailSenderThread(threading.Thread):
 		msg_alt.attach(msg_body)
 
 		# process attachments
-		if isinstance(self._mime_attachments, list):
+		if isinstance(self._mime_attachments, (list, tuple)):
 			attachfiles = self._mime_attachments
 		else:
 			attachfiles = self._get_mime_attachments()
-		for attachfile in self._mime_attachments:
+		for attachfile in attachfiles:
 			msg.attach(attachfile)
 		return msg
 
@@ -389,10 +400,10 @@ class MailSenderThread(threading.Thread):
 			Encoders.encode_base64(attachfile)
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
 			attachments.append(attachfile)
-		for attachment in template_environment.attachment_images:
-			attachfile = MIMEImage(open(attachment, 'rb').read())
-			attachfile.add_header('Content-ID', "<{0}>".format(os.path.basename(attachment)))
-			attachfile.add_header('Content-Disposition', "inline; filename=\"{0}\"".format(os.path.basename(attachment)))
+		for attachment_file, attachment_name in template_environment.attachment_images.items():
+			attachfile = MIMEImage(open(attachment_file, 'rb').read())
+			attachfile.add_header('Content-ID', "<{0}>".format(attachment_name))
+			attachfile.add_header('Content-Disposition', "inline; filename=\"{0}\"".format(attachment_name))
 			attachments.append(attachfile)
 		return attachments
 
@@ -411,7 +422,7 @@ class MailSenderThread(threading.Thread):
 					message_sent = True
 					break
 				except:
-					GLib.idle_add(self.tab.notify_status, 'Failed To Send Message\n')
+					GLib.idle_add(self.tab.notify_status, 'Failed to send message\n')
 					time.sleep(1)
 			if not message_sent:
 				self.server_smtp_disconnect()
@@ -476,5 +487,5 @@ class MailSenderThread(threading.Thread):
 			missing.append(msg_template)
 			return missing
 		self._prepare_env()
-		missing.extend(filter(lambda f: not os.access(f, os.R_OK), template_environment.attachment_images))
+		missing.extend(filter(lambda f: not os.access(f, os.R_OK), template_environment.attachment_images.keys()))
 		return missing

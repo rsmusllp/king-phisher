@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import base64
 import binascii
 import json
 import logging
@@ -51,7 +52,6 @@ from king_phisher.server import server_rpc
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 from king_phisher.third_party.AdvancedHTTPServer import *
-from king_phisher.third_party.AdvancedHTTPServer import build_server_from_config
 
 import jinja2
 
@@ -318,7 +318,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		except jinja2.exceptions.TemplateSyntaxError as error:
 			self.server.logger.error("jinja2 syntax error in template {0}:{1} {2}".format(error.filename, error.lineno, error.message))
 			raise errors.KingPhisherAbortRequestError()
-		except jinja2.exceptions.TemplateError, IOError:
+		except jinja2.exceptions.TemplateError:
 			raise errors.KingPhisherAbortRequestError()
 
 		template_vars = {
@@ -435,7 +435,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.logger.warning('dead drop request received with no \'token\' parameter')
 			return
 		try:
-			data = data.decode('base64')
+			data = base64.b64decode('base64')
 		except binascii.Error:
 			self.logger.error('dead drop request received with invalid \'token\' data')
 			return
@@ -490,7 +490,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		# image size: 49 Bytes
 		img_data = '47494638396101000100910000000000ffffffffffff00000021f90401000002'
 		img_data += '002c00000000010001000002025401003b'
-		img_data = img_data.decode('hex')
+		img_data = binascii.a2b_hex(img_data)
 		self.send_response(200)
 		self.send_header('Content-Type', 'image/gif')
 		self.send_header('Content-Length', str(len(img_data)))
@@ -636,6 +636,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		if config.has_section('server.page_variables'):
 			global_vars = config.get('server.page_variables')
 		global_vars['make_csrf_page'] = pages.make_csrf_page
+		global_vars['make_redirect_page'] = pages.make_redirect_page
 		self.http_server.template_env = templates.KingPhisherTemplateEnvironment(loader=loader, global_vars=global_vars)
 
 		self.__is_shutdown = threading.Event()

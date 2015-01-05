@@ -32,12 +32,12 @@
 
 import logging
 
-from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError, AdvancedHTTPServerRPCClientCached
+from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCClientCached
 
 try:
 	import msgpack
 	has_msgpack = True
-	"""Whether the :py:mod:`msgpack` module is available."""
+	"""Whether the :py:mod:`msgpack` module is available or not."""
 except ImportError:
 	has_msgpack = False
 

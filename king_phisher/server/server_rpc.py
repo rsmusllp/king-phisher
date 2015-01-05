@@ -36,7 +36,7 @@ from king_phisher import version
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
-VIEW_ROW_COUNT = 25
+VIEW_ROW_COUNT = 50
 """The default number of rows to return when one of the /view methods are called."""
 DATABASE_TABLES = db_models.DATABASE_TABLES
 DATABASE_TABLE_OBJECTS = db_models.DATABASE_TABLE_OBJECTS
