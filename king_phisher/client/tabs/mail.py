@@ -134,7 +134,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
-		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self, self.parent.rpc)
+		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self.parent.rpc, self)
 
 		# verify settings
 		missing_files = self.sender_thread.missing_files()

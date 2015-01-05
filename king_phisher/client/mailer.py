@@ -112,13 +112,13 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 class MailSenderThread(threading.Thread):
 	"""
 	The King Phisher threaded email message sender. This object manages
-	the sending of emails for campaigns and supports pausing sending
+	the sending of emails for campaigns and supports pausing the sending of
 	messages which can later be resumed by unpausing. This object reports
-	its information to the GUI through an
+	its information to the GUI through an optional
 	:py:class:`.MailSenderSendTab` instance, these two objects
 	are very interdependent.
 	"""
-	def __init__(self, config, target_file, tab, rpc):
+	def __init__(self, config, target_file, rpc, tab=None):
 		"""
 		:param dict config: The King Phisher client configuration.
 		:param str target_file: The CSV formatted file to read message targets from.
@@ -133,7 +133,7 @@ class MailSenderThread(threading.Thread):
 		self.target_file = target_file
 		"""The name of the target file in CSV format."""
 		self.tab = tab
-		""":py:class:`.MailSenderSendTab` instance for reporting to the GUI."""
+		"""The optional :py:class:`.MailSenderSendTab` instance for reporting status messages to the GUI."""
 		self.rpc = rpc
 		self.ssh_forwarder = None
 		"""The :py:class:`.SSHTCPForwarder` instance for tunneling traffic to the SMTP server."""
@@ -147,6 +147,33 @@ class MailSenderThread(threading.Thread):
 		self.should_exit = threading.Event()
 		self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		self._mime_attachments = None
+
+	def tab_notify_sent(self, emails_done, emails_total):
+		"""
+		Notify the tab that messages have been sent.
+
+		:param int emails_done: The number of emails that have been sent.
+		:param int emails_total: The total number of emails that are going to be sent.
+		"""
+		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
+
+	def tab_notify_status(self, message):
+		"""
+		Handle a status message regarding the message sending operation.
+
+		:param str message: The notification message.
+		"""
+		self.logger.info(message.lower())
+		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+			GLib.idle_add(self.tab.notify_status, message + '\n')
+
+	def tab_notify_stopped(self):
+		"""
+		Notify the tab that the message sending operation has stopped.
+		"""
+		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+			GLib.idle_add(self.tab.notify_stopped)
 
 	def server_ssh_connect(self):
 		"""
@@ -197,7 +224,7 @@ class MailSenderThread(threading.Thread):
 			except smtplib.SMTPServerDisconnected:
 				pass
 			self.smtp_connection = None
-			GLib.idle_add(self.tab.notify_status, 'Disconnected from the SMTP server\n')
+			self.tab_notify_status('Disconnected from the SMTP server')
 
 	def server_smtp_reconnect(self):
 		"""
@@ -214,7 +241,7 @@ class MailSenderThread(threading.Thread):
 				pass
 			self.smtp_connection = None
 		while not self.server_smtp_connect():
-			GLib.idle_add(self.tab.notify_status, 'Failed to reconnect to the SMTP server\n')
+			self.tab_notify_status('Failed to reconnect to the SMTP server')
 			if not self.process_pause(True):
 				return False
 		return True
@@ -251,7 +278,7 @@ class MailSenderThread(threading.Thread):
 		for target in csv_reader:
 			iteration_time = time.time()
 			if self.should_exit.is_set():
-				GLib.idle_add(self.tab.notify_status, 'Sending emails cancelled\n')
+				self.tab_notify_status('Sending emails cancelled')
 				break
 			if not self.process_pause():
 				break
@@ -260,11 +287,12 @@ class MailSenderThread(threading.Thread):
 
 			uid = make_uid()
 			emails_done += 1
-			GLib.idle_add(self.tab.notify_status, "Sending email {0:,} of {1:,} to {2} with UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
+			self.tab_notify_status("Sending email {0:,} of {1:,} to {2} with UID: {3}".format(emails_done, emails_total, target['email_address'], uid))
 			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
 			if not self._try_send_email(target['email_address'], msg):
 				break
-			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
+
+			self.tab_notify_sent(emails_done, emails_total)
 			campaign_id = self.config['campaign_id']
 			company_name = self.config.get('mailer.company_name', '')
 			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], company_name, target['first_name'], target['last_name'])
@@ -282,13 +310,13 @@ class MailSenderThread(threading.Thread):
 		target_file_h.close()
 		self._mime_attachments = None
 
-		GLib.idle_add(self.tab.notify_status, "Finished sending emails, successfully sent {0:,} emails\n".format(emails_done))
+		self.tab_notify_status("Finished sending emails, successfully sent {0:,} emails".format(emails_done))
 		self.server_smtp_disconnect()
 		if self.ssh_forwarder:
 			self.ssh_forwarder.stop()
 			self.ssh_forwarder = None
-			GLib.idle_add(self.tab.notify_status, 'Disconnected from the SSH server\n')
-		GLib.idle_add(self.tab.notify_stopped)
+			self.tab_notify_status('Disconnected from the SSH server')
+		self.tab_notify_stopped()
 		return
 
 	def process_pause(self, set_pause=False):
@@ -299,16 +327,16 @@ class MailSenderThread(threading.Thread):
 		:return: Whether or not the sending operation was cancelled during the pause.
 		:rtype: bool
 		"""
-		if set_pause:
+		if set_pause and isinstance(self.tab, gui_utilities.UtilityGladeGObject):
 			gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
 		if self.paused.is_set():
-			GLib.idle_add(self.tab.notify_status, 'Paused sending emails, waiting to resume\n')
+			self.tab_notify_status('Paused sending emails, waiting to resume')
 			self.running.wait()
 			self.paused.clear()
 			if self.should_exit.is_set():
-				GLib.idle_add(self.tab.notify_status, 'Sending emails cancelled\n')
+				self.tab_notify_status('Sending emails cancelled')
 				return False
-			GLib.idle_add(self.tab.notify_status, 'Resuming sending emails\n')
+			self.tab_notify_status('Resuming sending emails')
 			self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		return True
 
@@ -386,7 +414,7 @@ class MailSenderThread(threading.Thread):
 					message_sent = True
 					break
 				except:
-					GLib.idle_add(self.tab.notify_status, 'Failed to send message\n')
+					self.tab_notify_status('Failed to send message')
 					time.sleep(1)
 			if not message_sent:
 				self.server_smtp_disconnect()
