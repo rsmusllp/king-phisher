@@ -329,6 +329,8 @@ class MailSenderThread(threading.Thread):
 		"""
 		if set_pause and isinstance(self.tab, gui_utilities.UtilityGladeGObject):
 			gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
+		else:
+			self.pause()
 		if self.paused.is_set():
 			self.tab_notify_status('Paused sending emails, waiting to resume')
 			self.running.wait()
