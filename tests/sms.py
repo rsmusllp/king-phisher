@@ -33,7 +33,7 @@
 import unittest
 
 from king_phisher.utilities import random_string
-from king_phisher.sms import *
+from king_phisher.sms import CARRIERS, get_smtp_servers, lookup_carrier_gateway
 
 class SMSTests(unittest.TestCase):
 	def test_lookup_carrier_gateway(self):
@@ -42,6 +42,14 @@ class SMSTests(unittest.TestCase):
 		self.assertEqual(lookup_carrier_gateway('att'), 'txt.att.net')
 		self.assertEqual(lookup_carrier_gateway('aTt'), 'txt.att.net')
 		self.assertEqual(lookup_carrier_gateway('AT&T'), 'txt.att.net')
+
+	def test_major_carrier_smtp_server_resolution(self):
+		major_carriers = ['att', 'sprint', 'verizon']
+		for carrier_name in major_carriers:
+			gateway = lookup_carrier_gateway(carrier_name)
+			self.assertIsInstance(gateway, str)
+			smtp_servers = get_smtp_servers(gateway)
+			self.assertGreater(len(smtp_servers), 0)
 
 if __name__ == '__main__':
 	unittest.main()
