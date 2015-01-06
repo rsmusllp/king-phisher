@@ -139,14 +139,18 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 	def signal_treeview_key_pressed(self, widget, event):
 		if event.type != Gdk.EventType.KEY_PRESS:
 			return
+
+		treeview = self.gobjects['treeview_campaigns']
 		keyval = event.get_keyval()[1]
-		if keyval == Gdk.KEY_F5:
+		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
+			if keyval == Gdk.KEY_c:
+				gui_utilities.gtk_treeview_selection_to_clipboard(treeview)
+		elif keyval == Gdk.KEY_F5:
 			self.load_campaigns()
 			self._highlight_campaign(self.config.get('campaign_name'))
 		elif keyval == Gdk.KEY_Delete:
-			treeview = self.gobjects['treeview_campaigns']
-			selection = treeview.get_selection()
-			(model, tree_iter) = selection.get_selected()
+			treeview_selection = treeview.get_selection()
+			(model, tree_iter) = treeview_selection.get_selected()
 			if not tree_iter:
 				return
 			campaign_id = model.get_value(tree_iter, 0)

@@ -38,6 +38,7 @@ import threading
 from king_phisher import find
 from king_phisher import utilities
 
+from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -151,6 +152,23 @@ def gtk_widget_destroy_children(widget):
 	:type widget: :py:class:`Gtk.Widget`
 	"""
 	map(lambda child: child.destroy(), widget.get_children())
+
+def gtk_treeview_selection_to_clipboard(treeview, column=1):
+	"""
+	Copy the currently selected value from the specified column in the treeview
+	to the users clipboard. If no value is selected in the treeview, then the
+	clipboard is left unmodified.
+
+	:param treeview: The treeview instance to get the selection from.
+	:type treeview: :py:class:`Gtk.TreeView`
+	:param int column: The column number to retrieve the value for.
+	"""
+	treeview_selection = treeview.get_selection()
+	(model, tree_iter) = treeview_selection.get_selected()
+	if tree_iter:
+		selection_value = model.get_value(tree_iter, column)
+		clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+		clipboard.set_text(selection_value, -1)
 
 def search_list_store(list_store, value):
 	"""

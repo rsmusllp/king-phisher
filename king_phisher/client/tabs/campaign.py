@@ -236,7 +236,12 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def signal_treeview_key_pressed(self, widget, event):
 		if event.type != Gdk.EventType.KEY_PRESS:
 			return
+
+		treeview = self.gobjects['treeview_campaign']
 		keyval = event.get_keyval()[1]
+		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
+			if keyval == Gdk.KEY_c:
+				gui_utilities.gtk_treeview_selection_to_clipboard(treeview)
 		if keyval == Gdk.KEY_F5:
 			self.load_campaign_information(force=True)
 		elif keyval == Gdk.KEY_Delete:
