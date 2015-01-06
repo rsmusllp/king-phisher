@@ -242,20 +242,14 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
 			if keyval == Gdk.KEY_c:
 				gui_utilities.gtk_treeview_selection_to_clipboard(treeview)
-		if keyval == Gdk.KEY_F5:
+		elif keyval == Gdk.KEY_F5:
 			self.load_campaign_information(force=True)
 		elif keyval == Gdk.KEY_Delete:
 			self._prompt_to_delete_row()
 
 	def signal_activate_popup_menu_copy(self, widget, column_id):
 		treeview = self.gobjects['treeview_campaign']
-		selection = treeview.get_selection()
-		(model, tree_iter) = selection.get_selected()
-		if not tree_iter:
-			return
-		selection_text = model.get_value(tree_iter, column_id)
-		clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-		clipboard.set_text(selection_text, -1)
+		gui_utilities.gtk_treeview_selection_to_clipboard(treeview, column_id)
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""
