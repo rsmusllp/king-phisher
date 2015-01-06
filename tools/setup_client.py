@@ -54,6 +54,7 @@ setup(
 	packages=[
 		'king_phisher',
 		'king_phisher.client',
+		'king_phisher.client.dialogs',
 		'king_phisher.client.tabs',
 		'king_phisher.third_party',
 	],
