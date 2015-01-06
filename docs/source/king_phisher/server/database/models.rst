@@ -4,8 +4,6 @@
 .. module:: database.models
    :synopsis:
 
-
-
 Data
 ----
 

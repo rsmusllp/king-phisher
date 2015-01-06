@@ -4,8 +4,6 @@
 .. module:: client.graphs
    :synopsis:
 
-
-
 Data
 ----
 

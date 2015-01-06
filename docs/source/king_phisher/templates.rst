@@ -4,8 +4,6 @@
 .. module:: templates
    :synopsis:
 
-
-
 Classes
 -------
 

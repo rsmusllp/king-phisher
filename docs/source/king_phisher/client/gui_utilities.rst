@@ -4,8 +4,6 @@
 .. module:: client.gui_utilities
    :synopsis:
 
-
-
 Data
 ----
 

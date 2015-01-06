@@ -4,8 +4,6 @@
 .. module:: dialogs.campaign_selection
    :synopsis:
 
-
-
 Classes
 -------
 

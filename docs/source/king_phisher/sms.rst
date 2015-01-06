@@ -4,8 +4,6 @@
 .. module:: sms
    :synopsis:
 
-
-
 Functions
 ---------
 

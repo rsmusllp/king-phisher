@@ -4,8 +4,6 @@
 .. module:: client.mailer
    :synopsis:
 
-
-
 Functions
 ---------
 

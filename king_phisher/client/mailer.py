@@ -128,6 +128,7 @@ class MailSenderThread(threading.Thread):
 		:type rpc: :py:class:`.KingPhisherRPCClient`
 		"""
 		super(MailSenderThread, self).__init__()
+		self.daemon = True
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		self.config = config
 		self.target_file = target_file

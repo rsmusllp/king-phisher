@@ -4,8 +4,6 @@
 .. module:: server.authenticator
    :synopsis:
 
-
-
 Classes
 -------
 

@@ -4,8 +4,6 @@
 .. module:: smtp_server
    :synopsis:
 
-
-
 Classes
 -------
 

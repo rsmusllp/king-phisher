@@ -4,8 +4,6 @@
 .. module:: database.manager
    :synopsis:
 
-
-
 Functions
 ---------
 

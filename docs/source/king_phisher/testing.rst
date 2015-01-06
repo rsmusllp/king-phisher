@@ -4,8 +4,6 @@
 .. module:: testing
    :synopsis:
 
-
-
 Data
 ----
 

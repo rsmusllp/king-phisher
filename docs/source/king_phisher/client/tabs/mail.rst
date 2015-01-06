@@ -4,8 +4,6 @@
 .. module:: tabs.mail
    :synopsis:
 
-
-
 Functions
 ---------
 

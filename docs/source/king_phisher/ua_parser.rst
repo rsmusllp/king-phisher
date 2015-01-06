@@ -4,8 +4,6 @@
 .. module:: ua_parser
    :synopsis:
 
-
-
 Functions
 ---------
 

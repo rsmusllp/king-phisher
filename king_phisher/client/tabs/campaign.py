@@ -182,6 +182,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		else:
 			store.clear()
 		self.loader_thread = threading.Thread(target=self.loader_thread_routine, args=(store,))
+		self.loader_thread.daemon = True
 		self.loader_thread.start()
 		self.loader_thread_lock.release()
 		return
@@ -368,6 +369,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 				return
 			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
+			self.loader_thread.daemon = True
 			self.loader_thread.start()
 
 	def loader_idle_routine(self):

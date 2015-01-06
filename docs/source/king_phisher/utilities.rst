@@ -4,8 +4,6 @@
 .. module:: utilities
    :synopsis:
 
-
-
 Functions
 ---------
 

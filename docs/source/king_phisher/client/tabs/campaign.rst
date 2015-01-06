@@ -4,8 +4,6 @@
 .. module:: tabs.campaign
    :synopsis:
 
-
-
 Classes
 -------
 

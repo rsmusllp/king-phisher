@@ -4,8 +4,6 @@
 .. module:: dialogs.login
    :synopsis:
 
-
-
 Classes
 -------
 

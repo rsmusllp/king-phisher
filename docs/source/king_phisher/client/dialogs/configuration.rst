@@ -4,8 +4,6 @@
 .. module:: dialogs.configuration
    :synopsis:
 
-
-
 Classes
 -------
 

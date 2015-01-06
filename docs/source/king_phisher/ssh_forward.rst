@@ -4,8 +4,6 @@
 .. module:: ssh_forward
    :synopsis:
 
-
-
 Classes
 -------
 
