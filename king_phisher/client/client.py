@@ -44,11 +44,11 @@ import time
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
+from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client import tools
-from king_phisher.client.login import KingPhisherClientLoginDialog
 from king_phisher.client.client_rpc import KingPhisherRPCClient
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.mail import MailSenderTab
@@ -70,209 +70,6 @@ if isinstance(Gtk.Window, utilities.Mock):
 	_Gtk_Window.__module__ = ''
 else:
 	_Gtk_Window = Gtk.Window
-
-class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
-	"""
-	Display a dialog which allows a new campaign to be created or an
-	existing campaign to be opened.
-	"""
-	gobject_ids = [
-		'button_new_campaign',
-		'entry_new_campaign_name',
-		'treeview_campaigns'
-	]
-	top_gobject = 'dialog'
-	def __init__(self, *args, **kwargs):
-		super(KingPhisherClientCampaignSelectionDialog, self).__init__(*args, **kwargs)
-		treeview = self.gobjects['treeview_campaigns']
-		columns = ['Campaign Name', 'Created By', 'Creation Date']
-		for column_id in range(len(columns)):
-			column_name = columns[column_id]
-			column_id += 1
-			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text=column_id)
-			column.set_sort_column_id(column_id)
-			treeview.append_column(column)
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
-		self.load_campaigns()
-
-	def _highlight_campaign(self, campaign_name):
-		treeview = self.gobjects['treeview_campaigns']
-		store = treeview.get_model()
-		store_iter = store.get_iter_first()
-		while store_iter:
-			if store.get_value(store_iter, 1) == campaign_name:
-				treeview.set_cursor(store.get_path(store_iter), None, False)
-				return True
-			store_iter = store.iter_next(store_iter)
-		return False
-
-	def load_campaigns(self):
-		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
-		treeview = self.gobjects['treeview_campaigns']
-		store = treeview.get_model()
-		if store == None:
-			store = Gtk.ListStore(str, str, str, str)
-			treeview.set_model(store)
-		else:
-			store.clear()
-		for campaign in self.parent.rpc.remote_table('campaigns'):
-			store.append([str(campaign['id']), campaign['name'], campaign['user_id'], campaign['created'].strftime('%Y-%m-%d %H:%M:%S')])
-
-	def signal_button_clicked(self, button):
-		campaign_name_entry = self.gobjects['entry_new_campaign_name']
-		campaign_name = campaign_name_entry.get_property('text')
-		if not campaign_name:
-			gui_utilities.show_dialog_warning('Invalid Campaign Name', self.dialog, 'Please specify a new campaign name')
-			return
-		try:
-			self.parent.rpc('campaign/new', campaign_name)
-		except:
-			gui_utilities.show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
-			return
-		campaign_name_entry.set_property('text', '')
-		self.load_campaigns()
-		self._highlight_campaign(campaign_name)
-
-	def signal_entry_new_campaign_name_activate(self, entry):
-		self.gobjects['button_new_campaign'].emit('clicked')
-
-	def signal_treeview_key_pressed(self, widget, event):
-		if event.type != Gdk.EventType.KEY_PRESS:
-			return
-
-		treeview = self.gobjects['treeview_campaigns']
-		keyval = event.get_keyval()[1]
-		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
-			if keyval == Gdk.KEY_c:
-				gui_utilities.gtk_treeview_selection_to_clipboard(treeview)
-		elif keyval == Gdk.KEY_F5:
-			self.load_campaigns()
-			self._highlight_campaign(self.config.get('campaign_name'))
-		elif keyval == Gdk.KEY_Delete:
-			treeview_selection = treeview.get_selection()
-			(model, tree_iter) = treeview_selection.get_selected()
-			if not tree_iter:
-				return
-			campaign_id = model.get_value(tree_iter, 0)
-			if self.config.get('campaign_id') == campaign_id:
-				gui_utilities.show_dialog_warning('Can Not Delete Campaign', self.dialog, 'Can not delete the current campaign.')
-				return
-			if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.dialog, 'This action is irreversible, all campaign data will be lost.'):
-				return
-			self.parent.rpc('campaign/delete', campaign_id)
-			self.load_campaigns()
-			self._highlight_campaign(self.config.get('campaign_name'))
-
-	def interact(self):
-		self._highlight_campaign(self.config.get('campaign_name'))
-		self.dialog.show_all()
-		response = self.dialog.run()
-		old_campaign_id = self.config.get('campaign_id')
-		old_campaign_name = self.config.get('campaign_name')
-		while response != Gtk.ResponseType.CANCEL:
-			treeview = self.gobjects['treeview_campaigns']
-			selection = treeview.get_selection()
-			(model, tree_iter) = selection.get_selected()
-			if tree_iter:
-				break
-			gui_utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one.')
-			response = self.dialog.run()
-		if response != Gtk.ResponseType.CANCEL:
-			campaign_id = model.get_value(tree_iter, 0)
-			self.config['campaign_id'] = campaign_id
-			campaign_name = model.get_value(tree_iter, 1)
-			self.config['campaign_name'] = campaign_name
-			if not (campaign_id == old_campaign_id and campaign_name == old_campaign_name):
-				self.parent.emit('campaign-set', campaign_id)
-		self.dialog.destroy()
-		return response
-
-class KingPhisherClientConfigDialog(gui_utilities.UtilityGladeGObject):
-	"""
-	Display the King Phisher client configuration dialog. Running this
-	dialog via the :py:func:`.interact` method will cause some server
-	settings to be loaded.
-	"""
-	gobject_ids = [
-		# Server Tab
-		'entry_server',
-		'entry_server_username',
-		'entry_sms_phone_number',
-		'combobox_sms_carrier',
-		# SMTP Server Tab
-		'entry_smtp_server',
-		'spinbutton_smtp_max_send_rate',
-		'switch_smtp_ssl_enable',
-		'switch_smtp_ssh_enable',
-		'entry_ssh_server',
-		'entry_ssh_username'
-	]
-	top_gobject = 'dialog'
-	top_level_dependencies = [
-		'SMSCarriers',
-		'SMTPSendRate'
-	]
-	def signal_switch_smtp_ssh(self, switch, _):
-		active = switch.get_property('active')
-		self.gobjects['entry_ssh_server'].set_sensitive(active)
-		self.gobjects['entry_ssh_username'].set_sensitive(active)
-
-	def signal_toggle_alert_subscribe(self, cbutton):
-		active = cbutton.get_property('active')
-		if active:
-			remote_method = 'campaign/alerts/subscribe'
-		else:
-			remote_method = 'campaign/alerts/unsubscribe'
-		self.parent.rpc(remote_method, self.config['campaign_id'])
-
-	def signal_toggle_reject_after_credentials(self, cbutton):
-		self.parent.rpc('campaigns/set', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
-
-	def interact(self):
-		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
-		cb_reject_after_creds = self.gtk_builder_get('checkbutton_reject_after_credentials')
-		entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
-		server_config = self.parent.rpc('config/get', ['beef.hook_url', 'server.require_id', 'server.secret_id'])
-		entry_beef_hook.set_property('text', server_config.get('beef.hook_url', ''))
-		self.config['server_config']['server.require_id'] = server_config['server.require_id']
-		self.config['server_config']['server.secret_id'] = server_config['server.secret_id']
-		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
-		if GObject.pygobject_version < (3, 10):
-			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-			cb_reject_after_creds.set_property('active', self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id'])['reject_after_credentials'])
-		else:
-			with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
-				cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-				cb_reject_after_creds.set_property('active', self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id'])['reject_after_credentials'])
-
-		cb_reject_after_creds.set_sensitive(self.config['server_config']['server.require_id'])
-
-		self.dialog.show_all()
-		response = self.dialog.run()
-		if response != Gtk.ResponseType.CANCEL:
-			self.objects_save_to_config()
-			self.verify_sms_settings()
-			self.parent.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
-		self.dialog.destroy()
-		return response
-
-	def verify_sms_settings(self):
-		phone_number = gui_utilities.gobject_get_value(self.gobjects['entry_sms_phone_number'])
-		phone_number_set = bool(phone_number)
-		sms_carrier_set = bool(self.gobjects['combobox_sms_carrier'].get_active() > 0)
-		if phone_number_set ^ sms_carrier_set:
-			gui_utilities.show_dialog_warning('Missing Information', self.parent, 'Both a phone number and a valid carrier must be specified')
-			if 'sms_phone_number' in self.config:
-				del self.config['sms_phone_number']
-			if 'sms_carrier' in self.config:
-				del self.config['sms_carrier']
-		elif phone_number_set and sms_carrier_set:
-			phone_number = filter(lambda x: x in map(str, range(0, 10)), phone_number)
-			if len(phone_number) != 10:
-				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must contain exactly 10 digits')
-				return
-			username = self.config['server_username']
-			self.parent.rpc('users/set', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))
 
 class KingPhisherClient(_Gtk_Window):
 	"""
@@ -549,7 +346,7 @@ class KingPhisherClient(_Gtk_Window):
 				self.ssh_forwarder.stop()
 				self.ssh_forwarder = None
 				self.logger.info('stopped ssh port forwarding')
-			login_dialog = KingPhisherClientLoginDialog(self.config, self)
+			login_dialog = dialogs.KingPhisherClientLoginDialog(self.config, self)
 			login_dialog.objects_load_from_config()
 			response = login_dialog.interact()
 			if response == Gtk.ResponseType.CANCEL:
@@ -675,10 +472,11 @@ class KingPhisherClient(_Gtk_Window):
 
 	def edit_preferences(self):
 		"""
-		Display a :py:class:`.KingPhisherClientConfigDialog` instance and
-		save the config to disk if cancel is not selected.
+		Display a
+		:py:class:`.dialogs.configuration.KingPhisherClientConfigurationDialog`
+		instance and saves the configuration to disk if cancel is not selected.
 		"""
-		dialog = KingPhisherClientConfigDialog(self.config, self)
+		dialog = dialogs.KingPhisherClientConfigurationDialog(self.config, self)
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
 			self.save_config()
 
@@ -758,7 +556,7 @@ class KingPhisherClient(_Gtk_Window):
 		:return: The status of the dialog.
 		:rtype: bool
 		"""
-		dialog = KingPhisherClientCampaignSelectionDialog(self.config, self)
+		dialog = dialogs.KingPhisherClientCampaignSelectionDialog(self.config, self)
 		return dialog.interact() != Gtk.ResponseType.CANCEL
 
 	def start_sftp_client(self):

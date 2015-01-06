@@ -38,9 +38,9 @@ import urllib2
 import urlparse
 
 from king_phisher import utilities
+from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
-from king_phisher.client.login import KingPhisherClientSSHLoginDialog
 from king_phisher.client.mailer import format_message, MailSenderThread
 from king_phisher.errors import KingPhisherInputValidationError
 
@@ -147,7 +147,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if self.config['smtp_ssh_enable']:
 			while True:
 				self.text_insert('Connecting to SSH... ')
-				login_dialog = KingPhisherClientSSHLoginDialog(self.config, self.parent)
+				login_dialog = dialogs.KingPhisherClientSSHLoginDialog(self.config, self.parent)
 				login_dialog.objects_load_from_config()
 				response = login_dialog.interact()
 				if response == Gtk.ResponseType.CANCEL:
