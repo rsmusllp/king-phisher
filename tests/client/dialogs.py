@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/client/dialogs.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,27 +30,23 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
+import unittest
 
-from tests.configuration import ServerConfigurationTests
-from tests.sms import SMSTests
-from tests.templates import TemplatesTests
-from tests.ua_parser import UserAgentParserTests
-from tests.utilities import UtilitiesTests
-from tests.version import VersionTests
-from tests.xor import XORTests
+from king_phisher.client import dialogs
+from king_phisher.client import gui_utilities
 
-from tests.client.client import ClientGUITests
-from tests.client.dialogs import ClientDialogTests
-from tests.client.export import ClientExportTests
-from tests.client.graphs import ClientGraphsTests
-from tests.client.mailer import ClientMailerTests
+class ClientDialogTests(unittest.TestCase):
+	def test_client_dialog_classes(self):
+		dialog_names = filter(lambda d: d.endswith('Dialog'), dir(dialogs))
+		self.assertGreater(len(dialog_names), 0, msg='failed to identify any dialog objects')
+		for dialog_name in dialog_names:
+			dialog_obj = getattr(dialogs, dialog_name)
+			msg = "{0} is not a subclass of UtilityGladeGObject".format(dialog_name)
+			self.assertTrue(issubclass(dialog_obj, gui_utilities.UtilityGladeGObject), msg=msg)
+			msg = "{0}.top_gobject is not 'dialog'".format(dialog_name)
+			self.assertEqual(getattr(dialog_obj, 'top_gobject', None), 'dialog', msg=msg)
+			msg = "{0} has no 'interact' method".format(dialog_name)
+			self.assertTrue(hasattr(dialog_obj, 'interact'), msg=msg)
 
-from tests.server.authenticator import ServerAuthenticatorTests
-from tests.server.database import ServerDatabaseTests
-from tests.server.server import ServerTests
-from tests.server.server import CampaignWorkflowTests
-from tests.server.server_rpc import ServerRPCTests
-
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
+if __name__ == '__main__':
+	unittest.main()

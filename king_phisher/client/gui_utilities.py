@@ -155,9 +155,10 @@ def gtk_widget_destroy_children(widget):
 
 def gtk_treeview_selection_to_clipboard(treeview, column=1):
 	"""
-	Copy the currently selected value from the specified column in the treeview
+	Copy the currently selected values from the specified column in the treeview
 	to the users clipboard. If no value is selected in the treeview, then the
-	clipboard is left unmodified.
+	clipboard is left unmodified. If multiple values are selected, they will all
+	be placed in the clipboard on seperate lines.
 
 	:param treeview: The treeview instance to get the selection from.
 	:type treeview: :py:class:`Gtk.TreeView`
