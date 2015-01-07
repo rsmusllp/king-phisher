@@ -164,11 +164,15 @@ def gtk_treeview_selection_to_clipboard(treeview, column=1):
 	:param int column: The column number to retrieve the value for.
 	"""
 	treeview_selection = treeview.get_selection()
-	(model, tree_iter) = treeview_selection.get_selected()
-	if tree_iter:
-		selection_value = model.get_value(tree_iter, column)
-		clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-		clipboard.set_text(selection_value, -1)
+	(model, tree_paths) = treeview_selection.get_selected_rows()
+	if not tree_paths:
+		return
+
+	tree_iters = map(model.get_iter, tree_paths)
+	selection_values = map(lambda ti: model.get_value(ti, column), tree_iters)
+	selection_values = os.linesep.join(selection_values)
+	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+	clipboard.set_text(selection_values, -1)
 
 def search_list_store(list_store, value):
 	"""

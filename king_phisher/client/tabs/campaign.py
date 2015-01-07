@@ -100,7 +100,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		treeview.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
 		popup_copy_submenu = Gtk.Menu.new()
 		self.view_column_renderers = {}
 		columns = self.view_columns
@@ -130,18 +130,26 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.popup_menu.show_all()
 
 	def _prompt_to_delete_row(self):
+		selection = self.gobjects['treeview_campaign'].get_selection()
+		if not selection.count_selected_rows():
+			return
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
 			return
-		treeview = self.gobjects['treeview_campaign']
-		selection = treeview.get_selection()
-		(model, tree_iter) = selection.get_selected()
-		if not tree_iter:
+		(model, tree_paths) = selection.get_selected_rows()
+		if not tree_paths:
 			return
-		row_id = model.get_value(tree_iter, 0)
-		if not gui_utilities.show_dialog_yes_no('Delete This Row?', self.parent, 'This information will be lost.'):
+
+		tree_iters = map(model.get_iter, tree_paths)
+		row_ids = map(lambda ti: model.get_value(ti, 0), tree_iters)
+		if len(row_ids) == 1:
+			message = 'Delete This Row?'
+		else:
+			message = "Delete These {0:,} Rows?".format(len(row_ids))
+		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
-		self.parent.rpc(self.remote_table_name + '/delete', row_id)
+		for row_id in row_ids:
+			self.parent.rpc(self.remote_table_name + '/delete', row_id)
 		self.load_campaign_information(force=True)
 
 	def format_row_data(self, row):
@@ -228,7 +236,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
 			return
 		selection = self.gobjects['treeview_campaign'].get_selection()
-		if not selection.get_selected()[1]:
+		if not selection.count_selected_rows():
 			return
 		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
 		self.popup_menu.popup(None, None, pos_func, None, event.button, event.time)
