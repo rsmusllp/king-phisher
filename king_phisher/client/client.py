@@ -383,8 +383,8 @@ class KingPhisherClient(_Gtk_Window):
 				except ValueError as error:
 					self.logger.error("failed to set the rpc serializer, error: '{0}'".format(error.message))
 			try:
-				server_version_info = self.rpc('version')
 				assert(self.rpc('client/initialize'))
+				server_version_info = self.rpc('version')
 			except AdvancedHTTPServerRPCError as err:
 				if err.status == 401:
 					self.logger.warning('failed to authenticate to the remote king phisher service')

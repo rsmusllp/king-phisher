@@ -31,6 +31,7 @@
 #
 
 import argparse
+import random
 import smtplib
 from email.MIMEText import MIMEText
 
@@ -103,6 +104,7 @@ def send_sms(message_text, phone_number, carrier, from_address=None):
 	message['From'] = from_address
 
 	sms_gateways = get_smtp_servers(carrier_address)
+	random.shuffle(sms_gateways)
 	message_sent = False
 	for sms_gateway in sms_gateways:
 		try:
