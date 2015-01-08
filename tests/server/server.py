@@ -40,9 +40,14 @@ from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
 
 class ServerTests(KingPhisherServerTestCase):
-	def test_existing_resources(self):
+	def test_http_method_get(self):
 		for phile in self.web_root_files(3):
 			http_response = self.http_request(phile)
+			self.assertHTTPStatus(http_response, 200)
+
+	def test_http_method_head(self):
+		for phile in self.web_root_files(3):
+			http_response = self.http_request(phile, method='HEAD')
 			self.assertHTTPStatus(http_response, 200)
 
 	def test_non_existing_resources(self):

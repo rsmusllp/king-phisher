@@ -996,9 +996,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 
 		self.dispatch_handler(self.query_data)
 		return
-
-	def do_HEAD(self):
-		self.do_GET()
+	do_HEAD = do_GET
 
 	def do_POST(self):
 		if not self.check_authorization():

@@ -156,14 +156,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.path = '/' + self.vhost + self.path
 
 	def _do_http_method(self, *args, **kwargs):
+		if self.command != 'RPC':
+			self.adjust_path()
+		http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
 		self.server.throttle_semaphore.acquire()
 		try:
-			if self.command != 'RPC':
-				self.adjust_path()
-			if self.command == 'HEAD':
-				http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_GET')
-			else:
-				http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
 			http_method_handler(*args, **kwargs)
 		except errors.KingPhisherAbortRequestError:
 			self.respond_not_found()
