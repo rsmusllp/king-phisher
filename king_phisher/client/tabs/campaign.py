@@ -165,6 +165,23 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""
 		raise NotImplementedError()
 
+	def format_cell_data(self, cell_data):
+		"""
+		This method provides formatting to the individual cell values returned
+		from the :py:meth:`.format_row_data` function. Values are converted into
+		a format suitable for reading.
+
+		:param cell: The value to format.
+		:return: The formatted cell value.
+		:rtype: str
+		"""
+		if isinstance(cell_data, datetime.datetime):
+			cell_data = utilities.datetime_utc_to_local(cell_data)
+			return utilities.format_datetime(cell_data)
+		elif cell_data == None:
+			return ''
+		return str(cell_data)
+
 	def load_campaign_information(self, force=False):
 		"""
 		Load the necessary campaign information from the remote server.
@@ -212,8 +229,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			if row_data == None:
 				self.parent.rpc(self.remote_table_name + '/delete', row_id)
 				continue
-			row_data = map(lambda x: utilities.format_datetime(utilities.datetime_utc_to_local(x)) if isinstance(x, datetime.datetime) else x, row_data)
-			row_data = map(lambda x: '' if x == None else str(x), row_data)
+			row_data = list(map(self.format_cell_data, row_data))
 			row_data.insert(0, str(row_id))
 			gui_utilities.glib_idle_add_wait(store.append, row_data)
 		if self.is_destroyed.is_set():
