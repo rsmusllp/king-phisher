@@ -9,6 +9,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.check_requirements
 
+.. autofunction:: king_phisher.utilities.datetime_utc_to_local
+
 .. autofunction:: king_phisher.utilities.escape_single_quote
 
 .. autofunction:: king_phisher.utilities.format_datetime

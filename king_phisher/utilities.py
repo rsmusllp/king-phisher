@@ -220,6 +220,18 @@ def check_requirements(requirements, ignore=None):
 			not_satisfied.append(req_pkg)
 	return not_satisfied
 
+def datetime_utc_to_local(dt):
+	"""
+	Convert a :py:class:`datetime.datetime` instance from UTC time to the local
+	time.
+
+	:param dt: The time to convert from UTC to local.
+	:type dt: :py:class:`datetime.datetime`
+	:return: The time converted to the local timezone.
+	:rtype: :py:class:`datetime.datetime`
+	"""
+	return dt - datetime.timedelta(seconds=time.timezone)
+
 def escape_single_quote(string):
 	"""
 	Escape a string containing single quotes and backslashes with backslashes.

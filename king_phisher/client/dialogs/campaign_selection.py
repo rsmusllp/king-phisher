@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
 from gi.repository import Gdk
@@ -82,7 +83,10 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 		else:
 			store.clear()
 		for campaign in self.parent.rpc.remote_table('campaigns'):
-			store.append([str(campaign['id']), campaign['name'], campaign['user_id'], campaign['created'].strftime('%Y-%m-%d %H:%M:%S')])
+			created_ts = campaign['created']
+			created_ts = utilities.datetime_utc_to_local(created_ts)
+			created_ts = utilities.format_datetime(created_ts)
+			store.append([str(campaign['id']), campaign['name'], campaign['user_id'], created_ts])
 
 	def signal_button_clicked(self, button):
 		campaign_name_entry = self.gobjects['entry_new_campaign_name']

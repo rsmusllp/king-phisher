@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import datetime
 import logging
 import threading
 import time
@@ -211,6 +212,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			if row_data == None:
 				self.parent.rpc(self.remote_table_name + '/delete', row_id)
 				continue
+			row_data = map(lambda x: utilities.format_datetime(utilities.datetime_utc_to_local(x)) if isinstance(x, datetime.datetime) else x, row_data)
 			row_data = map(lambda x: '' if x == None else str(x), row_data)
 			row_data.insert(0, str(row_id))
 			gui_utilities.glib_idle_add_wait(store.append, row_data)
@@ -286,8 +288,8 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			connection['local_username'],
 			connection['local_hostname'],
 			connection['local_ip_addresses'],
-			utilities.format_datetime(connection['first_visit']),
-			utilities.format_datetime(connection['last_visit'])
+			connection['first_visit'],
+			connection['last_visit']
 		)
 		return row
 
@@ -314,7 +316,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 			msg_details['target_email'],
 			credential['username'],
 			credential['password'],
-			utilities.format_datetime(credential['submitted'])
+			credential['submitted']
 		)
 		return row
 
@@ -417,8 +419,8 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 			visit['visitor_ip'],
 			visit['visitor_details'],
 			visit['visit_count'],
-			utilities.format_datetime(visit['first_visit']),
-			utilities.format_datetime(visit['last_visit'])
+			visit['first_visit'],
+			visit['last_visit']
 		)
 		return row
 
@@ -435,8 +437,8 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	def format_row_data(self, message):
 		row = (
 			message['target_email'],
-			utilities.format_datetime(message['sent']),
-			utilities.format_datetime(message['opened']),
+			message['sent'],
+			message['opened'],
 			('Yes' if message['trained'] else '')
 		)
 		return row
