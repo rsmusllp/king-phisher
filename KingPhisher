@@ -92,7 +92,7 @@ def main():
 	if os.path.isdir(data_path):
 		find.data_path_append(data_path)
 
-	os.environ['KING_PHISHER_GLADE_FILE'] = 'KingPhisherClient.glade'
+	os.environ['KING_PHISHER_GLADE_FILE'] = 'king-phisher-client.glade'
 	if not gui_utilities.which_glade():
 		print('[-] unable to locate the Glade data file')
 		return 0
