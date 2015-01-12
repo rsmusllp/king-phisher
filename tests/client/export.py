@@ -39,11 +39,9 @@ from king_phisher.testing import TEST_MESSAGE_TEMPLATE, TEST_MESSAGE_TEMPLATE_IN
 
 class ClientExportTests(unittest.TestCase):
 	def test_value_conversions(self):
-		self.assertEqual(convert_value('campaigns', 'reject_after_credentials', 0), 'False')
-		self.assertEqual(convert_value('campaigns', 'reject_after_credentials', 1), 'True')
+		self.assertEqual(convert_value('campaigns', 'reject_after_credentials', False), 'False')
+		self.assertEqual(convert_value('campaigns', 'reject_after_credentials', True), 'True')
 		self.assertIsNone(convert_value('messages', 'opened', None))
-		self.assertEqual(convert_value('messages', 'trained', 0), 'False')
-		self.assertEqual(convert_value('messages', 'trained', 1), 'True')
 
 	def test_message_template_kpm(self):
 		# test to_kpm first
