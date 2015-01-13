@@ -61,6 +61,8 @@ __requirements__ = [
 	'PyYAML>=3.10',
 	'SQLAlchemy>=0.9'
 ]
+if sys.version_info.major == 2:
+	__requirements__.append('py2-ipaddress>=2.0.0')
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')

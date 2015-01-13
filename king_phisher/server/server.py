@@ -32,6 +32,7 @@
 
 import base64
 import binascii
+import ipaddress
 import json
 import logging
 import os
@@ -228,10 +229,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		# don't require authentication for non-RPC requests
 		if self.command != 'RPC':
 			return True
-		# deny anything not GET or POST if it's not from 127.0.0.1
-		if self.client_address[0] != '127.0.0.1':
-			return False
-		return super(KingPhisherRequestHandler, self).check_authorization()
+		if ipaddress.ip_address(self.client_address[0]).is_loopback:
+			return super(KingPhisherRequestHandler, self).check_authorization()
+		return False
 
 	@property
 	def campaign_id(self):

@@ -48,8 +48,10 @@ from gi.repository import Gtk
 
 __requirements__ = [
 	'Jinja2>=2.7.1',
-	'paramiko>=1.10.1',
+	'paramiko>=1.10.1'
 ]
+if sys.version_info.major == 2:
+	__requirements__.append('py2-ipaddress>=2.0.0')
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Client GUI', conflict_handler='resolve')
