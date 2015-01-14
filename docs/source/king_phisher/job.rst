@@ -7,7 +7,7 @@
 Functions
 ---------
 
-.. autofunction:: workshop.job.normalize_job_id
+.. autofunction:: king_phisher.job.normalize_job_id
 
 Classes
 -------
