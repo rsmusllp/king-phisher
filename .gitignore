@@ -9,6 +9,7 @@ build/*
 data/*/king_phisher/plugins/*
 dist/*
 docs/build/*
+docs/html/*
 
 !data/server/king_phisher/error_*.html
 !data/server/king_phisher/server_config.yml

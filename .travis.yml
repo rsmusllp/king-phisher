@@ -20,3 +20,4 @@ install:
 
 script:
   - python -m unittest -v tests
+  - sphinx-build docs/source docs/html
