@@ -37,6 +37,7 @@ from .server import *
 
 from .configuration import ServerConfigurationTests
 from .sms import SMSTests
+from .spf import SPFTests
 from .templates import TemplatesTests
 from .ua_parser import UserAgentParserTests
 from .utilities import UtilitiesTests

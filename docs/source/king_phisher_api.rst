@@ -17,6 +17,7 @@ The King Phisher Package
    king_phisher/job.rst
    king_phisher/sms.rst
    king_phisher/smtp_server.rst
+   king_phisher/spf.rst
    king_phisher/ssh_forward.rst
    king_phisher/templates.rst
    king_phisher/testing.rst
