@@ -52,11 +52,25 @@ class UtilitiesTests(unittest.TestCase):
 		self.assertEqual(escaped_string, SINGLE_QUOTE_STRING_ESCAPED)
 
 	def test_is_valid_email(self):
-		self.assertTrue(is_valid_email('kingphisher1+test@gmail.com'))
-		self.assertFalse(is_valid_email('kingphisher.gmail.com'))
-		self.assertTrue(is_valid_email('kingphisher@gmail.co.uk'))
-		self.assertFalse(is_valid_email('@gmail.com'))
-		self.assertFalse(is_valid_email('kingphisher@'))
+		valid_emails = [
+			'aliddle@wonderland.com',
+			'aliddle@wonderland.co.uk',
+			'alice.liddle1+spam@wonderland.com',
+		]
+		invalid_emails = [
+			'aliddle.wonderland.com'
+			'aliddle+',
+			'aliddle@',
+			'aliddle',
+			'',
+			'@wonderland.com',
+			'@wonder@land.com',
+			'aliddle@.com'
+		]
+		for address in valid_emails:
+			self.assertTrue(is_valid_email(address))
+		for address in invalid_emails:
+			self.assertFalse(is_valid_email(address))
 
 	def test_mock_attributes(self):
 		mock = Mock()
