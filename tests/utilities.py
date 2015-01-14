@@ -51,6 +51,13 @@ class UtilitiesTests(unittest.TestCase):
 		escaped_string = escape_single_quote(SINGLE_QUOTE_STRING_UNESCAPED)
 		self.assertEqual(escaped_string, SINGLE_QUOTE_STRING_ESCAPED)
 
+	def test_is_valid_email(self):
+		self.assertTrue(is_valid_email('kingphisher1+test@gmail.com'))
+		self.assertFalse(is_valid_email('kingphisher.gmail.com'))
+		self.assertTrue(is_valid_email('kingphisher@gmail.co.uk'))
+		self.assertFalse(is_valid_email('@gmail.com'))
+		self.assertFalse(is_valid_email('kingphisher@'))
+
 	def test_mock_attributes(self):
 		mock = Mock()
 		self.assertIsInstance(mock.foo, Mock)

@@ -44,6 +44,8 @@ import time
 
 import pkg_resources
 
+EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
+
 def timedef_to_seconds(timedef):
 	"""
 	Convert a string timespan definition to seconds, for example converting
@@ -257,6 +259,16 @@ def format_datetime(dt):
 	if not isinstance(dt, datetime.datetime):
 		return ''
 	return dt.strftime('%Y-%m-%d %H:%M:%S')
+
+def is_valid_email(email_address):
+	"""
+	Check that the string specified appears to be a valid email address.
+
+	:param str email_address: The email address to validate.
+	:return: Whether the email address appears to be valid or not.
+	:rtype: bool
+	"""
+	return EMAIL_REGEX.match(email_address) != None
 
 def open_uri(uri):
 	"""

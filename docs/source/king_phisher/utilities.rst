@@ -15,6 +15,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.format_datetime
 
+.. autofunction:: king_phisher.utilities.is_valid_email
+
 .. autofunction:: king_phisher.utilities.open_uri
 
 .. autofunction:: king_phisher.utilities.random_string
