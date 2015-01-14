@@ -37,7 +37,7 @@ import re
 import dns.exception
 import dns.resolver
 
-MACRO_REGEX = r'%\{([slodipvh])(\d*)([r]?)(.?)\}'
+MACRO_REGEX = re.compile(r'%\{([slodipvh])(\d*)([r]?)(.?)\}')
 """A regular expression which matches SPF record macros."""
 
 QUALIFIERS = {
@@ -179,10 +179,17 @@ class SenderPolicyFramework(object):
 			if record.startswith('redirect='):
 				if len(list(filter(lambda r: r.endswith('all'), records))):
 					# ignore redirects when all is present per https://tools.ietf.org/html/rfc7208#section-6.1
+					self.logger.warning("ignoring redirect modifier to: {0} due to an existing 'all' mechanism".format(domain))
 					continue
 				record = record[9:]
 				domain = self.expand_macros(record, self.ip, domain, self.sender)
-				return self._check_host(ip, domain, sender, top_level=False)
+				self.logger.debug("following redirect modifier to: {0}".format(domain))
+				if top_level and len(self.spf_records) == 0:
+					# treat a single redirect as a new top level
+					return self._check_host(ip, domain, sender, top_level=True)
+				else:
+					result = self._check_host(ip, domain, sender, top_level=False)
+					self.logger.debug("top check found matching spf record from redirect to: {0}".format(domain))
 
 			if ':' in record:
 				(mechanism, rvalue) = record.split(':', 1)
@@ -201,7 +208,7 @@ class SenderPolicyFramework(object):
 				self.spf_records.append((mechanism, qualifier, rvalue))
 			if self._evaluate_mechanism(ip, domain, sender, mechanism, rvalue):
 				self.spf_record_id = record_id
-				self.logger.debug("found matching spf record: '{0}'".format(record))
+				self.logger.debug("{0} check found matching spf record: '{1}'".format(('top' if top_level else 'recursive'), record))
 				return QUALIFIERS[qualifier]
 
 		self.logger.debug('no records matched, returning default policy of \'neutral\'')
@@ -304,7 +311,7 @@ class SenderPolicyFramework(object):
 
 		end = 0
 		result = ''
-		for match in re.finditer(MACRO_REGEX, value):
+		for match in MACRO_REGEX.finditer(value):
 			result += value[end:match.start()]
 			macro_type = match.group(1)
 			macro_digit = int(match.group(2) or 128)
