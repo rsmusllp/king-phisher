@@ -33,6 +33,7 @@
 import collections
 import datetime
 import distutils.version
+import ipaddress
 import os
 import random
 import re
@@ -260,7 +261,7 @@ def format_datetime(dt):
 		return ''
 	return dt.strftime('%Y-%m-%d %H:%M:%S')
 
-def is_valid_email(email_address):
+def is_valid_email_address(email_address):
 	"""
 	Check that the string specified appears to be a valid email address.
 
@@ -269,6 +270,21 @@ def is_valid_email(email_address):
 	:rtype: bool
 	"""
 	return EMAIL_REGEX.match(email_address) != None
+
+def is_valid_ip_address(ip_address):
+	"""
+	Check that the string specified appears to be either a valid IPv4 or IPv6
+	address.
+
+	:param str ip_address: The ip address to validate.
+	:return: Whether the ip address appears to be valid or not.
+	:rtype: bool
+	"""
+	try:
+		ipaddress.ip_address(ip_address)
+	except ValueError:
+		return False
+	return True
 
 def open_uri(uri):
 	"""

@@ -51,7 +51,7 @@ class UtilitiesTests(unittest.TestCase):
 		escaped_string = escape_single_quote(SINGLE_QUOTE_STRING_UNESCAPED)
 		self.assertEqual(escaped_string, SINGLE_QUOTE_STRING_ESCAPED)
 
-	def test_is_valid_email(self):
+	def test_is_valid_email_address(self):
 		valid_emails = [
 			'aliddle@wonderland.com',
 			'aliddle@wonderland.co.uk',
@@ -68,9 +68,27 @@ class UtilitiesTests(unittest.TestCase):
 			'aliddle@.com'
 		]
 		for address in valid_emails:
-			self.assertTrue(is_valid_email(address))
+			self.assertTrue(is_valid_email_address(address))
 		for address in invalid_emails:
-			self.assertFalse(is_valid_email(address))
+			self.assertFalse(is_valid_email_address(address))
+
+	def test_is_valid_ip_address(self):
+		valid_ips = [
+			'127.0.0.1',
+			'10.0.0.1',
+			'200.100.0.1',
+			'fe80::1',
+			'::1'
+		]
+		invalid_ips = [
+			'localhost',
+			'www.google.com',
+			''
+		]
+		for address in valid_ips:
+			self.assertTrue(is_valid_ip_address(address))
+		for address in invalid_ips:
+			self.assertFalse(is_valid_ip_address(address))
 
 	def test_mock_attributes(self):
 		mock = Mock()

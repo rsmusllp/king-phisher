@@ -15,7 +15,9 @@ Functions
 
 .. autofunction:: king_phisher.utilities.format_datetime
 
-.. autofunction:: king_phisher.utilities.is_valid_email
+.. autofunction:: king_phisher.utilities.is_valid_email_address
+
+.. autofunction:: king_phisher.utilities.is_valid_ip_address
 
 .. autofunction:: king_phisher.utilities.open_uri
 
