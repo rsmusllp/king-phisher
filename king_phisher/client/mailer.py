@@ -33,9 +33,11 @@
 import csv
 import logging
 import mimetypes
+import ipaddress
 import os
 import random
 import smtplib
+import socket
 import threading
 import time
 import urlparse
@@ -52,7 +54,7 @@ from king_phisher.ssh_forward import SSHTCPForwarder
 
 from gi.repository import GLib
 
-__all__ = ['format_message', 'MailSenderThread']
+__all__ = ['format_message', 'guess_smtp_server_address', 'MailSenderThread']
 
 make_uid = lambda: utilities.random_string(16)
 template_environment = templates.MessageTemplateEnvironment()
@@ -108,6 +110,44 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	template_vars['url'] = template_vars_url
 	template_vars.update(template_environment.standard_variables)
 	return template.render(template_vars)
+
+def guess_smtp_server_address(host, forward_host=None):
+	"""
+	Guess the IP address of the SMTP server that will be connected to given the
+	SMTP host information and an optional SSH forwarding host. If a hostname is
+	in use it will be resolved to an IP address, either IPv4 or IPv6 and in that
+	order. If a hostname resolves to multiple IP addresses, None will be
+	returned. This function is intended to guess the SMTP servers IP address
+	given the client configuration so it can be used for SPF record checks.
+
+	:param str host: The SMTP server that is being connected to.
+	:param str forward_host: An optional host that is being used to tunnel the connection.
+	:return: The ip address of the SMTP server.
+	:rtype: None, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
+	"""
+	host = host.rsplit(':', 1)[0]
+	if utilities.is_valid_ip_address(host):
+		ip = ipaddress.ip_address(host)
+		if not ip.is_loopback:
+			return ip
+	else:
+		info = None
+		for family in (socket.AF_INET, socket.AF_INET6):
+			try:
+				info = socket.getaddrinfo(host, 1, family)
+			except socket.gaierror:
+				continue
+			info = set(list(map(lambda r: r[4][0], info)))
+			if len(info) != 1:
+				return
+			break
+		if info:
+			ip = ipaddress.ip_address(info.pop())
+			if not ip.is_loopback:
+				return ip
+	if forward_host:
+		return guess_smtp_server_address(forward_host)
+	return
 
 class MailSenderThread(threading.Thread):
 	"""

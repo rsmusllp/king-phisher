@@ -50,6 +50,22 @@ class ClientMailerTests(unittest.TestCase):
 		}
 		self.image_cid_regex = r'img_[a-z0-9]{8}' + re.escape(os.path.splitext(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)[-1])
 
+	def test_mailer_guess_smtp_server_address(self):
+		random_host = random_string(7) + '.' + random_string(7) + '.' + random_string(3)
+		self.assertIsNone(guess_smtp_server_address('localhost'))
+		self.assertIsNone(guess_smtp_server_address('127.0.0.1'))
+		self.assertIsNone(guess_smtp_server_address('::1'))
+		self.assertIsNone(guess_smtp_server_address('localhost', 'localhost'))
+		self.assertIsNone(guess_smtp_server_address('localhost', random_host))
+
+		self.assertEqual(str(guess_smtp_server_address('10.0.0.1')), '10.0.0.1')
+		self.assertEqual(str(guess_smtp_server_address('10.0.0.1', random_host)), '10.0.0.1')
+		self.assertEqual(str(guess_smtp_server_address('127.0.0.1', '10.0.0.1')), '10.0.0.1')
+		self.assertEqual(str(guess_smtp_server_address('::1', '10.0.0.1')), '10.0.0.1')
+		self.assertEqual(str(guess_smtp_server_address('localhost', '10.0.0.1')), '10.0.0.1')
+		self.assertEqual(str(guess_smtp_server_address('10.0.0.1', 'localhost')), '10.0.0.1')
+		self.assertEqual(str(guess_smtp_server_address('10.0.0.1', '10.0.0.2')), '10.0.0.1')
+
 	def test_mailer_message_format(self):
 		secret_id = re.escape(self.config['server_config']['server.secret_id'])
 		tracking_image = re.escape(self.config['server_config']['server.tracking_image'])
