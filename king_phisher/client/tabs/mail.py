@@ -31,17 +31,19 @@
 #
 
 import datetime
+import ipaddress
 import os
 import socket
 import urllib
 import urllib2
 import urlparse
 
+from king_phisher import spf
 from king_phisher import utilities
 from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
-from king_phisher.client.mailer import format_message, MailSenderThread
+from king_phisher.client import mailer
 from king_phisher.errors import KingPhisherInputValidationError
 
 from gi.repository import Gtk
@@ -109,13 +111,16 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 				continue
 			file_path = self.config[setting]
 			if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
-				gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: File could not be read".format(setting_name))
+				gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: the file could not be read.".format(setting_name))
 				return
+		if not utilities.is_valid_email_address(self.config['mailer.source_email']):
+			gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, 'Setting: \'mailer.source_email\'\nReason: the email address is invalid.')
+			return
 		if not self.config.get('smtp_server'):
 			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
 			return
 
-		self.text_insert('Testing the target URL... ')
+		self.text_insert('Checking the target URL... ')
 		try:
 			test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
 		except Exception:
@@ -127,6 +132,29 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		else:
 			self.text_insert('success, done.\n')
 
+		spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
+		if not spf_test_ip:
+			self.logger.warning('skipping spf policy check because the smtp server address could not be reliably detected')
+		else:
+			self.logger.debug('detected the smtp server address as ' + str(spf_test_ip))
+			spf_test_sender, spf_test_domain = self.config['mailer.source_email'].split('@')
+			self.text_insert("Checking the SPF policy of target domain '{0}'... ".format(spf_test_domain))
+			try:
+				spf_test = spf.SenderPolicyFramework(spf_test_ip, spf_test_domain, spf_test_sender)
+				spf_result = spf_test.check_host()
+			except spf.SPFError as error:
+				spf_result = None
+				self.text_insert("done, encountered exception: {0}.\n".format(error.__class__.__name__))
+			else:
+				if spf_result:
+					self.text_insert('done.\n')
+					self.text_insert("{0}SPF policy result: {1}\n".format(('WARNING: ' if spf_result.endswith('fail') else ''), spf_result))
+					if spf_result == 'fail' and not gui_utilities.show_dialog_yes_no('Sender Policy Framework Failure', self.parent, 'The configuration fails the domains SPF policy.\nContinue sending messages anyways?'):
+						self.text_insert('Sending aborted due to a failed SPF policy.\n')
+						return
+				else:
+					self.text_insert('done, no policy was found.\n')
+
 		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:
 			return
@@ -134,7 +162,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
-		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self.parent.rpc, self)
+		self.sender_thread = mailer.MailSenderThread(self.config, self.config['mailer.target_file'], self.parent.rpc, self)
 
 		# verify settings
 		missing_files = self.sender_thread.missing_files()
@@ -575,7 +603,7 @@ class MailSenderTab(object):
 			if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 				return
 			html_data = open(html_file, 'r').read()
-			html_data = format_message(html_data, self.config)
+			html_data = mailer.format_message(html_data, self.config)
 			html_file_uri = urlparse.urlparse(html_file, 'file').geturl()
 			if not html_file_uri.startswith('file://'):
 				html_file_uri = 'file://' + html_file_uri
