@@ -9,6 +9,7 @@
 1. Support starting an external SFTP application from the client
 1. Tweaked miscellaneous features to scale for larger campaigns (35k+ messages)
 1. Updated AdvancedHTTPServer to version 0.4.0 which supports Python 3
+1. Added integration for checking Sender Policy Framework (SPF) records
 
 ## Version 0.1.6
 1. Migrated to SQLAlchemy backend (SQLite will no longer be supported for database upgrades)

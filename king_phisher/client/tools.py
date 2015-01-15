@@ -41,6 +41,7 @@ import sys
 
 from king_phisher import find
 from king_phisher import utilities
+from king_phisher import version
 from king_phisher.client import gui_utilities
 from king_phisher.client.client_rpc import KingPhisherRPCClient
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
@@ -196,6 +197,23 @@ class KingPhisherClientRPCTerminal(object):
 		action_paste = Gtk.Action("EditPaste", "Paste", "Paste", None)
 		action_paste.connect("activate", lambda x: self.terminal.paste_clipboard())
 		action_group.add_action_with_accel(action_paste, "<control><shift>V")
+
+		# Help Menu Actions
+		action = Gtk.Action('HelpMenu', 'Help', None, None)
+		action_group.add_action(action)
+
+		action = Gtk.Action('HelpAbout', 'About', 'About', None)
+		action.connect('activate', lambda x: self.parent.show_about_dialog())
+		action_group.add_action(action)
+
+		rpc_api_docs_url = "http://king-phisher.readthedocs.org/en/{0}/rpc_api.html".format('latest' if version.version_label in ('alpha', 'beta') else 'stable')
+		action = Gtk.Action('HelpApiDocs', 'API Documentation', 'API Documentation', None)
+		action.connect('activate', lambda x: utilities.open_uri(rpc_api_docs_url))
+		action_group.add_action(action)
+
+		action = Gtk.Action('HelpWiki', 'Wiki', 'Wiki', None)
+		action.connect('activate', lambda x: utilities.open_uri('https://github.com/securestate/king-phisher/wiki'))
+		action_group.add_action(action)
 
 	def _create_ui_manager(self):
 		uimanager = Gtk.UIManager()
