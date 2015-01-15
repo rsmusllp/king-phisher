@@ -55,7 +55,9 @@ class KingPhisherClientConfigurationDialog(gui_utilities.UtilityGladeGObject):
 		'switch_smtp_ssl_enable',
 		'switch_smtp_ssh_enable',
 		'entry_ssh_server',
-		'entry_ssh_username'
+		'entry_ssh_username',
+		# Client Tab
+		'checkbutton_autocheck_spf'
 	]
 	top_gobject = 'dialog'
 	top_level_dependencies = [

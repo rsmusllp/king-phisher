@@ -1,4 +1,5 @@
 {
+    "autocheck_spf": true,
     "dashboard.bottom": "VisitsTimeline",
     "dashboard.top_left": "Overview",
     "dashboard.top_right": "VisitorInfo",
