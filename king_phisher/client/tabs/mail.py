@@ -93,6 +93,11 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		"""The :py:class:`.MailSenderThread` instance that is being used to send messages."""
 		self.parent.connect('exit', self.signal_kpc_exit)
 		self.parent.connect('exit-confirm', self.signal_kpc_exit_confirm)
+		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
+
+	def signal_activate_popup_menu_clear_all(self, widget):
+		self.textbuffer.delete(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter())
+		self.textbuffer_iter = self.textbuffer.get_start_iter()
 
 	def signal_button_clicked_sender_start(self, button):
 		required_settings = {
@@ -234,6 +239,13 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if gui_utilities.show_dialog_yes_no('King Phisher Is Sending Messages', self.parent, 'Are you sure you want to exit?'):
 			return
 		kpc.emit_stop_by_name('exit-confirm')
+
+	def signal_textview_populate_popup(self, textview, menu):
+		menu_item = Gtk.MenuItem.new_with_label('Clear All')
+		menu_item.connect('activate', self.signal_activate_popup_menu_clear_all)
+		menu_item.show()
+		menu.append(menu_item)
+		return True
 
 	def signal_textview_size_allocate_autoscroll(self, textview, allocation):
 		scrolled_window = self.gobjects['scrolledwindow_mail_sender_progress']
