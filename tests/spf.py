@@ -35,6 +35,14 @@ import unittest
 from king_phisher import spf
 
 class SPFTests(unittest.TestCase):
+	def test_spf_check_host(self):
+		s = spf.SenderPolicyFramework('1.2.3.4', 'king-phisher.com')
+		check_host_result = s.check_host()
+		self.assertIsNotNone(check_host_result)
+		self.assertEqual(check_host_result, 'fail')
+
+		self.assertEqual(spf.check_host('1.2.3.4', 'king-phisher.com'), 'fail')
+
 	def test_spf_evaluate_mechanism(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'doesnotexist.king-phisher.com')
 		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip, s.domain, s.sender, m, r)
