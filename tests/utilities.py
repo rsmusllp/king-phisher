@@ -116,6 +116,11 @@ class UtilitiesTests(unittest.TestCase):
 		self.assertEqual(len(parsed), 2)
 		self.assertEqual(parsed[0], '127.0.0.1')
 		self.assertEqual(parsed[1], 8080)
+		parsed = server_parse('[::1]:8080', 80)
+		self.assertIsInstance(parsed, tuple)
+		self.assertEqual(len(parsed), 2)
+		self.assertEqual(parsed[0], '::1')
+		self.assertEqual(parsed[1], 8080)
 
 	def test_timedef_to_seconds(self):
 		self.assertRaises(ValueError, timedef_to_seconds, 'fake')

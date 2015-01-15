@@ -342,8 +342,10 @@ def server_parse(server, default_port):
 	:return: The parsed server information.
 	:rtype: tuple
 	"""
-	server = server.split(':')
+	server = server.rsplit(':', 1)
 	host = server[0]
+	if host.startswith('[') and host.endswith(']'):
+		host = host[1:-1]
 	if len(server) == 1:
 		return (host, default_port)
 	else:
