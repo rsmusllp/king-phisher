@@ -67,6 +67,24 @@ class SPFTempError(SPFError):
 	"""
 	pass
 
+def record_unparse(record):
+	"""
+	Take a parsed record tuple and unparse it into a string representing the
+	original record.
+
+	:param tuple record: The tuple representing the original parsed record.
+	:return: The string representation of the record.
+	:rtype: str
+	"""
+	mechanism, qualifier, rvalue = record
+	record = ''
+	if qualifier != '+':
+		record += qualifier
+	record += mechanism
+	if rvalue:
+		record += ':' + rvalue
+	return record
+
 def check_host(ip, domain, sender=None):
 	"""
 	Analyze the Sender Policy Framework of a domain by creating a
@@ -159,7 +177,7 @@ class SenderPolicyFramework(object):
 				raise
 			answers = []
 		if len(answers) == 0:
-			return None
+			return
 
 		if len(answers) > 1:
 			answers = list(filter(lambda answer: answer.strings[0].startswith('v=spf1 '), answers))
@@ -190,6 +208,7 @@ class SenderPolicyFramework(object):
 				else:
 					result = self._check_host(ip, domain, sender, top_level=False)
 					self.logger.debug("top check found matching spf record from redirect to: {0}".format(domain))
+					return result
 
 			if ':' in record:
 				(mechanism, rvalue) = record.split(':', 1)

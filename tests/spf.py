@@ -35,6 +35,11 @@ import unittest
 from king_phisher import spf
 
 class SPFTests(unittest.TestCase):
+	def test_spf_nonexistent_domain(self):
+		s = spf.SenderPolicyFramework('1.2.3.4', 'test.king-phisher.lan')
+		self.assertIsNone(s.check_host())
+		self.assertIsNone(spf.check_host('1.2.3.4', 'test.king-phisher.lan'))
+
 	def test_spf_rfc7208_macro_expansion(self):
 		spf_records = [('all', '-', None)]
 		s = spf.SenderPolicyFramework('192.0.2.3', 'email.example.com', 'strong-bad@email.example.com', spf_records=spf_records)
@@ -61,10 +66,12 @@ class SPFTests(unittest.TestCase):
 		self.assertEqual(expand_macro('%{ir}.%{v}.%{l1r-}.lp._spf.%{d2}'), '3.2.0.192.in-addr.strong.lp._spf.example.com')
 		self.assertEqual(expand_macro('%{d2}.trusted-domains.example.net'), 'example.com.trusted-domains.example.net')
 
-	def test_spf_nonexistent_domain(self):
-		s = spf.SenderPolicyFramework('1.2.3.4', 'test.king-phisher.lan')
-		self.assertIsNone(s.check_host())
-		self.assertIsNone(spf.check_host('1.2.3.4', 'test.king-phisher.lan'))
+	def test_spf_record_unparse(self):
+		self.assertEqual(spf.record_unparse(('all', '+', None)), 'all')
+		self.assertEqual(spf.record_unparse(('all', '-', None)), '-all')
+
+		self.assertEqual(spf.record_unparse(('include', '+', '_spf.wonderland.com')), 'include:_spf.wonderland.com')
+		self.assertEqual(spf.record_unparse(('ip4', '+', '10.0.0.0/24')), 'ip4:10.0.0.0/24')
 
 if __name__ == '__main__':
 	unittest.main()

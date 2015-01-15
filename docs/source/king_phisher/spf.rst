@@ -18,6 +18,8 @@ Functions
 
 .. autofunction:: king_phisher.spf.check_host
 
+.. autofunction:: king_phisher.spf.record_unparse
+
 .. autofunction:: king_phisher.spf.validate_record
 
 Classes
