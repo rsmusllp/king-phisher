@@ -262,11 +262,17 @@ class SenderPolicyFramework(object):
 			# pass results in match per https://tools.ietf.org/html/rfc7208#section-5.2
 			return self._check_host(ip, rvalue, sender, top_level=False) == 'pass'
 		elif mechanism == 'ip4':
-			ip_network = ipaddress.IPv4Network(rvalue, strict=False)
+			try:
+				ip_network = ipaddress.IPv4Network(rvalue, strict=False)
+			except ipaddress.AddressValueError:
+				raise SPFPermError('failed to parse spf data')
 			if ip in ip_network:
 				return True
 		elif mechanism == 'ip6':
-			ip_network = ipaddress.IPv6Network(rvalue, strict=False)
+			try:
+				ip_network = ipaddress.IPv6Network(rvalue, strict=False)
+			except ipaddress.AddressValueError:
+				raise SPFPermError('failed to parse spf data')
 			if ip in ip_network:
 				return True
 		elif mechanism == 'mx':
