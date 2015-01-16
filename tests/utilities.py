@@ -39,6 +39,24 @@ SINGLE_QUOTE_STRING_ESCAPED = """C:\\\\Users\\\\Alice\\\\Desktop\\\\Alice\\\'s S
 SINGLE_QUOTE_STRING_UNESCAPED = """C:\\Users\\Alice\\Desktop\\Alice's Secret File.txt"""
 
 class UtilitiesTests(unittest.TestCase):
+	def test_cache_flatten_args(self):
+		def target_function(first_name, last_name, email=None, dob=None):
+			return None
+		cached_target_function = Cache('6h')(target_function)
+		flatten_args = cached_target_function._flatten_args
+		self.assertEqual(flatten_args(('alice',), {'last_name': 'liddle'}), ('alice', 'liddle', None, None))
+		self.assertEqual(flatten_args(('alice',), {'last_name': 'liddle', 'email': 'aliddle@wonderland.com'}), ('alice', 'liddle', 'aliddle@wonderland.com', None))
+		self.assertEqual(flatten_args(('alice', 'liddle'), {}), ('alice', 'liddle', None, None))
+		self.assertEqual(flatten_args(('alice', 'liddle'), {}), ('alice', 'liddle', None, None))
+		self.assertEqual(flatten_args(('alice', 'liddle', 'aliddle@wonderland.com'), {}), ('alice', 'liddle', 'aliddle@wonderland.com', None))
+		self.assertEqual(flatten_args(('alice', 'liddle'), {'dob': '1990'}), ('alice', 'liddle', None, '1990'))
+
+		with self.assertRaisesRegexp(TypeError, r'^target_function\(\) missing required argument \'last_name\'$'):
+			flatten_args(('alice',), {})
+
+		with self.assertRaisesRegexp(TypeError, r'^target_function\(\) got an unexpected keyword argument \'foobar\'$'):
+			flatten_args(('alice', 'liddle'), {'foobar': True})
+
 	def test_check_requirements(self):
 		fake_pkg = 'a' + random_string(16)
 		real_pkg = 'Jinja2'

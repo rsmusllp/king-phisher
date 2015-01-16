@@ -33,6 +33,7 @@
 import collections
 import datetime
 import distutils.version
+import inspect
 import ipaddress
 import os
 import random
@@ -99,16 +100,25 @@ class Cache(object):
 			result will be considered valid for.
 		:type timeout: int, str
 		"""
-		if isinstance(timeout, (str, unicode)):
+		if isinstance(timeout, str):
 			timeout = timedef_to_seconds(timeout)
 		self.cache_timeout = timeout
 		self.__cache = {}
 
-	def __call__(self, *args):
+	def __call__(self, *args, **kwargs):
 		if not hasattr(self, '_target_function'):
-			self._target_function = args[0]
+			target_function = args[0]
+			if not inspect.isfunction(target_function) and not inspect.ismethod(target_function):
+				raise RuntimeError('the cached object must be a function or method')
+			arg_spec = inspect.getargspec(target_function)
+			if arg_spec.varargs or arg_spec.keywords:
+				raise RuntimeError('the cached function can not use dynamic args or kwargs')
+			self._target_function = target_function
+			self._target_function_arg_spec = arg_spec
 			return self
+
 		self.cache_clean()
+		args = self._flatten_args(args, kwargs)
 		if not isinstance(args, collections.Hashable):
 			return self._target_function(*args)
 		result, expiration = self.__cache.get(args, (None, 0))
@@ -119,7 +129,33 @@ class Cache(object):
 		return result
 
 	def __repr__(self):
-		return "<cached function {0}>".format(self._target_function.__name__)
+		return "<cached function {0} at 0x{1:x}>".format(self._target_function.__name__, id(self._target_function))
+
+	def _flatten_args(self, args, kwargs):
+		flattened_args = list(args)
+		arg_spec = self._target_function_arg_spec
+
+		arg_spec_defaults = (arg_spec.defaults or [])
+		default_args = tuple(arg_spec.args[:-len(arg_spec_defaults)])
+		default_kwargs = dict(zip(arg_spec.args[-len(arg_spec_defaults):], arg_spec_defaults))
+
+		for arg_id in range(len(args), len(arg_spec.args)):
+			arg_name = arg_spec.args[arg_id]
+			if arg_name in default_args:
+				if not arg_name in kwargs:
+					raise TypeError("{0}() missing required argument '{1}'".format(self._target_function.__name__, arg_name))
+				flattened_args.append(kwargs[arg_name])
+				del kwargs[arg_name]
+			else:
+				flattened_args.append(kwargs.get(arg_name, default_kwargs[arg_name]))
+				if arg_name in kwargs:
+					del kwargs[arg_name]
+
+		unexpected_kwargs = tuple(kwargs.keys())
+		if len(unexpected_kwargs):
+			unexpected_kwargs = tuple(map(lambda a: "'{0}'".format(a), unexpected_kwargs))
+			raise TypeError("{0}() got an unexpected keyword argument{1} {2}".format(self._target_function.__name__, ('' if len(unexpected_kwargs) == 1 else 's'), ', '.join(unexpected_kwargs)))
+		return tuple(flattened_args)
 
 	def cache_clean(self):
 		"""
