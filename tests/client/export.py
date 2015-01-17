@@ -32,12 +32,12 @@
 
 import unittest
 
+from king_phisher import testing
 from king_phisher.client.export import *
 from king_phisher.client.export import message_template_from_kpm
 from king_phisher.client.export import message_template_to_kpm
-from king_phisher.testing import TEST_MESSAGE_TEMPLATE, TEST_MESSAGE_TEMPLATE_INLINE_IMAGE
 
-class ClientExportTests(unittest.TestCase):
+class ClientExportTests(testing.KingPhisherTestCase):
 	def test_value_conversions(self):
 		self.assertEqual(convert_value('campaigns', 'reject_after_credentials', False), 'False')
 		self.assertEqual(convert_value('campaigns', 'reject_after_credentials', True), 'True')
@@ -45,15 +45,15 @@ class ClientExportTests(unittest.TestCase):
 
 	def test_message_template_kpm(self):
 		# test to_kpm first
-		template, files = message_template_to_kpm(TEST_MESSAGE_TEMPLATE)
+		template, files = message_template_to_kpm(testing.TEST_MESSAGE_TEMPLATE)
 		self.assertIn("""{{ inline_image(\'image.png\') }}""", template)
 		msg = 'The inline image path was not returned in the list of files'
 		self.assertEqual(len(files), 1, msg=msg)
-		self.assertIn(TEST_MESSAGE_TEMPLATE_INLINE_IMAGE, files, msg=msg)
+		self.assertIn(testing.TEST_MESSAGE_TEMPLATE_INLINE_IMAGE, files, msg=msg)
 
 		# then feed the results into from_kpm
 		template = message_template_from_kpm(template, files)
-		self.assertEqual(template, TEST_MESSAGE_TEMPLATE)
+		self.assertEqual(template, testing.TEST_MESSAGE_TEMPLATE)
 
 if __name__ == '__main__':
 	unittest.main()

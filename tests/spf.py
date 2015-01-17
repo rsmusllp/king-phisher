@@ -32,9 +32,10 @@
 
 import unittest
 
+from king_phisher import testing
 from king_phisher import spf
 
-class SPFTests(unittest.TestCase):
+class SPFTests(testing.KingPhisherTestCase):
 	def test_spf_check_host(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'king-phisher.com')
 		check_host_result = s.check_host()

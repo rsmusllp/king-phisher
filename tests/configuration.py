@@ -34,9 +34,10 @@ import os
 import unittest
 
 from king_phisher import find
+from king_phisher import testing
 from king_phisher.configuration import *
 
-class ServerConfigurationTests(unittest.TestCase):
+class ServerConfigurationTests(testing.KingPhisherTestCase):
 	def setUp(self):
 		find.data_path_append('data/server')
 

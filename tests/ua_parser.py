@@ -32,9 +32,10 @@
 
 import unittest
 
+from king_phisher import testing
 from king_phisher.ua_parser import *
 
-class UserAgentParserTests(unittest.TestCase):
+class UserAgentParserTests(testing.KingPhisherTestCase):
 	def test_matches(self):
 		ua = parse_user_agent('BAD USER AGENT')
 		self.assertIsNone(ua)

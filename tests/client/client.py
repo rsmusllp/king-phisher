@@ -35,12 +35,13 @@ import sys
 import unittest
 
 from king_phisher import find
+from king_phisher import testing
 from king_phisher.client.client import *
 
 from gi.repository import GObject
 from gi.repository import Gtk
 
-class ClientGUITests(unittest.TestCase):
+class ClientGUITests(testing.KingPhisherTestCase):
 	def test_client_initialization(self):
 		find.data_path_append('data/client')
 		os.environ['KING_PHISHER_GLADE_FILE'] = 'king-phisher-client.glade'

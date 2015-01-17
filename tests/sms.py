@@ -32,10 +32,11 @@
 
 import unittest
 
-from king_phisher.utilities import random_string
+from king_phisher import testing
 from king_phisher.sms import CARRIERS, get_smtp_servers, lookup_carrier_gateway
+from king_phisher.utilities import random_string
 
-class SMSTests(unittest.TestCase):
+class SMSTests(testing.KingPhisherTestCase):
 	def test_lookup_carrier_gateway(self):
 		rstring = random_string(16)
 		self.assertIsNone(lookup_carrier_gateway(rstring))

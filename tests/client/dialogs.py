@@ -32,10 +32,11 @@
 
 import unittest
 
+from king_phisher import testing
 from king_phisher.client import dialogs
 from king_phisher.client import gui_utilities
 
-class ClientDialogTests(unittest.TestCase):
+class ClientDialogTests(testing.KingPhisherTestCase):
 	def test_client_dialog_classes(self):
 		dialog_names = filter(lambda d: d.endswith('Dialog'), dir(dialogs))
 		self.assertGreater(len(dialog_names), 0, msg='failed to identify any dialog objects')

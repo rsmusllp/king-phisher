@@ -32,9 +32,10 @@
 
 import unittest
 
+from king_phisher import testing
 from king_phisher.client.graphs import *
 
-class ClientGraphsTests(unittest.TestCase):
+class ClientGraphsTests(testing.KingPhisherTestCase):
 	def test_graphs_found(self):
 		self.assertGreaterEqual(get_graphs(), 3)
 

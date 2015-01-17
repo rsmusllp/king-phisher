@@ -46,6 +46,7 @@ from king_phisher.server.server import *
 __all__ = [
 	'TEST_MESSAGE_TEMPLATE',
 	'TEST_MESSAGE_TEMPLATE_INLINE_IMAGE',
+	'KingPhisherTestCase',
 	'KingPhisherServerTestCase'
 ]
 
@@ -90,6 +91,19 @@ def skip_on_travis(test_method):
 class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
 	def custom_authentication(self, *args, **kwargs):
 		return True
+
+class KingPhisherTestCase(unittest.TestCase):
+	"""
+	This class provides additional functionality over the built in
+	:py:class:`unittest.TestCase` object, including better compatibility for
+	methods across Python 2.x and Python 3.x.
+	"""
+	def __init__(self, *args, **kwargs):
+		super(KingPhisherTestCase, self).__init__(*args, **kwargs)
+		if hasattr(self, 'assertRegexpMatches') and not hasattr(self, 'assertRegexMatches'):
+			self.assertRegexMatches = self.assertRegexpMatches
+		if hasattr(self, 'assertRaisesRegexp') and not hasattr(self, 'assertRaisesRegex'):
+			self.assertRaisesRegex = self.assertRaisesRegexp
 
 class KingPhisherServerTestCase(unittest.TestCase):
 	"""

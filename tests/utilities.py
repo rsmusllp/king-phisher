@@ -33,6 +33,7 @@
 import os
 import unittest
 
+from king_phisher import testing
 from king_phisher.utilities import *
 
 SINGLE_QUOTE_STRING_ESCAPED = """C:\\\\Users\\\\Alice\\\\Desktop\\\\Alice\\\'s Secret File.txt"""
@@ -42,7 +43,7 @@ SINGLE_QUOTE_STRING_UNESCAPED = """C:\\Users\\Alice\\Desktop\\Alice's Secret Fil
 def cache_test(first_name, last_name, email=None, dob=None):
 	return random_string(24)
 
-class UtilitiesCacheTests(unittest.TestCase):
+class UtilitiesCacheTests(testing.KingPhisherTestCase):
 	def test_cache(self):
 		target_function = Cache('6h')(cache_test)
 
@@ -73,12 +74,12 @@ class UtilitiesCacheTests(unittest.TestCase):
 		self.assertEqual(flatten_args(('alice', 'liddle', 'aliddle@wonderland.com'), {}), ('alice', 'liddle', 'aliddle@wonderland.com', None))
 		self.assertEqual(flatten_args(('alice', 'liddle'), {'dob': '1990'}), ('alice', 'liddle', None, '1990'))
 
-		with self.assertRaisesRegexp(TypeError, r'^cache_test\(\) missing required argument \'last_name\'$'):
+		with self.assertRaisesRegex(TypeError, r'^cache_test\(\) missing required argument \'last_name\'$'):
 			flatten_args(('alice',), {})
-		with self.assertRaisesRegexp(TypeError, r'^cache_test\(\) got an unexpected keyword argument \'foobar\'$'):
+		with self.assertRaisesRegex(TypeError, r'^cache_test\(\) got an unexpected keyword argument \'foobar\'$'):
 			flatten_args(('alice', 'liddle'), {'foobar': True})
 
-class UtilitiesTests(unittest.TestCase):
+class UtilitiesTests(testing.KingPhisherTestCase):
 	def test_check_requirements(self):
 		fake_pkg = 'a' + random_string(16)
 		real_pkg = 'Jinja2'

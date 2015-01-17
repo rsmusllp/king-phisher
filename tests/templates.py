@@ -32,10 +32,11 @@
 
 import unittest
 
+from king_phisher import testing
 from king_phisher.templates import *
 from king_phisher.utilities import random_string
 
-class TemplatesTests(unittest.TestCase):
+class TemplatesTests(testing.KingPhisherTestCase):
 	def test_global_variables(self):
 		# prepend an alphabetic character so the result is a valid identifier
 		test_key = 'a' + random_string(10)
