@@ -16,3 +16,6 @@ docs/html/*
 !data/server/king_phisher/server_config_verification.yml
 !data/server/king_phisher/service_files/*
 !data/*/king_phisher/*/*.html
+
+# ignore Python 3 requirements because it's not officially supported yet
+requirements.3.txt

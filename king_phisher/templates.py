@@ -52,7 +52,7 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		:param dict global_vars: Additional global variables for the environment.
 		"""
 		self.logger = logging.getLogger('KingPhisher.TemplateEnvironment')
-		autoescape = lambda name: isinstance(name, (str, unicode)) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
+		autoescape = lambda name: isinstance(name, str) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
 		extensions = ['jinja2.ext.autoescape', 'jinja2.ext.do']
 		super(BaseTemplateEnvironment, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
 

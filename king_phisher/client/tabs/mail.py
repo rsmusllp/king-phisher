@@ -690,7 +690,7 @@ class MailSenderTab(object):
 			config_keys.remove(key)
 		for unset_key in config_keys:
 			config_type = config_types[unset_key]
-			if not config_type in (bool, dict, int, list, long, str, tuple, unicode):
+			if not config_type in (bool, dict, int, list, str, tuple):
 				continue
 			self.config[unset_key] = config_type()
 		config_tab.objects_load_from_config()

@@ -33,11 +33,16 @@
 import argparse
 import random
 import smtplib
-from email.MIMEText import MIMEText
+import sys
 
 from king_phisher import utilities
 
 import dns.resolver
+
+if sys.version_info[0] < 3:
+	from email.MIMEText import MIMEText
+else:
+	from email.mime.text import MIMEText
 
 __version__ = '0.1'
 __all__ = ['lookup_carrier_gateway', 'send_sms']
@@ -55,7 +60,7 @@ CARRIERS = {
 @utilities.Cache('6h')
 def get_smtp_servers(domain):
 	mx_records = dns.resolver.query(domain, 'MX')
-	return map(lambda r: str(r.exchange).rstrip('.'), mx_records)
+	return list(map(lambda r: str(r.exchange).rstrip('.'), mx_records))
 
 def normalize_name(name):
 	return name.lower().replace('&', '').replace('-', '')
@@ -71,7 +76,7 @@ def lookup_carrier_gateway(carrier):
 	:rtype: str
 	"""
 	carrier = normalize_name(carrier)
-	carrier_address = filter(lambda c: normalize_name(c) == carrier, CARRIERS.keys())
+	carrier_address = list(filter(lambda c: normalize_name(c) == carrier, CARRIERS.keys()))
 	if len(carrier_address) != 1:
 		return None
 	return CARRIERS[carrier_address[0]]

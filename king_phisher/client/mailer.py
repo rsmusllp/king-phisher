@@ -76,9 +76,9 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	"""
 	if uid == None:
 		template_environment.set_mode(template_environment.MODE_PREVIEW)
-	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
-	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
-	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, (str, unicode)) else target_email)
+	first_name = ('Alice' if not isinstance(first_name, str) else first_name)
+	last_name = ('Liddle' if not isinstance(last_name, str) else last_name)
+	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, str) else target_email)
 	uid = (uid or config['server_config'].get('server.secret_id') or make_uid())
 
 	template = template_environment.from_string(template)

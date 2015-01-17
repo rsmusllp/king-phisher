@@ -596,7 +596,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 
 		trained = self.get_query_parameter('trained')
-		if isinstance(trained, (str, unicode)) and trained.lower() in ['1', 'true', 'yes']:
+		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
 			message.trained = True
 		session.commit()
 		session.close()

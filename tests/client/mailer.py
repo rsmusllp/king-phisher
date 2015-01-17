@@ -72,9 +72,9 @@ class ClientMailerTests(testing.KingPhisherTestCase):
 
 		formatted_msg = format_message(testing.TEST_MESSAGE_TEMPLATE, self.config)
 		regexp = """(<a href="https?://king-phisher.local/foobar\?id={0}">)""".format(secret_id)
-		self.assertRegexMatches(formatted_msg, regexp, msg='The web server URL was not inserted correctly')
+		self.assertRegex(formatted_msg, regexp, msg='The web server URL was not inserted correctly')
 		regexp = """(<img src="https?://king-phisher.local/{0}\?id={1}" style="display:none" />)""".format(tracking_image, secret_id)
-		self.assertRegexMatches(formatted_msg, regexp, msg='The tracking image tag was not inserted correctly')
+		self.assertRegex(formatted_msg, regexp, msg='The tracking image tag was not inserted correctly')
 
 	def test_client_template_environment_mode_analyze(self):
 		tenv = MessageTemplateEnvironment()
@@ -88,7 +88,7 @@ class ClientMailerTests(testing.KingPhisherTestCase):
 		msg = 'The analysis mode failed to identify the inline image'
 		self.assertIn(testing.TEST_MESSAGE_TEMPLATE_INLINE_IMAGE, tenv.attachment_images, msg=msg)
 		cid_value = tenv.attachment_images[testing.TEST_MESSAGE_TEMPLATE_INLINE_IMAGE]
-		self.assertRegexMatches(cid_value, self.image_cid_regex)
+		self.assertRegex(cid_value, self.image_cid_regex)
 
 	def test_client_template_environment_mode_preview(self):
 		tenv = MessageTemplateEnvironment()
@@ -110,7 +110,7 @@ class ClientMailerTests(testing.KingPhisherTestCase):
 		img_tag_test += self.image_cid_regex
 		img_tag_test += r'">'
 		msg = 'The send mode failed to properly format the img HTML tag'
-		self.assertRegexMatches(img_tag_result, img_tag_test, msg=msg)
+		self.assertRegex(img_tag_result, img_tag_test, msg=msg)
 
 if __name__ == '__main__':
 	unittest.main()
