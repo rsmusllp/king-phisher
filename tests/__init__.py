@@ -40,7 +40,7 @@ from .sms import SMSTests
 from .spf import SPFTests
 from .templates import TemplatesTests
 from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
+from .utilities import UtilitiesCacheTests, UtilitiesTests
 from .version import VersionTests
 from .xor import XORTests
 
