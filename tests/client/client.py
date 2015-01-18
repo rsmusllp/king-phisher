@@ -45,7 +45,7 @@ class ClientGUITests(testing.KingPhisherTestCase):
 	def test_client_initialization(self):
 		find.data_path_append('data/client')
 		os.environ['KING_PHISHER_GLADE_FILE'] = 'king-phisher-client.glade'
-		self.assertTrue(isinstance(gui_utilities.which_glade(), (str, unicode)))
+		self.assertTrue(isinstance(gui_utilities.which_glade(), str))
 		try:
 			Gtk.init(sys.argv)
 			main_window = KingPhisherClient()

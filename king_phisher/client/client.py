@@ -433,9 +433,9 @@ class KingPhisherClient(_Gtk_Window):
 		client_template = find.find_data_file('client_config.json')
 		if not os.path.isfile(config_file):
 			shutil.copy(client_template, config_file)
-		self.config = json.load(open(config_file, 'rb'))
+		self.config = json.load(open(config_file, 'r'))
 		if load_defaults:
-			client_template = json.load(open(client_template, 'rb'))
+			client_template = json.load(open(client_template, 'r'))
 			for key, value in client_template.items():
 				if not key in self.config:
 					self.config[key] = value
