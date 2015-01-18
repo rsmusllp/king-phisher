@@ -38,14 +38,9 @@ import os
 import random
 import smtplib
 import socket
+import sys
 import threading
 import time
-import urlparse
-from email import Encoders
-from email.MIMEBase import MIMEBase
-from email.MIMEImage import MIMEImage
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
 
 from king_phisher import templates
 from king_phisher import utilities
@@ -53,6 +48,23 @@ from king_phisher.client import gui_utilities
 from king_phisher.ssh_forward import SSHTCPForwarder
 
 from gi.repository import GLib
+
+if sys.version_info[0] < 3:
+	from email import Encoders as encoders
+	import urllib
+	import urlparse
+	urllib.parse = urlparse
+	from email.MIMEBase import MIMEBase
+	from email.MIMEImage import MIMEImage
+	from email.MIMEMultipart import MIMEMultipart
+	from email.MIMEText import MIMEText
+else:
+	from email import encoders
+	import urllib.parse
+	from email.mime.base import MIMEBase
+	from email.mime.image import MIMEImage
+	from email.mime.multipart import MIMEMultipart
+	from email.mime.text import MIMEText
 
 __all__ = ['format_message', 'guess_smtp_server_address', 'MailSenderThread']
 
@@ -438,7 +450,7 @@ class MailSenderThread(threading.Thread):
 			attachment = self.config['mailer.attachment_file']
 			attachfile = MIMEBase(*mimetypes.guess_type(attachment))
 			attachfile.set_payload(open(attachment, 'rb').read())
-			Encoders.encode_base64(attachfile)
+			encoders.encode_base64(attachfile)
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
 			attachments.append(attachfile)
 		for attachment_file, attachment_name in template_environment.attachment_images.items():

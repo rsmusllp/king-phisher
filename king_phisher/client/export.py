@@ -113,7 +113,7 @@ def convert_value(table_name, key, value):
 	if isinstance(value, datetime.datetime):
 		value = value.isoformat()
 	if value != None:
-		value = str(value).encode('utf-8')
+		value = str(value)
 	return value
 
 def campaign_to_xml(rpc, campaign_id, xml_file):

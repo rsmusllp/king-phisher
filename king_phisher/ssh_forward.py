@@ -32,28 +32,33 @@
 
 import binascii
 import select
-import SocketServer
+import sys
 import threading
 
 import paramiko
 
+if sys.version_info[0] < 3:
+	import SocketServer as socketserver
+else:
+	import socketserver
+
 __all__ = ['SSHTCPForwarder']
 
-class ForwardServer(SocketServer.ThreadingTCPServer):
+class ForwardServer(socketserver.ThreadingTCPServer):
 	daemon_threads = True
 	allow_reuse_address = True
 	def __init__(self, remote_server, ssh_transport, *args, **kwargs):
 		self.remote_server = remote_server
 		self.ssh_transport = ssh_transport
-		SocketServer.ThreadingTCPServer.__init__(self, *args, **kwargs)
+		socketserver.ThreadingTCPServer.__init__(self, *args, **kwargs)
 
-class ForwardHandler(SocketServer.BaseRequestHandler):
+class ForwardHandler(socketserver.BaseRequestHandler):
 	def __init__(self, *args, **kwargs):
 		self.server = args[2]
 		self.chain_host = self.server.remote_server[0]
 		self.chain_port = self.server.remote_server[1]
 		self.ssh_transport = self.server.ssh_transport
-		SocketServer.BaseRequestHandler.__init__(self, *args, **kwargs)
+		socketserver.BaseRequestHandler.__init__(self, *args, **kwargs)
 
 	def handle(self):
 		try:

@@ -34,9 +34,8 @@ import datetime
 import ipaddress
 import os
 import socket
+import sys
 import urllib
-import urllib2
-import urlparse
 
 from king_phisher import spf
 from king_phisher import utilities
@@ -49,6 +48,16 @@ from king_phisher.errors import KingPhisherInputValidationError
 from gi.repository import Gtk
 from gi.repository import WebKit
 
+if sys.version_info[0] < 3:
+	import urllib2
+	import urlparse
+	urllib.parse = urlparse
+	urllib.parse.urlencode = urllib.urlencode
+	urllib.request = urllib2
+else:
+	import urllib.parse
+	import urllib.request
+
 def test_webserver_url(target_url, secret_id):
 	"""
 	Test the target URL to ensure that it is valid and the server is responding.
@@ -56,12 +65,12 @@ def test_webserver_url(target_url, secret_id):
 	:param str target_url: The URL to make a test request to.
 	:param str secret_id: The King Phisher Server secret id to include in the test request.
 	"""
-	parsed_url = urlparse.urlparse(target_url)
-	query = urlparse.parse_qs(parsed_url.query)
+	parsed_url = urllib.parse.urlparse(target_url)
+	query = urllib.parse.parse_qs(parsed_url.query)
 	query['id'] = [secret_id]
-	query = urllib.urlencode(query, True)
-	target_url = urlparse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
-	urllib2.urlopen(target_url, timeout=5)
+	query = urllib.parse.urlencode(query, True)
+	target_url = urllib.parse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
+	urllib.request.urlopen(target_url, timeout=5)
 
 class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 	"""
@@ -198,7 +207,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			return
 		self.text_insert('done.\n')
 
-		parsed_target_url = urlparse.urlparse(self.config['mailer.webserver_url'])
+		parsed_target_url = urllib.parse.urlparse(self.config['mailer.webserver_url'])
 		landing_page_hostname = parsed_target_url.netloc
 		landing_page = parsed_target_url.path
 		landing_page = landing_page.lstrip('/')
@@ -488,9 +497,9 @@ class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 			test_webserver_url(target_url, self.config['server_config']['server.secret_id'])
 		except Exception as error:
 			error_description = None
-			if isinstance(error, urllib2.URLError) and hasattr(error, 'reason') and isinstance(error.reason, Exception):
+			if isinstance(error, urllib.request.URLError) and hasattr(error, 'reason') and isinstance(error.reason, Exception):
 				error = error.reason
-			if isinstance(error, urllib2.HTTPError) and error.getcode():
+			if isinstance(error, urllib.request.HTTPError) and error.getcode():
 				self.logger.warning("verify url HTTPError: {0} {1}".format(error.getcode(), error.reason))
 				error_description = "HTTP status {0} {1}".format(error.getcode(), error.reason)
 			elif isinstance(error, socket.gaierror):
@@ -621,7 +630,7 @@ class MailSenderTab(object):
 				return
 			html_data = open(html_file, 'r').read()
 			html_data = mailer.format_message(html_data, self.config)
-			html_file_uri = urlparse.urlparse(html_file, 'file').geturl()
+			html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
 			if not html_file_uri.startswith('file://'):
 				html_file_uri = 'file://' + html_file_uri
 			preview_tab.webview.load_html_string(html_data, html_file_uri)
