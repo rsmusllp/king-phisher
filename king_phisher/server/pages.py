@@ -30,10 +30,16 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import cgi
+import sys
+
 import markupsafe
 
 from king_phisher import utilities
+
+if sys.version_info[0] < 3:
+	import cgi as html
+else:
+	import html
 
 def make_csrf_page(url, params, method='POST'):
 	"""
@@ -44,7 +50,7 @@ def make_csrf_page(url, params, method='POST'):
 	:param dict params: The parameters to send in the forged request.
 	:param str method: The HTTP method to use when submitting the form.
 	"""
-	escape = lambda s: cgi.escape(s, quote=True)
+	escape = lambda s: html.escape(s, quote=True)
 	form_id = utilities.random_string(12)
 
 	page = []
@@ -69,8 +75,8 @@ def make_redirect_page(url, title='Automatic Redirect'):
 	:param str url: The URL to redirect the user to.
 	:param str title: The title to use in the resulting HTML page.
 	"""
-	title = cgi.escape(title, quote=True)
-	url = cgi.escape(url, quote=True)
+	title = html.escape(title, quote=True)
+	url = html.escape(url, quote=True)
 
 	page = []
 	page.append('<!DOCTYPE html>')

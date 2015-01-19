@@ -38,7 +38,7 @@ from king_phisher.client import gui_utilities
 
 class ClientDialogTests(testing.KingPhisherTestCase):
 	def test_client_dialog_classes(self):
-		dialog_names = filter(lambda d: d.endswith('Dialog'), dir(dialogs))
+		dialog_names = list(filter(lambda d: d.endswith('Dialog'), dir(dialogs)))
 		self.assertGreater(len(dialog_names), 0, msg='failed to identify any dialog objects')
 		for dialog_name in dialog_names:
 			dialog_obj = getattr(dialogs, dialog_name)

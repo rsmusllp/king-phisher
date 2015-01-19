@@ -34,8 +34,8 @@ import logging
 
 from .authenticator import ServerAuthenticatorTests
 from .database import ServerDatabaseTests
-from .server import ServerTests
 from .server import CampaignWorkflowTests
+from .server import ServerTests
 from .server_rpc import ServerRPCTests
 
 if hasattr(logging, 'NullHandler'):

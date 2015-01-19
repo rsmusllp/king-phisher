@@ -30,16 +30,21 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import cgi
 import datetime
 import logging
 import os
+import sys
 import random
 
 from king_phisher import utilities
 from king_phisher import version
 
 import jinja2
+
+if sys.version_info[0] < 3:
+	import cgi as html
+else:
+	import html
 
 __all__ = ['BaseTemplateEnvironment', 'MessageTemplateEnvironment']
 
@@ -117,7 +122,7 @@ class MessageTemplateEnvironment(BaseTemplateEnvironment):
 			if not image_path.startswith('/'):
 				image_path = '/' + image_path
 			image_path = 'file://' + image_path
-			return "<img src=\"{0}\">".format(cgi.escape(image_path, quote=True))
+			return "<img src=\"{0}\">".format(html.escape(image_path, quote=True))
 		if image_path in self.attachment_images:
 			attachment_name = self.attachment_images[image_path]
 		else:
@@ -125,4 +130,4 @@ class MessageTemplateEnvironment(BaseTemplateEnvironment):
 			while attachment_name in self.attachment_images.values():
 				attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
 			self.attachment_images[image_path] = attachment_name
-		return "<img src=\"cid:{0}\">".format(cgi.escape(attachment_name, quote=True))
+		return "<img src=\"cid:{0}\">".format(html.escape(attachment_name, quote=True))
