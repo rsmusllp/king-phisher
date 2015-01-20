@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 __all__ = [
 	'AdvancedHTTPServer',
 	'AdvancedHTTPServerRegisterPath',
@@ -80,7 +80,6 @@ __all__ = [
 
 import base64
 import binascii
-import cgi
 import datetime
 import hashlib
 import hmac
@@ -108,6 +107,7 @@ import zlib
 
 if sys.version_info[0] < 3:
 	import BaseHTTPServer
+	import cgi as html
 	import Cookie
 	import httplib
 	import SocketServer as socketserver
@@ -118,6 +118,7 @@ if sys.version_info[0] < 3:
 	urllib.parse.unquote = urllib.unquote
 	from ConfigParser import ConfigParser
 else:
+	import html
 	import http.client
 	import http.cookies
 	import http.server
@@ -143,7 +144,7 @@ def _json_object_hook(obj):
 
 SERIALIZER_DRIVERS = {}
 """Dictionary of available drivers for serialization."""
-SERIALIZER_DRIVERS['application/json'] = {'loads': lambda d: json.loads(d, object_hook=_json_object_hook), 'dumps': lambda d: json.dumps(d, default=_json_default)}
+SERIALIZER_DRIVERS['application/json'] = {'loads': lambda d, e: json.loads(d, object_hook=_json_object_hook), 'dumps': lambda d: json.dumps(d, default=_json_default)}
 
 try:
 	import msgpack
@@ -162,7 +163,7 @@ else:
 			else:
 				return datetime.datetime.strptime(data, '%Y-%m-%dT%H:%M:%S')
 		return msfpack.ExtType(code, data)
-	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads': lambda d: msgpack.loads(d, ext_hook=_msgpack_ext_hook), 'dumps': lambda d: msgpack.dumps(d, default=_msgpack_default)}
+	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads': lambda d, e: msgpack.loads(d, encoding=e, ext_hook=_msgpack_ext_hook), 'dumps': lambda d: msgpack.dumps(d, default=_msgpack_default)}
 
 
 if hasattr(logging, 'NullHandler'):
@@ -179,6 +180,27 @@ def random_string(size):
 	:rtype: str
 	"""
 	return ''.join(random.choice(string.ascii_letters + string.digits) for x in range(size))
+
+def resolve_ssl_protocol_version(version=None):
+	"""
+	Look up an SSL protocol version by name. If *version* is not specified, then
+	the strongest protocol available will be returned.
+
+	:param str version: The name of the version to look up.
+	:return: A protocol constant from the :py:mod:`ssl` module.
+	:rtype: int
+	"""
+	if version == None:
+		protocol_preference = ('TLSv1_2', 'TLSv1_1', 'TLSv1', 'SSLv3', 'SSLv23', 'SSLv2')
+		for protocol in protocol_preference:
+			if hasattr(ssl, 'PROTOCOL_' + protocol):
+				return getattr(ssl, 'PROTOCOL_' + protocol)
+		raise RuntimeError('could not find a suitable ssl PROTOCOL_ version constant')
+	elif isinstance(version, str):
+		if not hasattr(ssl, 'PROTOCOL_' + version):
+			raise ValueError('invalid ssl protocol version: ' + version)
+		return getattr(ssl, 'PROTOCOL_' + version)
+	raise TypeError("ssl_version() argument 1 must be str, not {0}".format(type(version).__name__))
 
 def build_serializer_from_content_type(content_type):
 	"""
@@ -384,8 +406,10 @@ class AdvancedHTTPServerRPCError(Exception):
 	@property
 	def is_remote_exception(self):
 		"""
-		This is true of the represented error resulted from an exception
-		on the remote server.
+		This is true if the represented error resulted from an exception on the
+		remote server.
+
+		:type: bool
 		"""
 		return bool(self.remote_exception != None)
 
@@ -536,7 +560,7 @@ class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 		cursor.execute('SELECT return_value FROM cache WHERE method = ? AND options_hash = ?', (method, options_hash))
 		return_value = cursor.fetchone()
 		if return_value:
-			return_value = self.cache_serializer_loads(return_value[0])
+			return_value = self.cache_serializer_loads(return_value[0], 'UTF-8')
 		else:
 			return_value = self.call(method, *options)
 			cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, self.cache_serializer_dumps(return_value)))
@@ -703,7 +727,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		if os.path.normpath(dir_path) != self.server.serve_files_root:
 			dir_contents.append('..')
 		dir_contents.sort(key=lambda a: a.lower())
-		displaypath = cgi.escape(urllib.parse.unquote(self.path))
+		displaypath = html.escape(urllib.parse.unquote(self.path), quote=True)
 
 		f = io.BytesIO()
 		encoding = sys.getfilesystemencoding()
@@ -721,7 +745,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 			if os.path.islink(fullname):
 				displayname = name + "@"
 				# Note: a link to a directory displays with @ and links with /
-			f.write(('<li><a href="' + urllib.parse.quote(linkname) + '">' + cgi.escape(displayname) + '</a>\n').encode(encoding))
+			f.write(('<li><a href="' + urllib.parse.quote(linkname) + '">' + html.escape(displayname, quote=True) + '</a>\n').encode(encoding))
 		f.write(b'</ul>\n<hr>\n</body>\n</html>\n')
 		length = f.tell()
 		f.seek(0)
@@ -1170,7 +1194,7 @@ class AdvancedHTTPServerSerializer(object):
 			data = zlib.decompress(data)
 		if sys.version_info[0] == 3 and self.name.startswith('application/'):
 			data = data.decode(self._charset)
-		data = SERIALIZER_DRIVERS[self.name]['loads'](data)
+		data = SERIALIZER_DRIVERS[self.name]['loads'](data, (self._charset if sys.version_info[0] == 3 else None))
 		if isinstance(data, list):
 			data = tuple(data)
 		return data
@@ -1183,7 +1207,7 @@ class AdvancedHTTPServer(object):
 	the port is guessed based on if the server is run as root or not and
 	SSL is used.
 	"""
-	def __init__(self, RequestHandler, address=None, use_threads=True, ssl_certfile=None, ssl_keyfile=None):
+	def __init__(self, RequestHandler, address=None, use_threads=True, ssl_certfile=None, ssl_keyfile=None, ssl_version=None):
 		"""
 		:param RequestHandler: The request handler class to use.
 		:type RequestHandler: :py:class:`.AdvancedHTTPServerRequestHandler`
@@ -1191,6 +1215,7 @@ class AdvancedHTTPServer(object):
 		:param bool use_threads: Whether to enable the use of a threaded handler.
 		:param str ssl_certfile: An SSL certificate file to use, setting this enables SSL.
 		:param str ssl_keyfile: An SSL certificate file to use.
+		:param ssl_version: The SSL protocol version to use.
 		"""
 		self.use_ssl = bool(ssl_certfile)
 		if address == None:
@@ -1218,7 +1243,9 @@ class AdvancedHTTPServer(object):
 		self.logger.info('listening on ' + address[0] + ':' + str(address[1]))
 
 		if self.use_ssl:
-			self.http_server.socket = ssl.wrap_socket(self.http_server.socket, keyfile=ssl_keyfile, certfile=ssl_certfile, server_side=True)
+			if ssl_version == None or isinstance(ssl_version, str):
+				ssl_version = resolve_ssl_protocol_version(ssl_version)
+			self.http_server.socket = ssl.wrap_socket(self.http_server.socket, keyfile=ssl_keyfile, certfile=ssl_certfile, server_side=True, ssl_version=ssl_version)
 			self.http_server.using_ssl = True
 			self.logger.info(address[0] + ':' + str(address[1]) + ' - ssl has been enabled')
 
@@ -1373,7 +1400,8 @@ class AdvancedHTTPServer(object):
 		as a hash by specifying the hash type in the *pwtype* argument.
 
 		:param str username: The username of the credentials to be added.
-		:param bytes, str password: The password data of the credentials to be added.
+		:param password: The password data of the credentials to be added.
+		:type password: bytes, str
 		:param str pwtype: The type of the *password* data, (plain, md5, sha1, etc.).
 		"""
 		if not isinstance(password, (bytes, str)):
