@@ -46,8 +46,12 @@ from king_phisher.server.server import *
 if sys.version_info[0] < 3:
 	import httplib
 	http = type('http', (), {'client': httplib})
+	import urlparse
+	urllib.parse = urlparse
+	urllib.parse.urlencode = urllib.urlencode
 else:
 	import http.client
+	import urllib.parse
 
 __all__ = [
 	'TEST_MESSAGE_TEMPLATE',
@@ -169,7 +173,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		conn = http.client.HTTPConnection('localhost', self.config.get('server.address.port'))
 		request_kwargs = {}
 		if isinstance(body, dict):
-			body = urllib.urlencode(body)
+			body = urllib.parse.urlencode(body)
 		if body:
 			request_kwargs['body'] = body
 		if headers:

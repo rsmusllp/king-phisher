@@ -301,7 +301,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	@property
 	def vhost(self):
 		"""The value of the Host HTTP header."""
-		return self.headers.get('Host', '').split(':')[0]
+		return self.headers.get('host', '').split(':')[0]
 
 	def respond_file(self, file_path, attachment=False, query={}):
 		self._respond_file_check_id()
@@ -410,7 +410,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.end_headers()
 		page_404 = find.find_data_file('error_404.html')
 		if page_404:
-			shutil.copyfileobj(open(page_404), self.wfile)
+			with open(page_404, 'rb') as page_404:
+				shutil.copyfileobj(page_404, self.wfile)
 		else:
 			self.wfile.write('Resource Not Found\n')
 		return
@@ -511,7 +512,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not kp_hook_js:
 			self.respond_not_found()
 			return
-		javascript = open(kp_hook_js).read()
+		with open(kp_hook_js, 'r') as kp_hook_js:
+			javascript = kp_hook_js.read()
 		if self.config.has_option('beef.hook_url'):
 			javascript += "\nloadScript('{0}');\n\n".format(self.config.get('beef.hook_url'))
 		self.send_response(200)
@@ -563,7 +565,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.send_header('Set-Cookie', cookie)
 			visit = db_models.Visit(id=visit_id, campaign_id=campaign_id, message_id=message_id)
 			visit.visitor_ip = self.client_address[0]
-			visit.visitor_details = (self.headers.getheader('user-agent') or '')
+			visit.visitor_details = self.headers.get('user-agent', '')
 			session.add(visit)
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in [1, 10, 25]) or ((visit_count % 50) == 0)):

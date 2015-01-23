@@ -335,7 +335,7 @@ class KingPhisherRequestHandlerRPC(object):
 		query = session.query(table)
 		query = query.filter_by(**dict(zip(map(lambda f: f + '_id', fields), args)))
 		for row in query[offset:offset + VIEW_ROW_COUNT]:
-			rows.append(map(lambda c: getattr(row, c), columns))
+			rows.append(list(map(lambda c: getattr(row, c), columns)))
 		session.close()
 		if not len(rows):
 			return None

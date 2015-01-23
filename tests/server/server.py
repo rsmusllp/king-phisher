@@ -98,7 +98,7 @@ class ServerTests(KingPhisherServerTestCase):
 		http_response = self.http_request(self.config.get('server.tracking_image'), include_id=False)
 		self.assertHTTPStatus(http_response, 200)
 		image_data = http_response.read()
-		self.assertTrue(image_data.startswith('GIF'))
+		self.assertTrue(image_data.startswith(b'GIF'))
 
 class CampaignWorkflowTests(KingPhisherServerTestCase):
 	"""
@@ -109,7 +109,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.campaign_id = self.rpc('campaign/new', 'Unit Test Campaign')
 
 	def step_2_send_messages(self):
-		self.landing_page = filter(lambda f: os.path.splitext(f)[1] == '.html', self.web_root_files())[0]
+		self.landing_page = list(filter(lambda f: os.path.splitext(f)[1] == '.html', self.web_root_files()))[0]
 		self.rpc('campaign/landing_page/new', self.campaign_id, 'localhost', self.landing_page)
 		message_count = self.rpc('campaign/messages/count', self.campaign_id)
 		self.assertEqual(message_count, 0)
@@ -143,7 +143,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.assertHTTPStatus(response, 200)
 		creds_count = self.rpc('campaign/credentials/count', self.campaign_id)
 		self.assertEqual(creds_count, 1)
-		cred = self.rpc.remote_table('campaign/credentials', self.campaign_id).next()
+		cred = next(self.rpc.remote_table('campaign/credentials', self.campaign_id))
 		self.assertEqual(cred['username'], username)
 		self.assertEqual(cred['password'], password)
 		self.assertEqual(cred['message_id'], self.message_id)
@@ -160,7 +160,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 
 	def steps(self):
 		steps = filter(lambda f: f.startswith('step_'), dir(self))
-		steps = sorted(steps, lambda x, y: cmp(int(x.split('_')[1]), int(y.split('_')[1])))
+		steps = sorted(steps, key=lambda x: int(x.split('_')[1]))
 		for name in steps:
 			yield name, getattr(self, name)
 
