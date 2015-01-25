@@ -482,7 +482,7 @@ class CampaignViewTab(object):
 
 		self.notebook = Gtk.Notebook()
 		""" The :py:class:`Gtk.Notebook` for holding sub-tabs."""
-		self.notebook.connect('switch-page', self._tab_changed)
+		self.notebook.connect('switch-page', self.signal_notebook_switch_page)
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
@@ -525,7 +525,7 @@ class CampaignViewTab(object):
 			if hasattr(tab, 'load_campaign_information'):
 				tab.load_campaign_information(force=True)
 
-	def _tab_changed(self, notebook, current_page, index):
+	def signal_notebook_switch_page(self, notebook, current_page, index):
 		if not hasattr(self.parent, 'rpc'):
 			return
 		#previous_page = notebook.get_nth_page(self.last_page_id)

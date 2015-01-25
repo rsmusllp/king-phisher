@@ -364,7 +364,7 @@ class JobManager(object):
 		job_desc = self._jobs[job_id]
 		with self._job_lock:
 			job_desc['enabled'] = False
-			if self.job_is_running(job_id):
+			if wait and self.job_is_running(job_id):
 				job_desc['job'].join()
 			del self._jobs[job_id]
 

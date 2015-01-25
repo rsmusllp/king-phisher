@@ -525,6 +525,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.send_header('Access-Control-Allow-Methods', 'POST, GET')
 		self.send_header('Content-Length', str(len(javascript)))
 		self.end_headers()
+		if not isinstance(javascript, bytes):
+			javascript = javascript.encode('utf-8')
 		self.wfile.write(javascript)
 		return
 

@@ -5,6 +5,7 @@
 *.log
 *.py[cod]
 *.yml
+.pylintrc
 build/*
 data/*/king_phisher/plugins/*
 dist/*

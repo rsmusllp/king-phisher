@@ -81,6 +81,7 @@ class ServerTests(KingPhisherServerTestCase):
 		error_message = "HTTP Response received Content-Type {0} when {1} was expected".format(content_type, 'text/javascript')
 		self.assertEqual(content_type, 'text/javascript', msg=error_message)
 		javascript = http_response.read()
+		javascript = str(javascript.decode('utf-8'))
 		load_script = 'function loadScript(url, callback) {'
 		error_message = "Javascript did not defined the loadScript function"
 		self.assertTrue(load_script in javascript, msg=error_message)
@@ -90,6 +91,7 @@ class ServerTests(KingPhisherServerTestCase):
 		http_response = self.http_request('kp.js')
 		self.assertHTTPStatus(http_response, 200)
 		javascript = http_response.read()
+		javascript = str(javascript.decode('utf-8'))
 		load_script = "loadScript('{0}');".format(beef_hook_url)
 		error_message = "Javascript did not load the beef hook from the config"
 		self.assertTrue(load_script in javascript, msg=error_message)
