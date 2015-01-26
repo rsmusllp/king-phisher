@@ -72,7 +72,10 @@ class KingPhisherClientRPCTerminal(object):
 		self.parent = parent
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		if not has_vte:
-			gui_utilities.show_dialog_error('RPC terminal is unavailable', parent, 'VTE is not installed')
+			gui_utilities.show_dialog_error('RPC Terminal Is Unavailable', parent, 'VTE is not installed')
+			return
+		if not hasattr(Vte.Terminal, 'fork_command_full'):
+			gui_utilities.show_dialog_error('RPC Terminal Is Unavailable', parent, 'The VTE version is incompatible')
 			return
 		self.window = Gtk.Window()
 		self.window.set_property('title', 'King Phisher RPC')
