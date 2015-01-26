@@ -33,10 +33,10 @@ Brandan Geise
 
 -->
 <interface>
-  <requires lib="gtk+" version="3.10"/>
+  <requires lib="gtk+" version="3.4"/>
   <!-- interface-license-type bsd3c -->
   <!-- interface-name King Phisher -->
-  <!-- interface-description Phishing Toolkit -->
+  <!-- interface-description Social Engineering Phishing Toolkit -->
   <!-- interface-copyright 2013-2015, SecureState LLC -->
   <!-- interface-authors Spencer McIntyre\nJeff McCutchan\nBrandan Geise -->
   <object class="GtkBox" id="CampaignViewCredentialsTab">
