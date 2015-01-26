@@ -46,12 +46,10 @@ class ClientGUITests(testing.KingPhisherTestCase):
 		find.data_path_append('data/client')
 		os.environ['KING_PHISHER_GLADE_FILE'] = 'king-phisher-client.glade'
 		self.assertTrue(isinstance(gui_utilities.which_glade(), str))
-		try:
-			Gtk.init(sys.argv)
-			main_window = KingPhisherClient()
-			main_window.set_position(Gtk.WindowPosition.CENTER)
-		except Exception as error:
-			self.fail("failed to initialize KingPhisherClient (error: {0})".format(error.__class__.__name__))
+
+		Gtk.init(sys.argv)
+		main_window = KingPhisherClient()
+		main_window.set_position(Gtk.WindowPosition.CENTER)
 
 	def test_client_template_config(self):
 		find.data_path_append('data/client')

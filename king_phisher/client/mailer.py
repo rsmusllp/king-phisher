@@ -307,7 +307,7 @@ class MailSenderThread(threading.Thread):
 		:rtype: int
 		"""
 		targets = 0
-		target_file_h = open(self.target_file, 'r')
+		target_file_h = open(self.target_file, 'rU')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
 			if not utilities.is_valid_email_address(target['email_address']):
@@ -328,7 +328,7 @@ class MailSenderThread(threading.Thread):
 		self._mime_attachments = self._get_mime_attachments()
 		self.logger.debug("loaded {0:,} MIME attachments".format(len(self._mime_attachments)))
 
-		target_file_h = open(self.target_file, 'r')
+		target_file_h = open(self.target_file, 'rU')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
 			if not utilities.is_valid_email_address(target['email_address']):
@@ -430,7 +430,9 @@ class MailSenderThread(threading.Thread):
 		msg.preamble = 'This is a multi-part message in MIME format.'
 		msg_alt = MIMEMultipart('alternative')
 		msg.attach(msg_alt)
-		msg_template = open(self.config['mailer.html_file'], 'r').read()
+		with open(self.config['mailer.html_file'], 'rb') as file_h:
+			msg_template = file_h.read()
+		msg_template = str(msg_template.decode('utf-8', 'ignore'))
 		formatted_msg = format_message(msg_template, self.config, first_name=first_name, last_name=last_name, uid=uid, target_email=target_email)
 		msg_body = MIMEText(formatted_msg, "html")
 		msg_alt.attach(msg_body)
