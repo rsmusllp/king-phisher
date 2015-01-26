@@ -623,12 +623,17 @@ class MailSenderTab(object):
 				return
 			edit_tab.button_save_html_file.set_sensitive(True)
 			edit_tab.textview.set_property('editable', True)
-			edit_tab.textbuffer.set_text(open(html_file, 'r').read())
+			with open(html_file, 'rb') as file_h:
+				html_data = file_h.read()
+			html_data = str(html_data.decode('utf-8', 'ignore'))
+			edit_tab.textbuffer.set_text(html_data)
 		elif preview_tab and current_page == preview_tab.box:
 			html_file = self.config.get('mailer.html_file')
 			if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 				return
-			html_data = open(html_file, 'r').read()
+			with open(html_file, 'rb') as file_h:
+				html_data = file_h.read()
+			html_data = str(html_data.decode('utf-8', 'ignore'))
 			html_data = mailer.format_message(html_data, self.config)
 			html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
 			if not html_file_uri.startswith('file://'):

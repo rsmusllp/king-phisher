@@ -11,6 +11,7 @@ data/*/king_phisher/plugins/*
 dist/*
 docs/build/*
 docs/html/*
+todo.txt
 
 !data/server/king_phisher/error_*.html
 !data/server/king_phisher/server_config.yml
