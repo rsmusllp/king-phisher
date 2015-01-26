@@ -113,7 +113,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			'mailer.webserver_url': 'Web Server URL',
 			'mailer.company_name': 'Company Name',
 			'mailer.source_email': 'Source Email',
-			'mailer.subject': 'Friendly Alias',
+			'mailer.subject': 'Subject',
 			'mailer.html_file': 'Message HTML File',
 			'mailer.target_file': 'Target CSV File'
 		}
