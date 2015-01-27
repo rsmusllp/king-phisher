@@ -94,6 +94,7 @@ class KingPhisherClient(_Gtk_Window):
 		# print version information for debugging purposes
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
 		self.logger.debug("gi.repository GObject version: {0}".format('.'.join(map(str, GObject.pygobject_version))))
+		self.logger.debug("gi.repository Gtk version: {0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()))
 		if tools.has_vte:
 			self.logger.debug("gi.repository VTE version: {0}".format(tools.Vte._version))
 		if graphs.has_matplotlib:
