@@ -30,10 +30,15 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import code
+import getpass
+import json
 import logging
+import os
+import sys
 
-from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCClientCached
-
+from king_phisher import find
+from king_phisher.third_party import AdvancedHTTPServer
 try:
 	import msgpack
 	has_msgpack = True
@@ -41,7 +46,7 @@ try:
 except ImportError:
 	has_msgpack = False
 
-class KingPhisherRPCClient(AdvancedHTTPServerRPCClientCached):
+class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached):
 	"""
 	The main RPC object for communicating with the King Phisher Server
 	over RPC.
@@ -96,3 +101,57 @@ class KingPhisherRPCClient(AdvancedHTTPServerRPCClientCached):
 		else:
 			result = self.call(table_method, row_id)
 		return result
+
+def vte_child_routine(config):
+	"""
+	This is the method which is executed within the child process spawned
+	by VTE. It expects additional values to be set in the *config*
+	object so it can initialize a new :py:class:`.KingPhisherRPCClient`
+	instance. It will then drop into an interpreter where the user may directly
+	interact with the rpc object.
+
+	:param str config: A JSON encoded client configuration.
+	"""
+	config = json.loads(config)
+	try:
+		import readline
+		import rlcompleter
+	except ImportError:
+		pass
+	else:
+		readline.parse_and_bind('tab: complete')
+	plugins_directory = find.find_data_directory('plugins')
+	if plugins_directory:
+		sys.path.append(plugins_directory)
+
+	rpc = KingPhisherRPCClient(**config['rpc_data'])
+	logged_in = False
+	for _ in range(0, 3):
+		rpc.password = getpass.getpass("{0}@{1}'s password: ".format(rpc.username, rpc.host))
+		try:
+			logged_in = rpc('ping')
+		except AdvancedHTTPServer.AdvancedHTTPServerRPCError:
+			print('Permission denied, please try again.')
+			continue
+		else:
+			break
+	if not logged_in:
+		return
+
+	banner = "Python {0} on {1}".format(sys.version, sys.platform)
+	print(banner)
+	information = "Campaign Name: '{0}'  ID: {1}".format(config['campaign_name'], config['campaign_id'])
+	print(information)
+	console_vars = {
+		'CAMPAIGN_NAME': config['campaign_name'],
+		'CAMPAIGN_ID': config['campaign_id'],
+		'os': os,
+		'rpc': rpc,
+		'sys': sys
+	}
+	export_to_builtins = ['CAMPAIGN_NAME', 'CAMPAIGN_ID', 'rpc']
+	console = code.InteractiveConsole(console_vars)
+	for var in export_to_builtins:
+		console.push("__builtins__['{0}'] = {0}".format(var))
+	console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
+	return

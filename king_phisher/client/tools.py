@@ -30,22 +30,19 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import code
-import getpass
 import json
 import logging
 import os
 import select
 import signal
-import sys
 
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
+from king_phisher.client import client_rpc
 from king_phisher.client import gui_utilities
-from king_phisher.client.client_rpc import KingPhisherRPCClient
-from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from gi.repository import GLib
 from gi.repository import Gtk
 
 try:
@@ -74,9 +71,7 @@ class KingPhisherClientRPCTerminal(object):
 		if not has_vte:
 			gui_utilities.show_dialog_error('RPC Terminal Is Unavailable', parent, 'VTE is not installed')
 			return
-		if not hasattr(Vte.Terminal, 'fork_command_full'):
-			gui_utilities.show_dialog_error('RPC Terminal Is Unavailable', parent, 'The VTE version is incompatible')
-			return
+
 		self.window = Gtk.Window()
 		self.window.set_property('title', 'King Phisher RPC')
 		self.window.set_transient_for(parent)
@@ -107,12 +102,12 @@ class KingPhisherClientRPCTerminal(object):
 			'hmac_key': rpc.hmac_key,
 		}
 
-		module_path = os.path.dirname(__file__) + (os.path.sep + '..') * self.__module__.count('.')
+		module_path = os.path.dirname(client_rpc.__file__) + ((os.path.sep + '..') * client_rpc.__name__.count('.'))
 		module_path = os.path.normpath(module_path)
 
 		python_command = [
-			"import {0}".format(self.__module__),
-			"{0}.{1}.child_routine('{2}')".format(self.__module__, self.__class__.__name__, json.dumps(config))
+			"import {0}".format(client_rpc.__name__),
+			"{0}.vte_child_routine('{1}')".format(client_rpc.__name__, json.dumps(config))
 		]
 		python_command = '; '.join(python_command)
 
@@ -120,72 +115,25 @@ class KingPhisherClientRPCTerminal(object):
 		argv.append(utilities.which('python'))
 		argv.append('-c')
 		argv.append(python_command)
+		env = ['PYTHONPATH=' + module_path]
+		flags = (GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD)
 
-		env = ('PYTHONPATH=' + module_path,)
-		_, child_pid = self.terminal.fork_command_full(0, os.getcwd(), argv, env, 0, None, None)
+		vte_pty = self.terminal.pty_new_sync(Vte.PtyFlags.DEFAULT)
+		self.terminal.set_pty(vte_pty)
+		child_pid, _, _, _ = GLib.spawn_async(working_directory=os.getcwd(), argv=argv, envp=env, flags=flags, child_setup=self._child_setup, user_data=vte_pty)
+
 		self.logger.info("vte spawned child process with pid: {0}".format(child_pid))
 		self.child_pid = child_pid
-		self.terminal.connect('child-exited', lambda vt: self.window.destroy())
+		self.terminal.set_pty(vte_pty)
+		self.terminal.watch_child(child_pid)
+		GLib.spawn_close_pid(child_pid)
+		self.terminal.connect('child-exited', lambda vt, status: self.window.destroy())
 		self.window.show_all()
 
-		# Automatically enter the password
-		vte_pty = self.terminal.get_pty_object()
+		# automatically enter the password
 		vte_pty_fd = vte_pty.get_fd()
-		if len(select.select([vte_pty_fd], [], [], 0.5)[0]):
+		if len(select.select([vte_pty_fd], [], [], 1)[0]):
 			os.write(vte_pty_fd, rpc.password + '\n')
-		return
-
-	@staticmethod
-	def child_routine(config):
-		"""
-		This is the method which is executed in the child process spawned
-		by VTE. It expects additional values to be set in the *config*
-		object so it can initialize a new :py:class:`.KingPhisherRPCClient`
-		instance.
-
-		:param str config: A JSON encoded client configuration.
-		"""
-		config = json.loads(config)
-		try:
-			import readline
-			import rlcompleter
-		except ImportError:
-			pass
-		else:
-			readline.parse_and_bind('tab: complete')
-		plugins_directory = find.find_data_directory('plugins')
-		if plugins_directory:
-			sys.path.append(plugins_directory)
-
-		rpc = KingPhisherRPCClient(**config['rpc_data'])
-		logged_in = False
-		for _ in range(0, 3):
-			rpc.password = getpass.getpass("{0}@{1}'s password: ".format(rpc.username, rpc.host))
-			try:
-				logged_in = rpc('ping')
-			except AdvancedHTTPServerRPCError:
-				print('Permission denied, please try again.')
-				continue
-			else:
-				break
-		if not logged_in:
-			return
-
-		banner = "Python {0} on {1}".format(sys.version, sys.platform)
-		print(banner)
-		information = "Campaign Name: '{0}'  ID: {1}".format(config['campaign_name'], config['campaign_id'])
-		print(information)
-		console_vars = {
-			'CAMPAIGN_NAME': config['campaign_name'],
-			'CAMPAIGN_ID': config['campaign_id'],
-			'os': os,
-			'rpc': rpc
-		}
-		export_to_builtins = ['CAMPAIGN_NAME', 'CAMPAIGN_ID', 'rpc']
-		console = code.InteractiveConsole(console_vars)
-		for var in export_to_builtins:
-			console.push("__builtins__['{0}'] = {0}".format(var))
-		console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
 		return
 
 	def _add_menu_actions(self, action_group):
@@ -218,6 +166,9 @@ class KingPhisherClientRPCTerminal(object):
 		action.connect('activate', lambda x: utilities.open_uri('https://github.com/securestate/king-phisher/wiki'))
 		action_group.add_action(action)
 
+	def _child_setup(self, vte_pty):
+		vte_pty.child_setup()
+
 	def _create_ui_manager(self):
 		uimanager = Gtk.UIManager()
 		with open(find.find_data_file('ui_info/rpc_terminal_window.xml')) as ui_info_file:
@@ -229,4 +180,5 @@ class KingPhisherClientRPCTerminal(object):
 
 	def signal_window_destroy(self, window):
 		if os.path.exists("/proc/{0}".format(self.child_pid)):
+			self.logger.debug("sending sigkill to child process: {0}".format(self.child_pid))
 			os.kill(self.child_pid, signal.SIGKILL)
