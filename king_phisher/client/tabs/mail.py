@@ -87,7 +87,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Send')
+		self.label = Gtk.Label(label='Send')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderSendTab, self).__init__(*args, **kwargs)
 		self.textview = self.gobjects['textview_mail_sender_progress']
@@ -332,7 +332,7 @@ class MailSenderPreviewTab(object):
 		:param parent: The parent window for this object.
 		:type parent: :py:class:`Gtk.Window`
 		"""
-		self.label = Gtk.Label('Preview')
+		self.label = Gtk.Label(label='Preview')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		self.config = config
 		self.parent = parent
@@ -360,7 +360,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Edit')
+		self.label = Gtk.Label(label='Edit')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderEditTab, self).__init__(*args, **kwargs)
 		self.textview = self.gobjects['textview_html_file']
@@ -486,7 +486,7 @@ class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 		'MsgSensitivity'
 	]
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Configuration')
+		self.label = Gtk.Label(label='Configuration')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderConfigurationTab, self).__init__(*args, **kwargs)
 		self.parent.connect('exit', self.signal_kpc_exit)
@@ -553,12 +553,12 @@ class MailSenderTab(object):
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
-		self.label = Gtk.Label('Send Messages')
+		self.label = Gtk.Label(label='Send Messages')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 
 		self.notebook = Gtk.Notebook()
 		""" The :py:class:`Gtk.Notebook` for holding sub-tabs."""
-		self.notebook.connect('switch-page', self._tab_changed)
+		self.notebook.connect('switch-page', self.signal_notebook_switch_page)
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
@@ -587,7 +587,7 @@ class MailSenderTab(object):
 			tab.box.show()
 		self.notebook.show()
 
-	def _tab_changed(self, notebook, current_page, index):
+	def signal_notebook_switch_page(self, notebook, current_page, index):
 		previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
 		config_tab = self.tabs.get('config')

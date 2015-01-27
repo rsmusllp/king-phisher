@@ -53,7 +53,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 	"""The label of the tab for display in the GUI."""
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label(self.label_text)
+		self.label = Gtk.Label(label=self.label_text)
 		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`~.CampaignViewGenericTab.label_text`."""
 		super(CampaignViewGenericTab, self).__init__(*args, **kwargs)
 		self.is_destroyed = threading.Event()
@@ -477,7 +477,7 @@ class CampaignViewTab(object):
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
-		self.label = Gtk.Label('View Campaign')
+		self.label = Gtk.Label(label='View Campaign')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 
 		self.notebook = Gtk.Notebook()
