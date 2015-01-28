@@ -34,7 +34,7 @@
 #  Author:   Spencer McIntyre (zeroSteiner)
 
 # Config File Example
-"""
+FILE_CONFIG = """
 [server]
 ip = 0.0.0.0
 port = 8080
@@ -45,27 +45,26 @@ list_directories = True
 """
 
 # The AdvancedHTTPServer systemd service unit file
-"""
 # Quick How To:
 # 1. Copy this file to /etc/systemd/system/pyhttpd.service
-# 2. Edit <USER> and run parameters appropriately in the ExecStart option
+# 2. Edit the run parameters appropriately in the ExecStart option
 # 3. Set configuration settings in /etc/pyhttpd.conf
 # 4. Run "systemctl daemon-reload"
-
+FILE_SYSTEMD_SERVICE_UNIT = """
 [Unit]
 Description=Python Advanced HTTP Server
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/sbin/runuser -l <USER> -c "/usr/bin/python -m AdvancedHTTPServer -c /etc/pyhttpd.conf"
+ExecStart=/sbin/runuser -l nobody -c "/usr/bin/python -m AdvancedHTTPServer -c /etc/pyhttpd.conf"
 ExecStop=/bin/kill -INT $MAINPID
 
 [Install]
 WantedBy=multi-user.target
 """
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 __all__ = [
 	'AdvancedHTTPServer',
 	'AdvancedHTTPServerRegisterPath',
@@ -153,11 +152,16 @@ except ImportError:
 else:
 	def _msgpack_default(obj):
 		if isinstance(obj, datetime.datetime):
-			return msgpack.ExtType(10, obj.isoformat())
+			obj = obj.isoformat()
+			if sys.version_info[0] == 3:
+				obj = obj.encode('utf-8')
+			return msgpack.ExtType(10, obj)
 		raise TypeError('Unknown type: ' + repr(obj))
 
 	def _msgpack_ext_hook(code, data):
 		if code == 10:
+			if sys.version_info[0] == 3:
+				data = data.decode('utf-8')
 			if '.' in data:
 				return datetime.datetime.strptime(data, '%Y-%m-%dT%H:%M:%S.%f')
 			else:
@@ -461,7 +465,7 @@ class AdvancedHTTPServerRPCClient(object):
 		:param str serializer_name: The name of the serializer to use.
 		:param str compression: The name of a compression library to use.
 		"""
-		self.serializer = AdvancedHTTPServerSerializer(serializer_name, charset='UTF-8')
+		self.serializer = AdvancedHTTPServerSerializer(serializer_name, charset='UTF-8', compression=compression)
 		self.logger.debug('using serializer: ' + serializer_name)
 
 	def __call__(self, *args, **kwargs):
@@ -501,7 +505,7 @@ class AdvancedHTTPServerRPCClient(object):
 		if self.hmac_key != None:
 			hmac_calculator = hmac.new(self.hmac_key, digestmod=hashlib.sha1)
 			hmac_calculator.update(options)
-			headers['HMAC'] = hmac_calculator.hexdigest()
+			headers['X-RPC-HMAC'] = hmac_calculator.hexdigest()
 
 		if self.username != None and self.password != None:
 			headers['Authorization'] = 'Basic ' + base64.b64encode((self.username + ':' + self.password).encode('UTF-8')).decode('UTF-8')
@@ -516,7 +520,7 @@ class AdvancedHTTPServerRPCClient(object):
 
 		resp_data = resp.read()
 		if self.hmac_key != None:
-			hmac_digest = resp.getheader('hmac')
+			hmac_digest = resp.getheader('X-RPC-HMAC')
 			if not isinstance(hmac_digest, str):
 				raise AdvancedHTTPServerRPCError('hmac validation error', resp.status)
 			hmac_digest = hmac_digest.lower()
@@ -658,9 +662,12 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 
 	def __init__(self, *args, **kwargs):
 		self.handler_map = {}
+		"""The dict object which maps regular expressions of resources to the functions which should handle them."""
 		self.rpc_handler_map = {}
+		"""The dict object which maps regular expressions of RPC functions to their handlers."""
 		self.server = args[2]
 		self.headers_active = False
+		"""Whether or not the request is in the sending headers phase."""
 		for map_name in (None, self.__class__.__name__):
 			handler_map = GLOBAL_HANDLER_MAP.get(map_name, {})
 			for path, function_info in handler_map.items():
@@ -672,6 +679,11 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		self.install_handlers()
 
 		self.basic_auth_user = None
+		"""The name of the user if the current request is using basic authentication."""
+		self.query_data = None
+		"""The parameter data that has been passed to the server parsed as a dict."""
+		self.raw_query_data = None
+		"""The raw data that was parsed into the :py:attr:`.query_data` attribute."""
 		super(AdvancedHTTPServerRequestHandler, self).__init__(*args, **kwargs)
 
 	def version_string(self):
@@ -693,6 +705,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		:param str file_path: The path to the file to serve, this does not need to be in the web root.
 		:param bool attachment: Whether to serve the file as a download by setting the Content-Disposition header.
 		"""
+		del query
 		file_path = os.path.abspath(file_path)
 		try:
 			file_obj = open(file_path, 'rb')
@@ -719,6 +732,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 
 		:param str dir_path: The path of the directory to list the contents of.
 		"""
+		del query
 		try:
 			dir_contents = os.listdir(dir_path)
 		except os.error:
@@ -933,18 +947,22 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 
 	def stock_handler_respond_unauthorized(self, query):
 		"""This method provides a handler suitable to be used in the handler_map."""
+		del query
 		self.respond_unauthorized()
 		return
 
 	def stock_handler_respond_not_found(self, query):
 		"""This method provides a handler suitable to be used in the handler_map."""
+		del query
 		self.respond_not_found()
 		return
 
 	def check_authorization(self):
 		"""
 		Check for the presence of a basic auth Authorization header and
-		if the credentials contained within are valid.
+		if the credentials contained within in are valid.
+		:return: Whether or not the credentials are valid.
+		:rtype: bool
 		"""
 		try:
 			if self.server.basic_auth == None:
@@ -1028,11 +1046,13 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 			return
 		content_length = int(self.headers.get('content-length', 0))
 		data = self.rfile.read(content_length)
-		self.query_data_raw = data
+		self.raw_query_data = data
 		content_type = self.headers.get('content-type', '')
 		content_type = content_type.split(';', 1)[0]
 		self.query_data = {}
 		try:
+			if not isinstance(data, str):
+				data = data.decode(self.get_content_type_charset())
 			if content_type.startswith('application/json'):
 				data = json.loads(data)
 				if isinstance(data, dict):
@@ -1046,7 +1066,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		return
 
 	def do_OPTIONS(self):
-		available_methods = map(lambda x: x[3:], filter(lambda x: x.startswith('do_'), dir(self)))
+		available_methods = list(map(lambda x: x[3:], filter(lambda x: x.startswith('do_'), dir(self))))
 		if 'RPC' in available_methods and len(self.rpc_handler_map) == 0:
 			available_methods.remove('RPC')
 		self.send_response(200)
@@ -1076,7 +1096,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 			return
 
 		if self.server.rpc_hmac_key != None:
-			hmac_digest = self.headers.get('hmac')
+			hmac_digest = self.headers.get('X-RPC-HMAC')
 			if not isinstance(hmac_digest, str):
 				self.respond_unauthorized(request_authentication=True)
 				return
@@ -1134,7 +1154,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		if self.server.rpc_hmac_key != None:
 			hmac_calculator = hmac.new(self.server.rpc_hmac_key, digestmod=hashlib.sha1)
 			hmac_calculator.update(response)
-			self.send_header('HMAC', hmac_calculator.hexdigest())
+			self.send_header('X-RPC-HMAC', hmac_calculator.hexdigest())
 		self.end_headers()
 
 		self.wfile.write(response)
@@ -1145,6 +1165,32 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 
 	def log_message(self, format, *args):
 		self.server.logger.info(self.address_string() + ' ' + format % args)
+
+	def get_query(self, name, default=None):
+		"""
+		Get a value from the query data that was sent to the server.
+
+		:param str name: The name of the query value to retrieve.
+		:return: The value if it exists, otherwise *default* will be returned.
+		:rtype: str
+		"""
+		return self.query_data.get(name, [default])[0]
+
+	def get_content_type_charset(self, default='UTF-8'):
+		"""
+		Inspect the Content-Type header to retrieve the charset that the client
+		has specified.
+
+		:param str default: The default charset to return if none exists.
+		:return: The charset of the request.
+		:rtype: str
+		"""
+		encoding = default
+		header = self.headers.get('Content-Type', '')
+		idx = header.find('charset=')
+		if idx > 0:
+			encoding = (header[idx + 8:].split(' ', 1)[0] or encoding)
+		return encoding
 
 class AdvancedHTTPServerSerializer(object):
 	"""
@@ -1472,6 +1518,7 @@ class AdvancedHTTPServerTestCase(unittest.TestCase):
 		self.http_connection = http.client.HTTPConnection(self.server_address[0], self.server_address[1])
 
 	def _test_resource_handler(self, handler, query):
+		del query
 		handler.send_response(200)
 		handler.end_headers()
 		message = b'Hello World!\r\n\r\n'
