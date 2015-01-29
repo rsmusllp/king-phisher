@@ -1,6 +1,6 @@
 # Install
-The King Phisher server is only supported on Linux. The King Phisher
-client is supported on both Windows and Linux. Windows executables are
+The King Phisher Server is only supported on Linux. The King Phisher
+Client is supported on both Windows and Linux. Windows executables are
 available from the [releases page](https://github.com/securestate/king-phisher/releases).
 
 Before getting started, install all of the required packages specified below.
@@ -12,8 +12,8 @@ client file is meant to connect to the daemon over SSH from a remote system. The
 server must be running SSH and allow ports to be forwarded. The client after
 connecting, communicates via RPC to the server through the encrypted SSH tunnel.
 
-Additionally, the user logging in with the King-Phisher client will
-require a valid local account on the KingPhisherServer.
+Additionally, the user logging in with the King Phisher Client will
+require a valid local account on the King Phisher Server.
 
 ## Client Required Packages
 * [Jinja2](http://jinja.pocoo.org/)
@@ -32,21 +32,36 @@ require a valid local account on the KingPhisherServer.
 * [PyYAML](http://pyyaml.org/)
 * [SQLAlchemy](http://www.sqlalchemy.org/)
 
-## Linux Install Steps
-The following steps walk through installing King-Phisher on Linux into a
-self contained directory. Installing King-Phisher into ```/opt/king-phisher```
+The following steps walk through installing King Phisher on Linux into a
+self contained directory. Installing King Phisher into ```/opt/king-phisher```
 is recommended.
 
-### Client and Server on Ubuntu 14.04 / Kali 1.0
+## Linux Install Steps
+King Phisher comes with an install script for a convenient installation process.
+It will handle installing all of the operating system dependencies, the required
+Python packages, and basic configuration. The automated install scripts supports
+a limited set of Linux flavors. To request that one be added, please open a
+support ticket.
+
 After cloning the directory run the install.sh script that is in the tools
 directory as such: ```sudo tools/install.sh```. This will download all the
-required packages and set up a default server configuration. If installing the
-server component of King Phisher, either a SQLite or Postgres database will need
-to be setup. It is recommended that Postgres be used over SQLite to support
-future database upgrades. For more information on the database, please see the
+required packages and set up a default server configuration.
+
+**WARNING** If installing the server component of King Phisher, the automated
+install script with use the tempalate configuration file which specifies SQLite
+as the database backend. It is highly recommended that PostgreSQL be used over
+SQLite to support future database upgrades. For more information on selecting
+and configuring a database backend, please see the
 [wiki page](https://github.com/securestate/king-phisher/wiki/Database).
 
-### Other Linux Versions
+### Install Script Supported Flavors
+| Linux Flavor | Client Support | Server Support |
+|:-------------|:--------------:|:--------------:|
+| CentOS       | no             | yes            |
+| Kali         | yes            | yes            |
+| Ubuntu       | yes            | yes            |
+
+## Other Linux Versions
 Install each of the required packages with
 ```pip install -r requirements.txt```. If any fail to install they are most
 likely missing libraries that will need to be installed through the native

@@ -23,10 +23,10 @@ server:
   # WARNING: SQLite3 is not fully supported as of version 0.1.6, see
   # https://github.com/securestate/king-phisher/wiki/Database#sqlite for more
   # details
-  #database: sqlite:////var/king-phisher/king-phisher.db
+  database: sqlite:////var/king-phisher/king-phisher.db
 
   # The Postgres database to use
-  database: postgresql://user:pass@localhost/king_phisher
+  #database: postgresql://user:pass@localhost/king_phisher
 
   # Fork the server process into the background
   fork: true
