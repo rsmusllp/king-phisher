@@ -7,7 +7,7 @@ After=syslog.target network.target auditd.service
 
 [Service]
 Type=forking
-PIDFile=/var/run/kingphisher.pid
+PIDFile=/var/run/king-phisher.pid
 # Installed Together In /opt/king-phisher
 # ExecStart=/opt/king-phisher/KingPhisherServer /opt/king-phisher/server_config.yml
 # Installed With 'python server-setup.py install'
