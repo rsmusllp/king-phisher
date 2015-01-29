@@ -47,7 +47,7 @@ After cloning the directory run the install.sh script that is in the tools
 directory as such: ```sudo tools/install.sh```. This will download all the
 required packages and set up a default server configuration.
 
-**WARNING** If installing the server component of King Phisher, the automated
+**WARNING:** If installing the server component of King Phisher, the automated
 install script with use the tempalate configuration file which specifies SQLite
 as the database backend. It is highly recommended that PostgreSQL be used over
 SQLite to support future database upgrades. For more information on selecting

@@ -160,18 +160,29 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 
 	cp data/server/king_phisher/server_config.yml .
 	sed -i -re "s|#\\s?data_path:.*$|data_path: $KING_PHISHER_DIR|" ./server_config.yml
-fi
 
-if [ "$LINUX_VERSION" == "Ubuntu" -a -z "$KING_PHISHER_SKIP_SERVER" ]; then
-	echo "Installing King Phisher service file to /etc/init"
-	cp data/server/service_files/king-phisher.conf /etc/init
-	sed -i -re "s|^exec KingPhisherServer|# exec KingPhisherServer|" /etc/init/king-phisher.conf
-	sed -i -re "s|^#\\s?exec /opt|exec /opt|" /etc/init/king-phisher.conf
-	sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" /etc/init/king-phisher.conf
+	if [ "$LINUX_VERSION" == "CentOS" ]; then
+		echo "Installing the King Phisher service file in /lib/systemd/system/"
+		cp data/server/service_files/king-phisher.service /lib/systemd/system
+		sed -i -re "s|^ExecStart=KingPhisherServer|# ExecStart=KingPhisherServer|" /lib/systemd/system/king-phisher.service
+		sed -i -re "s|^#\\s?ExecStart=/opt|ExecStart=/opt|" /lib/systemd/system/king-phisher.service
+		sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" /lib/systemd/system/king-phisher.service
 
-	echo "Starting the King Phisher server"
-	start king-phisher
-else
-	echo "Start the King Phisher server with the following command: "
-	echo "sudo $KING_PHISHER_DIR/KingPhisherServer -L INFO -f $KING_PHISHER_DIR/server_config.yml"
+		echo "Starting the King Phisher service"
+		systemctl daemon-reload
+		systemctl enable king-phisher.service
+		systemctl start king-phisher.service
+	elif [ "$LINUX_VERSION" == "Ubuntu" ]; then
+		echo "Installing the King Phisher service file in /etc/init/"
+		cp data/server/service_files/king-phisher.conf /etc/init
+		sed -i -re "s|^exec KingPhisherServer|# exec KingPhisherServer|" /etc/init/king-phisher.conf
+		sed -i -re "s|^#\\s?exec /opt|exec /opt|" /etc/init/king-phisher.conf
+		sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" /etc/init/king-phisher.conf
+
+		echo "Starting the King Phisher service"
+		start king-phisher
+	else
+		echo "Start the King Phisher server with the following command: "
+		echo "sudo $KING_PHISHER_DIR/KingPhisherServer -L INFO -f $KING_PHISHER_DIR/server_config.yml"
+	fi
 fi
