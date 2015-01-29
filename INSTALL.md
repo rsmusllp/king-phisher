@@ -45,7 +45,9 @@ support ticket.
 
 After cloning the directory run the install.sh script that is in the tools
 directory as such: ```sudo tools/install.sh```. This will download all the
-required packages and set up a default server configuration.
+required packages and set up a default server configuration. The automated
+installation process may take up to 20 minutes to complete depending on
+the speed at which packages are downloaded.
 
 **WARNING:** If installing the server component of King Phisher, the automated
 install script with use the tempalate configuration file which specifies SQLite
@@ -60,6 +62,20 @@ and configuring a database backend, please see the
 | CentOS       | no             | yes            |
 | Kali         | yes            | yes            |
 | Ubuntu       | yes            | yes            |
+
+### Install Script Environment Variables
+Certain environment variables can be set to change the default behaviour of
+the installation script.
+
+| Variable Name               | Description                       | Default           |
+|:----------------------------|:----------------------------------|:-----------------:|
+| KING\_PHISHER\_DIR          | The base directory to install to  | /opt/king-phisher |
+| KING\_PHISHER\_SKIP\_CLIENT | Skip installing client components | **NOT SET**       |
+| KING\_PHISHER\_SKIP\_SERVER | Skip installing server components | **NOT SET**       |
+
+Variables which are not set by default are flags which are toggled when defined.
+For example to skip installing client components the following command could be
+used: ```KING_PHISHER_SKIP_CLIENT=x tools/install.sh```
 
 ## Other Linux Versions
 Install each of the required packages with

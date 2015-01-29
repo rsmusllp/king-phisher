@@ -20,7 +20,9 @@
 E_NOTROOT=87
 FILE_NAME="$(dirname $(readlink -e $0) 2>/dev/null)/$(basename $0)"
 GIT_CLONE_URL="https://github.com/securestate/king-phisher.git"
-KING_PHISHER_DIR="/opt/king-phisher"
+if [ -z "$KING_PHISHER_DIR" ]; then
+	KING_PHISHER_DIR="/opt/king-phisher"
+fi
 KING_PHISHER_GROUP="kpadmins"
 KING_PHISHER_WEB_ROOT="/var/www"
 LINUX_VERSION=""

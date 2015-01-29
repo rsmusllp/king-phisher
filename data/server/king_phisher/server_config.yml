@@ -32,7 +32,7 @@ server:
   fork: true
 
   # Set a file to write the PID to
-  #pid_file: /var/run/kingphisher.pid
+  pid_file: /var/run/kingphisher.pid
 
   # Require an ID associated with a campaign to load pages
   require_id: true
