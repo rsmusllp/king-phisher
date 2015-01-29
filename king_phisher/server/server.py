@@ -32,6 +32,7 @@
 
 import base64
 import binascii
+import ipaddress
 import json
 import logging
 import os
@@ -156,14 +157,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.path = '/' + self.vhost + self.path
 
 	def _do_http_method(self, *args, **kwargs):
+		if self.command != 'RPC':
+			self.adjust_path()
+		http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
 		self.server.throttle_semaphore.acquire()
 		try:
-			if self.command != 'RPC':
-				self.adjust_path()
-			if self.command == 'HEAD':
-				http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_GET')
-			else:
-				http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
 			http_method_handler(*args, **kwargs)
 		except errors.KingPhisherAbortRequestError:
 			self.respond_not_found()
@@ -231,10 +229,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		# don't require authentication for non-RPC requests
 		if self.command != 'RPC':
 			return True
-		# deny anything not GET or POST if it's not from 127.0.0.1
-		if self.client_address[0] != '127.0.0.1':
-			return False
-		return super(KingPhisherRequestHandler, self).check_authorization()
+		if ipaddress.ip_address(self.client_address[0]).is_loopback:
+			return super(KingPhisherRequestHandler, self).check_authorization()
+		return False
 
 	@property
 	def campaign_id(self):
@@ -304,7 +301,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	@property
 	def vhost(self):
 		"""The value of the Host HTTP header."""
-		return self.headers.get('Host', '').split(':')[0]
+		return self.headers.get('host', '').split(':')[0]
 
 	def respond_file(self, file_path, attachment=False, query={}):
 		self._respond_file_check_id()
@@ -413,7 +410,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.end_headers()
 		page_404 = find.find_data_file('error_404.html')
 		if page_404:
-			shutil.copyfileobj(open(page_404), self.wfile)
+			with open(page_404, 'rb') as page_404:
+				shutil.copyfileobj(page_404, self.wfile)
 		else:
 			self.wfile.write('Resource Not Found\n')
 		return
@@ -514,7 +512,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not kp_hook_js:
 			self.respond_not_found()
 			return
-		javascript = open(kp_hook_js).read()
+		with open(kp_hook_js, 'r') as kp_hook_js:
+			javascript = kp_hook_js.read()
 		if self.config.has_option('beef.hook_url'):
 			javascript += "\nloadScript('{0}');\n\n".format(self.config.get('beef.hook_url'))
 		self.send_response(200)
@@ -526,6 +525,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.send_header('Access-Control-Allow-Methods', 'POST, GET')
 		self.send_header('Content-Length', str(len(javascript)))
 		self.end_headers()
+		if not isinstance(javascript, bytes):
+			javascript = javascript.encode('utf-8')
 		self.wfile.write(javascript)
 		return
 
@@ -566,7 +567,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.send_header('Set-Cookie', cookie)
 			visit = db_models.Visit(id=visit_id, campaign_id=campaign_id, message_id=message_id)
 			visit.visitor_ip = self.client_address[0]
-			visit.visitor_details = (self.headers.getheader('user-agent') or '')
+			visit.visitor_details = self.headers.get('user-agent', '')
 			session.add(visit)
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in [1, 10, 25]) or ((visit_count % 50) == 0)):
@@ -599,7 +600,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
 
 		trained = self.get_query_parameter('trained')
-		if isinstance(trained, (str, unicode)) and trained.lower() in ['1', 'true', 'yes']:
+		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
 			message.trained = True
 		session.commit()
 		session.close()
@@ -637,7 +638,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 			global_vars = config.get('server.page_variables')
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
-		self.http_server.template_env = templates.KingPhisherTemplateEnvironment(loader=loader, global_vars=global_vars)
+		self.http_server.template_env = templates.BaseTemplateEnvironment(loader=loader, global_vars=global_vars)
 
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()

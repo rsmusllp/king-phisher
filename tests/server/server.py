@@ -40,9 +40,14 @@ from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
 
 class ServerTests(KingPhisherServerTestCase):
-	def test_existing_resources(self):
+	def test_http_method_get(self):
 		for phile in self.web_root_files(3):
 			http_response = self.http_request(phile)
+			self.assertHTTPStatus(http_response, 200)
+
+	def test_http_method_head(self):
+		for phile in self.web_root_files(3):
+			http_response = self.http_request(phile, method='HEAD')
 			self.assertHTTPStatus(http_response, 200)
 
 	def test_non_existing_resources(self):
@@ -76,6 +81,7 @@ class ServerTests(KingPhisherServerTestCase):
 		error_message = "HTTP Response received Content-Type {0} when {1} was expected".format(content_type, 'text/javascript')
 		self.assertEqual(content_type, 'text/javascript', msg=error_message)
 		javascript = http_response.read()
+		javascript = str(javascript.decode('utf-8'))
 		load_script = 'function loadScript(url, callback) {'
 		error_message = "Javascript did not defined the loadScript function"
 		self.assertTrue(load_script in javascript, msg=error_message)
@@ -85,6 +91,7 @@ class ServerTests(KingPhisherServerTestCase):
 		http_response = self.http_request('kp.js')
 		self.assertHTTPStatus(http_response, 200)
 		javascript = http_response.read()
+		javascript = str(javascript.decode('utf-8'))
 		load_script = "loadScript('{0}');".format(beef_hook_url)
 		error_message = "Javascript did not load the beef hook from the config"
 		self.assertTrue(load_script in javascript, msg=error_message)
@@ -93,7 +100,7 @@ class ServerTests(KingPhisherServerTestCase):
 		http_response = self.http_request(self.config.get('server.tracking_image'), include_id=False)
 		self.assertHTTPStatus(http_response, 200)
 		image_data = http_response.read()
-		self.assertTrue(image_data.startswith('GIF'))
+		self.assertTrue(image_data.startswith(b'GIF'))
 
 class CampaignWorkflowTests(KingPhisherServerTestCase):
 	"""
@@ -104,7 +111,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.campaign_id = self.rpc('campaign/new', 'Unit Test Campaign')
 
 	def step_2_send_messages(self):
-		self.landing_page = filter(lambda f: os.path.splitext(f)[1] == '.html', self.web_root_files())[0]
+		self.landing_page = list(filter(lambda f: os.path.splitext(f)[1] == '.html', self.web_root_files()))[0]
 		self.rpc('campaign/landing_page/new', self.campaign_id, 'localhost', self.landing_page)
 		message_count = self.rpc('campaign/messages/count', self.campaign_id)
 		self.assertEqual(message_count, 0)
@@ -138,7 +145,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.assertHTTPStatus(response, 200)
 		creds_count = self.rpc('campaign/credentials/count', self.campaign_id)
 		self.assertEqual(creds_count, 1)
-		cred = self.rpc.remote_table('campaign/credentials', self.campaign_id).next()
+		cred = next(self.rpc.remote_table('campaign/credentials', self.campaign_id))
 		self.assertEqual(cred['username'], username)
 		self.assertEqual(cred['password'], password)
 		self.assertEqual(cred['message_id'], self.message_id)
@@ -155,7 +162,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 
 	def steps(self):
 		steps = filter(lambda f: f.startswith('step_'), dir(self))
-		steps = sorted(steps, lambda x, y: cmp(int(x.split('_')[1]), int(y.split('_')[1])))
+		steps = sorted(steps, key=lambda x: int(x.split('_')[1]))
 		for name in steps:
 			yield name, getattr(self, name)
 

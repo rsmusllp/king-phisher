@@ -42,7 +42,7 @@ from king_phisher.third_party import pam
 __all__ = ['ForkedAuthenticator']
 
 make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for x in range(random.randint(5, 8)))
-make_hash = lambda pw: hashlib.sha512(pw).digest()
+make_hash = lambda pw: hashlib.sha512(pw.encode('utf-8')).digest()
 
 class ForkedAuthenticator(object):
 	"""
@@ -69,8 +69,8 @@ class ForkedAuthenticator(object):
 		else:
 			self.rfile = self.parent_rfile
 			self.wfile = self.parent_wfile
-		self.rfile = os.fdopen(self.rfile, 'rb', 1)
-		self.wfile = os.fdopen(self.wfile, 'wb', 1)
+		self.rfile = os.fdopen(self.rfile, 'r', 1)
+		self.wfile = os.fdopen(self.wfile, 'w', 1)
 		if not self.child_pid:
 			self.child_routine()
 			self.rfile.close()

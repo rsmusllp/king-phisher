@@ -1,10 +1,8 @@
-:mod:`server.database.manager`
-==============================
+:mod:`database.manager`
+=======================
 
-.. module:: server.database.manager
+.. module:: database.manager
    :synopsis:
-
-
 
 Functions
 ---------

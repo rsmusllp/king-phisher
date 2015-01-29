@@ -4,8 +4,6 @@
 .. module:: client.tools
    :synopsis:
 
-
-
 Data
 ----
 

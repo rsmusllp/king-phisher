@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/login.py
+#  king_phisher/client/dialogs/login.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -33,6 +33,8 @@
 from king_phisher.client.gui_utilities import UtilityGladeGObject
 
 from gi.repository import Gtk
+
+__all__ = ['KingPhisherClientLoginDialog', 'KingPhisherClientSSHLoginDialog']
 
 class KingPhisherClientLoginDialogBase(UtilityGladeGObject):
 	"""

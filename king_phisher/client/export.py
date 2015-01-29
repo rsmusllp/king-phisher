@@ -59,12 +59,6 @@ KPM_ARCHIVE_FILES = {
 
 KPM_INLINE_IMAGE_REGEXP = re.compile(r"""{{\s*inline_image\(\s*(('(?:[^'\\]|\\.)+')|("(?:[^"\\]|\\.)+"))\s*\)\s*}}""")
 
-TABLE_VALUE_CONVERSIONS = {
-	'campaigns/reject_after_credentials': bool,
-	'messages/opened': lambda value: (None if value == None else value),
-	'messages/trained': bool
-}
-
 logger = logging.getLogger('KingPhisher.Client.export')
 
 def message_template_to_kpm(template):
@@ -116,13 +110,10 @@ def convert_value(table_name, key, value):
 	:return: The converted value.
 	:rtype: str
 	"""
-	conversion_key = table_name + '/' + key
-	if conversion_key in TABLE_VALUE_CONVERSIONS:
-		value = TABLE_VALUE_CONVERSIONS[conversion_key](value)
-	elif isinstance(value, datetime.datetime):
+	if isinstance(value, datetime.datetime):
 		value = value.isoformat()
 	if value != None:
-		value = str(value).encode('utf-8')
+		value = str(value)
 	return value
 
 def campaign_to_xml(rpc, campaign_id, xml_file):
@@ -135,13 +126,15 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	:param campaign_id: The ID of the campaign to load the information for.
 	:param str xml_file: The destination file for the XML data.
 	"""
-	root = ET.Element('kingphisher')
+	root = ET.Element('king_phisher')
 	# Generate export metadata
 	metadata = ET.SubElement(root, 'metadata')
 	timestamp = ET.SubElement(metadata, 'timestamp')
-	timestamp.text = datetime.datetime.now().isoformat()
+	timestamp.text = datetime.datetime.utcnow().isoformat()
+	utctime = ET.SubElement(metadata, 'utctime')
+	utctime.text = 'True'
 	version = ET.SubElement(metadata, 'version')
-	version.text = '1.1'
+	version.text = '1.2'
 
 	campaign = ET.SubElement(root, 'campaign')
 	campaign_info = rpc.remote_table_row('campaigns', campaign_id)

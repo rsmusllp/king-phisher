@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import datetime
 import logging
 import threading
 import time
@@ -52,7 +53,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 	"""The label of the tab for display in the GUI."""
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label(self.label_text)
+		self.label = Gtk.Label(label=self.label_text)
 		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`~.CampaignViewGenericTab.label_text`."""
 		super(CampaignViewGenericTab, self).__init__(*args, **kwargs)
 		self.is_destroyed = threading.Event()
@@ -100,7 +101,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		treeview.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
 		popup_copy_submenu = Gtk.Menu.new()
 		self.view_column_renderers = {}
 		columns = self.view_columns
@@ -130,18 +131,26 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.popup_menu.show_all()
 
 	def _prompt_to_delete_row(self):
+		selection = self.gobjects['treeview_campaign'].get_selection()
+		if not selection.count_selected_rows():
+			return
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
 			return
-		treeview = self.gobjects['treeview_campaign']
-		selection = treeview.get_selection()
-		(model, tree_iter) = selection.get_selected()
-		if not tree_iter:
+		(model, tree_paths) = selection.get_selected_rows()
+		if not tree_paths:
 			return
-		row_id = model.get_value(tree_iter, 0)
-		if not gui_utilities.show_dialog_yes_no('Delete This Row?', self.parent, 'This information will be lost.'):
+
+		tree_iters = map(model.get_iter, tree_paths)
+		row_ids = map(lambda ti: model.get_value(ti, 0), tree_iters)
+		if len(row_ids) == 1:
+			message = 'Delete This Row?'
+		else:
+			message = "Delete These {0:,} Rows?".format(len(row_ids))
+		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
-		self.parent.rpc(self.remote_table_name + '/delete', row_id)
+		for row_id in row_ids:
+			self.parent.rpc(self.remote_table_name + '/delete', row_id)
 		self.load_campaign_information(force=True)
 
 	def format_row_data(self, row):
@@ -155,6 +164,23 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		:rtype: list
 		"""
 		raise NotImplementedError()
+
+	def format_cell_data(self, cell_data):
+		"""
+		This method provides formatting to the individual cell values returned
+		from the :py:meth:`.format_row_data` function. Values are converted into
+		a format suitable for reading.
+
+		:param cell: The value to format.
+		:return: The formatted cell value.
+		:rtype: str
+		"""
+		if isinstance(cell_data, datetime.datetime):
+			cell_data = utilities.datetime_utc_to_local(cell_data)
+			return utilities.format_datetime(cell_data)
+		elif cell_data == None:
+			return ''
+		return str(cell_data)
 
 	def load_campaign_information(self, force=False):
 		"""
@@ -182,6 +208,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		else:
 			store.clear()
 		self.loader_thread = threading.Thread(target=self.loader_thread_routine, args=(store,))
+		self.loader_thread.daemon = True
 		self.loader_thread.start()
 		self.loader_thread_lock.release()
 		return
@@ -202,7 +229,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			if row_data == None:
 				self.parent.rpc(self.remote_table_name + '/delete', row_id)
 				continue
-			row_data = map(lambda x: '' if x == None else str(x), row_data)
+			row_data = list(map(self.format_cell_data, row_data))
 			row_data.insert(0, str(row_id))
 			gui_utilities.glib_idle_add_wait(store.append, row_data)
 		if self.is_destroyed.is_set():
@@ -227,7 +254,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
 			return
 		selection = self.gobjects['treeview_campaign'].get_selection()
-		if not selection.get_selected()[1]:
+		if not selection.count_selected_rows():
 			return
 		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
 		self.popup_menu.popup(None, None, pos_func, None, event.button, event.time)
@@ -236,21 +263,20 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def signal_treeview_key_pressed(self, widget, event):
 		if event.type != Gdk.EventType.KEY_PRESS:
 			return
+
+		treeview = self.gobjects['treeview_campaign']
 		keyval = event.get_keyval()[1]
-		if keyval == Gdk.KEY_F5:
+		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
+			if keyval == Gdk.KEY_c:
+				gui_utilities.gtk_treeview_selection_to_clipboard(treeview)
+		elif keyval == Gdk.KEY_F5:
 			self.load_campaign_information(force=True)
 		elif keyval == Gdk.KEY_Delete:
 			self._prompt_to_delete_row()
 
 	def signal_activate_popup_menu_copy(self, widget, column_id):
 		treeview = self.gobjects['treeview_campaign']
-		selection = treeview.get_selection()
-		(model, tree_iter) = selection.get_selected()
-		if not tree_iter:
-			return
-		selection_text = model.get_value(tree_iter, column_id)
-		clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-		clipboard.set_text(selection_text, -1)
+		gui_utilities.gtk_treeview_selection_to_clipboard(treeview, column_id)
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""
@@ -278,8 +304,8 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			connection['local_username'],
 			connection['local_hostname'],
 			connection['local_ip_addresses'],
-			utilities.format_datetime(connection['first_visit']),
-			utilities.format_datetime(connection['last_visit'])
+			connection['first_visit'],
+			connection['last_visit']
 		)
 		return row
 
@@ -306,7 +332,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 			msg_details['target_email'],
 			credential['username'],
 			credential['password'],
-			utilities.format_datetime(credential['submitted'])
+			credential['submitted']
 		)
 		return row
 
@@ -369,6 +395,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 				return
 			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
+			self.loader_thread.daemon = True
 			self.loader_thread.start()
 
 	def loader_idle_routine(self):
@@ -408,8 +435,8 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 			visit['visitor_ip'],
 			visit['visitor_details'],
 			visit['visit_count'],
-			utilities.format_datetime(visit['first_visit']),
-			utilities.format_datetime(visit['last_visit'])
+			visit['first_visit'],
+			visit['last_visit']
 		)
 		return row
 
@@ -426,8 +453,8 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	def format_row_data(self, message):
 		row = (
 			message['target_email'],
-			utilities.format_datetime(message['sent']),
-			utilities.format_datetime(message['opened']),
+			message['sent'],
+			message['opened'],
 			('Yes' if message['trained'] else '')
 		)
 		return row
@@ -450,12 +477,12 @@ class CampaignViewTab(object):
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
-		self.label = Gtk.Label('View Campaign')
+		self.label = Gtk.Label(label='View Campaign')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 
 		self.notebook = Gtk.Notebook()
 		""" The :py:class:`Gtk.Notebook` for holding sub-tabs."""
-		self.notebook.connect('switch-page', self._tab_changed)
+		self.notebook.connect('switch-page', self.signal_notebook_switch_page)
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
@@ -498,7 +525,7 @@ class CampaignViewTab(object):
 			if hasattr(tab, 'load_campaign_information'):
 				tab.load_campaign_information(force=True)
 
-	def _tab_changed(self, notebook, current_page, index):
+	def signal_notebook_switch_page(self, notebook, current_page, index):
 		if not hasattr(self.parent, 'rpc'):
 			return
 		#previous_page = notebook.get_nth_page(self.last_page_id)

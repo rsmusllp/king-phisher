@@ -31,18 +31,23 @@
 #
 
 import argparse
+import random
 import smtplib
-from email.MIMEText import MIMEText
+import sys
 
 from king_phisher import utilities
 
 import dns.resolver
 
+if sys.version_info[0] < 3:
+	from email.MIMEText import MIMEText
+else:
+	from email.mime.text import MIMEText
+
 __version__ = '0.1'
-__all__ = ['send_sms']
+__all__ = ['lookup_carrier_gateway', 'send_sms']
 
 CARRIERS = {
-	'Alltel':        'message.alltel.com',
 	'AT&T':          'txt.att.net',
 	'Boost':         'myboostmobile.com',
 	'Sprint':        'messaging.sprintpcs.com',
@@ -55,10 +60,26 @@ CARRIERS = {
 @utilities.Cache('6h')
 def get_smtp_servers(domain):
 	mx_records = dns.resolver.query(domain, 'MX')
-	return map(lambda r: str(r.exchange).rstrip('.'), mx_records)
+	return list(map(lambda r: str(r.exchange).rstrip('.'), mx_records))
 
 def normalize_name(name):
 	return name.lower().replace('&', '').replace('-', '')
+
+def lookup_carrier_gateway(carrier):
+	"""
+	Lookup the SMS gateway for the specified carrier. Normalization on the
+	carrier name does take place and if an invalid or unknown value is
+	specified, None will be returned.
+
+	:param str carrier: The name of the carrier to lookup.
+	:return: The SMS gateway for the specified carrier.
+	:rtype: str
+	"""
+	carrier = normalize_name(carrier)
+	carrier_address = list(filter(lambda c: normalize_name(c) == carrier, CARRIERS.keys()))
+	if len(carrier_address) != 1:
+		return None
+	return CARRIERS[carrier_address[0]]
 
 def send_sms(message_text, phone_number, carrier, from_address=None):
 	"""
@@ -79,17 +100,16 @@ def send_sms(message_text, phone_number, carrier, from_address=None):
 		raise ValueError('message length exceeds 160 characters')
 	message = MIMEText(message_text)
 
-	carrier = normalize_name(carrier)
-	carrier_address = filter(lambda c: normalize_name(c) == carrier, CARRIERS.keys())
-	if len(carrier_address) != 1:
+	carrier_address = lookup_carrier_gateway(carrier)
+	if not carrier_address:
 		raise ValueError('unknown carrier specified')
-	carrier_address = CARRIERS[carrier_address[0]]
 
 	to_address = "{0}@{1}".format(phone_number, carrier_address)
 	message['To'] = to_address
 	message['From'] = from_address
 
 	sms_gateways = get_smtp_servers(carrier_address)
+	random.shuffle(sms_gateways)
 	message_sent = False
 	for sms_gateway in sms_gateways:
 		try:

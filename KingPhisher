@@ -47,9 +47,12 @@ from gi.repository import GObject
 from gi.repository import Gtk
 
 __requirements__ = [
+	'dnspython>=1.10.0',
 	'Jinja2>=2.7.1',
-	'paramiko>=1.10.1',
+	'paramiko>=1.10.1'
 ]
+if sys.version_info.major == 2:
+	__requirements__.append('py2-ipaddress>=2.0.0')
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Client GUI', conflict_handler='resolve')
@@ -67,6 +70,10 @@ def main():
 	config_file = arguments.config_file
 	del arguments, parser
 	logger = logging.getLogger('KingPhisher.Client.CLI')
+
+	if Gtk.check_version(3, 4, 0):
+		print('[-] the GTK+ version is too old (minimum required is 3.4)')
+		return os.EX_SOFTWARE
 
 	# check and configure the environment
 	if getattr(sys, 'frozen', False):
@@ -92,7 +99,7 @@ def main():
 	if os.path.isdir(data_path):
 		find.data_path_append(data_path)
 
-	os.environ['KING_PHISHER_GLADE_FILE'] = 'KingPhisherClient.glade'
+	os.environ['KING_PHISHER_GLADE_FILE'] = 'king-phisher-client.glade'
 	if not gui_utilities.which_glade():
 		print('[-] unable to locate the Glade data file')
 		return 0

@@ -4,12 +4,15 @@
 .. module:: client.client_rpc
    :synopsis:
 
-
-
 Data
 ----
 
 .. autodata:: king_phisher.client.client_rpc.has_msgpack
+
+Functions
+---------
+
+.. autofunction:: king_phisher.client.client_rpc.vte_child_routine
 
 Classes
 -------

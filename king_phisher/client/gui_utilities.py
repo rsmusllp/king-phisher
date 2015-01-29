@@ -38,6 +38,7 @@ import threading
 from king_phisher import find
 from king_phisher import utilities
 
+from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -152,6 +153,28 @@ def gtk_widget_destroy_children(widget):
 	"""
 	map(lambda child: child.destroy(), widget.get_children())
 
+def gtk_treeview_selection_to_clipboard(treeview, column=1):
+	"""
+	Copy the currently selected values from the specified column in the treeview
+	to the users clipboard. If no value is selected in the treeview, then the
+	clipboard is left unmodified. If multiple values are selected, they will all
+	be placed in the clipboard on seperate lines.
+
+	:param treeview: The treeview instance to get the selection from.
+	:type treeview: :py:class:`Gtk.TreeView`
+	:param int column: The column number to retrieve the value for.
+	"""
+	treeview_selection = treeview.get_selection()
+	(model, tree_paths) = treeview_selection.get_selected_rows()
+	if not tree_paths:
+		return
+
+	tree_iters = map(model.get_iter, tree_paths)
+	selection_values = map(lambda ti: model.get_value(ti, column), tree_iters)
+	selection_values = os.linesep.join(selection_values)
+	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+	clipboard.set_text(selection_values, -1)
+
 def search_list_store(list_store, value):
 	"""
 	Search a GTK ListStore for a value.
@@ -247,8 +270,7 @@ class UtilityGladeGObject(object):
 		self.gtk_builder = builder
 		"""A :py:class:`Gtk.Builder` instance used to load Glade data with."""
 
-		glade_file = which_glade()
-		builder.add_objects_from_file(glade_file, self.top_level_dependencies + [self.__class__.__name__])
+		builder.add_objects_from_file(which_glade(), self.top_level_dependencies + [self.__class__.__name__])
 		builder.connect_signals(self)
 		gobject = builder.get_object(self.__class__.__name__)
 		if isinstance(gobject, Gtk.Window):
@@ -258,8 +280,7 @@ class UtilityGladeGObject(object):
 		self.gobjects = {}
 		for gobject_id in self.gobject_ids:
 			gobject = self.gtk_builder_get(gobject_id)
-			# The following five lines ensure that the types match up, this is
-			# primarily to enforce clean development.
+			# the following five lines ensure that the types match up, this is to enforce clean development
 			gtype = gobject_id.split('_', 1)[0]
 			if gobject == None:
 				raise TypeError("gobject {0} could not be found in the glade file".format(gobject_id))

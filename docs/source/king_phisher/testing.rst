@@ -4,8 +4,6 @@
 .. module:: testing
    :synopsis:
 
-
-
 Data
 ----
 
@@ -17,6 +15,10 @@ Data
 
 Classes
 -------
+
+.. autoclass:: king_phisher.testing.KingPhisherTestCase
+   :show-inheritance:
+   :members:
 
 .. autoclass:: king_phisher.testing.KingPhisherServerTestCase
    :show-inheritance:

@@ -1,10 +1,8 @@
-:mod:`server.database.models`
-=============================
+:mod:`database.models`
+======================
 
-.. module:: server.database.models
+.. module:: database.models
    :synopsis:
-
-
 
 Data
 ----

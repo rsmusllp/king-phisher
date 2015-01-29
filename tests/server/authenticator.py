@@ -33,9 +33,10 @@
 import os
 import unittest
 
+from king_phisher import testing
 from king_phisher.server.authenticator import *
 
-class ServerAuthenticatorTests(unittest.TestCase):
+class ServerAuthenticatorTests(testing.KingPhisherTestCase):
 	def test_authenticator_bad_credentials(self):
 		auth = ForkedAuthenticator()
 		self.assertFalse(auth.authenticate('fakeuser', 'FakePassword1'))

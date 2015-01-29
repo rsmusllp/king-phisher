@@ -40,17 +40,20 @@ from gi.repository import Gtk
 
 try:
 	import matplotlib
-	matplotlib.rcParams['backend'] = 'TkAgg'
+	matplotlib.rcParams['backend'] = 'GTK3Cairo'
 	from matplotlib import dates
 	from matplotlib import pyplot
-	from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
-	from matplotlib.backends.backend_gtk3agg import FigureManagerGTK3Agg as FigureManager
+	from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo as FigureCanvas
+	from matplotlib.backends.backend_gtk3cairo import FigureManagerGTK3Cairo as FigureManager
 	from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
 except ImportError:
 	has_matplotlib = False
 	"""Whether the :py:mod:`matplotlib` module is available."""
 else:
-	has_matplotlib = True
+	if utilities.check_requirements(['matplotlib>=1.4.1']):
+		has_matplotlib = False
+	else:
+		has_matplotlib = True
 
 EXPORTED_GRAPHS = {}
 

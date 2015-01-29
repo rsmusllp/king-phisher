@@ -49,7 +49,7 @@ import sqlalchemy.pool
 
 Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 logger = logging.getLogger('KingPhisher.Server.database')
-_meta_data_type_map = {'int': int, 'long': long, 'str': str}
+_meta_data_type_map = {'int': int, 'str': str}
 
 def get_meta_data(key, session=None):
 	"""

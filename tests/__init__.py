@@ -32,21 +32,18 @@
 
 import logging
 
-from tests.client.client import ClientGUITests
-from tests.client.export import ClientExportTests
-from tests.client.graphs import ClientGraphsTests
-from tests.client.mailer import ClientMailerTests
-from tests.server.authenticator import ServerAuthenticatorTests
-from tests.server.database import ServerDatabaseTests
-from tests.server.server import ServerTests
-from tests.server.server import CampaignWorkflowTests
-from tests.server.server_rpc import ServerRPCTests
-from tests.configuration import ServerConfigurationTests
-from tests.templates import TemplatesTests
-from tests.ua_parser import UserAgentParserTests
-from tests.utilities import UtilitiesTests
-from tests.version import VersionTests
-from tests.xor import XORTests
+from .client import *
+from .server import *
+
+from .configuration import ServerConfigurationTests
+from .sms import SMSTests
+from .spf import SPFTests
+from .templates import TemplatesTests
+from .ua_parser import UserAgentParserTests
+from .utilities import UtilitiesCacheTests
+from .utilities import UtilitiesTests
+from .version import VersionTests
+from .xor import XORTests
 
 if hasattr(logging, 'NullHandler'):
 	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())

@@ -4,8 +4,6 @@
 .. module:: configuration
    :synopsis:
 
-
-
 Data
 ----
 

@@ -4,8 +4,6 @@
 .. module:: client.export
    :synopsis:
 
-
-
 Functions
 ---------
 

@@ -1,7 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.16.1 -->
+<!-- Generated with glade 3.18.3 
+
+Copyright (c) 2013-2015, SecureState LLC
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Authors:
+Spencer McIntyre
+Jeff McCutchan
+Brandan Geise
+
+-->
 <interface>
-  <requires lib="gtk+" version="3.2"/>
+  <requires lib="gtk+" version="3.4"/>
+  <!-- interface-license-type bsd3c -->
+  <!-- interface-name King Phisher -->
+  <!-- interface-description Social Engineering Phishing Toolkit -->
+  <!-- interface-copyright 2013-2015, SecureState LLC -->
+  <!-- interface-authors Spencer McIntyre\nJeff McCutchan\nBrandan Geise -->
   <object class="GtkBox" id="CampaignViewCredentialsTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -408,8 +445,8 @@
     </child>
   </object>
   <object class="GtkDialog" id="KingPhisherClientCampaignSelectionDialog">
-    <property name="width_request">450</property>
-    <property name="height_request">300</property>
+    <property name="width_request">550</property>
+    <property name="height_request">350</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="type_hint">dialog</property>
@@ -419,27 +456,6 @@
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">5</property>
-        <child>
-          <object class="GtkScrolledWindow" id="KingPhisherClientCampaignSelectionDialog.scrolledwindow5">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <child>
-              <object class="GtkTreeView" id="KingPhisherClientCampaignSelectionDialog.treeview_campaigns">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection4"/>
-                </child>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="KingPhisherClientCampaignSelectionDialog.dialog-action_area4">
             <property name="visible">True</property>
@@ -477,6 +493,27 @@
             <property name="fill">True</property>
             <property name="pack_type">end</property>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="KingPhisherClientCampaignSelectionDialog.scrolledwindow5">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <child>
+              <object class="GtkTreeView" id="KingPhisherClientCampaignSelectionDialog.treeview_campaigns">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection4"/>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
           </packing>
         </child>
         <child>
@@ -541,6 +578,9 @@
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="KingPhisherClientSSHLoginDialog.dialog-action_area5">
             <property name="can_focus">False</property>
+            <property name="margin_right">3</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">3</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="KingPhisherClientSSHLoginDialog.button_cancel">
@@ -584,6 +624,7 @@
             <property name="can_focus">False</property>
             <property name="margin_left">5</property>
             <property name="margin_right">5</property>
+            <property name="row_spacing">5</property>
             <property name="row_homogeneous">True</property>
             <property name="column_homogeneous">True</property>
             <child>
@@ -595,8 +636,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">0</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -608,8 +647,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -621,8 +658,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">2</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -636,8 +671,6 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">0</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -651,8 +684,6 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">1</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -669,8 +700,6 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">2</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
           </object>
@@ -713,6 +742,8 @@
                   <object class="GtkButtonBox" id="MailSenderEditTab.buttonbox5">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_bottom">5</property>
                     <property name="spacing">3</property>
                     <property name="layout_style">end</property>
                     <child>
@@ -755,6 +786,10 @@
                   <object class="GtkScrolledWindow" id="MailSenderEditTab.scrolledwindow6">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_top">5</property>
+                    <property name="margin_bottom">5</property>
                     <property name="shadow_type">etched-in</property>
                     <child>
                       <object class="GtkTextView" id="MailSenderEditTab.textview_html_file">
@@ -821,6 +856,8 @@
       <object class="GtkProgressBar" id="MailSenderSendTab.progressbar_mail_sender">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_top">3</property>
+        <property name="margin_bottom">3</property>
         <property name="show_text">True</property>
       </object>
       <packing>
@@ -947,8 +984,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">0</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -960,8 +995,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">1</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -973,8 +1006,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">2</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -986,8 +1017,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">3</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -999,8 +1028,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">4</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1012,8 +1039,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">5</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1025,8 +1050,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">6</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1038,8 +1061,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">7</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1051,8 +1072,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">8</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1064,8 +1083,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">11</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1105,8 +1122,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">0</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1147,8 +1162,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">6</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1195,8 +1208,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">7</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1242,8 +1253,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">8</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1254,8 +1263,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">1</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1266,8 +1273,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">2</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1278,8 +1283,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">3</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1290,8 +1293,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">4</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1302,8 +1303,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">5</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1315,8 +1314,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">9</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1328,8 +1325,6 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">10</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1348,8 +1343,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">9</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1368,8 +1361,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">10</property>
-            <property name="width">1</property>
-            <property name="height">1</property>
           </packing>
         </child>
         <child>
@@ -1404,6 +1395,9 @@
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="KingPhisherClientLoginDialog.dialog-action_area5">
             <property name="can_focus">False</property>
+            <property name="margin_right">3</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">3</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="KingPhisherClientLoginDialog.button_cancel">
@@ -1445,9 +1439,10 @@
           <object class="GtkGrid" id="KingPhisherClientLoginDialog.grid1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="valign">start</property>
             <property name="margin_left">5</property>
             <property name="margin_right">5</property>
-            <property name="row_spacing">3</property>
+            <property name="row_spacing">5</property>
             <property name="row_homogeneous">True</property>
             <property name="column_homogeneous">True</property>
             <child>
@@ -1459,8 +1454,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">0</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -1472,8 +1465,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -1485,8 +1476,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">2</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -1500,8 +1489,6 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">0</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -1515,8 +1502,6 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">1</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -1533,8 +1518,6 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">2</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -1550,8 +1533,6 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">4</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -1566,8 +1547,6 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="top_attach">3</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -1579,8 +1558,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">4</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
             <child>
@@ -1592,8 +1569,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">3</property>
-                <property name="width">1</property>
-                <property name="height">1</property>
               </packing>
             </child>
           </object>
@@ -1620,9 +1595,6 @@
         <col id="0" translatable="yes"> </col>
       </row>
       <row>
-        <col id="0" translatable="yes">Alltel</col>
-      </row>
-      <row>
         <col id="0" translatable="yes">AT&amp;T</col>
       </row>
       <row>
@@ -1647,7 +1619,7 @@
     <property name="step_increment">0.5</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkDialog" id="KingPhisherClientConfigDialog">
+  <object class="GtkDialog" id="KingPhisherClientConfigurationDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">King Phisher Configuration</property>
@@ -1656,18 +1628,18 @@
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkBox" id="KingPhisherClientConfigDialog.dialog-vbox3">
+      <object class="GtkBox" id="KingPhisherClientConfigurationDialog.dialog-vbox3">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="KingPhisherClientConfigDialog.dialog-action_area3">
+          <object class="GtkButtonBox" id="KingPhisherClientConfigurationDialog.dialog-action_area3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="KingPhisherClientConfigDialog.button_cancel">
+              <object class="GtkButton" id="KingPhisherClientConfigurationDialog.button_cancel">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -1681,7 +1653,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="KingPhisherClientConfigDialog.button_apply">
+              <object class="GtkButton" id="KingPhisherClientConfigurationDialog.button_apply">
                 <property name="label">gtk-apply</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -1703,7 +1675,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkNotebook" id="KingPhisherClientConfigDialog.notebook1">
+          <object class="GtkNotebook" id="KingPhisherClientConfigurationDialog.notebook1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
@@ -1730,8 +1702,6 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">0</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
@@ -1743,12 +1713,10 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">1</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_server">
+                      <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_server">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="editable">False</property>
@@ -1757,12 +1725,10 @@
                       <packing>
                         <property name="left_attach">1</property>
                         <property name="top_attach">0</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_server_username">
+                      <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_server_username">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="editable">False</property>
@@ -1771,8 +1737,6 @@
                       <packing>
                         <property name="left_attach">1</property>
                         <property name="top_attach">1</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                   </object>
@@ -1783,12 +1747,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="KingPhisherClientConfigDialog.frame2">
+                  <object class="GtkFrame" id="KingPhisherClientConfigurationDialog.frame2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkAlignment" id="KingPhisherClientConfigDialog.alignment2">
+                      <object class="GtkAlignment" id="KingPhisherClientConfigurationDialog.alignment2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="left_padding">12</property>
@@ -1796,6 +1760,7 @@
                           <object class="GtkGrid" id="grid3">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_right">3</property>
                             <property name="row_homogeneous">True</property>
                             <property name="column_homogeneous">True</property>
                             <child>
@@ -1807,8 +1772,6 @@
                               <packing>
                                 <property name="left_attach">0</property>
                                 <property name="top_attach">0</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
@@ -1820,12 +1783,10 @@
                               <packing>
                                 <property name="left_attach">0</property>
                                 <property name="top_attach">1</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_sms_phone_number">
+                              <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_sms_phone_number">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="max_length">14</property>
@@ -1834,12 +1795,10 @@
                               <packing>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">0</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBox" id="KingPhisherClientConfigDialog.combobox_sms_carrier">
+                              <object class="GtkComboBox" id="KingPhisherClientConfigurationDialog.combobox_sms_carrier">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="valign">center</property>
@@ -1854,8 +1813,6 @@
                               <packing>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">1</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                           </object>
@@ -1863,7 +1820,7 @@
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="KingPhisherClientConfigDialog.label1">
+                      <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;SMS Settings&lt;/b&gt;</property>
@@ -1878,12 +1835,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="KingPhisherClientConfigDialog.frame3">
+                  <object class="GtkFrame" id="KingPhisherClientConfigurationDialog.frame3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkAlignment" id="KingPhisherClientConfigDialog.alignment3">
+                      <object class="GtkAlignment" id="KingPhisherClientConfigurationDialog.alignment3">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="left_padding">12</property>
@@ -1891,6 +1848,7 @@
                           <object class="GtkGrid" id="grid5">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_right">3</property>
                             <property name="column_spacing">5</property>
                             <property name="row_homogeneous">True</property>
                             <child>
@@ -1902,12 +1860,10 @@
                               <packing>
                                 <property name="left_attach">0</property>
                                 <property name="top_attach">0</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_server_beef_hook">
+                              <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_server_beef_hook">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="hexpand">True</property>
@@ -1916,8 +1872,6 @@
                               <packing>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">0</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                           </object>
@@ -1925,7 +1879,7 @@
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="KingPhisherClientConfigDialog.label2">
+                      <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;BeEF Settings&lt;/b&gt;</property>
@@ -1942,7 +1896,7 @@
               </object>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="KingPhisherClientConfigDialog.label10">
+              <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label10">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
@@ -1975,12 +1929,10 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">0</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_smtp_server">
+                      <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_smtp_server">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The SMTP server to use for sending messages.</property>
@@ -1990,12 +1942,10 @@
                       <packing>
                         <property name="left_attach">1</property>
                         <property name="top_attach">0</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSpinButton" id="KingPhisherClientConfigDialog.spinbutton_smtp_max_send_rate">
+                      <object class="GtkSpinButton" id="KingPhisherClientConfigurationDialog.spinbutton_smtp_max_send_rate">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Maximum messages to send per minute.</property>
@@ -2007,8 +1957,6 @@
                       <packing>
                         <property name="left_attach">1</property>
                         <property name="top_attach">1</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
@@ -2020,8 +1968,6 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">1</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
@@ -2033,8 +1979,6 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">2</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
@@ -2046,12 +1990,10 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">3</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSwitch" id="KingPhisherClientConfigDialog.switch_smtp_ssl_enable">
+                      <object class="GtkSwitch" id="KingPhisherClientConfigurationDialog.switch_smtp_ssl_enable">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Connect to the SMTP server with SSL.</property>
@@ -2061,12 +2003,10 @@
                       <packing>
                         <property name="left_attach">1</property>
                         <property name="top_attach">2</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSwitch" id="KingPhisherClientConfigDialog.switch_smtp_ssh_enable">
+                      <object class="GtkSwitch" id="KingPhisherClientConfigurationDialog.switch_smtp_ssh_enable">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Connect to the SMTP server over an SSH tunnel.</property>
@@ -2077,8 +2017,6 @@
                       <packing>
                         <property name="left_attach">1</property>
                         <property name="top_attach">3</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
                       </packing>
                     </child>
                   </object>
@@ -2089,12 +2027,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="KingPhisherClientConfigDialog.frame1">
+                  <object class="GtkFrame" id="KingPhisherClientConfigurationDialog.frame1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkAlignment" id="KingPhisherClientConfigDialog.alignment1">
+                      <object class="GtkAlignment" id="KingPhisherClientConfigurationDialog.alignment1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="left_padding">5</property>
@@ -2102,6 +2040,7 @@
                           <object class="GtkGrid" id="grid4">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_right">3</property>
                             <property name="row_homogeneous">True</property>
                             <property name="column_homogeneous">True</property>
                             <child>
@@ -2113,8 +2052,6 @@
                               <packing>
                                 <property name="left_attach">0</property>
                                 <property name="top_attach">0</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
@@ -2126,12 +2063,10 @@
                               <packing>
                                 <property name="left_attach">0</property>
                                 <property name="top_attach">1</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_ssh_server">
+                              <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_ssh_server">
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
@@ -2140,12 +2075,10 @@
                               <packing>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">0</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="KingPhisherClientConfigDialog.entry_ssh_username">
+                              <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_ssh_username">
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
@@ -2154,8 +2087,6 @@
                               <packing>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">1</property>
-                                <property name="width">1</property>
-                                <property name="height">1</property>
                               </packing>
                             </child>
                           </object>
@@ -2163,7 +2094,7 @@
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="KingPhisherClientConfigDialog.label14">
+                      <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label14">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;SSH Settings&lt;/b&gt;</property>
@@ -2183,7 +2114,7 @@
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="KingPhisherClientConfigDialog.label15">
+              <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label15">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">SMTP Server</property>
@@ -2203,7 +2134,7 @@
                 <property name="margin_bottom">5</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkCheckButton" id="KingPhisherClientConfigDialog.checkbutton_alert_subscribe">
+                  <object class="GtkCheckButton" id="KingPhisherClientConfigurationDialog.checkbutton_alert_subscribe">
                     <property name="label" translatable="yes">Subscribe To SMS Alerts</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -2220,7 +2151,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="KingPhisherClientConfigDialog.checkbutton_reject_after_credentials">
+                  <object class="GtkCheckButton" id="KingPhisherClientConfigurationDialog.checkbutton_reject_after_credentials">
                     <property name="label" translatable="yes">Deny Requests After Credential Submission</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -2242,13 +2173,54 @@
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="KingPhisherClientConfigDialog.label4">
+              <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label4">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Campaign</property>
               </object>
               <packing>
                 <property name="position">2</property>
+                <property name="tab_fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="box1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">5</property>
+                <property name="margin_right">5</property>
+                <property name="margin_top">5</property>
+                <property name="margin_bottom">5</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkCheckButton" id="KingPhisherClientConfigurationDialog.checkbutton_autocheck_spf">
+                    <property name="label" translatable="yes">Automatically Check SPF Records</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="tooltip_text" translatable="yes">Check SPF records before sending messages.</property>
+                    <property name="xalign">0</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel" id="KingPhisherClientConfigurationDialoglabel14">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Client</property>
+              </object>
+              <packing>
+                <property name="position">3</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -2262,8 +2234,8 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">KingPhisherClientConfigDialog.button_cancel</action-widget>
-      <action-widget response="-10">KingPhisherClientConfigDialog.button_apply</action-widget>
+      <action-widget response="-6">KingPhisherClientConfigurationDialog.button_cancel</action-widget>
+      <action-widget response="-10">KingPhisherClientConfigurationDialog.button_apply</action-widget>
     </action-widgets>
   </object>
 </interface>

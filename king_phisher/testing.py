@@ -31,8 +31,8 @@
 #
 
 import functools
-import httplib
 import os
+import sys
 import threading
 import time
 import urllib
@@ -43,9 +43,20 @@ from king_phisher import find
 from king_phisher.client import client_rpc
 from king_phisher.server.server import *
 
+if sys.version_info[0] < 3:
+	import httplib
+	http = type('http', (), {'client': httplib})
+	import urlparse
+	urllib.parse = urlparse
+	urllib.parse.urlencode = urllib.urlencode
+else:
+	import http.client
+	import urllib.parse
+
 __all__ = [
 	'TEST_MESSAGE_TEMPLATE',
 	'TEST_MESSAGE_TEMPLATE_INLINE_IMAGE',
+	'KingPhisherTestCase',
 	'KingPhisherServerTestCase'
 ]
 
@@ -91,6 +102,19 @@ class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
 	def custom_authentication(self, *args, **kwargs):
 		return True
 
+class KingPhisherTestCase(unittest.TestCase):
+	"""
+	This class provides additional functionality over the built in
+	:py:class:`unittest.TestCase` object, including better compatibility for
+	methods across Python 2.x and Python 3.x.
+	"""
+	def __init__(self, *args, **kwargs):
+		super(KingPhisherTestCase, self).__init__(*args, **kwargs)
+		if not hasattr(self, 'assertRegex') and hasattr(self, 'assertRegexpMatches'):
+			self.assertRegex = self.assertRegexpMatches
+		if not hasattr(self, 'assertRaisesRegex') and hasattr(self, 'assertRaisesRegexp'):
+			self.assertRaisesRegex = self.assertRaisesRegexp
+
 class KingPhisherServerTestCase(unittest.TestCase):
 	"""
 	This class can be inherited to automatically set up a King Phisher server
@@ -123,7 +147,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		:type http_response: :py:class:`httplib.HTTPResponse`
 		:param int status: The status to check for.
 		"""
-		self.assertIsInstance(http_response, httplib.HTTPResponse)
+		self.assertIsInstance(http_response, http.client.HTTPResponse)
 		error_message = "HTTP Response received status {0} when {1} was expected".format(http_response.status, status)
 		self.assertEqual(http_response.status, status, msg=error_message)
 
@@ -146,10 +170,10 @@ class KingPhisherServerTestCase(unittest.TestCase):
 			else:
 				id_value = self.config.get('server.secret_id')
 			resource += "{0}id={1}".format('&' if '?' in resource else '?', id_value)
-		conn = httplib.HTTPConnection('localhost', self.config.get('server.address.port'))
+		conn = http.client.HTTPConnection('localhost', self.config.get('server.address.port'))
 		request_kwargs = {}
 		if isinstance(body, dict):
-			body = urllib.urlencode(body)
+			body = urllib.parse.urlencode(body)
 		if body:
 			request_kwargs['body'] = body
 		if headers:

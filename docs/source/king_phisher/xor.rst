@@ -4,8 +4,6 @@
 .. module:: xor
    :synopsis:
 
-
-
 Functions
 ---------
 

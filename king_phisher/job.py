@@ -61,12 +61,13 @@ class JobRequestDelete(object):
 
 class JobRun(threading.Thread):
 	def __init__(self, callback, args):
+		super(JobRun, self).__init__()
+		self.daemon = False
 		self.callback = callback
 		self.callback_args = args
 		self.request_delete = False
 		self.exception = None
 		self.reaped = False
-		threading.Thread.__init__(self)
 
 	def run(self):
 		try:
@@ -87,7 +88,7 @@ class JobRun(threading.Thread):
 #   tolerate_exceptions: boolean if true this job will run again after a failure
 #   run_count: number of times the job has been ran
 #   expiration: number of times to run a job, datetime.timedelta instance or None
-class JobManager(threading.Thread):
+class JobManager(object):
 	"""
 	This class provides a threaded job manager for periodically executing
 	arbitrary functions in an asynchronous fashion.
@@ -96,24 +97,77 @@ class JobManager(threading.Thread):
 		"""
 		:param bool use_utc: Whether or not to use UTC time internally.
 		"""
-		super(JobManager, self).__init__()
-		self.__jobs__ = {}
-		self.running = threading.Event()
-		self.shutdown = threading.Event()
-		self.shutdown.set()
-		self.job_lock = threading.RLock()
+		self._thread = threading.Thread(target=self._run)
+		self._thread.daemon = True
+		self._jobs = {}
+		self._thread_running = threading.Event()
+		self._thread_shutdown = threading.Event()
+		self._thread_shutdown.set()
+		self._job_lock = threading.RLock()
 		self.use_utc = use_utc
 		self.logger = logging.getLogger(self.__class__.__name__)
 
-	def __job_execute(self, job_id):
-		self.job_lock.acquire()
-		job_desc = self.__jobs__[job_id]
+	def _job_execute(self, job_id):
+		self._job_lock.acquire()
+		job_desc = self._jobs[job_id]
 		job_desc['last_run'] = self.now()
 		job_desc['run_count'] += 1
 		self.logger.debug('executing job with id: ' + str(job_id) + ' and callback function: ' + job_desc['callback'].__name__)
 		job_desc['job'] = JobRun(job_desc['callback'], job_desc['parameters'])
 		job_desc['job'].start()
-		self.job_lock.release()
+		self._job_lock.release()
+
+	def _run(self):
+		self.logger.info('the job manager has been started')
+		self._thread_running.set()
+		self._thread_shutdown.clear()
+		self._job_lock.acquire()
+		while self._thread_running.is_set():
+			self._job_lock.release()
+			time.sleep(1)
+			self._job_lock.acquire()
+			if not self._thread_running.is_set():
+				break
+
+			# reap jobs
+			jobs_for_removal = set()
+			for job_id, job_desc in self._jobs.items():
+				job_obj = job_desc['job']
+				if job_obj.is_alive() or job_obj.reaped:
+					continue
+				if job_obj.exception != None:
+					if job_desc['tolerate_exceptions'] == False:
+						self.logger.error('job ' + str(job_id) + ' encountered an error and is not set to tolerate exceptions')
+						jobs_for_removal.add(job_id)
+					else:
+						self.logger.warning('job ' + str(job_id) + ' encountered exception: ' + job_obj.exception.__class__.__name__)
+				if isinstance(job_desc['expiration'], int):
+					if job_desc['expiration'] <= 0:
+						jobs_for_removal.add(job_id)
+					else:
+						job_desc['expiration'] -= 1
+				elif isinstance(job_desc['expiration'], datetime.datetime):
+					if self.now_is_after(job_desc['expiration']):
+						jobs_for_removal.add(job_id)
+				if job_obj.request_delete:
+					jobs_for_removal.add(job_id)
+				job_obj.reaped = True
+			for job_id in jobs_for_removal:
+				self.job_delete(job_id)
+
+			# sow jobs
+			for job_id, job_desc in self._jobs.items():
+				if job_desc['last_run'] != None and self.now_is_before(job_desc['last_run'] + job_desc['run_every']):
+					continue
+				if job_desc['job'].is_alive():
+					continue
+				if not job_desc['job'].reaped:
+					continue
+				if not job_desc['enabled']:
+					continue
+				self._job_execute(job_id)
+		self._job_lock.release()
+		self._thread_shutdown.set()
 
 	def now(self):
 		"""
@@ -148,77 +202,33 @@ class JobManager(threading.Thread):
 		"""
 		return bool(dt >= self.now())
 
+	def start(self):
+		"""
+		Start the JobManager thread.
+		"""
+		if self._thread_running.is_set():
+			raise RuntimeError('the JobManager has already been started')
+		return self._thread.start()
+
 	def stop(self):
 		"""
 		Stop the JobManager thread.
 		"""
 		self.logger.debug('stopping the job manager')
-		self.running.clear()
-		self.shutdown.wait()
-		self.job_lock.acquire()
-		self.logger.debug('waiting on ' + str(len(self.__jobs__)) + ' job threads')
-		for job_id, job_desc in self.__jobs__.items():
+		self._thread_running.clear()
+		self._thread_shutdown.wait()
+		self._job_lock.acquire()
+		self.logger.debug('waiting on ' + str(len(self._jobs)) + ' job threads')
+		for job_id, job_desc in self._jobs.items():
 			if job_desc['job'] == None:
 				continue
 			if not job_desc['job'].is_alive():
 				continue
 			job_desc['job'].join()
-		self.join()
-		self.job_lock.release()
+		self._thread.join()
+		self._job_lock.release()
 		self.logger.info('the job manager has been stopped')
 		return
-
-	def run(self):
-		self.logger.info('the job manager has been started')
-		self.running.set()
-		self.shutdown.clear()
-		self.job_lock.acquire()
-		while self.running.is_set():
-			self.job_lock.release()
-			time.sleep(1)
-			self.job_lock.acquire()
-			if not self.running.is_set():
-				break
-
-			# Reap Jobs
-			jobs_for_removal = []
-			for job_id, job_desc in self.__jobs__.items():
-				job_obj = job_desc['job']
-				if job_obj.is_alive() or job_obj.reaped:
-					continue
-				if job_obj.exception != None:
-					if job_desc['tolerate_exceptions'] == False:
-						self.logger.error('job ' + str(job_id) + ' encountered an error and is not set to tolerate exceptions')
-						jobs_for_removal.append(job_id)
-					else:
-						self.logger.warning('job ' + str(job_id) + ' encountered exception: ' + job_obj.exception.__class__.__name__)
-				if isinstance(job_desc['expiration'], int):
-					if job_desc['expiration'] <= 0:
-						jobs_for_removal.append(job_id)
-					else:
-						job_desc['expiration'] -= 1
-				elif isinstance(job_desc['expiration'], datetime.datetime):
-					if self.now_is_after(job_desc['expiration']):
-						jobs_for_removal.append(job_id)
-				if job_obj.request_delete:
-					jobs_for_removal.append(job_id)
-				job_obj.reaped = True
-			for job_id in jobs_for_removal:
-				self.job_delete(job_id)
-
-			# Sow Jobs
-			for job_id, job_desc in self.__jobs__.items():
-				if job_desc['last_run'] != None and self.now_is_before(job_desc['last_run'] + job_desc['run_every']):
-					continue
-				if job_desc['job'].is_alive():
-					continue
-				if not job_desc['job'].reaped:
-					continue
-				if not job_desc['enabled']:
-					continue
-				self.__job_execute(job_id)
-		self.job_lock.release()
-		self.shutdown.set()
 
 	def job_run(self, callback, parameters=None):
 		"""
@@ -230,6 +240,8 @@ class JobManager(threading.Thread):
 		:return: The job id.
 		:rtype: :py:class:`uuid.UUID`
 		"""
+		if not self._thread_running.is_set():
+			raise RuntimeError('the JobManager is not running')
 		parameters = (parameters or ())
 		if not isinstance(parameters, (list, tuple)):
 			parameters = (parameters,)
@@ -245,9 +257,9 @@ class JobManager(threading.Thread):
 		job_desc['expiration'] = 0
 		job_id = uuid.uuid4()
 		self.logger.info('adding new job with id: ' + str(job_id) + ' and callback function: ' + callback.__name__)
-		with self.job_lock:
-			self.__jobs__[job_id] = job_desc
-			self.__job_execute(job_id)
+		with self._job_lock:
+			self._jobs[job_id] = job_desc
+			self._job_execute(job_id)
 		return job_id
 
 	def job_add(self, callback, parameters=None, hours=0, minutes=0, seconds=0, tolerate_exceptions=True, expiration=None):
@@ -269,6 +281,8 @@ class JobManager(threading.Thread):
 		:return: The job id.
 		:rtype: :py:class:`uuid.UUID`
 		"""
+		if not self._thread_running.is_set():
+			raise RuntimeError('the JobManager is not running')
 		parameters = (parameters or ())
 		if not isinstance(parameters, (list, tuple)):
 			parameters = (parameters,)
@@ -291,8 +305,8 @@ class JobManager(threading.Thread):
 			job_desc['expiration'] = None
 		job_id = uuid.uuid4()
 		self.logger.info('adding new job with id: ' + str(job_id) + ' and callback function: ' + callback.__name__)
-		with self.job_lock:
-			self.__jobs__[job_id] = job_desc
+		with self._job_lock:
+			self._jobs[job_id] = job_desc
 		return job_id
 
 	def job_count(self):
@@ -302,7 +316,7 @@ class JobManager(threading.Thread):
 		:return: The number of jobs.
 		:rtype: int
 		"""
-		return len(self.__jobs__)
+		return len(self._jobs)
 
 	def job_count_enabled(self):
 		"""
@@ -311,7 +325,7 @@ class JobManager(threading.Thread):
 		:return: The number of jobs that are enabled.
 		:rtype: int
 		"""
-		return len(filter(lambda job_desc: job_desc['enabled'], self.__jobs__.values()))
+		return len(filter(lambda job_desc: job_desc['enabled'], self._jobs.values()))
 
 	def job_enable(self, job_id):
 		"""
@@ -321,8 +335,8 @@ class JobManager(threading.Thread):
 		:type job_id: :py:class:`uuid.UUID`
 		"""
 		job_id = normalize_job_id(job_id)
-		with self.job_lock:
-			job_desc = self.__jobs__[job_id]
+		with self._job_lock:
+			job_desc = self._jobs[job_id]
 			job_desc['enabled'] = True
 
 	def job_disable(self, job_id):
@@ -333,21 +347,26 @@ class JobManager(threading.Thread):
 		:type job_id: :py:class:`uuid.UUID`
 		"""
 		job_id = normalize_job_id(job_id)
-		with self.job_lock:
-			job_desc = self.__jobs__[job_id]
+		with self._job_lock:
+			job_desc = self._jobs[job_id]
 			job_desc['enabled'] = False
 
-	def job_delete(self, job_id):
+	def job_delete(self, job_id, wait=True):
 		"""
 		Delete a job.
 
 		:param job_id: Job identifier to delete.
 		:type job_id: :py:class:`uuid.UUID`
+		:param bool wait: If the job is currently running, wait for it to complete before deleting it.
 		"""
 		job_id = normalize_job_id(job_id)
-		self.logger.info('deleting job with id: ' + str(job_id) + ' and callback function: ' + self.__jobs__[job_id]['callback'].__name__)
-		with self.job_lock:
-			del self.__jobs__[job_id]
+		self.logger.info('deleting job with id: ' + str(job_id) + ' and callback function: ' + self._jobs[job_id]['callback'].__name__)
+		job_desc = self._jobs[job_id]
+		with self._job_lock:
+			job_desc['enabled'] = False
+			if wait and self.job_is_running(job_id):
+				job_desc['job'].join()
+			del self._jobs[job_id]
 
 	def job_exists(self, job_id):
 		"""
@@ -358,7 +377,7 @@ class JobManager(threading.Thread):
 		:rtype: bool
 		"""
 		job_id = normalize_job_id(job_id)
-		return job_id in self.__jobs__
+		return job_id in self._jobs
 
 	def job_is_enabled(self, job_id):
 		"""
@@ -369,5 +388,22 @@ class JobManager(threading.Thread):
 		:rtype: bool
 		"""
 		job_id = normalize_job_id(job_id)
-		job_desc = self.__jobs__[job_id]
+		job_desc = self._jobs[job_id]
 		return job_desc['enabled']
+
+	def job_is_running(self, job_id):
+		"""
+		Check if a job is currently running. False is returned if the job does
+		not exist.
+
+		:param job_id: Job identifier to check the status of.
+		:type job_id: :py:class:`uuid.UUID`
+		:rtype: bool
+		"""
+		job_id = normalize_job_id(job_id)
+		if not job_id in self._jobs:
+			return False
+		job_desc = self._jobs[job_id]
+		if job_desc['job']:
+			return job_desc['job'].is_alive()
+		return False

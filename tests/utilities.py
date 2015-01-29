@@ -33,12 +33,53 @@
 import os
 import unittest
 
+from king_phisher import testing
 from king_phisher.utilities import *
 
 SINGLE_QUOTE_STRING_ESCAPED = """C:\\\\Users\\\\Alice\\\\Desktop\\\\Alice\\\'s Secret File.txt"""
 SINGLE_QUOTE_STRING_UNESCAPED = """C:\\Users\\Alice\\Desktop\\Alice's Secret File.txt"""
 
-class UtilitiesTests(unittest.TestCase):
+# function used for testing the cache object
+def cache_test(first_name, last_name, email=None, dob=None):
+	return random_string(24)
+
+class UtilitiesCacheTests(testing.KingPhisherTestCase):
+	def test_cache(self):
+		target_function = Cache('6h')(cache_test)
+
+		result_alice = target_function('alice', 'liddle')
+		self.assertEqual(target_function('alice', 'liddle'), result_alice)
+
+		result_calie = target_function('calie', 'liddle')
+		self.assertEqual(target_function('calie', 'liddle'), result_calie)
+		self.assertNotEqual(result_alice, result_calie)
+
+		result_alice = target_function('alice', 'liddle', email='aliddle@wonderland.com')
+		self.assertEqual(target_function('alice', 'liddle', email='aliddle@wonderland.com'), result_alice)
+		self.assertNotEqual(result_alice, result_calie)
+
+	def test_cache_cache_clear(self):
+		target_function = Cache('6h')(cache_test)
+		result_alice = target_function('alice', 'liddle')
+		target_function.cache_clear()
+		self.assertNotEqual(target_function('alice', 'liddle'), result_alice)
+
+	def test_cache_flatten_args(self):
+		target_function = Cache('6h')(cache_test)
+		flatten_args = target_function._flatten_args
+		self.assertEqual(flatten_args(('alice',), {'last_name': 'liddle'}), ('alice', 'liddle', None, None))
+		self.assertEqual(flatten_args(('alice',), {'last_name': 'liddle', 'email': 'aliddle@wonderland.com'}), ('alice', 'liddle', 'aliddle@wonderland.com', None))
+		self.assertEqual(flatten_args(('alice', 'liddle'), {}), ('alice', 'liddle', None, None))
+		self.assertEqual(flatten_args(('alice', 'liddle'), {}), ('alice', 'liddle', None, None))
+		self.assertEqual(flatten_args(('alice', 'liddle', 'aliddle@wonderland.com'), {}), ('alice', 'liddle', 'aliddle@wonderland.com', None))
+		self.assertEqual(flatten_args(('alice', 'liddle'), {'dob': '1990'}), ('alice', 'liddle', None, '1990'))
+
+		with self.assertRaisesRegex(TypeError, r'^cache_test\(\) missing required argument \'last_name\'$'):
+			flatten_args(('alice',), {})
+		with self.assertRaisesRegex(TypeError, r'^cache_test\(\) got an unexpected keyword argument \'foobar\'$'):
+			flatten_args(('alice', 'liddle'), {'foobar': True})
+
+class UtilitiesTests(testing.KingPhisherTestCase):
 	def test_check_requirements(self):
 		fake_pkg = 'a' + random_string(16)
 		real_pkg = 'Jinja2'
@@ -50,6 +91,45 @@ class UtilitiesTests(unittest.TestCase):
 	def test_escape_single_quote(self):
 		escaped_string = escape_single_quote(SINGLE_QUOTE_STRING_UNESCAPED)
 		self.assertEqual(escaped_string, SINGLE_QUOTE_STRING_ESCAPED)
+
+	def test_is_valid_email_address(self):
+		valid_emails = [
+			'aliddle@wonderland.com',
+			'aliddle@wonderland.co.uk',
+			'alice.liddle1+spam@wonderland.com',
+		]
+		invalid_emails = [
+			'aliddle.wonderland.com'
+			'aliddle+',
+			'aliddle@',
+			'aliddle',
+			'',
+			'@wonderland.com',
+			'@wonder@land.com',
+			'aliddle@.com'
+		]
+		for address in valid_emails:
+			self.assertTrue(is_valid_email_address(address))
+		for address in invalid_emails:
+			self.assertFalse(is_valid_email_address(address))
+
+	def test_is_valid_ip_address(self):
+		valid_ips = [
+			'127.0.0.1',
+			'10.0.0.1',
+			'200.100.0.1',
+			'fe80::1',
+			'::1'
+		]
+		invalid_ips = [
+			'localhost',
+			'www.google.com',
+			''
+		]
+		for address in valid_ips:
+			self.assertTrue(is_valid_ip_address(address))
+		for address in invalid_ips:
+			self.assertFalse(is_valid_ip_address(address))
 
 	def test_mock_attributes(self):
 		mock = Mock()
@@ -76,6 +156,11 @@ class UtilitiesTests(unittest.TestCase):
 		self.assertIsInstance(parsed, tuple)
 		self.assertEqual(len(parsed), 2)
 		self.assertEqual(parsed[0], '127.0.0.1')
+		self.assertEqual(parsed[1], 8080)
+		parsed = server_parse('[::1]:8080', 80)
+		self.assertIsInstance(parsed, tuple)
+		self.assertEqual(len(parsed), 2)
+		self.assertEqual(parsed[0], '::1')
 		self.assertEqual(parsed[1], 8080)
 
 	def test_timedef_to_seconds(self):

@@ -23,16 +23,16 @@ server:
   # WARNING: SQLite3 is not fully supported as of version 0.1.6, see
   # https://github.com/securestate/king-phisher/wiki/Database#sqlite for more
   # details
-  #database: sqlite:////var/king-phisher/king-phisher.db
+  database: sqlite:////var/king-phisher/king-phisher.db
 
   # The Postgres database to use
-  database: postgresql://user:pass@localhost/king_phisher
+  #database: postgresql://user:pass@localhost/king_phisher
 
   # Fork the server process into the background
   fork: true
 
   # Set a file to write the PID to
-  #pid_file: /var/run/kingphisher.pid
+  pid_file: /var/run/king-phisher.pid
 
   # Require an ID associated with a campaign to load pages
   require_id: true

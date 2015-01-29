@@ -4,8 +4,6 @@
 .. module:: errors
    :synopsis:
 
-
-
 Exceptions
 ----------
 

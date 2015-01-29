@@ -4,8 +4,6 @@
 .. module:: server.server
    :synopsis:
 
-
-
 Functions
 ---------
 

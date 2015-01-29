@@ -31,21 +31,32 @@
 #
 
 import datetime
+import ipaddress
 import os
 import socket
+import sys
 import urllib
-import urllib2
-import urlparse
 
+from king_phisher import spf
 from king_phisher import utilities
+from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
-from king_phisher.client.login import KingPhisherClientSSHLoginDialog
-from king_phisher.client.mailer import format_message, MailSenderThread
+from king_phisher.client import mailer
 from king_phisher.errors import KingPhisherInputValidationError
 
 from gi.repository import Gtk
 from gi.repository import WebKit
+
+if sys.version_info[0] < 3:
+	import urllib2
+	import urlparse
+	urllib.parse = urlparse
+	urllib.parse.urlencode = urllib.urlencode
+	urllib.request = urllib2
+else:
+	import urllib.parse
+	import urllib.request
 
 def test_webserver_url(target_url, secret_id):
 	"""
@@ -54,12 +65,12 @@ def test_webserver_url(target_url, secret_id):
 	:param str target_url: The URL to make a test request to.
 	:param str secret_id: The King Phisher Server secret id to include in the test request.
 	"""
-	parsed_url = urlparse.urlparse(target_url)
-	query = urlparse.parse_qs(parsed_url.query)
+	parsed_url = urllib.parse.urlparse(target_url)
+	query = urllib.parse.parse_qs(parsed_url.query)
 	query['id'] = [secret_id]
-	query = urllib.urlencode(query, True)
-	target_url = urlparse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
-	urllib2.urlopen(target_url, timeout=5)
+	query = urllib.parse.urlencode(query, True)
+	target_url = urllib.parse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
+	urllib.request.urlopen(target_url, timeout=5)
 
 class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 	"""
@@ -76,7 +87,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Send')
+		self.label = Gtk.Label(label='Send')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderSendTab, self).__init__(*args, **kwargs)
 		self.textview = self.gobjects['textview_mail_sender_progress']
@@ -91,13 +102,18 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		"""The :py:class:`.MailSenderThread` instance that is being used to send messages."""
 		self.parent.connect('exit', self.signal_kpc_exit)
 		self.parent.connect('exit-confirm', self.signal_kpc_exit_confirm)
+		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
+
+	def signal_activate_popup_menu_clear_all(self, widget):
+		self.textbuffer.delete(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter())
+		self.textbuffer_iter = self.textbuffer.get_start_iter()
 
 	def signal_button_clicked_sender_start(self, button):
 		required_settings = {
 			'mailer.webserver_url': 'Web Server URL',
 			'mailer.company_name': 'Company Name',
 			'mailer.source_email': 'Source Email',
-			'mailer.subject': 'Friendly Alias',
+			'mailer.subject': 'Subject',
 			'mailer.html_file': 'Message HTML File',
 			'mailer.target_file': 'Target CSV File'
 		}
@@ -109,13 +125,16 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 				continue
 			file_path = self.config[setting]
 			if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
-				gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: File could not be read".format(setting_name))
+				gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: the file could not be read.".format(setting_name))
 				return
+		if not utilities.is_valid_email_address(self.config['mailer.source_email']):
+			gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, 'Setting: \'mailer.source_email\'\nReason: the email address is invalid.')
+			return
 		if not self.config.get('smtp_server'):
 			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
 			return
 
-		self.text_insert('Testing the target URL... ')
+		self.text_insert('Checking the target URL... ')
 		try:
 			test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
 		except Exception:
@@ -127,6 +146,31 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		else:
 			self.text_insert('success, done.\n')
 
+		if self.config['autocheck_spf']:
+			spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
+			if not spf_test_ip:
+				self.text_insert('Skipped checking the SPF policy because the SMTP server address could not be detected.\n')
+				self.logger.warning('skipping spf policy check because the smtp server address could not be reliably detected')
+			else:
+				self.logger.debug('detected the smtp server address as ' + str(spf_test_ip))
+				spf_test_sender, spf_test_domain = self.config['mailer.source_email'].split('@')
+				self.text_insert("Checking the SPF policy of target domain '{0}'... ".format(spf_test_domain))
+				try:
+					spf_test = spf.SenderPolicyFramework(spf_test_ip, spf_test_domain, spf_test_sender)
+					spf_result = spf_test.check_host()
+				except spf.SPFError as error:
+					spf_result = None
+					self.text_insert("done, encountered exception: {0}.\n".format(error.__class__.__name__))
+				else:
+					if spf_result:
+						self.text_insert('done.\n')
+						self.text_insert("{0}SPF policy result: {1}\n".format(('WARNING: ' if spf_result.endswith('fail') else ''), spf_result))
+						if spf_result == 'fail' and not gui_utilities.show_dialog_yes_no('Sender Policy Framework Failure', self.parent, 'The configuration fails the domains SPF policy.\nContinue sending messages anyways?'):
+							self.text_insert('Sending aborted due to a failed SPF policy.\n')
+							return
+					else:
+						self.text_insert('done, no policy was found.\n')
+
 		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:
 			return
@@ -134,7 +178,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
-		self.sender_thread = MailSenderThread(self.config, self.config['mailer.target_file'], self, self.parent.rpc)
+		self.sender_thread = mailer.MailSenderThread(self.config, self.config['mailer.target_file'], self.parent.rpc, self)
 
 		# verify settings
 		missing_files = self.sender_thread.missing_files()
@@ -147,7 +191,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if self.config['smtp_ssh_enable']:
 			while True:
 				self.text_insert('Connecting to SSH... ')
-				login_dialog = KingPhisherClientSSHLoginDialog(self.config, self.parent)
+				login_dialog = dialogs.KingPhisherClientSSHLoginDialog(self.config, self.parent)
 				login_dialog.objects_load_from_config()
 				response = login_dialog.interact()
 				if response == Gtk.ResponseType.CANCEL:
@@ -156,14 +200,14 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 				if self.sender_thread.server_ssh_connect():
 					self.text_insert('done.\n')
 					break
-				self.sender_start_failure('Failed to connect to SSH', 'failed.\n', retry=True)
+				self.sender_start_failure(('Connection Failed', 'Failed to connect to the SSH server.'), 'failed.\n', retry=True)
 		self.text_insert('Connecting to SMTP server... ')
 		if not self.sender_thread.server_smtp_connect():
-			self.sender_start_failure('Failed to connect to SMTP', 'failed.\n')
+			self.sender_start_failure(('Connection Failed', 'Failed to connect to the SMTP server.'), 'failed.\n')
 			return
 		self.text_insert('done.\n')
 
-		parsed_target_url = urlparse.urlparse(self.config['mailer.webserver_url'])
+		parsed_target_url = urllib.parse.urlparse(self.config['mailer.webserver_url'])
 		landing_page_hostname = parsed_target_url.netloc
 		landing_page = parsed_target_url.path
 		landing_page = landing_page.lstrip('/')
@@ -205,6 +249,13 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			return
 		kpc.emit_stop_by_name('exit-confirm')
 
+	def signal_textview_populate_popup(self, textview, menu):
+		menu_item = Gtk.MenuItem.new_with_label('Clear All')
+		menu_item.connect('activate', self.signal_activate_popup_menu_clear_all)
+		menu_item.show()
+		menu.append(menu_item)
+		return True
+
 	def signal_textview_size_allocate_autoscroll(self, textview, allocation):
 		scrolled_window = self.gobjects['scrolledwindow_mail_sender_progress']
 		adjustment = scrolled_window.get_vadjustment()
@@ -242,7 +293,8 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		Handle a failure in starting the message sender thread and
 		perform any necessary clean up.
 
-		:param str message: A message to shown in an error popup dialog.
+		:param message: A message to shown in an error popup dialog.
+		:type message: str, tuple
 		:param text message: A message to be inserted into the text buffer.
 		:param bool retry: The operation will be attempted again.
 		"""
@@ -250,8 +302,10 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			self.text_insert(text)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
 		self.gobjects['button_mail_sender_start'].set_sensitive(True)
-		if message:
+		if isinstance(message, str):
 			gui_utilities.show_dialog_error(message, self.parent)
+		elif isinstance(message, tuple) and len(message) == 2:
+			gui_utilities.show_dialog_error(message[0], self.parent, message[1])
 		if not retry:
 			self.sender_thread = None
 
@@ -278,7 +332,7 @@ class MailSenderPreviewTab(object):
 		:param parent: The parent window for this object.
 		:type parent: :py:class:`Gtk.Window`
 		"""
-		self.label = Gtk.Label('Preview')
+		self.label = Gtk.Label(label='Preview')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		self.config = config
 		self.parent = parent
@@ -306,7 +360,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Edit')
+		self.label = Gtk.Label(label='Edit')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderEditTab, self).__init__(*args, **kwargs)
 		self.textview = self.gobjects['textview_html_file']
@@ -432,7 +486,7 @@ class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 		'MsgSensitivity'
 	]
 	def __init__(self, *args, **kwargs):
-		self.label = Gtk.Label('Configuration')
+		self.label = Gtk.Label(label='Configuration')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderConfigurationTab, self).__init__(*args, **kwargs)
 		self.parent.connect('exit', self.signal_kpc_exit)
@@ -443,9 +497,9 @@ class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 			test_webserver_url(target_url, self.config['server_config']['server.secret_id'])
 		except Exception as error:
 			error_description = None
-			if isinstance(error, urllib2.URLError) and hasattr(error, 'reason') and isinstance(error.reason, Exception):
+			if isinstance(error, urllib.request.URLError) and hasattr(error, 'reason') and isinstance(error.reason, Exception):
 				error = error.reason
-			if isinstance(error, urllib2.HTTPError) and error.getcode():
+			if isinstance(error, urllib.request.HTTPError) and error.getcode():
 				self.logger.warning("verify url HTTPError: {0} {1}".format(error.getcode(), error.reason))
 				error_description = "HTTP status {0} {1}".format(error.getcode(), error.reason)
 			elif isinstance(error, socket.gaierror):
@@ -499,12 +553,12 @@ class MailSenderTab(object):
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
-		self.label = Gtk.Label('Send Messages')
+		self.label = Gtk.Label(label='Send Messages')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 
 		self.notebook = Gtk.Notebook()
 		""" The :py:class:`Gtk.Notebook` for holding sub-tabs."""
-		self.notebook.connect('switch-page', self._tab_changed)
+		self.notebook.connect('switch-page', self.signal_notebook_switch_page)
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
@@ -533,7 +587,7 @@ class MailSenderTab(object):
 			tab.box.show()
 		self.notebook.show()
 
-	def _tab_changed(self, notebook, current_page, index):
+	def signal_notebook_switch_page(self, notebook, current_page, index):
 		previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
 		config_tab = self.tabs.get('config')
@@ -569,14 +623,19 @@ class MailSenderTab(object):
 				return
 			edit_tab.button_save_html_file.set_sensitive(True)
 			edit_tab.textview.set_property('editable', True)
-			edit_tab.textbuffer.set_text(open(html_file, 'r').read())
+			with open(html_file, 'rb') as file_h:
+				html_data = file_h.read()
+			html_data = str(html_data.decode('utf-8', 'ignore'))
+			edit_tab.textbuffer.set_text(html_data)
 		elif preview_tab and current_page == preview_tab.box:
 			html_file = self.config.get('mailer.html_file')
 			if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 				return
-			html_data = open(html_file, 'r').read()
-			html_data = format_message(html_data, self.config)
-			html_file_uri = urlparse.urlparse(html_file, 'file').geturl()
+			with open(html_file, 'rb') as file_h:
+				html_data = file_h.read()
+			html_data = str(html_data.decode('utf-8', 'ignore'))
+			html_data = mailer.format_message(html_data, self.config)
+			html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
 			if not html_file_uri.startswith('file://'):
 				html_file_uri = 'file://' + html_file_uri
 			preview_tab.webview.load_html_string(html_data, html_file_uri)
@@ -645,7 +704,7 @@ class MailSenderTab(object):
 			config_keys.remove(key)
 		for unset_key in config_keys:
 			config_type = config_types[unset_key]
-			if not config_type in (bool, dict, int, list, long, str, tuple, unicode):
+			if not config_type in (bool, dict, int, list, str, tuple):
 				continue
 			self.config[unset_key] = config_type()
 		config_tab.objects_load_from_config()

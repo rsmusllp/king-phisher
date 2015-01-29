@@ -65,7 +65,7 @@ def xor_decode(data):
 	:return: The decoded data.
 	:rtype: str
 	"""
-	data = map(ord, data)
+	data = list(map(ord, data))
 	last_key = data.pop(0)
 	decoded_data = []
 	for b in data:

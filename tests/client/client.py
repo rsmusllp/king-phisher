@@ -35,22 +35,21 @@ import sys
 import unittest
 
 from king_phisher import find
+from king_phisher import testing
 from king_phisher.client.client import *
 
 from gi.repository import GObject
 from gi.repository import Gtk
 
-class ClientGUITests(unittest.TestCase):
+class ClientGUITests(testing.KingPhisherTestCase):
 	def test_client_initialization(self):
 		find.data_path_append('data/client')
-		os.environ['KING_PHISHER_GLADE_FILE'] = 'KingPhisherClient.glade'
-		self.assertTrue(isinstance(gui_utilities.which_glade(), (str, unicode)))
-		try:
-			Gtk.init(sys.argv)
-			main_window = KingPhisherClient()
-			main_window.set_position(Gtk.WindowPosition.CENTER)
-		except Exception as error:
-			self.fail("failed to initialize KingPhisherClient (error: {0})".format(error.__class__.__name__))
+		os.environ['KING_PHISHER_GLADE_FILE'] = 'king-phisher-client.glade'
+		self.assertTrue(isinstance(gui_utilities.which_glade(), str))
+
+		Gtk.init(sys.argv)
+		main_window = KingPhisherClient()
+		main_window.set_position(Gtk.WindowPosition.CENTER)
 
 	def test_client_template_config(self):
 		find.data_path_append('data/client')

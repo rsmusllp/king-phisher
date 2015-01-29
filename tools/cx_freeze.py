@@ -119,6 +119,7 @@ executables = [
 	Executable(
 		'KingPhisher',
 		base=exe_base,
+		icon='data/client/king_phisher/king-phisher-icon.ico',
 		shortcutName='KingPhisher',
 		shortcutDir='ProgramMenuFolder'
 	)

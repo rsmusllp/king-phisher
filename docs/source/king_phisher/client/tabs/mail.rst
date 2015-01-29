@@ -1,10 +1,8 @@
-:mod:`client.tabs.mail`
-=======================
+:mod:`tabs.mail`
+================
 
 .. module:: tabs.mail
    :synopsis:
-
-
 
 Functions
 ---------

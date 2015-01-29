@@ -4,8 +4,6 @@
 .. module:: server.server_rpc
    :synopsis:
 
-
-
 Data
 ----
 

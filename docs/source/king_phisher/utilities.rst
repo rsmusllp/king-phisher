@@ -4,16 +4,20 @@
 .. module:: utilities
    :synopsis:
 
-
-
 Functions
 ---------
 
 .. autofunction:: king_phisher.utilities.check_requirements
 
+.. autofunction:: king_phisher.utilities.datetime_utc_to_local
+
 .. autofunction:: king_phisher.utilities.escape_single_quote
 
 .. autofunction:: king_phisher.utilities.format_datetime
+
+.. autofunction:: king_phisher.utilities.is_valid_email_address
+
+.. autofunction:: king_phisher.utilities.is_valid_ip_address
 
 .. autofunction:: king_phisher.utilities.open_uri
 

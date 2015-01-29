@@ -33,6 +33,8 @@
 import collections
 import datetime
 import distutils.version
+import inspect
+import ipaddress
 import os
 import random
 import re
@@ -43,6 +45,8 @@ import sys
 import time
 
 import pkg_resources
+
+EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
 
 def timedef_to_seconds(timedef):
 	"""
@@ -96,16 +100,25 @@ class Cache(object):
 			result will be considered valid for.
 		:type timeout: int, str
 		"""
-		if isinstance(timeout, (str, unicode)):
+		if isinstance(timeout, str):
 			timeout = timedef_to_seconds(timeout)
 		self.cache_timeout = timeout
 		self.__cache = {}
 
-	def __call__(self, *args):
+	def __call__(self, *args, **kwargs):
 		if not hasattr(self, '_target_function'):
-			self._target_function = args[0]
+			target_function = args[0]
+			if not inspect.isfunction(target_function) and not inspect.ismethod(target_function):
+				raise RuntimeError('the cached object must be a function or method')
+			arg_spec = inspect.getargspec(target_function)
+			if arg_spec.varargs or arg_spec.keywords:
+				raise RuntimeError('the cached function can not use dynamic args or kwargs')
+			self._target_function = target_function
+			self._target_function_arg_spec = arg_spec
 			return self
+
 		self.cache_clean()
+		args = self._flatten_args(args, kwargs)
 		if not isinstance(args, collections.Hashable):
 			return self._target_function(*args)
 		result, expiration = self.__cache.get(args, (None, 0))
@@ -116,7 +129,33 @@ class Cache(object):
 		return result
 
 	def __repr__(self):
-		return "<cached function {0}>".format(self._target_function.__name__)
+		return "<cached function {0} at 0x{1:x}>".format(self._target_function.__name__, id(self._target_function))
+
+	def _flatten_args(self, args, kwargs):
+		flattened_args = list(args)
+		arg_spec = self._target_function_arg_spec
+
+		arg_spec_defaults = (arg_spec.defaults or [])
+		default_args = tuple(arg_spec.args[:-len(arg_spec_defaults)])
+		default_kwargs = dict(zip(arg_spec.args[-len(arg_spec_defaults):], arg_spec_defaults))
+
+		for arg_id in range(len(args), len(arg_spec.args)):
+			arg_name = arg_spec.args[arg_id]
+			if arg_name in default_args:
+				if not arg_name in kwargs:
+					raise TypeError("{0}() missing required argument '{1}'".format(self._target_function.__name__, arg_name))
+				flattened_args.append(kwargs[arg_name])
+				del kwargs[arg_name]
+			else:
+				flattened_args.append(kwargs.get(arg_name, default_kwargs[arg_name]))
+				if arg_name in kwargs:
+					del kwargs[arg_name]
+
+		unexpected_kwargs = tuple(kwargs.keys())
+		if len(unexpected_kwargs):
+			unexpected_kwargs = tuple(map(lambda a: "'{0}'".format(a), unexpected_kwargs))
+			raise TypeError("{0}() got an unexpected keyword argument{1} {2}".format(self._target_function.__name__, ('' if len(unexpected_kwargs) == 1 else 's'), ', '.join(unexpected_kwargs)))
+		return tuple(flattened_args)
 
 	def cache_clean(self):
 		"""
@@ -220,6 +259,18 @@ def check_requirements(requirements, ignore=None):
 			not_satisfied.append(req_pkg)
 	return not_satisfied
 
+def datetime_utc_to_local(dt):
+	"""
+	Convert a :py:class:`datetime.datetime` instance from UTC time to the local
+	time.
+
+	:param dt: The time to convert from UTC to local.
+	:type dt: :py:class:`datetime.datetime`
+	:return: The time converted to the local timezone.
+	:rtype: :py:class:`datetime.datetime`
+	"""
+	return dt - datetime.timedelta(seconds=time.timezone)
+
 def escape_single_quote(string):
 	"""
 	Escape a string containing single quotes and backslashes with backslashes.
@@ -245,6 +296,31 @@ def format_datetime(dt):
 	if not isinstance(dt, datetime.datetime):
 		return ''
 	return dt.strftime('%Y-%m-%d %H:%M:%S')
+
+def is_valid_email_address(email_address):
+	"""
+	Check that the string specified appears to be a valid email address.
+
+	:param str email_address: The email address to validate.
+	:return: Whether the email address appears to be valid or not.
+	:rtype: bool
+	"""
+	return EMAIL_REGEX.match(email_address) != None
+
+def is_valid_ip_address(ip_address):
+	"""
+	Check that the string specified appears to be either a valid IPv4 or IPv6
+	address.
+
+	:param str ip_address: The ip address to validate.
+	:return: Whether the ip address appears to be valid or not.
+	:rtype: bool
+	"""
+	try:
+		ipaddress.ip_address(ip_address)
+	except ValueError:
+		return False
+	return True
 
 def open_uri(uri):
 	"""
@@ -302,8 +378,10 @@ def server_parse(server, default_port):
 	:return: The parsed server information.
 	:rtype: tuple
 	"""
-	server = server.split(':')
+	server = server.rsplit(':', 1)
 	host = server[0]
+	if host.startswith('[') and host.endswith(']'):
+		host = host[1:-1]
 	if len(server) == 1:
 		return (host, default_port)
 	else:

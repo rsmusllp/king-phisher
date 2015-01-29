@@ -1,10 +1,8 @@
-:mod:`client.tabs.campaign`
-===========================
+:mod:`tabs.campaign`
+====================
 
 .. module:: tabs.campaign
    :synopsis:
-
-
 
 Classes
 -------

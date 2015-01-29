@@ -61,6 +61,8 @@ __requirements__ = [
 	'PyYAML>=3.10',
 	'SQLAlchemy>=0.9'
 ]
+if sys.version_info.major == 2:
+	__requirements__.append('py2-ipaddress>=2.0.0')
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
@@ -161,7 +163,7 @@ def main():
 	server_pid = os.getpid()
 	logger.info("server running in process: {0} main tid: 0x{1:x}".format(server_pid, threading.current_thread().ident))
 
-	if config.has_option('server.pid_file'):
+	if should_fork and config.has_option('server.pid_file'):
 		pid_file = open(config.get('server.pid_file'), 'w')
 		pid_file.write(str(server_pid))
 		pid_file.close()

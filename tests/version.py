@@ -32,31 +32,37 @@
 
 import json
 import re
-import urllib2
+import sys
 import unittest
 
-from king_phisher.testing import skip_on_travis
+from king_phisher import testing
 from king_phisher.version import *
 
-class VersionTests(unittest.TestCase):
+if sys.version_info[0] < 3:
+	import urllib2
+	urllib = type('http', (), {'request': urllib2})
+else:
+	import urllib.request
+
+class VersionTests(testing.KingPhisherTestCase):
 	def test_version_info(self):
 		if version_label:
 			self.assertIn(version_label, ('alpha', 'beta'), msg='the version label is invalid')
 		version_regex = r'^\d+\.\d+\.\d+(-(alpha|beta))?$'
-		self.assertRegexpMatches(version, version_regex, msg='the version format is invalid')
+		self.assertRegex(version, version_regex, msg='the version format is invalid')
 		version_regex = r'^\d+\.\d+\.\d+((a|b)\d)?$'
-		self.assertRegexpMatches(distutils_version, version_regex, msg='the distutils version format is invalid')
+		self.assertRegex(distutils_version, version_regex, msg='the distutils version format is invalid')
 
-	@skip_on_travis
+	@testing.skip_on_travis
 	def test_github_releases(self):
-		url_h = urllib2.urlopen('https://api.github.com/repos/securestate/king-phisher/releases')
-		releases = json.load(url_h)
+		url_h = urllib.request.urlopen('https://api.github.com/repos/securestate/king-phisher/releases')
+		releases = json.loads(url_h.read().decode('utf-8'))
 		url_h.close()
 		releases = filter(lambda release: not release['draft'], releases)
 		for release in releases:
 			tag_name_regex = r'v\d+\.\d+\.\d+'
 			tag_name = release['tag_name']
-			self.assertRegexpMatches(tag_name, tag_name_regex, msg='the release tag name is invalid')
+			self.assertRegex(tag_name, tag_name_regex, msg='the release tag name is invalid')
 			name = "{0}: Version {1}".format(tag_name, tag_name[1:])
 			self.assertEqual(name, release['name'], msg='the release name is invalid')
 

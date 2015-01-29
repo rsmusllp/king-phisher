@@ -32,16 +32,17 @@
 
 import unittest
 
+from king_phisher import testing
 from king_phisher.client.graphs import *
 
-class ClientGraphsTests(unittest.TestCase):
+class ClientGraphsTests(testing.KingPhisherTestCase):
 	def test_graphs_found(self):
-		self.assertGreaterEqual(get_graphs(), 3)
+		self.assertGreaterEqual(len(get_graphs()), 3)
 
 	def test_graph_classes(self):
 		graphs = get_graphs()
 		for graph in graphs:
-			self.assertTrue(isinstance(graph, (str, unicode)))
+			self.assertTrue(isinstance(graph, str))
 			self.assertTrue(issubclass(get_graph(graph), CampaignGraph))
 
 if __name__ == '__main__':

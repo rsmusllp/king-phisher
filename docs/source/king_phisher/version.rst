@@ -4,8 +4,6 @@
 .. module:: version
    :synopsis:
 
-
-
 Data
 ----
 

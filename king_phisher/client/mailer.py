@@ -30,21 +30,17 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import cgi
 import csv
 import logging
 import mimetypes
+import ipaddress
 import os
 import random
 import smtplib
+import socket
+import sys
 import threading
 import time
-import urlparse
-from email import Encoders
-from email.MIMEBase import MIMEBase
-from email.MIMEImage import MIMEImage
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
 
 from king_phisher import templates
 from king_phisher import utilities
@@ -53,45 +49,27 @@ from king_phisher.ssh_forward import SSHTCPForwarder
 
 from gi.repository import GLib
 
-__all__ = ['format_message', 'MailSenderThread']
+if sys.version_info[0] < 3:
+	from email import Encoders as encoders
+	import urllib
+	import urlparse
+	urllib.parse = urlparse
+	from email.MIMEBase import MIMEBase
+	from email.MIMEImage import MIMEImage
+	from email.MIMEMultipart import MIMEMultipart
+	from email.MIMEText import MIMEText
+else:
+	from email import encoders
+	import urllib.parse
+	from email.mime.base import MIMEBase
+	from email.mime.image import MIMEImage
+	from email.mime.multipart import MIMEMultipart
+	from email.mime.text import MIMEText
+
+__all__ = ['format_message', 'guess_smtp_server_address', 'MailSenderThread']
 
 make_uid = lambda: utilities.random_string(16)
-
-class ClientTemplateEnvironment(templates.KingPhisherTemplateEnvironment):
-	MODE_PREVIEW = 0
-	MODE_ANALYZE = 1
-	MODE_SEND = 2
-	def __init__(self, *args, **kwargs):
-		super(ClientTemplateEnvironment, self).__init__(*args, **kwargs)
-		self.set_mode(self.MODE_PREVIEW)
-		self.globals['inline_image'] = self._inline_image_handler
-		self.attachment_images = {}
-
-	def set_mode(self, mode):
-		assert(mode in [self.MODE_PREVIEW, self.MODE_ANALYZE, self.MODE_SEND])
-		self._mode = mode
-		if mode == self.MODE_ANALYZE:
-			self.attachment_images = {}
-
-	def _inline_image_handler(self, image_path):
-		image_path = os.path.abspath(image_path)
-		if self._mode == self.MODE_PREVIEW:
-			if os.path.sep == '\\':
-				image_path = '/'.join(image_path.split('\\'))
-			if not image_path.startswith('/'):
-				image_path = '/' + image_path
-			image_path = 'file://' + image_path
-			return "<img src=\"{0}\">".format(cgi.escape(image_path, quote=True))
-		if image_path in self.attachment_images:
-			attachment_name = self.attachment_images[image_path]
-		else:
-			attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
-			while attachment_name in self.attachment_images.values():
-				attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
-			self.attachment_images[image_path] = attachment_name
-		return "<img src=\"cid:{0}\">".format(cgi.escape(attachment_name, quote=True))
-
-template_environment = ClientTemplateEnvironment()
+template_environment = templates.MessageTemplateEnvironment()
 
 def format_message(template, config, first_name=None, last_name=None, uid=None, target_email=None):
 	"""
@@ -109,10 +87,10 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	:rtype: str
 	"""
 	if uid == None:
-		template_environment.set_mode(ClientTemplateEnvironment.MODE_PREVIEW)
-	first_name = ('Alice' if not isinstance(first_name, (str, unicode)) else first_name)
-	last_name = ('Liddle' if not isinstance(last_name, (str, unicode)) else last_name)
-	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, (str, unicode)) else target_email)
+		template_environment.set_mode(template_environment.MODE_PREVIEW)
+	first_name = ('Alice' if not isinstance(first_name, str) else first_name)
+	last_name = ('Liddle' if not isinstance(last_name, str) else last_name)
+	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, str) else target_email)
 	uid = (uid or config['server_config'].get('server.secret_id') or make_uid())
 
 	template = template_environment.from_string(template)
@@ -129,11 +107,11 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	template_vars['uid'] = uid
 
 	webserver_url = config.get('mailer.webserver_url', '')
-	webserver_url = urlparse.urlparse(webserver_url)
+	webserver_url = urllib.parse.urlparse(webserver_url)
 	tracking_image = config['server_config']['server.tracking_image']
 	template_vars['webserver'] = webserver_url.netloc
-	tracking_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, tracking_image, '', 'id=' + uid, ''))
-	webserver_url = urlparse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
+	tracking_url = urllib.parse.urlunparse((webserver_url.scheme, webserver_url.netloc, tracking_image, '', 'id=' + uid, ''))
+	webserver_url = urllib.parse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
 	template_vars['tracking_dot_image_tag'] = "<img src=\"{0}\" style=\"display:none\" />".format(tracking_url)
 
 	template_vars_url = {}
@@ -145,16 +123,54 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	template_vars.update(template_environment.standard_variables)
 	return template.render(template_vars)
 
+def guess_smtp_server_address(host, forward_host=None):
+	"""
+	Guess the IP address of the SMTP server that will be connected to given the
+	SMTP host information and an optional SSH forwarding host. If a hostname is
+	in use it will be resolved to an IP address, either IPv4 or IPv6 and in that
+	order. If a hostname resolves to multiple IP addresses, None will be
+	returned. This function is intended to guess the SMTP servers IP address
+	given the client configuration so it can be used for SPF record checks.
+
+	:param str host: The SMTP server that is being connected to.
+	:param str forward_host: An optional host that is being used to tunnel the connection.
+	:return: The ip address of the SMTP server.
+	:rtype: None, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
+	"""
+	host = host.rsplit(':', 1)[0]
+	if utilities.is_valid_ip_address(host):
+		ip = ipaddress.ip_address(host)
+		if not ip.is_loopback:
+			return ip
+	else:
+		info = None
+		for family in (socket.AF_INET, socket.AF_INET6):
+			try:
+				info = socket.getaddrinfo(host, 1, family)
+			except socket.gaierror:
+				continue
+			info = set(list(map(lambda r: r[4][0], info)))
+			if len(info) != 1:
+				return
+			break
+		if info:
+			ip = ipaddress.ip_address(info.pop())
+			if not ip.is_loopback:
+				return ip
+	if forward_host:
+		return guess_smtp_server_address(forward_host)
+	return
+
 class MailSenderThread(threading.Thread):
 	"""
 	The King Phisher threaded email message sender. This object manages
-	the sending of emails for campaigns and supports pausing sending
+	the sending of emails for campaigns and supports pausing the sending of
 	messages which can later be resumed by unpausing. This object reports
-	its information to the GUI through an
+	its information to the GUI through an optional
 	:py:class:`.MailSenderSendTab` instance, these two objects
 	are very interdependent.
 	"""
-	def __init__(self, config, target_file, tab, rpc):
+	def __init__(self, config, target_file, rpc, tab=None):
 		"""
 		:param dict config: The King Phisher client configuration.
 		:param str target_file: The CSV formatted file to read message targets from.
@@ -164,12 +180,13 @@ class MailSenderThread(threading.Thread):
 		:type rpc: :py:class:`.KingPhisherRPCClient`
 		"""
 		super(MailSenderThread, self).__init__()
+		self.daemon = True
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		self.config = config
 		self.target_file = target_file
 		"""The name of the target file in CSV format."""
 		self.tab = tab
-		""":py:class:`.MailSenderSendTab` instance for reporting to the GUI."""
+		"""The optional :py:class:`.MailSenderSendTab` instance for reporting status messages to the GUI."""
 		self.rpc = rpc
 		self.ssh_forwarder = None
 		"""The :py:class:`.SSHTCPForwarder` instance for tunneling traffic to the SMTP server."""
@@ -183,6 +200,33 @@ class MailSenderThread(threading.Thread):
 		self.should_exit = threading.Event()
 		self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		self._mime_attachments = None
+
+	def tab_notify_sent(self, emails_done, emails_total):
+		"""
+		Notify the tab that messages have been sent.
+
+		:param int emails_done: The number of emails that have been sent.
+		:param int emails_total: The total number of emails that are going to be sent.
+		"""
+		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
+
+	def tab_notify_status(self, message):
+		"""
+		Handle a status message regarding the message sending operation.
+
+		:param str message: The notification message.
+		"""
+		self.logger.info(message.lower())
+		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+			GLib.idle_add(self.tab.notify_status, message + '\n')
+
+	def tab_notify_stopped(self):
+		"""
+		Notify the tab that the message sending operation has stopped.
+		"""
+		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+			GLib.idle_add(self.tab.notify_stopped)
 
 	def server_ssh_connect(self):
 		"""
@@ -233,7 +277,7 @@ class MailSenderThread(threading.Thread):
 			except smtplib.SMTPServerDisconnected:
 				pass
 			self.smtp_connection = None
-			GLib.idle_add(self.tab.notify_status, 'Disconnected from the SMTP server\n')
+			self.tab_notify_status('Disconnected from the SMTP server')
 
 	def server_smtp_reconnect(self):
 		"""
@@ -250,7 +294,7 @@ class MailSenderThread(threading.Thread):
 				pass
 			self.smtp_connection = None
 		while not self.server_smtp_connect():
-			GLib.idle_add(self.tab.notify_status, 'Failed to reconnect to the SMTP server\n')
+			self.tab_notify_status('Failed to reconnect to the SMTP server')
 			if not self.process_pause(True):
 				return False
 		return True
@@ -263,9 +307,11 @@ class MailSenderThread(threading.Thread):
 		:rtype: int
 		"""
 		targets = 0
-		target_file_h = open(self.target_file, 'r')
+		target_file_h = open(self.target_file, 'rU')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
+			if not utilities.is_valid_email_address(target['email_address']):
+				continue
 			targets += 1
 		target_file_h.close()
 		return targets
@@ -282,12 +328,15 @@ class MailSenderThread(threading.Thread):
 		self._mime_attachments = self._get_mime_attachments()
 		self.logger.debug("loaded {0:,} MIME attachments".format(len(self._mime_attachments)))
 
-		target_file_h = open(self.target_file, 'r')
+		target_file_h = open(self.target_file, 'rU')
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
+			if not utilities.is_valid_email_address(target['email_address']):
+				self.logger.warning('skipping invalid email address: ' + target['email_address'])
+				continue
 			iteration_time = time.time()
 			if self.should_exit.is_set():
-				GLib.idle_add(self.tab.notify_status, 'Sending emails cancelled\n')
+				self.tab_notify_status('Sending emails cancelled')
 				break
 			if not self.process_pause():
 				break
@@ -296,11 +345,12 @@ class MailSenderThread(threading.Thread):
 
 			uid = make_uid()
 			emails_done += 1
-			GLib.idle_add(self.tab.notify_status, "Sending email {0:,} of {1:,} to {2} with UID: {3}\n".format(emails_done, emails_total, target['email_address'], uid))
+			self.tab_notify_status("Sending email {0:,} of {1:,} to {2} with UID: {3}".format(emails_done, emails_total, target['email_address'], uid))
 			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
 			if not self._try_send_email(target['email_address'], msg):
 				break
-			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
+
+			self.tab_notify_sent(emails_done, emails_total)
 			campaign_id = self.config['campaign_id']
 			company_name = self.config.get('mailer.company_name', '')
 			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], company_name, target['first_name'], target['last_name'])
@@ -318,13 +368,13 @@ class MailSenderThread(threading.Thread):
 		target_file_h.close()
 		self._mime_attachments = None
 
-		GLib.idle_add(self.tab.notify_status, "Finished sending emails, successfully sent {0:,} emails\n".format(emails_done))
+		self.tab_notify_status("Finished sending emails, successfully sent {0:,} emails".format(emails_done))
 		self.server_smtp_disconnect()
 		if self.ssh_forwarder:
 			self.ssh_forwarder.stop()
 			self.ssh_forwarder = None
-			GLib.idle_add(self.tab.notify_status, 'Disconnected from the SSH server\n')
-		GLib.idle_add(self.tab.notify_stopped)
+			self.tab_notify_status('Disconnected from the SSH server')
+		self.tab_notify_stopped()
 		return
 
 	def process_pause(self, set_pause=False):
@@ -336,15 +386,18 @@ class MailSenderThread(threading.Thread):
 		:rtype: bool
 		"""
 		if set_pause:
-			gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
+			if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+				gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
+			else:
+				self.pause()
 		if self.paused.is_set():
-			GLib.idle_add(self.tab.notify_status, 'Paused sending emails, waiting to resume\n')
+			self.tab_notify_status('Paused sending emails, waiting to resume')
 			self.running.wait()
 			self.paused.clear()
 			if self.should_exit.is_set():
-				GLib.idle_add(self.tab.notify_status, 'Sending emails cancelled\n')
+				self.tab_notify_status('Sending emails cancelled')
 				return False
-			GLib.idle_add(self.tab.notify_status, 'Resuming sending emails\n')
+			self.tab_notify_status('Resuming sending emails')
 			self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		return True
 
@@ -377,7 +430,9 @@ class MailSenderThread(threading.Thread):
 		msg.preamble = 'This is a multi-part message in MIME format.'
 		msg_alt = MIMEMultipart('alternative')
 		msg.attach(msg_alt)
-		msg_template = open(self.config['mailer.html_file'], 'r').read()
+		with open(self.config['mailer.html_file'], 'rb') as file_h:
+			msg_template = file_h.read()
+		msg_template = str(msg_template.decode('utf-8', 'ignore'))
 		formatted_msg = format_message(msg_template, self.config, first_name=first_name, last_name=last_name, uid=uid, target_email=target_email)
 		msg_body = MIMEText(formatted_msg, "html")
 		msg_alt.attach(msg_body)
@@ -397,7 +452,7 @@ class MailSenderThread(threading.Thread):
 			attachment = self.config['mailer.attachment_file']
 			attachfile = MIMEBase(*mimetypes.guess_type(attachment))
 			attachfile.set_payload(open(attachment, 'rb').read())
-			Encoders.encode_base64(attachfile)
+			encoders.encode_base64(attachfile)
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
 			attachments.append(attachfile)
 		for attachment_file, attachment_name in template_environment.attachment_images.items():
@@ -409,9 +464,9 @@ class MailSenderThread(threading.Thread):
 
 	def _prepare_env(self):
 		msg_template = open(self.config['mailer.html_file'], 'r').read()
-		template_environment.set_mode(ClientTemplateEnvironment.MODE_ANALYZE)
+		template_environment.set_mode(template_environment.MODE_ANALYZE)
 		format_message(msg_template, self.config, uid=make_uid())
-		template_environment.set_mode(ClientTemplateEnvironment.MODE_SEND)
+		template_environment.set_mode(template_environment.MODE_SEND)
 
 	def _try_send_email(self, *args, **kwargs):
 		message_sent = False
@@ -422,7 +477,7 @@ class MailSenderThread(threading.Thread):
 					message_sent = True
 					break
 				except:
-					GLib.idle_add(self.tab.notify_status, 'Failed to send message\n')
+					self.tab_notify_status('Failed to send message')
 					time.sleep(1)
 			if not message_sent:
 				self.server_smtp_disconnect()

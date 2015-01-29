@@ -4,8 +4,6 @@
 .. module:: server.pages
    :synopsis:
 
-
-
 Functions
 ---------
 

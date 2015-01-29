@@ -32,16 +32,17 @@
 
 import unittest
 
+from king_phisher import testing
 from king_phisher.templates import *
 from king_phisher.utilities import random_string
 
-class TemplatesTests(unittest.TestCase):
+class TemplatesTests(testing.KingPhisherTestCase):
 	def test_global_variables(self):
 		# prepend an alphabetic character so the result is a valid identifier
 		test_key = 'a' + random_string(10)
 		test_value = random_string(20)
 		global_vars = {test_key: test_value}
-		env = KingPhisherTemplateEnvironment(global_vars=global_vars)
+		env = BaseTemplateEnvironment(global_vars=global_vars)
 		test_string = test_string = '<html>{{ ' + test_key + ' }}</html>'
 		template = env.from_string(test_string)
 		result = template.render()
@@ -49,7 +50,7 @@ class TemplatesTests(unittest.TestCase):
 		self.assertFalse(test_key in result)
 
 	def test_strings_are_not_escaped(self):
-		env = KingPhisherTemplateEnvironment()
+		env = BaseTemplateEnvironment()
 		test_string = '<html>{{ link }}</html>'
 		link = '<a href="http://kingphisher.com/">Click Me</a>'
 		template = env.from_string(test_string)

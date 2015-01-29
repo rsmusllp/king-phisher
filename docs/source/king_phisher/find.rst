@@ -4,8 +4,6 @@
 .. module:: find
    :synopsis:
 
-
-
 Data
 ----
 

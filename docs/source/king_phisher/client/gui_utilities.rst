@@ -4,8 +4,6 @@
 .. module:: client.gui_utilities
    :synopsis:
 
-
-
 Data
 ----
 
@@ -22,6 +20,8 @@ Functions
 .. autofunction:: king_phisher.client.gui_utilities.gobject_signal_blocked
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_sync
+
+.. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_selection_to_clipboard
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_widget_destroy_children
 
