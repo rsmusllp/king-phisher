@@ -7,14 +7,15 @@
 # Author: Spencer McIntyre
 #
 # Quick run command:
+#   wget -q https://github.com/securestate/king-phisher/raw/master/tools/install.sh && sudo bash ./install.sh
 #
+# Supported Linux Flavors:
+#   Linux Flavor    | Client | Server |
+#   ----------------|--------|--------|
+#   CentOS          | no     | yes    |
+#   Kali            | yes    | yes    |
+#   Ubuntu          | yes    | yes    |
 #
-# Supported Linux versions:
-# Linux Flavor    | Client | Server |
-# ----------------|--------|--------|
-# CentOS          | no     | yes    |
-# Kali            | yes    | yes    |
-# Ubuntu          | yes    | yes    |
 ########################################################################
 
 E_NOTROOT=87
@@ -102,8 +103,7 @@ elif [ "$LINUX_VERSION" == "Kali" ]; then
 		apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
 			gir1.2-webkit-3.0 python-cairo \
 			libgtk-3-dev python-gi python-gi-cairo \
-			python-gobject python-gobject-dev python-paramiko \
-			python-tk tk-dev
+			python-gobject python-gobject-dev python-paramiko
 	fi
 	if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		apt-get install -y libpq-dev
@@ -115,8 +115,7 @@ elif [ "$LINUX_VERSION" == "Ubuntu" ]; then
 		apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
 			gir1.2-webkit-3.0 python-cairo \
 			libgtk-3-dev python-gi python-gi-cairo \
-			python-gobject python-gobject-dev python-paramiko \
-			python-tk tk-dev
+			python-gobject python-gobject-dev python-paramiko
 	fi
 	if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		apt-get install -y libpq-dev
