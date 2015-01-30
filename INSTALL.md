@@ -60,6 +60,7 @@ and configuring a database backend, please see the
 | Linux Flavor | Client Support | Server Support |
 |:-------------|:--------------:|:--------------:|
 | CentOS       | no             | yes            |
+| Debian       | yes            | yes            |
 | Kali         | yes            | yes            |
 | Ubuntu       | yes            | yes            |
 
