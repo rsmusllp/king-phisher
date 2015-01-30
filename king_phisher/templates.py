@@ -101,6 +101,7 @@ class MessageTemplateEnvironment(BaseTemplateEnvironment):
 		self.set_mode(self.MODE_PREVIEW)
 		self.globals['inline_image'] = self._inline_image_handler
 		self.attachment_images = {}
+		"""A dictionary collecting the images that are going to be embedded and sent inline in the message."""
 
 	def set_mode(self, mode):
 		"""

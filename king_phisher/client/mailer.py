@@ -413,6 +413,7 @@ class MailSenderThread(threading.Thread):
 		:rtype: :py:class:`email.MIMEMultipart.MIMEMultipart`
 		"""
 		msg = MIMEMultipart()
+		msg.replace_header('Content-Type', 'multipart/related')
 		msg['Subject'] = self.config['mailer.subject']
 		if self.config.get('mailer.reply_to_email'):
 			msg.add_header('reply-to', self.config['mailer.reply_to_email'])
