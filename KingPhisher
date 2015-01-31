@@ -47,7 +47,7 @@ from gi.repository import GObject
 from gi.repository import Gtk
 
 __requirements__ = [
-	'dnspython>=1.10.0',
+	"dns{0}>=1.10.0".format('python' if sys.version_info.major == 2 else 'python3'),
 	'Jinja2>=2.7.1',
 	'paramiko>=1.10.1'
 ]

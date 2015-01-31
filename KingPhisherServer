@@ -53,7 +53,7 @@ except ImportError:
 
 __requirements__ = [
 	'alembic>=0.6.7',
-	'dnspython>=1.10.0',
+	"dns{0}>=1.10.0".format('python' if sys.version_info.major == 2 else 'python3'),
 	'Jinja2>=2.7.1',
 	'markupsafe>=0.18',
 	'msgpack-python>=0.4.2',
