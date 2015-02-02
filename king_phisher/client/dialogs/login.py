@@ -72,7 +72,6 @@ class KingPhisherClientLoginDialog(KingPhisherClientLoginDialogBase):
 	top_level_dependencies = [
 		'PortAdjustment'
 	]
-
 	def signal_switch_ssl(self, switch, _):
 		if switch.get_property('active'):
 			self.gobjects['spinbutton_server_remote_port'].set_value(443)

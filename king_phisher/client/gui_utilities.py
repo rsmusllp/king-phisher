@@ -275,6 +275,8 @@ class UtilityGladeGObject(object):
 		gobject = builder.get_object(self.__class__.__name__)
 		if isinstance(gobject, Gtk.Window):
 			gobject.set_transient_for(self.parent)
+			if isinstance(gobject, Gtk.Dialog):
+				gobject.set_modal(True)
 		setattr(self, self.top_gobject, gobject)
 
 		self.gobjects = {}

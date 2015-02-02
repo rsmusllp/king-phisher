@@ -147,7 +147,7 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 				break
 			gui_utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one.')
 			response = self.dialog.run()
-		if response != Gtk.ResponseType.CANCEL:
+		if response == Gtk.ResponseType.APPLY:
 			campaign_id = model.get_value(tree_iter, 0)
 			self.config['campaign_id'] = campaign_id
 			campaign_name = model.get_value(tree_iter, 1)

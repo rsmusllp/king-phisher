@@ -639,7 +639,8 @@ Brandan Geise</property>
     <property name="can_focus">False</property>
     <property name="default_width">300</property>
     <property name="default_height">200</property>
-    <property name="type_hint">splashscreen</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="type_hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="KingPhisherClientSSHLoginDialog.dialog-vbox5">
         <property name="can_focus">False</property>
@@ -1456,6 +1457,7 @@ Brandan Geise</property>
     <property name="title" translatable="yes">King Phisher</property>
     <property name="default_width">300</property>
     <property name="default_height">200</property>
+    <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="KingPhisherClientLoginDialog.dialog-vbox5">

@@ -119,9 +119,8 @@ def main():
 	main_window.set_position(Gtk.WindowPosition.CENTER)
 	logger.debug("client loaded in {0:.2f} seconds".format(time.time() - start_time))
 
-	if main_window.init_connection():
-		GObject.threads_init()
-		Gtk.main()
+	GObject.threads_init()
+	Gtk.main()
 
 if __name__ == '__main__':
 	sys.exit(main())

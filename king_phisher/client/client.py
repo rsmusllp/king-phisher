@@ -83,7 +83,8 @@ class KingPhisherClient(_Gtk_Window):
 	__gsignals__ = {
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
-		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ())
+		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'server-connected': (GObject.SIGNAL_RUN_FIRST, None, ())
 	}
 	def __init__(self, config_file=None):
 		"""
@@ -157,6 +158,10 @@ class KingPhisherClient(_Gtk_Window):
 		self.show()
 		self.rpc = None # needs to be initialized last
 		"""The :py:class:`.KingPhisherRPCClient` instance."""
+
+		login_dialog = dialogs.KingPhisherClientLoginDialog(self.config, self)
+		login_dialog.dialog.connect('response', self.signal_login_dialog_response, login_dialog)
+		login_dialog.dialog.show()
 
 	def _add_menu_actions(self, action_group):
 		# File Menu Actions
@@ -293,31 +298,24 @@ class KingPhisherClient(_Gtk_Window):
 	def do_exit_confirm(self):
 		self.emit('exit')
 
-	def init_connection(self):
-		"""
-		Initialize a connection to the King Phisher server. This will
-		connect to the server and load necessary information from it.
-
-		:return: Whether or not the connection attempt was successful.
-		:rtype: bool
-		"""
-		if not self.server_connect():
-			return False
+	def do_server_connected(self):
 		self.load_server_config()
 		campaign_id = self.config.get('campaign_id')
 		if campaign_id == None:
 			if not self.show_campaign_selection():
-				self.server_disconnect()
-				return False
+				self.logger.debug('no campaign selected, disconnecting and exiting')
+				self.emit('exit')
+				return True
 		campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True)
 		if campaign_info == None:
 			if not self.show_campaign_selection():
-				self.server_disconnect()
-				return False
+				self.logger.debug('no campaign selected, disconnecting and exiting')
+				self.emit('exit')
+				return True
 			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True, refresh=True)
 		self.config['campaign_name'] = campaign_info['name']
 		self.emit('campaign-set', self.config['campaign_id'])
-		return True
+		return
 
 	def client_quit(self):
 		"""
@@ -327,79 +325,75 @@ class KingPhisherClient(_Gtk_Window):
 		"""
 		self.emit('exit')
 
-	def server_connect(self):
-		"""
-		Perform the connection setup as part of the server connection
-		initialization process. This will display a GUI window requesting
-		the connection information. An :py:class:`.SSHTCPForwarder` instance
-		is created and configured for tunneling traffic to the King Phisher
-		server. This also verifies that the RPC API version running on
-		the server is compatible with the client.
-
-		:return: Whether or not the connection attempt was successful.
-		:rtype: bool
-		"""
+	def signal_login_dialog_response(self, dialog, response, glade_dialog):
 		server_version_info = None
 		title_ssh_error = 'Failed To Connect To The SSH Service'
 		title_rpc_error = 'Failed To Connect To The King Phisher RPC Service'
-		while True:
-			if self.ssh_forwarder:
-				self.ssh_forwarder.stop()
-				self.ssh_forwarder = None
-				self.logger.info('stopped ssh port forwarding')
-			login_dialog = dialogs.KingPhisherClientLoginDialog(self.config, self)
-			login_dialog.objects_load_from_config()
-			response = login_dialog.interact()
-			if response == Gtk.ResponseType.CANCEL:
-				return False
-			server = utilities.server_parse(self.config['server'], 22)
-			username = self.config['server_username']
-			password = self.config['server_password']
-			server_remote_port = self.config['server_remote_port']
-			local_port = random.randint(2000, 6000)
+
+		if response == Gtk.ResponseType.CANCEL or response == Gtk.ResponseType.DELETE_EVENT:
+			dialog.destroy()
+			self.emit('exit')
+			return True
+		glade_dialog.objects_save_to_config()
+		server = utilities.server_parse(self.config['server'], 22)
+		username = self.config['server_username']
+		password = self.config['server_password']
+		server_remote_port = self.config['server_remote_port']
+		local_port = random.randint(2000, 6000)
+		connection_failed = True
+		try:
+			self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
+			self.ssh_forwarder.start()
+			time.sleep(0.5)
+			self.logger.info('started ssh port forwarding')
+		except paramiko.AuthenticationException:
+			self.logger.warning('failed to authenticate to the remote ssh server')
+			gui_utilities.show_dialog_error(title_ssh_error, self, 'The server responded that the credentials are invalid')
+		except socket.error as error:
+			error_number, error_message = error.args
+			if error_number == 111:
+				gui_utilities.show_dialog_error(title_ssh_error, self, 'The server refused the connection')
+			else:
+				gui_utilities.show_dialog_error(title_ssh_error, self, "Socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
+		except Exception:
+			self.logger.warning('failed to connect to the remote ssh server')
+			gui_utilities.show_dialog_error(title_ssh_error, self)
+		else:
+			connection_failed = False
+		finally:
+			if connection_failed:
+				self.server_disconnect()
+				return
+
+		self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl'))
+		if self.config.get('rpc.serializer'):
 			try:
-				self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
-				self.ssh_forwarder.start()
-				time.sleep(0.5)
-				self.logger.info('started ssh port forwarding')
-			except paramiko.AuthenticationException:
-				self.logger.warning('failed to authenticate to the remote ssh server')
-				gui_utilities.show_dialog_error(title_ssh_error, self, 'The server responded that the credentials are invalid')
-				continue
-			except socket.error as error:
-				error_number, error_message = error.args
-				if error_number == 111:
-					gui_utilities.show_dialog_error(title_ssh_error, self, 'The server refused the connection')
-				else:
-					gui_utilities.show_dialog_error(title_ssh_error, self, "Socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
-				continue
-			except Exception:
-				self.logger.warning('failed to connect to the remote ssh server')
-				gui_utilities.show_dialog_error(title_ssh_error, self)
-				continue
-			self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl'))
-			if self.config.get('rpc.serializer'):
-				try:
-					self.rpc.set_serializer(self.config['rpc.serializer'])
-				except ValueError as error:
-					self.logger.error("failed to set the rpc serializer, error: '{0}'".format(error.message))
-			try:
-				assert(self.rpc('client/initialize'))
-				server_version_info = self.rpc('version')
-			except AdvancedHTTPServerRPCError as err:
-				if err.status == 401:
-					self.logger.warning('failed to authenticate to the remote king phisher service')
-					gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded that the credentials are invalid')
-				else:
-					self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
-					gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded with HTTP status: ' + str(err.status))
-				continue
-			except:
-				self.logger.warning('failed to connect to the remote rpc service')
-				gui_utilities.show_dialog_error(title_rpc_error, self, 'Ensure that the King Phisher Server is currently running')
-				continue
-			break
-		assert(server_version_info != None)
+				self.rpc.set_serializer(self.config['rpc.serializer'])
+			except ValueError as error:
+				self.logger.error("failed to set the rpc serializer, error: '{0}'".format(error.message))
+
+		connection_failed = True
+		try:
+			assert(self.rpc('client/initialize'))
+			server_version_info = self.rpc('version')
+			assert(server_version_info != None)
+		except AdvancedHTTPServerRPCError as err:
+			if err.status == 401:
+				self.logger.warning('failed to authenticate to the remote king phisher service')
+				gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded that the credentials are invalid')
+			else:
+				self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
+				gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded with HTTP status: ' + str(err.status))
+		except:
+			self.logger.warning('failed to connect to the remote rpc service')
+			gui_utilities.show_dialog_error(title_rpc_error, self, 'Ensure that the King Phisher Server is currently running')
+		else:
+			connection_failed = False
+		finally:
+			if connection_failed:
+				self.server_disconnect()
+				return
+
 		server_rpc_api_version = server_version_info.get('rpc_api_version', -1)
 		self.logger.info("successfully connected to the king phisher server (version: {0} rpc api version: {1})".format(server_version_info['version'], server_rpc_api_version))
 		self.server_local_port = local_port
@@ -411,8 +405,10 @@ class KingPhisherClient(_Gtk_Window):
 			secondary_text += '\nPlease ensure that both the client and server are fully up to date.'
 			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', self, secondary_text)
 			self.server_disconnect()
-			return False
-		return True
+			return
+		dialog.destroy()
+		self.emit('server-connected')
+		return
 
 	def server_disconnect(self):
 		"""Clean up the SSH TCP connections and disconnect from the server."""
@@ -525,7 +521,7 @@ class KingPhisherClient(_Gtk_Window):
 		:rtype: bool
 		"""
 		dialog = dialogs.KingPhisherClientCampaignSelectionDialog(self.config, self)
-		return dialog.interact() != Gtk.ResponseType.CANCEL
+		return dialog.interact() == Gtk.ResponseType.APPLY
 
 	def start_sftp_client(self):
 		"""
