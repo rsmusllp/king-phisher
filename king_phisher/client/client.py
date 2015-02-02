@@ -499,43 +499,8 @@ class KingPhisherClient(_Gtk_Window):
 		Display the about dialog showing details about the programs version,
 		license etc.
 		"""
-		license_text = None
-		if os.path.splitext(__file__)[1] == '.py':
-			source_file_h = open(__file__, 'r')
-			source_code = []
-			source_code.append(source_file_h.readline())
-			while source_code[-1].startswith('#'):
-				source_code.append(source_file_h.readline())
-			source_code = source_code[5:-1]
-			source_code = map(lambda x: x.strip('# '), source_code)
-			license_text = ''.join(source_code)
-		logo_pixbuf = None
-		logo_file_path = find.find_data_file('king-phisher-icon.svg')
-		if logo_file_path:
-			logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(logo_file_path, 128, 128)
-		about_dialog = Gtk.AboutDialog()
-		about_dialog.set_transient_for(self)
-		about_dialog_properties = {
-			'authors': ['Spencer McIntyre', 'Jeff McCutchan', 'Brandan Geise'],
-			'comments': 'Phishing Campaign Toolkit',
-			'copyright': 'Copyright (c) 2013-2015, SecureState LLC',
-			'license-type': Gtk.License.BSD,
-			'program-name': 'King Phisher',
-			'version': version.version,
-			'website': 'https://github.com/securestate/king-phisher',
-			'website-label': 'GitHub Home Page',
-			'wrap-license': False,
-		}
-		if license_text:
-			about_dialog_properties['license'] = license_text
-		if logo_pixbuf:
-			about_dialog_properties['logo'] = logo_pixbuf
-		for property_name, property_value in about_dialog_properties.items():
-			about_dialog.set_property(property_name, property_value)
-		about_dialog.connect('activate-link', lambda _, url: utilities.open_uri(url))
-		about_dialog.show_all()
-		about_dialog.run()
-		about_dialog.destroy()
+		about_dialog = dialogs.KingPhisherClientAboutDialog(self.config, self)
+		about_dialog.interact()
 
 	def show_campaign_graph(self, graph_name):
 		"""

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/dialogs/__init__.py
+#  king_phisher/client/dialogs/about.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,7 +30,34 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from .about import *
-from .campaign_selection import *
-from .configuration import *
-from .login import *
+import os
+
+from king_phisher.client import gui_utilities
+from king_phisher import find
+from king_phisher import utilities
+from king_phisher import version
+
+from gi.repository import GdkPixbuf
+from gi.repository import Gtk
+
+__all__ = ['KingPhisherClientAboutDialog']
+
+class KingPhisherClientAboutDialog(gui_utilities.UtilityGladeGObject):
+	"""
+	Display a :py:class:`Gtk.AboutDialog` with information regarding the King
+	Phisher client.
+	"""
+	top_gobject = 'dialog'
+	def __init__(self, *args, **kwargs):
+		super(KingPhisherClientAboutDialog, self).__init__(*args, **kwargs)
+		logo_file_path = find.find_data_file('king-phisher-icon.svg')
+		if logo_file_path:
+			logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(logo_file_path, 128, 128)
+			self.dialog.set_property('logo', logo_pixbuf)
+		self.dialog.set_property('version', version.version)
+		self.dialog.connect('activate-link', lambda _, url: utilities.open_uri(url))
+
+	def interact(self):
+		self.dialog.show_all()
+		self.dialog.run()
+		self.dialog.destroy()
