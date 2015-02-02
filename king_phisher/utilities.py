@@ -48,47 +48,6 @@ import pkg_resources
 
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
 
-def timedef_to_seconds(timedef):
-	"""
-	Convert a string timespan definition to seconds, for example converting
-	'1m30s' to 90.
-
-	:param str timedef: The timespan definition to convert to seconds.
-	:return: The converted value in seconds.
-	:rtype: int
-	"""
-	converter_order = ['w', 'd', 'h', 'm', 's']
-	converters = {
-		'w': 604800,
-		'd': 86400,
-		'h': 3600,
-		'm': 60,
-		's': 1
-	}
-	timedef = timedef.lower()
-	if timedef.isdigit():
-		return int(timedef)
-	elif len(timedef) == 0:
-		return 0
-	seconds = -1
-	for spec in converter_order:
-		timedef = timedef.split(spec)
-		if len(timedef) == 1:
-			timedef = timedef[0]
-			continue
-		elif len(timedef) > 2 or not timedef[0].isdigit():
-			seconds = -1
-			break
-		adjustment = converters[spec]
-		seconds = max(seconds, 0)
-		seconds += (int(timedef[0]) * adjustment)
-		timedef = timedef[1]
-		if not len(timedef):
-			break
-	if seconds < 0:
-		raise ValueError('invalid time format')
-	return seconds
-
 class Cache(object):
 	"""
 	This class provides a simple to use cache object which can be applied
@@ -415,6 +374,47 @@ def start_process(proc_args, wait=True):
 	if not wait:
 		return proc_h
 	return proc_h.wait() == 0
+
+def timedef_to_seconds(timedef):
+	"""
+	Convert a string timespan definition to seconds, for example converting
+	'1m30s' to 90.
+
+	:param str timedef: The timespan definition to convert to seconds.
+	:return: The converted value in seconds.
+	:rtype: int
+	"""
+	converter_order = ['w', 'd', 'h', 'm', 's']
+	converters = {
+		'w': 604800,
+		'd': 86400,
+		'h': 3600,
+		'm': 60,
+		's': 1
+	}
+	timedef = timedef.lower()
+	if timedef.isdigit():
+		return int(timedef)
+	elif len(timedef) == 0:
+		return 0
+	seconds = -1
+	for spec in converter_order:
+		timedef = timedef.split(spec)
+		if len(timedef) == 1:
+			timedef = timedef[0]
+			continue
+		elif len(timedef) > 2 or not timedef[0].isdigit():
+			seconds = -1
+			break
+		adjustment = converters[spec]
+		seconds = max(seconds, 0)
+		seconds += (int(timedef[0]) * adjustment)
+		timedef = timedef[1]
+		if not len(timedef):
+			break
+	if seconds < 0:
+		raise ValueError('invalid time format')
+	return seconds
 
 def unescape_single_quote(string):
 	"""

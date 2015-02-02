@@ -25,6 +25,8 @@ sys.path.insert(2, _pkg)
 
 del _prj_root, _pkg
 
+sys.modules['ipaddress'] = type('ipaddress', (), {})
+
 import king_phisher.version
 import king_phisher.utilities
 
@@ -275,6 +277,7 @@ texinfo_documents = [
 sys.modules['dns.resolver'] = king_phisher.utilities.Mock()
 sys.modules['gi'] = king_phisher.utilities.Mock()
 sys.modules['gi.repository'] = king_phisher.utilities.Mock()
+sys.modules['ipaddress'] = king_phisher.utilities.Mock()
 sys.modules['matplotlib'] = king_phisher.utilities.Mock()
 sys.modules['matplotlib.backends'] = king_phisher.utilities.Mock()
 sys.modules['matplotlib.backends.backend_gtk3'] = king_phisher.utilities.Mock()
