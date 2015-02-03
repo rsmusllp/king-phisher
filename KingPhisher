@@ -99,9 +99,8 @@ def main():
 	if os.path.isdir(data_path):
 		find.data_path_append(data_path)
 
-	os.environ['KING_PHISHER_GLADE_FILE'] = 'king-phisher-client.glade'
 	if not gui_utilities.which_glade():
-		print('[-] unable to locate the Glade data file')
+		print('[-] unable to locate the glade ui data file')
 		return 0
 
 	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
@@ -109,12 +108,12 @@ def main():
 
 	start_time = time.time()
 	Gtk.init(sys.argv)
-	logger.debug('using gui data from glade file: ' + gui_utilities.which_glade())
+	logger.debug('using ui data from glade file: ' + gui_utilities.which_glade())
 	try:
 		main_window = client.KingPhisherClient(config_file=config_file)
 	except Exception as error:
 		logger.critical("ititialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
-		print('[-] failed to initialize the King Phisher Client')
+		print('[-] failed to initialize the King Phisher client')
 		return 0
 	main_window.set_position(Gtk.WindowPosition.CENTER)
 	logger.debug("client loaded in {0:.2f} seconds".format(time.time() - start_time))

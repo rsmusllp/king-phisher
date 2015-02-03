@@ -65,7 +65,7 @@ parameters, the object and the value and the get function will just be
 provided the object.
 """
 
-if isinstance(Gtk.Window, utilities.Mock):
+if isinstance(Gtk.FileChooserDialog, utilities.Mock):
 	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {})
 	_Gtk_FileChooserDialog.__module__ = ''
 else:
@@ -73,12 +73,13 @@ else:
 
 def which_glade():
 	"""
-	Locate the glade data file.
+	Locate the glade data file which stores the UI information in a Gtk Builder
+	format.
 
 	:return: The path to the glade data file.
 	:rtype: str
 	"""
-	return find.find_data_file(os.environ['KING_PHISHER_GLADE_FILE'])
+	return find.find_data_file(os.environ.get('KING_PHISHER_GLADE_FILE', 'king-phisher-client.ui'))
 
 def glib_idle_add_wait(function, *args):
 	"""
