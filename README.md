@@ -7,7 +7,15 @@ Phishing Campaign Toolkit
 [![Documentation Status](https://readthedocs.org/projects/king-phisher/badge/?version=latest&style=flat-square)](http://king-phisher.readthedocs.org/en/latest)
 [![Github Issues](http://img.shields.io/github/issues/securestate/king-phisher.svg?style=flat-square)](https://github.com/securestate/king-phisher/issues)
 
-King Phisher facilitates running phishing-focused social engineering campaigns.
+King Phisher is a tool for testing and promoting user awareness by simulating
+real world phishing attacks. It features an easy to use, yet very flexible
+architecture allowing full control over both emails and server content.
+King Phisher can be used to run campaigns ranging from simple awareness
+training to more complicated scenarios in which user aware content is served
+for harvesting credentials.
+
+King Phisher is only to be used for legal applications when the explicit
+permission of the targeted organization has been obtained.
 
 Get the latest stable version from the
 [GitHub Releases Page](https://github.com/securestate/king-phisher/releases) or
@@ -42,7 +50,7 @@ King Phisher Development Team:
 ## Code Documentation
 King Phisher uses Sphinx for internal code documentation. This
 documentation can be generated from source with the command
-```sphinx-build docs/source docs/build```. The latest documentation is
+```sphinx-build docs/source docs/html```. The latest documentation is
 kindly hosted on [ReadTheDocs](https://readthedocs.org/) at
 [king-phisher.readthedocs.org](https://king-phisher.readthedocs.org/en/latest/).
 
