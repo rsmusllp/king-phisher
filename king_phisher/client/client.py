@@ -65,13 +65,28 @@ import paramiko
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 """The default search location for the client configuration file."""
 
-if isinstance(Gtk.Window, utilities.Mock):
-	_Gtk_Window = type('Gtk.Window', (object,), {})
-	_Gtk_Window.__module__ = ''
+if isinstance(Gtk.Application, utilities.Mock):
+	_Gtk_Application = type('Gtk.Application', (object,), {})
+	_Gtk_Application.__module__ = ''
+	_Gtk_ApplicationWindow = type('Gtk.ApplicationWindow', (object,), {})
+	_Gtk_ApplicationWindow.__module__ = ''
 else:
-	_Gtk_Window = Gtk.Window
+	_Gtk_Application = Gtk.Application
+	_Gtk_ApplicationWindow = Gtk.ApplicationWindow
 
-class KingPhisherClient(_Gtk_Window):
+class KingPhisherClientApplication(_Gtk_Application):
+	def __init__(self, config_file):
+		super(KingPhisherClientApplication, self).__init__()
+		self.set_property('application-id', 'org.king-phisher.client')
+		self.set_property('register-session', True)
+		self.config_file = config_file
+
+	def do_activate(self):
+		win = KingPhisherClient(self, self.config_file)
+		win.set_position(Gtk.WindowPosition.CENTER)
+		win.show_all()
+
+class KingPhisherClient(_Gtk_ApplicationWindow):
 	"""
 	This is the top level King Phisher client object. It contains the
 	custom GObject signals, keeps all the GUI references, and manages
@@ -86,11 +101,11 @@ class KingPhisherClient(_Gtk_Window):
 		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_FIRST, None, ())
 	}
-	def __init__(self, config_file=None):
+	def __init__(self, application=None, config_file=None):
 		"""
 		:param str config_file: The path to the configuration file to load.
 		"""
-		super(KingPhisherClient, self).__init__()
+		super(KingPhisherClient, self).__init__(application=application)
 		self.logger = logging.getLogger('KingPhisher.Client')
 		# print version information for debugging purposes
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
@@ -292,7 +307,6 @@ class KingPhisherClient(_Gtk_Window):
 		self.server_disconnect()
 		self.save_config()
 		self.destroy()
-		Gtk.main_quit()
 		return
 
 	def do_exit_confirm(self):

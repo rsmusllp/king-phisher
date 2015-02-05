@@ -42,13 +42,10 @@ from gi.repository import GObject
 from gi.repository import Gtk
 
 class ClientGUITests(testing.KingPhisherTestCase):
-	def test_client_initialization(self):
+	def test_client_main_window_initialize(self):
 		find.data_path_append('data/client')
-		self.assertTrue(isinstance(gui_utilities.which_glade(), str))
-
-		Gtk.init(sys.argv)
+		Gtk.init([])
 		main_window = KingPhisherClient()
-		main_window.set_position(Gtk.WindowPosition.CENTER)
 
 	def test_client_template_config(self):
 		find.data_path_append('data/client')

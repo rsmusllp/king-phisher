@@ -107,19 +107,17 @@ def main():
 	logger.debug("client running in process: {0} main tid: 0x{1:x}".format(os.getpid(), threading.current_thread().ident))
 
 	start_time = time.time()
-	Gtk.init(sys.argv)
 	logger.debug('using ui data from glade file: ' + gui_utilities.which_glade())
 	try:
-		main_window = client.KingPhisherClient(config_file=config_file)
+		app = client.KingPhisherClientApplication(config_file=config_file)
 	except Exception as error:
 		logger.critical("ititialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
 		print('[-] failed to initialize the King Phisher client')
 		return 0
-	main_window.set_position(Gtk.WindowPosition.CENTER)
 	logger.debug("client loaded in {0:.2f} seconds".format(time.time() - start_time))
 
 	GObject.threads_init()
-	Gtk.main()
+	return app.run([])
 
 if __name__ == '__main__':
 	sys.exit(main())
