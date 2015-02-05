@@ -71,6 +71,10 @@ def main():
 	del arguments, parser
 	logger = logging.getLogger('KingPhisher.Client.CLI')
 
+	if sys.platform.startswith('linux') and not os.environ.get('DISPLAY'):
+		print('[-] no display was detected, this must be run with an interactive X session')
+		return os.EX_UNAVAILABLE
+
 	if Gtk.check_version(3, 4, 0):
 		print('[-] the GTK+ version is too old (minimum required is 3.4)')
 		return os.EX_SOFTWARE
