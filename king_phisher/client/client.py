@@ -83,6 +83,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		:param application: The application instance to which this window belongs.
 		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
+		assert isinstance(application, Gtk.Application)
 		super(KingPhisherClient, self).__init__(application=application)
 		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')
 		self.ssh_forwarder = None
@@ -192,7 +193,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		action_group.add_action(action)
 
 		action = Gtk.Action(name='ToolsRPCTerminal', label='RPC Terminal', tooltip='RPC Terminal', stock_id=None)
-		action.connect('activate', lambda x: tools.KingPhisherClientRPCTerminal(self.config, self))
+		action.connect('activate', lambda x: tools.KingPhisherClientRPCTerminal(self.config, self, self.get_property('application')))
 		action_group.add_action(action)
 
 		# Help Menu Actions
@@ -421,8 +422,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		dialog = dialogs.KingPhisherClientConfigurationDialog(self.config, self)
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
 			app = self.get_property('application')
-			if app:
-				app.save_config()
+			app.save_config()
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""

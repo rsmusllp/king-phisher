@@ -333,6 +333,11 @@ class UtilityGladeGObject(object):
 class UtilityFileChooser(_Gtk_FileChooserDialog):
 	"""Display a file chooser dialog."""
 	def __init__(self, title, parent, **kwargs):
+		"""
+		:param str title: The title for the file chooser dialog.
+		:param parent: The parent window for the dialog.
+		:type parent: :py:class:`Gtk.Window`
+		"""
 		super(UtilityFileChooser, self).__init__(title, parent, **kwargs)
 		self.parent = self.get_parent_window()
 

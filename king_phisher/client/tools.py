@@ -59,20 +59,24 @@ class KingPhisherClientRPCTerminal(object):
 	within the King Phisher client. This is primarily useful for
 	unofficial and advanced features or debugging and development.
 	"""
-	def __init__(self, config, parent):
+	def __init__(self, config, parent, application):
 		"""
 		:param dict config: The King Phisher client configuration.
 		:param parent: The parent window for this object.
 		:type parent: :py:class:`Gtk.Window`
+		:param application: The application instance to which this window belongs.
+		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
+		assert isinstance(application, Gtk.Application)
 		self.config = config
 		self.parent = parent
+		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		if not has_vte:
 			gui_utilities.show_dialog_error('RPC Terminal Is Unavailable', parent, 'VTE is not installed')
 			return
 
-		self.window = Gtk.Window()
+		self.window = Gtk.ApplicationWindow(application=application)
 		self.window.set_property('title', 'King Phisher RPC')
 		self.window.set_transient_for(parent)
 		self.window.set_destroy_with_parent(True)
