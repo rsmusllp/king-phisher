@@ -261,6 +261,7 @@ class UtilityGladeGObject(object):
 		:param parent: The parent window for this object.
 		:type parent: :py:class:`Gtk.Window`
 		"""
+		assert isinstance(parent, Gtk.Window)
 		self.config = config
 		"""A reference to the King Phisher client configuration."""
 		self.parent = parent
@@ -338,6 +339,7 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 		:param parent: The parent window for the dialog.
 		:type parent: :py:class:`Gtk.Window`
 		"""
+		assert isinstance(parent, Gtk.Window)
 		super(UtilityFileChooser, self).__init__(title, parent, **kwargs)
 		self.parent = self.get_parent_window()
 

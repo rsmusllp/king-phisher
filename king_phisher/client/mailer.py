@@ -188,8 +188,7 @@ class MailSenderThread(threading.Thread):
 		self.tab = tab
 		"""The optional :py:class:`.MailSenderSendTab` instance for reporting status messages to the GUI."""
 		self.rpc = rpc
-		self.ssh_forwarder = None
-		"""The :py:class:`.SSHTCPForwarder` instance for tunneling traffic to the SMTP server."""
+		self._ssh_forwarder = None
 		self.smtp_connection = None
 		"""The :py:class:`smtplib.SMTP` connection instance."""
 		self.smtp_server = utilities.server_parse(self.config['smtp_server'], 25)
@@ -243,8 +242,8 @@ class MailSenderThread(threading.Thread):
 		remote_server = utilities.server_parse(self.config['smtp_server'], 25)
 		local_port = random.randint(2000, 6000)
 		try:
-			self.ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server, preferred_private_key=self.config.get('ssh_preferred_key'))
-			self.ssh_forwarder.start()
+			self._ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server, preferred_private_key=self.config.get('ssh_preferred_key'))
+			self._ssh_forwarder.start()
 			time.sleep(0.5)
 		except:
 			self.logger.warning('failed to connect to remote ssh server')
@@ -370,9 +369,9 @@ class MailSenderThread(threading.Thread):
 
 		self.tab_notify_status("Finished sending emails, successfully sent {0:,} emails".format(emails_done))
 		self.server_smtp_disconnect()
-		if self.ssh_forwarder:
-			self.ssh_forwarder.stop()
-			self.ssh_forwarder = None
+		if self._ssh_forwarder:
+			self._ssh_forwarder.stop()
+			self._ssh_forwarder = None
 			self.tab_notify_status('Disconnected from the SSH server')
 		self.tab_notify_stopped()
 		return
