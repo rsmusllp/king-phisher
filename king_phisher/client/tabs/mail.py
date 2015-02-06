@@ -450,7 +450,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		return True
 
 	def signal_activate_popup_menu_insert_image(self, widget):
-		dialog = gui_utilities.UtilityFileChooser('Choose Image')
+		dialog = gui_utilities.UtilityFileChooser('Choose Image', self.parent)
 		dialog.quick_add_filter('Images', ['*.gif', '*.jpeg', '*.jpg', '*.png'])
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -517,7 +517,7 @@ class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 		return
 
 	def signal_entry_activate_open_file(self, entry):
-		dialog = gui_utilities.UtilityFileChooser('Choose File')
+		dialog = gui_utilities.UtilityFileChooser('Choose File', self.parent)
 		if entry == self.gobjects.get('entry_html_file'):
 			dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		elif entry == self.gobjects.get('entry_target_file'):

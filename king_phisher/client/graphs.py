@@ -120,7 +120,6 @@ class CampaignGraph(object):
 		self.canvas.mpl_connect('button_press_event', self.mpl_signal_canvas_button_pressed)
 		self.canvas.show()
 		self.navigation_toolbar = NavigationToolbar(self.canvas, self.parent)
-		self.navigation_toolbar.hide()
 		self.popup_menu = Gtk.Menu.new()
 
 		menu_item = Gtk.MenuItem.new_with_label('Export')
@@ -135,6 +134,7 @@ class CampaignGraph(object):
 		menu_item.connect('toggled', self.signal_toggled_popup_menu_show_toolbar)
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
+		self.navigation_toolbar.hide()
 
 	@classmethod
 	def get_graph_id(klass):
