@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/client/client.py
+#  tests/client/application.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -36,16 +36,15 @@ import unittest
 
 from king_phisher import find
 from king_phisher import testing
-from king_phisher.client.client import *
+from king_phisher.client import application
 
 from gi.repository import GObject
 from gi.repository import Gtk
 
-class ClientGUITests(testing.KingPhisherTestCase):
+class ClientApplicationTests(testing.KingPhisherTestCase):
 	def test_client_main_window_initialize(self):
 		find.data_path_append('data/client')
-		Gtk.init([])
-		main_window = KingPhisherClient()
+		app = application.KingPhisherClientApplication()
 
 	def test_client_template_config(self):
 		find.data_path_append('data/client')

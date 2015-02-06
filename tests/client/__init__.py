@@ -32,7 +32,7 @@
 
 import logging
 
-from .client import ClientGUITests
+from .application import ClientApplicationTests
 from .dialogs import ClientDialogTests
 from .export import ClientExportTests
 from .graphs import ClientGraphsTests

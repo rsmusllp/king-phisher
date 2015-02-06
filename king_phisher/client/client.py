@@ -30,13 +30,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import copy
-import json
 import logging
-import os
 import random
 import shlex
-import shutil
 import socket
 import sys
 import time
@@ -55,9 +51,7 @@ from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
-from gi.repository import Gdk
 from gi.repository import GdkPixbuf
-from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
 import paramiko
@@ -65,26 +59,11 @@ import paramiko
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 """The default search location for the client configuration file."""
 
-if isinstance(Gtk.Application, utilities.Mock):
-	_Gtk_Application = type('Gtk.Application', (object,), {})
-	_Gtk_Application.__module__ = ''
+if isinstance(Gtk.ApplicationWindow, utilities.Mock):
 	_Gtk_ApplicationWindow = type('Gtk.ApplicationWindow', (object,), {})
 	_Gtk_ApplicationWindow.__module__ = ''
 else:
-	_Gtk_Application = Gtk.Application
 	_Gtk_ApplicationWindow = Gtk.ApplicationWindow
-
-class KingPhisherClientApplication(_Gtk_Application):
-	def __init__(self, config_file):
-		super(KingPhisherClientApplication, self).__init__()
-		self.set_property('application-id', 'org.king-phisher.client')
-		self.set_property('register-session', True)
-		self.config_file = config_file
-
-	def do_activate(self):
-		win = KingPhisherClient(self, self.config_file)
-		win.set_position(Gtk.WindowPosition.CENTER)
-		win.show_all()
 
 class KingPhisherClient(_Gtk_ApplicationWindow):
 	"""
@@ -101,31 +80,18 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_FIRST, None, ())
 	}
-	def __init__(self, application=None, config_file=None):
+	def __init__(self, config, application):
 		"""
-		:param str config_file: The path to the configuration file to load.
+		:param dict config: The main King Phisher client configuration.
+		:param application: The application instance to which this window belongs.
+		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
 		super(KingPhisherClient, self).__init__(application=application)
-		self.logger = logging.getLogger('KingPhisher.Client')
-		# print version information for debugging purposes
-		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
-		self.logger.debug("gi.repository GObject version: {0}".format('.'.join(map(str, GObject.pygobject_version))))
-		self.logger.debug("gi.repository Gtk version: {0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()))
-		if tools.has_vte:
-			self.logger.debug("gi.repository VTE version: {0}".format(tools.Vte._version))
-		if graphs.has_matplotlib:
-			self.logger.debug("matplotlib version: {0}".format(graphs.matplotlib.__version__))
-		self.config_file = (config_file or CONFIG_FILE_PATH)
-		"""The file containing the King Phisher client configuration."""
+		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')
 		self.ssh_forwarder = None
 		"""The :py:class:`.SSHTCPForwarder` instance used for tunneling traffic."""
-		self.config = None
+		self.config = config
 		"""The main King Phisher client configuration."""
-		try:
-			self.load_config(load_defaults=True)
-		except Exception:
-			self.logger.critical('failed to load the client configuration')
-			raise
 		self.set_property('title', 'King Phisher')
 		vbox = Gtk.Box()
 		vbox.set_property('orientation', Gtk.Orientation.VERTICAL)
@@ -135,7 +101,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		if default_icon_file:
 			icon_pixbuf = GdkPixbuf.Pixbuf.new_from_file(default_icon_file)
 			self.set_default_icon(icon_pixbuf)
-
 		action_group = Gtk.ActionGroup(name="client_window_actions")
 		self._add_menu_actions(action_group)
 		uimanager = self._create_ui_manager()
@@ -305,7 +270,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		gui_utilities.gtk_widget_destroy_children(self)
 		gui_utilities.gtk_sync()
 		self.server_disconnect()
-		self.save_config()
 		self.destroy()
 		return
 
@@ -388,9 +352,9 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 		connection_failed = True
 		try:
-			assert(self.rpc('client/initialize'))
+			assert self.rpc('client/initialize')
 			server_version_info = self.rpc('version')
-			assert(server_version_info != None)
+			assert server_version_info != None
 		except AdvancedHTTPServerRPCError as err:
 			if err.status == 401:
 				self.logger.warning('failed to authenticate to the remote king phisher service')
@@ -432,42 +396,10 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			self.logger.info('stopped ssh port forwarding')
 		return
 
-	def load_config(self, load_defaults=False):
-		"""
-		Load the client configuration from disk and set the
-		:py:attr:`~.KingPhisherClient.config` attribute.
-
-		:param bool load_defaults: Load missing options from the template configuration file.
-		"""
-		self.logger.info('loading the config from disk')
-		config_file = os.path.expanduser(self.config_file)
-		client_template = find.find_data_file('client_config.json')
-		if not os.path.isfile(config_file):
-			shutil.copy(client_template, config_file)
-		with open(config_file, 'r') as tmp_file:
-			self.config = json.load(tmp_file)
-		if load_defaults:
-			with open(client_template, 'r') as tmp_file:
-				client_template = json.load(tmp_file)
-			for key, value in client_template.items():
-				if not key in self.config:
-					self.config[key] = value
-
 	def load_server_config(self):
 		"""Load the necessary values from the server's configuration."""
 		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image'])
 		return
-
-	def save_config(self):
-		"""Write the client configuration to disk."""
-		self.logger.info('writing the client configuration to disk')
-		config = copy.copy(self.config)
-		for key in self.config.keys():
-			if 'password' in key or key == 'server_config':
-				del config[key]
-		config_file = os.path.expanduser(self.config_file)
-		config_file_h = open(config_file, 'wb')
-		json.dump(config, config_file_h, sort_keys=True, indent=4)
 
 	def delete_campaign(self):
 		"""
@@ -491,7 +423,9 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		"""
 		dialog = dialogs.KingPhisherClientConfigurationDialog(self.config, self)
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
-			self.save_config()
+			app = self.get_property('application')
+			if app:
+				app.save_config()
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""

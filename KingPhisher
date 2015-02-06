@@ -40,7 +40,7 @@ import time
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
-from king_phisher.client import client
+from king_phisher.client import application
 from king_phisher.client import gui_utilities
 
 from gi.repository import GObject
@@ -113,7 +113,7 @@ def main():
 	start_time = time.time()
 	logger.debug('using ui data from glade file: ' + gui_utilities.which_glade())
 	try:
-		app = client.KingPhisherClientApplication(config_file=config_file)
+		app = application.KingPhisherClientApplication(config_file=config_file)
 	except Exception as error:
 		logger.critical("ititialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
 		print('[-] failed to initialize the King Phisher client')
