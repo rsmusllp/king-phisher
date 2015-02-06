@@ -56,9 +56,6 @@ from gi.repository import GObject
 from gi.repository import Gtk
 import paramiko
 
-CONFIG_FILE_PATH = '~/.king_phisher.json'
-"""The default search location for the client configuration file."""
-
 if isinstance(Gtk.ApplicationWindow, utilities.Mock):
 	_Gtk_ApplicationWindow = type('Gtk.ApplicationWindow', (object,), {})
 	_Gtk_ApplicationWindow.__module__ = ''

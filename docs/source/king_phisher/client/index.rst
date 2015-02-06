@@ -9,6 +9,7 @@
 
    tabs/index.rst
 
+   application.rst
    client.rst
    export.rst
    graphs.rst

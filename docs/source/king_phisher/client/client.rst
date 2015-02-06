@@ -4,11 +4,6 @@
 .. module:: client.client
    :synopsis:
 
-Data
-----
-
-.. autodata:: king_phisher.client.client.CONFIG_FILE_PATH
-
 Classes
 -------
 
