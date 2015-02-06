@@ -99,7 +99,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.logger.info('loading the config from disk')
 		config_file = os.path.expanduser(self.config_file)
 		client_template = find.find_data_file('client_config.json')
-		if not os.path.isfile(config_file):
+		if not (os.path.isfile(config_file) and os.stat(config_file).st_size):
 			shutil.copy(client_template, config_file)
 		with open(config_file, 'r') as tmp_file:
 			self.config = json.load(tmp_file)
@@ -118,5 +118,5 @@ class KingPhisherClientApplication(_Gtk_Application):
 			if 'password' in key or key == 'server_config':
 				del config[key]
 		config_file = os.path.expanduser(self.config_file)
-		config_file_h = open(config_file, 'wb')
+		config_file_h = open(config_file, 'w')
 		json.dump(config, config_file_h, sort_keys=True, indent=4)

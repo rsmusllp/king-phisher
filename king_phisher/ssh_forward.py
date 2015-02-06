@@ -61,10 +61,7 @@ class ForwardHandler(socketserver.BaseRequestHandler):
 		socketserver.BaseRequestHandler.__init__(self, *args, **kwargs)
 
 	def handle(self):
-		try:
-			chan = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
-		except Exception:
-			return
+		chan = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
 		if chan is None:
 			return
 		while True:
@@ -99,9 +96,9 @@ class SSHTCPForwarder(threading.Thread):
 		:param str preferred_private_key: An RSA key to prefer for authentication.
 		"""
 		super(SSHTCPForwarder, self).__init__()
-		self.local_port = local_port
-		self.server = server
-		self.remote_server = remote_server
+		self.server = (server[0], int(server[1]))
+		self.local_port = int(local_port)
+		self.remote_server = (remote_server[0], int(remote_server[1]))
 		client = paramiko.SSHClient()
 		client.load_system_host_keys()
 		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
