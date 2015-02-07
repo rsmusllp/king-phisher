@@ -207,7 +207,7 @@ class CampaignGraph(object):
 				return info_cache
 			if not table in info_cache:
 				info_cache[table] = list(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
-		map(lambda ax: ax.clear(), self.axes)
+		[ax.clear() for ax in self.axes]
 		self._load_graph(info_cache)
 		self.canvas.draw()
 		return info_cache
@@ -237,7 +237,7 @@ class CampaignGraphOverview(CampaignGraph):
 		ax.set_ylabel('Grand Total')
 		ax.set_title('Campaign Overview')
 		ax.set_yticks((1,))
-		ax.set_xticks(map(lambda x: float(x) + (width / 2), range(len(bars))))
+		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
 		ax.set_xticklabels(('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)], rotation=30)
 		for col in bars:
 			height = col.get_height()
@@ -261,7 +261,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 				operating_systems[user_agent.os_name] = operating_systems.get(user_agent.os_name, 0) + 1
 			else:
 				operating_systems[unknown_os] = operating_systems.get(unknown_os, 0) + 1
-		os_names = operating_systems.keys()
+		os_names = list(operating_systems.keys())
 		os_names.sort(key=lambda name: operating_systems[name])
 		os_names.reverse()
 
@@ -274,7 +274,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		ax.set_ylabel('Total Visits')
 		ax.set_title('Visitor OS Information')
 		ax.set_yticks((1,))
-		ax.set_xticks(map(lambda x: float(x) + (width / 2), range(len(bars))))
+		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
 		ax.set_xticklabels(os_names, rotation=30)
 		for col in bars:
 			height = col.get_height()
@@ -289,7 +289,7 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 	table_subscriptions = ['visits']
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']
-		first_visits = map(lambda visit: visit['first_visit'], visits)
+		first_visits = [visit['first_visit'] for visit in visits]
 
 		ax = self.axes[0]
 		ax.set_ylabel('Number of Visits')

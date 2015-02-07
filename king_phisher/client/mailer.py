@@ -471,7 +471,7 @@ class MailSenderThread(threading.Thread):
 	def _try_send_email(self, *args, **kwargs):
 		message_sent = False
 		while not message_sent:
-			for i in xrange(0, 3):
+			for _ in range(0, 3):
 				try:
 					self.send_email(*args, **kwargs)
 					message_sent = True

@@ -598,7 +598,7 @@ class MailSenderTab(object):
 		if config_tab and previous_page == config_tab.box:
 			config_tab.objects_save_to_config()
 		elif edit_tab and previous_page == edit_tab.box:
-			for _ in xrange(1):
+			for _ in range(1):
 				html_file = self.config.get('mailer.html_file')
 				if not html_file:
 					break
