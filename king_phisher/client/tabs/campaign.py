@@ -202,7 +202,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		store = treeview.get_model()
 		if store == None:
 			store_columns = [str]
-			[store_columns.append(str) for _ in range(len(self.view_columns))]
+			for _ in range(len(self.view_columns)):
+				store_columns.append(str)
 			store = Gtk.ListStore(*store_columns)
 			treeview.set_model(store)
 		else:

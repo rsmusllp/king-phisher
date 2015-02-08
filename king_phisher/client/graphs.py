@@ -65,7 +65,7 @@ def export(klass):
 	:return: The *klass* parameter is returned.
 	"""
 	graph_name = klass.__name__[13:]
-	klass._graph_id = len(EXPORTED_GRAPHS)
+	klass._graph_id = len(EXPORTED_GRAPHS) # pylint: disable=protected-access
 	klass.name = graph_name
 	EXPORTED_GRAPHS[graph_name] = klass
 	return klass
@@ -111,7 +111,7 @@ class CampaignGraph(object):
 		"""A reference to the King Phisher client configuration."""
 		self.parent = parent
 		"""The parent :py:class:`Gtk.Window` instance."""
-		self.figure, ax = pyplot.subplots()
+		self.figure, _ = pyplot.subplots()
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
 		self.manager = None
@@ -137,16 +137,14 @@ class CampaignGraph(object):
 		self.navigation_toolbar.hide()
 
 	@classmethod
-	def get_graph_id(klass):
+	def get_graph_id(cls):
 		"""
 		The graph id of an exported :py:class:`.CampaignGraph`.
 
-		:param klass: The class to return the graph id of.
-		:type klass: :py:class:`.CampaignGraph`
 		:return: The id of the graph.
 		:rtype: int
 		"""
-		return klass._graph_id
+		return cls._graph_id
 
 	def make_window(self):
 		"""
@@ -207,7 +205,8 @@ class CampaignGraph(object):
 				return info_cache
 			if not table in info_cache:
 				info_cache[table] = list(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
-		[ax.clear() for ax in self.axes]
+		for ax in self.axes:
+			ax.clear()
 		self._load_graph(info_cache)
 		self.canvas.draw()
 		return info_cache

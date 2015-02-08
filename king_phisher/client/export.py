@@ -129,12 +129,9 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	root = ET.Element('king_phisher')
 	# Generate export metadata
 	metadata = ET.SubElement(root, 'metadata')
-	timestamp = ET.SubElement(metadata, 'timestamp')
-	timestamp.text = datetime.datetime.utcnow().isoformat()
-	utctime = ET.SubElement(metadata, 'utctime')
-	utctime.text = 'True'
-	version = ET.SubElement(metadata, 'version')
-	version.text = '1.2'
+	ET.SubElement(metadata, 'timestamp').text = datetime.datetime.utcnow().isoformat()
+	ET.SubElement(metadata, 'utctime').text = 'True'
+	ET.SubElement(metadata, 'version').text = '1.2'
 
 	campaign = ET.SubElement(root, 'campaign')
 	campaign_info = rpc.remote_table_row('campaigns', campaign_id)

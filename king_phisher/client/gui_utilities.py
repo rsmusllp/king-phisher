@@ -94,7 +94,7 @@ def glib_idle_add_wait(function, *args):
 	gsource_completed = threading.Event()
 	results = []
 	def wrapper():
-		results.append(function(*args))
+		results.append(function(*args)) # pylint: disable=star-args
 		gsource_completed.set()
 		return False
 	GLib.idle_add(wrapper)
@@ -152,7 +152,8 @@ def gtk_widget_destroy_children(widget):
 	:param widget: The widget to destroy all the children of.
 	:type widget: :py:class:`Gtk.Widget`
 	"""
-	map(lambda child: child.destroy(), widget.get_children())
+	for child in widget.get_children():
+		child.destroy()
 
 def gtk_treeview_selection_to_clipboard(treeview, column=1):
 	"""
@@ -171,7 +172,7 @@ def gtk_treeview_selection_to_clipboard(treeview, column=1):
 		return
 
 	tree_iters = map(model.get_iter, tree_paths)
-	selection_values = map(lambda ti: model.get_value(ti, column), tree_iters)
+	selection_values = [model.get_value(ti, column) for ti in tree_iters]
 	selection_values = os.linesep.join(selection_values)
 	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 	clipboard.set_text(selection_values, -1)

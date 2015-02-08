@@ -40,7 +40,7 @@ import sys
 from king_phisher import find
 from king_phisher.third_party import AdvancedHTTPServer
 try:
-	import msgpack
+	import msgpack # pylint: disable=unused-import
 	has_msgpack = True
 	"""Whether the :py:mod:`msgpack` module is available or not."""
 except ImportError:
@@ -115,7 +115,7 @@ def vte_child_routine(config):
 	config = json.loads(config)
 	try:
 		import readline
-		import rlcompleter
+		import rlcompleter # pylint: disable=unused-variable
 	except ImportError:
 		pass
 	else:
