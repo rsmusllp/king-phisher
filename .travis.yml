@@ -20,6 +20,5 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -r requirements.txt; fi
 
 script:
-  - pylint --rcfile data/pylintrc king_phisher
   - python -m unittest -v tests
   - sphinx-build -v docs/source docs/html

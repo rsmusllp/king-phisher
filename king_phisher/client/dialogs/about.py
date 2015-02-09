@@ -30,15 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os
-
 from king_phisher.client import gui_utilities
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
 
 from gi.repository import GdkPixbuf
-from gi.repository import Gtk
 
 __all__ = ['KingPhisherClientAboutDialog']
 

@@ -377,7 +377,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			else:
 				self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
 				gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded with HTTP status: ' + str(err.status))
-		except:
+		except Exception:
 			self.logger.warning('failed to connect to the remote rpc service')
 			gui_utilities.show_dialog_error(title_rpc_error, self, 'Ensure that the King Phisher Server is currently running.')
 		else:

@@ -122,7 +122,7 @@ class Cache(object):
 		"""
 		now = time.time()
 		keys_for_removal = []
-		for key, (value, expiration) in self.__cache.items():
+		for key, (_, expiration) in self.__cache.items():
 			if expiration < now:
 				keys_for_removal.append(key)
 		for key in keys_for_removal:
@@ -210,11 +210,11 @@ def check_requirements(requirements, ignore=None):
 		req_version = distutils.version.StrictVersion(parts.group(4))
 		installed_pkg = installed_packages[req_pkg]
 		installed_version = distutils.version.StrictVersion(installed_pkg.version)
-		if parts.group(3) == '==' and not (installed_version == req_version):
+		if parts.group(3) == '==' and not installed_version == req_version:
 			not_satisfied.append(req_pkg)
-		elif parts.group(3) == '>=' and not (installed_version >= req_version):
+		elif parts.group(3) == '>=' and not installed_version >= req_version:
 			not_satisfied.append(req_pkg)
-		elif parts.group(3) == '<=' and not (installed_version <= req_version):
+		elif parts.group(3) == '<=' and not installed_version <= req_version:
 			not_satisfied.append(req_pkg)
 	return not_satisfied
 

@@ -164,7 +164,7 @@ def message_data_from_kpm(target_file, dest_dir):
 		raise KingPhisherInputValidationError('file is not in the correct format')
 	tar_h = tarfile.open(target_file)
 	member_names = tar_h.getnames()
-	attachment_member_names = filter(lambda n: n.startswith('attachments' + os.path.sep), member_names)
+	attachment_member_names = [n for n in member_names if n.startswith('attachments' + os.path.sep)]
 	tar_get_file = lambda name: tar_h.extractfile(tar_h.getmember(name))
 	attachments = []
 
@@ -210,11 +210,8 @@ def message_data_from_kpm(target_file, dest_dir):
 		file_path = os.path.join(dest_dir, message_config['html_file'])
 		template = tarfile_h.read()
 		template = message_template_from_kpm(template, attachments)
-		template_strio = io.BytesIO()
-		template_strio.write(template)
-		template_strio.seek(os.SEEK_SET)
 		with open(file_path, 'wb') as file_h:
-			shutil.copyfileobj(template_strio, file_h)
+			file_h.write(template)
 		message_config['html_file'] = file_path
 	elif 'html_file' in message_config:
 		logger.warning('the kpm archive is missing the message_content.html file')
@@ -288,7 +285,7 @@ def treeview_liststore_to_csv(treeview, target_file):
 	"""
 	target_file_h = open(target_file, 'wb')
 	writer = csv.writer(target_file_h, quoting=csv.QUOTE_ALL)
-	column_names = map(lambda x: x.get_property('title'), treeview.get_columns())
+	column_names = [column.get_property('title') for column in treeview.get_columns()]
 	column_names.insert(0, 'UID')
 	column_count = len(column_names)
 	writer.writerow(column_names)
@@ -296,7 +293,7 @@ def treeview_liststore_to_csv(treeview, target_file):
 	store_iter = store.get_iter_first()
 	rows_written = 0
 	while store_iter:
-		values = map(lambda x: store.get_value(store_iter, x), range(column_count))
+		values = [store.get_value(store_iter, x) for x in range(column_count)]
 		writer.writerow(values)
 		rows_written += 1
 		store_iter = store.iter_next(store_iter)

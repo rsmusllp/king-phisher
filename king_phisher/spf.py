@@ -153,7 +153,7 @@ class SenderPolicyFramework(object):
 		return "<{0} ip={1} domain={2} sender={3} >".format(self.__class__.__name__, self.ip, self.domain, self.sender)
 
 	def __str__(self):
-		return (self.check_host() or '')
+		return self.check_host() or ''
 
 	def check_host(self):
 		"""

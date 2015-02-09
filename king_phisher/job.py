@@ -219,7 +219,7 @@ class JobManager(object):
 		self._thread_shutdown.wait()
 		self._job_lock.acquire()
 		self.logger.debug('waiting on ' + str(len(self._jobs)) + ' job threads')
-		for job_id, job_desc in self._jobs.items():
+		for job_desc in self._jobs.values():
 			if job_desc['job'] == None:
 				continue
 			if not job_desc['job'].is_alive():

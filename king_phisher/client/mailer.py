@@ -149,7 +149,7 @@ def guess_smtp_server_address(host, forward_host=None):
 				info = socket.getaddrinfo(host, 1, family)
 			except socket.gaierror:
 				continue
-			info = set(list(map(lambda r: r[4][0], info)))
+			info = set(list([r[4][0] for r in info]))
 			if len(info) != 1:
 				return
 			break
@@ -245,7 +245,7 @@ class MailSenderThread(threading.Thread):
 			self._ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server, preferred_private_key=self.config.get('ssh_preferred_key'))
 			self._ssh_forwarder.start()
 			time.sleep(0.5)
-		except:
+		except Exception:
 			self.logger.warning('failed to connect to remote ssh server')
 			return False
 		self.smtp_server = ('localhost', local_port)
@@ -264,7 +264,7 @@ class MailSenderThread(threading.Thread):
 			SMTP_CLASS = smtplib.SMTP
 		try:
 			self.smtp_connection = SMTP_CLASS(*self.smtp_server)
-		except:
+		except Exception:
 			return False
 		return True
 
@@ -476,7 +476,7 @@ class MailSenderThread(threading.Thread):
 					self.send_email(*args, **kwargs)
 					message_sent = True
 					break
-				except:
+				except Exception:
 					self.tab_notify_status('Failed to send message')
 					time.sleep(1)
 			if not message_sent:
@@ -542,5 +542,7 @@ class MailSenderThread(threading.Thread):
 			missing.append(msg_template)
 			return missing
 		self._prepare_env()
-		missing.extend(filter(lambda f: not os.access(f, os.R_OK), template_environment.attachment_images.keys()))
+		for attachment in template_environment.attachment_images.keys():
+			if not os.access(attachment, os.R_OK):
+				missing.append(attachment)
 		return missing

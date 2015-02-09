@@ -65,13 +65,13 @@ class ForwardHandler(socketserver.BaseRequestHandler):
 		if chan is None:
 			return
 		while True:
-			r, w, x = select.select([self.request, chan], [], [])
-			if self.request in r:
+			read_ready, _, _ = select.select([self.request, chan], [], [])
+			if self.request in read_ready:
 				data = self.request.recv(1024)
 				if len(data) == 0:
 					break
 				chan.send(data)
-			if chan in r:
+			if chan in read_ready:
 				data = chan.recv(1024)
 				if len(data) == 0:
 					break
