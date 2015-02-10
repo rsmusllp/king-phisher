@@ -30,6 +30,8 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import string
+
 from king_phisher.client import gui_utilities
 
 from gi.repository import GObject
@@ -119,7 +121,7 @@ class KingPhisherClientConfigurationDialog(gui_utilities.UtilityGladeGObject):
 			if 'sms_carrier' in self.config:
 				del self.config['sms_carrier']
 		elif phone_number_set and sms_carrier_set:
-			phone_number = filter(lambda x: x in map(str, range(0, 10)), phone_number)
+			phone_number = ''.join(d for d in phone_number if d in string.digits)
 			if len(phone_number) != 10:
 				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must contain exactly 10 digits')
 				return

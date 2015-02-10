@@ -1,5 +1,5 @@
 [MASTER]
-persistent=no
+persistent=yes
 profile=no
 jobs=1
 unsafe-load-any-extension=no
@@ -7,7 +7,7 @@ unsafe-load-any-extension=no
 [MESSAGES CONTROL]
 confidence=INFERENCE
 disable=all
-enable=C0325,C0326,R0914,W0611,W0612,W0613,W0702
+enable=C0325,C0326,R0914,W0110,W0611,W0612,W0613,W0702
 
 [REPORTS].
 output-format=colorized

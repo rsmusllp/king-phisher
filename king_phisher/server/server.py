@@ -324,7 +324,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			},
 			'request': {
 				'command': self.command,
-				'cookies': dict(map(lambda c: (c[0], c[1].value),  self.cookies.items())),
+				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
 				'parameters': dict(zip(self.query_data.keys(), map(self.get_query_parameter, self.query_data.keys())))
 			},
 			'server': {

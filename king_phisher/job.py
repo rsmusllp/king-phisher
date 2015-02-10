@@ -325,7 +325,11 @@ class JobManager(object):
 		:return: The number of jobs that are enabled.
 		:rtype: int
 		"""
-		return len(filter(lambda job_desc: job_desc['enabled'], self._jobs.values()))
+		enabled = 0
+		for job_desc in self._jobs.values():
+			if job_desc['enabled']:
+				enabled += 1
+		return enabled
 
 	def job_enable(self, job_id):
 		"""

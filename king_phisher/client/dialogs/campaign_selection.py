@@ -96,7 +96,8 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 			return
 		try:
 			self.parent.rpc('campaign/new', campaign_name)
-		except:
+		#_TODO: this should probably be an RPC exception
+		except Exception:
 			gui_utilities.show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
 			return
 		campaign_name_entry.set_property('text', '')

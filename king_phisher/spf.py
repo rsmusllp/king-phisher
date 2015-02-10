@@ -180,7 +180,7 @@ class SenderPolicyFramework(object):
 			return
 
 		if len(answers) > 1:
-			answers = list(filter(lambda answer: answer.strings[0].startswith('v=spf1 '), answers))
+			answers = [answer for answer in answers if answer.strings[0].startswith('v=spf1 ')]
 		record = ''.join(answers[0].strings)
 		if not record.startswith('v=spf1 '):
 			raise SPFPermError('failed to parse spf data')
@@ -195,7 +195,7 @@ class SenderPolicyFramework(object):
 				break
 
 			if record.startswith('redirect='):
-				if len(list(filter(lambda r: r.endswith('all'), records))):
+				if len([r for r in records if r.endswith('all')]):
 					# ignore redirects when all is present per https://tools.ietf.org/html/rfc7208#section-6.1
 					self.logger.warning("ignoring redirect modifier to: {0} due to an existing 'all' mechanism".format(domain))
 					continue
@@ -302,7 +302,7 @@ class SenderPolicyFramework(object):
 	def _hostname_matches_ip(self, ip, name):
 		qtype = ('A' if isinstance(ip, ipaddress.IPv4Address) else 'AAAA')
 		answers = self._dns_query(name, qtype)
-		return str(ip) in map(lambda a: a.address, answers)
+		return str(ip) in tuple(a.address for a in answers)
 
 	def expand_macros(self, value, ip, domain, sender):
 		"""

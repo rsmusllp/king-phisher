@@ -70,7 +70,7 @@ class KingPhisherSMTPServer(smtpd.PureProxy, object):
 		except dns.resolver.NoAnswer:
 			smtp_servers = ()
 		else:
-			smtp_servers = tuple(map(lambda r: str(r.exchange).rstrip('.'), smtp_servers))
+			smtp_servers = tuple(str(r.exchange).rstrip('.') for r in smtp_servers)
 		return smtp_servers
 
 	def process_message(self, peer, mailfrom, rcpttos, data):

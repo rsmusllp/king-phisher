@@ -60,7 +60,7 @@ CARRIERS = {
 @utilities.Cache('6h')
 def get_smtp_servers(domain):
 	mx_records = dns.resolver.query(domain, 'MX')
-	return list(map(lambda r: str(r.exchange).rstrip('.'), mx_records))
+	return [str(r.exchange).rstrip('.') for r in mx_records]
 
 def normalize_name(name):
 	return name.lower().replace('&', '').replace('-', '')
@@ -76,7 +76,7 @@ def lookup_carrier_gateway(carrier):
 	:rtype: str
 	"""
 	carrier = normalize_name(carrier)
-	carrier_address = list(filter(lambda c: normalize_name(c) == carrier, CARRIERS.keys()))
+	carrier_address = [c for c in CARRIERS.keys() if normalize_name(c) == carrier]
 	if len(carrier_address) != 1:
 		return None
 	return CARRIERS[carrier_address[0]]

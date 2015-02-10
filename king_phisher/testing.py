@@ -197,14 +197,15 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		philes_yielded = 0
 		web_root = self.config.get('server.web_root')
 		self.assertTrue(os.path.isdir(web_root), msg='The test web root does not exist')
-		directories = filter(lambda p: os.path.isdir(os.path.join(web_root, p)), os.listdir(web_root))
+		directories = (p for p in os.listdir(web_root) if os.path.isdir(os.path.join(web_root, p)))
 		for directory in directories:
 			full_directory = os.path.join(web_root, directory)
-			for phile in filter(lambda p: os.path.isfile(os.path.join(full_directory, p)), os.listdir(full_directory)):
+			philes = (p for p in os.listdir(full_directory) if os.path.isfile(os.path.join(full_directory, p)))
+			for phile in philes:
 				phile = os.path.join(directory, phile)
 				if philes_yielded < limit:
 					yield phile
-				philes_yielded += 1
+					philes_yielded += 1
 		self.assertGreater(philes_yielded, 0, msg='No files were found in the web root')
 
 	def tearDown(self):

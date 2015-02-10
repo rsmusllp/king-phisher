@@ -112,7 +112,7 @@ class Cache(object):
 
 		unexpected_kwargs = tuple(kwargs.keys())
 		if len(unexpected_kwargs):
-			unexpected_kwargs = tuple(map(lambda a: "'{0}'".format(a), unexpected_kwargs))
+			unexpected_kwargs = tuple("'{0}'".format(arg_name) for arg_name in unexpected_kwargs)
 			raise TypeError("{0}() got an unexpected keyword argument{1} {2}".format(self._target_function.__name__, ('' if len(unexpected_kwargs) == 1 else 's'), ', '.join(unexpected_kwargs)))
 		return tuple(flattened_args)
 
@@ -179,7 +179,7 @@ def check_requirements(requirements, ignore=None):
 	ignore = (ignore or [])
 	not_satisfied = []
 	working_set = pkg_resources.working_set
-	installed_packages = dict(map(lambda p: (p.project_name, p), working_set))
+	installed_packages = dict((p.project_name, p) for p in working_set)
 
 	if isinstance(requirements, str):
 		with open(requirements, 'r') as file_h:
@@ -188,9 +188,9 @@ def check_requirements(requirements, ignore=None):
 		requirements = requirements.readlines()
 	elif not isinstance(requirements, (list, tuple)):
 		raise TypeError('invalid type for argument requirements')
-	requirements = map(lambda req: req.strip(), requirements)
 
 	for req_line in requirements:
+		req_line = req_line.strip()
 		parts = re.match('^([\w\-]+)(([<>=]=)(\d+(\.\d+)*))?$', req_line)
 		if not parts:
 			raise ValueError("requirement '{0}' is in an invalid format".format(req_line))

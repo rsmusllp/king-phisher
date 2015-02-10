@@ -183,7 +183,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		# verify settings
 		missing_files = self.sender_thread.missing_files()
 		if missing_files:
-			text = ''.join(map(lambda f: "Missing required file: '{0}'\n".format(f), missing_files))
+			text = ''.join("Missing required file: '{0}'\n".format(f) for f in missing_files)
 			self.sender_start_failure('Missing required files', text)
 			return
 
@@ -657,7 +657,7 @@ class MailSenderTab(object):
 		if not response:
 			return
 		message_config = {}
-		config_keys = filter(lambda k: k.startswith(config_prefix), self.config.keys())
+		config_keys = (key for key in self.config.keys() if key.startswith(config_prefix))
 		for config_key in config_keys:
 			message_config[config_key[7:]] = self.config[config_key]
 		export.message_data_to_kpm(message_config, response['target_path'])
@@ -694,7 +694,7 @@ class MailSenderTab(object):
 			gui_utilities.show_dialog_error('Import Error', self.parent, error.message.capitalize() + '.')
 			return
 
-		config_keys = set(filter(lambda k: k.startswith(config_prefix), self.config.keys()))
+		config_keys = set(key for key in self.config.keys() if key.startswith(config_prefix))
 		config_types = dict(zip(config_keys, map(type, config_keys)))
 		for key, value in message_data.items():
 			key = config_prefix + key

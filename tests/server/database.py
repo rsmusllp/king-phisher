@@ -72,7 +72,7 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 			'visits'
 		])
 		tables_with_id = get_tables_with_column_id('id')
-		self.assertSetEqual(set(get_tables_with_column_id('id')), tables)
+		self.assertSetEqual(get_tables_with_column_id('id'), tables)
 
 	def test_get_tables_campaign_id(self):
 		tables = set([
@@ -84,14 +84,14 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 			'messages',
 			'visits'
 		])
-		self.assertSetEqual(set(get_tables_with_column_id('campaign_id')), tables)
+		self.assertSetEqual(get_tables_with_column_id('campaign_id'), tables)
 
 	def test_get_tables_message_id(self):
 		tables = set([
 			'credentials',
 			'visits'
 		])
-		self.assertSetEqual(set(get_tables_with_column_id('message_id')), tables)
+		self.assertSetEqual(get_tables_with_column_id('message_id'), tables)
 
 	def test_set_meta_data(self):
 		try:

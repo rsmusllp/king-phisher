@@ -151,7 +151,7 @@ def init_database(connection_url):
 	try:
 		models.Base.metadata.create_all(engine)
 	except sqlalchemy.exc.SQLAlchemyError as error:
-		error_lines = map(lambda line: line.strip(), error.message.split('\n'))
+		error_lines = (line.strip() for line in error.message.split('\n'))
 		raise errors.KingPhisherDatabaseError('SQLAlchemyError: ' + ' '.join(error_lines).strip())
 
 	session = Session()

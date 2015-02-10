@@ -116,7 +116,7 @@ class SSHTCPForwarder(threading.Thread):
 			preferred_private_key = preferred_private_key.strip()
 			preferred_private_key = preferred_private_key.replace(':', '')
 			preferred_private_key = preferred_private_key.lower()
-			preferred_private_key = tuple(filter(lambda k: binascii.b2a_hex(k.get_fingerprint()).lower() == preferred_private_key, ssh_keys))
+			preferred_private_key = tuple(key for key in ssh_keys if binascii.b2a_hex(key.get_fingerprint()).lower() == preferred_private_key)
 			if len(preferred_private_key) == 1:
 				self.__try_connect(look_for_keys=False, allow_agent=False, pkey=preferred_private_key[0])
 

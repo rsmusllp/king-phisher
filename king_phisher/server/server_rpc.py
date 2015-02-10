@@ -301,12 +301,12 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		args = list(args)
 		fields = self.path.split('/')[1:-2]
-		assert(len(fields) == len(args))
+		assert len(fields) == len(args)
 		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
-		assert(table)
+		assert table
 		session = db_manager.Session()
 		query = session.query(table)
-		query = query.filter_by(**dict(zip(map(lambda f: f + '_id', fields), args)))
+		query = query.filter_by(**dict(zip((f + '_id' for f in fields), args)))
 		result = query.count()
 		session.close()
 		return result
@@ -324,18 +324,18 @@ class KingPhisherRequestHandlerRPC(object):
 		fields = self.path.split('/')[1:-2]
 		if len(args) == (len(fields) + 1):
 			offset = (args.pop() * VIEW_ROW_COUNT)
-		assert(len(fields) == len(args))
+		assert len(fields) == len(args)
 		table_name = self.path.split('/')[-2]
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
-		assert(table)
+		assert table
 
 		columns = DATABASE_TABLES[table_name]
 		rows = []
 		session = db_manager.Session()
 		query = session.query(table)
-		query = query.filter_by(**dict(zip(map(lambda f: f + '_id', fields), args)))
+		query = query.filter_by(**dict(zip((f + '_id' for f in fields), args)))
 		for row in query[offset:offset + VIEW_ROW_COUNT]:
-			rows.append(list(map(lambda c: getattr(row, c), columns)))
+			rows.append([getattr(row, c) for c in columns])
 		session.close()
 		if not len(rows):
 			return None
@@ -348,7 +348,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:param row_id: The id value.
 		"""
 		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
-		assert(table)
+		assert table
 		session = db_manager.Session()
 		session.delete(db_manager.get_row_by_id(session, table, row_id))
 		session.commit()
@@ -366,12 +366,12 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		table_name = self.path.split('/')[-2]
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
-		assert(table)
+		assert table
 		columns = DATABASE_TABLES[table_name]
 		session = db_manager.Session()
 		row = db_manager.get_row_by_id(session, table, row_id)
 		if row:
-			row = dict(zip(columns, map(lambda c: getattr(row, c), columns)))
+			row = dict(zip(columns, (getattr(row, c) for c in columns)))
 		session.close()
 		return row
 
@@ -386,12 +386,12 @@ class KingPhisherRequestHandlerRPC(object):
 			keys = (keys,)
 		if not isinstance(values, (list, tuple)):
 			values = (values,)
-		assert(len(keys) == len(values))
+		assert len(keys) == len(values)
 		table_name = self.path.split('/')[-2]
 		for key, value in zip(keys, values):
-			assert(key in DATABASE_TABLES[table_name])
+			assert key in DATABASE_TABLES[table_name]
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
-		assert(table)
+		assert table
 		session = db_manager.Session()
 		row = table()
 		for key, value in zip(keys, values):
@@ -411,17 +411,17 @@ class KingPhisherRequestHandlerRPC(object):
 			keys = (keys,)
 		if not isinstance(values, (list, tuple)):
 			values = (values,)
-		assert(len(keys) == len(values))
+		assert len(keys) == len(values)
 		table_name = self.path.split('/')[-2]
 		for key, value in zip(keys, values):
-			assert(key in DATABASE_TABLES[table_name])
+			assert key in DATABASE_TABLES[table_name]
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
-		assert(table)
+		assert table
 		session = db_manager.Session()
 		row = db_manager.get_row_by_id(session, table, row_id)
 		if not row:
 			session.close()
-			assert(row)
+			assert row
 		for key, value in zip(keys, values):
 			setattr(row, key, value)
 		session.commit()

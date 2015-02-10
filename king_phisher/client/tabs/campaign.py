@@ -142,7 +142,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			return
 
 		tree_iters = map(model.get_iter, tree_paths)
-		row_ids = map(lambda ti: model.get_value(ti, 0), tree_iters)
+		row_ids = [model.get_value(ti, 0) for ti in tree_iters]
 		if len(row_ids) == 1:
 			message = 'Delete This Row?'
 		else:
@@ -522,7 +522,7 @@ class CampaignViewTab(object):
 		self.parent.connect('campaign-set', self.signal_kpc_campaign_set)
 
 	def signal_kpc_campaign_set(self, kpc, cid):
-		for tab_name, tab in self.tabs.items():
+		for tab in self.tabs.values():
 			if hasattr(tab, 'load_campaign_information'):
 				tab.load_campaign_information(force=True)
 
@@ -532,7 +532,7 @@ class CampaignViewTab(object):
 		#previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
 
-		for tab_name, tab in self.tabs.items():
+		for tab in self.tabs.values():
 			if current_page != tab.box:
 				continue
 			if hasattr(tab, 'load_campaign_information'):

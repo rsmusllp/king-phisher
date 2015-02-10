@@ -58,9 +58,9 @@ def get_tables_with_column_id(column_id):
 
 	:param str column_id: The column name to get all the tables of.
 	:return: The list of matching tables.
-	:rtype: list
+	:rtype: set
 	"""
-	return map(lambda x: x[0], filter(lambda x: column_id in x[1], DATABASE_TABLES.items()))
+	return set(x[0] for x in DATABASE_TABLES.items() if column_id in x[1])
 
 def register_table(table):
 	"""
@@ -69,7 +69,7 @@ def register_table(table):
 
 	:param table: The table to register.
 	"""
-	columns = tuple(map(lambda c: c.name, table.__table__.columns))
+	columns = tuple(col.name for col in table.__table__.columns)
 	DATABASE_TABLES[table.__tablename__] = columns
 	DATABASE_TABLE_OBJECTS[table.__tablename__] = table
 	return table

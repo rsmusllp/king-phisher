@@ -150,7 +150,7 @@ class ForkedAuthenticator(object):
 			if result['result']:
 				self.cache[username] = (pw_hash, time.time() + self.cache_timeout)
 			return result['result']
-		return (cached_hash == pw_hash)
+		return cached_hash == pw_hash
 
 	def stop(self):
 		"""
