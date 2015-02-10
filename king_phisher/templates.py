@@ -70,8 +70,11 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		self.filters['last_week'] = lambda dt: dt + datetime.timedelta(weeks=-1)
 		self.filters['last_month'] = lambda dt: dt + datetime.timedelta(days=-30)
 		self.filters['last_year'] = lambda dt: dt + datetime.timedelta(days=-365)
-		self.globals['random_integer'] = random.randint
+		# global variables
 		self.globals['version'] = version.version
+		# global functions
+		self.globals['random_integer'] = random.randint
+		# additional globals
 		if global_vars:
 			for key, value in global_vars.items():
 				self.globals[key] = value
