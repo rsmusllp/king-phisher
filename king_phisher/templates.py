@@ -64,8 +64,12 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		self.filters['strftime'] = self._filter_strftime
 		self.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
 		self.filters['next_week'] = lambda dt: dt + datetime.timedelta(weeks=1)
+		self.filters['next_month'] = lambda dt: dt + datetime.timedelta(days=30)
+		self.filters['next_year'] = lambda dt: dt + datetime.timedelta(days=365)
 		self.filters['yesterday'] = lambda dt: dt + datetime.timedelta(days=-1)
 		self.filters['last_week'] = lambda dt: dt + datetime.timedelta(weeks=-1)
+		self.filters['last_month'] = lambda dt: dt + datetime.timedelta(days=-30)
+		self.filters['last_year'] = lambda dt: dt + datetime.timedelta(days=-365)
 		self.globals['random_integer'] = random.randint
 		self.globals['version'] = version.version
 		if global_vars:
