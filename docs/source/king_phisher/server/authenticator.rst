@@ -4,6 +4,11 @@
 .. module:: server.authenticator
    :synopsis:
 
+Functions
+---------
+
+.. autofunction:: king_phisher.server.authenticator.get_groups_for_user
+
 Classes
 -------
 
