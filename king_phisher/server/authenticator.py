@@ -30,9 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import grp
 import hashlib
 import json
+import logging
 import os
+import pwd
 import random
 import string
 import time
@@ -44,6 +47,18 @@ __all__ = ['ForkedAuthenticator']
 make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for x in range(random.randint(5, 8)))
 make_hash = lambda pw: hashlib.sha512(pw.encode('utf-8')).digest()
 
+def get_groups_for_user(username):
+	"""
+	Get the groups that a user is a member of.
+
+	:param str username: The user to lookup group membership for.
+	:rtype: set
+	:return: The names of the groups that the user is a member of.
+	"""
+	groups = set(g.gr_name for g in grp.getgrall() if username in g.gr_mem)
+	groups.add(grp.getgrgid(pwd.getpwnam(username).pw_gid).gr_name)
+	return groups
+
 class ForkedAuthenticator(object):
 	"""
 	This provides authentication services to the King Phisher server
@@ -53,12 +68,17 @@ class ForkedAuthenticator(object):
 	The pipes use JSON to encoded the request data as a string before
 	sending it and using a newline character as the terminator.
 	"""
-	def __init__(self, cache_timeout=600):
+	def __init__(self, cache_timeout=600, required_group=None):
 		"""
 		:param int cache_timeout: The life time of cached credentials in seconds.
+		:param str required_group: A group that if specified, users must be a member of to be authenticated.
 		"""
+		self.logger = logging.getLogger('KingPhisher.Server.Authenticator')
 		self.cache_timeout = cache_timeout
 		"""The timeout of the credential cache in seconds."""
+		self.required_group = required_group
+		if self.required_group and not self.required_group in [g.gr_name for g in grp.getgrall()]:
+			self.logger.error('the specified group for authentication was not found')
 		self.parent_rfile, self.child_wfile = os.pipe()
 		self.child_rfile, self.parent_wfile = os.pipe()
 		self.child_pid = os.fork()
@@ -75,6 +95,7 @@ class ForkedAuthenticator(object):
 			self.child_routine()
 			self.rfile.close()
 			self.wfile.close()
+			logging.shutdown()
 			os._exit(os.EX_OK)
 		self.cache_salt = make_salt()
 		"""The salt to be prepended to passwords before hashing them for the cache."""
@@ -124,11 +145,23 @@ class ForkedAuthenticator(object):
 			password = str(request['password'])
 			result = {}
 			result['result'] = pam.authenticate(username, password, service=service)
+			if result['result'] and self.required_group:
+				result['result'] = False
+				try:
+					assert self.required_group in get_groups_for_user(username)
+				except AssertionError:
+					self.logger.warning("authentication failed for user: {0} reason: lack of group membership".format(username))
+				except KeyError:
+					self.logger.error("encountered a KeyError while looking up group member ship for user: {0}".format(username))
+				else:
+					result['result'] = True
+			else:
+				self.logger.warning("authentication failed for user: {0} reason: bad username or password".format(username))
 			self.send(result)
 
 	def authenticate(self, username, password):
 		"""
-		Check if a uername and password are valid. If they are, the
+		Check if a username and password are valid. If they are, the
 		password will be salted, hashed with SHA-512 and stored so the
 		next call with the same values will not require sending a
 		request to the forked child.

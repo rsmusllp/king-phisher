@@ -626,7 +626,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 
 		self.http_server.config = config
 		self.http_server.throttle_semaphore = threading.Semaphore()
-		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator()
+		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator(required_group=config.get_if_exists('server.authentication.group'))
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.job_manager = job.JobManager()
 		"""A :py:class:`.JobManager` instance for scheduling tasks."""

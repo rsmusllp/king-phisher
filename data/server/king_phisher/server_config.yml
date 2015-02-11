@@ -13,6 +13,11 @@ server:
     host: 0.0.0.0
     port: 80
 
+  # Authentication related information
+  #authentication:
+    # Require authenticating users to be a member of the specified group
+    #group: king-phisher
+
   # The name of the cookie used to track users
   cookie_name: KPID
 
