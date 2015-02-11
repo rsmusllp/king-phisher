@@ -155,6 +155,8 @@ class Configuration(object):
 		item_names = option_name.split(self.seperator)
 		node = self._storage
 		for item_name in item_names:
+			if node == None:
+				return False
 			if not item_name in node:
 				return False
 			node = node[item_name]
