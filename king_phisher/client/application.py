@@ -83,7 +83,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Gtk.Application.do_activate(self)
 		win = client.KingPhisherClient(self.config, self)
 		win.set_position(Gtk.WindowPosition.CENTER)
-		win.show_all()
+		win.show()
 
 	def do_shutdown(self):
 		Gtk.Application.do_shutdown(self)
