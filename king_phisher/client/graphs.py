@@ -31,6 +31,7 @@
 #
 
 import datetime
+import sys
 
 from king_phisher import ua_parser
 from king_phisher import utilities
@@ -50,7 +51,7 @@ except ImportError:
 	has_matplotlib = False
 	"""Whether the :py:mod:`matplotlib` module is available."""
 else:
-	if utilities.check_requirements(['matplotlib>=1.4.1']):
+	if not getattr(sys, 'frozen', False) and utilities.check_requirements(['matplotlib>=1.4.1']):
 		has_matplotlib = False
 	else:
 		has_matplotlib = True

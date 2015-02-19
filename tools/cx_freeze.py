@@ -127,7 +127,7 @@ executables = [
 
 build_exe_options = dict(
 	compressed=False,
-	packages=['email', 'gi', 'jinja2', 'matplotlib', 'msgpack', 'paramiko'],
+	packages=['cairo', 'email', 'gi', 'jinja2', 'matplotlib', 'msgpack', 'paramiko'],
 	include_files=include_files
 )
 
