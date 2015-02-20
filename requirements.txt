@@ -1,7 +1,7 @@
 # these are also hard coded into the respective executable files for checking as
 # part of their startup routine
 alembic>=0.6.7
-dnspython>=1.10.0
+dnspython>=1.12.0
 Jinja2>=2.7.1
 markupsafe>=0.18
 matplotlib>=1.4.1
