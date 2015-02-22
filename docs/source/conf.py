@@ -277,6 +277,7 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 # mock specific external packages
+sys.modules['dns.exception'] = king_phisher.utilities.Mock()
 sys.modules['dns.resolver'] = king_phisher.utilities.Mock()
 sys.modules['gi'] = king_phisher.utilities.Mock()
 sys.modules['gi.repository'] = king_phisher.utilities.Mock()
@@ -287,3 +288,4 @@ sys.modules['matplotlib.backends.backend_gtk3'] = king_phisher.utilities.Mock()
 sys.modules['matplotlib.backends.backend_gtk3agg'] = king_phisher.utilities.Mock()
 sys.modules['matplotlib.figure'] = king_phisher.utilities.Mock()
 sys.modules['paramiko'] = king_phisher.utilities.Mock()
+sys.modules['sqlalchemy'] = king_phisher.utilities.Mock()
