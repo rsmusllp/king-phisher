@@ -35,7 +35,8 @@ import unittest
 
 from king_phisher import find
 from king_phisher import testing
-from king_phisher.configuration import *
+
+from smoke_zephyr import configuration
 
 class ServerConfigurationTests(testing.KingPhisherTestCase):
 	def setUp(self):
@@ -45,7 +46,7 @@ class ServerConfigurationTests(testing.KingPhisherTestCase):
 		config_file = find.find_data_file('server_config.yml')
 		self.assertIsNotNone(config_file)
 		self.assertTrue(os.path.isfile(config_file))
-		config = Configuration(config_file)
+		config = configuration.Configuration(config_file)
 		self.assertTrue(config.has_section('server'))
 		self.assertTrue(config.has_section('server.address'))
 
@@ -53,7 +54,7 @@ class ServerConfigurationTests(testing.KingPhisherTestCase):
 		config_file = find.find_data_file('server_config.yml')
 		verify_config_file = find.find_data_file('server_config_verification.yml')
 		self.assertIsNotNone(config_file)
-		config = Configuration(config_file)
+		config = configuration.Configuration(config_file)
 		bad_options = config.get_missing(verify_config_file)
 		self.assertIsInstance(bad_options, dict)
 		incompatible_options = bad_options.get('incompatible')

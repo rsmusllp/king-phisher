@@ -19,6 +19,7 @@ require a valid local account on the King Phisher Server.
 * [Jinja2](http://jinja.pocoo.org/)
 * [Paramiko](https://github.com/paramiko/paramiko/)
 * [PyGObject](https://wiki.gnome.org/PyGObject/)
+* [Smoke-Zephyr](https://github.com/zeroSteiner/smoke-zephyr/)
 
 ## Client Optional Packages
 * [Matplotlib](http://matplotlib.org/)
@@ -30,6 +31,7 @@ require a valid local account on the King Phisher Server.
 * [Jinja2](http://jinja.pocoo.org/)
 * [Msgpack-Python](https://github.com/msgpack/msgpack-python/)
 * [PyYAML](http://pyyaml.org/)
+* [Smoke-Zephyr](https://github.com/zeroSteiner/smoke-zephyr/)
 * [SQLAlchemy](http://www.sqlalchemy.org/)
 
 The following steps walk through installing King Phisher on Linux into a

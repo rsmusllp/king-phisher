@@ -42,7 +42,6 @@ import threading
 
 from king_phisher import errors
 from king_phisher import find
-from king_phisher import job
 from king_phisher import sms
 from king_phisher import templates
 from king_phisher import utilities
@@ -55,6 +54,7 @@ from king_phisher.server.database import models as db_models
 from king_phisher.third_party.AdvancedHTTPServer import *
 
 import jinja2
+from smoke_zephyr import job
 
 make_uid = lambda: utilities.random_string(24)
 
@@ -617,7 +617,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.logger = logging.getLogger('KingPhisher.Server')
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
 		self.config = config
-		"""The main King Phisher server configuration."""
+		"""A :py:class:`smoke_zephyr.configuration.Configuration` instance used as the main King Phisher server configuration."""
 		self.serve_files = True
 		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
@@ -629,7 +629,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator(required_group=config.get_if_exists('server.authentication.group'))
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.job_manager = job.JobManager()
-		"""A :py:class:`.JobManager` instance for scheduling tasks."""
+		"""A :py:class:`smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
 		self.http_server.job_manager = self.job_manager
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))

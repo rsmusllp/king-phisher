@@ -38,10 +38,11 @@ import time
 import urllib
 import unittest
 
-from king_phisher import configuration
 from king_phisher import find
 from king_phisher.client import client_rpc
 from king_phisher.server.server import *
+
+from smoke_zephyr import configuration
 
 if sys.version_info[0] < 3:
 	import httplib

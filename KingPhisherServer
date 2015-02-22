@@ -38,18 +38,13 @@ import signal
 import sys
 import threading
 
-from king_phisher import configuration
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import server
 
-try:
-	import msgpack
-	has_msgpack = True
-except ImportError:
-	has_msgpack = False
+from smoke_zephyr import configuration
 
 __requirements__ = [
 	'alembic>=0.6.7',

@@ -11,10 +11,8 @@ The King Phisher Package
 
    king_phisher/third_party/index.rst
 
-   king_phisher/configuration.rst
    king_phisher/errors.rst
    king_phisher/find.rst
-   king_phisher/job.rst
    king_phisher/sms.rst
    king_phisher/smtp_server.rst
    king_phisher/spf.rst
