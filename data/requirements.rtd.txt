@@ -1,0 +1,12 @@
+# these are also hard coded into the respective executable files for checking as
+# part of their startup routine
+alembic>=0.6.7
+dnspython>=1.12.0
+Jinja2>=2.7.1
+markupsafe>=0.18
+msgpack-python>=0.4.2
+paramiko>=1.10.1
+py2-ipaddress>=2.0.0
+PyYAML>=3.10
+smoke-zephyr==1.0.0
+SQLAlchemy>=0.9

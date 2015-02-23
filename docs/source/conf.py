@@ -277,15 +277,15 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 # mock specific external packages
-sys.modules['dns.exception'] = king_phisher.utilities.Mock()
-sys.modules['dns.resolver'] = king_phisher.utilities.Mock()
-sys.modules['gi'] = king_phisher.utilities.Mock()
-sys.modules['gi.repository'] = king_phisher.utilities.Mock()
-sys.modules['ipaddress'] = king_phisher.utilities.Mock()
-sys.modules['matplotlib'] = king_phisher.utilities.Mock()
-sys.modules['matplotlib.backends'] = king_phisher.utilities.Mock()
-sys.modules['matplotlib.backends.backend_gtk3'] = king_phisher.utilities.Mock()
-sys.modules['matplotlib.backends.backend_gtk3agg'] = king_phisher.utilities.Mock()
-sys.modules['matplotlib.figure'] = king_phisher.utilities.Mock()
-sys.modules['paramiko'] = king_phisher.utilities.Mock()
-sys.modules['sqlalchemy'] = king_phisher.utilities.Mock()
+MOCK_MODULES = [
+	'gi',
+	'gi.repository',
+	'ipaddress',
+	'matplotlib',
+	'matplotlib.backends',
+	'matplotlib.backends.backend_gtk3',
+	'matplotlib.backends.backend_gtk3agg',
+	'matplotlib.figure',
+	'paramiko'
+]
+sys.modules.update((mod_name, king_phisher.utilities.Mock()) for mod_name in MOCK_MODULES)
