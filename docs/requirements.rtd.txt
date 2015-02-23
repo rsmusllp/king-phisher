@@ -1,5 +1,5 @@
-# these are also hard coded into the respective executable files for checking as
-# part of their startup routine
+# this is a pip requirements file specifically for the ReadTheDocs environment
+# because it can not install certain packages such as matplotlib
 alembic>=0.6.7
 dnspython>=1.12.0
 Jinja2>=2.7.1
