@@ -60,13 +60,12 @@ make_uid = lambda: utilities.random_string(24)
 
 def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	"""
-	Build a server from a provided :py:class:`.Configuration`
-	instance. If a ServerClass or HandlerClass is specified, then the
-	object must inherit from the corresponding KingPhisherServer base
-	class.
+	Build a server from a provided configuration instance. If *ServerClass* or
+	*HandlerClass* is specified, then the object must inherit from the
+	corresponding KingPhisherServer base class.
 
 	:param config: Configuration to retrieve settings from.
-	:type config: :py:class:`.Configuration`
+	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 	:param ServerClass: Alternative server class to use.
 	:type ServerClass: :py:class:`.KingPhisherServer`
 	:param HandlerClass: Alternative handler class to use.
@@ -101,7 +100,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	def __init__(self, *args, **kwargs):
 		# this is for attribute documentation
 		self.config = None
-		"""The main King Phisher server :py:class:`.Configuration` instance."""
+		"""A reference to the main server instance :py:attr:`.KingPhisherServer.config`."""
 		self.path = None
 		"""The resource path of the current HTTP request."""
 		super(KingPhisherRequestHandler, self).__init__(*args, **kwargs)
@@ -612,12 +611,12 @@ class KingPhisherServer(AdvancedHTTPServer):
 	def __init__(self, config, *args, **kwargs):
 		"""
 		:param config: Configuration to retrieve settings from.
-		:type config: :py:class:`.Configuration`
+		:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 		"""
 		self.logger = logging.getLogger('KingPhisher.Server')
 		super(KingPhisherServer, self).__init__(*args, **kwargs)
 		self.config = config
-		"""A :py:class:`smoke_zephyr.configuration.Configuration` instance used as the main King Phisher server configuration."""
+		"""A :py:class:`~smoke_zephyr.configuration.Configuration` instance used as the main King Phisher server configuration."""
 		self.serve_files = True
 		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
@@ -629,7 +628,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator(required_group=config.get_if_exists('server.authentication.group'))
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.job_manager = job.JobManager()
-		"""A :py:class:`smoke_zephyr.job.JobManager` instance for scheduling tasks."""
+		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
 		self.http_server.job_manager = self.job_manager
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))

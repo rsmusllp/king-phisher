@@ -40,11 +40,5 @@ Functions
 Classes
 -------
 
-.. autoclass:: king_phisher.utilities.Cache
-   :show-inheritance:
-   :members:
-   :special-members: __init__
-   :undoc-members:
-
 .. autoclass:: king_phisher.utilities.Mock
    :show-inheritance:

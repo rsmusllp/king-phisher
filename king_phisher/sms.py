@@ -35,9 +35,8 @@ import random
 import smtplib
 import sys
 
-from king_phisher import utilities
-
 import dns.resolver
+import smoke_zephyr.utilities
 
 if sys.version_info[0] < 3:
 	from email.MIMEText import MIMEText
@@ -57,8 +56,15 @@ CARRIERS = {
 }
 """A dictionary for mapping carrier names to SMS via email gateways."""
 
-@utilities.Cache('6h')
+@smoke_zephyr.utilities.Cache('6h')
 def get_smtp_servers(domain):
+	"""
+	Get the SMTP servers for the specified domain by querying their MX records.
+
+	:param str domain: The domain to look up the MX records for.
+	:return: The smtp servers for the specified domain.
+	:rtype: list
+	"""
 	mx_records = dns.resolver.query(domain, 'MX')
 	return [str(r.exchange).rstrip('.') for r in mx_records]
 
