@@ -69,6 +69,7 @@ class KingPhisherRequestHandlerRPC(object):
 		for table_name in DATABASE_TABLES.keys():
 			self.rpc_handler_map['/' + table_name + '/count'] = self.rpc_database_count_rows
 			self.rpc_handler_map['/' + table_name + '/delete'] = self.rpc_database_delete_row_by_id
+			self.rpc_handler_map['/' + table_name + '/delete/multi'] = self.rpc_database_delete_rows_by_id
 			self.rpc_handler_map['/' + table_name + '/get'] = self.rpc_database_get_row_by_id
 			self.rpc_handler_map['/' + table_name + '/insert'] = self.rpc_database_insert_row
 			self.rpc_handler_map['/' + table_name + '/set'] = self.rpc_database_set_row_value
@@ -350,10 +351,38 @@ class KingPhisherRequestHandlerRPC(object):
 		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
 		assert table
 		session = db_manager.Session()
-		session.delete(db_manager.get_row_by_id(session, table, row_id))
-		session.commit()
-		session.close()
+		try:
+			session.delete(db_manager.get_row_by_id(session, table, row_id))
+			session.commit()
+		finally:
+			session.close()
 		return
+
+	def rpc_database_delete_rows_by_id(self, row_ids):
+		"""
+		Delete multiple rows from a table with the specified values in the id
+		column. If a row id specified in *row_ids* does not exist, then it will
+		be skipped and no error will be thrown.
+
+		:param list row_ids: The row ids to delete.
+		:return: The row ids that were deleted.
+		:rtype: list
+		"""
+		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
+		assert table
+		deleted_rows = []
+		session = db_manager.Session()
+		try:
+			for row_id in row_ids:
+				row = db_manager.get_row_by_id(session, table, row_id)
+				if not row:
+					continue
+				session.delete(row)
+				deleted_rows.append(row_id)
+			session.commit()
+		finally:
+			session.close()
+		return deleted_rows
 
 	def rpc_database_get_row_by_id(self, row_id):
 		"""

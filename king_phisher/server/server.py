@@ -164,8 +164,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			http_method_handler(*args, **kwargs)
 		except errors.KingPhisherAbortRequestError:
 			self.respond_not_found()
-		except:
-			raise
 		finally:
 			self.server.throttle_semaphore.release()
 	do_GET = _do_http_method

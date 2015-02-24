@@ -46,7 +46,7 @@ class SPFTests(testing.KingPhisherTestCase):
 
 	def test_spf_evaluate_mechanism(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'doesnotexist.king-phisher.com')
-		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip, s.domain, s.sender, m, r)
+		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip_address, s.domain, s.sender, m, r)
 		self.assertTrue(eval_mech('all', None))
 		self.assertTrue(eval_mech('exists', '%{d2}'))
 		self.assertTrue(eval_mech('ip4', '1.2.3.0/24'))
@@ -55,7 +55,7 @@ class SPFTests(testing.KingPhisherTestCase):
 
 	def test_spf_evaluate_mechanism_permerror(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'doesnotexist.king-phisher.com')
-		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip, s.domain, s.sender, m, r)
+		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip_address, s.domain, s.sender, m, r)
 		with self.assertRaises(spf.SPFPermError):
 			eval_mech('ip4', 'thisisnotanetwork')
 		with self.assertRaises(spf.SPFPermError):
@@ -65,7 +65,7 @@ class SPFTests(testing.KingPhisherTestCase):
 
 	def test_spf_evaluate_mechanism_temperror(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'doesnotexist.king-phisher.com')
-		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip, s.domain, s.sender, m, r)
+		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip_address, s.domain, s.sender, m, r)
 		with self.assertRaises(spf.SPFTempError):
 			eval_mech('a', None)
 		with self.assertRaises(spf.SPFTempError):

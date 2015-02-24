@@ -151,6 +151,11 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			return
 		for row_id in row_ids:
 			self.parent.rpc(self.remote_table_name + '/delete', row_id)
+		#_TODO: use /delete/multi once rpc_version is 3
+		#if len(row_ids) == 1:
+		#	self.parent.rpc(self.remote_table_name + '/delete', row_ids[0])
+		#else:
+		#	self.parent.rpc(self.remote_table_name + '/delete/multi', row_ids)
 		self.load_campaign_information(force=True)
 
 	def format_row_data(self, row):

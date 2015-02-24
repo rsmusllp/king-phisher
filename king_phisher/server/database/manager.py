@@ -130,7 +130,7 @@ def init_database(connection_url):
 	"""
 	Create and initialize the database engine. This must be done before the
 	session object can be used. This will also attempt to perform any updates to
-	the database schema if the backend support such operations.
+	the database schema if the backend supports such operations.
 
 	:param str connection_url: The url for the database connection.
 	:return: The initialized database engine.

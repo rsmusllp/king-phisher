@@ -133,7 +133,7 @@ class SenderPolicyFramework(object):
 		"""
 		if isinstance(ip, str):
 			ip = ipaddress.ip_address(ip)
-		self.ip = ip
+		self.ip_address = ip
 		self.domain = domain
 		self.helo_domain = 'unknown'
 		sender = (sender or 'postmaster')
@@ -150,7 +150,7 @@ class SenderPolicyFramework(object):
 		self.logger = logging.getLogger('KingPhisher.SPF.SenderPolicyFramework')
 
 	def __repr__(self):
-		return "<{0} ip={1} domain={2} sender={3} >".format(self.__class__.__name__, self.ip, self.domain, self.sender)
+		return "<{0} ip={1} domain={2} sender={3} >".format(self.__class__.__name__, self.ip_address, self.domain, self.sender)
 
 	def __str__(self):
 		return self.check_host() or ''
@@ -165,7 +165,7 @@ class SenderPolicyFramework(object):
 		:rtype: None, str
 		"""
 		if not self._policy_checked:
-			self.policy = self._check_host(self.ip, self.domain, self.sender)
+			self.policy = self._check_host(self.ip_address, self.domain, self.sender)
 			self._policy_checked = True
 		return self.policy
 
@@ -200,7 +200,7 @@ class SenderPolicyFramework(object):
 					self.logger.warning("ignoring redirect modifier to: {0} due to an existing 'all' mechanism".format(domain))
 					continue
 				record = record[9:]
-				domain = self.expand_macros(record, self.ip, domain, self.sender)
+				domain = self.expand_macros(record, self.ip_address, domain, self.sender)
 				self.logger.debug("following redirect modifier to: {0}".format(domain))
 				if top_level and len(self.spf_records) == 0:
 					# treat a single redirect as a new top level
