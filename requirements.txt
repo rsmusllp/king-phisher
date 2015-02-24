@@ -2,6 +2,7 @@
 # part of their startup routine
 alembic>=0.6.7
 dnspython>=1.12.0
+geoip2>=2.1.0
 Jinja2>=2.7.1
 markupsafe>=0.18
 matplotlib>=1.4.1

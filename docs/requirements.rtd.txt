@@ -2,6 +2,7 @@
 # because it can not install certain packages such as matplotlib
 alembic>=0.6.7
 dnspython>=1.12.0
+geoip2>=2.1.0
 Jinja2>=2.7.1
 markupsafe>=0.18
 msgpack-python>=0.4.2

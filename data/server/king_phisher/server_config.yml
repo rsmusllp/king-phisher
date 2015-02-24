@@ -36,6 +36,10 @@ server:
   # Fork the server process into the background
   fork: true
 
+  geoip:
+    # The location of the GeoLite2 City database
+    database: /var/king-phisher/geoip.mmdb
+
   # Set a file to write the PID to
   pid_file: /var/run/king-phisher.pid
 

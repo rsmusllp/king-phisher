@@ -91,7 +91,7 @@ def check_host(ip, domain, sender=None):
 	:py:class:`.SenderPolicyFramework` instance and returning the result of
 	:py:meth:`.SenderPolicyFramework.check_host`.
 
-	:param ip: The ip address of the host sending the message.
+	:param ip: The IP address of the host sending the message.
 	:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	:param str domain: The domain to check the SPF policy of.
 	:param str sender: The "MAIL FROM" identity of the message being sent.
@@ -119,14 +119,14 @@ def validate_record(ip, domain, sender=None):
 class SenderPolicyFramework(object):
 	"""
 	Analyze the Sender Policy Framework configuration for a domain to determine
-	if an ip address is authorized to send messages on it's behalf. Sender
+	if an IP address is authorized to send messages on it's behalf. Sender
 	Policy Framework is defined in
 	`RFC 7208 <http://tools.ietf.org/html/rfc7208>`_. The exp modifier defined
 	in section 6.2 of the RFC is not supported.
 	"""
 	def __init__(self, ip, domain, sender=None, spf_records=None):
 		"""
-		:param ip: The ip address of the host sending the message.
+		:param ip: The IP address of the host sending the message.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 		:param str domain: The domain to check the SPF policy of.
 		:param str sender: The "MAIL FROM" identity of the message being sent.
@@ -310,7 +310,7 @@ class SenderPolicyFramework(object):
 		7 of RFC 7208.
 
 		:param str value: The string containing macros to expand.
-		:param ip: The ip address to use when expanding macros.
+		:param ip: The IP address to use when expanding macros.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 		:param str domain: The domain name to use when expanding macros.
 		:param str sender: The email address of the sender to use when expanding macros.

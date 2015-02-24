@@ -351,7 +351,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		username = self.config['server_username']
 		password = self.config['server_password']
 		if server[0] == 'localhost' or (utilities.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
-			local_port = server[1]
+			local_port = self.config['server_remote_port']
 			self.logger.info("connecting to local king-phisher instance")
 		else:
 			local_port = self._create_ssh_forwarder(server, username, password)

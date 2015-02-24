@@ -42,6 +42,7 @@ import threading
 
 from king_phisher import errors
 from king_phisher import find
+from king_phisher import geoip
 from king_phisher import sms
 from king_phisher import templates
 from king_phisher import utilities
@@ -636,6 +637,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
 		self.http_server.template_env = templates.BaseTemplateEnvironment(loader=loader, global_vars=global_vars)
+		self.__geoip_db = geoip.init_database(config.get('server.geoip.database'))
 
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
@@ -653,4 +655,5 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.forked_authenticator.stop()
 		self.logger.debug('stopped the forked authenticator process')
 		self.job_manager.stop()
+		self.__geoip_db.close()
 		self.__is_shutdown.set()

@@ -11,6 +11,7 @@ settings:
 
   server.cookie_name: str
   server.database: str
+  server.geoip.database: str
   server.require_id: bool
   server.tracking_image: str
   server.vhost_directories: bool

@@ -134,7 +134,7 @@ def guess_smtp_server_address(host, forward_host=None):
 
 	:param str host: The SMTP server that is being connected to.
 	:param str forward_host: An optional host that is being used to tunnel the connection.
-	:return: The ip address of the SMTP server.
+	:return: The IP address of the SMTP server.
 	:rtype: None, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	"""
 	host = host.rsplit(':', 1)[0]

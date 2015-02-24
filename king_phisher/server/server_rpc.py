@@ -32,6 +32,7 @@
 
 import threading
 
+from king_phisher import geoip
 from king_phisher import version
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
@@ -53,6 +54,8 @@ class KingPhisherRequestHandlerRPC(object):
 		self.rpc_handler_map['/ping'] = self.rpc_ping
 		self.rpc_handler_map['/shutdown'] = self.rpc_shutdown
 		self.rpc_handler_map['/version'] = self.rpc_version
+		self.rpc_handler_map['/geoip/lookup'] = self.rpc_geoip_lookup
+		self.rpc_handler_map['/geoip/lookup/multi'] = self.rpc_geoip_lookup_multi
 
 		self.rpc_handler_map['/client/initialize'] = self.rpc_client_initialize
 		self.rpc_handler_map['/config/get'] = self.rpc_config_get
@@ -456,3 +459,29 @@ class KingPhisherRequestHandlerRPC(object):
 		session.commit()
 		session.close()
 		return
+
+	def rpc_geoip_lookup(self, ip, lang=None):
+		"""
+		Look up an IP address in the servers GeoIP database.
+
+		:param str ip: The IP address to look up.
+		:param str lang: The language to prefer for regional names.
+		:return: The geographic information for the specified IP address.
+		:rtype: dict
+		"""
+		return geoip.lookup(ip, lang=lang)
+
+	def rpc_geoip_lookup_multi(self, ips, lang=None):
+		"""
+		Look up multiple IP addresses in the servers GeoIP database.
+
+		:param list ips: The list of IP addresses to look up.
+		:param str lang: The language to prefer for regional names.
+		:return: A dictionary containing the results keyed by the specified IP
+			addresses.
+		:rtype: dict
+		"""
+		results = {}
+		for ip in ips:
+			results[ip] = geoip.lookup(ip, lang=lang)
+		return results

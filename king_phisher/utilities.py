@@ -185,8 +185,8 @@ def is_valid_ip_address(ip_address):
 	Check that the string specified appears to be either a valid IPv4 or IPv6
 	address.
 
-	:param str ip_address: The ip address to validate.
-	:return: Whether the ip address appears to be valid or not.
+	:param str ip_address: The IP address to validate.
+	:return: Whether the IP address appears to be valid or not.
 	:rtype: bool
 	"""
 	try:

@@ -40,6 +40,7 @@ import threading
 
 from king_phisher import errors
 from king_phisher import find
+from king_phisher import geoip
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import server
@@ -138,6 +139,7 @@ def main():
 			file_handler.setLevel(log_level)
 		if config.has_option('logging.console') and config.get('logging.console'):
 			console_log_handler.setLevel(log_level)
+	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
 
 	# fork into the background
 	should_fork = True
@@ -148,7 +150,6 @@ def main():
 	if should_fork and os.fork():
 		return os.EX_OK
 
-	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
 	try:
 		king_phisher_server = server.build_king_phisher_server(config)
 	except errors.KingPhisherError as error:
@@ -162,6 +163,7 @@ def main():
 		pid_file = open(config.get('server.pid_file'), 'w')
 		pid_file.write(str(server_pid))
 		pid_file.close()
+
 	if config.has_option('server.setuid_username'):
 		setuid_username = config.get('server.setuid_username')
 		try:
