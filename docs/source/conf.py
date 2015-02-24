@@ -45,10 +45,6 @@ extensions = [
 ]
 
 intersphinx_mapping = {'smoke-zephyr': ('https://smoke-zephyr.readthedocs.org/en/latest/', None)}
-if on_rtd:
-	intersphinx_mapping['python'] = ('https://docs.python.org/2.7/', None)
-else:
-	intersphinx_mapping['python'] = ("https://docs.python.org/{0}.{1}/".format(sys.version_info.major, sys.version_info.minor), None)
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

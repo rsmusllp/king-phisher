@@ -63,6 +63,8 @@ Campaign API
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_new`
 
+.. _rpc-api-campaign-table-api-label:
+
 Campaign Table API
 ^^^^^^^^^^^^^^^^^^
 
@@ -90,6 +92,21 @@ Configuration API
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_config_set`
+
+.. _rpc-api-geoip-api-label:
+
+GeoIP API
+---------
+
+.. py:function:: geoip/lookup(ip, lang=None)
+   :noindex:
+
+   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_geoip_lookup`
+
+.. py:function:: geoip/lookup/multi(ips, lang=None)
+   :noindex:
+
+   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_geoip_lookup_multi`
 
 .. _rpc-api-message-api-label:
 
@@ -130,6 +147,11 @@ Table API
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_row_by_id`
+
+.. py:function:: < table_name >/delete/multi(row_ids)
+   :noindex:
+
+   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_rows_by_id`
 
 .. py:function:: < table_name >/get(row_id)
    :noindex:
