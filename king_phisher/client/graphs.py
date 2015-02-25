@@ -38,6 +38,7 @@ from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
 from gi.repository import Gtk
+from smoke_zephyr.requirements import check_requirements
 
 try:
 	import matplotlib
@@ -51,7 +52,7 @@ except ImportError:
 	has_matplotlib = False
 	"""Whether the :py:mod:`matplotlib` module is available."""
 else:
-	if not getattr(sys, 'frozen', False) and utilities.check_requirements(['matplotlib>=1.4.1']):
+	if not getattr(sys, 'frozen', False) and check_requirements(['matplotlib>=1.4.1']):
 		has_matplotlib = False
 	else:
 		has_matplotlib = True

@@ -45,6 +45,7 @@ from king_phisher.client import gui_utilities
 
 from gi.repository import GObject
 from gi.repository import Gtk
+from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
 	"dns{0}>=1.12.0".format('python' if sys.version_info.major == 2 else 'python3'),
@@ -83,7 +84,7 @@ def main():
 	if getattr(sys, 'frozen', False):
 		data_path = os.path.dirname(sys.executable)
 	else:
-		missing_requirements = utilities.check_requirements(__requirements__)
+		missing_requirements = check_requirements(__requirements__)
 		if missing_requirements:
 			print('[-] the following package requirements are missing or incompatible:')
 			for missing_req in missing_requirements:

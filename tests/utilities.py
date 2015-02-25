@@ -40,14 +40,6 @@ SINGLE_QUOTE_STRING_ESCAPED = """C:\\\\Users\\\\Alice\\\\Desktop\\\\Alice\\'s Se
 SINGLE_QUOTE_STRING_UNESCAPED = """C:\\Users\\Alice\\Desktop\\Alice's Secret File.txt"""
 
 class UtilitiesTests(testing.KingPhisherTestCase):
-	def test_check_requirements(self):
-		fake_pkg = 'a' + random_string(16)
-		real_pkg = 'Jinja2'
-		missing_pkgs = check_requirements([real_pkg + '>=2.0', fake_pkg + '>=1.0'])
-		self.assertNotIn(real_pkg, missing_pkgs, msg='A valid package is marked as missing or incompatible')
-		self.assertIn(fake_pkg, missing_pkgs, msg='An invalid package is not marked as missing or incompatible')
-		self.assertEqual(len(missing_pkgs), 1)
-
 	def test_escape_single_quote(self):
 		escaped_string = escape_single_quote(SINGLE_QUOTE_STRING_UNESCAPED)
 		self.assertEqual(escaped_string, SINGLE_QUOTE_STRING_ESCAPED)

@@ -45,7 +45,8 @@ from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import server
 
-from smoke_zephyr import configuration
+from smoke_zephyr.configuration import Configuration
+from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
 	'alembic>=0.6.7',
@@ -81,7 +82,7 @@ def main():
 	del parser
 	logger = logging.getLogger('KingPhisher.Server.CLI')
 
-	missing_requirements = utilities.check_requirements(__requirements__)
+	missing_requirements = check_requirements(__requirements__)
 	if missing_requirements:
 		print('[-] the following package requirements are missing or incompatible:')
 		for missing_req in missing_requirements:
@@ -94,7 +95,7 @@ def main():
 		print('[-] \'server.setuid_username\' option in the config file to drop privileges')
 		return os.EX_NOPERM
 
-	config = configuration.Configuration(config_file.name)
+	config = Configuration(config_file.name)
 
 	# configure environment variables
 	data_path = os.path.dirname(__file__)
