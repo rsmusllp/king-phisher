@@ -127,6 +127,8 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		config = configuration.Configuration(find.find_data_file('server_config.yml'))
 		config.set('server.address.port', 0)
 		config.set('server.database', 'sqlite://')
+		if os.environ.get('TRAVIS'):
+			config.set('server.geoip.database', 'GeoLite2-City.mmdb')
 		config.set('server.web_root', web_root)
 		self.config = config
 		self.server = build_king_phisher_server(config, HandlerClass=KingPhisherRequestHandlerTest)

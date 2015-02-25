@@ -3,6 +3,7 @@
 *.geany
 *.html
 *.log
+*.mmdb
 *.py[cod]
 *.yml
 .pylintrc
