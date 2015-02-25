@@ -18,7 +18,7 @@ before_install:
 install:
   - pip install pylint sphinx
   - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -r requirements.txt; fi
-  - wget -q http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
+  - wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
   - gunzip -f GeoLite2-City.mmdb.gz
 
 script:

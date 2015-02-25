@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/server/server.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,20 +30,27 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
+import os
+import unittest
 
-from .client import *
-from .server import *
+from king_phisher import geoip
+from king_phisher.testing import KingPhisherServerTestCase
 
-from .configuration import ServerConfigurationTests
-from .geoip import GeoIPTests
-from .sms import SMSTests
-from .spf import SPFTests
-from .templates import TemplatesTests
-from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
-from .version import VersionTests
-from .xor import XORTests
+GEO_TEST_IP = '8.8.8.8'
 
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
+class GeoIPTests(KingPhisherServerTestCase):
+	def test_geoip_lookup(self):
+		result = geoip.lookup(GEO_TEST_IP)
+		self.assertIsInstance(result, dict)
+		for field in geoip.DB_RESULT_FIELDS:
+			self.assertIn(field, result)
+
+	def test_geoip_lookup_private(self):
+		with self.assertRaises(RuntimeError):
+			geoip.lookup('192.168.1.1')
+
+	def test_geoip_raw_geolocation(self):
+		loc = geoip.GeoLocation(GEO_TEST_IP)
+		loc_raw = geoip.GeoLocation(GEO_TEST_IP, result=geoip.lookup(GEO_TEST_IP))
+		for field in geoip.DB_RESULT_FIELDS:
+			self.assertEqual(getattr(loc, field), getattr(loc_raw, field))
