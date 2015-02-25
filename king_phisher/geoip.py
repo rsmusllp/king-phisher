@@ -92,7 +92,7 @@ def init_database(database_file):
 	global _geoip_db
 	if not os.path.isfile(database_file):
 		logger.warning('the specified geoip database does not exist, downloading a new copy')
-		geoip.download_geolite2_city_db(database_file)
+		download_geolite2_city_db(database_file)
 		os.chmod(database_file, 0644)
 	_geoip_db = geoip2.database.Reader(database_file)
 	metadata = _geoip_db.metadata()
