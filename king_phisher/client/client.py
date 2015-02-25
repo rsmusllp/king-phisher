@@ -216,7 +216,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			for graph_name in graphs.get_graphs():
 				action_name = 'ToolsGraph' + graph_name
 				action = Gtk.Action(name=action_name, label=graph_name, tooltip=graph_name, stock_id=None)
-				action.connect('activate', lambda _: self.show_campaign_graph(graph_name))
+				action.connect('activate', self.signal_activate_popup_menu_create_graph, graph_name)
 				action_group.add_action(action)
 
 			merge_id = uimanager.new_merge_id()
@@ -275,6 +275,9 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			ui_data = ui_info_file.read()
 		uimanager.add_ui_from_string(ui_data)
 		return uimanager
+
+	def signal_activate_popup_menu_create_graph(self, _, graph_name):
+		return self.show_campaign_graph(graph_name)
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		#previous_page = notebook.get_nth_page(self.last_page_id)
@@ -468,8 +471,8 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 		:param str graph_name: The name of the graph to make a window of.
 		"""
-		Klass = graphs.get_graph(graph_name)
-		graph_inst = Klass(self.config, self)
+		cls = graphs.get_graph(graph_name)
+		graph_inst = cls(self.config, self)
 		graph_inst.load_graph()
 		window = graph_inst.make_window()
 		window.show_all()

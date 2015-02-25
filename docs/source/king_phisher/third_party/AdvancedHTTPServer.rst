@@ -1,8 +1,8 @@
-:mod:`AdvancedHTTPServer` --- Light and flexible web framework
-==============================================================
+:mod:`AdvancedHTTPServer` --- Python HTTP Server
+================================================
 
-.. module:: AdvancedHTTPServer
-   :synopsis: Light and flexible web framework
+.. module:: king_phisher.third_party.AdvancedHTTPServer
+   :synopsis: Python HTTP Server
 
 AdvancedHTTPServer is a light weight module that provides a set of classes
 for quickly making HTTP servers for a variety of purposes. It focuses on
@@ -20,50 +20,50 @@ Data
 Functions
 ---------
 
-.. autofunction:: AdvancedHTTPServer.build_serializer_from_content_type
+.. autofunction:: build_serializer_from_content_type
 
-.. autofunction:: AdvancedHTTPServer.build_server_from_argparser
+.. autofunction:: build_server_from_argparser
 
-.. autofunction:: AdvancedHTTPServer.build_server_from_config
+.. autofunction:: build_server_from_config
 
-.. autofunction:: AdvancedHTTPServer.random_string
+.. autofunction:: random_string
 
 Classes
 -------
 
-.. autoclass:: AdvancedHTTPServer.AdvancedHTTPServer
+.. autoclass:: AdvancedHTTPServer
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerRegisterPath
+.. autoclass:: AdvancedHTTPServerRegisterPath
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerRequestHandler
+.. autoclass:: AdvancedHTTPServerRequestHandler
    :members:
 
-.. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerRPCClient
-   :members:
-   :special-members: __init__
-   :undoc-members:
-
-.. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached
-   :members:
-   :undoc-members:
-
-.. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerSerializer
+.. autoclass:: AdvancedHTTPServerRPCClient
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: AdvancedHTTPServer.AdvancedHTTPServerTestCase
+.. autoclass:: AdvancedHTTPServerRPCClientCached
+   :members:
+   :undoc-members:
+
+.. autoclass:: AdvancedHTTPServerSerializer
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: AdvancedHTTPServerTestCase
    :members:
 
 Exceptions
 ----------
 
-.. autoexception:: AdvancedHTTPServer.AdvancedHTTPServerRPCError
+.. autoexception:: AdvancedHTTPServerRPCError
    :members:
    :undoc-members:

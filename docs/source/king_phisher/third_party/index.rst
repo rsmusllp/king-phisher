@@ -1,7 +1,7 @@
 :mod:`third_party` --- Pre-packaged third party modules
 =======================================================
 
-.. module:: thid_party
+.. module:: third_party
    :synopsis: Packaged third party modules
 
 .. toctree::
