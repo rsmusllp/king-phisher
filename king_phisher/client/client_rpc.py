@@ -38,6 +38,7 @@ import os
 import sys
 
 from king_phisher import find
+from king_phisher import geoip
 from king_phisher.third_party import AdvancedHTTPServer
 try:
 	import msgpack # pylint: disable=unused-import
@@ -101,6 +102,18 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		else:
 			result = self.call(table_method, row_id)
 		return result
+
+	def geoip_lookup(self, ip):
+		"""
+		Look up the geographic location information for the specified IP
+		address in the server's geoip database.
+
+		:param ip: The IP address to lookup.
+		:return: The geographic location information for the specified IP address.
+		:rtype: :py:class:`~king_phisher.geoip.GeoLocation`
+		"""
+		result = self.cache_call('geoip/lookup', ip)
+		return geoip.GeoLocation(ip, result=result)
 
 def vte_child_routine(config):
 	"""

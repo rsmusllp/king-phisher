@@ -149,13 +149,10 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			message = "Delete These {0:,} Rows?".format(len(row_ids))
 		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
-		for row_id in row_ids:
-			self.parent.rpc(self.remote_table_name + '/delete', row_id)
-		#_TODO: use /delete/multi once rpc_version is 3
-		#if len(row_ids) == 1:
-		#	self.parent.rpc(self.remote_table_name + '/delete', row_ids[0])
-		#else:
-		#	self.parent.rpc(self.remote_table_name + '/delete/multi', row_ids)
+		if len(row_ids) == 1:
+			self.parent.rpc(self.remote_table_name + '/delete', row_ids[0])
+		else:
+			self.parent.rpc(self.remote_table_name + '/delete/multi', row_ids)
 		self.load_campaign_information(force=True)
 
 	def format_row_data(self, row):
@@ -426,21 +423,24 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	view_columns = {
 		1: 'Email',
 		2: 'Visitor IP',
-		3: 'Visitor Details',
-		4: 'Visit Count',
-		5: 'First Visit',
-		6: 'Last Visit'
+		3: 'Visit Count',
+		4: 'Visitor Details',
+		5: 'Visitor Location',
+		6: 'First Visit',
+		7: 'Last Visit'
 	}
 	def format_row_data(self, visit):
 		msg_id = visit['message_id']
 		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache=True)
 		if not msg_details:
 			return None
+		geo_location = self.parent.rpc.geoip_lookup(visit['visitor_ip'])
 		row = (
 			msg_details['target_email'],
 			visit['visitor_ip'],
-			visit['visitor_details'],
 			visit['visit_count'],
+			visit['visitor_details'],
+			str(geo_location),
 			visit['first_visit'],
 			visit['last_visit']
 		)
