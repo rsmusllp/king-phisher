@@ -536,8 +536,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not self.campaign_id:
 			return
 		self.logger.info("handling a page visit for campaign id: {0} from IP address: {1}".format(self.campaign_id, self.client_address[0]))
-		message_id = self.message_id
-		campaign_id = self.campaign_id
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
@@ -546,6 +544,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			message.opened = db_models.current_timestamp()
 
 		set_new_visit = True
+		visit_id = make_uid()
 		if self.visit_id:
 			set_new_visit = False
 			visit_id = self.visit_id
@@ -553,55 +552,58 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
 			if query.count():
 				visit = db_manager.get_row_by_id(session, db_models.Visit, visit_id)
-				if visit.message_id == message_id:
+				if visit.message_id == self.message_id:
 					visit.visit_count += 1
 				else:
 					set_new_visit = True
 
 		if set_new_visit:
-			visit_id = make_uid()
 			kp_cookie_name = self.config.get('server.cookie_name')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
 			self.send_header('Set-Cookie', cookie)
-			visit = db_models.Visit(id=visit_id, campaign_id=campaign_id, message_id=message_id)
+			visit = db_models.Visit(id=visit_id, campaign_id=self.campaign_id, message_id=self.message_id)
 			visit.visitor_ip = self.client_address[0]
 			visit.visitor_details = self.headers.get('user-agent', '')
 			session.add(visit)
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in [1, 10, 25]) or ((visit_count % 50) == 0)):
 				alert_text = "{0} vists reached for campaign: {{campaign_name}}".format(visit_count)
-				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
+				self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
 
-		username = None
-		for pname in ['username', 'user', 'u']:
-			username = (self.get_query_parameter(pname) or self.get_query_parameter(pname.title()) or self.get_query_parameter(pname.upper()))
-			if username:
-				break
-		if username:
-			password = None
-			for pname in ['password', 'pass', 'p']:
-				password = (self.get_query_parameter(pname) or self.get_query_parameter(pname.title()) or self.get_query_parameter(pname.upper()))
-				if password:
-					break
-			password = (password or '')
-			cred_count = 0
-			query = session.query(db_models.Credential)
-			query = query.filter_by(message_id=message_id, username=username, password=password)
-			if query.count() == 0:
-				cred = db_models.Credential(campaign_id=campaign_id, message_id=message_id, visit_id=visit_id)
-				cred.username = username
-				cred.password = password
-				session.add(cred)
-				cred_count = len(campaign.credentials)
-			if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
-				alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
-				self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
-
+		self._handle_page_visit_creds(session, visit_id)
 		trained = self.get_query_parameter('trained')
 		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
 			message.trained = True
 		session.commit()
 		session.close()
+
+	def _handle_page_visit_creds(self, session, visit_id):
+		username = None
+		for pname in ['username', 'user', 'u']:
+			username = (self.get_query_parameter(pname) or self.get_query_parameter(pname.title()) or self.get_query_parameter(pname.upper()))
+			if username:
+				break
+		if not username:
+			return
+		password = None
+		for pname in ['password', 'pass', 'p']:
+			password = (self.get_query_parameter(pname) or self.get_query_parameter(pname.title()) or self.get_query_parameter(pname.upper()))
+			if password:
+				break
+		password = (password or '')
+		cred_count = 0
+		query = session.query(db_models.Credential)
+		query = query.filter_by(message_id=self.message_id, username=username, password=password)
+		if query.count() == 0:
+			cred = db_models.Credential(campaign_id=self.campaign_id, message_id=self.message_id, visit_id=visit_id)
+			cred.username = username
+			cred.password = password
+			session.add(cred)
+			campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
+			cred_count = len(campaign.credentials)
+		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
+			alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
+			self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
 
 class KingPhisherServer(AdvancedHTTPServer):
 	"""

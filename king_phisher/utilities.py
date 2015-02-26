@@ -30,10 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
 import datetime
-import distutils.version
-import inspect
 import ipaddress
 import os
 import random
@@ -43,8 +40,6 @@ import string
 import subprocess
 import sys
 import time
-
-import pkg_resources
 
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
 

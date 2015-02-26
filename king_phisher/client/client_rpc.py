@@ -144,7 +144,7 @@ def vte_child_routine(config):
 		try:
 			logged_in = rpc('ping')
 		except AdvancedHTTPServer.AdvancedHTTPServerRPCError:
-			print('Permission denied, please try again.')
+			print('Permission denied, please try again.') # pylint: disable=C0325
 			continue
 		else:
 			break
@@ -152,9 +152,9 @@ def vte_child_routine(config):
 		return
 
 	banner = "Python {0} on {1}".format(sys.version, sys.platform)
-	print(banner)
+	print(banner) # pylint: disable=C0325
 	information = "Campaign Name: '{0}'  ID: {1}".format(config['campaign_name'], config['campaign_id'])
-	print(information)
+	print(information) # pylint: disable=C0325
 	console_vars = {
 		'CAMPAIGN_NAME': config['campaign_name'],
 		'CAMPAIGN_ID': config['campaign_id'],

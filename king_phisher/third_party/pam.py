@@ -130,4 +130,4 @@ def authenticate(username, password, service=b'login'):
 
 if __name__ == "__main__":
 	import getpass
-	print(authenticate(getpass.getuser(), getpass.getpass()))
+	print(authenticate(getpass.getuser(), getpass.getpass())) # pylint: disable=C0325

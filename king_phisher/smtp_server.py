@@ -34,8 +34,6 @@ import asyncore
 import smtpd
 import logging
 
-import dns.resolver
-
 class KingPhisherSMTPServer(smtpd.PureProxy, object):
 	"""
 	An SMTP server useful for debugging. Messages handled by this server
