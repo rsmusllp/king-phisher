@@ -215,13 +215,14 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 			for graph_name in graphs.get_graphs():
 				action_name = 'ToolsGraph' + graph_name
-				action = Gtk.Action(name=action_name, label=graph_name, tooltip=graph_name, stock_id=None)
+				graph = graphs.get_graph(graph_name)
+				action = Gtk.Action(name=action_name, label=graph.name_human, tooltip=graph.name_human, stock_id=None)
 				action.connect('activate', self.signal_activate_popup_menu_create_graph, graph_name)
 				action_group.add_action(action)
 
 			merge_id = uimanager.new_merge_id()
 			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsGraphMenu', 'ToolsGraphMenu', Gtk.UIManagerItemType.MENU, False)
-			for graph_name in graphs.get_graphs():
+			for graph_name in sorted(graphs.get_graphs(), key=lambda gn: graphs.get_graph(gn).name_human):
 				action_name = 'ToolsGraph' + graph_name
 				uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu/ToolsGraphMenu', action_name, action_name, Gtk.UIManagerItemType.MENUITEM, False)
 

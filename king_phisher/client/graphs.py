@@ -59,22 +59,28 @@ else:
 
 EXPORTED_GRAPHS = {}
 
-def export(klass):
-	"""
-	Decorator for classes to mark them as valid graph providers.
+__all__ = ['export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph']
 
-	:param class klass: The class to mark as a graph provider.
-	:return: The *klass* parameter is returned.
+def export_graph_provider(cls):
 	"""
-	graph_name = klass.__name__[13:]
-	klass._graph_id = len(EXPORTED_GRAPHS) # pylint: disable=protected-access
-	klass.name = graph_name
-	EXPORTED_GRAPHS[graph_name] = klass
-	return klass
+	Decorator to mark classes as valid graph providers. This decorator also sets
+	the :py:attr:`~.CampaignGraph.name` attribute.
+
+	:param class cls: The class to mark as a graph provider.
+	:return: The *cls* parameter is returned.
+	"""
+	if not issubclass(cls, CampaignGraph):
+		raise RuntimeError("{0} is not a subclass of CampaignGraph".format(cls.__name__))
+	graph_name = cls.__name__[13:]
+	cls.name = graph_name
+	EXPORTED_GRAPHS[graph_name] = cls
+	return cls
 
 def get_graph(graph_name):
 	"""
-	Return the graph providing class for *graph_name*.
+	Return the graph providing class for *graph_name*. The class providing the
+	specified graph must have been previously exported using
+	:py:func:`.export_graph_provider`.
 
 	:param str graph_name: The name of the graph provider.
 	:return: The graph provider class.
@@ -97,9 +103,12 @@ class CampaignGraph(object):
 	representations of campaign data. This class is meant to be subclassed
 	by real providers.
 	"""
-	title = 'Unknown'
-	"""The title of the graph."""
-	_graph_id = None
+	name = 'Unknown'
+	"""The name of the graph provider."""
+	name_human = 'Unknown'
+	"""The human readable name of the graph provider used for UI identification."""
+	graph_title = 'Unknown'
+	"""The title that will be given to the graph."""
 	table_subscriptions = []
 	"""A list of tables from which information is needed to produce the graph."""
 	def __init__(self, config, parent, size_request=None):
@@ -138,15 +147,8 @@ class CampaignGraph(object):
 		self.popup_menu.show_all()
 		self.navigation_toolbar.hide()
 
-	@classmethod
-	def get_graph_id(cls):
-		"""
-		The graph id of an exported :py:class:`.CampaignGraph`.
-
-		:return: The id of the graph.
-		:rtype: int
-		"""
-		return cls._graph_id
+	def _load_graph(self, info_cache):
+		raise NotImplementedError()
 
 	def make_window(self):
 		"""
@@ -159,7 +161,7 @@ class CampaignGraph(object):
 			self.manager = FigureManager(self.canvas, 0)
 		window = self.manager.window
 		window.set_transient_for(self.parent)
-		window.set_title(self.title)
+		window.set_title(self.graph_title)
 		return window
 
 	def mpl_signal_canvas_button_pressed(self, event):
@@ -210,14 +212,16 @@ class CampaignGraph(object):
 		for ax in self.axes:
 			ax.clear()
 		self._load_graph(info_cache)
+		self.axes[0].set_title(self.graph_title)
 		self.canvas.draw()
 		return info_cache
 
-@export
+@export_graph_provider
 class CampaignGraphOverview(CampaignGraph):
 	"""Display a graph which represents an overview of the campaign."""
-	title = 'Overview'
-	table_subscriptions = ['credentials', 'visits']
+	graph_title = 'Campaign Overview'
+	name_human = 'Campaign Overview'
+	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
 		rpc = self.parent.rpc
 		cid = self.config['campaign_id']
@@ -236,7 +240,6 @@ class CampaignGraphOverview(CampaignGraph):
 		ax = self.axes[0]
 		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Grand Total')
-		ax.set_title('Campaign Overview')
 		ax.set_yticks((1,))
 		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
 		ax.set_xticklabels(('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)], rotation=30)
@@ -244,13 +247,14 @@ class CampaignGraphOverview(CampaignGraph):
 			height = col.get_height()
 			ax.text(col.get_x() + col.get_width() / 2.0, height, str(height), ha='center', va='bottom')
 		self.figure.subplots_adjust(bottom=0.25)
-		return info_cache
+		return
 
-@export
+@export_graph_provider
 class CampaignGraphVisitorInfo(CampaignGraph):
 	"""Display a graph which represents information regarding a campaign's visitors."""
-	title = 'Visitor Information'
-	table_subscriptions = ['visits']
+	graph_title = 'Campaign Visitor OS Information'
+	name_human = 'Visitor OS Information'
+	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']
 
@@ -273,7 +277,6 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		ax = self.axes[0]
 		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Total Visits')
-		ax.set_title('Visitor OS Information')
 		ax.set_yticks((1,))
 		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
 		ax.set_xticklabels(os_names, rotation=30)
@@ -281,20 +284,20 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 			height = col.get_height()
 			ax.text(col.get_x() + col.get_width() / 2.0, height, str(height), ha='center', va='bottom')
 		self.figure.subplots_adjust(bottom=0.25)
-		return info_cache
+		return
 
-@export
+@export_graph_provider
 class CampaignGraphVisitsTimeline(CampaignGraph):
 	"""Display a graph which represents the visits of a campaign over time."""
-	title = 'Visits Timeline'
-	table_subscriptions = ['visits']
+	graph_title = 'Campaign Visits Timeline'
+	name_human = 'Visits Timeline'
+	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']
 		first_visits = [visit['first_visit'] for visit in visits]
 
 		ax = self.axes[0]
 		ax.set_ylabel('Number of Visits')
-		ax.set_title('Visits Over Time')
 		if not len(first_visits):
 			ax.set_yticks((0,))
 			ax.set_xticks((0,))
@@ -310,4 +313,46 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 			ax.xaxis.set_minor_locator(dates.DayLocator())
 			if first_visit_span < datetime.timedelta(3) and len(first_visits) > 1:
 				ax.xaxis.set_minor_locator(dates.HourLocator())
-		return info_cache
+		return
+
+@export_graph_provider
+class CampaignGraphMessageResults(CampaignGraph):
+	"""Display the percentage of messages which resulted in a visit."""
+	graph_title = 'Campaign Message Results'
+	name_human = 'Message Results'
+	table_subscriptions = ('credentials', 'visits')
+	def _load_graph(self, info_cache):
+		rpc = self.parent.rpc
+		cid = self.config['campaign_id']
+
+		messages_count = rpc('campaign/messages/count', cid)
+		if not messages_count:
+			ax = self.axes[0]
+			ax.pie((100,), labels=('No Messages Sent',), colors=('skyblue',), autopct='%1.0f%%', shadow=True, startangle=90)
+			ax.axis('equal')
+			return
+		visits_count = len(utilities.unique(info_cache['visits'], key=lambda visit: visit['message_id']))
+		credentials_count = len(utilities.unique(info_cache['credentials'], key=lambda cred: cred['message_id']))
+
+		assert credentials_count <= visits_count <= messages_count
+		labels = ['Without Visit', 'With Visit', 'With Credentials']
+		sizes = []
+		sizes.append((float(messages_count - visits_count) / float(messages_count)) * 100)
+		sizes.append((float(visits_count - credentials_count) / float(messages_count)) * 100)
+		sizes.append((float(credentials_count) / float(messages_count)) * 100)
+		colors = ['yellowgreen', 'gold', 'lightcoral']
+		explode = [0.1, 0, 0]
+		if not credentials_count:
+			labels.pop()
+			sizes.pop()
+			colors.pop()
+			explode.pop()
+		if not visits_count:
+			labels.pop()
+			sizes.pop()
+			colors.pop()
+			explode.pop()
+		ax = self.axes[0]
+		ax.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
+		ax.axis('equal')
+		return

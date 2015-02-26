@@ -12,7 +12,7 @@ Data
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.graphs.export
+.. autofunction:: king_phisher.client.graphs.export_graph_provider
 
 .. autofunction:: king_phisher.client.graphs.get_graph
 
@@ -25,6 +25,12 @@ Classes
    :show-inheritance:
    :members:
    :special-members: __init__
+
+.. autoclass:: king_phisher.client.graphs.CampaignGraphMessageResults
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
 
 .. autoclass:: king_phisher.client.graphs.CampaignGraphOverview
    :show-inheritance:
