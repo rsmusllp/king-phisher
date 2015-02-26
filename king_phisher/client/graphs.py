@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import datetime
 import sys
 
@@ -57,6 +58,14 @@ else:
 	else:
 		has_matplotlib = True
 
+try:
+	import mpl_toolkits.basemap
+except ImportError:
+	has_matplotlib_basemap = False
+	"""Whether the :py:mod:`mpl_toolkits.basemap` module is available."""
+else:
+	has_matplotlib_basemap = True
+
 EXPORTED_GRAPHS = {}
 
 __all__ = ['export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph']
@@ -71,6 +80,8 @@ def export_graph_provider(cls):
 	"""
 	if not issubclass(cls, CampaignGraph):
 		raise RuntimeError("{0} is not a subclass of CampaignGraph".format(cls.__name__))
+	if not cls.is_available:
+		return None
 	graph_name = cls.__name__[13:]
 	cls.name = graph_name
 	EXPORTED_GRAPHS[graph_name] = cls
@@ -111,6 +122,7 @@ class CampaignGraph(object):
 	"""The title that will be given to the graph."""
 	table_subscriptions = []
 	"""A list of tables from which information is needed to produce the graph."""
+	is_available = True
 	def __init__(self, config, parent, size_request=None):
 		"""
 		:param dict config: The King Phisher client configuration.
@@ -143,6 +155,7 @@ class CampaignGraph(object):
 
 		menu_item = Gtk.CheckMenuItem.new_with_label('Show Toolbar')
 		menu_item.connect('toggled', self.signal_toggled_popup_menu_show_toolbar)
+		self._menu_item_show_toolbar = menu_item
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
 		self.navigation_toolbar.hide()
@@ -159,6 +172,9 @@ class CampaignGraph(object):
 		"""
 		if self.manager == None:
 			self.manager = FigureManager(self.canvas, 0)
+		self.navigation_toolbar.destroy()
+		self.navigation_toolbar = self.manager.toolbar
+		self._menu_item_show_toolbar.set_active(True)
 		window = self.manager.window
 		window.set_transient_for(self.parent)
 		window.set_title(self.graph_title)
@@ -356,3 +372,32 @@ class CampaignGraphMessageResults(CampaignGraph):
 		ax.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
 		ax.axis('equal')
 		return
+
+@export_graph_provider
+class CampaignGraphVisitsMap(CampaignGraph):
+	"""Display a graph which represents the visits of a campaign over time."""
+	graph_title = 'Campaign Visits Map'
+	name_human = 'Visits Map'
+	table_subscriptions = ['visits']
+	is_available = has_matplotlib_basemap
+	def _load_graph(self, info_cache):
+		visits = info_cache['visits']
+
+		ax = self.axes[0]
+		bm = mpl_toolkits.basemap.Basemap(projection='kav7', lon_0=0, resolution='c', ax=ax)
+
+		bm.drawcoastlines()
+		bm.drawcountries()
+		bm.fillcontinents(color='gray', lake_color='aqua')
+		bm.drawparallels((-60, -30, 0, 30, 60), labels=(1, 1, 0, 0))
+		bm.drawmeridians((0, 90, 180, 270), labels=(0, 0, 0, 1))
+		bm.drawmapboundary(fill_color='aqua')
+
+		ctr = collections.Counter()
+		ctr.update([visit['visitor_ip'] for visit in visits])
+
+		for visitor_ip, occurances in ctr.items():
+			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
+			xpt, ypt = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
+			bm.plot(xpt, ypt, 'o', markerfacecolor='gold', markersize=float(min(15, occurances)))
+		return info_cache

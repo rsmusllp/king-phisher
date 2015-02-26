@@ -9,6 +9,8 @@ Data
 
 .. autodata:: king_phisher.client.graphs.has_matplotlib
 
+.. autodata:: king_phisher.client.graphs.has_matplotlib_basemap
+
 Functions
 ---------
 

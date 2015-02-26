@@ -476,7 +476,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		graph_inst = cls(self.config, self)
 		graph_inst.load_graph()
 		window = graph_inst.make_window()
-		window.show_all()
+		window.show()
 
 	def show_campaign_selection(self):
 		"""

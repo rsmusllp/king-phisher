@@ -65,7 +65,7 @@ if sys.version_info.major == 2:
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
+	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='WARNING', help='set the logging level')
 	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in forground (do not fork)')
 	parser.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
 	parser.add_argument('--update-geoip-db', dest='update_geoip_db', action='store_true', default=False, help='update the geoip database and exit')
