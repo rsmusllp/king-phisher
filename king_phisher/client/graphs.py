@@ -179,11 +179,57 @@ class CampaignGraph(object):
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
 
-	def _null_graph_pie(self, title):
+	def _graph_bar_set_yparams(self, top_lim):
+		min_value = top_lim + (top_lim * 0.075)
+		if min_value <= 25:
+			scale = 5
+		else:
+			scale = scale = 10 ** (len(str(int(min_value))) - 1)
+		inc_scale = scale
+		while scale <= min_value:
+			scale += inc_scale
+		top_lim = scale
+
+		ax = self.axes[0]
+		yticks = set((round(top_lim * 0.5), top_lim))
+		ax.set_yticks(tuple(yticks))
+		ax.set_ylim(top=top_lim)
+		return
+
+	def _graph_null_pie(self, title):
 		ax = self.axes[0]
 		ax.pie((100,), labels=(title,), colors=(MPL_COLOR_NULL,), autopct='%1.0f%%', shadow=True, startangle=90)
 		ax.axis('equal')
 		return
+
+	def graph_bar(self, bars, color=None, xticklabels=None, ylabel=None):
+		"""
+		Create a standard bar graph with better defaults for the standard use
+		cases.
+
+		:param list bars: The values of the bars to graph.
+		:param color: The color of the bars on the graph.
+		:type color: list, str
+		:param list xticklabels: The labels to use on the x-axis.
+		:param str ylabel: The label to give to the y-axis.
+		:return: The bars created using :py:mod:`matplotlib`
+		:rtype: `matplotlib.container.BarContainer`
+		"""
+		color = color or 'darkcyan'
+		width = 0.25
+		ax = self.axes[0]
+		self._graph_bar_set_yparams(max(bars))
+		bars = ax.bar(range(len(bars)), bars, width, color=color)
+		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
+		if xticklabels:
+			ax.set_xticklabels(xticklabels, rotation=30)
+			for col in bars:
+				height = col.get_height()
+				ax.text(col.get_x() + col.get_width() / 2.0, height, "{0:,}".format(height), ha='center', va='bottom')
+		if ylabel:
+			ax.set_ylabel(ylabel)
+		self.figure.subplots_adjust(bottom=0.25)
+		return bars
 
 	def make_window(self):
 		"""
@@ -274,20 +320,8 @@ class CampaignGraphOverview(CampaignGraph):
 		if len(creds):
 			bars.append(len(creds))
 			bars.append(len(utilities.unique(creds, key=lambda cred: cred['message_id'])))
-		top_lim = max(bars)
-		top_lim += 5 - top_lim % 5
-		width = 0.25
-		ax = self.axes[0]
-		bars = ax.bar(range(len(bars)), bars, width)
-		ax.set_ylabel('Grand Total')
-		ax.set_yticks((1, top_lim / 2, top_lim))
-		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
-		ax.set_xticklabels(('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)], rotation=30)
-		ax.set_ylim(top=top_lim)
-		for col in bars:
-			height = col.get_height()
-			ax.text(col.get_x() + col.get_width() / 2.0, height, "{0:,}".format(height), ha='center', va='bottom')
-		self.figure.subplots_adjust(bottom=0.25)
+		xticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)]
+		bars = self.graph_bar(bars, xticklabels=xticklabels, ylabel='Grand Total')
 		return
 
 @export_graph_provider
@@ -310,21 +344,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		bars = []
 		for os_name in os_names:
 			bars.append(operating_systems[os_name])
-		colors = [_mpl_os_colors.get(osn, MPL_COLOR_NULL) for osn in os_names]
-		width = 0.25
-		ax = self.axes[0]
-		bars = ax.bar(range(len(bars)), bars, width, color=colors)
-		top_lim = max(os for os in operating_systems.values())
-		top_lim += 5 - top_lim % 5
-		ax.set_ylabel('Total Visits')
-		ax.set_yticks((1, top_lim / 2, top_lim))
-		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
-		ax.set_xticklabels(os_names, rotation=30)
-		ax.set_ylim(top=top_lim)
-		for col in bars:
-			height = col.get_height()
-			ax.text(col.get_x() + col.get_width() / 2.0, height, str(height), ha='center', va='bottom')
-		self.figure.subplots_adjust(bottom=0.25)
+		self.graph_bar(bars, color=[_mpl_os_colors.get(osn, MPL_COLOR_NULL) for osn in os_names], xticklabels=os_names, ylabel='Total Visits')
 		return
 
 @export_graph_provider
@@ -336,11 +356,13 @@ class CampaignGraphVisitorInfoPie(CampaignGraph):
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']
 		if not len(visits):
-			self._null_graph_pie('No Visitor Information')
+			self._graph_null_pie('No Visitor Information')
 			return
 
 		operating_systems = collections.Counter()
-		operating_systems.update([ua_parser.parse_user_agent(visit['visitor_details']).os_name or 'Unknown OS' for visit in visits])
+		for visit in visits:
+			ua = ua_parser.parse_user_agent(visit['visitor_details'])
+			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 		(os_names, count) = zip(*operating_systems.items())
 		colors = [_mpl_os_colors.get(osn, MPL_COLOR_NULL) for osn in os_names]
 
@@ -391,7 +413,7 @@ class CampaignGraphMessageResults(CampaignGraph):
 
 		messages_count = rpc('campaign/messages/count', cid)
 		if not messages_count:
-			self._null_graph_pie('No Messages Sent')
+			self._graph_null_pie('No Messages Sent')
 			return
 		visits_count = len(utilities.unique(info_cache['visits'], key=lambda visit: visit['message_id']))
 		credentials_count = len(utilities.unique(info_cache['credentials'], key=lambda cred: cred['message_id']))
@@ -478,7 +500,7 @@ class CampaignGraphPasswordComplexityPie(CampaignGraph):
 	def _load_graph(self, info_cache):
 		passwords = set(cindianred['password'] for cindianred in info_cache['credentials'])
 		if not len(passwords):
-			self._null_graph_pie('No Credential Information')
+			self._graph_null_pie('No Credential Information')
 			return
 		ctr = collections.Counter()
 		ctr.update(self._check_complexity(password) for password in passwords)
