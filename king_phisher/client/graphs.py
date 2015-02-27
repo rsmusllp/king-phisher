@@ -239,7 +239,7 @@ class CampaignGraph(object):
 		for ax in self.axes:
 			ax.clear()
 		self._load_graph(info_cache)
-		self.axes[0].set_title(self.graph_title)
+		self.axes[0].set_title(self.graph_title, y=1.03)
 		self.canvas.draw()
 		return info_cache
 
@@ -263,13 +263,16 @@ class CampaignGraphOverview(CampaignGraph):
 		if len(creds):
 			bars.append(len(creds))
 			bars.append(len(utilities.unique(creds, key=lambda cred: cred['message_id'])))
+		top_lim = max(bars)
+		top_lim += 5 - top_lim % 5
 		width = 0.25
 		ax = self.axes[0]
 		bars = ax.bar(range(len(bars)), bars, width)
 		ax.set_ylabel('Grand Total')
-		ax.set_yticks((1,))
+		ax.set_yticks((1, top_lim / 2, top_lim))
 		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
 		ax.set_xticklabels(('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)], rotation=30)
+		ax.set_ylim(top=top_lim)
 		for col in bars:
 			height = col.get_height()
 			ax.text(col.get_x() + col.get_width() / 2.0, height, str(height), ha='center', va='bottom')
@@ -298,10 +301,13 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		width = 0.25
 		ax = self.axes[0]
 		bars = ax.bar(range(len(bars)), bars, width, color=colors)
+		top_lim = max(os for os in operating_systems.values())
+		top_lim += 5 - top_lim % 5
 		ax.set_ylabel('Total Visits')
-		ax.set_yticks((1,))
+		ax.set_yticks((1, top_lim / 2, top_lim))
 		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
 		ax.set_xticklabels(os_names, rotation=30)
+		ax.set_ylim(top=top_lim)
 		for col in bars:
 			height = col.get_height()
 			ax.text(col.get_x() + col.get_width() / 2.0, height, str(height), ha='center', va='bottom')
@@ -323,7 +329,7 @@ class CampaignGraphVisitorInfoPie(CampaignGraph):
 		colors = [_mpl_os_colors.get(osn, 'skyblue') for osn in os_names]
 
 		ax = self.axes[0]
-		ax.pie(count, labels=os_names, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
+		ax.pie(count, labels=os_names, labeldistance=1.05, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
 		ax.axis('equal')
 		return
 
@@ -342,7 +348,7 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 		if not len(first_visits):
 			ax.set_yticks((0,))
 			ax.set_xticks((0,))
-			return info_cache
+			return
 
 		ax.xaxis.set_major_locator(dates.AutoDateLocator())
 		ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
@@ -354,6 +360,7 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 			ax.xaxis.set_minor_locator(dates.DayLocator())
 			if first_visit_span < datetime.timedelta(3) and len(first_visits) > 1:
 				ax.xaxis.set_minor_locator(dates.HourLocator())
+		ax.grid(True)
 		return
 
 @export_graph_provider
@@ -394,7 +401,7 @@ class CampaignGraphMessageResults(CampaignGraph):
 			colors.pop()
 			explode.pop()
 		ax = self.axes[0]
-		ax.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
+		ax.pie(sizes, explode=explode, labels=labels, labeldistance=1.05, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
 		ax.axis('equal')
 		return
 
