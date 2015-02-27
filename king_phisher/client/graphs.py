@@ -433,13 +433,23 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		bm.drawmeridians((0, 90, 180, 270), labels=(0, 0, 0, 1))
 		bm.drawmapboundary(fill_color='aqua')
 
+		if not visits:
+			return
+
 		ctr = collections.Counter()
 		ctr.update([visit['visitor_ip'] for visit in visits])
 
+		bbox = ax.get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())
+		base_markersize = max(bbox.width, bbox.width) * self.figure.dpi * 0.015
+
+		o_high = float(max(ctr.values()))
+		o_low = float(min(ctr.values()))
 		for visitor_ip, occurances in ctr.items():
 			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
 			xpt, ypt = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
-			bm.plot(xpt, ypt, 'o', markerfacecolor='gold', markersize=float(min(15, occurances)))
+			markersize = 1.0 + (float(occurances) - o_low) / (o_high - o_low)
+			markersize = markersize * base_markersize
+			bm.plot(xpt, ypt, 'o', markerfacecolor='gold', markersize=markersize)
 		return info_cache
 
 @export_graph_provider
