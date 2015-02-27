@@ -46,6 +46,18 @@ Classes
    :special-members: __init__
    :undoc-members:
 
+.. autoclass:: king_phisher.client.graphs.CampaignGraphVisitorInfoPie
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: king_phisher.client.graphs.CampaignGraphVisitsMap
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
 .. autoclass:: king_phisher.client.graphs.CampaignGraphVisitsTimeline
    :show-inheritance:
    :members:

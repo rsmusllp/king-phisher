@@ -64,11 +64,22 @@ except ImportError:
 	has_matplotlib_basemap = False
 	"""Whether the :py:mod:`mpl_toolkits.basemap` module is available."""
 else:
-	has_matplotlib_basemap = True
+	if not getattr(sys, 'frozen', False) and check_requirements(['basemap>=1.0.7']):
+		has_matplotlib_basemap = False
+	else:
+		has_matplotlib_basemap = True
 
 EXPORTED_GRAPHS = {}
 
 __all__ = ['export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph']
+_mpl_os_colors = {
+	'Android': 'olive',
+	'BlackBerry': 'gray',
+	'iOS': 'violet',
+	'Linux': 'palegreen',
+	'OS X': 'darkviolet',
+	'Windows NT': 'gold'
+}
 
 def export_graph_provider(cls):
 	"""
@@ -236,7 +247,7 @@ class CampaignGraph(object):
 class CampaignGraphOverview(CampaignGraph):
 	"""Display a graph which represents an overview of the campaign."""
 	graph_title = 'Campaign Overview'
-	name_human = 'Campaign Overview'
+	name_human = 'Bar - Campaign Overview'
 	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
 		rpc = self.parent.rpc
@@ -267,21 +278,15 @@ class CampaignGraphOverview(CampaignGraph):
 
 @export_graph_provider
 class CampaignGraphVisitorInfo(CampaignGraph):
-	"""Display a graph which represents information regarding a campaign's visitors."""
+	"""Display a graph which shows the different operating systems seen from visitors."""
 	graph_title = 'Campaign Visitor OS Information'
-	name_human = 'Visitor OS Information'
+	name_human = 'Bar - Visitor OS Information'
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']
 
-		operating_systems = {}
-		unknown_os = 'Unknown OS'
-		for visit in visits:
-			user_agent = ua_parser.parse_user_agent(visit['visitor_details'])
-			if user_agent:
-				operating_systems[user_agent.os_name] = operating_systems.get(user_agent.os_name, 0) + 1
-			else:
-				operating_systems[unknown_os] = operating_systems.get(unknown_os, 0) + 1
+		operating_systems = collections.Counter()
+		operating_systems.update([ua_parser.parse_user_agent(visit['visitor_details']).os_name or 'Unknown OS' for visit in visits])
 		os_names = list(operating_systems.keys())
 		os_names.sort(key=lambda name: operating_systems[name])
 		os_names.reverse()
@@ -289,9 +294,10 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		bars = []
 		for os_name in os_names:
 			bars.append(operating_systems[os_name])
+		colors = [_mpl_os_colors.get(osn, 'skyblue') for osn in os_names]
 		width = 0.25
 		ax = self.axes[0]
-		bars = ax.bar(range(len(bars)), bars, width)
+		bars = ax.bar(range(len(bars)), bars, width, color=colors)
 		ax.set_ylabel('Total Visits')
 		ax.set_yticks((1,))
 		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
@@ -303,10 +309,29 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		return
 
 @export_graph_provider
+class CampaignGraphVisitorInfoPie(CampaignGraph):
+	"""Display a graph which compares the different operating systems seen from visitors."""
+	graph_title = 'Campaign Visitor OS Information'
+	name_human = 'Pie - Visitor OS Information'
+	table_subscriptions = ('visits',)
+	def _load_graph(self, info_cache):
+		visits = info_cache['visits']
+
+		operating_systems = collections.Counter()
+		operating_systems.update([ua_parser.parse_user_agent(visit['visitor_details']).os_name or 'Unknown OS' for visit in visits])
+		(os_names, count) = zip(*operating_systems.items())
+		colors = [_mpl_os_colors.get(osn, 'skyblue') for osn in os_names]
+
+		ax = self.axes[0]
+		ax.pie(count, labels=os_names, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
+		ax.axis('equal')
+		return
+
+@export_graph_provider
 class CampaignGraphVisitsTimeline(CampaignGraph):
 	"""Display a graph which represents the visits of a campaign over time."""
 	graph_title = 'Campaign Visits Timeline'
-	name_human = 'Visits Timeline'
+	name_human = 'Line - Visits Timeline'
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']
@@ -335,7 +360,7 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 class CampaignGraphMessageResults(CampaignGraph):
 	"""Display the percentage of messages which resulted in a visit."""
 	graph_title = 'Campaign Message Results'
-	name_human = 'Message Results'
+	name_human = 'Pie - Message Results'
 	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
 		rpc = self.parent.rpc
@@ -344,7 +369,7 @@ class CampaignGraphMessageResults(CampaignGraph):
 		messages_count = rpc('campaign/messages/count', cid)
 		if not messages_count:
 			ax = self.axes[0]
-			ax.pie((100,), labels=('No Messages Sent',), colors=('skyblue',), autopct='%1.0f%%', shadow=True, startangle=90)
+			ax.pie((100,), labels=('No Messages Sent',), colors=('skyblue',), autopct='%1.0f%%', shadow=True)
 			ax.axis('equal')
 			return
 		visits_count = len(utilities.unique(info_cache['visits'], key=lambda visit: visit['message_id']))
@@ -369,19 +394,19 @@ class CampaignGraphMessageResults(CampaignGraph):
 			colors.pop()
 			explode.pop()
 		ax = self.axes[0]
-		ax.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
+		ax.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
 		ax.axis('equal')
 		return
 
 @export_graph_provider
 class CampaignGraphVisitsMap(CampaignGraph):
-	"""Display a graph which represents the visits of a campaign over time."""
-	graph_title = 'Campaign Visits Map'
-	name_human = 'Visits Map'
+	"""Display a map which shows the locations of visit origins."""
+	graph_title = 'Campaign Visit Locations Map'
+	name_human = 'Map - Visit Locations'
 	table_subscriptions = ['visits']
 	is_available = has_matplotlib_basemap
 	def _load_graph(self, info_cache):
-		visits = info_cache['visits']
+		visits = utilities.unique(info_cache['visits'], key=lambda visit: visit['message_id'])
 
 		ax = self.axes[0]
 		bm = mpl_toolkits.basemap.Basemap(projection='kav7', lon_0=0, resolution='c', ax=ax)
