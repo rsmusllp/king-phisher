@@ -1,5 +1,9 @@
 # King Phisher Change Log
 
+## Version 0.2.0
+1. Added additional graphs including maps when basemap is available
+1. Added geolocation support
+
 ## Version 0.1.7
 1. Added make_csrf_page function
 1. Added server support for SSL

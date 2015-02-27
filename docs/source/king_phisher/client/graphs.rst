@@ -40,6 +40,12 @@ Classes
    :special-members: __init__
    :undoc-members:
 
+.. autoclass:: king_phisher.client.graphs.CampaignGraphPasswordComplexityPie
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
 .. autoclass:: king_phisher.client.graphs.CampaignGraphVisitorInfo
    :show-inheritance:
    :members:

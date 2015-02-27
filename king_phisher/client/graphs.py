@@ -32,6 +32,7 @@
 
 import collections
 import datetime
+import string
 import sys
 
 from king_phisher import ua_parser
@@ -173,6 +174,12 @@ class CampaignGraph(object):
 
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
+
+	def _null_graph_pie(self, title):
+		ax = self.axes[0]
+		ax.pie((100,), labels=(title,), colors=('skyblue',), autopct='%1.0f%%', shadow=True, startangle=90)
+		ax.axis('equal')
+		return
 
 	def make_window(self):
 		"""
@@ -322,6 +329,9 @@ class CampaignGraphVisitorInfoPie(CampaignGraph):
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']
+		if not len(visits):
+			self._null_graph_pie('No Visitor Information')
+			return
 
 		operating_systems = collections.Counter()
 		operating_systems.update([ua_parser.parse_user_agent(visit['visitor_details']).os_name or 'Unknown OS' for visit in visits])
@@ -375,9 +385,7 @@ class CampaignGraphMessageResults(CampaignGraph):
 
 		messages_count = rpc('campaign/messages/count', cid)
 		if not messages_count:
-			ax = self.axes[0]
-			ax.pie((100,), labels=('No Messages Sent',), colors=('skyblue',), autopct='%1.0f%%', shadow=True)
-			ax.axis('equal')
+			self._null_graph_pie('No Messages Sent')
 			return
 		visits_count = len(utilities.unique(info_cache['visits'], key=lambda visit: visit['message_id']))
 		credentials_count = len(utilities.unique(info_cache['credentials'], key=lambda cred: cred['message_id']))
@@ -433,3 +441,33 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			xpt, ypt = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
 			bm.plot(xpt, ypt, 'o', markerfacecolor='gold', markersize=float(min(15, occurances)))
 		return info_cache
+
+@export_graph_provider
+class CampaignGraphPasswordComplexityPie(CampaignGraph):
+	"""Display a graph which displays the number of passwords which meet standard complexity requirements."""
+	graph_title = 'Campaign Password Complexity'
+	name_human = 'Pie - Password Complexity'
+	table_subscriptions = ('credentials',)
+	def _load_graph(self, info_cache):
+		passwords = set(cred['password'] for cred in info_cache['credentials'])
+		if not len(passwords):
+			self._null_graph_pie('No Credential Information')
+			return
+		ctr = collections.Counter()
+		ctr.update(self._check_complexity(password) for password in passwords)
+
+		ax = self.axes[0]
+		ax.pie((ctr[True], ctr[False]), labels=('Complex', 'Not Complex'), labeldistance=1.05, colors=('yellowgreen', 'lightcoral'), autopct='%1.1f%%', shadow=True, startangle=45)
+		ax.axis('equal')
+		return
+
+	def _check_complexity(self, password):
+		if len(password) < 8:
+			return False
+		met = 0
+		for char_set in (string.ascii_uppercase, string.ascii_lowercase, string.digits, string.punctuation):
+			for char in password:
+				if char in char_set:
+					met += 1
+					break
+		return met >= 3
