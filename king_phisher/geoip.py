@@ -59,6 +59,11 @@ _geoip_db = None
 _geoip_db_lock = threading.RLock()
 logger = logging.getLogger('KingPhisher.geoip')
 
+def _normalize_encoding(word):
+	if sys.version_info[0] == 2 and isinstance(word, unicode):
+		word = word.encode('ascii', 'ignore')
+	return word
+
 def download_geolite2_city_db(dest):
 	"""
 	Download the GeoLite2 database, decompress it, and save it to disk.
@@ -93,7 +98,7 @@ def init_database(database_file):
 	if not os.path.isfile(database_file):
 		logger.warning('the specified geoip database does not exist, downloading a new copy')
 		download_geolite2_city_db(database_file)
-		os.chmod(database_file, 0644)
+		os.chmod(database_file, 0o644)
 	_geoip_db = geoip2.database.Reader(database_file)
 	metadata = _geoip_db.metadata()
 	if not metadata.database_type == 'GeoLite2-City':
@@ -163,6 +168,7 @@ class GeoLocation(object):
 		return "<{0} ip={1} >".format(self.__class__.__name__, self.ip_address)
 
 	def __str__(self):
+		country = _normalize_encoding(self.country)
 		if self.city:
-			return "{0}, {1}".format(self.city, self.country)
-		return self.country
+			return "{0}, {1}".format(_normalize_encoding(self.city), country)
+		return (country or '')

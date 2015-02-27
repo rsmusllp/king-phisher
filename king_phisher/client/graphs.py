@@ -72,6 +72,10 @@ else:
 
 EXPORTED_GRAPHS = {}
 
+MPL_COLOR_LAND = 'gray'
+MPL_COLOR_NULL = 'skyblue'
+MPL_COLOR_WATER = 'paleturquoise'
+
 __all__ = ['export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph']
 _mpl_os_colors = {
 	'Android': 'olive',
@@ -177,7 +181,7 @@ class CampaignGraph(object):
 
 	def _null_graph_pie(self, title):
 		ax = self.axes[0]
-		ax.pie((100,), labels=(title,), colors=('skyblue',), autopct='%1.0f%%', shadow=True, startangle=90)
+		ax.pie((100,), labels=(title,), colors=(MPL_COLOR_NULL,), autopct='%1.0f%%', shadow=True, startangle=90)
 		ax.axis('equal')
 		return
 
@@ -282,7 +286,7 @@ class CampaignGraphOverview(CampaignGraph):
 		ax.set_ylim(top=top_lim)
 		for col in bars:
 			height = col.get_height()
-			ax.text(col.get_x() + col.get_width() / 2.0, height, str(height), ha='center', va='bottom')
+			ax.text(col.get_x() + col.get_width() / 2.0, height, "{0:,}".format(height), ha='center', va='bottom')
 		self.figure.subplots_adjust(bottom=0.25)
 		return
 
@@ -296,7 +300,9 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		visits = info_cache['visits']
 
 		operating_systems = collections.Counter()
-		operating_systems.update([ua_parser.parse_user_agent(visit['visitor_details']).os_name or 'Unknown OS' for visit in visits])
+		for visit in visits:
+			ua = ua_parser.parse_user_agent(visit['visitor_details'])
+			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 		os_names = list(operating_systems.keys())
 		os_names.sort(key=lambda name: operating_systems[name])
 		os_names.reverse()
@@ -304,7 +310,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		bars = []
 		for os_name in os_names:
 			bars.append(operating_systems[os_name])
-		colors = [_mpl_os_colors.get(osn, 'skyblue') for osn in os_names]
+		colors = [_mpl_os_colors.get(osn, MPL_COLOR_NULL) for osn in os_names]
 		width = 0.25
 		ax = self.axes[0]
 		bars = ax.bar(range(len(bars)), bars, width, color=colors)
@@ -336,7 +342,7 @@ class CampaignGraphVisitorInfoPie(CampaignGraph):
 		operating_systems = collections.Counter()
 		operating_systems.update([ua_parser.parse_user_agent(visit['visitor_details']).os_name or 'Unknown OS' for visit in visits])
 		(os_names, count) = zip(*operating_systems.items())
-		colors = [_mpl_os_colors.get(osn, 'skyblue') for osn in os_names]
+		colors = [_mpl_os_colors.get(osn, MPL_COLOR_NULL) for osn in os_names]
 
 		ax = self.axes[0]
 		ax.pie(count, labels=os_names, labeldistance=1.05, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
@@ -396,7 +402,7 @@ class CampaignGraphMessageResults(CampaignGraph):
 		sizes.append((float(messages_count - visits_count) / float(messages_count)) * 100)
 		sizes.append((float(visits_count - credentials_count) / float(messages_count)) * 100)
 		sizes.append((float(credentials_count) / float(messages_count)) * 100)
-		colors = ['yellowgreen', 'gold', 'lightcoral']
+		colors = ['yellowgreen', 'gold', 'indianred']
 		explode = [0.1, 0, 0]
 		if not credentials_count:
 			labels.pop()
@@ -416,22 +422,24 @@ class CampaignGraphMessageResults(CampaignGraph):
 @export_graph_provider
 class CampaignGraphVisitsMap(CampaignGraph):
 	"""Display a map which shows the locations of visit origins."""
-	graph_title = 'Campaign Visit Locations Map'
+	graph_title = 'Campaign Visit Locations'
 	name_human = 'Map - Visit Locations'
-	table_subscriptions = ['visits']
+	table_subscriptions = ('credentials', 'visits')
 	is_available = has_matplotlib_basemap
 	def _load_graph(self, info_cache):
 		visits = utilities.unique(info_cache['visits'], key=lambda visit: visit['message_id'])
+		cred_ips = set(cred['message_id'] for cred in info_cache['credentials'])
+		cred_ips = set([visit['visitor_ip'] for visit in visits if visit['message_id'] in cred_ips])
 
 		ax = self.axes[0]
 		bm = mpl_toolkits.basemap.Basemap(projection='kav7', lon_0=0, resolution='c', ax=ax)
 
 		bm.drawcoastlines()
 		bm.drawcountries()
-		bm.fillcontinents(color='gray', lake_color='aqua')
+		bm.fillcontinents(color=MPL_COLOR_LAND, lake_color=MPL_COLOR_WATER)
 		bm.drawparallels((-60, -30, 0, 30, 60), labels=(1, 1, 0, 0))
 		bm.drawmeridians((0, 90, 180, 270), labels=(0, 0, 0, 1))
-		bm.drawmapboundary(fill_color='aqua')
+		bm.drawmapboundary(fill_color=MPL_COLOR_WATER)
 
 		if not visits:
 			return
@@ -440,16 +448,25 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		ctr.update([visit['visitor_ip'] for visit in visits])
 
 		bbox = ax.get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())
-		base_markersize = max(bbox.width, bbox.width) * self.figure.dpi * 0.015
+		base_markersize = max(bbox.width, bbox.width) * self.figure.dpi * 0.01
+		base_markersize = max(base_markersize, 3.05)
+		base_markersize = min(base_markersize, 9)
 
 		o_high = float(max(ctr.values()))
 		o_low = float(min(ctr.values()))
 		for visitor_ip, occurances in ctr.items():
 			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
 			xpt, ypt = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
-			markersize = 1.0 + (float(occurances) - o_low) / (o_high - o_low)
+			if o_high == o_low:
+				markersize = 2.0
+			else:
+				markersize = 1.0 + (float(occurances) - o_low) / (o_high - o_low)
 			markersize = markersize * base_markersize
-			bm.plot(xpt, ypt, 'o', markerfacecolor='gold', markersize=markersize)
+			if visitor_ip in cred_ips:
+				mk_color = 'indianred'
+			else:
+				mk_color = 'gold'
+			bm.plot(xpt, ypt, 'o', markerfacecolor=mk_color, markersize=markersize)
 		return info_cache
 
 @export_graph_provider
@@ -459,7 +476,7 @@ class CampaignGraphPasswordComplexityPie(CampaignGraph):
 	name_human = 'Pie - Password Complexity'
 	table_subscriptions = ('credentials',)
 	def _load_graph(self, info_cache):
-		passwords = set(cred['password'] for cred in info_cache['credentials'])
+		passwords = set(cindianred['password'] for cindianred in info_cache['credentials'])
 		if not len(passwords):
 			self._null_graph_pie('No Credential Information')
 			return
@@ -467,7 +484,7 @@ class CampaignGraphPasswordComplexityPie(CampaignGraph):
 		ctr.update(self._check_complexity(password) for password in passwords)
 
 		ax = self.axes[0]
-		ax.pie((ctr[True], ctr[False]), labels=('Complex', 'Not Complex'), labeldistance=1.05, colors=('yellowgreen', 'lightcoral'), autopct='%1.1f%%', shadow=True, startangle=45)
+		ax.pie((ctr[True], ctr[False]), explode=(0.1, 0), labels=('Complex', 'Not Complex'), labeldistance=1.05, colors=('yellowgreen', 'indianred'), autopct='%1.1f%%', shadow=True, startangle=45)
 		ax.axis('equal')
 		return
 

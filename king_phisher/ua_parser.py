@@ -34,8 +34,9 @@ import collections
 import re
 
 __all__ = ['UserAgent', 'parse_user_agent']
-__version__ = '0.1'
+__version__ = '0.2'
 
+USER_AGENT_REGEX_ARCH_PPC = re.compile(r'\sPPC\s', flags=re.IGNORECASE)
 USER_AGENT_REGEX_ARCH_X86 = re.compile(r'(x|(i[3456]))86[^-_]', flags=re.IGNORECASE)
 USER_AGENT_REGEX_ARCH_X86_64 = re.compile(r'(amd|wow|x(86[-_])?)?64', flags=re.IGNORECASE)
 USER_AGENT_REGEX_OS = re.compile(r'(android|blackberry|(ipad|iphone)?; cpu (ipad |iphone )?os|linux|mac os x|windows nt) (([\d\._\-]+)(;|\)| ))?', flags=re.IGNORECASE)
@@ -43,15 +44,14 @@ USER_AGENT_REGEX_VERSION = re.compile(r'Version/(([\d\._\-]+)(;|\)| ))')
 
 UserAgent = collections.namedtuple('UserAgent', ['os_name', 'os_version', 'os_arch'])
 """
-A parsed representation of the information available from a browsers user
-agent string. Only the :py:attr:`.os_name` attribute is guaranteed to not
-be None.
+A parsed representation of the information available from a browsers user agent
+string. Only the :py:attr:`.os_name` attribute is guaranteed to not be None.
 """
 
 def parse_user_agent(user_agent):
 	"""
-	Parse a user agent string and return normalized information regarding
-	the operating system.
+	Parse a user agent string and return normalized information regarding the
+	operating system.
 
 	:param str user_agent: The user agent to parse.
 	:return: A parsed user agent, None is returned if the data can not be processed.
@@ -65,7 +65,7 @@ def parse_user_agent(user_agent):
 			return None
 	os_arch = None
 	os_version = None
-	# OS Name
+	# os name
 	os_name = os_parts.group(1).lower()
 	if 'android' in os_name:
 		os_name = 'Android'
@@ -84,13 +84,15 @@ def parse_user_agent(user_agent):
 		os_name = 'Windows NT'
 	else:
 		return None
-	# OS Version
+	# os version
 	os_version = (os_version or os_parts.group(5))
 	if os_version:
 		os_version = re.sub(r'[_-]', r'.', os_version)
-	# OS Arch
+	# os arch
 	os_arch = None
-	if USER_AGENT_REGEX_ARCH_X86_64.search(user_agent):
+	if USER_AGENT_REGEX_ARCH_PPC.search(user_agent):
+		os_arch = 'PPC'
+	elif USER_AGENT_REGEX_ARCH_X86_64.search(user_agent):
 		os_arch = 'x86-64'
 	elif USER_AGENT_REGEX_ARCH_X86.search(user_agent):
 		os_arch = 'x86'

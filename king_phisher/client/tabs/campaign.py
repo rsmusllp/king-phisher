@@ -288,7 +288,7 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	view_columns = {
 		1: 'Destination',
 		2: 'Visit Count',
-		3: 'External IP',
+		3: 'IP Address',
 		4: 'Username',
 		5: 'Hostname',
 		6: 'Local IP Addresses',
@@ -317,7 +317,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	remote_table_name = 'credentials'
 	label_text = 'Credentials'
 	view_columns = {
-		1: 'Email',
+		1: 'Email Address',
 		2: 'Username',
 		3: 'Password',
 		4: 'Submitted'
@@ -421,10 +421,10 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	remote_table_name = 'visits'
 	label_text = 'Visits'
 	view_columns = {
-		1: 'Email',
-		2: 'Visitor IP',
+		1: 'Email Address',
+		2: 'IP Address',
 		3: 'Visit Count',
-		4: 'Visitor Details',
+		4: 'Visitor User Agent',
 		5: 'Visitor Location',
 		6: 'First Visit',
 		7: 'Last Visit'
@@ -451,7 +451,7 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	remote_table_name = 'messages'
 	label_text = 'Messages'
 	view_columns = {
-		1: 'Email',
+		1: 'Email Address',
 		2: 'Sent',
 		3: 'Opened',
 		4: 'Trained'
