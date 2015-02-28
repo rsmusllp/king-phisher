@@ -31,6 +31,7 @@
 #
 
 import code
+import collections
 import getpass
 import json
 import logging
@@ -46,6 +47,30 @@ try:
 	"""Whether the :py:mod:`msgpack` module is available or not."""
 except ImportError:
 	has_msgpack = False
+
+AlertSubscription = collections.namedtuple('AlertSubscription', ('id', 'user_id', 'campaign_id'))
+Campaign = collections.namedtuple('Campaign', ('id', 'name', 'user_id', 'created', 'reject_after_credentials'))
+Credential = collections.namedtuple('Credential', ('id', 'visit_id', 'message_id', 'campaign_id', 'username', 'password', 'submitted'))
+DeaddropConnection = collections.namedtuple('DeaddropConnection', ('id', 'deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit'))
+DeaddropDeployment = collections.namedtuple('DeaddropDeployment', ('id', 'campaign_id', 'destination'))
+LandingPage = collections.namedtuple('LandingPage', ('id', 'campaign_id', 'hostname', 'page'))
+Message = collections.namedtuple('Message', ('id', 'campaign_id', 'target_email', 'company_name', 'first_name', 'last_name', 'opened', 'sent', 'trained'))
+MetaData = collections.namedtuple('MetaData', ('id', 'value_type', 'value'))
+User = collections.namedtuple('User', ('id', 'phone_carrier', 'phone_number'))
+Visit = collections.namedtuple('Visit', ('id', 'message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit'))
+
+_table_row_classes = {
+	'alert_subscriptions': AlertSubscription,
+	'campaigns': Campaign,
+	'credentials': Credential,
+	'deaddrop_connections': DeaddropConnection,
+	'deaddrop_deployments': DeaddropDeployment,
+	'landing_pages': LandingPage,
+	'messages': Message,
+	'meta_data': MetaData,
+	'users': User,
+	'visits': Visit
+}
 
 class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached):
 	"""
@@ -70,15 +95,17 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		:return: A generator which yields rows in dictionaries.
 		"""
 		table_method = table + '/view'
+		table = table.rsplit('/', 1)[-1]
 		page = 0
 		args = list(args)
 		args.append(page)
 		results = self.call(table_method, *args)
 		results_length = len(results or '')
+		row_cls = _table_row_classes[table]
 		while results:
 			columns = results['columns']
 			for row in results['rows']:
-				yield dict(zip(columns, row))
+				yield row_cls(*row)
 			if len(results) < results_length:
 				break
 			args[-1] += 1
@@ -96,12 +123,13 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		"""
 		table_method = table + '/get'
 		if cache and refresh:
-			result = self.cache_call_refresh(table_method, row_id)
+			row = self.cache_call_refresh(table_method, row_id)
 		elif cache and not refresh:
-			result = self.cache_call(table_method, row_id)
+			row = self.cache_call(table_method, row_id)
 		else:
-			result = self.call(table_method, row_id)
-		return result
+			row = self.call(table_method, row_id)
+		row_cls = _table_row_classes[table]
+		return row_cls(**row)
 
 	def geoip_lookup(self, ip):
 		"""

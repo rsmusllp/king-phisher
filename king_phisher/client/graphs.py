@@ -292,7 +292,7 @@ class CampaignGraph(object):
 			if stop_event and stop_event.is_set():
 				return info_cache
 			if not table in info_cache:
-				info_cache[table] = list(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
+				info_cache[table] = tuple(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
 		for ax in self.axes:
 			ax.clear()
 		self._load_graph(info_cache)
@@ -308,18 +308,16 @@ class CampaignGraphOverview(CampaignGraph):
 	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
 		rpc = self.parent.rpc
-		cid = self.config['campaign_id']
-
 		visits = info_cache['visits']
 		creds = info_cache['credentials']
 
 		bars = []
-		bars.append(rpc('campaign/messages/count', cid))
+		bars.append(rpc('campaign/messages/count', self.config['campaign_id']))
 		bars.append(len(visits))
-		bars.append(len(utilities.unique(visits, key=lambda visit: visit['message_id'])))
+		bars.append(len(utilities.unique(visits, key=lambda visit: visit.message_id)))
 		if len(creds):
 			bars.append(len(creds))
-			bars.append(len(utilities.unique(creds, key=lambda cred: cred['message_id'])))
+			bars.append(len(utilities.unique(creds, key=lambda cred: cred.message_id)))
 		xticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)]
 		bars = self.graph_bar(bars, xticklabels=xticklabels, ylabel='Grand Total')
 		return
@@ -335,7 +333,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 
 		operating_systems = collections.Counter()
 		for visit in visits:
-			ua = ua_parser.parse_user_agent(visit['visitor_details'])
+			ua = ua_parser.parse_user_agent(visit.visitor_details)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 		os_names = list(operating_systems.keys())
 		os_names.sort(key=lambda name: operating_systems[name])
@@ -361,7 +359,7 @@ class CampaignGraphVisitorInfoPie(CampaignGraph):
 
 		operating_systems = collections.Counter()
 		for visit in visits:
-			ua = ua_parser.parse_user_agent(visit['visitor_details'])
+			ua = ua_parser.parse_user_agent(visit.visitor_details)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 		(os_names, count) = zip(*operating_systems.items())
 		colors = [_mpl_os_colors.get(osn, MPL_COLOR_NULL) for osn in os_names]
@@ -379,7 +377,7 @@ class CampaignGraphVisitsTimeline(CampaignGraph):
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']
-		first_visits = [visit['first_visit'] for visit in visits]
+		first_visits = [visit.first_visit for visit in visits]
 
 		ax = self.axes[0]
 		ax.set_ylabel('Number of Visits')
@@ -409,14 +407,12 @@ class CampaignGraphMessageResults(CampaignGraph):
 	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
 		rpc = self.parent.rpc
-		cid = self.config['campaign_id']
-
-		messages_count = rpc('campaign/messages/count', cid)
+		messages_count = rpc('campaign/messages/count', self.config['campaign_id'])
 		if not messages_count:
 			self._graph_null_pie('No Messages Sent')
 			return
-		visits_count = len(utilities.unique(info_cache['visits'], key=lambda visit: visit['message_id']))
-		credentials_count = len(utilities.unique(info_cache['credentials'], key=lambda cred: cred['message_id']))
+		visits_count = len(utilities.unique(info_cache['visits'], key=lambda visit: visit.message_id))
+		credentials_count = len(utilities.unique(info_cache['credentials'], key=lambda cred: cred.message_id))
 
 		assert credentials_count <= visits_count <= messages_count
 		labels = ['Without Visit', 'With Visit', 'With Credentials']
@@ -449,9 +445,9 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	table_subscriptions = ('credentials', 'visits')
 	is_available = has_matplotlib_basemap
 	def _load_graph(self, info_cache):
-		visits = utilities.unique(info_cache['visits'], key=lambda visit: visit['message_id'])
-		cred_ips = set(cred['message_id'] for cred in info_cache['credentials'])
-		cred_ips = set([visit['visitor_ip'] for visit in visits if visit['message_id'] in cred_ips])
+		visits = utilities.unique(info_cache['visits'], key=lambda visit: visit.message_id)
+		cred_ips = set(cred.message_id for cred in info_cache['credentials'])
+		cred_ips = set([visit.visitor_ip for visit in visits if visit.message_id in cred_ips])
 
 		ax = self.axes[0]
 		bm = mpl_toolkits.basemap.Basemap(projection='kav7', lon_0=0, resolution='c', ax=ax)
@@ -467,7 +463,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			return
 
 		ctr = collections.Counter()
-		ctr.update([visit['visitor_ip'] for visit in visits])
+		ctr.update([visit.visitor_ip for visit in visits])
 
 		bbox = ax.get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())
 		base_markersize = max(bbox.width, bbox.width) * self.figure.dpi * 0.01
@@ -498,7 +494,7 @@ class CampaignGraphPasswordComplexityPie(CampaignGraph):
 	name_human = 'Pie - Password Complexity'
 	table_subscriptions = ('credentials',)
 	def _load_graph(self, info_cache):
-		passwords = set(cindianred['password'] for cindianred in info_cache['credentials'])
+		passwords = set(cred.password for cred in info_cache['credentials'])
 		if not len(passwords):
 			self._graph_null_pie('No Credential Information')
 			return

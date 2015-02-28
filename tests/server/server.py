@@ -146,19 +146,19 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		creds_count = self.rpc('campaign/credentials/count', self.campaign_id)
 		self.assertEqual(creds_count, 1)
 		cred = next(self.rpc.remote_table('campaign/credentials', self.campaign_id))
-		self.assertEqual(cred['username'], username)
-		self.assertEqual(cred['password'], password)
-		self.assertEqual(cred['message_id'], self.message_id)
-		self.assertEqual(cred['visit_id'], self.visit_id)
+		self.assertEqual(cred.username, username)
+		self.assertEqual(cred.password, password)
+		self.assertEqual(cred.message_id, self.message_id)
+		self.assertEqual(cred.visit_id, self.visit_id)
 
 	def step_5_get_repeat_visit(self):
 		visit = self.rpc.remote_table_row('visits', self.visit_id)
-		visit_count = visit['visit_count']
+		visit_count = visit.visit_count
 		headers = {'Cookie': "{0}={1}".format(self.config.get('server.cookie_name'), self.visit_id)}
 		response = self.http_request('/' + self.landing_page, include_id=False, headers=headers)
 		self.assertHTTPStatus(response, 200)
 		visit = self.rpc.remote_table_row('visits', self.visit_id)
-		self.assertEqual(visit['visit_count'], visit_count + 1)
+		self.assertEqual(visit.visit_count, visit_count + 1)
 
 	def steps(self):
 		steps = filter(lambda f: f.startswith('step_'), dir(self))

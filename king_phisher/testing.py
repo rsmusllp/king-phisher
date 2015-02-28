@@ -42,7 +42,8 @@ from king_phisher import find
 from king_phisher.client import client_rpc
 from king_phisher.server.server import *
 
-from smoke_zephyr import configuration
+import smoke_zephyr.configuration
+import smoke_zephyr.utilities
 
 if sys.version_info[0] < 3:
 	import httplib
@@ -103,18 +104,13 @@ class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
 	def custom_authentication(self, *args, **kwargs):
 		return True
 
-class KingPhisherTestCase(unittest.TestCase):
+class KingPhisherTestCase(smoke_zephyr.utilities.TestCase):
 	"""
 	This class provides additional functionality over the built in
 	:py:class:`unittest.TestCase` object, including better compatibility for
 	methods across Python 2.x and Python 3.x.
 	"""
-	def __init__(self, *args, **kwargs):
-		super(KingPhisherTestCase, self).__init__(*args, **kwargs)
-		if not hasattr(self, 'assertRegex') and hasattr(self, 'assertRegexpMatches'):
-			self.assertRegex = self.assertRegexpMatches
-		if not hasattr(self, 'assertRaisesRegex') and hasattr(self, 'assertRaisesRegexp'):
-			self.assertRaisesRegex = self.assertRaisesRegexp
+	pass
 
 class KingPhisherServerTestCase(unittest.TestCase):
 	"""
@@ -124,7 +120,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 	def setUp(self):
 		find.data_path_append('data/server')
 		web_root = os.path.join(os.getcwd(), 'data', 'server', 'king_phisher')
-		config = configuration.Configuration(find.find_data_file('server_config.yml'))
+		config = smoke_zephyr.configuration.Configuration(find.find_data_file('server_config.yml'))
 		config.set('server.address.port', 0)
 		config.set('server.database', 'sqlite://')
 		if os.environ.get('TRAVIS'):

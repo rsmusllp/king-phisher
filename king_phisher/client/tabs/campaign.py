@@ -224,16 +224,15 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		:type store: :py:class:`Gtk.ListStore`
 		"""
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
-		for row_data in self.parent.rpc.remote_table('campaign/' + self.remote_table_name, self.config['campaign_id']):
+		for row in self.parent.rpc.remote_table('campaign/' + self.remote_table_name, self.config['campaign_id']):
 			if self.is_destroyed.is_set():
 				break
-			row_id = row_data['id']
-			row_data = self.format_row_data(row_data)
+			row_data = self.format_row_data(row)
 			if row_data == None:
 				self.parent.rpc(self.remote_table_name + '/delete', row_id)
 				continue
 			row_data = list(map(self.format_cell_data, row_data))
-			row_data.insert(0, str(row_id))
+			row_data.insert(0, str(row.id))
 			gui_utilities.glib_idle_add_wait(store.append, row_data)
 		if self.is_destroyed.is_set():
 			return
@@ -296,19 +295,18 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 		8: 'Last Hit'
 	}
 	def format_row_data(self, connection):
-		deploy_id = connection['deployment_id']
-		deploy_details = self.parent.rpc.remote_table_row('deaddrop_deployments', deploy_id, cache=True)
+		deploy_details = self.parent.rpc.remote_table_row('deaddrop_deployments', connection.deployment_id, cache=True)
 		if not deploy_details:
 			return None
 		row = (
-			deploy_details['destination'],
-			connection['visit_count'],
-			connection['visitor_ip'],
-			connection['local_username'],
-			connection['local_hostname'],
-			connection['local_ip_addresses'],
-			connection['first_visit'],
-			connection['last_visit']
+			deploy_details.destination,
+			connection.visit_count,
+			connection.visitor_ip,
+			connection.local_username,
+			connection.local_hostname,
+			connection.local_ip_addresses,
+			connection.first_visit,
+			connection.last_visit
 		)
 		return row
 
@@ -327,15 +325,14 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		self.view_column_renderers[3].set_property('visible', False)
 
 	def format_row_data(self, credential):
-		msg_id = credential['message_id']
-		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache=True)
+		msg_details = self.parent.rpc.remote_table_row('messages', credential.message_id, cache=True)
 		if not msg_details:
 			return None
 		row = (
-			msg_details['target_email'],
-			credential['username'],
-			credential['password'],
-			credential['submitted']
+			msg_details.target_email,
+			credential.username,
+			credential.password,
+			credential.submitted
 		)
 		return row
 
@@ -430,19 +427,18 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		7: 'Last Visit'
 	}
 	def format_row_data(self, visit):
-		msg_id = visit['message_id']
-		msg_details = self.parent.rpc.remote_table_row('messages', msg_id, cache=True)
+		msg_details = self.parent.rpc.remote_table_row('messages', visit.message_id, cache=True)
 		if not msg_details:
 			return None
-		geo_location = self.parent.rpc.geoip_lookup(visit['visitor_ip'])
+		geo_location = self.parent.rpc.geoip_lookup(visit.visitor_ip)
 		row = (
-			msg_details['target_email'],
-			visit['visitor_ip'],
-			visit['visit_count'],
-			visit['visitor_details'],
+			msg_details.target_email,
+			visit.visitor_ip,
+			visit.visit_count,
+			visit.visitor_details,
 			str(geo_location),
-			visit['first_visit'],
-			visit['last_visit']
+			visit.first_visit,
+			visit.last_visit
 		)
 		return row
 
@@ -458,10 +454,10 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	}
 	def format_row_data(self, message):
 		row = (
-			message['target_email'],
-			message['sent'],
-			message['opened'],
-			('Yes' if message['trained'] else '')
+			message.target_email,
+			message.sent,
+			message.opened,
+			('Yes' if message.trained else '')
 		)
 		return row
 

@@ -70,8 +70,8 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		campaigns = list(campaigns)
 		self.assertEqual(len(campaigns), 1)
 		campaign = campaigns[0]
-		self.assertEqual(campaign['id'], campaign_id)
-		self.assertEqual(campaign['name'], campaign_name)
+		self.assertEqual(campaign.id, campaign_id)
+		self.assertEqual(campaign.name, campaign_name)
 
 	def test_rpc_config_set(self):
 		config_key = random_string(10)
@@ -89,6 +89,7 @@ class ServerRPCTests(KingPhisherServerTestCase):
 	def test_rpc_remote_table(self):
 		self.test_rpc_campaign_new()
 		campaign = list(self.rpc.remote_table('campaigns'))[0]
+		campaign = campaign._asdict()
 		self.assertTrue(isinstance(campaign, dict))
 		self.assertEqual(sorted(campaign.keys()), sorted(db_models.DATABASE_TABLES['campaigns']))
 
@@ -116,10 +117,11 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		new_campaign_name = random_string(10)
 		campaign_id = self.rpc('campaign/new', campaign_name)
 		campaign = self.rpc.remote_table_row('campaigns', campaign_id)
-		self.assertEqual(campaign['name'], campaign_name)
+		self.assertEqual(campaign.id, campaign_id)
+		self.assertEqual(campaign.name, campaign_name)
 		self.rpc('campaigns/set', campaign_id, 'name', new_campaign_name)
 		campaign = self.rpc.remote_table_row('campaigns', campaign_id)
-		self.assertEqual(campaign['name'], new_campaign_name)
+		self.assertEqual(campaign.name, new_campaign_name)
 
 	def test_rpc_version(self):
 		response = self.rpc('version')

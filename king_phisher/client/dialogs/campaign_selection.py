@@ -83,10 +83,9 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 		else:
 			store.clear()
 		for campaign in self.parent.rpc.remote_table('campaigns'):
-			created_ts = campaign['created']
-			created_ts = utilities.datetime_utc_to_local(created_ts)
+			created_ts = utilities.datetime_utc_to_local(campaign.created)
 			created_ts = utilities.format_datetime(created_ts)
-			store.append([str(campaign['id']), campaign['name'], campaign['user_id'], created_ts])
+			store.append([str(campaign.id), campaign.name, campaign.user_id, created_ts])
 
 	def signal_button_clicked(self, button):
 		campaign_name_entry = self.gobjects['entry_new_campaign_name']

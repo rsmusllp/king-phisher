@@ -330,7 +330,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 				self.emit('exit')
 				return True
 			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True, refresh=True)
-		self.config['campaign_name'] = campaign_info['name']
+		self.config['campaign_name'] = campaign_info.name
 		self.emit('campaign-set', self.config['campaign_id'])
 		return
 

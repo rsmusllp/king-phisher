@@ -143,6 +143,7 @@ class GeoLocation(object):
 	"""
 	The geographic location information for a given IP address.
 	"""
+	__slots__ = ('city', 'continent', 'coordinates', 'country', 'ip_address', 'postal_code', 'time_zone')
 	def __init__(self, ip, lang='en', result=None):
 		"""
 		:param str ip: The IP address to look up geographic location data for.
@@ -162,7 +163,6 @@ class GeoLocation(object):
 				continue
 			setattr(self, field, result[field])
 		self.coordinates = Coordinates(latitude=result['coordinates'][0], longitude=result['coordinates'][1])
-		self.raw = result
 
 	def __repr__(self):
 		return "<{0} ip={1} >".format(self.__class__.__name__, self.ip_address)

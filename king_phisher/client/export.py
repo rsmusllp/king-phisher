@@ -135,7 +135,7 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 
 	campaign = ET.SubElement(root, 'campaign')
 	campaign_info = rpc.remote_table_row('campaigns', campaign_id)
-	for key, value in campaign_info.items():
+	for key, value in campaign_info._asdict().items():
 		ET.SubElement(campaign, key).text = convert_value('campaigns', key, value)
 
 	# Tables with a campaign_id field
@@ -143,7 +143,7 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 		table_element = ET.SubElement(campaign, table_name)
 		for table_row in rpc.remote_table('campaign/' + table_name, campaign_id):
 			table_row_element = ET.SubElement(table_element, table_name[:-1])
-			for key, value in table_row.items():
+			for key, value in table_row._asdict().items():
 				ET.SubElement(table_row_element, key).text = convert_value(table_name, key, value)
 
 	element_tree = ET.ElementTree(root)
