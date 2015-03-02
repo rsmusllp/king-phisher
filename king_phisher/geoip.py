@@ -171,4 +171,4 @@ class GeoLocation(object):
 		country = _normalize_encoding(self.country)
 		if self.city:
 			return "{0}, {1}".format(_normalize_encoding(self.city), country)
-		return (country or '')
+		return country or ''

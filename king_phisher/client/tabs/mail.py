@@ -348,6 +348,20 @@ class MailSenderPreviewTab(object):
 		scrolled_window.show()
 		self.box.pack_start(scrolled_window, True, True, 0)
 
+	def show_tab(self):
+		"""Configure the webview to preview the the message HTML file."""
+		html_file = self.config.get('mailer.html_file')
+		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
+			return
+		with open(html_file, 'rb') as file_h:
+			html_data = file_h.read()
+		html_data = str(html_data.decode('utf-8', 'ignore'))
+		html_data = mailer.format_message(html_data, self.config)
+		html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
+		if not html_file_uri.startswith('file://'):
+			html_file_uri = 'file://' + html_file_uri
+		self.webview.load_html_string(html_data, html_file_uri)
+
 class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	"""
 	This is the tab which adds basic text edition for changing an email
@@ -460,6 +474,20 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		target_path = utilities.escape_single_quote(target_path)
 		text = "{{{{ inline_image('{0}') }}}}".format(target_path)
 		return self.signal_activate_popup_menu_insert(widget, text)
+
+	def show_tab(self):
+		"""Load the message HTML file from disk and configure the tab for editing."""
+		html_file = self.config.get('mailer.html_file')
+		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
+			self.button_save_html_file.set_sensitive(False)
+			self.textview.set_property('editable', False)
+			return
+		self.button_save_html_file.set_sensitive(True)
+		self.textview.set_property('editable', True)
+		with open(html_file, 'rb') as file_h:
+			html_data = file_h.read()
+		html_data = str(html_data.decode('utf-8', 'ignore'))
+		self.textbuffer.set_text(html_data)
 
 class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 	"""
@@ -615,30 +643,10 @@ class MailSenderTab(object):
 
 		if config_tab and current_page == config_tab.box:
 			config_tab.objects_load_from_config()
-		if edit_tab and current_page == edit_tab.box:
-			html_file = self.config.get('mailer.html_file')
-			if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
-				edit_tab.button_save_html_file.set_sensitive(False)
-				edit_tab.textview.set_property('editable', False)
-				return
-			edit_tab.button_save_html_file.set_sensitive(True)
-			edit_tab.textview.set_property('editable', True)
-			with open(html_file, 'rb') as file_h:
-				html_data = file_h.read()
-			html_data = str(html_data.decode('utf-8', 'ignore'))
-			edit_tab.textbuffer.set_text(html_data)
+		elif edit_tab and current_page == edit_tab.box:
+			edit_tab.show_tab()
 		elif preview_tab and current_page == preview_tab.box:
-			html_file = self.config.get('mailer.html_file')
-			if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
-				return
-			with open(html_file, 'rb') as file_h:
-				html_data = file_h.read()
-			html_data = str(html_data.decode('utf-8', 'ignore'))
-			html_data = mailer.format_message(html_data, self.config)
-			html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
-			if not html_file_uri.startswith('file://'):
-				html_file_uri = 'file://' + html_file_uri
-			preview_tab.webview.load_html_string(html_data, html_file_uri)
+			preview_tab.show_tab()
 
 	def export_message_data(self):
 		"""

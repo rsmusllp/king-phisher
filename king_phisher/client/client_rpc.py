@@ -103,7 +103,6 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		results_length = len(results or '')
 		row_cls = _table_row_classes[table]
 		while results:
-			columns = results['columns']
 			for row in results['rows']:
 				yield row_cls(*row)
 			if len(results) < results_length:

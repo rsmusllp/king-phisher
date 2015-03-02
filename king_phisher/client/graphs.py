@@ -451,7 +451,6 @@ class CampaignGraphVisitsMap(CampaignGraph):
 
 		ax = self.axes[0]
 		bm = mpl_toolkits.basemap.Basemap(projection='kav7', lon_0=0, resolution='c', ax=ax)
-
 		bm.drawcoastlines()
 		bm.drawcountries()
 		bm.fillcontinents(color=MPL_COLOR_LAND, lake_color=MPL_COLOR_WATER)
@@ -469,23 +468,22 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		base_markersize = max(bbox.width, bbox.width) * self.figure.dpi * 0.01
 		base_markersize = max(base_markersize, 3.05)
 		base_markersize = min(base_markersize, 9)
+		self._plot_visitor_map_points(bm, ctr, base_markersize, cred_ips)
+		return
 
+	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
 		o_high = float(max(ctr.values()))
 		o_low = float(min(ctr.values()))
 		for visitor_ip, occurances in ctr.items():
 			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
-			xpt, ypt = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
+			pts = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
 			if o_high == o_low:
 				markersize = 2.0
 			else:
 				markersize = 1.0 + (float(occurances) - o_low) / (o_high - o_low)
 			markersize = markersize * base_markersize
-			if visitor_ip in cred_ips:
-				mk_color = 'indianred'
-			else:
-				mk_color = 'gold'
-			bm.plot(xpt, ypt, 'o', markerfacecolor=mk_color, markersize=markersize)
-		return info_cache
+			bm.plot(pts[0], pts[1], 'o', markerfacecolor=('indianred' if visitor_ip in cred_ips else 'gold'), markersize=markersize)
+		return
 
 @export_graph_provider
 class CampaignGraphPasswordComplexityPie(CampaignGraph):
