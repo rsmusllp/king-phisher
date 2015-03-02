@@ -46,6 +46,7 @@ try:
 	import matplotlib
 	matplotlib.rcParams['backend'] = 'GTK3Cairo'
 	from matplotlib import dates
+	from matplotlib import patches
 	from matplotlib import pyplot
 	from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo as FigureCanvas
 	from matplotlib.backends.backend_gtk3cairo import FigureManagerGTK3Cairo as FigureManager
@@ -202,6 +203,22 @@ class CampaignGraph(object):
 		ax.axis('equal')
 		return
 
+	def add_legend_patch(self, legend_rows, fontsize=None):
+		handles = []
+		if not fontsize:
+			scale = self.markersize_scale
+			if scale < 5:
+				fontsize = 'xx-small'
+			elif scale < 7:
+				fontsize = 'x-small'
+			elif scale < 9:
+				fontsize = 'small'
+			else:
+				fontsize = 'medium'
+		for row in legend_rows:
+			handles.append(patches.Patch(color=row[0], label=row[1]))
+		self.axes[0].legend(handles=handles, fontsize=fontsize, loc='lower right')
+
 	def graph_bar(self, bars, color=None, xticklabels=None, ylabel=None):
 		"""
 		Create a standard bar graph with better defaults for the standard use
@@ -247,6 +264,11 @@ class CampaignGraph(object):
 		window.set_transient_for(self.parent)
 		window.set_title(self.graph_title)
 		return window
+
+	@property
+	def markersize_scale(self):
+		bbox = self.axes[0].get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())
+		return max(bbox.width, bbox.width) * self.figure.dpi * 0.01
 
 	def mpl_signal_canvas_button_pressed(self, event):
 		if event.button != 3:
@@ -444,6 +466,8 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	name_human = 'Map - Visit Locations'
 	table_subscriptions = ('credentials', 'visits')
 	is_available = has_matplotlib_basemap
+	mpl_color_with_creds = 'indianred'
+	mpl_color_without_creds = 'gold'
 	def _load_graph(self, info_cache):
 		visits = utilities.unique(info_cache['visits'], key=lambda visit: visit.message_id)
 		cred_ips = set(cred.message_id for cred in info_cache['credentials'])
@@ -464,11 +488,12 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		ctr = collections.Counter()
 		ctr.update([visit.visitor_ip for visit in visits])
 
-		bbox = ax.get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())
-		base_markersize = max(bbox.width, bbox.width) * self.figure.dpi * 0.01
+		base_markersize = self.markersize_scale
 		base_markersize = max(base_markersize, 3.05)
 		base_markersize = min(base_markersize, 9)
 		self._plot_visitor_map_points(bm, ctr, base_markersize, cred_ips)
+
+		self.add_legend_patch(((self.mpl_color_with_creds, 'With Credentials'), (self.mpl_color_without_creds, 'Without Credentials')))
 		return
 
 	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
@@ -482,7 +507,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			else:
 				markersize = 1.0 + (float(occurances) - o_low) / (o_high - o_low)
 			markersize = markersize * base_markersize
-			bm.plot(pts[0], pts[1], 'o', markerfacecolor=('indianred' if visitor_ip in cred_ips else 'gold'), markersize=markersize)
+			bm.plot(pts[0], pts[1], 'o', markerfacecolor=(self.mpl_color_with_creds if visitor_ip in cred_ips else self.mpl_color_without_creds), markersize=markersize)
 		return
 
 @export_graph_provider
