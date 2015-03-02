@@ -38,6 +38,7 @@ import sys
 from king_phisher import ua_parser
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
+from king_phisher.constants import OSFamily
 
 from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
@@ -74,18 +75,20 @@ else:
 EXPORTED_GRAPHS = {}
 
 MPL_COLOR_LAND = 'gray'
-MPL_COLOR_NULL = 'skyblue'
+MPL_COLOR_NULL = 'darkcyan'
 MPL_COLOR_WATER = 'paleturquoise'
+MPL_OS_COLORS = collections.defaultdict(lambda: MPL_COLOR_NULL)
+"""Matplotlib colors for the different operating systems defined in the :py:class:`~king_phisher.constants.OSFamily` class."""
+MPL_OS_COLORS.update({
+	OSFamily.ANDROID: 'olive',
+	OSFamily.BLACKBERRY: 'gray',
+	OSFamily.IOS: 'violet',
+	OSFamily.LINUX: 'palegreen',
+	OSFamily.OSX: 'darkviolet',
+	OSFamily.WINDOWS: 'gold'
+})
 
 __all__ = ['export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph']
-_mpl_os_colors = {
-	'Android': 'olive',
-	'BlackBerry': 'gray',
-	'iOS': 'violet',
-	'Linux': 'palegreen',
-	'OS X': 'darkviolet',
-	'Windows NT': 'gold'
-}
 
 def export_graph_provider(cls):
 	"""
@@ -232,7 +235,7 @@ class CampaignGraph(object):
 		:return: The bars created using :py:mod:`matplotlib`
 		:rtype: `matplotlib.container.BarContainer`
 		"""
-		color = color or 'darkcyan'
+		color = color or MPL_COLOR_NULL
 		width = 0.25
 		ax = self.axes[0]
 		self._graph_bar_set_yparams(max(bars))
@@ -364,7 +367,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		bars = []
 		for os_name in os_names:
 			bars.append(operating_systems[os_name])
-		self.graph_bar(bars, color=[_mpl_os_colors.get(osn, MPL_COLOR_NULL) for osn in os_names], xticklabels=os_names, ylabel='Total Visits')
+		self.graph_bar(bars, color=[MPL_OS_COLORS[osn] for osn in os_names], xticklabels=os_names, ylabel='Total Visits')
 		return
 
 @export_graph_provider
@@ -384,7 +387,7 @@ class CampaignGraphVisitorInfoPie(CampaignGraph):
 			ua = ua_parser.parse_user_agent(visit.visitor_details)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 		(os_names, count) = zip(*operating_systems.items())
-		colors = [_mpl_os_colors.get(osn, MPL_COLOR_NULL) for osn in os_names]
+		colors = [MPL_OS_COLORS[osn] for osn in os_names]
 
 		ax = self.axes[0]
 		ax.pie(count, labels=os_names, labeldistance=1.05, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)

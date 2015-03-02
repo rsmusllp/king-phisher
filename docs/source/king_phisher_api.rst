@@ -11,6 +11,7 @@ The King Phisher Package
 
    king_phisher/third_party/index.rst
 
+   king_phisher/constants.rst
    king_phisher/errors.rst
    king_phisher/find.rst
    king_phisher/geoip.rst

@@ -33,6 +33,9 @@
 import collections
 import re
 
+from king_phisher.constants import OSArch
+from king_phisher.constants import OSFamily
+
 __all__ = ['UserAgent', 'parse_user_agent']
 __version__ = '0.2'
 
@@ -68,20 +71,20 @@ def parse_user_agent(user_agent):
 	# os name
 	os_name = os_parts.group(1).lower()
 	if 'android' in os_name:
-		os_name = 'Android'
+		os_name = OSFamily.ANDROID
 	elif 'blackberry' in os_name:
-		os_name = 'BlackBerry'
+		os_name = OSFamily.BLACKBERRY
 		version_tag = USER_AGENT_REGEX_VERSION.search(user_agent)
 		if version_tag:
 			os_version = version_tag.group(2)
 	elif 'ipad' in os_name or 'iphone' in os_name:
-		os_name = 'iOS'
+		os_name = OSFamily.IOS
 	elif 'linux' in os_name:
-		os_name = 'Linux'
+		os_name = OSFamily.LINUX
 	elif 'os x' in os_name:
-		os_name = 'OS X'
+		os_name = OSFamily.OSX
 	elif 'windows nt' in os_name:
-		os_name = 'Windows NT'
+		os_name = OSFamily.WINDOWS
 	else:
 		return None
 	# os version
@@ -91,9 +94,9 @@ def parse_user_agent(user_agent):
 	# os arch
 	os_arch = None
 	if USER_AGENT_REGEX_ARCH_PPC.search(user_agent):
-		os_arch = 'PPC'
+		os_arch = OSArch.PPC
 	elif USER_AGENT_REGEX_ARCH_X86_64.search(user_agent):
-		os_arch = 'x86-64'
+		os_arch = OSArch.X86_64
 	elif USER_AGENT_REGEX_ARCH_X86.search(user_agent):
-		os_arch = 'x86'
+		os_arch = OSArch.X86
 	return UserAgent(os_name, os_version, os_arch)
