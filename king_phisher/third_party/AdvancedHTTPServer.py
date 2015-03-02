@@ -29,11 +29,12 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+#  pylint: disable=too-many-lines
 
 #  Homepage: https://github.com/zeroSteiner/AdvancedHTTPServer
 #  Author:   Spencer McIntyre (zeroSteiner)
 
-# Config File Example
+# Config file example
 FILE_CONFIG = """
 [server]
 ip = 0.0.0.0
@@ -45,11 +46,11 @@ list_directories = True
 """
 
 # The AdvancedHTTPServer systemd service unit file
-# Quick How To:
-# 1. Copy this file to /etc/systemd/system/pyhttpd.service
-# 2. Edit the run parameters appropriately in the ExecStart option
-# 3. Set configuration settings in /etc/pyhttpd.conf
-# 4. Run "systemctl daemon-reload"
+# Quick how to:
+#   1. Copy this file to /etc/systemd/system/pyhttpd.service
+#   2. Edit the run parameters appropriately in the ExecStart option
+#   3. Set configuration settings in /etc/pyhttpd.conf
+#   4. Run "systemctl daemon-reload"
 FILE_SYSTEMD_SERVICE_UNIT = """
 [Unit]
 Description=Python Advanced HTTP Server
@@ -64,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 __all__ = [
 	'AdvancedHTTPServer',
 	'AdvancedHTTPServerRegisterPath',
@@ -127,19 +128,30 @@ else:
 
 GLOBAL_HANDLER_MAP = {}
 
-def _json_default(obj):
-	if isinstance(obj, datetime.datetime):
-		return {'__complex_type__': 'datetime.datetime', 'value': obj.isoformat()}
+def _serialize_ext_dump(obj):
+	if obj.__class__ == datetime.date:
+		return 'datetime.date', obj.isoformat()
+	elif obj.__class__ == datetime.datetime:
+		return 'datetime.datetime', obj.isoformat()
+	elif obj.__class__ == datetime.time:
+		return 'datetime.time', obj.isoformat()
 	raise TypeError('Unknown type: ' + repr(obj))
 
+def _serialize_ext_load(obj_type, obj_value, default):
+	if obj_type == 'datetime.date':
+		return datetime.datetime.strptime(obj_value, '%Y-%m-%d').date()
+	elif obj_type == 'datetime.datetime':
+		return datetime.datetime.strptime(obj_value, '%Y-%m-%dT%H:%M:%S' + ('.%f' if '.' in obj_value else ''))
+	elif obj_type == 'datetime.time':
+		return datetime.datetime.strptime(obj_value, '%H:%M:%S' + ('.%f' if '.' in obj_value else '')).time()
+	return default
+
+def _json_default(obj):
+	obj_type, obj_value = _serialize_ext_dump(obj)
+	return {'__complex_type__': obj_type, 'value': obj_value}
+
 def _json_object_hook(obj):
-	if obj.get('__complex_type__') == 'datetime.datetime':
-		value = obj['value']
-		if '.' in value:
-			return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
-		else:
-			return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S')
-	return obj
+	return _serialize_ext_load(obj.get('__complex_type__'), obj.get('value'), obj)
 
 SERIALIZER_DRIVERS = {}
 """Dictionary of available drivers for serialization."""
@@ -148,27 +160,24 @@ SERIALIZER_DRIVERS['application/json'] = {'loads': lambda d, e: json.loads(d, ob
 try:
 	import msgpack
 except ImportError:
-	pass
+	has_msgpack = False
 else:
+	has_msgpack = True
+	_MSGPACK_EXT_TYPES = {10: 'datetime.datetime', 11: 'datetime.date', 12: 'datetime.time'}
 	def _msgpack_default(obj):
-		if isinstance(obj, datetime.datetime):
-			obj = obj.isoformat()
-			if sys.version_info[0] == 3:
-				obj = obj.encode('utf-8')
-			return msgpack.ExtType(10, obj)
-		raise TypeError('Unknown type: ' + repr(obj))
+		obj_type, obj_value = _serialize_ext_dump(obj)
+		obj_type = next(i[0] for i in _MSGPACK_EXT_TYPES.items() if i[1] == obj_type)
+		if sys.version_info[0] == 3:
+			obj_value = obj_value.encode('utf-8')
+		return msgpack.ExtType(obj_type, obj_value)
 
-	def _msgpack_ext_hook(code, data):
-		if code == 10:
-			if sys.version_info[0] == 3:
-				data = data.decode('utf-8')
-			if '.' in data:
-				return datetime.datetime.strptime(data, '%Y-%m-%dT%H:%M:%S.%f')
-			else:
-				return datetime.datetime.strptime(data, '%Y-%m-%dT%H:%M:%S')
-		return msfpack.ExtType(code, data)
+	def _msgpack_ext_hook(code, obj_value):
+		default = msgpack.ExtType(code, obj_value)
+		if sys.version_info[0] == 3:
+			obj_value = obj_value.decode('utf-8')
+		obj_type = _MSGPACK_EXT_TYPES.get(code)
+		return _serialize_ext_load(obj_type, obj_value, default)
 	SERIALIZER_DRIVERS['binary/message-pack'] = {'loads': lambda d, e: msgpack.loads(d, encoding=e, ext_hook=_msgpack_ext_hook), 'dumps': lambda d: msgpack.dumps(d, default=_msgpack_default)}
-
 
 if hasattr(logging, 'NullHandler'):
 	logging.getLogger('AdvancedHTTPServer').addHandler(logging.NullHandler())
@@ -206,31 +215,6 @@ def resolve_ssl_protocol_version(version=None):
 		return getattr(ssl, 'PROTOCOL_' + version)
 	raise TypeError("ssl_version() argument 1 must be str, not {0}".format(type(version).__name__))
 
-def build_serializer_from_content_type(content_type):
-	"""
-	Build a serializer object from a MIME Content-Type string.
-
-	:param str content_type: The Content-Type string to parse.
-	:return: A new configured serializer instance.
-	:rtype: :py:class:`.AdvancedHTTPServerSerializer`
-	"""
-	name = content_type
-	options = {}
-	if ';' in content_type:
-		name, options_str = content_type.split(';', 1)
-		for part in options_str.split(';'):
-			part = part.strip()
-			if '=' in part:
-				key, value = part.split('=')
-			else:
-				key, value = (part, None)
-			options[key] = value
-	# old style compatibility
-	if name.endswith('+zlib'):
-		options['compression'] = 'zlib'
-		name = name[:-5]
-	return AdvancedHTTPServerSerializer(name, charset=options.get('charset', 'UTF-8'), compression=options.get('compression'))
-
 def build_server_from_argparser(description=None, ServerClass=None, HandlerClass=None):
 	"""
 	Build a server from command line arguments. If a ServerClass or
@@ -247,14 +231,27 @@ def build_server_from_argparser(description=None, ServerClass=None, HandlerClass
 	"""
 	import argparse
 
-	description = (description or 'AdvancedHTTPServer')
+	def _argp_dir_type(arg):
+		if not os.path.isdir(arg):
+			raise argparse.ArgumentTypeError("{0} is not a valid directory".format(repr(arg)))
+		return arg
+
+	def _argp_port_type(arg):
+		if not arg.isdigit():
+			raise argparse.ArgumentTypeError("{0} is not a valid port".format(repr(arg)))
+		arg = int(arg)
+		if arg < 0 or arg > 65535:
+			raise argparse.ArgumentTypeError("{0} is not a valid port".format(repr(arg)))
+		return arg
+
+	description = (description or 'HTTP Server')
 	ServerClass = (ServerClass or AdvancedHTTPServer)
 	HandlerClass = (HandlerClass or AdvancedHTTPServerRequestHandler)
 
-	parser = argparse.ArgumentParser(description=description, conflict_handler='resolve')
+	parser = argparse.ArgumentParser(conflict_handler='resolve', description=description, fromfile_prefix_chars='@')
 	parser.epilog = 'When a config file is specified with --config the --ip, --port and --web-root options are all ignored.'
-	parser.add_argument('-w', '--web-root', dest='web_root', action='store', default='.', help='path to the web root directory')
-	parser.add_argument('-p', '--port', dest='port', action='store', default=8080, type=int, help='port to serve on')
+	parser.add_argument('-w', '--web-root', dest='web_root', action='store', default='.', type=_argp_dir_type, help='path to the web root directory')
+	parser.add_argument('-p', '--port', dest='port', action='store', default=8080, type=_argp_port_type, help='port to serve on')
 	parser.add_argument('-i', '--ip', dest='ip', action='store', default='0.0.0.0', help='the ip address to serve on')
 	parser.add_argument('--password', dest='password', action='store', default=None, help='password to use for basic authentication')
 	parser.add_argument('--log-file', dest='log_file', action='store', default=None, help='log information to a file')
@@ -395,6 +392,7 @@ class AdvancedHTTPServerRPCError(Exception):
 	in routines executed on the server will raise this error.
 	"""
 	def __init__(self, message, status, remote_exception=None):
+		super(AdvancedHTTPServerRPCError, self).__init__()
 		self.message = message
 		self.status = status
 		self.remote_exception = remote_exception
@@ -448,7 +446,7 @@ class AdvancedHTTPServerRPCClient(object):
 		if isinstance(hmac_key, str):
 			hmac_key = hmac_key.encode('UTF-8')
 		self.hmac_key = hmac_key
-		self.lock = threading.RLock()
+		self.lock = threading.Lock()
 		self.set_serializer('application/json')
 		self.reconnect()
 
@@ -541,33 +539,42 @@ class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 	provides additional methods for cacheing results in memory.
 	"""
 	def __init__(self, *args, **kwargs):
+		cache_db = kwargs.pop('cache_db', ':memory:')
 		super(AdvancedHTTPServerRPCClientCached, self).__init__(*args, **kwargs)
-		self.cache_db = sqlite3.connect(':memory:', check_same_thread=False)
+		self.cache_db = sqlite3.connect(cache_db, check_same_thread=False)
 		cursor = self.cache_db.cursor()
-		cursor.execute('CREATE TABLE cache (method TEXT NOT NULL, options_hash TEXT NOT NULL, return_value TEXT NOT NULL)')
+		cursor.execute('CREATE TABLE IF NOT EXISTS cache (method TEXT NOT NULL, options_hash BLOB NOT NULL, return_value BLOB NOT NULL)')
 		self.cache_db.commit()
-		self.cache_serializer_loads = SERIALIZER_DRIVERS['application/json']['loads']
-		self.cache_serializer_dumps = SERIALIZER_DRIVERS['application/json']['dumps']
+		self.cache_lock = threading.Lock()
 
 	def cache_call(self, method, *options):
 		"""
 		Call a remote method and store the result locally. Subsequent
 		calls to the same method with the same arguments will return the
-		cached result without invoking the remote procedure.
+		cached result without invoking the remote procedure. Cached results are
+		kept indefinitely and must be manually refreshed with a call to
+		:py:meth:`.cache_call_refresh`.
 
 		:param str method: The name of the remote procedure to execute.
 		:return: The return value from the remote function.
 		"""
-		options_hash = hashlib.new('sha1', self.encode(options)).hexdigest()
-		cursor = self.cache_db.cursor()
+		options_hash = self.encode(options)
+		if len(options_hash) > 20:
+			options_hash = hashlib.new('sha1', options_hash).digest()
+		options_hash = sqlite3.Binary(options_hash)
 
-		cursor.execute('SELECT return_value FROM cache WHERE method = ? AND options_hash = ?', (method, options_hash))
-		return_value = cursor.fetchone()
+		with self.cache_lock:
+			cursor = self.cache_db.cursor()
+			cursor.execute('SELECT return_value FROM cache WHERE method = ? AND options_hash = ?', (method, options_hash))
+			return_value = cursor.fetchone()
 		if return_value:
-			return_value = self.cache_serializer_loads(return_value[0], 'UTF-8')
-		else:
-			return_value = self.call(method, *options)
-			cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, self.cache_serializer_dumps(return_value)))
+			return_value = bytes(return_value[0])
+			return self.decode(return_value)
+		return_value = self.call(method, *options)
+		store_return_value = sqlite3.Binary(self.encode(return_value))
+		with self.cache_lock:
+			cursor = self.cache_db.cursor()
+			cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, store_return_value))
 			self.cache_db.commit()
 		return return_value
 
@@ -579,20 +586,29 @@ class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 		:param str method: The name of the remote procedure to execute.
 		:return: The return value from the remote function.
 		"""
-		options_hash = hashlib.new('sha1', self.encode(options)).hexdigest()
-		cursor = self.cache_db.cursor()
-		cursor.execute('DELETE FROM cache WHERE method = ? AND options_hash = ?', (method, options_hash))
+		options_hash = self.encode(options)
+		if len(options_hash) > 20:
+			options_hash = hashlib.new('sha1', options).digest()
+		options_hash = sqlite3.Binary(options_hash)
+
+		with self.cache_lock:
+			cursor = self.cache_db.cursor()
+			cursor.execute('DELETE FROM cache WHERE method = ? AND options_hash = ?', (method, options_hash))
 		return_value = self.call(method, *options)
-		cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, self.cache_serializer_dumps(return_value)))
-		self.cache_db.commit()
+		return_value = sqlite3.Binary(self.encode(return_value))
+		with self.cache_lock:
+			cursor = self.cache_db.cursor()
+			cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, return_value))
+			self.cache_db.commit()
 		return return_value
 
 	def cache_clear(self):
 		"""Purge the local store of all cached function information."""
-		cursor = self.cache_db.cursor()
-		cursor.execute('DELETE FROM cache')
-		self.cache_db.commit()
-		self.logger.info('the RPC cache has been clared')
+		with self.cache_lock:
+			cursor = self.cache_db.cursor()
+			cursor.execute('DELETE FROM cache')
+			self.cache_db.commit()
+		self.logger.info('the RPC cache has been purged')
 		return
 
 class AdvancedHTTPServerNonThreaded(http.server.HTTPServer, object):
@@ -627,6 +643,10 @@ class AdvancedHTTPServerNonThreaded(http.server.HTTPServer, object):
 
 	def shutdown(self, *args, **kwargs):
 		super(AdvancedHTTPServerNonThreaded, self).shutdown(*args, **kwargs)
+		try:
+			self.socket.shutdown(socket.SHUT_RDWR)
+		except socket.error:
+			pass
 		self.socket.close()
 
 class AdvancedHTTPServerThreaded(socketserver.ThreadingMixIn, AdvancedHTTPServerNonThreaded):
@@ -661,6 +681,9 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 	})
 
 	def __init__(self, *args, **kwargs):
+		self.cookies = None
+		self.path = None
+		self.wfile = None
 		self.handler_map = {}
 		"""The dict object which maps regular expressions of resources to the functions which should handle them."""
 		self.rpc_handler_map = {}
@@ -856,14 +879,14 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		# abandon query parameters
 		self.path = self.path.split('?', 1)[0]
 		self.path = self.path.split('#', 1)[0]
-		self.original_path = urllib.parse.unquote(self.path)
-		self.path = posixpath.normpath(self.original_path)
+		original_path = urllib.parse.unquote(self.path)
+		self.path = posixpath.normpath(original_path)
 		words = self.path.split('/')
 		words = filter(None, words)
 		tmp_path = ''
 		for word in words:
-			drive, word = os.path.splitdrive(word)
-			head, word = os.path.split(word)
+			_, word = os.path.splitdrive(word)
+			_, word = os.path.split(word)
 			if word in (os.curdir, os.pardir):
 				continue
 			tmp_path = os.path.join(tmp_path, word)
@@ -884,7 +907,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 						getattr(self, handler.__name__)(query)
 					else:
 						handler(self, query)
-				except:
+				except Exception:
 					self.respond_server_error()
 				return
 
@@ -898,7 +921,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 			self.respond_file(file_path, query=query)
 			return
 		elif os.path.isdir(file_path) and os.access(file_path, os.R_OK):
-			if not self.original_path.endswith('/'):
+			if not original_path.endswith('/'):
 				# redirect browser, doing what apache does
 				destination = self.path + '/'
 				if self.command == 'GET':
@@ -924,7 +947,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		super(AdvancedHTTPServerRequestHandler, self).end_headers()
 		self.headers_active = False
 		if self.command == 'HEAD':
-			self.wfile.close()
+			self.wfile.close() # pylint: disable=access-member-before-definition
 			self.wfile = open(os.devnull, 'wb')
 
 	def guess_mime_type(self, path):
@@ -936,7 +959,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		:return: The guessed MIME type of the default if non are found.
 		:rtype: str
 		"""
-		base, ext = posixpath.splitext(path)
+		_, ext = posixpath.splitext(path)
 		if ext in self.extensions_map:
 			return self.extensions_map[ext]
 		ext = ext.lower()
@@ -971,11 +994,8 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 			if not auth_info:
 				return False
 			auth_info = auth_info.split()
-			if len(auth_info) != 2:
+			if len(auth_info) != 2 or auth_info[0] != 'Basic':
 				return False
-			if auth_info[0] != 'Basic':
-				return False
-
 			auth_info = base64.b64decode(auth_info[1]).decode(sys.getdefaultencoding())
 			username = auth_info.split(':')[0]
 			password = ':'.join(auth_info.split(':')[1:])
@@ -998,9 +1018,9 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 				self.basic_auth_user = username
 				return True
 			self.server.logger.warning('received invalid password from user: ' + username)
-			return False
-		except:
-			return False
+		except Exception:
+			pass
+		return False
 
 	def cookie_get(self, name):
 		"""
@@ -1056,17 +1076,17 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 			if content_type.startswith('application/json'):
 				data = json.loads(data)
 				if isinstance(data, dict):
-					self.query_data = dict(map(lambda i: (i[0], [i[1]]), data.items()))
+					self.query_data = dict([(i[0], [i[1]]) for i in data.items()])
 			else:
 				self.query_data = urllib.parse.parse_qs(data, keep_blank_values=1)
-		except:
+		except Exception:
 			self.respond_server_error(400)
 		else:
 			self.dispatch_handler(self.query_data)
 		return
 
 	def do_OPTIONS(self):
-		available_methods = list(map(lambda x: x[3:], filter(lambda x: x.startswith('do_'), dir(self))))
+		available_methods = list(x[3:] for x in dir(self) if x.startswith('do_'))
 		if 'RPC' in available_methods and len(self.rpc_handler_map) == 0:
 			available_methods.remove('RPC')
 		self.send_response(200)
@@ -1091,7 +1111,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		try:
 			data_length = int(self.headers.get('content-length'))
 			data = self.rfile.read(data_length)
-		except:
+		except Exception:
 			self.send_error(400, 'Invalid Data')
 			return
 
@@ -1109,14 +1129,14 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 				return
 
 		try:
-			serializer = build_serializer_from_content_type(content_type)
+			serializer = AdvancedHTTPServerSerializer.from_content_type(content_type)
 		except ValueError:
 			self.send_error(400, 'Invalid Content-Type')
 			return
 
 		try:
 			data = serializer.loads(data)
-		except:
+		except Exception:
 			self.server.logger.warning('serializer failed to load data')
 			self.send_error(400, 'Invalid Data')
 			return
@@ -1133,19 +1153,16 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		self.server.logger.info('running RPC method: ' + self.path)
 		response = {'result': None, 'exception_occurred': False}
 		try:
-			result = rpc_handler(*data)
+			result = rpc_handler(*data) # pylint: disable=star-args
 			response['result'] = result
 		except Exception as error:
 			response['exception_occurred'] = True
-			exc = {}
-			exc['name'] = error.__class__.__name__
-			exc['message'] = error.message
-			response['exception'] = exc
+			response['exception'] = dict(name=error.__class__.__name__, message=getattr(error, 'message', None))
 			self.server.logger.error('error: ' + error.__class__.__name__ + ' occurred while calling RPC method: ' + self.path)
 
 		try:
 			response = serializer.dumps(response)
-		except:
+		except Exception:
 			self.respond_server_error(message='Failed To Pack Response')
 			return
 
@@ -1211,6 +1228,32 @@ class AdvancedHTTPServerSerializer(object):
 		if self._compression:
 			self.content_type += '; compression=' + self._compression
 
+	@classmethod
+	def from_content_type(cls, content_type):
+		"""
+		Build a serializer object from a MIME Content-Type string.
+
+		:param str content_type: The Content-Type string to parse.
+		:return: A new serializer instance.
+		:rtype: :py:class:`.AdvancedHTTPServerSerializer`
+		"""
+		name = content_type
+		options = {}
+		if ';' in content_type:
+			name, options_str = content_type.split(';', 1)
+			for part in options_str.split(';'):
+				part = part.strip()
+				if '=' in part:
+					key, value = part.split('=')
+				else:
+					key, value = (part, None)
+				options[key] = value
+		# old style compatibility
+		if name.endswith('+zlib'):
+			options['compression'] = 'zlib'
+			name = name[:-5]
+		return cls(name, charset=options.get('charset', 'UTF-8'), compression=options.get('compression'))
+
 	def dumps(self, data):
 		"""
 		Serialize a python data type for transmission or storage.
@@ -1224,7 +1267,7 @@ class AdvancedHTTPServerSerializer(object):
 			data = data.encode(self._charset)
 		if self._compression == 'zlib':
 			data = zlib.compress(data)
-		assert(isinstance(data, bytes))
+		assert isinstance(data, bytes)
 		return data
 
 	def loads(self, data):
@@ -1302,7 +1345,7 @@ class AdvancedHTTPServer(object):
 	def serve_forever(self, fork=False):
 		"""
 		Start handling requests. This method must be called and does not
-		return unless the :py:func:`.shutdown` method is called from
+		return unless the :py:meth:`.shutdown` method is called from
 		another thread.
 
 		:param bool fork: Whether to fork or not before serving content.
