@@ -86,6 +86,9 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 			serializer = 'binary/json'
 		self.set_serializer(serializer)
 
+	def __repr__(self):
+		return "<{0} '{1}@{2}:{3}{4}'>".format(self.__class__.__name__, self.username, self.host, self.port, self.uri_base)
+
 	def remote_table(self, table, *args):
 		"""
 		Iterate over a remote database table hosted on the server. Rows are
@@ -130,6 +133,8 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 			row = self.cache_call(table_method, row_id)
 		else:
 			row = self.call(table_method, row_id)
+		if row == None:
+			return None
 		row_cls = _table_row_classes[table]
 		return row_cls(**row)
 

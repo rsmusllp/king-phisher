@@ -463,22 +463,23 @@ class CampaignGraphMessageResults(CampaignGraph):
 		ax.axis('equal')
 		return
 
-@export_graph_provider
 class CampaignGraphVisitsMap(CampaignGraph):
-	"""Display a map which shows the locations of visit origins."""
+	"""A base class to display a map which shows the locations of visit origins."""
 	graph_title = 'Campaign Visit Locations'
-	name_human = 'Map - Visit Locations'
 	table_subscriptions = ('credentials', 'visits')
 	is_available = has_matplotlib_basemap
 	mpl_color_with_creds = 'indianred'
 	mpl_color_without_creds = 'gold'
+	draw_states = False
 	def _load_graph(self, info_cache):
 		visits = utilities.unique(info_cache['visits'], key=lambda visit: visit.message_id)
 		cred_ips = set(cred.message_id for cred in info_cache['credentials'])
 		cred_ips = set([visit.visitor_ip for visit in visits if visit.message_id in cred_ips])
 
 		ax = self.axes[0]
-		bm = mpl_toolkits.basemap.Basemap(projection='kav7', lon_0=0, resolution='c', ax=ax)
+		bm = mpl_toolkits.basemap.Basemap(resolution='c', ax=ax, **self.basemap_args)
+		if self.draw_states:
+			bm.drawstates()
 		bm.drawcoastlines()
 		bm.drawcountries()
 		bm.fillcontinents(color=MPL_COLOR_LAND, lake_color=MPL_COLOR_WATER)
@@ -513,6 +514,19 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			markersize = markersize * base_markersize
 			bm.plot(pts[0], pts[1], 'o', markerfacecolor=(self.mpl_color_with_creds if visitor_ip in cred_ips else self.mpl_color_without_creds), markersize=markersize)
 		return
+
+@export_graph_provider
+class CampaignGraphVisitsMapUSA(CampaignGraphVisitsMap):
+	"""Display a map of the USA which shows the locations of visit origins."""
+	name_human = 'Map - Visit Locations (USA)'
+	draw_states = True
+	basemap_args = dict(projection='lcc', lat_1=30, lon_0=-90, llcrnrlon=-122.5, llcrnrlat=12.5, urcrnrlon=-45, urcrnrlat=50)
+
+@export_graph_provider
+class CampaignGraphVisitsMapWorld(CampaignGraphVisitsMap):
+	"""Display a map of the world which shows the locations of visit origins."""
+	name_human = 'Map - Visit Locations (World)'
+	basemap_args = dict(projection='kav7', lon_0=0)
 
 @export_graph_provider
 class CampaignGraphPasswordComplexityPie(CampaignGraph):
