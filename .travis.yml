@@ -22,5 +22,6 @@ install:
   - gunzip -f GeoLite2-City.mmdb.gz
 
 script:
+  - pylint --rcfile data/pylintrc king_phisher
   - python -m unittest -v tests
   - sphinx-build -v docs/source docs/html

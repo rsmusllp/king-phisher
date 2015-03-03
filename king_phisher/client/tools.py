@@ -115,16 +115,16 @@ class KingPhisherClientRPCTerminal(object):
 		]
 		python_command = '; '.join(python_command)
 
-		argv = []
-		argv.append(utilities.which('python'))
-		argv.append('-c')
-		argv.append(python_command)
-		env = ['PYTHONPATH=' + module_path]
-		flags = (GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD)
-
 		vte_pty = self.terminal.pty_new_sync(Vte.PtyFlags.DEFAULT)
 		self.terminal.set_pty(vte_pty)
-		child_pid, _, _, _ = GLib.spawn_async(working_directory=os.getcwd(), argv=argv, envp=env, flags=flags, child_setup=self._child_setup, user_data=vte_pty)
+		child_pid, _, _, _ = GLib.spawn_async(
+			working_directory=os.getcwd(),
+			argv=[utilities.which('python'), '-c', python_command],
+			envp=['PYTHONPATH=' + module_path],
+			flags=(GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD),
+			child_setup=self._child_setup,
+			user_data=vte_pty
+		)
 
 		self.logger.info("vte spawned child process with pid: {0}".format(child_pid))
 		self.child_pid = child_pid

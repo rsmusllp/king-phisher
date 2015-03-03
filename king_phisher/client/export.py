@@ -208,10 +208,8 @@ def message_data_from_kpm(target_file, dest_dir):
 			raise KingPhisherInputValidationError('data is missing from the message archive')
 		tarfile_h = tar_get_file('message_content.html')
 		file_path = os.path.join(dest_dir, message_config['html_file'])
-		template = tarfile_h.read()
-		template = message_template_from_kpm(template, attachments)
 		with open(file_path, 'wb') as file_h:
-			file_h.write(template)
+			file_h.write(message_template_from_kpm(tarfile_h.read(), attachments))
 		message_config['html_file'] = file_path
 	elif 'html_file' in message_config:
 		logger.warning('the kpm archive is missing the message_content.html file')
