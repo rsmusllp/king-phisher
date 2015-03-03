@@ -46,6 +46,7 @@ class UserAgentParserTests(testing.KingPhisherTestCase):
 			'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36',
 			'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)',
 			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.10 (KHTML, like Gecko) Version/5.1.9 Safari/534.59.10',
+			'Mozilla/4.0 (compatible; MSIE 7.0; Windows Phone OS 7.0; Trident/3.1; IEMobile/7.0; NOKIA; Lumia 1520)'
 		]
 		for user_agent in valid_user_agents:
 			ua = parse_user_agent(user_agent)
@@ -54,6 +55,7 @@ class UserAgentParserTests(testing.KingPhisherTestCase):
 	def _parse_user_agent(self, user_agent, os_name, os_version, os_arch):
 		ua = parse_user_agent(user_agent)
 		self.assertIsInstance(ua, UserAgent)
+		self.assertEqual(ua.os_name, os_name, msg='detected os name does not match')
 		if os_version == None:
 			self.assertIsNone(ua.os_version)
 		else:
@@ -81,14 +83,22 @@ class UserAgentParserTests(testing.KingPhisherTestCase):
 	def test_os_linux(self):
 		ua = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36'
 		self._parse_user_agent(ua, 'Linux', None, 'x86-64')
+		ua = 'Mozilla/5.0 (Linux; U; en-us; KFTHWI Build/JDQ39) AppleWebKit/535.19 (KHTML, like Gecko) Silk/3.21 Safari/535.19 Silk-Accelerated=true'
+		self._parse_user_agent(ua, 'Linux', None, None)
 
 	def test_os_osx(self):
 		ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.10 (KHTML, like Gecko) Version/5.1.9 Safari/534.59.10'
 		self._parse_user_agent(ua, 'OS X', '10.6.8', None)
+		ua = 'Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en) AppleWebKit/521.25 (KHTML, like Gecko) Safari/521.24'
+		self._parse_user_agent(ua, 'OS X', None, 'PPC')
 
 	def test_os_windows(self):
 		ua = 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)'
 		self._parse_user_agent(ua, 'Windows NT', '6.1', 'x86-64')
+
+	def test_os_windows_phone(self):
+		ua = 'Mozilla/4.0 (compatible; MSIE 7.0; Windows Phone OS 7.0; Trident/3.1; IEMobile/7.0; NOKIA; Lumia 1520)'
+		self._parse_user_agent(ua, 'Windows Phone', '7.0', None)
 
 if __name__ == '__main__':
 	unittest.main()

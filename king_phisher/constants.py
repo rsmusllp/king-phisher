@@ -77,3 +77,4 @@ class OSFamily(ConstantGroup):
 	LINUX = intern('Linux')
 	OSX = intern('OS X')
 	WINDOWS = intern('Windows NT')
+	WINDOWS_PHONE = intern('Windows Phone')

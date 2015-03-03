@@ -85,7 +85,8 @@ MPL_OS_COLORS.update({
 	OSFamily.IOS: 'violet',
 	OSFamily.LINUX: 'palegreen',
 	OSFamily.OSX: 'darkviolet',
-	OSFamily.WINDOWS: 'gold'
+	OSFamily.WINDOWS: 'gold',
+	OSFamily.WINDOWS_PHONE: 'darkgoldenrod'
 })
 
 __all__ = ['export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph']
