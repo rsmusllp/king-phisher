@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.4.3'
+__version__ = '0.4.3' # version 0.4.3-rc1
 __all__ = [
 	'AdvancedHTTPServer',
 	'AdvancedHTTPServerRegisterPath',
@@ -595,10 +595,10 @@ class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):
 			cursor = self.cache_db.cursor()
 			cursor.execute('DELETE FROM cache WHERE method = ? AND options_hash = ?', (method, options_hash))
 		return_value = self.call(method, *options)
-		return_value = sqlite3.Binary(self.encode(return_value))
+		store_return_value = sqlite3.Binary(self.encode(return_value))
 		with self.cache_lock:
 			cursor = self.cache_db.cursor()
-			cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, return_value))
+			cursor.execute('INSERT INTO cache (method, options_hash, return_value) VALUES (?, ?, ?)', (method, options_hash, store_return_value))
 			self.cache_db.commit()
 		return return_value
 
