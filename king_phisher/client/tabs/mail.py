@@ -103,11 +103,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.parent.connect('exit-confirm', self.signal_kpc_exit_confirm)
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 
-	def signal_activate_popup_menu_clear_all(self, widget):
-		self.textbuffer.delete(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter())
-		self.textbuffer_iter = self.textbuffer.get_start_iter()
-
-	def signal_button_clicked_sender_start(self, button):
+	def _sender_precheck_settings(self):
 		required_settings = {
 			'mailer.webserver_url': 'Web Server URL',
 			'mailer.company_name': 'Company Name',
@@ -132,7 +128,41 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if not self.config.get('smtp_server'):
 			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
 			return
+		return True
 
+	def _sender_precheck_spf(self):
+		if not self.config['autocheck_spf']:
+			return True
+
+		spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
+		if not spf_test_ip:
+			self.text_insert('Skipped checking the SPF policy because the SMTP server address could not be detected.\n')
+			self.logger.warning('skipping spf policy check because the smtp server address could not be reliably detected')
+			return True
+
+		self.logger.debug('detected the smtp server address as ' + str(spf_test_ip))
+		spf_test_sender, spf_test_domain = self.config['mailer.source_email'].split('@')
+		self.text_insert("Checking the SPF policy of target domain '{0}'... ".format(spf_test_domain))
+		try:
+			spf_test = spf.SenderPolicyFramework(spf_test_ip, spf_test_domain, spf_test_sender)
+			spf_result = spf_test.check_host()
+		except spf.SPFError as error:
+			spf_result = None
+			self.text_insert("done, encountered exception: {0}.\n".format(error.__class__.__name__))
+			return True
+
+		if not spf_result:
+			self.text_insert('done, no policy was found.\n')
+			return True
+
+		self.text_insert('done.\n')
+		self.text_insert("{0}SPF policy result: {1}\n".format(('WARNING: ' if spf_result.endswith('fail') else ''), spf_result))
+		if spf_result == 'fail' and not gui_utilities.show_dialog_yes_no('Sender Policy Framework Failure', self.parent, 'The configuration fails the domains SPF policy.\nContinue sending messages anyways?'):
+			self.text_insert('Sending aborted due to a failed SPF policy.\n')
+			return
+		return True
+
+	def _sender_precheck_url(self):
 		self.text_insert('Checking the target URL... ')
 		try:
 			test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
@@ -144,31 +174,19 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			self.text_insert(', error ignored.\n')
 		else:
 			self.text_insert('success, done.\n')
+		return True
 
-		if self.config['autocheck_spf']:
-			spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
-			if not spf_test_ip:
-				self.text_insert('Skipped checking the SPF policy because the SMTP server address could not be detected.\n')
-				self.logger.warning('skipping spf policy check because the smtp server address could not be reliably detected')
-			else:
-				self.logger.debug('detected the smtp server address as ' + str(spf_test_ip))
-				spf_test_sender, spf_test_domain = self.config['mailer.source_email'].split('@')
-				self.text_insert("Checking the SPF policy of target domain '{0}'... ".format(spf_test_domain))
-				try:
-					spf_test = spf.SenderPolicyFramework(spf_test_ip, spf_test_domain, spf_test_sender)
-					spf_result = spf_test.check_host()
-				except spf.SPFError as error:
-					spf_result = None
-					self.text_insert("done, encountered exception: {0}.\n".format(error.__class__.__name__))
-				else:
-					if spf_result:
-						self.text_insert('done.\n')
-						self.text_insert("{0}SPF policy result: {1}\n".format(('WARNING: ' if spf_result.endswith('fail') else ''), spf_result))
-						if spf_result == 'fail' and not gui_utilities.show_dialog_yes_no('Sender Policy Framework Failure', self.parent, 'The configuration fails the domains SPF policy.\nContinue sending messages anyways?'):
-							self.text_insert('Sending aborted due to a failed SPF policy.\n')
-							return
-					else:
-						self.text_insert('done, no policy was found.\n')
+	def signal_activate_popup_menu_clear_all(self, widget):
+		self.textbuffer.delete(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter())
+		self.textbuffer_iter = self.textbuffer.get_start_iter()
+
+	def signal_button_clicked_sender_start(self, button):
+		if not self._sender_precheck_settings():
+			return
+		if not self._sender_precheck_url():
+			return
+		if not self._sender_precheck_spf():
+			return
 
 		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:
