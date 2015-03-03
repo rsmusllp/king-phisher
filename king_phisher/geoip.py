@@ -31,6 +31,7 @@
 #
 
 import collections
+import datetime
 import gzip
 import ipaddress
 import logging
@@ -103,6 +104,9 @@ def init_database(database_file):
 	metadata = _geoip_db.metadata()
 	if not metadata.database_type == 'GeoLite2-City':
 		raise ValueError('the connected database is not a GeoLite2-City database')
+	build_date = datetime.datetime.fromtimestamp(metadata.build_epoch)
+	if build_date < datetime.datetime.utcnow() - datetime.timedelta(days=90):
+		logger.warning('the geoip database is older than 90 days')
 	return _geoip_db
 
 def lookup(ip, lang='en'):
@@ -141,7 +145,8 @@ Coordinates = collections.namedtuple('Coordinates', ['latitude', 'longitude'])
 
 class GeoLocation(object):
 	"""
-	The geographic location information for a given IP address.
+	The geographic location information for a given IP address. If *results* are
+	not specified, :py:func:`.lookup` will be used to obtain the information.
 	"""
 	__slots__ = ('city', 'continent', 'coordinates', 'country', 'ip_address', 'postal_code', 'time_zone')
 	def __init__(self, ip, lang='en', result=None):

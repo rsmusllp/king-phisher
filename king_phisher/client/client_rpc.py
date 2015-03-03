@@ -88,11 +88,13 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 
 	def remote_table(self, table, *args):
 		"""
-		Get a remote table from the server by calling the correct RPC
-		method.
+		Iterate over a remote database table hosted on the server. Rows are
+		yielded as named tuples whose fields are the columns of the specified
+		table.
 
 		:param str table: The table name to retrieve.
-		:return: A generator which yields rows in dictionaries.
+		:return: A generator which yields rows of named tuples.
+		:rtype: tuple
 		"""
 		table_method = table + '/view'
 		table = table.rsplit('/', 1)[-1]
@@ -112,13 +114,14 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 
 	def remote_table_row(self, table, row_id, cache=False, refresh=False):
 		"""
-		Get a specific row by it's id, optionally cacheing it.
+		Get a row from the specified table by it's id, optionally cacheing it.
 
 		:param str table: The table in which the row exists.
 		:param row_id: The value of the row's id column.
 		:param bool cache: Whether to use the cache for this row.
 		:param bool refresh: If *cache* is True, get the current row value and store it.
-		:return: The remote row.
+		:return: The remote row as a named tuple of the specified table.
+		:rtype: tuple
 		"""
 		table_method = table + '/get'
 		if cache and refresh:

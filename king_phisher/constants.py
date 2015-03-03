@@ -35,13 +35,41 @@ import sys
 if sys.version_info[0] == 3:
 	intern = sys.intern
 
-class OSArch:
+__all__ = ['OSArch', 'OSFamily']
+
+class ConstantGroup:
+	"""A class for grouping related constants together."""
+	@classmethod
+	def names(cls):
+		"""Iterate over the names in a group of constants."""
+		for name in dir(cls):
+			if name.upper() != name:
+				continue
+			yield name
+
+	@classmethod
+	def items(cls):
+		"""Iterate over the names and values in a group of constants."""
+		for name in dir(cls):
+			if name.upper() != name:
+				continue
+			yield (name, getattr(cls, name))
+
+	@classmethod
+	def values(cls):
+		"""Iterate over the values in a group of constants."""
+		for name in dir(cls):
+			if name.upper() != name:
+				continue
+			yield getattr(cls, name)
+
+class OSArch(ConstantGroup):
 	"""Constants for different operating system architectures."""
 	PPC = intern('PPC')
 	X86 = intern('x86')
 	X86_64 = intern('x86-64')
 
-class OSFamily:
+class OSFamily(ConstantGroup):
 	"""Constants for families of different operating systems."""
 	ANDROID = intern('Android')
 	BLACKBERRY = intern('BlackBerry')

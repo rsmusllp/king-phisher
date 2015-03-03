@@ -7,6 +7,10 @@
 Classes
 -------
 
+.. autoclass:: king_phisher.constants.ConstantGroup
+   :members:
+   :undoc-members:
+
 .. autoclass:: king_phisher.constants.OSArch
 .. autoattribute:: king_phisher.constants.OSArch.PPC
 .. autoattribute:: king_phisher.constants.OSArch.X86

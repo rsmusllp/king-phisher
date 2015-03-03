@@ -333,6 +333,7 @@ class KingPhisherRequestHandlerRPC(object):
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert table
 
+		# it's critical that the columns are in the order that the client is expecting
 		columns = DATABASE_TABLES[table_name]
 		rows = []
 		session = db_manager.Session()

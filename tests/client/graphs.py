@@ -32,18 +32,25 @@
 
 import unittest
 
+from king_phisher import constants
 from king_phisher import testing
-from king_phisher.client.graphs import *
+from king_phisher.client import graphs
+from king_phisher.utilities import random_string
 
 class ClientGraphsTests(testing.KingPhisherTestCase):
-	def test_graphs_found(self):
-		self.assertGreaterEqual(len(get_graphs()), 3)
-
 	def test_graph_classes(self):
-		graphs = get_graphs()
-		for graph in graphs:
+		for graph in graphs.get_graphs():
 			self.assertTrue(isinstance(graph, str))
-			self.assertTrue(issubclass(get_graph(graph), CampaignGraph))
+			self.assertTrue(issubclass(graphs.get_graph(graph), graphs.CampaignGraph))
+
+	def test_graphs_found(self):
+		self.assertGreaterEqual(len(graphs.get_graphs()), 6)
+
+	def test_graphs_os_colors(self):
+		for os_name in constants.OSFamily.values():
+			self.assertIn(os_name, graphs.MPL_OS_COLORS)
+		bad_os_name = random_string(10)
+		self.assertEqual(graphs.MPL_OS_COLORS[bad_os_name], graphs.MPL_COLOR_NULL)
 
 if __name__ == '__main__':
 	unittest.main()
