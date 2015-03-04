@@ -119,4 +119,4 @@ class KingPhisherClientApplication(_Gtk_Application):
 				del config[key]
 		config_file = os.path.expanduser(self.config_file)
 		config_file_h = open(config_file, 'w')
-		json.dump(config, config_file_h, sort_keys=True, indent=4)
+		json.dump(config, config_file_h, sort_keys=True, indent=2, separators=(',', ': '))

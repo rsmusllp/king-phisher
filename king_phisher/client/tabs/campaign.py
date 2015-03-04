@@ -513,9 +513,10 @@ class CampaignViewTab(object):
 		self.tabs['credentials'] = credentials_tab
 		self.notebook.append_page(credentials_tab.box, credentials_tab.label)
 
-		deaddrop_connections_tab = CampaignViewDeaddropTab(self.config, self.parent)
-		self.tabs['deaddrop_connections'] = deaddrop_connections_tab
-		self.notebook.append_page(deaddrop_connections_tab.box, deaddrop_connections_tab.label)
+		if self.config.get('gui.show_deaddrop', False):
+			deaddrop_connections_tab = CampaignViewDeaddropTab(self.config, self.parent)
+			self.tabs['deaddrop_connections'] = deaddrop_connections_tab
+			self.notebook.append_page(deaddrop_connections_tab.box, deaddrop_connections_tab.label)
 
 		for tab in self.tabs.values():
 			tab.box.show()
