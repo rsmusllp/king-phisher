@@ -35,12 +35,14 @@ import logging
 import threading
 import time
 
+from king_phisher import find
 from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 
 from gi.repository import Gdk
+from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import Gtk
 
@@ -367,6 +369,11 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			Klass = graphs.get_graph(graph_name)
 			if not Klass:
 				self.logger.warning('could not get graph: ' + graph_name)
+				logo_file_path = find.find_data_file('king-phisher-icon.svg')
+				if logo_file_path:
+					image = Gtk.Image.new_from_pixbuf(GdkPixbuf.Pixbuf.new_from_file_at_size(logo_file_path, 128, 128))
+					image.show()
+					self.gobjects['scrolledwindow_' + dash_port].add(image)
 				continue
 			graph_inst = Klass(self.config, self.parent, details)
 			self.gobjects['scrolledwindow_' + dash_port].add_with_viewport(graph_inst.canvas)
