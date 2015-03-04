@@ -115,8 +115,16 @@ class KingPhisherClientRPCTerminal(object):
 		]
 		python_command = '; '.join(python_command)
 
-		vte_pty = self.terminal.pty_new_sync(Vte.PtyFlags.DEFAULT)
-		self.terminal.set_pty(vte_pty)
+		if hasattr(self.terminal, 'pty_new_sync'):
+			# Vte._version >= 2.91
+			vte_pty = self.terminal.pty_new_sync(Vte.PtyFlags.DEFAULT)
+			self.terminal.set_pty(vte_pty)
+			self.terminal.connect('child-exited', lambda vt, status: self.window.destroy())
+		else:
+			# Vte._version <= 2.90
+			vte_pty = self.termina.pty_new(Vte.PtyFlags.DEFAULT)
+			self.terminal.set_pty_object(vte_pty)
+			self.terminal.connect('child-exited', lambda vt: self.window.destroy())
 		child_pid, _, _, _ = GLib.spawn_async(
 			working_directory=os.getcwd(),
 			argv=[utilities.which('python'), '-c', python_command],
@@ -128,10 +136,8 @@ class KingPhisherClientRPCTerminal(object):
 
 		self.logger.info("vte spawned child process with pid: {0}".format(child_pid))
 		self.child_pid = child_pid
-		self.terminal.set_pty(vte_pty)
 		self.terminal.watch_child(child_pid)
 		GLib.spawn_close_pid(child_pid)
-		self.terminal.connect('child-exited', lambda vt, status: self.window.destroy())
 		self.window.show_all()
 
 		# automatically enter the password
