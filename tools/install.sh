@@ -109,7 +109,7 @@ elif [ "$LINUX_VERSION" == "Debian" ]; then
 	apt-get install -y libfreetype6-dev python-dev python-pip
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
-			gir1.2-webkit-3.0 python-cairo \
+			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
 			libgtk-3-dev python-gi python-gi-cairo \
 			python-gobject python-gobject-dev python-paramiko
 	fi
@@ -120,7 +120,7 @@ elif [ "$LINUX_VERSION" == "Kali" ]; then
 	apt-get install -y libfreetype6-dev python-dev python-pip
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
-			gir1.2-webkit-3.0 python-cairo \
+			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
 			libgtk-3-dev python-gi python-gi-cairo \
 			python-gobject python-gobject-dev python-paramiko
 	fi
@@ -132,7 +132,7 @@ elif [ "$LINUX_VERSION" == "Ubuntu" ]; then
 	apt-get install -y libfreetype6-dev python-dev python-pip
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
-			gir1.2-webkit-3.0 python-cairo \
+			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
 			libgtk-3-dev python-gi python-gi-cairo \
 			python-gobject python-gobject-dev python-paramiko
 	fi
