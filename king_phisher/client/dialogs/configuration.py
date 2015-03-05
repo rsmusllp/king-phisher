@@ -32,6 +32,7 @@
 
 import string
 
+from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 
 from gi.repository import GObject
@@ -82,7 +83,21 @@ class KingPhisherClientConfigurationDialog(gui_utilities.UtilityGladeGObject):
 	def signal_toggle_reject_after_credentials(self, cbutton):
 		self.parent.rpc('campaigns/set', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
 
-	def interact(self):
+	def _configure_settings_dashboard(self):
+		if not graphs.has_matplotlib:
+			self.gtk_builder_get('frame_dashboard').set_sensitive(False)
+			return
+		graph_providers = Gtk.ListStore(str, str)
+		for graph in graphs.get_graphs():
+			graph = graphs.get_graph(graph)
+			graph_providers.append([graph.name_human, graph.name])
+		for dash_position in ['top_left', 'top_right', 'bottom']:
+			combobox = self.gtk_builder_get('combobox_dashboard_' + dash_position)
+			combobox.set_model(graph_providers)
+			ti = gui_utilities.search_list_store(graph_providers, self.config.get('dashboard.' + dash_position), column=1)
+			combobox.set_active_iter(ti)
+
+	def _configure_settings_server(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
 		cb_reject_after_creds = self.gtk_builder_get('checkbutton_reject_after_credentials')
 		entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
@@ -98,15 +113,37 @@ class KingPhisherClientConfigurationDialog(gui_utilities.UtilityGladeGObject):
 			with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
 				cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
 				cb_reject_after_creds.set_property('active', self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id']).reject_after_credentials)
-
 		cb_reject_after_creds.set_sensitive(self.config['server_config']['server.require_id'])
+
+	def _finialize_settings_dashboard(self):
+		dashboard_changed = False
+		for dash_position in ['top_left', 'top_right', 'bottom']:
+			combobox = self.gtk_builder_get('combobox_dashboard_' + dash_position)
+			ti = combobox.get_active_iter()
+			if not ti:
+				continue
+			graph_providers = combobox.get_model()
+			graph_name = graph_providers[ti][1]
+			if self.config.get('dashboard.' + dash_position) == graph_name:
+				continue
+			self.config['dashboard.' + dash_position] = graph_name
+			dashboard_changed = True
+		if dashboard_changed:
+			gui_utilities.show_dialog_info('The dashboard layout has been updated.', self.parent, 'The new settings will be applied the next time the application starts.')
+
+	def interact(self):
+		self._configure_settings_dashboard()
+		self._configure_settings_server()
 
 		self.dialog.show_all()
 		response = self.dialog.run()
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
 			self.verify_sms_settings()
+			entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
 			self.parent.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
+			if graphs.has_matplotlib:
+				self._finialize_settings_dashboard()
 		self.dialog.destroy()
 		return response
 

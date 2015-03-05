@@ -177,18 +177,19 @@ def gtk_treeview_selection_to_clipboard(treeview, column=1):
 	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 	clipboard.set_text(selection_values, -1)
 
-def search_list_store(list_store, value):
+def search_list_store(list_store, value, column=0):
 	"""
 	Search a GTK ListStore for a value.
 
 	:param list_store: The list store to search.
 	:type list_store: :py:class:`Gtk.ListStore`
 	:param value: The value to search for.
+	:param int column: The column in the row to check.
 	:return: The row on which the value was found.
 	:rtype: :py:class:`Gtk.TreeIter`
 	"""
 	for row in list_store:
-		if row[0] == value:
+		if row[column] == value:
 			return row.iter
 	return None
 
