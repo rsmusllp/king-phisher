@@ -1763,6 +1763,7 @@ Brandan Geise</property>
                   <object class="GtkGrid" id="grid1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="row_spacing">3</property>
                     <property name="row_homogeneous">True</property>
                     <property name="column_homogeneous">True</property>
                     <child>
@@ -1833,6 +1834,7 @@ Brandan Geise</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_right">3</property>
+                            <property name="row_spacing">3</property>
                             <property name="row_homogeneous">True</property>
                             <property name="column_homogeneous">True</property>
                             <child>
@@ -1921,6 +1923,7 @@ Brandan Geise</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_right">3</property>
+                            <property name="margin_bottom">3</property>
                             <property name="column_spacing">5</property>
                             <property name="row_homogeneous">True</property>
                             <child>
@@ -1990,6 +1993,7 @@ Brandan Geise</property>
                   <object class="GtkGrid" id="grid2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="row_spacing">3</property>
                     <property name="row_homogeneous">True</property>
                     <property name="column_homogeneous">True</property>
                     <child>
@@ -2099,7 +2103,7 @@ Brandan Geise</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="KingPhisherClientConfigurationDialog.frame1">
+                  <object class="GtkFrame" id="KingPhisherClientConfigurationDialog.frame_smtp_ssh">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
@@ -2113,6 +2117,8 @@ Brandan Geise</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_right">3</property>
+                            <property name="margin_bottom">3</property>
+                            <property name="row_spacing">3</property>
                             <property name="row_homogeneous">True</property>
                             <property name="column_homogeneous">True</property>
                             <child>
@@ -2140,7 +2146,6 @@ Brandan Geise</property>
                             <child>
                               <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_ssh_server">
                                 <property name="visible">True</property>
-                                <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
                                 <property name="placeholder_text" translatable="yes">server:port</property>
                               </object>
@@ -2152,7 +2157,6 @@ Brandan Geise</property>
                             <child>
                               <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_ssh_username">
                                 <property name="visible">True</property>
-                                <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
                                 <property name="placeholder_text" translatable="yes">username</property>
                               </object>
@@ -2303,7 +2307,7 @@ Brandan Geise</property>
                               <object class="GtkLabel" id="label15">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="margin_left">5</property>
+                                <property name="margin_left">10</property>
                                 <property name="label" translatable="yes">Top Left</property>
                               </object>
                               <packing>
@@ -2315,7 +2319,7 @@ Brandan Geise</property>
                               <object class="GtkLabel" id="label16">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="margin_left">5</property>
+                                <property name="margin_left">10</property>
                                 <property name="label" translatable="yes">Top Right</property>
                               </object>
                               <packing>
@@ -2327,7 +2331,7 @@ Brandan Geise</property>
                               <object class="GtkLabel" id="label17">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="margin_left">5</property>
+                                <property name="margin_left">10</property>
                                 <property name="label" translatable="yes">Bottom</property>
                               </object>
                               <packing>

@@ -69,8 +69,7 @@ class KingPhisherClientConfigurationDialog(gui_utilities.UtilityGladeGObject):
 	]
 	def signal_switch_smtp_ssh(self, switch, _):
 		active = switch.get_property('active')
-		self.gobjects['entry_ssh_server'].set_sensitive(active)
-		self.gobjects['entry_ssh_username'].set_sensitive(active)
+		self.gtk_builder_get('frame_smtp_ssh').set_sensitive(active)
 
 	def signal_toggle_alert_subscribe(self, cbutton):
 		active = cbutton.get_property('active')
