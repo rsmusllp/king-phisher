@@ -3,7 +3,9 @@ The King Phisher Server is only supported on Linux. The King Phisher
 Client is supported on both Windows and Linux. Windows executables are
 available from the [releases page](https://github.com/securestate/king-phisher/releases).
 
-Before getting started, install all of the required packages specified below.
+An installation script is available to automate the process on supported versions
+of Linux. Instructions on how it can be used are
+[Linux Install Steps](#linux-install-steps) section.
 
 ## Overview
 King Phisher uses a client server architecture. The ```KingPhisherServer```
@@ -15,17 +17,24 @@ connecting, communicates via RPC to the server through the encrypted SSH tunnel.
 Additionally, the user logging in with the King Phisher Client will
 require a valid local account on the King Phisher Server.
 
-## Client Required Packages
+## Required Packages
+The following sections document the packages required for both the client
+and server components. All packages are listed in the provided ```requirements.txt```
+file to be easily installed with pip. Some packages may not install correctly
+due to missing native libraries. The automated install script will handle the
+installation of these libraries for the supported flavors of Linux.
+
+### Client Required Packages
 * [Jinja2](http://jinja.pocoo.org/)
 * [Paramiko](https://github.com/paramiko/paramiko/)
 * [PyGObject](https://wiki.gnome.org/PyGObject/)
 * [Smoke-Zephyr](https://github.com/zeroSteiner/smoke-zephyr/)
 
-## Client Optional Packages
+### Client Optional Packages
 * [Matplotlib](http://matplotlib.org/)
 * [Msgpack-Python](https://github.com/msgpack/msgpack-python/)
 
-## Server Required Packages
+### Server Required Packages
 * [Alembic](http://alembic.readthedocs.org/en/latest/)
 * [dnspython](http://www.dnspython.org/)
 * [Jinja2](http://jinja.pocoo.org/)
@@ -45,14 +54,14 @@ Python packages, and basic configuration. The automated install scripts supports
 a limited set of Linux flavors. To request that one be added, please open a
 support ticket.
 
-After cloning the directory run the install.sh script that is in the tools
+After cloning the repository run the install.sh script that is in the tools
 directory as such: ```sudo tools/install.sh```. This will download all the
 required packages and set up a default server configuration. The automated
 installation process may take up to 20 minutes to complete depending on
 the speed at which packages are downloaded.
 
 **WARNING:** If installing the server component of King Phisher, the automated
-install script with use the tempalate configuration file which specifies SQLite
+install script will use the tempalate configuration file which specifies SQLite
 as the database backend. It is highly recommended that PostgreSQL be used over
 SQLite to support future database upgrades. For more information on selecting
 and configuring a database backend, please see the
