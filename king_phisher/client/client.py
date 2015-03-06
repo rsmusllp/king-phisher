@@ -256,12 +256,14 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		except paramiko.AuthenticationException:
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, self, 'The server responded that the credentials are invalid.')
+		except socket.timeout:
+			gui_utilities.show_dialog_error(title_ssh_error, self, 'The connection to the server timed out.')
 		except socket.error as error:
 			error_number, error_message = error.args
 			if error_number == 111:
 				gui_utilities.show_dialog_error(title_ssh_error, self, 'The server refused the connection.')
 			else:
-				gui_utilities.show_dialog_error(title_ssh_error, self, "Socket error #{0} ({1}).".format((error_number or 'NOT-SET'), error_message))
+				gui_utilities.show_dialog_error(title_ssh_error, self, "Socket error #{0} ({1}).".format((error_number or 'N/A'), error_message))
 		except Exception:
 			self.logger.warning('failed to connect to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, self, 'An unknown error occurred.')

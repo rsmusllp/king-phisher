@@ -41,7 +41,6 @@ import threading
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
-from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import server
 
@@ -132,7 +131,7 @@ def main():
 		return os.EX_OK
 	if arguments.update_geoip_db:
 		print('[*] downloading a new geoip database')
-		size = geoip.download_geolite2_city_db(config.get('server.geoip.database'))
+		geoip.download_geolite2_city_db(config.get('server.geoip.database'))
 		print('[+] download complete')
 		return os.EX_OK
 

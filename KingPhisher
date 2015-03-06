@@ -38,7 +38,6 @@ import threading
 import time
 
 from king_phisher import find
-from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import application
 from king_phisher.client import gui_utilities

@@ -110,7 +110,7 @@ class SSHTCPForwarder(threading.Thread):
 		ssh_agent = paramiko.Agent()
 		ssh_keys = ssh_agent.get_keys()
 		if len(ssh_keys) == 1:
-			self.__try_connect(look_for_keys=False, allow_agent=False, pkey=ssh_keys[0])
+			self.__try_connect(look_for_keys=False, pkey=ssh_keys[0])
 
 		if not self.__connected and preferred_private_key:
 			preferred_private_key = preferred_private_key.strip()
@@ -118,10 +118,10 @@ class SSHTCPForwarder(threading.Thread):
 			preferred_private_key = preferred_private_key.lower()
 			preferred_private_key = tuple(key for key in ssh_keys if binascii.b2a_hex(key.get_fingerprint()).lower() == preferred_private_key)
 			if len(preferred_private_key) == 1:
-				self.__try_connect(look_for_keys=False, allow_agent=False, pkey=preferred_private_key[0])
+				self.__try_connect(look_for_keys=False, pkey=preferred_private_key[0])
 
 		if not self.__connected:
-			self.__try_connect(password=password, allow_agent=False, look_for_keys=True, raise_error=True)
+			self.__try_connect(password=password, look_for_keys=True, raise_error=True)
 
 	def __try_connect(self, *args, **kwargs):
 		raise_error = False
@@ -129,7 +129,7 @@ class SSHTCPForwarder(threading.Thread):
 			raise_error = kwargs['raise_error']
 			del kwargs['raise_error']
 		try:
-			self.client.connect(self.server[0], self.server[1], username=self.username, *args, **kwargs)
+			self.client.connect(self.server[0], self.server[1], username=self.username, allow_agent=False, timeout=12.0, *args, **kwargs)
 		except paramiko.SSHException as error:
 			if raise_error:
 				raise error
