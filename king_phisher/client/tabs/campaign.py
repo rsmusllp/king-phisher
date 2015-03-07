@@ -474,14 +474,17 @@ class CampaignViewTab(object):
 	manages the sub-tabs which display all the information regarding
 	the current campaign.
 	"""
-	def __init__(self, config, parent):
+	def __init__(self, config, parent, application):
 		"""
 		:param dict config: The King Phisher client configuration.
 		:param parent: The parent window for this object.
 		:type parent: :py:class:`Gtk.Window`
+		:param application: The main client application instance.
+		:type application: :py:class:`Gtk.Application`
 		"""
 		self.config = config
 		self.parent = parent
+		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)

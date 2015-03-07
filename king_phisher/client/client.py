@@ -86,6 +86,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		"""
 		assert isinstance(application, Gtk.Application)
 		super(KingPhisherClient, self).__init__(application=application)
+		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')
 		self.config = config
 		"""The main King Phisher client configuration."""
@@ -120,12 +121,12 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
 
-		mailer_tab = MailSenderTab(self.config, self)
+		mailer_tab = MailSenderTab(self.config, self, self.application)
 		self.tabs['mailer'] = mailer_tab
 		self.notebook.insert_page(mailer_tab.box, mailer_tab.label, current_page + 1)
 		self.notebook.set_current_page(current_page + 1)
 
-		campaign_tab = CampaignViewTab(self.config, self)
+		campaign_tab = CampaignViewTab(self.config, self, self.application)
 		campaign_tab.box.show()
 		self.tabs['campaign'] = campaign_tab
 		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page + 2)
