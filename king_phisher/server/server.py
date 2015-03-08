@@ -172,16 +172,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	do_POST = _do_http_method
 	do_RPC = _do_http_method
 
-	def get_query_parameter(self, parameter):
-		"""
-		Get a parameter from the current request's query information.
-
-		:param str parameter: The parameter to retrieve the value for.
-		:return: The value of it exists.
-		:rtype: str
-		"""
-		return self.query_data.get(parameter, [None])[0]
-
 	def get_template_vars_client(self):
 		"""
 		Build a dictionary of variables for a client with an associated
@@ -264,7 +254,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if hasattr(self, '_message_id'):
 			return self._message_id
 		self._message_id = None
-		msg_id = self.get_query_parameter('id')
+		msg_id = self.get_query('id')
 		if msg_id == self.config.get('server.secret_id'):
 			self._message_id = msg_id
 			return self._message_id
@@ -323,7 +313,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			'request': {
 				'command': self.command,
 				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
-				'parameters': dict(zip(self.query_data.keys(), map(self.get_query_parameter, self.query_data.keys())))
+				'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys())))
 			},
 			'server': {
 				'hostname': self.vhost,
@@ -426,7 +416,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.send_response(200)
 		self.end_headers()
 
-		data = self.get_query_parameter('token')
+		data = self.get_query('token')
 		if not data:
 			self.logger.warning('dead drop request received with no \'token\' parameter')
 			return
@@ -493,7 +483,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.end_headers()
 		self.wfile.write(img_data)
 
-		msg_id = self.get_query_parameter('id')
+		msg_id = self.get_query('id')
 		if not msg_id:
 			return
 		session = db_manager.Session()
@@ -571,7 +561,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
 
 		self._handle_page_visit_creds(session, visit_id)
-		trained = self.get_query_parameter('trained')
+		trained = self.get_query('trained')
 		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
 			message.trained = True
 		session.commit()
@@ -580,14 +570,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	def _handle_page_visit_creds(self, session, visit_id):
 		username = None
 		for pname in ['username', 'user', 'u']:
-			username = (self.get_query_parameter(pname) or self.get_query_parameter(pname.title()) or self.get_query_parameter(pname.upper()))
+			username = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
 			if username:
 				break
 		if not username:
 			return
 		password = None
 		for pname in ['password', 'pass', 'p']:
-			password = (self.get_query_parameter(pname) or self.get_query_parameter(pname.title()) or self.get_query_parameter(pname.upper()))
+			password = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
 			if password:
 				break
 		password = (password or '')
