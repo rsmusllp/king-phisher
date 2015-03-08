@@ -39,8 +39,10 @@ from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRegist
 
 __all__ = ['generate_token']
 
-REST_HANDLER = 'KingPhisherRequestHandler'
 REST_API_BASE = '_/api/'
+"""The base URI path for REST API requests."""
+REST_HANDLER = 'KingPhisherRequestHandler'
+"""The :py:class:`~king_phisher.third_party.AdvancedHTTPServer.AdvancedHTTPServerRequestHandler` class to register REST API handlers to."""
 
 def generate_token():
 	"""

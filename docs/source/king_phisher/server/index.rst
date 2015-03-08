@@ -9,5 +9,6 @@
 
    authenticator.rst
    pages.rst
+   rest_api.rst
    server.rst
    server_rpc.rst
