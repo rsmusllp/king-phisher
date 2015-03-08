@@ -395,13 +395,18 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 				return
 
 		server_rpc_api_version = server_version_info.get('rpc_api_version', -1)
-		self.logger.info("successfully connected to the king phisher server (version: {0} rpc api version: {1})".format(server_version_info['version'], server_rpc_api_version))
+		if isinstance(server_rpc_api_version, int):
+			# compatibility with pre-0.2.0 version
+			server_rpc_api_version = (server_rpc_api_version, 0)
+		self.logger.info("successfully connected to the king phisher server (version: {0} rpc api version: {1}.{2})".format(server_version_info['version'], server_rpc_api_version[0], server_rpc_api_version[1]))
 		self.server_local_port = local_port
-		if server_rpc_api_version != version.rpc_api_version:
-			if version.rpc_api_version < server_rpc_api_version:
-				secondary_text = 'The local client is not up to date with the server version.'
-			else:
-				secondary_text = 'The remote server is not up to date with the client version.'
+
+		secondary_text = None
+		if server_rpc_api_version[0] < version.rpc_api_version.major or (server_rpc_api_version[0] == version.rpc_api_version.major and server_rpc_api_version[1] < version.rpc_api_version.minor):
+			secondary_text = 'The remote server is not up to date with the client version.'
+		elif server_rpc_api_version[0] > version.rpc_api_version.major:
+			secondary_text = 'The local client is not up to date with the server version.'
+		if secondary_text:
 			secondary_text += '\nPlease ensure that both the client and server are fully up to date.'
 			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', self, secondary_text)
 			self.server_disconnect()

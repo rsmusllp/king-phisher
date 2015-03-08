@@ -82,6 +82,7 @@ class KingPhisherClientRPCTerminal(object):
 		self.window.set_destroy_with_parent(True)
 		self.window.connect('destroy', self.signal_window_destroy)
 		self.terminal = Vte.Terminal()
+		self.terminal.set_property('rewrap-on-resize', True)
 		self.terminal.set_scroll_on_keystroke(True)
 		vbox = Gtk.VBox()
 		self.window.add(vbox)
@@ -125,6 +126,7 @@ class KingPhisherClientRPCTerminal(object):
 			vte_pty = self.termina.pty_new(Vte.PtyFlags.DEFAULT)
 			self.terminal.set_pty_object(vte_pty)
 			self.terminal.connect('child-exited', lambda vt: self.window.destroy())
+
 		child_pid, _, _, _ = GLib.spawn_async(
 			working_directory=os.getcwd(),
 			argv=[utilities.which('python'), '-c', python_command],
