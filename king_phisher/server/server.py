@@ -118,6 +118,10 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		regex_prefix = '^'
 		if self.config.get('server.vhost_directories'):
 			regex_prefix += '[\w\.\-]+\/'
+			for path, handler in self.handler_map.items():
+				if path.startswith(rest_api.REST_API_BASE):
+					del self.handler_map[path]
+					self.handler_map[regex_prefix + path] = handler
 		self.handler_map[regex_prefix + 'kpdd$'] = self.handle_deaddrop_visit
 		self.handler_map[regex_prefix + 'kp\\.js$'] = self.handle_javascript_hook
 
