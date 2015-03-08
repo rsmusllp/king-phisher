@@ -46,6 +46,11 @@ server:
   # Require an ID associated with a campaign to load pages
   require_id: true
 
+  rest_api:
+    enabled: true
+    # When left at null the token will be randomized at run time
+    token: null
+
   # Configure the server header value
   #server_header: Apache/2.4.9 (Unix)
 

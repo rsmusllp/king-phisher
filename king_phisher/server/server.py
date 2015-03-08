@@ -49,6 +49,7 @@ from king_phisher import utilities
 from king_phisher import xor
 from king_phisher.server import authenticator
 from king_phisher.server import pages
+from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
@@ -95,6 +96,10 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 		raise errors.KingPhisherError("socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
+	if not config.get_if_exists('server.rest_api.token'):
+		config.set('server.rest_api.token', rest_api.generate_token())
+	if config.get('server.rest_api.enabled'):
+		logger.info('rest api initialized with token: ' + config.get('server.rest_api.token'))
 	return server
 
 class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, AdvancedHTTPServerRequestHandler):

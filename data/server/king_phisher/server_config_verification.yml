@@ -8,11 +8,11 @@
 settings:
   server.address.host: str
   server.address.port: int
-
   server.cookie_name: str
   server.database: str
   server.geoip.database: str
   server.require_id: bool
+  server.rest_api.enabled: bool
   server.tracking_image: str
   server.vhost_directories: bool
   server.web_root: str
