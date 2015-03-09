@@ -41,8 +41,6 @@ __all__ = ['generate_token']
 
 REST_API_BASE = '_/api/'
 """The base URI path for REST API requests."""
-REST_HANDLER = 'KingPhisherRequestHandler'
-"""The :py:class:`~king_phisher.third_party.AdvancedHTTPServer.AdvancedHTTPServerRequestHandler` class to register REST API handlers to."""
 
 def generate_token():
 	"""
@@ -70,6 +68,7 @@ def rest_handler(handle_function):
 			return
 		response = dict(result=handle_function(handler, params))
 		response = json.dumps(response, sort_keys=True, indent=2, separators=(',', ': '))
+		response = response.encode('utf-8')
 		handler.send_response(200)
 		handler.send_header('Content-Type', 'application/json')
 		handler.send_header('Content-Length', str(len(response)))
@@ -78,14 +77,14 @@ def rest_handler(handle_function):
 		return
 	return wrapped
 
-@AdvancedHTTPServerRegisterPath(REST_API_BASE + 'geoip/lookup', REST_HANDLER)
+@AdvancedHTTPServerRegisterPath(REST_API_BASE + 'geoip/lookup')
 @rest_handler
 def rest_api_geoip_lookup(handler, params):
 	ip = handler.get_query('ip')
 	assert ip
 	return geoip.lookup(ip)
 
-@AdvancedHTTPServerRegisterPath(REST_API_BASE + 'sms/send', REST_HANDLER)
+@AdvancedHTTPServerRegisterPath(REST_API_BASE + 'sms/send')
 @rest_handler
 def rest_api_sms_send(handler, params):
 	sms.send_sms(

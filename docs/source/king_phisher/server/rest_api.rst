@@ -10,9 +10,6 @@ Data
 .. autodata:: king_phisher.server.rest_api.REST_API_BASE
    :annotation:
 
-.. autodata:: king_phisher.server.rest_api.REST_HANDLER
-   :annotation:
-
 Functions
 ---------
 

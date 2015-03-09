@@ -33,9 +33,6 @@
 import os
 import unittest
 
-from king_phisher.client import client_rpc
-from king_phisher.server.database import manager as db_manager
-from king_phisher.server.database import models as db_models
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
 
@@ -111,7 +108,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.campaign_id = self.rpc('campaign/new', 'Unit Test Campaign')
 
 	def step_2_send_messages(self):
-		self.landing_page = list(filter(lambda f: os.path.splitext(f)[1] == '.html', self.web_root_files()))[0]
+		self.landing_page = next(f for f in self.web_root_files() if os.path.splitext(f)[1] == '.html')
 		self.rpc('campaign/landing_page/new', self.campaign_id, 'localhost', self.landing_page)
 		message_count = self.rpc('campaign/messages/count', self.campaign_id)
 		self.assertEqual(message_count, 0)
@@ -161,14 +158,14 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.assertEqual(visit.visit_count, visit_count + 1)
 
 	def steps(self):
-		steps = filter(lambda f: f.startswith('step_'), dir(self))
+		steps = [f for f in dir(self) if f.startswith('step_')]
 		steps = sorted(steps, key=lambda x: int(x.split('_')[1]))
 		for name in steps:
 			yield name, getattr(self, name)
 
 	def test_campaign_workflow(self):
 		self.config.set('server.require_id', True)
-		for name, step in self.steps():
+		for _, step in self.steps():
 			step()
 
 if __name__ == '__main__':

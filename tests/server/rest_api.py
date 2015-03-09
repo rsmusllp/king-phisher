@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/server/__init__.py
+#  tests/server/rest_api.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,14 +30,32 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
+import json
+import unittest
 
-from .authenticator import ServerAuthenticatorTests
-from .database import ServerDatabaseTests
-from .rest_api import ServerRESTAPITests
-from .server import CampaignWorkflowTests
-from .server import ServerTests
-from .server_rpc import ServerRPCTests
+from king_phisher.server import rest_api
+from king_phisher.testing import KingPhisherServerTestCase
 
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
+class ServerRESTAPITests(KingPhisherServerTestCase):
+	def test_rest_api_token(self):
+		response = self.http_request('/' + rest_api.REST_API_BASE + 'geoip/lookup', include_id=False)
+		self.assertHTTPStatus(response, 401)
+		response = self.http_request('/' + rest_api.REST_API_BASE + 'geoip/lookup?token=fake', include_id=False)
+		self.assertHTTPStatus(response, 401)
+
+	def test_rest_api_geoip_lookup(self):
+		resource = '/' + rest_api.REST_API_BASE + 'geoip/lookup'
+		resource += '?token=' + self.config.get('server.rest_api.token')
+		resource += '&ip=8.8.8.8'
+		response = self.http_request(resource, include_id=False)
+		self.assertHTTPStatus(response, 200)
+		self.assertEqual(response.getheader('Content-Type'), 'application/json')
+		response = response.read()
+		if not isinstance(response, str):
+			response = response.decode('utf-8')
+		response = json.loads(response)
+		self.assertIn('result', response)
+		self.assertIsInstance(response['result'], dict)
+
+if __name__ == '__main__':
+	unittest.main()

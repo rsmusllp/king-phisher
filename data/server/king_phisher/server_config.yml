@@ -47,8 +47,8 @@ server:
   require_id: true
 
   rest_api:
-    enabled: true
-    # When left at null the token will be randomized at run time
+    enabled: false
+    # When null the token will be randomized at run time
     token: null
 
   # Configure the server header value

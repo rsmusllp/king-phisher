@@ -40,6 +40,7 @@ import unittest
 
 from king_phisher import find
 from king_phisher.client import client_rpc
+from king_phisher.server import rest_api
 from king_phisher.server.server import *
 
 import smoke_zephyr.configuration
@@ -126,6 +127,8 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		if os.environ.get('TRAVIS'):
 			config.set('server.geoip.database', 'GeoLite2-City.mmdb')
 		config.set('server.web_root', web_root)
+		config.set('server.rest_api.enabled', True)
+		config.set('server.rest_api.token', rest_api.generate_token())
 		self.config = config
 		self.server = build_king_phisher_server(config, HandlerClass=KingPhisherRequestHandlerTest)
 		config.set('server.address.port', self.server.http_server.server_port)
