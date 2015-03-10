@@ -26,6 +26,8 @@ For instructions on how to install, please see the
 file. After installing, for instructions on how to get started please see the
 [wiki](https://github.com/securestate/king-phisher/wiki).
 
+![alt text](https://raw.githubusercontent.com/securestate/king-phisher/screenshots/dashboard.png "Campaign Dashboard")
+
 ## License
 King Phisher is released under the BSD 3-clause license, for more details see
 the [LICENSE](https://github.com/securestate/king-phisher/blob/master/LICENSE) file.
