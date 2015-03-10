@@ -391,6 +391,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			connection_failed = False
 		finally:
 			if connection_failed:
+				self.rpc = None
 				self.server_disconnect()
 				return
 
