@@ -482,9 +482,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		return
 
 	def handle_email_opened(self, query):
-		# image size: 49 Bytes
-		img_data = '47494638396101000100910000000000ffffffffffff00000021f90401000002'
-		img_data += '002c00000000010001000002025401003b'
+		# image size: 43 Bytes
+		img_data = '47494638396101000100800100000000ffffff21f90401000001002c00000000'
+		img_data += '010001000002024c01003b'
 		img_data = binascii.a2b_hex(img_data)
 		self.send_response(200)
 		self.send_header('Content-Type', 'image/gif')
