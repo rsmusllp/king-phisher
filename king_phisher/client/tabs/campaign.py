@@ -413,6 +413,10 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 
 	def loader_thread_routine(self):
 		"""The loading routine to be executed within a thread."""
+		if not 'campaign_id' in self.config:
+			return
+		if not self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id']):
+			return
 		info_cache = {}
 		for graph in self.graphs:
 			if self.is_destroyed.is_set():
