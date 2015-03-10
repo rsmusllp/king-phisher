@@ -595,6 +595,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="KingPhisherClientCampaignSelectionDialog.entry_new_campaign_name">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The name of the new campaign to create.</property>
                 <property name="invisible_char">●</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
@@ -613,6 +614,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">Create a new campaign.</property>
                 <signal name="clicked" handler="signal_button_clicked" swapped="no"/>
               </object>
               <packing>
@@ -1166,7 +1168,9 @@ Brandan Geise</property>
               <object class="GtkEntry" id="MailSenderConfigurationTab.entry_webserver_url">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The URL on the King Phisher server.</property>
                 <property name="hexpand">True</property>
+                <property name="placeholder_text" translatable="yes">http://king-phisher.com/</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1205,6 +1209,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="MailSenderConfigurationTab.entry_html_file">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The HTML message template file.</property>
                 <property name="hexpand">True</property>
                 <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
                 <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
@@ -1291,6 +1296,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="MailSenderConfigurationTab.entry_attachment_file">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">Attach an arbitrary file to sent messages.</property>
                 <property name="hexpand">True</property>
                 <property name="editable">False</property>
                 <property name="invisible_char">●</property>
@@ -1330,6 +1336,7 @@ Brandan Geise</property>
           <object class="GtkEntry" id="MailSenderConfigurationTab.entry_company_name">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="placeholder_text" translatable="yes">King Phisher Inc.</property>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -1340,6 +1347,8 @@ Brandan Geise</property>
           <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="tooltip_text" translatable="yes">The email address to send messages from.</property>
+            <property name="placeholder_text" translatable="yes">sender@king-phisher.com</property>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -1792,6 +1801,7 @@ Brandan Geise</property>
                       <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_server">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The King Phisher SSH server.</property>
                         <property name="editable">False</property>
                         <property name="placeholder_text" translatable="yes">server:port</property>
                       </object>
@@ -1804,6 +1814,7 @@ Brandan Geise</property>
                       <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_server_username">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The username to authenticate to SSH with.</property>
                         <property name="editable">False</property>
                         <property name="placeholder_text" translatable="yes">username</property>
                       </object>
@@ -1863,6 +1874,7 @@ Brandan Geise</property>
                               <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_sms_phone_number">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">The phone number to send SMS alerts to.</property>
                                 <property name="max_length">14</property>
                                 <property name="placeholder_text" translatable="yes">(###) ###-####</property>
                               </object>
@@ -2147,6 +2159,7 @@ Brandan Geise</property>
                               <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_ssh_server">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">The SSH server to use to port forward the SMTP connection.</property>
                                 <property name="placeholder_text" translatable="yes">server:port</property>
                               </object>
                               <packing>
@@ -2158,6 +2171,7 @@ Brandan Geise</property>
                               <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_ssh_username">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">The username to log in to the SSH server with.</property>
                                 <property name="placeholder_text" translatable="yes">username</property>
                               </object>
                               <packing>
