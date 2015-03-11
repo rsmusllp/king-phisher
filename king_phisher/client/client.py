@@ -185,6 +185,10 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		action.connect('activate', lambda x: self.delete_campaign())
 		action_group.add_action(action)
 
+		action = Gtk.Action(name='EditRenameCampaign', label='Rename Campaign', tooltip='Rename Campaign', stock_id=None)
+		action.connect('activate', lambda x: self.rename_campaign())
+		action_group.add_action(action)
+
 		action = Gtk.Action(name='EditStopService', label='Stop Service', tooltip='Stop The Remote King-Phisher Service', stock_id=None)
 		action.connect('activate', lambda x: self.stop_remote_service())
 		action_group.add_action(action)
@@ -428,6 +432,15 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		"""Load the necessary values from the server's configuration."""
 		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image'])
 		return
+
+	def rename_campaign(self):
+		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
+		prompt = dialogs.KingPhisherClientTextEntryDialog.build_prompt(self.config, self, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
+		response = prompt.interact()
+		if response == None or response == campaign.name:
+			return
+		self.rpc('campaigns/set', self.config['campaign_id'], ('name',), (response,))
+		gui_utilities.show_dialog_info('Campaign Name Updated', self, 'The campaign name was successfully changed')
 
 	def delete_campaign(self):
 		"""

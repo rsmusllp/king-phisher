@@ -16,6 +16,7 @@
 			<menuitem action="EditPreferences" />
 			<separator />
 			<menuitem action="EditDeleteCampaign" />
+			<menuitem action="EditRenameCampaign" />
 			<menuitem action="EditStopService" />
 		</menu>
 		<menu action="ToolsMenu">
