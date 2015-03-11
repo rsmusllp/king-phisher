@@ -38,9 +38,9 @@ from king_phisher.client import gui_utilities
 from gi.repository import GObject
 from gi.repository import Gtk
 
-__all__ = ['KingPhisherClientConfigurationDialog']
+__all__ = ['ConfigurationDialog']
 
-class KingPhisherClientConfigurationDialog(gui_utilities.UtilityGladeGObject):
+class ConfigurationDialog(gui_utilities.UtilityGladeGObject):
 	"""
 	Display the King Phisher client configuration dialog. Running this
 	dialog via the :py:func:`.interact` method will cause some server

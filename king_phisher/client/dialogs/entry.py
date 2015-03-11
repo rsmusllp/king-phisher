@@ -34,15 +34,18 @@ from king_phisher.client import gui_utilities
 
 from gi.repository import Gtk
 
-__all__ = ['KingPhisherClientTextEntryDialog']
+__all__ = ['TextEntryDialog']
 
-class KingPhisherClientTextEntryDialog(gui_utilities.UtilityGladeGObject):
+class TextEntryDialog(gui_utilities.UtilityGladeGObject):
 	"""
-	Display a :py:class:`Gtk.Dialog` with a simple text entry.
+	Display a :py:class:`Gtk.Dialog` with a text entry suitable for prompting
+	users for text input. If the user confirms the action, the text within the
+	entry is returned. If the user cancels the action or closes the dialog, None
+	is returned.
 	"""
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
-		super(KingPhisherClientTextEntryDialog, self).__init__(*args, **kwargs)
+		super(TextEntryDialog, self).__init__(*args, **kwargs)
 		self.label = self.gtk_builder_get('label')
 		self.entry = self.gtk_builder_get('entry')
 		button = self.dialog.get_widget_for_response(response_id=Gtk.ResponseType.APPLY)
@@ -50,6 +53,20 @@ class KingPhisherClientTextEntryDialog(gui_utilities.UtilityGladeGObject):
 
 	@classmethod
 	def build_prompt(cls, config, parent, title, label_text, entry_text=None, entry_tooltip_text=None):
+		"""
+		Create a :py:class:`.TextEntryDialog` instance configured with the
+		specified text prompts.
+
+		:param dict config: The King Phisher client configuration.
+		:param parent: The parent window for this object.
+		:type parent: :py:class:`Gtk.Window`
+		:param str title: The title to set for the dialog window.
+		:param str label_text: The text to display in the entry's label.
+		:param str entry_text: Text to place in the entry.
+		:param str entry_tooltip_text: Text to display in the tool tip of the entry.
+		:return: If the prompt is submitted by the user, the text within the entry is returned.
+		:rtype: str
+		"""
 		prompt = cls(config, parent)
 		prompt.dialog.set_property('title', title)
 		prompt.label.set_text(label_text)

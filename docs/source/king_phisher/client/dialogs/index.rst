@@ -8,4 +8,5 @@
    about.rst
    campaign_selection.rst
    configuration.rst
+   entry.rst
    login.rst

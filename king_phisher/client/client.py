@@ -138,7 +138,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.rpc = None # needs to be initialized last
 		"""The :py:class:`.KingPhisherRPCClient` instance."""
 
-		login_dialog = dialogs.KingPhisherClientLoginDialog(self.config, self)
+		login_dialog = dialogs.LoginDialog(self.config, self)
 		login_dialog.dialog.connect('response', self.signal_login_dialog_response, login_dialog)
 		login_dialog.dialog.show()
 
@@ -435,7 +435,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 	def rename_campaign(self):
 		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
-		prompt = dialogs.KingPhisherClientTextEntryDialog.build_prompt(self.config, self, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
+		prompt = dialogs.TextEntryDialog.build_prompt(self.config, self, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
 		response = prompt.interact()
 		if response == None or response == campaign.name:
 			return
@@ -459,10 +459,10 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 	def edit_preferences(self):
 		"""
 		Display a
-		:py:class:`.dialogs.configuration.KingPhisherClientConfigurationDialog`
+		:py:class:`.dialogs.configuration.ConfigurationDialog`
 		instance and saves the configuration to disk if cancel is not selected.
 		"""
-		dialog = dialogs.KingPhisherClientConfigurationDialog(self.config, self)
+		dialog = dialogs.ConfigurationDialog(self.config, self)
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
 			app = self.get_property('application')
 			app.save_config()
@@ -483,7 +483,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		Display the about dialog showing details about the programs version,
 		license etc.
 		"""
-		about_dialog = dialogs.KingPhisherClientAboutDialog(self.config, self)
+		about_dialog = dialogs.AboutDialog(self.config, self)
 		about_dialog.interact()
 
 	def show_campaign_graph(self, graph_name):
@@ -503,12 +503,12 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 	def show_campaign_selection(self):
 		"""
 		Display the campaign selection dialog in a new
-		:py:class:`.KingPhisherClientCampaignSelectionDialog` instance.
+		:py:class:`.CampaignSelectionDialog` instance.
 
 		:return: The status of the dialog.
 		:rtype: bool
 		"""
-		dialog = dialogs.KingPhisherClientCampaignSelectionDialog(self.config, self)
+		dialog = dialogs.CampaignSelectionDialog(self.config, self)
 		return dialog.interact() == Gtk.ResponseType.APPLY
 
 	def start_sftp_client(self):

@@ -36,9 +36,9 @@ from king_phisher.client import gui_utilities
 from gi.repository import Gdk
 from gi.repository import Gtk
 
-__all__ = ['KingPhisherClientCampaignSelectionDialog']
+__all__ = ['CampaignSelectionDialog']
 
-class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
+class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 	"""
 	Display a dialog which allows a new campaign to be created or an
 	existing campaign to be opened.
@@ -50,7 +50,7 @@ class KingPhisherClientCampaignSelectionDialog(gui_utilities.UtilityGladeGObject
 	]
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
-		super(KingPhisherClientCampaignSelectionDialog, self).__init__(*args, **kwargs)
+		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
 		columns = ['Campaign Name', 'Created By', 'Creation Date']
 		for column_id in range(len(columns)):

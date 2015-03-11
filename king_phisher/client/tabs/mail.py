@@ -209,7 +209,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if self.config['smtp_ssh_enable']:
 			while True:
 				self.text_insert('Connecting to SSH... ')
-				login_dialog = dialogs.KingPhisherClientSSHLoginDialog(self.config, self.parent)
+				login_dialog = dialogs.SSHLoginDialog(self.config, self.parent)
 				login_dialog.objects_load_from_config()
 				response = login_dialog.interact()
 				if response == Gtk.ResponseType.CANCEL:

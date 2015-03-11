@@ -34,9 +34,9 @@ from king_phisher.client.gui_utilities import UtilityGladeGObject
 
 from gi.repository import Gtk
 
-__all__ = ['KingPhisherClientLoginDialog', 'KingPhisherClientSSHLoginDialog']
+__all__ = ['LoginDialog', 'SSHLoginDialog']
 
-class KingPhisherClientLoginDialogBase(UtilityGladeGObject):
+class BaseLoginDialog(UtilityGladeGObject):
 	"""
 	This object is basic login dialog object that can be inherited from and
 	customized.
@@ -53,7 +53,7 @@ class KingPhisherClientLoginDialogBase(UtilityGladeGObject):
 	def signal_entry_activate(self, entry):
 		self.gobjects['button_connect'].emit('clicked')
 
-class KingPhisherClientLoginDialog(KingPhisherClientLoginDialogBase):
+class LoginDialog(BaseLoginDialog):
 	"""
 	This object is the main King Phisher login dialog, it is used to
 	prompt for connection information for the King Phisher server.
@@ -78,7 +78,7 @@ class KingPhisherClientLoginDialog(KingPhisherClientLoginDialogBase):
 		else:
 			self.gobjects['spinbutton_server_remote_port'].set_value(80)
 
-class KingPhisherClientSSHLoginDialog(KingPhisherClientLoginDialogBase):
+class SSHLoginDialog(BaseLoginDialog):
 	"""
 	This object is the King Phisher SSH login dialog, it is used to
 	prompt for connection information to an SSH server.

@@ -444,7 +444,7 @@ Brandan Geise
       </packing>
     </child>
   </object>
-  <object class="GtkAboutDialog" id="KingPhisherClientAboutDialog">
+  <object class="GtkAboutDialog" id="AboutDialog">
     <property name="can_focus">False</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">King Phisher</property>
@@ -514,25 +514,25 @@ Brandan Geise</property>
       </object>
     </child>
   </object>
-  <object class="GtkDialog" id="KingPhisherClientCampaignSelectionDialog">
+  <object class="GtkDialog" id="CampaignSelectionDialog">
     <property name="width_request">550</property>
     <property name="height_request">350</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkBox" id="KingPhisherClientCampaignSelectionDialog.dialog-vbox4">
+      <object class="GtkBox" id="CampaignSelectionDialog.dialog-vbox4">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">5</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="KingPhisherClientCampaignSelectionDialog.dialog-action_area4">
+          <object class="GtkButtonBox" id="CampaignSelectionDialog.dialog-action_area4">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="KingPhisherClientCampaignSelectionDialog.button_cancel">
+              <object class="GtkButton" id="CampaignSelectionDialog.button_cancel">
                 <property name="label" translatable="yes">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -545,7 +545,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="KingPhisherClientCampaignSelectionDialog.button_select">
+              <object class="GtkButton" id="CampaignSelectionDialog.button_select">
                 <property name="label" translatable="yes">Select</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -566,11 +566,11 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="KingPhisherClientCampaignSelectionDialog.scrolledwindow5">
+          <object class="GtkScrolledWindow" id="CampaignSelectionDialog.scrolledwindow5">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
-              <object class="GtkTreeView" id="KingPhisherClientCampaignSelectionDialog.treeview_campaigns">
+              <object class="GtkTreeView" id="CampaignSelectionDialog.treeview_campaigns">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
@@ -587,12 +587,12 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="KingPhisherClientCampaignSelectionDialog.box1">
+          <object class="GtkBox" id="CampaignSelectionDialog.box1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="spacing">3</property>
             <child>
-              <object class="GtkEntry" id="KingPhisherClientCampaignSelectionDialog.entry_new_campaign_name">
+              <object class="GtkEntry" id="CampaignSelectionDialog.entry_new_campaign_name">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The name of the new campaign to create.</property>
@@ -609,7 +609,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="KingPhisherClientCampaignSelectionDialog.button_new_campaign">
+              <object class="GtkButton" id="CampaignSelectionDialog.button_new_campaign">
                 <property name="label" translatable="yes">New Campaign</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -633,30 +633,30 @@ Brandan Geise</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">KingPhisherClientCampaignSelectionDialog.button_cancel</action-widget>
-      <action-widget response="-10">KingPhisherClientCampaignSelectionDialog.button_select</action-widget>
+      <action-widget response="-6">CampaignSelectionDialog.button_cancel</action-widget>
+      <action-widget response="-10">CampaignSelectionDialog.button_select</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkDialog" id="KingPhisherClientSSHLoginDialog">
+  <object class="GtkDialog" id="SSHLoginDialog">
     <property name="can_focus">False</property>
     <property name="default_width">300</property>
     <property name="default_height">200</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkBox" id="KingPhisherClientSSHLoginDialog.dialog-vbox5">
+      <object class="GtkBox" id="SSHLoginDialog.dialog-vbox5">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">3</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="KingPhisherClientSSHLoginDialog.dialog-action_area5">
+          <object class="GtkButtonBox" id="SSHLoginDialog.dialog-action_area5">
             <property name="can_focus">False</property>
             <property name="margin_right">3</property>
             <property name="margin_top">5</property>
             <property name="margin_bottom">3</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="KingPhisherClientSSHLoginDialog.button_cancel">
+              <object class="GtkButton" id="SSHLoginDialog.button_cancel">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -670,7 +670,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="KingPhisherClientSSHLoginDialog.button_connect">
+              <object class="GtkButton" id="SSHLoginDialog.button_connect">
                 <property name="label">gtk-connect</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -692,7 +692,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkGrid" id="KingPhisherClientSSHLoginDialog.grid1">
+          <object class="GtkGrid" id="SSHLoginDialog.grid1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_left">5</property>
@@ -701,7 +701,7 @@ Brandan Geise</property>
             <property name="row_homogeneous">True</property>
             <property name="column_homogeneous">True</property>
             <child>
-              <object class="GtkLabel" id="KingPhisherClientSSHLoginDialog.label11">
+              <object class="GtkLabel" id="SSHLoginDialog.label11">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
@@ -712,7 +712,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="KingPhisherClientSSHLoginDialog.label12">
+              <object class="GtkLabel" id="SSHLoginDialog.label12">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Username</property>
@@ -723,7 +723,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="KingPhisherClientSSHLoginDialog.label13">
+              <object class="GtkLabel" id="SSHLoginDialog.label13">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Password</property>
@@ -734,7 +734,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="KingPhisherClientSSHLoginDialog.entry_ssh_server">
+              <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="primary_icon_tooltip_text" translatable="yes">The SSH server.</property>
@@ -747,7 +747,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="KingPhisherClientSSHLoginDialog.entry_ssh_username">
+              <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
@@ -760,7 +760,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="KingPhisherClientSSHLoginDialog.entry_ssh_password">
+              <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_password">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="has_focus">True</property>
@@ -785,17 +785,17 @@ Brandan Geise</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">KingPhisherClientSSHLoginDialog.button_cancel</action-widget>
-      <action-widget response="-10">KingPhisherClientSSHLoginDialog.button_connect</action-widget>
+      <action-widget response="-6">SSHLoginDialog.button_cancel</action-widget>
+      <action-widget response="-10">SSHLoginDialog.button_connect</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkDialog" id="KingPhisherClientTextEntryDialog">
+  <object class="GtkDialog" id="TextEntryDialog">
     <property name="can_focus">False</property>
     <property name="default_width">300</property>
     <property name="default_height">124</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkBox" id="KingPhisherClientTextEntryDialog.dialog-vbox5">
+      <object class="GtkBox" id="TextEntryDialog.dialog-vbox5">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
@@ -806,7 +806,7 @@ Brandan Geise</property>
             <property name="margin_bottom">5</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="KingPhisherClientTextEntryDialog.button_cancel">
+              <object class="GtkButton" id="TextEntryDialog.button_cancel">
                 <property name="label" translatable="yes">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -819,7 +819,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="KingPhisherClientTextEntryDialog.button_apply">
+              <object class="GtkButton" id="TextEntryDialog.button_apply">
                 <property name="label" translatable="yes">Apply</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -848,7 +848,7 @@ Brandan Geise</property>
             <property name="orientation">vertical</property>
             <property name="homogeneous">True</property>
             <child>
-              <object class="GtkLabel" id="KingPhisherClientTextEntryDialog.label">
+              <object class="GtkLabel" id="TextEntryDialog.label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
@@ -861,7 +861,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="KingPhisherClientTextEntryDialog.entry">
+              <object class="GtkEntry" id="TextEntryDialog.entry">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="activates_default">True</property>
@@ -882,8 +882,8 @@ Brandan Geise</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">KingPhisherClientTextEntryDialog.button_cancel</action-widget>
-      <action-widget response="-10">KingPhisherClientTextEntryDialog.button_apply</action-widget>
+      <action-widget response="-6">TextEntryDialog.button_cancel</action-widget>
+      <action-widget response="-10">TextEntryDialog.button_apply</action-widget>
     </action-widgets>
   </object>
   <object class="GtkBox" id="MailSenderEditTab">
@@ -1558,7 +1558,7 @@ Brandan Geise</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkDialog" id="KingPhisherClientLoginDialog">
+  <object class="GtkDialog" id="LoginDialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher</property>
     <property name="default_width">300</property>
@@ -1566,19 +1566,19 @@ Brandan Geise</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkBox" id="KingPhisherClientLoginDialog.dialog-vbox5">
+      <object class="GtkBox" id="LoginDialog.dialog-vbox5">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">3</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="KingPhisherClientLoginDialog.dialog-action_area5">
+          <object class="GtkButtonBox" id="LoginDialog.dialog-action_area5">
             <property name="can_focus">False</property>
             <property name="margin_right">3</property>
             <property name="margin_top">5</property>
             <property name="margin_bottom">3</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="KingPhisherClientLoginDialog.button_cancel">
+              <object class="GtkButton" id="LoginDialog.button_cancel">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -1592,7 +1592,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="KingPhisherClientLoginDialog.button_connect">
+              <object class="GtkButton" id="LoginDialog.button_connect">
                 <property name="label">gtk-connect</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -1614,7 +1614,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkGrid" id="KingPhisherClientLoginDialog.grid1">
+          <object class="GtkGrid" id="LoginDialog.grid1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="valign">start</property>
@@ -1624,7 +1624,7 @@ Brandan Geise</property>
             <property name="row_homogeneous">True</property>
             <property name="column_homogeneous">True</property>
             <child>
-              <object class="GtkLabel" id="KingPhisherClientLoginDialog.label11">
+              <object class="GtkLabel" id="LoginDialog.label11">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
@@ -1635,7 +1635,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="KingPhisherClientLoginDialog.label12">
+              <object class="GtkLabel" id="LoginDialog.label12">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Username</property>
@@ -1646,7 +1646,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="KingPhisherClientLoginDialog.label13">
+              <object class="GtkLabel" id="LoginDialog.label13">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Password</property>
@@ -1657,7 +1657,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server">
+              <object class="GtkEntry" id="LoginDialog.entry_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The King Phisher SSH server.</property>
@@ -1670,7 +1670,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server_username">
+              <object class="GtkEntry" id="LoginDialog.entry_server_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The username to authenticate to SSH with.</property>
@@ -1683,7 +1683,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="KingPhisherClientLoginDialog.entry_server_password">
+              <object class="GtkEntry" id="LoginDialog.entry_server_password">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="has_focus">True</property>
@@ -1699,7 +1699,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkSpinButton" id="KingPhisherClientLoginDialog.spinbutton_server_remote_port">
+              <object class="GtkSpinButton" id="LoginDialog.spinbutton_server_remote_port">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The port on which the King Phisher server is listening.</property>
@@ -1714,7 +1714,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkSwitch" id="KingPhisherClientLoginDialog.switch_server_use_ssl">
+              <object class="GtkSwitch" id="LoginDialog.switch_server_use_ssl">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">Whether the King Phisher server is listening with SSL or not.</property>
@@ -1759,8 +1759,8 @@ Brandan Geise</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">KingPhisherClientLoginDialog.button_cancel</action-widget>
-      <action-widget response="-10">KingPhisherClientLoginDialog.button_connect</action-widget>
+      <action-widget response="-6">LoginDialog.button_cancel</action-widget>
+      <action-widget response="-10">LoginDialog.button_connect</action-widget>
     </action-widgets>
   </object>
   <object class="GtkListStore" id="SMSCarriers">
@@ -1797,7 +1797,7 @@ Brandan Geise</property>
     <property name="step_increment">0.5</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkDialog" id="KingPhisherClientConfigurationDialog">
+  <object class="GtkDialog" id="ConfigurationDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">King Phisher Configuration</property>
@@ -1806,18 +1806,18 @@ Brandan Geise</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkBox" id="KingPhisherClientConfigurationDialog.dialog-vbox3">
+      <object class="GtkBox" id="ConfigurationDialog.dialog-vbox3">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="KingPhisherClientConfigurationDialog.dialog-action_area3">
+          <object class="GtkButtonBox" id="ConfigurationDialog.dialog-action_area3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="KingPhisherClientConfigurationDialog.button_cancel">
+              <object class="GtkButton" id="ConfigurationDialog.button_cancel">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -1831,7 +1831,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="KingPhisherClientConfigurationDialog.button_apply">
+              <object class="GtkButton" id="ConfigurationDialog.button_apply">
                 <property name="label">gtk-apply</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -1853,7 +1853,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkNotebook" id="KingPhisherClientConfigurationDialog.notebook1">
+          <object class="GtkNotebook" id="ConfigurationDialog.notebook1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
@@ -1895,7 +1895,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_server">
+                      <object class="GtkEntry" id="ConfigurationDialog.entry_server">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The King Phisher SSH server.</property>
@@ -1908,7 +1908,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_server_username">
+                      <object class="GtkEntry" id="ConfigurationDialog.entry_server_username">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The username to authenticate to SSH with.</property>
@@ -1928,12 +1928,12 @@ Brandan Geise</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="KingPhisherClientConfigurationDialog.frame2">
+                  <object class="GtkFrame" id="ConfigurationDialog.frame2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkAlignment" id="KingPhisherClientConfigurationDialog.alignment2">
+                      <object class="GtkAlignment" id="ConfigurationDialog.alignment2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="left_padding">12</property>
@@ -1968,7 +1968,7 @@ Brandan Geise</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_sms_phone_number">
+                              <object class="GtkEntry" id="ConfigurationDialog.entry_sms_phone_number">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">The phone number to send SMS alerts to.</property>
@@ -1981,7 +1981,7 @@ Brandan Geise</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBox" id="KingPhisherClientConfigurationDialog.combobox_sms_carrier">
+                              <object class="GtkComboBox" id="ConfigurationDialog.combobox_sms_carrier">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="valign">center</property>
@@ -2003,7 +2003,7 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label1">
+                      <object class="GtkLabel" id="ConfigurationDialog.label1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;SMS Settings&lt;/b&gt;</property>
@@ -2018,12 +2018,12 @@ Brandan Geise</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="KingPhisherClientConfigurationDialog.frame3">
+                  <object class="GtkFrame" id="ConfigurationDialog.frame3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkAlignment" id="KingPhisherClientConfigurationDialog.alignment3">
+                      <object class="GtkAlignment" id="ConfigurationDialog.alignment3">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="left_padding">12</property>
@@ -2047,7 +2047,7 @@ Brandan Geise</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_server_beef_hook">
+                              <object class="GtkEntry" id="ConfigurationDialog.entry_server_beef_hook">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="hexpand">True</property>
@@ -2063,7 +2063,7 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label2">
+                      <object class="GtkLabel" id="ConfigurationDialog.label2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;BeEF Settings&lt;/b&gt;</property>
@@ -2080,7 +2080,7 @@ Brandan Geise</property>
               </object>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label10">
+              <object class="GtkLabel" id="ConfigurationDialog.label10">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
@@ -2117,7 +2117,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_smtp_server">
+                      <object class="GtkEntry" id="ConfigurationDialog.entry_smtp_server">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The SMTP server to use for sending messages.</property>
@@ -2130,7 +2130,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSpinButton" id="KingPhisherClientConfigurationDialog.spinbutton_smtp_max_send_rate">
+                      <object class="GtkSpinButton" id="ConfigurationDialog.spinbutton_smtp_max_send_rate">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Maximum messages to send per minute.</property>
@@ -2178,7 +2178,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSwitch" id="KingPhisherClientConfigurationDialog.switch_smtp_ssl_enable">
+                      <object class="GtkSwitch" id="ConfigurationDialog.switch_smtp_ssl_enable">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Connect to the SMTP server with SSL.</property>
@@ -2191,7 +2191,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSwitch" id="KingPhisherClientConfigurationDialog.switch_smtp_ssh_enable">
+                      <object class="GtkSwitch" id="ConfigurationDialog.switch_smtp_ssh_enable">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Connect to the SMTP server over an SSH tunnel.</property>
@@ -2212,12 +2212,12 @@ Brandan Geise</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="KingPhisherClientConfigurationDialog.frame_smtp_ssh">
+                  <object class="GtkFrame" id="ConfigurationDialog.frame_smtp_ssh">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkAlignment" id="KingPhisherClientConfigurationDialog.alignment1">
+                      <object class="GtkAlignment" id="ConfigurationDialog.alignment1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="left_padding">5</property>
@@ -2253,7 +2253,7 @@ Brandan Geise</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_ssh_server">
+                              <object class="GtkEntry" id="ConfigurationDialog.entry_ssh_server">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">The SSH server to use to port forward the SMTP connection.</property>
@@ -2265,7 +2265,7 @@ Brandan Geise</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="KingPhisherClientConfigurationDialog.entry_ssh_username">
+                              <object class="GtkEntry" id="ConfigurationDialog.entry_ssh_username">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">The username to log in to the SSH server with.</property>
@@ -2281,7 +2281,7 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label14">
+                      <object class="GtkLabel" id="ConfigurationDialog.label14">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;SSH Settings&lt;/b&gt;</property>
@@ -2301,7 +2301,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label15">
+              <object class="GtkLabel" id="ConfigurationDialog.label15">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">SMTP Server</property>
@@ -2321,7 +2321,7 @@ Brandan Geise</property>
                 <property name="margin_bottom">5</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkCheckButton" id="KingPhisherClientConfigurationDialog.checkbutton_alert_subscribe">
+                  <object class="GtkCheckButton" id="ConfigurationDialog.checkbutton_alert_subscribe">
                     <property name="label" translatable="yes">Subscribe To SMS Alerts</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -2338,7 +2338,7 @@ Brandan Geise</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="KingPhisherClientConfigurationDialog.checkbutton_reject_after_credentials">
+                  <object class="GtkCheckButton" id="ConfigurationDialog.checkbutton_reject_after_credentials">
                     <property name="label" translatable="yes">Deny Requests After Credential Submission</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -2360,7 +2360,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="KingPhisherClientConfigurationDialog.label4">
+              <object class="GtkLabel" id="ConfigurationDialog.label4">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Campaign</property>
@@ -2380,7 +2380,7 @@ Brandan Geise</property>
                 <property name="margin_bottom">5</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkCheckButton" id="KingPhisherClientConfigurationDialog.checkbutton_autocheck_spf">
+                  <object class="GtkCheckButton" id="ConfigurationDialog.checkbutton_autocheck_spf">
                     <property name="label" translatable="yes">Automatically Check SPF Records</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -2396,7 +2396,7 @@ Brandan Geise</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFrame" id="KingPhisherClientConfigurationDialog.frame_dashboard">
+                  <object class="GtkFrame" id="ConfigurationDialog.frame_dashboard">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
@@ -2451,7 +2451,7 @@ Brandan Geise</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBoxText" id="KingPhisherClientConfigurationDialog.combobox_dashboard_top_left">
+                              <object class="GtkComboBoxText" id="ConfigurationDialog.combobox_dashboard_top_left">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="hexpand">True</property>
@@ -2462,7 +2462,7 @@ Brandan Geise</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBoxText" id="KingPhisherClientConfigurationDialog.combobox_dashboard_top_right">
+                              <object class="GtkComboBoxText" id="ConfigurationDialog.combobox_dashboard_top_right">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="hexpand">True</property>
@@ -2473,7 +2473,7 @@ Brandan Geise</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBoxText" id="KingPhisherClientConfigurationDialog.combobox_dashboard_bottom">
+                              <object class="GtkComboBoxText" id="ConfigurationDialog.combobox_dashboard_bottom">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="hexpand">True</property>
@@ -2508,7 +2508,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="KingPhisherClientConfigurationDialoglabel14">
+              <object class="GtkLabel" id="ConfigurationDialoglabel14">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Client</property>
@@ -2528,8 +2528,8 @@ Brandan Geise</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="-6">KingPhisherClientConfigurationDialog.button_cancel</action-widget>
-      <action-widget response="-10">KingPhisherClientConfigurationDialog.button_apply</action-widget>
+      <action-widget response="-6">ConfigurationDialog.button_cancel</action-widget>
+      <action-widget response="-10">ConfigurationDialog.button_apply</action-widget>
     </action-widgets>
   </object>
 </interface>

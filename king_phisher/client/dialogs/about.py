@@ -37,16 +37,16 @@ from king_phisher import version
 
 from gi.repository import GdkPixbuf
 
-__all__ = ['KingPhisherClientAboutDialog']
+__all__ = ['AboutDialog']
 
-class KingPhisherClientAboutDialog(gui_utilities.UtilityGladeGObject):
+class AboutDialog(gui_utilities.UtilityGladeGObject):
 	"""
 	Display a :py:class:`Gtk.AboutDialog` with information regarding the King
 	Phisher client.
 	"""
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
-		super(KingPhisherClientAboutDialog, self).__init__(*args, **kwargs)
+		super(AboutDialog, self).__init__(*args, **kwargs)
 		logo_file_path = find.find_data_file('king-phisher-icon.svg')
 		if logo_file_path:
 			logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(logo_file_path, 128, 128)

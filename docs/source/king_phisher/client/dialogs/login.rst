@@ -7,17 +7,17 @@
 Classes
 -------
 
-.. autoclass:: king_phisher.client.dialogs.login.KingPhisherClientLoginDialog
+.. autoclass:: king_phisher.client.dialogs.login.BaseLoginDialog
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.dialogs.login.KingPhisherClientLoginDialogBase
+.. autoclass:: king_phisher.client.dialogs.login.LoginDialog
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.dialogs.login.KingPhisherClientSSHLoginDialog
+.. autoclass:: king_phisher.client.dialogs.login.SSHLoginDialog
    :show-inheritance:
    :members:
    :special-members: __init__
