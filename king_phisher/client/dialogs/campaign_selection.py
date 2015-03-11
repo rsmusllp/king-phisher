@@ -61,6 +61,8 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 			treeview.append_column(column)
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
 		self.load_campaigns()
+		# default sort is by campaign creation date, descending
+		treeview.get_model().set_sort_column_id(3, Gtk.SortType.DESCENDING)
 
 	def _highlight_campaign(self, campaign_name):
 		treeview = self.gobjects['treeview_campaigns']

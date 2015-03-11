@@ -453,7 +453,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			return
 		self.rpc('campaign/delete', self.config['campaign_id'])
 		if not self.show_campaign_selection():
-			gui_utilities.show_dialog_error('A Campaign Must Be Selected', self, 'Now exiting')
+			gui_utilities.show_dialog_error('Now Exiting', self, 'A campaign must be selected.')
 			self.client_quit()
 
 	def edit_preferences(self):
@@ -543,6 +543,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			return
 		self.rpc('shutdown')
 		self.logger.info('the remote king phisher service has been stopped')
-		gui_utilities.show_dialog_error('The Remote Service Has Been Stopped', self, 'Now exiting')
+		gui_utilities.show_dialog_error('Now Exiting', self, 'The remote service has been stopped.')
 		self.client_quit()
 		return
