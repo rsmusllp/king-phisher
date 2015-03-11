@@ -157,7 +157,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 
 		self.text_insert('done.\n')
 		self.text_insert("{0}SPF policy result: {1}\n".format(('WARNING: ' if spf_result.endswith('fail') else ''), spf_result))
-		if spf_result == 'fail' and not gui_utilities.show_dialog_yes_no('Sender Policy Framework Failure', self.parent, 'The configuration fails the domains SPF policy.\nContinue sending messages anyways?'):
+		if spf_result == 'fail' and not gui_utilities.show_dialog_yes_no('Sender Policy Framework Failure', self.parent, 'The configuration fails the domains SPF policy.\nMessages may be marked as forged.\n\nContinue sending messages anyways?'):
 			self.text_insert('Sending aborted due to a failed SPF policy.\n')
 			return
 		return True

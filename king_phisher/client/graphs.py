@@ -239,7 +239,7 @@ class CampaignGraph(object):
 		color = color or MPL_COLOR_NULL
 		width = 0.25
 		ax = self.axes[0]
-		self._graph_bar_set_yparams(max(bars))
+		self._graph_bar_set_yparams(max(bars) if bars else 0)
 		bars = ax.bar(range(len(bars)), bars, width, color=color)
 		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
 		if xticklabels:

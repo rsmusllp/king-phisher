@@ -61,8 +61,11 @@ class ForwardHandler(socketserver.BaseRequestHandler):
 		socketserver.BaseRequestHandler.__init__(self, *args, **kwargs)
 
 	def handle(self):
-		chan = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
-		if chan is None:
+		try:
+			chan = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
+		except paramiko.ChannelException:
+			chan = None
+		if chan == None:
 			return
 		while True:
 			read_ready, _, _ = select.select([self.request, chan], [], [])
