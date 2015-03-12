@@ -78,3 +78,10 @@ class OSFamily(ConstantGroup):
 	OSX = intern('OS X')
 	WINDOWS = intern('Windows NT')
 	WINDOWS_PHONE = intern('Windows Phone')
+
+class SPFResult(ConstantGroup):
+	"""Constants for the different result identifiers returned from SPF checks."""
+	PASS = intern('pass')
+	NEUTRAL = intern('neutral')
+	FAIL = intern('fail')
+	SOFT_FAIL = intern('softfail')

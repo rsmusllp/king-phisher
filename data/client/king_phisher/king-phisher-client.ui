@@ -39,6 +39,199 @@ Brandan Geise
   <!-- interface-description Social Engineering Phishing Toolkit -->
   <!-- interface-copyright 2013-2015, SecureState LLC -->
   <!-- interface-authors Spencer McIntyre\nJeff McCutchan\nBrandan Geise -->
+  <object class="GtkAboutDialog" id="AboutDialog">
+    <property name="can_focus">False</property>
+    <property name="type_hint">dialog</property>
+    <property name="program_name">King Phisher</property>
+    <property name="copyright" translatable="yes">Copyright (c) 2013-2015, SecureState LLC</property>
+    <property name="comments" translatable="yes">Phishing Campaign Toolkit</property>
+    <property name="website">https://github.com/securestate/king-phisher</property>
+    <property name="website_label" translatable="yes">GitHub Home Page</property>
+    <property name="license" translatable="yes">Copyright (c) 2013-2015, SecureState LLC
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following disclaimer
+   in the documentation and/or other materials provided with the
+   distribution.
+ * Neither the name of the project nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</property>
+    <property name="authors">Spencer McIntyre
+Jeff McCutchan
+Brandan Geise</property>
+    <property name="documenters">Spencer McIntyre</property>
+    <property name="logo_icon_name">image-missing</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="aboutdialog-vbox1">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="aboutdialog-action_area1">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkDialog" id="CampaignSelectionDialog">
+    <property name="width_request">550</property>
+    <property name="height_request">350</property>
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="type_hint">dialog</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="CampaignSelectionDialog.dialog-vbox4">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">5</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="CampaignSelectionDialog.dialog-action_area4">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="CampaignSelectionDialog.button_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="CampaignSelectionDialog.button_select">
+                <property name="label" translatable="yes">Select</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="CampaignSelectionDialog.scrolledwindow5">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <child>
+              <object class="GtkTreeView" id="CampaignSelectionDialog.treeview_campaigns">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection4"/>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="CampaignSelectionDialog.box1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkEntry" id="CampaignSelectionDialog.entry_new_campaign_name">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The name of the new campaign to create.</property>
+                <property name="invisible_char">●</property>
+                <property name="primary_icon_activatable">False</property>
+                <property name="secondary_icon_activatable">False</property>
+                <property name="placeholder_text" translatable="yes">new campaign name</property>
+                <signal name="activate" handler="signal_entry_new_campaign_name_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="CampaignSelectionDialog.button_new_campaign">
+                <property name="label" translatable="yes">New Campaign</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">Create a new campaign.</property>
+                <signal name="clicked" handler="signal_button_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="-6">CampaignSelectionDialog.button_cancel</action-widget>
+      <action-widget response="-10">CampaignSelectionDialog.button_select</action-widget>
+    </action-widgets>
+  </object>
   <object class="GtkBox" id="CampaignViewCredentialsTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -443,448 +636,6 @@ Brandan Geise
         <property name="position">2</property>
       </packing>
     </child>
-  </object>
-  <object class="GtkAboutDialog" id="AboutDialog">
-    <property name="can_focus">False</property>
-    <property name="type_hint">dialog</property>
-    <property name="program_name">King Phisher</property>
-    <property name="copyright" translatable="yes">Copyright (c) 2013-2015, SecureState LLC</property>
-    <property name="comments" translatable="yes">Phishing Campaign Toolkit</property>
-    <property name="website">https://github.com/securestate/king-phisher</property>
-    <property name="website_label" translatable="yes">GitHub Home Page</property>
-    <property name="license" translatable="yes">Copyright (c) 2013-2015, SecureState LLC
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above
-   copyright notice, this list of conditions and the following disclaimer
-   in the documentation and/or other materials provided with the
-   distribution.
- * Neither the name of the project nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-</property>
-    <property name="authors">Spencer McIntyre
-Jeff McCutchan
-Brandan Geise</property>
-    <property name="documenters">Spencer McIntyre</property>
-    <property name="logo_icon_name">image-missing</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="aboutdialog-vbox1">
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="aboutdialog-action_area1">
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-      </object>
-    </child>
-  </object>
-  <object class="GtkDialog" id="CampaignSelectionDialog">
-    <property name="width_request">550</property>
-    <property name="height_request">350</property>
-    <property name="can_focus">False</property>
-    <property name="border_width">5</property>
-    <property name="type_hint">dialog</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="CampaignSelectionDialog.dialog-vbox4">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">5</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="CampaignSelectionDialog.dialog-action_area4">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="CampaignSelectionDialog.button_cancel">
-                <property name="label" translatable="yes">Cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="CampaignSelectionDialog.button_select">
-                <property name="label" translatable="yes">Select</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkScrolledWindow" id="CampaignSelectionDialog.scrolledwindow5">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <child>
-              <object class="GtkTreeView" id="CampaignSelectionDialog.treeview_campaigns">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection4"/>
-                </child>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox" id="CampaignSelectionDialog.box1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="spacing">3</property>
-            <child>
-              <object class="GtkEntry" id="CampaignSelectionDialog.entry_new_campaign_name">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">The name of the new campaign to create.</property>
-                <property name="invisible_char">●</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="placeholder_text" translatable="yes">new campaign name</property>
-                <signal name="activate" handler="signal_entry_new_campaign_name_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="CampaignSelectionDialog.button_new_campaign">
-                <property name="label" translatable="yes">New Campaign</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">Create a new campaign.</property>
-                <signal name="clicked" handler="signal_button_clicked" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">2</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="-6">CampaignSelectionDialog.button_cancel</action-widget>
-      <action-widget response="-10">CampaignSelectionDialog.button_select</action-widget>
-    </action-widgets>
-  </object>
-  <object class="GtkDialog" id="SSHLoginDialog">
-    <property name="can_focus">False</property>
-    <property name="default_width">300</property>
-    <property name="default_height">200</property>
-    <property name="destroy_with_parent">True</property>
-    <property name="type_hint">dialog</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="SSHLoginDialog.dialog-vbox5">
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">3</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="SSHLoginDialog.dialog-action_area5">
-            <property name="can_focus">False</property>
-            <property name="margin_right">3</property>
-            <property name="margin_top">5</property>
-            <property name="margin_bottom">3</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="SSHLoginDialog.button_cancel">
-                <property name="label">gtk-cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="SSHLoginDialog.button_connect">
-                <property name="label">gtk-connect</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkGrid" id="SSHLoginDialog.grid1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_left">5</property>
-            <property name="margin_right">5</property>
-            <property name="row_spacing">5</property>
-            <property name="row_homogeneous">True</property>
-            <property name="column_homogeneous">True</property>
-            <child>
-              <object class="GtkLabel" id="SSHLoginDialog.label11">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Server</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="SSHLoginDialog.label12">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Username</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="SSHLoginDialog.label13">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Password</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_server">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">The SSH server.</property>
-                <property name="placeholder_text" translatable="yes">server:port</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_username">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
-                <property name="placeholder_text" translatable="yes">username</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_password">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="has_focus">True</property>
-                <property name="visibility">False</property>
-                <property name="invisible_char">●</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH password to authenticate with.</property>
-                <property name="placeholder_text" translatable="yes">password</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">2</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="-6">SSHLoginDialog.button_cancel</action-widget>
-      <action-widget response="-10">SSHLoginDialog.button_connect</action-widget>
-    </action-widgets>
-  </object>
-  <object class="GtkDialog" id="TextEntryDialog">
-    <property name="can_focus">False</property>
-    <property name="default_width">300</property>
-    <property name="default_height">124</property>
-    <property name="type_hint">dialog</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="TextEntryDialog.dialog-vbox5">
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="dialog-action_area5">
-            <property name="can_focus">False</property>
-            <property name="margin_right">5</property>
-            <property name="margin_bottom">5</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="TextEntryDialog.button_cancel">
-                <property name="label" translatable="yes">Cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="TextEntryDialog.button_apply">
-                <property name="label" translatable="yes">Apply</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox" id="box5">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_left">5</property>
-            <property name="margin_right">5</property>
-            <property name="orientation">vertical</property>
-            <property name="homogeneous">True</property>
-            <child>
-              <object class="GtkLabel" id="TextEntryDialog.label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="halign">start</property>
-                <property name="label" translatable="yes">label</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="TextEntryDialog.entry">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="activates_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="-6">TextEntryDialog.button_cancel</action-widget>
-      <action-widget response="-10">TextEntryDialog.button_apply</action-widget>
-    </action-widgets>
   </object>
   <object class="GtkBox" id="MailSenderEditTab">
     <property name="visible">True</property>
@@ -2380,19 +2131,61 @@ Brandan Geise</property>
                 <property name="margin_bottom">5</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkCheckButton" id="ConfigurationDialog.checkbutton_autocheck_spf">
-                    <property name="label" translatable="yes">Automatically Check SPF Records</property>
+                  <object class="GtkBox" id="box6">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="tooltip_text" translatable="yes">Check SPF records before sending messages.</property>
-                    <property name="xalign">0</property>
-                    <property name="draw_indicator">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="homogeneous">True</property>
+                    <child>
+                      <object class="GtkLabel" id="label18">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">SPF Record Check Type</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="ConfigurationDialog.combobox_spf_check_level">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">SPFCheckLevels</property>
+                        <property name="active">1</property>
+                        <signal name="changed" handler="signal_changed_spf_check_level" swapped="no"/>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext4"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="fill">False</property>
+                    <property name="fill">True</property>
                     <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="ConfigurationDialog.label_spf_level_description">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <attributes>
+                      <attribute name="style" value="italic"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
                   </packing>
                 </child>
                 <child>
@@ -2499,7 +2292,7 @@ Brandan Geise</property>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
               </object>
@@ -2530,6 +2323,282 @@ Brandan Geise</property>
     <action-widgets>
       <action-widget response="-6">ConfigurationDialog.button_cancel</action-widget>
       <action-widget response="-10">ConfigurationDialog.button_apply</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkListStore" id="SPFCheckLevels">
+    <columns>
+      <!-- column-name SPFCheckLevels.level_id -->
+      <column type="gint"/>
+      <!-- column-name SPFCheckLevels.level_name -->
+      <column type="gchararray"/>
+      <!-- column-name SPFCheckLevels.level_description -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">Do Not Check</col>
+        <col id="2" translatable="yes">Do not check SPF records.</col>
+      </row>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">Permissive</col>
+        <col id="2" translatable="yes">Ensure the configuration does not result in a failure.</col>
+      </row>
+      <row>
+        <col id="0">2</col>
+        <col id="1" translatable="yes">Strict</col>
+        <col id="2" translatable="yes">Ensure the configuration results in neutral or pass.</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkDialog" id="SSHLoginDialog">
+    <property name="can_focus">False</property>
+    <property name="default_width">300</property>
+    <property name="default_height">200</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="type_hint">dialog</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="SSHLoginDialog.dialog-vbox5">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">3</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="SSHLoginDialog.dialog-action_area5">
+            <property name="can_focus">False</property>
+            <property name="margin_right">3</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">3</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="SSHLoginDialog.button_cancel">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="SSHLoginDialog.button_connect">
+                <property name="label">gtk-connect</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="SSHLoginDialog.grid1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="row_spacing">5</property>
+            <property name="row_homogeneous">True</property>
+            <property name="column_homogeneous">True</property>
+            <child>
+              <object class="GtkLabel" id="SSHLoginDialog.label11">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Server</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="SSHLoginDialog.label12">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Username</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="SSHLoginDialog.label13">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Password</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_server">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The SSH server.</property>
+                <property name="placeholder_text" translatable="yes">server:port</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_username">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
+                <property name="placeholder_text" translatable="yes">username</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_password">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="has_focus">True</property>
+                <property name="visibility">False</property>
+                <property name="invisible_char">●</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH password to authenticate with.</property>
+                <property name="placeholder_text" translatable="yes">password</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="-6">SSHLoginDialog.button_cancel</action-widget>
+      <action-widget response="-10">SSHLoginDialog.button_connect</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkDialog" id="TextEntryDialog">
+    <property name="can_focus">False</property>
+    <property name="default_width">300</property>
+    <property name="default_height">124</property>
+    <property name="type_hint">dialog</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="TextEntryDialog.dialog-vbox5">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog-action_area5">
+            <property name="can_focus">False</property>
+            <property name="margin_right">5</property>
+            <property name="margin_bottom">5</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="TextEntryDialog.button_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="TextEntryDialog.button_apply">
+                <property name="label" translatable="yes">Apply</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="box5">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="orientation">vertical</property>
+            <property name="homogeneous">True</property>
+            <child>
+              <object class="GtkLabel" id="TextEntryDialog.label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="halign">start</property>
+                <property name="label" translatable="yes">label</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="TextEntryDialog.entry">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="activates_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="-6">TextEntryDialog.button_cancel</action-widget>
+      <action-widget response="-10">TextEntryDialog.button_apply</action-widget>
     </action-widgets>
   </object>
 </interface>

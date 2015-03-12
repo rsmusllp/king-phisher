@@ -34,6 +34,8 @@ import ipaddress
 import logging
 import re
 
+from king_phisher.constants import SPFResult
+
 import dns.exception
 import dns.resolver
 
@@ -41,10 +43,10 @@ MACRO_REGEX = re.compile(r'%\{([slodipvh])(\d*)([r]?)(.?)\}')
 """A regular expression which matches SPF record macros."""
 
 QUALIFIERS = {
-	'+': 'pass',
-	'-': 'fail',
-	'~': 'softfail',
-	'?': 'neutral'
+	'+': SPFResult.PASS,
+	'-': SPFResult.FAIL,
+	'~': SPFResult.SOFT_FAIL,
+	'?': SPFResult.NEUTRAL
 }
 """A dict object keyed with the qualifier symbols to their readable values."""
 
@@ -95,7 +97,7 @@ def check_host(ip, domain, sender=None):
 	:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	:param str domain: The domain to check the SPF policy of.
 	:param str sender: The "MAIL FROM" identity of the message being sent.
-	:return: The SPF policy if one can be found or None.
+	:return: The result of the SPF policy if one can be found or None.
 	:rtype: None, str
 	"""
 	s = SenderPolicyFramework(ip, domain, sender)
@@ -161,7 +163,7 @@ class SenderPolicyFramework(object):
 		matched policy is returned if an SPF policy exists, otherwise None will
 		be returned if no policy is defined.
 
-		:return: The SPF policy described by the object.
+		:return: The result of the SPF policy described by the object.
 		:rtype: None, str
 		"""
 		if not self._policy_checked:
@@ -230,9 +232,9 @@ class SenderPolicyFramework(object):
 				self.logger.debug("{0} check found matching spf record: '{1}'".format(('top' if top_level else 'recursive'), record))
 				return QUALIFIERS[qualifier]
 
-		self.logger.debug('no records matched, returning default policy of \'neutral\'')
+		self.logger.debug('no records matched, returning default policy of neutral')
 		# default result per https://tools.ietf.org/html/rfc7208#section-4.7
-		return 'neutral'
+		return SPFResult.NEUTRAL
 
 	def _dns_query(self, qname, qtype):
 		self.query_limit -= 1
@@ -260,7 +262,7 @@ class SenderPolicyFramework(object):
 				return True
 		elif mechanism == 'include':
 			# pass results in match per https://tools.ietf.org/html/rfc7208#section-5.2
-			return self._check_host(ip, rvalue, sender, top_level=False) == 'pass'
+			return self._check_host(ip, rvalue, sender, top_level=False) == SPFResult.PASS
 		elif mechanism == 'ip4':
 			try:
 				ip_network = ipaddress.IPv4Network(rvalue, strict=False)

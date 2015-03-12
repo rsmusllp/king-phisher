@@ -25,3 +25,11 @@ script:
   - pylint --rcfile data/pylintrc king_phisher
   - python -m unittest -v tests
   - sphinx-build -v docs/source docs/html
+
+notifications:
+  irc:
+    channels:
+      - "chat.freenode.net#king-phisher"
+    on_success: change
+    on_failure: always
+    skip_join: true

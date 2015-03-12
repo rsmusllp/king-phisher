@@ -60,12 +60,13 @@ class ConfigurationDialog(gui_utilities.UtilityGladeGObject):
 		'entry_ssh_server',
 		'entry_ssh_username',
 		# Client Tab
-		'checkbutton_autocheck_spf'
+		'combobox_spf_check_level'
 	]
 	top_gobject = 'dialog'
 	top_level_dependencies = [
 		'SMSCarriers',
-		'SMTPSendRate'
+		'SMTPSendRate',
+		'SPFCheckLevels'
 	]
 	def signal_switch_smtp_ssh(self, switch, _):
 		active = switch.get_property('active')
@@ -81,6 +82,15 @@ class ConfigurationDialog(gui_utilities.UtilityGladeGObject):
 
 	def signal_toggle_reject_after_credentials(self, cbutton):
 		self.parent.rpc('campaigns/set', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
+
+	def signal_changed_spf_check_level(self, combobox):
+		ti = combobox.get_active_iter()
+		if not ti:
+			return
+		model = combobox.get_model()
+		label = self.gtk_builder_get('label_spf_level_description')
+		level_description = model[ti][2]
+		label.set_text(level_description)
 
 	def _configure_settings_dashboard(self):
 		if not graphs.has_matplotlib:
@@ -133,6 +143,7 @@ class ConfigurationDialog(gui_utilities.UtilityGladeGObject):
 	def interact(self):
 		self._configure_settings_dashboard()
 		self._configure_settings_server()
+		self.gtk_builder_get('combobox_spf_check_level').emit('changed')
 
 		self.dialog.show_all()
 		response = self.dialog.run()

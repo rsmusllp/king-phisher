@@ -42,6 +42,7 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
+from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
 from gi.repository import Gtk
@@ -131,7 +132,8 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		return True
 
 	def _sender_precheck_spf(self):
-		if not self.config['autocheck_spf']:
+		spf_check_level = self.config['spf_check_level']
+		if not spf_check_level:
 			return True
 
 		spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
@@ -147,19 +149,26 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			spf_test = spf.SenderPolicyFramework(spf_test_ip, spf_test_domain, spf_test_sender)
 			spf_result = spf_test.check_host()
 		except spf.SPFError as error:
-			spf_result = None
 			self.text_insert("done, encountered exception: {0}.\n".format(error.__class__.__name__))
 			return True
 
 		if not spf_result:
 			self.text_insert('done, no policy was found.\n')
-			return True
-
-		self.text_insert('done.\n')
+		else:
+			self.text_insert('done.\n')
+		dialog_title = 'Sender Policy Framework Failure'
+		dialog_message = None
+		if spf_check_level == 1 and spf_result in [SPFResult.FAIL, SPFResult.SOFT_FAIL]:
+			dialog_message = 'The configuration fails the domains SPF policy.\nMessages may be marked as forged.'
+		elif spf_check_level == 2 and not spf_result in [SPFResult.NEUTRAL, SPFResult.PASS]:
+			dialog_message = 'The configuration does not pass the domains SPF policy.'
+		spf_result = spf_result or 'N/A (No policy found)'
 		self.text_insert("{0}SPF policy result: {1}\n".format(('WARNING: ' if spf_result.endswith('fail') else ''), spf_result))
-		if spf_result == 'fail' and not gui_utilities.show_dialog_yes_no('Sender Policy Framework Failure', self.parent, 'The configuration fails the domains SPF policy.\nMessages may be marked as forged.\n\nContinue sending messages anyways?'):
-			self.text_insert('Sending aborted due to a failed SPF policy.\n')
-			return
+		if dialog_message:
+			dialog_message += '\n\nContinue sending messages anyways?'
+			if not gui_utilities.show_dialog_yes_no(dialog_title, self.parent, dialog_message):
+				self.text_insert('Sending aborted due to the SPF policy.\n')
+				return False
 		return True
 
 	def _sender_precheck_url(self):
