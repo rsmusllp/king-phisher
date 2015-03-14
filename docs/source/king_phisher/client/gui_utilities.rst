@@ -29,6 +29,8 @@ Functions
 
 .. autofunction:: king_phisher.client.gui_utilities.show_dialog
 
+.. autofunction:: king_phisher.client.gui_utilities.show_dialog_exc_socket_error
+
 .. autofunction:: king_phisher.client.gui_utilities.show_dialog_error
 
 .. autofunction:: king_phisher.client.gui_utilities.show_dialog_info

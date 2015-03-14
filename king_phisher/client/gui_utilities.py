@@ -33,6 +33,7 @@
 import contextlib
 import logging
 import os
+import socket
 import threading
 
 from king_phisher import find
@@ -220,6 +221,28 @@ def show_dialog(message_type, message, parent, secondary_text=None, message_butt
 def show_dialog_error(*args, **kwargs):
 	"""Display an error dialog with :py:func:`.show_dialog`."""
 	return show_dialog(Gtk.MessageType.ERROR, *args, **kwargs)
+
+def show_dialog_exc_socket_error(error, parent, title=None):
+	"""
+	Display an error dialog with details regarding a :py:exc:`socket.error`
+	exception that has been raised.
+
+	:param error: The exception instance that has been raised.
+	:type error: :py:exc:`socket.error`
+	:param parent: The parent window that the dialog should belong to.
+	:type parent: :py:class:`Gtk.Window`
+	:param title: The title of the error dialog that is displayed.
+	"""
+	title = title or 'Connection Error'
+	if isinstance(error, socket.timeout):
+		description = 'The connection to the server timed out.'
+	else:
+		error_number, error_message = error.args
+		if error_number == 111:
+			description = 'The server refused the connection.'
+		else:
+			description = "Socket error #{0} ({1}).".format((error_number or 'N/A'), error_message)
+	return show_dialog(Gtk.MessageType.ERROR, title, parent, secondary_text=description)
 
 def show_dialog_info(*args, **kwargs):
 	"""Display an informational dialog with :py:func:`.show_dialog`."""

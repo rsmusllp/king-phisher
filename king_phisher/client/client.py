@@ -261,14 +261,8 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		except paramiko.AuthenticationException:
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, self, 'The server responded that the credentials are invalid.')
-		except socket.timeout:
-			gui_utilities.show_dialog_error(title_ssh_error, self, 'The connection to the server timed out.')
 		except socket.error as error:
-			error_number, error_message = error.args
-			if error_number == 111:
-				gui_utilities.show_dialog_error(title_ssh_error, self, 'The server refused the connection.')
-			else:
-				gui_utilities.show_dialog_error(title_ssh_error, self, "Socket error #{0} ({1}).".format((error_number or 'N/A'), error_message))
+			gui_utilities.show_dialog_exc_socket_error(error, self, title=title_ssh_error)
 		except Exception:
 			self.logger.warning('failed to connect to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, self, 'An unknown error occurred.')
@@ -388,7 +382,9 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			else:
 				self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
 				gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded with HTTP status: ' + str(err.status))
-		except Exception:
+		except socket.error as error:
+			gui_utilities.show_dialog_exc_socket_error(error, self)
+		except Exception as error:
 			self.logger.warning('failed to connect to the remote rpc service')
 			gui_utilities.show_dialog_error(title_rpc_error, self, 'Ensure that the King Phisher Server is currently running.')
 		else:

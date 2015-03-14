@@ -221,7 +221,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 				login_dialog = dialogs.SSHLoginDialog(self.config, self.parent)
 				login_dialog.objects_load_from_config()
 				response = login_dialog.interact()
-				if response == Gtk.ResponseType.CANCEL:
+				if response != Gtk.ResponseType.APPLY:
 					self.sender_start_failure(text='canceled.\n')
 					return
 				if self.sender_thread.server_ssh_connect():
