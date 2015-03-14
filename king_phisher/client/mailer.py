@@ -494,7 +494,7 @@ class MailSenderThread(threading.Thread):
 		:param msg: The formatted message to be sent.
 		:type msg: :py:class:`email.MIMEMultipart.MIMEMultipart`
 		"""
-		source_email = self.config['mailer.source_email']
+		source_email = self.config['mailer.source_email_smtp']
 		self.smtp_connection.sendmail(source_email, target_email, msg.as_string())
 
 	def pause(self):

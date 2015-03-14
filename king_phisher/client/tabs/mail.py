@@ -108,7 +108,6 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		required_settings = {
 			'mailer.webserver_url': 'Web Server URL',
 			'mailer.company_name': 'Company Name',
-			'mailer.source_email': 'Source Email',
 			'mailer.subject': 'Subject',
 			'mailer.html_file': 'Message HTML File',
 			'mailer.target_file': 'Target CSV File'
@@ -123,9 +122,6 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
 				gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: the file could not be read.".format(setting_name))
 				return
-		if not utilities.is_valid_email_address(self.config['mailer.source_email']):
-			gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, 'Setting: \'mailer.source_email\'\nReason: the email address is invalid.')
-			return
 		if not self.config.get('smtp_server'):
 			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
 			return
@@ -143,7 +139,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			return True
 
 		self.logger.debug('detected the smtp server address as ' + str(spf_test_ip))
-		spf_test_sender, spf_test_domain = self.config['mailer.source_email'].split('@')
+		spf_test_sender, spf_test_domain = self.config['mailer.source_email_smtp'].split('@')
 		self.text_insert("Checking the SPF policy of target domain '{0}'... ".format(spf_test_domain))
 		try:
 			spf_test = spf.SenderPolicyFramework(spf_test_ip, spf_test_domain, spf_test_sender)
@@ -525,6 +521,7 @@ class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 		'entry_webserver_url',
 		'entry_company_name',
 		'entry_source_email',
+		'entry_source_email_smtp',
 		'entry_source_email_alias',
 		'entry_subject',
 		'entry_reply_to_email',
