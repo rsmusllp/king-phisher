@@ -121,15 +121,29 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 			file_path = self.config[setting]
 			if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
 				gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: the file could not be read.".format(setting_name))
-				return
+				return False
 		if not self.config.get('smtp_server'):
 			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
-			return
+			return False
+		return True
+
+	def _sender_precheck_source(self):
+		valid = utilities.is_valid_email_address(self.config['mailer.source_email'])
+		valid = valid and utilities.is_valid_email_address(self.config['mailer.source_email_smtp'])
+		if valid:
+			return True
+		self.text_insert('WARNING: One or more source email addresses specified are invalid.\n')
+		if not gui_utilities.show_dialog_yes_no('Invalid Email Address', self.parent, 'One or more source email addresses specified are invalid.\nContinue sending messages anyways?'):
+			self.text_insert('Sending aborted due to invalid source email address.\n')
+			return False
 		return True
 
 	def _sender_precheck_spf(self):
 		spf_check_level = self.config['spf_check_level']
 		if not spf_check_level:
+			return True
+		if not utilities.is_valid_email_address(self.config['mailer.source_email_smtp']):
+			self.text_insert('WARNING: Can not check SPF records for invalid source email address.\n')
 			return True
 
 		spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
@@ -189,6 +203,8 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if not self._sender_precheck_settings():
 			return
 		if not self._sender_precheck_url():
+			return
+		if not self._sender_precheck_source():
 			return
 		if not self._sender_precheck_spf():
 			return
