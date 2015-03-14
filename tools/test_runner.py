@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/server/server.py
+#  tools/test_runner.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,28 +30,13 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from king_phisher import geoip
-from king_phisher.testing import KingPhisherServerTestCase
+import os
+import sys
+import unittest
 
-GEO_TEST_IP = '8.8.8.8'
+sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-class GeoIPTests(KingPhisherServerTestCase):
-	def test_geoip_lookup(self):
-		result = geoip.lookup(GEO_TEST_IP)
-		self.assertIsInstance(result, dict)
-		for field in geoip.DB_RESULT_FIELDS:
-			self.assertIn(field, result)
+from tests import *
 
-	def test_geoip_lookup_private(self):
-		with self.assertRaises(RuntimeError):
-			geoip.lookup('192.168.1.1')
-
-	def test_geoip_lookup_ipv6(self):
-		with self.assertRaises(TypeError):
-			geoip.lookup('2607:f8b0:4002:c07::68')
-
-	def test_geoip_raw_geolocation(self):
-		loc = geoip.GeoLocation(GEO_TEST_IP)
-		loc_raw = geoip.GeoLocation(GEO_TEST_IP, result=geoip.lookup(GEO_TEST_IP))
-		for field in geoip.DB_RESULT_FIELDS:
-			self.assertEqual(getattr(loc, field), getattr(loc_raw, field))
+if __name__ == '__main__':
+	unittest.main()

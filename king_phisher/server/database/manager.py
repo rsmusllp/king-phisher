@@ -70,7 +70,7 @@ def get_meta_data(key, session=None):
 
 def get_row_by_id(session, table, row_id):
 	"""
-	Retrieve a database row fron the specified table by it's unique id.
+	Retrieve a database row from the specified table by it's unique id.
 
 	:param session: The database session to use for the query.
 	:type session: `.Session`

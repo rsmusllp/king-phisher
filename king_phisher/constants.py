@@ -35,7 +35,7 @@ import sys
 if sys.version_info[0] == 3:
 	intern = sys.intern
 
-__all__ = ['OSArch', 'OSFamily']
+__all__ = ['OSArch', 'OSFamily', 'SPFResult']
 
 class ConstantGroup:
 	"""A class for grouping related constants together."""

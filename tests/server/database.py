@@ -40,23 +40,39 @@ from king_phisher.utilities import random_string
 get_tables_with_column_id = db_models.get_tables_with_column_id
 
 class ServerDatabaseTests(testing.KingPhisherTestCase):
-	def test_create_database(self):
+	def _init_db(self):
 		try:
 			db_manager.init_database('sqlite://')
 		except Exception as error:
 			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
+
+	def test_create_database(self):
+		self._init_db()
 
 	def test_get_meta_data(self):
-		try:
-			db_manager.init_database('sqlite://')
-		except Exception as error:
-			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
-
+		self._init_db()
 		database_driver = db_manager.get_meta_data('database_driver')
 		self.assertEqual(database_driver, 'sqlite')
 
 		schema_version = db_manager.get_meta_data('schema_version')
 		self.assertEqual(schema_version, db_models.SCHEMA_VERSION)
+
+	def test_get_row_by_id(self):
+		self._init_db()
+		session = db_manager.Session()
+		user = db_models.User(id='alice')
+		session.add(user)
+		campaign_name = random_string(10)
+		campaign = db_models.Campaign(name=campaign_name, user_id=user.id)
+		session.add(campaign)
+		session.commit()
+		self.assertIsNotNone(campaign.id)
+		campaign_id = campaign.id
+		del campaign
+
+		row = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
+		self.assertEqual(row.id, campaign_id)
+		self.assertEqual(row.name, campaign_name)
 
 	def test_get_tables_id(self):
 		tables = set([
@@ -71,7 +87,6 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 			'users',
 			'visits'
 		])
-		tables_with_id = get_tables_with_column_id('id')
 		self.assertSetEqual(get_tables_with_column_id('id'), tables)
 
 	def test_get_tables_campaign_id(self):
