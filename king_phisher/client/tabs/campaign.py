@@ -407,8 +407,9 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 
 	def loader_idle_routine(self):
 		"""The routine which refreshes the campaign data at a regular interval."""
-		self.logger.debug('idle loader routine called')
-		self.load_campaign_information(force=True)
+		if self.parent.rpc:
+			self.logger.debug('idle loader routine called')
+			self.load_campaign_information(force=True)
 		return True
 
 	def loader_thread_routine(self):
