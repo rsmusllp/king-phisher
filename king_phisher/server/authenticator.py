@@ -145,16 +145,17 @@ class ForkedAuthenticator(object):
 			password = str(request['password'])
 			result = {}
 			result['result'] = pam.authenticate(username, password, service=service)
-			if result['result'] and self.required_group:
-				result['result'] = False
-				try:
-					assert self.required_group in get_groups_for_user(username)
-				except AssertionError:
-					self.logger.warning("authentication failed for user: {0} reason: lack of group membership".format(username))
-				except KeyError:
-					self.logger.error("encountered a KeyError while looking up group member ship for user: {0}".format(username))
-				else:
-					result['result'] = True
+			if result['result']:
+				if self.required_group:
+					result['result'] = False
+					try:
+						assert self.required_group in get_groups_for_user(username)
+					except AssertionError:
+						self.logger.warning("authentication failed for user: {0} reason: lack of group membership".format(username))
+					except KeyError:
+						self.logger.error("encountered a KeyError while looking up group member ship for user: {0}".format(username))
+					else:
+						result['result'] = True
 			else:
 				self.logger.warning("authentication failed for user: {0} reason: bad username or password".format(username))
 			self.send(result)

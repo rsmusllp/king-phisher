@@ -51,42 +51,42 @@ class KingPhisherRequestHandlerRPC(object):
 	"""
 	def install_handlers(self):
 		super(KingPhisherRequestHandlerRPC, self).install_handlers()
-		self.rpc_handler_map['/ping'] = self.rpc_ping
-		self.rpc_handler_map['/shutdown'] = self.rpc_shutdown
-		self.rpc_handler_map['/version'] = self.rpc_version
-		self.rpc_handler_map['/geoip/lookup'] = self.rpc_geoip_lookup
-		self.rpc_handler_map['/geoip/lookup/multi'] = self.rpc_geoip_lookup_multi
+		self.rpc_handler_map['^/ping$'] = self.rpc_ping
+		self.rpc_handler_map['^/shutdown$'] = self.rpc_shutdown
+		self.rpc_handler_map['^/version$'] = self.rpc_version
+		self.rpc_handler_map['^/geoip/lookup$'] = self.rpc_geoip_lookup
+		self.rpc_handler_map['^/geoip/lookup/multi$'] = self.rpc_geoip_lookup_multi
 
-		self.rpc_handler_map['/client/initialize'] = self.rpc_client_initialize
-		self.rpc_handler_map['/config/get'] = self.rpc_config_get
-		self.rpc_handler_map['/config/set'] = self.rpc_config_set
+		self.rpc_handler_map['^/client/initialize$'] = self.rpc_client_initialize
+		self.rpc_handler_map['^/config/get$'] = self.rpc_config_get
+		self.rpc_handler_map['^/config/set$'] = self.rpc_config_set
 
-		self.rpc_handler_map['/campaign/alerts/is_subscribed'] = self.rpc_campaign_alerts_is_subscribed
-		self.rpc_handler_map['/campaign/alerts/subscribe'] = self.rpc_campaign_alerts_subscribe
-		self.rpc_handler_map['/campaign/alerts/unsubscribe'] = self.rpc_campaign_alerts_unsubscribe
-		self.rpc_handler_map['/campaign/landing_page/new'] = self.rpc_campaign_landing_page_new
-		self.rpc_handler_map['/campaign/message/new'] = self.rpc_campaign_message_new
-		self.rpc_handler_map['/campaign/new'] = self.rpc_campaign_new
-		self.rpc_handler_map['/campaign/delete'] = self.rpc_campaign_delete
+		self.rpc_handler_map['^/campaign/alerts/is_subscribed$'] = self.rpc_campaign_alerts_is_subscribed
+		self.rpc_handler_map['^/campaign/alerts/subscribe$'] = self.rpc_campaign_alerts_subscribe
+		self.rpc_handler_map['^/campaign/alerts/unsubscribe$'] = self.rpc_campaign_alerts_unsubscribe
+		self.rpc_handler_map['^/campaign/landing_page/new$'] = self.rpc_campaign_landing_page_new
+		self.rpc_handler_map['^/campaign/message/new$'] = self.rpc_campaign_message_new
+		self.rpc_handler_map['^/campaign/new$'] = self.rpc_campaign_new
+		self.rpc_handler_map['^/campaign/delete$'] = self.rpc_campaign_delete
 
 		for table_name in DATABASE_TABLES.keys():
-			self.rpc_handler_map['/' + table_name + '/count'] = self.rpc_database_count_rows
-			self.rpc_handler_map['/' + table_name + '/delete'] = self.rpc_database_delete_row_by_id
-			self.rpc_handler_map['/' + table_name + '/delete/multi'] = self.rpc_database_delete_rows_by_id
-			self.rpc_handler_map['/' + table_name + '/get'] = self.rpc_database_get_row_by_id
-			self.rpc_handler_map['/' + table_name + '/insert'] = self.rpc_database_insert_row
-			self.rpc_handler_map['/' + table_name + '/set'] = self.rpc_database_set_row_value
-			self.rpc_handler_map['/' + table_name + '/view'] = self.rpc_database_get_rows
+			self.rpc_handler_map['^/' + table_name + '/count$'] = self.rpc_database_count_rows
+			self.rpc_handler_map['^/' + table_name + '/delete$'] = self.rpc_database_delete_row_by_id
+			self.rpc_handler_map['^/' + table_name + '/delete/multi'] = self.rpc_database_delete_rows_by_id
+			self.rpc_handler_map['^/' + table_name + '/get$'] = self.rpc_database_get_row_by_id
+			self.rpc_handler_map['^/' + table_name + '/insert'] = self.rpc_database_insert_row
+			self.rpc_handler_map['^/' + table_name + '/set$'] = self.rpc_database_set_row_value
+			self.rpc_handler_map['^/' + table_name + '/view$'] = self.rpc_database_get_rows
 
 		# Tables with a campaign_id field
 		for table_name in db_models.get_tables_with_column_id('campaign_id'):
-			self.rpc_handler_map['/campaign/' + table_name + '/count'] = self.rpc_database_count_rows
-			self.rpc_handler_map['/campaign/' + table_name + '/view'] = self.rpc_database_get_rows
+			self.rpc_handler_map['^/campaign/' + table_name + '/count$'] = self.rpc_database_count_rows
+			self.rpc_handler_map['^/campaign/' + table_name + '/view$'] = self.rpc_database_get_rows
 
 		# Tables with a message_id field
 		for table_name in db_models.get_tables_with_column_id('message_id'):
-			self.rpc_handler_map['/message/' + table_name + '/count'] = self.rpc_database_count_rows
-			self.rpc_handler_map['/message/' + table_name + '/view'] = self.rpc_database_get_rows
+			self.rpc_handler_map['^/message/' + table_name + '/count$'] = self.rpc_database_count_rows
+			self.rpc_handler_map['^/message/' + table_name + '/view$'] = self.rpc_database_get_rows
 
 	def rpc_ping(self):
 		"""
@@ -372,7 +372,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: The row ids that were deleted.
 		:rtype: list
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
+		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-3])
 		assert table
 		deleted_rows = []
 		session = db_manager.Session()
