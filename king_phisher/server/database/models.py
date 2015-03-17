@@ -36,6 +36,8 @@ import sqlalchemy
 import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 
+DATABASE_TABLE_REGEX = '[a-z_]+'
+"""A regular expression which will match all valid database table names."""
 DATABASE_TABLES = {}
 """A dictionary which contains all the database tables and their columns."""
 DATABASE_TABLE_OBJECTS = {}
