@@ -199,7 +199,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 		action = Gtk.Action(name='ToolsRPCTerminal', label='RPC Terminal', tooltip='RPC Terminal', stock_id=None)
 		action.connect('activate', lambda x: tools.KingPhisherClientRPCTerminal(self.config, self, self.get_property('application')))
-		action_group.add_action(action)
+		action_group.add_action_with_accel(action, '<control>F1')
 
 		# Help Menu Actions
 		action = Gtk.Action(name='HelpMenu', label='Help', tooltip=None, stock_id=None)
@@ -234,7 +234,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		if sys.platform.startswith('linux'):
 			action = Gtk.Action(name='ToolsSFTPClient', label='SFTP Client', tooltip='SFTP Client', stock_id=None)
 			action.connect('activate', lambda x: self.start_sftp_client())
-			action_group.add_action(action)
+			action_group.add_action_with_accel(action, '<control>F2')
 			merge_id = uimanager.new_merge_id()
 			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsSFTPClient', 'ToolsSFTPClient', Gtk.UIManagerItemType.MENUITEM, False)
 
