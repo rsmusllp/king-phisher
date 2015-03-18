@@ -426,7 +426,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 	def load_server_config(self):
 		"""Load the necessary values from the server's configuration."""
-		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image'])
+		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image', 'server.web_root'])
 		return
 
 	def rename_campaign(self):
@@ -521,7 +521,11 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			gui_utilities.show_dialog_warning('Invalid SFTP Configuration', self, "Could not find the SFTP binary '{0}'".format(sftp_bin))
 			return False
 		try:
-			command = command.format(username=self.config['server_username'], server=self.config['server'])
+			command = command.format(
+				server=self.config['server'],
+				username=self.config['server_username'],
+				web_root=self.config['server_config']['server.web_root']
+			)
 		except KeyError:
 			pass
 		self.logger.debug("starting sftp client command: {0}".format(command))

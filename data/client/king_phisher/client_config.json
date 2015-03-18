@@ -7,7 +7,7 @@
   "server": "localhost:22",
   "server_remote_port": 80,
   "server_use_ssl": false,
-  "sftp_client": "filezilla --logontype=interactive sftp://{username}@{server}/",
+  "sftp_client": "filezilla --logontype=interactive sftp://{username}@{server}{web_root}",
   "ssh_preferred_key": null,
   "smtp_max_send_rate": 45.0,
   "smtp_server": "localhost:25",
