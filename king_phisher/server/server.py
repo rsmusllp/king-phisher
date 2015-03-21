@@ -608,13 +608,19 @@ class KingPhisherServer(AdvancedHTTPServer):
 	"""
 	The main HTTP and RPC server for King Phisher.
 	"""
-	def __init__(self, config, *args, **kwargs):
+	def __init__(self, config, HandlerClass, *args, **kwargs):
 		"""
 		:param config: Configuration to retrieve settings from.
 		:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 		"""
 		self.logger = logging.getLogger('KingPhisher.Server')
-		super(KingPhisherServer, self).__init__(*args, **kwargs)
+		HandlerClass.extensions_map.update({
+			'.asp': 'text/html',
+			'.aspx': 'text/html',
+			'.php': 'text/html',
+			'.srf': 'text/html'
+		})
+		super(KingPhisherServer, self).__init__(HandlerClass, *args, **kwargs)
 		self.config = config
 		"""A :py:class:`~smoke_zephyr.configuration.Configuration` instance used as the main King Phisher server configuration."""
 		self.serve_files = True
