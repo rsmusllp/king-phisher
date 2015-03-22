@@ -30,10 +30,10 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from king_phisher.client import gui_utilities
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
+from king_phisher.client import gui_utilities
 
 from gi.repository import GdkPixbuf
 

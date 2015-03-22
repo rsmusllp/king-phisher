@@ -201,6 +201,10 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		action.connect('activate', lambda x: tools.KingPhisherClientRPCTerminal(self.config, self, self.get_property('application')))
 		action_group.add_action_with_accel(action, '<control>F1')
 
+		action = Gtk.Action(name='ToolsCloneWebPage', label='Clone A Web Page', tooltip='Clone A Web Page', stock_id=None)
+		action.connect('activate', lambda x: dialogs.ClonePageDialog(self.config, self).interact())
+		action_group.add_action(action)
+
 		# Help Menu Actions
 		action = Gtk.Action(name='HelpMenu', label='Help', tooltip=None, stock_id=None)
 		action_group.add_action(action)

@@ -45,6 +45,7 @@ from king_phisher.client import tools
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import WebKit
 
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 """The default search location for the client configuration file."""
@@ -81,6 +82,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def do_activate(self):
 		Gtk.Application.do_activate(self)
+		# set up the environment
+		WebKit.set_cache_model(WebKit.CacheModel.DOCUMENT_VIEWER)
+
 		win = client.KingPhisherClient(self.config, self)
 		win.set_position(Gtk.WindowPosition.CENTER)
 		win.show()

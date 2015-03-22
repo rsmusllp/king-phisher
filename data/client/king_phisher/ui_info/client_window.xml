@@ -21,6 +21,7 @@
 		</menu>
 		<menu action="ToolsMenu">
 			<menuitem action="ToolsRPCTerminal" />
+			<menuitem action="ToolsCloneWebPage" />
 		</menu>
 		<menu action="HelpMenu">
 			<menuitem action="HelpAbout" />
