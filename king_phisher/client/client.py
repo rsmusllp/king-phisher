@@ -210,7 +210,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		action_group.add_action(action)
 
 		action = Gtk.Action(name='HelpAbout', label='About', tooltip='About', stock_id=None)
-		action.connect('activate', lambda x: self.show_about_dialog())
+		action.connect('activate', lambda x: dialogs.AboutDialog(self.config, self).interact())
 		action_group.add_action(action)
 
 		action = Gtk.Action(name='HelpWiki', label='Wiki', tooltip='Wiki', stock_id=None)
@@ -477,14 +477,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			return
 		destination_file = response['target_path']
 		export.campaign_to_xml(self.rpc, self.config['campaign_id'], destination_file)
-
-	def show_about_dialog(self):
-		"""
-		Display the about dialog showing details about the programs version,
-		license etc.
-		"""
-		about_dialog = dialogs.AboutDialog(self.config, self)
-		about_dialog.interact()
 
 	def show_campaign_graph(self, graph_name):
 		"""

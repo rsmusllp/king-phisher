@@ -83,6 +83,8 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 			cloner.webview.destroy()
 			gui_utilities.gtk_sync()
 			self.set_status('Done')
+		if len(self.resources) and gui_utilities.show_dialog_yes_no('Transfer Cloned Pages', self.dialog, 'Would you like to start the SFTP client\nto upload the cloned pages?'):
+			self.parent.start_sftp_client()
 		self.dialog.destroy()
 
 	def signal_entry_dir(self, widget):

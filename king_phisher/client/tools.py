@@ -40,6 +40,7 @@ from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import client_rpc
+from king_phisher.client import dialogs
 from king_phisher.client import gui_utilities
 
 from gi.repository import GLib
@@ -166,7 +167,7 @@ class KingPhisherClientRPCTerminal(object):
 		action_group.add_action(action)
 
 		action = Gtk.Action('HelpAbout', 'About', 'About', None)
-		action.connect('activate', lambda x: self.parent.show_about_dialog())
+		action.connect('activate', lambda x: dialogs.AboutDialog(self.config, self.window).interact())
 		action_group.add_action(action)
 
 		rpc_api_docs_url = "http://king-phisher.readthedocs.org/en/{0}/rpc_api.html".format('latest' if version.version_label in ('alpha', 'beta') else 'stable')
