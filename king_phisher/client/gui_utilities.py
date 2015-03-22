@@ -178,6 +178,21 @@ def gtk_treeview_selection_to_clipboard(treeview, column=1):
 	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 	clipboard.set_text(selection_values, -1)
 
+def gtk_treeview_set_column_names(treeview, column_names, column_offset=0):
+	"""
+	Populate the column names of a GTK TreeView and set their sort IDs.
+
+	:param treeview: The treeview to set column names for.
+	:type treeview: :py:class:`Gtk.TreeView`
+	:param list column_names: The names of the columns.
+	:param int column_offset: The offset to start setting column names at.
+	"""
+	for column_id, column_name in enumerate(column_names):
+		column_id += column_offset
+		column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text=column_id)
+		column.set_sort_column_id(column_id)
+		treeview.append_column(column)
+
 def search_list_store(list_store, value, column=0):
 	"""
 	Search a GTK ListStore for a value.

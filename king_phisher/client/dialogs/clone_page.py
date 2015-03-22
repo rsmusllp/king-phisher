@@ -48,12 +48,7 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 		self.resources = Gtk.ListStore(str, str)
 		treeview = self.gtk_builder_get('treeview_resources')
 		treeview.set_model(self.resources)
-		columns = ['MIME Type', 'Resource_Path']
-		for column_id in range(len(columns)):
-			column_name = columns[column_id]
-			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text=column_id)
-			column.set_sort_column_id(column_id)
-			treeview.append_column(column)
+		gui_utilities.gtk_treeview_set_column_names(treeview, ('MIME Type', 'Resource Path'))
 
 	def set_status(self, status_text, spinner_active=False):
 		status_label = self.gtk_builder_get('label_status')
