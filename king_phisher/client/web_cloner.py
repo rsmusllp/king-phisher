@@ -50,7 +50,16 @@ else:
 	import urllib.parse
 
 class WebPageCloner(object):
+	"""
+	This object is used to clone web pages. It will use the WebKit engine and
+	hook signals to detect what remote resources that are loaded from the target
+	URL. These resources are then written to disk.
+	"""
 	def __init__(self, target_url, dest_dir):
+		"""
+		:param str target_url: The URL of the target web page to clone.
+		:param str dest_dir: The path of a directory to write the resources to.
+		"""
 		self.target_url = urllib.parse.urlparse(target_url)
 		dest_dir = os.path.abspath(dest_dir)
 		if not os.path.exists(dest_dir):
@@ -66,6 +75,7 @@ class WebPageCloner(object):
 		self.webview.load_uri(target_url)
 
 	def wait(self):
+		"""Wait for the cloning operation to complete."""
 		status = self.webview.get_property('load-status')
 		while status != WebKit.LoadStatus.FAILED and status != WebKit.LoadStatus.FINISHED:
 			gui_utilities.gtk_sync()

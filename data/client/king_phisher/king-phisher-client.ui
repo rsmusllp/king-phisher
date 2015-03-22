@@ -704,7 +704,7 @@ Brandan Geise</property>
                   <object class="GtkEntry" id="ClonePageDialog.entry_target">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="primary_icon_tooltip_text" translatable="yes">The URL to the page to clone.</property>
+                    <property name="tooltip_text" translatable="yes">The URL of the target web page to clone.</property>
                     <property name="placeholder_text" translatable="yes">http://targetsite/</property>
                   </object>
                   <packing>
@@ -727,9 +727,9 @@ Brandan Geise</property>
                   <object class="GtkEntry" id="ClonePageDialog.entry_directory">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <property name="tooltip_text" translatable="yes">The directory to save the cloned page to.</property>
                     <property name="hexpand">True</property>
                     <property name="editable">False</property>
-                    <property name="primary_icon_tooltip_text" translatable="yes">The directory to save the cloned page to.</property>
                     <property name="placeholder_text" translatable="yes">/path/to/clone/to</property>
                     <signal name="activate" handler="signal_entry_dir" swapped="no"/>
                   </object>

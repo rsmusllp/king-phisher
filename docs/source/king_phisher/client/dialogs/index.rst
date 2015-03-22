@@ -7,6 +7,7 @@
 
    about.rst
    campaign_selection.rst
+   clone_page.rst
    configuration.rst
    entry.rst
    login.rst

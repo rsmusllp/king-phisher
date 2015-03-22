@@ -39,6 +39,8 @@ __all__ = ['ClonePageDialog']
 
 class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 	"""
+	Display a dialog for cloning a web page. The logic of the cloning operation
+	is provided by the :py:mod:`.web_cloner` module.
 	"""
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
