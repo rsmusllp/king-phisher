@@ -72,7 +72,10 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 				self.set_status('Missing Information')
 				continue
 			cloner = web_cloner.WebPageCloner(target_url, dest_dir)
-			cloner.wait()
+			if not cloner.wait():
+				gui_utilities.show_dialog_error('Operation Failed', self.dialog, 'The web page clone operation failed.')
+				self.set_status('Failed')
+				continue
 			for resource, mime_type in cloner.cloned_resources.items():
 				if gui_utilities.search_list_store(self.resources, resource, column=1):
 					continue

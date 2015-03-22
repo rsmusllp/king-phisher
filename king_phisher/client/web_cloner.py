@@ -75,12 +75,19 @@ class WebPageCloner(object):
 		self.webview.load_uri(target_url)
 
 	def wait(self):
-		"""Wait for the cloning operation to complete."""
+		"""
+		Wait for the cloning operation to complete and return whether the
+		operation was successful or not.
+
+		:return: True if the operation was successful.
+		:rtype: bool
+		"""
 		status = self.webview.get_property('load-status')
 		while status != WebKit.LoadStatus.FAILED and status != WebKit.LoadStatus.FINISHED:
 			gui_utilities.gtk_sync()
 			time.sleep(0.25)
 			status = self.webview.get_property('load-status')
+		return status == WebKit.LoadStatus.FINISHED
 
 	def signal_navigation_requested(self, webview, frame, request, navigation_action, policy_decision):
 		resource_url_str = request.get_property('uri')
