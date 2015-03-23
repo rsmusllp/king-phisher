@@ -47,7 +47,7 @@ from gi.repository import Gtk
 GOBJECT_PROPERTY_MAP = {
 	'checkbutton': 'active',
 	'combobox': (
-		lambda c, v: c.set_active_iter(search_list_store(c.get_model(), v)),
+		lambda c, v: c.set_active_iter(gtk_list_store_search(c.get_model(), v)),
 		lambda c: c.get_model().get_value(c.get_active_iter() or c.get_model().get_iter_first(), 0)
 	),
 	'entry': 'text',
@@ -141,20 +141,26 @@ def gobject_signal_blocked(gobject, signal_name):
 	yield
 	GObject.signal_handler_unblock(gobject, handler_id)
 
+def gtk_list_store_search(list_store, value, column=0):
+	"""
+	Search a GTK ListStore for a value.
+
+	:param list_store: The list store to search.
+	:type list_store: :py:class:`Gtk.ListStore`
+	:param value: The value to search for.
+	:param int column: The column in the row to check.
+	:return: The row on which the value was found.
+	:rtype: :py:class:`Gtk.TreeIter`
+	"""
+	for row in list_store:
+		if row[column] == value:
+			return row.iter
+	return None
+
 def gtk_sync():
 	"""Process all pending GTK events."""
 	while Gtk.events_pending():
 		Gtk.main_iteration()
-
-def gtk_widget_destroy_children(widget):
-	"""
-	Destroy all GTK child objects of *widget*.
-
-	:param widget: The widget to destroy all the children of.
-	:type widget: :py:class:`Gtk.Widget`
-	"""
-	for child in widget.get_children():
-		child.destroy()
 
 def gtk_treeview_selection_to_clipboard(treeview, column=1):
 	"""
@@ -193,21 +199,15 @@ def gtk_treeview_set_column_names(treeview, column_names, column_offset=0):
 		column.set_sort_column_id(column_id)
 		treeview.append_column(column)
 
-def search_list_store(list_store, value, column=0):
+def gtk_widget_destroy_children(widget):
 	"""
-	Search a GTK ListStore for a value.
+	Destroy all GTK child objects of *widget*.
 
-	:param list_store: The list store to search.
-	:type list_store: :py:class:`Gtk.ListStore`
-	:param value: The value to search for.
-	:param int column: The column in the row to check.
-	:return: The row on which the value was found.
-	:rtype: :py:class:`Gtk.TreeIter`
+	:param widget: The widget to destroy all the children of.
+	:type widget: :py:class:`Gtk.Widget`
 	"""
-	for row in list_store:
-		if row[column] == value:
-			return row.iter
-	return None
+	for child in widget.get_children():
+		child.destroy()
 
 def show_dialog(message_type, message, parent, secondary_text=None, message_buttons=Gtk.ButtonsType.OK):
 	"""

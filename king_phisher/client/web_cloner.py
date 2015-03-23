@@ -36,7 +36,6 @@ import collections
 import logging
 import os
 import sys
-import time
 import urllib
 
 from king_phisher.client import gui_utilities
@@ -85,7 +84,6 @@ class WebPageCloner(object):
 		status = self.webview.get_property('load-status')
 		while status != WebKit.LoadStatus.FAILED and status != WebKit.LoadStatus.FINISHED:
 			gui_utilities.gtk_sync()
-			time.sleep(0.25)
 			status = self.webview.get_property('load-status')
 		return status == WebKit.LoadStatus.FINISHED
 

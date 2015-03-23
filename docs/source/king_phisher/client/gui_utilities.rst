@@ -19,6 +19,8 @@ Functions
 
 .. autofunction:: king_phisher.client.gui_utilities.gobject_signal_blocked
 
+.. autofunction:: king_phisher.client.gui_utilities.gtk_list_store_search
+
 .. autofunction:: king_phisher.client.gui_utilities.gtk_sync
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_selection_to_clipboard
@@ -26,8 +28,6 @@ Functions
 .. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_set_column_names
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_widget_destroy_children
-
-.. autofunction:: king_phisher.client.gui_utilities.search_list_store
 
 .. autofunction:: king_phisher.client.gui_utilities.show_dialog
 
