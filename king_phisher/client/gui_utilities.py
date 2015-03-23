@@ -192,12 +192,17 @@ def gtk_treeview_set_column_names(treeview, column_names, column_offset=0):
 	:type treeview: :py:class:`Gtk.TreeView`
 	:param list column_names: The names of the columns.
 	:param int column_offset: The offset to start setting column names at.
+	:return: A dict of all the column renderers keyed by their column id.
+	:rtype: dict
 	"""
+	renderers = {}
 	for column_id, column_name in enumerate(column_names):
 		column_id += column_offset
 		column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text=column_id)
 		column.set_sort_column_id(column_id)
 		treeview.append_column(column)
+		renderers[column_id] = column
+	return renderers
 
 def gtk_widget_destroy_children(widget):
 	"""

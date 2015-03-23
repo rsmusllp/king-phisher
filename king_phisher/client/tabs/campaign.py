@@ -106,9 +106,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		treeview.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
 		popup_copy_submenu = Gtk.Menu.new()
 		self.view_column_renderers = {}
-		columns = self.view_columns
-		for column_id in range(1, len(columns) + 1):
-			column_name = columns[column_id]
+		for column_id, column_name in self.view_columns.items():
 			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text=column_id)
 			column.set_sort_column_id(column_id)
 			treeview.append_column(column)
