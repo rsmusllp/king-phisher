@@ -79,7 +79,7 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 			for resource, mime_type in cloner.cloned_resources.items():
 				if gui_utilities.search_list_store(self.resources, resource, column=1):
 					continue
-				self.resources.append([mime_type, resource])
+				self.resources.append([mime_type or 'N/A', resource])
 			cloner.webview.destroy()
 			gui_utilities.gtk_sync()
 			self.set_status('Done')

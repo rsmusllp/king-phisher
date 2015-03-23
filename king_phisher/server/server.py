@@ -617,6 +617,8 @@ class KingPhisherServer(AdvancedHTTPServer):
 		HandlerClass.extensions_map.update({
 			'.asp': 'text/html',
 			'.aspx': 'text/html',
+			'.cfm': 'text/html',
+			'.jsp': 'text/html',
 			'.php': 'text/html',
 			'.srf': 'text/html'
 		})

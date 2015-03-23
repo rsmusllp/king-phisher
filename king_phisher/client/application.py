@@ -82,7 +82,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def do_activate(self):
 		Gtk.Application.do_activate(self)
-		# set up the environment
+
+		# set WebKit to not cache things
 		WebKit.set_cache_model(WebKit.CacheModel.DOCUMENT_VIEWER)
 
 		win = client.KingPhisherClient(self.config, self)
