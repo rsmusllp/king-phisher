@@ -46,7 +46,7 @@ from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
 from gi.repository import Gtk
-from gi.repository import WebKit
+from gi.repository import WebKit2
 
 if sys.version_info[0] < 3:
 	import urllib2
@@ -362,8 +362,8 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 
 class MailSenderPreviewTab(object):
 	"""
-	This tab uses webkit to render the HTML of an email so it can be
-	previewed before it is sent.
+	This tab uses the WebKit2GTK+ engine to render the HTML of an email so it
+	can be previewed before it is sent.
 	"""
 	def __init__(self, config, parent):
 		"""
@@ -379,8 +379,10 @@ class MailSenderPreviewTab(object):
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
-		self.webview = WebKit.WebView()
-		"""The :py:class:`WebKit.WebView` object used to render the message HTML."""
+		self.webview = WebKit2.WebView()
+		"""The :py:class:`WebKit2.WebView` object used to render the message HTML."""
+		web_context = self.webview.get_context()
+		web_context.set_cache_model(WebKit2.CacheModel.DOCUMENT_VIEWER)
 		self.webview.show()
 		scrolled_window = Gtk.ScrolledWindow()
 		scrolled_window.add(self.webview)
@@ -399,7 +401,7 @@ class MailSenderPreviewTab(object):
 		html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
 		if not html_file_uri.startswith('file://'):
 			html_file_uri = 'file://' + html_file_uri
-		self.webview.load_html_string(html_data, html_file_uri)
+		self.webview.load_html(html_data, html_file_uri)
 
 class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	"""

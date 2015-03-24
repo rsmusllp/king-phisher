@@ -50,23 +50,26 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 		treeview.set_model(self.resources)
 		gui_utilities.gtk_treeview_set_column_names(treeview, ('MIME Type', 'Resource Path'))
 
+		self.entry_directory = self.gtk_builder_get('entry_directory')
+		self.entry_target = self.gtk_builder_get('entry_target')
+		self.label_status = self.gtk_builder_get('label_status')
+		self.spinner_status = self.gtk_builder_get('spinner_status')
+
 	def set_status(self, status_text, spinner_active=False):
-		status_label = self.gtk_builder_get('label_status')
-		status_label.set_text("Status: {0}".format(status_text))
-		status_spinner = self.gtk_builder_get('spinner_status')
-		status_spinner.set_property('active', spinner_active)
+		self.label_status.set_text("Status: {0}".format(status_text))
+		self.spinner_status.set_property('active', spinner_active)
 
 	def interact(self):
 		self.dialog.show_all()
 		self.set_status('Waiting')
 		while self.dialog.run() == Gtk.ResponseType.APPLY:
 			self.set_status('Cloning', spinner_active=True)
-			target_url = self.gtk_builder_get('entry_target').get_text()
+			target_url = self.entry_target.get_text()
 			if not target_url:
 				gui_utilities.show_dialog_error('Missing Information', self.dialog, 'Please set the target URL.')
 				self.set_status('Missing Information')
 				continue
-			dest_dir = self.gtk_builder_get('entry_directory').get_text()
+			dest_dir = self.entry_directory.get_text()
 			if not dest_dir:
 				gui_utilities.show_dialog_error('Missing Information', self.dialog, 'Please set the destination directory.')
 				self.set_status('Missing Information')
@@ -80,7 +83,6 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 				if gui_utilities.gtk_list_store_search(self.resources, resource, column=1):
 					continue
 				self.resources.append([mime_type or 'N/A', resource])
-			cloner.webview.destroy()
 			gui_utilities.gtk_sync()
 			self.set_status('Done')
 		if len(self.resources) and gui_utilities.show_dialog_yes_no('Transfer Cloned Pages', self.dialog, 'Would you like to start the SFTP client\nto upload the cloned pages?'):

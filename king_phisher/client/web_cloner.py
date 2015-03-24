@@ -69,6 +69,8 @@ class WebPageCloner(object):
 		self.load_failed_event = None
 
 		self.webview = WebKit2.WebView()
+		web_context = self.webview.get_context()
+		web_context.set_cache_model(WebKit2.CacheModel.DOCUMENT_VIEWER)
 		self.webview.connect('decide-policy', self.signal_decide_policy)
 		self.webview.connect('load-failed', self.signal_load_failed)
 		self.webview.connect('resource-load-started', self.signal_resource_load_started)
@@ -145,7 +147,7 @@ class WebPageCloner(object):
 		"""
 		while self.webview.get_property('is-loading'):
 			gui_utilities.gtk_sync()
-		return self.load_failed
+		return not self.load_failed
 
 	def signal_decide_policy(self, webview, decision, decision_type):
 		self.logger.debug("received policy decision request of type: {0}".format(decision_type.value_name))
