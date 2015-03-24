@@ -498,7 +498,7 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 		Display a dialog which asks the user to select a directory to use. The
 		value of target_path in the returned dictionary is an absolute path.
 
-		:return: A dictionary with target_uri and target_path keys representing the path choosen.
+		:return: A dictionary with target_uri and target_path keys representing the path chosen.
 		:rtype: dict
 		"""
 		self.set_action(Gtk.FileChooserAction.SELECT_FOLDER)

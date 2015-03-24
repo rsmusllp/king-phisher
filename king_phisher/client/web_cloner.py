@@ -66,7 +66,7 @@ class WebPageCloner(object):
 		if not os.path.exists(dest_dir):
 			os.mkdir(dest_dir)
 		self.dest_dir = dest_dir
-		self.logger = logging.getLogger('WebPageScraper')
+		self.logger = logging.getLogger('KingPhisher.Client.WebPageScraper')
 		self.cloned_resources = collections.OrderedDict()
 		self.load_failed_event = None
 
@@ -154,11 +154,17 @@ class WebPageCloner(object):
 
 	def signal_decide_policy(self, webview, decision, decision_type):
 		self.logger.debug("received policy decision request of type: {0}".format(decision_type.value_name))
-		if decision_type == WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
-			target_url = decision.get_request().get_uri()
-			if target_url != self.target_url_str:
-				self.target_url = urllib.parse.urlparse(target_url)
-				self.logger.info("updated the target url to: {0}".format(target_url))
+		if decision_type != WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+			return
+		new_target_url_str = decision.get_request().get_uri()
+		new_target_url = urllib.parse.urlparse(new_target_url_str)
+		if new_target_url_str == self.target_url_str:
+			return
+		# don't allow offsite redirects
+		if new_target_url.netloc != self.target_url.netloc:
+			return
+		self.target_url = new_target_url
+		self.logger.info("updated the target url to: {0}".format(new_target_url_str))
 
 	def cb_get_data_finish(self, resource, task):
 		data = resource.get_data_finish(task)

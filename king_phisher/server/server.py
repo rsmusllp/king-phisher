@@ -619,6 +619,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 			'.aspx': 'text/html',
 			'.cfm': 'text/html',
 			'.jsp': 'text/html',
+			'.nsf': 'text/html',
 			'.php': 'text/html',
 			'.srf': 'text/html'
 		})
