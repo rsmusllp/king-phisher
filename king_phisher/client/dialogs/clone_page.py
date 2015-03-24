@@ -93,9 +93,9 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 			self.parent.start_sftp_client()
 		self.dialog.destroy()
 
-	def signal_entry_dir(self, widget):
+	def signal_multi_set_directory(self, _):
 		dialog = gui_utilities.UtilityFileChooser('Destination Directory', self.dialog)
 		response = dialog.run_quick_select_directory()
 		dialog.destroy()
 		if response:
-			widget.set_text(response['target_path'])
+			self.entry_directory.set_text(response['target_path'])

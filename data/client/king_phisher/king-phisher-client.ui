@@ -709,11 +709,12 @@ Brandan Geise</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="tooltip_text" translatable="yes">The URL of the target web page to clone.</property>
-                    <property name="placeholder_text" translatable="yes">http://targetsite/</property>
+                    <property name="placeholder_text" translatable="yes">http://targetsite/targetpage</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
                     <property name="top_attach">0</property>
+                    <property name="width">2</property>
                   </packing>
                 </child>
                 <child>
@@ -735,7 +736,7 @@ Brandan Geise</property>
                     <property name="hexpand">True</property>
                     <property name="editable">False</property>
                     <property name="placeholder_text" translatable="yes">/path/to/clone/to</property>
-                    <signal name="activate" handler="signal_entry_dir" swapped="no"/>
+                    <signal name="activate" handler="signal_multi_set_directory" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -751,6 +752,19 @@ Brandan Geise</property>
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="ClonePageDialog.button_set_directory">
+                    <property name="label" translatable="yes">Select</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="signal_multi_set_directory" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="top_attach">1</property>
                   </packing>
                 </child>
               </object>
