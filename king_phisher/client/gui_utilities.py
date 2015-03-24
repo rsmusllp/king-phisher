@@ -162,12 +162,48 @@ def gtk_sync():
 	while Gtk.events_pending():
 		Gtk.main_iteration()
 
+def gtk_treesortable_sort_func_numeric(model, iter1, iter2, column_id):
+	"""
+	Sort the model by comparing text numeric values with place holders such as
+	1,337. This is meant to be set as a sorting function using
+	:py:func:`Gtk.TreeSortable.set_sort_func`. The user_data parameter must be
+	the column id which contains the numeric values to be sorted.
+
+	:param model: The model that is being sorted.
+	:type model: :py:class:`Gtk.TreeSortable`
+	:param iter1: The iterator of the first item to compare.
+	:type iter1: :py:class:`Gtk.TreeIter`
+	:param iter2: The iterator of the second item to compare.
+	:type iter2: :py:class:`Gtk.TreeIter`
+	:param column_id: The ID of the column containing numeric values.
+	:return: An integer, -1 if item1 should come before item2, 0 if they are the same and 1 if item1 should come after item2.
+	:rtype: int
+	"""
+	column_id = column_id or 0
+	item1 = model.get_value(iter1, column_id).replace(',', '')
+	item2 = model.get_value(iter2, column_id).replace(',', '')
+	if item1.isdigit() and item2.isdigit():
+		item1 = int(item1)
+		item2 = int(item2)
+		if item1 < item2:
+			return -1
+		elif item1 > item2:
+			return 1
+		return 0
+	if item1.isdigit():
+		return -1
+	elif item2.isdigit():
+		return 1
+	item1 = model.get_value(iter1, column_id)
+	item2 = model.get_value(iter2, column_id)
+	return cmp(item1, item2)
+
 def gtk_treeview_selection_to_clipboard(treeview, column=1):
 	"""
 	Copy the currently selected values from the specified column in the treeview
 	to the users clipboard. If no value is selected in the treeview, then the
 	clipboard is left unmodified. If multiple values are selected, they will all
-	be placed in the clipboard on seperate lines.
+	be placed in the clipboard on separate lines.
 
 	:param treeview: The treeview instance to get the selection from.
 	:type treeview: :py:class:`Gtk.TreeView`

@@ -23,6 +23,8 @@ Functions
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_sync
 
+.. autofunction:: king_phisher.client.gui_utilities.gtk_treesortable_sort_func_numeric
+
 .. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_selection_to_clipboard
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_set_column_names

@@ -48,6 +48,8 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse
 
+ClonedResourceDetails = collections.namedtuple('ClonedResourceDetails', ['mime_type', 'size'])
+
 class WebPageCloner(object):
 	"""
 	This object is used to clone web pages. It will use the WebKit2GTK+ engine
@@ -126,8 +128,9 @@ class WebPageCloner(object):
 		response = resource.get_response()
 		if response:
 			mime_type = response.get_mime_type()
-		self.cloned_resources[resource_url.path] = mime_type
-		self.logger.debug("wrote {0:,} bytes to {1}".format(len(data), resource_path))
+		crd = ClonedResourceDetails(mime_type, len(data))
+		self.cloned_resources[resource_url.path] = crd
+		self.logger.debug("wrote {0:,} bytes to {1}".format(crd.size, resource_path))
 
 	@property
 	def load_failed(self):

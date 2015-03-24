@@ -45,10 +45,12 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
 		super(ClonePageDialog, self).__init__(*args, **kwargs)
-		self.resources = Gtk.ListStore(str, str)
+		self.resources = Gtk.ListStore(str, str, str)
 		treeview = self.gtk_builder_get('treeview_resources')
 		treeview.set_model(self.resources)
-		gui_utilities.gtk_treeview_set_column_names(treeview, ('MIME Type', 'Resource Path'))
+		treeview.get_selection().set_mode(Gtk.SelectionMode.NONE)
+		gui_utilities.gtk_treeview_set_column_names(treeview, ('Resource Path', 'MIME Type', 'Size'))
+		self.resources.set_sort_func(2, gui_utilities.gtk_treesortable_sort_func_numeric, 2)
 
 		self.entry_directory = self.gtk_builder_get('entry_directory')
 		self.entry_target = self.gtk_builder_get('entry_target')
@@ -75,14 +77,16 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 				self.set_status('Missing Information')
 				continue
 			cloner = web_cloner.WebPageCloner(target_url, dest_dir)
-			if not cloner.wait():
+			cloner.wait()
+
+			if cloner.load_failed:
 				gui_utilities.show_dialog_error('Operation Failed', self.dialog, 'The web page clone operation failed.')
 				self.set_status('Failed')
 				continue
-			for resource, mime_type in cloner.cloned_resources.items():
-				if gui_utilities.gtk_list_store_search(self.resources, resource, column=1):
+			for resource, resource_details in cloner.cloned_resources.items():
+				if gui_utilities.gtk_list_store_search(self.resources, resource, column=0):
 					continue
-				self.resources.append([mime_type or 'N/A', resource])
+				self.resources.append([resource, resource_details.mime_type or 'N/A', "{0:,}".format(resource_details.size)])
 			gui_utilities.gtk_sync()
 			self.set_status('Done')
 		if len(self.resources) and gui_utilities.show_dialog_yes_no('Transfer Cloned Pages', self.dialog, 'Would you like to start the SFTP client\nto upload the cloned pages?'):
