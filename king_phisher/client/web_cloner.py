@@ -40,7 +40,7 @@ import urllib
 
 from king_phisher.client import gui_utilities
 
-from gi.repository import WebKit
+from gi.repository import WebKit2
 
 if sys.version_info[0] < 3:
 	import urlparse
@@ -50,9 +50,9 @@ else:
 
 class WebPageCloner(object):
 	"""
-	This object is used to clone web pages. It will use the WebKit engine and
-	hook signals to detect what remote resources that are loaded from the target
-	URL. These resources are then written to disk.
+	This object is used to clone web pages. It will use the WebKit2GTK+ engine
+	and hook signals to detect what remote resources that are loaded from the
+	target URL. These resources are then written to disk.
 	"""
 	def __init__(self, target_url, dest_dir):
 		"""
@@ -66,44 +66,45 @@ class WebPageCloner(object):
 		self.dest_dir = dest_dir
 		self.logger = logging.getLogger('WebPageScraper')
 		self.cloned_resources = collections.OrderedDict()
-		self.ignore_scheme = False
+		self.load_failed_event = None
 
-		self.webview = WebKit.WebView()
-		self.webview.connect('navigation-policy-decision-requested', self.signal_navigation_requested)
-		self.webview.connect('resource-load-finished', self.signal_resource_load_finished)
+		self.webview = WebKit2.WebView()
+		self.webview.connect('decide-policy', self.signal_decide_policy)
+		self.webview.connect('load-failed', self.signal_load_failed)
+		self.webview.connect('resource-load-started', self.signal_resource_load_started)
 		self.webview.load_uri(target_url)
 
-	def wait(self):
+	def resource_is_on_target(self, resource):
 		"""
-		Wait for the cloning operation to complete and return whether the
-		operation was successful or not.
+		Test whether the resource is on the target system. This tries to match
+		the hostname, scheme and port number of the resource's URI against the
+		target URI.
 
-		:return: True if the operation was successful.
+		:return: Whether the resource is on the target or not.
 		:rtype: bool
 		"""
-		status = self.webview.get_property('load-status')
-		while status != WebKit.LoadStatus.FAILED and status != WebKit.LoadStatus.FINISHED:
-			gui_utilities.gtk_sync()
-			status = self.webview.get_property('load-status')
-		return status == WebKit.LoadStatus.FINISHED
+		resource_url = urllib.parse.urlparse(resource.get_property('uri'))
+		if resource_url.netloc != self.target_url.netloc:
+			return False
+		if resource_url.scheme != self.target_url.scheme:
+			return False
+		rport = resource_url.port or (443 if resource_url.scheme == 'https' else 80)
+		tport = self.target_url.port or (443 if self.target_url.scheme == 'https' else 80)
+		if rport != tport:
+			return False
+		return True
 
-	def signal_navigation_requested(self, webview, frame, request, navigation_action, policy_decision):
-		resource_url_str = request.get_property('uri')
-		self.logger.debug('received navigation policy decision request for uri: ' + resource_url_str)
-		if resource_url_str == urllib.parse.urlunparse(self.target_url):
-			return
-		if len(self.cloned_resources) != 0:
-			return
-		self.target_url = urllib.parse.urlparse(resource_url_str)
+	def copy_resource_data(self, resource, data):
+		"""
+		Copy the data from a loaded resource to a local file.
 
-	def signal_resource_load_finished(self, webview, frame, resource):
+		:param resource: The resource whos data is being copied.
+		:type resource: :py:class:`WebKit2.WebResource`
+		:param data: The raw data of the represented resource.
+		:type data: bytes, str
+		"""
 		resource_url_str = resource.get_property('uri')
 		resource_url = urllib.parse.urlparse(resource_url_str)
-		if not (resource_url.scheme == self.target_url.scheme and resource_url.netloc == self.target_url.netloc):
-			self.logger.debug('loaded external resource: ' + resource_url_str)
-			return
-		self.logger.info('loaded target resource: ' + resource_url_str)
-
 		resource_path = os.path.split(resource_url.path)[0].lstrip('/')
 		directory = self.dest_dir
 		for part in resource_path.split('/'):
@@ -116,9 +117,64 @@ class WebPageCloner(object):
 			resource_path += 'index.html'
 		resource_path = resource_path.lstrip('/')
 		resource_path = os.path.join(self.dest_dir, resource_path)
-
-		data = resource.get_data()
 		with open(resource_path, 'wb') as file_h:
-			file_h.write(data.str)
-		self.cloned_resources[resource_url.path] = resource.get_mime_type()
-		self.logger.debug("wrote {0:,} bytes to {1}".format(data.len, resource_path))
+			file_h.write(data)
+
+		mime_type = None
+		response = resource.get_response()
+		if response:
+			mime_type = response.get_mime_type()
+		self.cloned_resources[resource_url.path] = mime_type
+		self.logger.debug("wrote {0:,} bytes to {1}".format(len(data), resource_path))
+
+	@property
+	def load_failed(self):
+		return self.load_failed_event != None
+
+	@property
+	def target_url_str(self):
+		return urllib.parse.urlunparse(self.target_url)
+
+	def wait(self):
+		"""
+		Wait for the cloning operation to complete and return whether the
+		operation was successful or not.
+
+		:return: True if the operation was successful.
+		:rtype: bool
+		"""
+		while self.webview.get_property('is-loading'):
+			gui_utilities.gtk_sync()
+		return self.load_failed
+
+	def signal_decide_policy(self, webview, decision, decision_type):
+		self.logger.debug("received policy decision request of type: {0}".format(decision_type.value_name))
+		if decision_type == WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+			target_url = decision.get_request().get_uri()
+			if target_url != self.target_url_str:
+				self.target_url = urllib.parse.urlparse(target_url)
+				self.logger.info("updated the target url to: {0}".format(target_url))
+
+	def cb_get_data_finish(self, resource, task):
+		data = resource.get_data_finish(task)
+		if not resource.get_response():
+			return
+		resource_url_str = resource.get_property('uri')
+		if not self.resource_is_on_target(resource):
+			self.logger.debug('loaded external resource: ' + resource_url_str)
+			return
+		self.logger.info('loaded on target resource: ' + resource_url_str)
+		self.copy_resource_data(resource, data)
+
+	def signal_load_changed(self, webview, load_event):
+		self.logger.debug("load status changed to: {0}".format(load_event.value_name))
+
+	def signal_load_failed(self, webview, event, uri, error):
+		self.logger.warning("load failed on event: {0} for uri: {1}".format(event.value_name, uri))
+		self.load_failed_event = event
+
+	def signal_resource_load_started(self, webveiw, resource, request):
+		resource.connect('finished', self.signal_resource_load_finished)
+
+	def signal_resource_load_finished(self, resource):
+		resource.get_data(callback=self.cb_get_data_finish)
