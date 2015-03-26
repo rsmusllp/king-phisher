@@ -68,12 +68,14 @@ class WebPageCloner(object):
 		self.dest_dir = dest_dir
 		self.logger = logging.getLogger('KingPhisher.Client.WebPageScraper')
 		self.cloned_resources = collections.OrderedDict()
+		self.load_started = False
 		self.load_failed_event = None
 
 		self.webview = WebKit2.WebView()
 		web_context = self.webview.get_context()
 		web_context.set_cache_model(WebKit2.CacheModel.DOCUMENT_VIEWER)
 		self.webview.connect('decide-policy', self.signal_decide_policy)
+		self.webview.connect('load-changed', self.signal_load_changed)
 		self.webview.connect('load-failed', self.signal_load_failed)
 		self.webview.connect('resource-load-started', self.signal_resource_load_started)
 		self.webview.load_uri(target_url)
@@ -153,6 +155,8 @@ class WebPageCloner(object):
 		:return: True if the operation was successful.
 		:rtype: bool
 		"""
+		while not self.load_started:
+			gui_utilities.gtk_sync()
 		while self.webview.get_property('is-loading'):
 			gui_utilities.gtk_sync()
 		return not self.load_failed
@@ -184,6 +188,8 @@ class WebPageCloner(object):
 
 	def signal_load_changed(self, webview, load_event):
 		self.logger.debug("load status changed to: {0}".format(load_event.value_name))
+		if load_event == WebKit2.LoadEvent.STARTED:
+			self.load_started = True
 
 	def signal_load_failed(self, webview, event, uri, error):
 		self.logger.warning("load failed on event: {0} for uri: {1}".format(event.value_name, uri))

@@ -815,7 +815,6 @@ Brandan Geise</property>
                 </child>
                 <child>
                   <object class="GtkSpinner" id="ClonePageDialog.spinner_status">
-                    <property name="visible">True</property>
                     <property name="can_focus">False</property>
                   </object>
                   <packing>

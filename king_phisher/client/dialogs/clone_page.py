@@ -60,6 +60,7 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 
 	def set_status(self, status_text, spinner_active=False):
 		self.label_status.set_text("Status: {0}".format(status_text))
+		self.spinner_status.set_property('visible', spinner_active)
 		self.spinner_status.set_property('active', spinner_active)
 
 	def interact(self):
@@ -79,7 +80,10 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 			self.set_status('Cloning', spinner_active=True)
 			cloner = web_cloner.WebPageCloner(target_url, dest_dir)
 			signal_id = self.button_cancel.connect('clicked', lambda _: cloner.stop_cloning())
+			original_label = self.button_cancel.get_label()
+			self.button_cancel.set_label('Cancel')
 			cloner.wait()
+			self.button_cancel.set_label(original_label)
 			self.button_cancel.disconnect(signal_id)
 
 			if cloner.load_failed:
