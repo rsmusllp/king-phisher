@@ -132,6 +132,11 @@ class WebPageCloner(object):
 		self.cloned_resources[resource_url.path] = crd
 		self.logger.debug("wrote {0:,} bytes to {1}".format(crd.size, resource_path))
 
+	def stop_cloning(self):
+		"""Stop the current cloning operation if it is running."""
+		if self.webview.get_property('is-loading'):
+			self.webview.stop_loading()
+
 	@property
 	def load_failed(self):
 		return self.load_failed_event != None

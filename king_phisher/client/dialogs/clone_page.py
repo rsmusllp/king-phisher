@@ -52,6 +52,7 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 		gui_utilities.gtk_treeview_set_column_names(treeview, ('Resource Path', 'MIME Type', 'Size'))
 		self.resources.set_sort_func(2, gui_utilities.gtk_treesortable_sort_func_numeric, 2)
 
+		self.button_cancel = self.gtk_builder_get('button_cancel')
 		self.entry_directory = self.gtk_builder_get('entry_directory')
 		self.entry_target = self.gtk_builder_get('entry_target')
 		self.label_status = self.gtk_builder_get('label_status')
@@ -65,7 +66,6 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 		self.dialog.show_all()
 		self.set_status('Waiting')
 		while self.dialog.run() == Gtk.ResponseType.APPLY:
-			self.set_status('Cloning', spinner_active=True)
 			target_url = self.entry_target.get_text()
 			if not target_url:
 				gui_utilities.show_dialog_error('Missing Information', self.dialog, 'Please set the target URL.')
@@ -76,19 +76,22 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 				gui_utilities.show_dialog_error('Missing Information', self.dialog, 'Please set the destination directory.')
 				self.set_status('Missing Information')
 				continue
+			self.set_status('Cloning', spinner_active=True)
 			cloner = web_cloner.WebPageCloner(target_url, dest_dir)
+			signal_id = self.button_cancel.connect('clicked', lambda _: cloner.stop_cloning())
 			cloner.wait()
+			self.button_cancel.disconnect(signal_id)
 
 			if cloner.load_failed:
-				gui_utilities.show_dialog_error('Operation Failed', self.dialog, 'The web page clone operation failed.')
 				self.set_status('Failed')
+				gui_utilities.show_dialog_error('Operation Failed', self.dialog, 'The web page clone operation failed.')
 				continue
 			for resource, resource_details in cloner.cloned_resources.items():
 				if gui_utilities.gtk_list_store_search(self.resources, resource, column=0):
 					continue
 				self.resources.append([resource, resource_details.mime_type or 'N/A', "{0:,}".format(resource_details.size)])
-			gui_utilities.gtk_sync()
 			self.set_status('Done')
+			gui_utilities.gtk_sync()
 		if len(self.resources) and gui_utilities.show_dialog_yes_no('Transfer Cloned Pages', self.dialog, 'Would you like to start the SFTP client\nto upload the cloned pages?'):
 			self.parent.start_sftp_client()
 		self.dialog.destroy()

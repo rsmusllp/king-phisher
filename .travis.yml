@@ -29,7 +29,7 @@ script:
 notifications:
   irc:
     channels:
-      - "chat.freenode.net#king-phisher"
+      - "irc.freenode.org#king-phisher"
     on_success: always
     on_failure: always
     skip_join: true

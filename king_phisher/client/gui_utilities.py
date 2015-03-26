@@ -183,13 +183,7 @@ def gtk_treesortable_sort_func_numeric(model, iter1, iter2, column_id):
 	item1 = model.get_value(iter1, column_id).replace(',', '')
 	item2 = model.get_value(iter2, column_id).replace(',', '')
 	if item1.isdigit() and item2.isdigit():
-		item1 = int(item1)
-		item2 = int(item2)
-		if item1 < item2:
-			return -1
-		elif item1 > item2:
-			return 1
-		return 0
+		return cmp(int(item1), int(item2))
 	if item1.isdigit():
 		return -1
 	elif item2.isdigit():
