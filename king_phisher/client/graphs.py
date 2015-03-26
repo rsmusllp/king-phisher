@@ -507,7 +507,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		o_low = float(min(ctr.values()))
 		for visitor_ip, occurances in ctr.items():
 			visitor_ip = ipaddress.ip_address(visitor_ip)
-			if visitor_ip.is_loopback or visitor_ip.is_link_local or visitor_ip.is_site_local or visitor_ip.is_private:
+			if visitor_ip.is_loopback or visitor_ip.is_private:
 				continue
 			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
 			pts = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
