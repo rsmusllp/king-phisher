@@ -303,8 +303,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	def respond_file(self, file_path, attachment=False, query={}):
 		self._respond_file_check_id()
 		file_path = os.path.abspath(file_path)
-		file_ext = os.path.splitext(file_path)[1][1:]
-		if attachment or not file_ext in ['hta', 'htm', 'html', 'txt']:
+		mime_type = self.guess_mime_type(file_path)
+		if attachment or mime_type != 'text/html':
 			self._respond_file_raw(file_path, attachment)
 			return
 		try:
@@ -338,7 +338,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			raise errors.KingPhisherAbortRequestError()
 
 		fs = os.stat(template.filename)
-		mime_type = self.guess_mime_type(file_path)
 		if mime_type.startswith('text'):
 			mime_type = mime_type + '; charset=utf-8'
 		self.send_response(200)
@@ -614,10 +613,14 @@ class KingPhisherServer(AdvancedHTTPServer):
 		:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 		"""
 		self.logger = logging.getLogger('KingPhisher.Server')
+		# additional mime types to be treated as html because they're probably cloned pages
 		HandlerClass.extensions_map.update({
+			'': 'text/html',
 			'.asp': 'text/html',
 			'.aspx': 'text/html',
 			'.cfm': 'text/html',
+			'.cgi': 'text/html',
+			'.do': 'text/html',
 			'.jsp': 'text/html',
 			'.nsf': 'text/html',
 			'.php': 'text/html',
