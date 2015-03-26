@@ -70,10 +70,12 @@ class WebPageCloner(object):
 		self.cloned_resources = collections.OrderedDict()
 		self.load_started = False
 		self.load_failed_event = None
+		self.__web_resources = []
 
 		self.webview = WebKit2.WebView()
 		web_context = self.webview.get_context()
 		web_context.set_cache_model(WebKit2.CacheModel.DOCUMENT_VIEWER)
+		web_context.set_tls_errors_policy(WebKit2.TLSErrorsPolicy.IGNORE)
 		self.webview.connect('decide-policy', self.signal_decide_policy)
 		self.webview.connect('load-changed', self.signal_load_changed)
 		self.webview.connect('load-failed', self.signal_load_failed)
@@ -157,9 +159,22 @@ class WebPageCloner(object):
 		"""
 		while not self.load_started:
 			gui_utilities.gtk_sync()
-		while self.webview.get_property('is-loading'):
+		while self.webview.get_property('is-loading') or len(self.__web_resources):
 			gui_utilities.gtk_sync()
 		return not self.load_failed
+
+	def cb_get_data_finish(self, resource, task):
+		data = resource.get_data_finish(task)
+		for _ in range(1):
+			if not resource.get_response():
+				break
+			resource_url_str = resource.get_property('uri')
+			if not self.resource_is_on_target(resource):
+				self.logger.debug('loaded external resource: ' + resource_url_str)
+				break
+			self.logger.info('loaded on target resource: ' + resource_url_str)
+			self.copy_resource_data(resource, data)
+		self.__web_resources.remove(resource)
 
 	def signal_decide_policy(self, webview, decision, decision_type):
 		self.logger.debug("received policy decision request of type: {0}".format(decision_type.value_name))
@@ -175,17 +190,6 @@ class WebPageCloner(object):
 		self.target_url = new_target_url
 		self.logger.info("updated the target url to: {0}".format(new_target_url_str))
 
-	def cb_get_data_finish(self, resource, task):
-		data = resource.get_data_finish(task)
-		if not resource.get_response():
-			return
-		resource_url_str = resource.get_property('uri')
-		if not self.resource_is_on_target(resource):
-			self.logger.debug('loaded external resource: ' + resource_url_str)
-			return
-		self.logger.info('loaded on target resource: ' + resource_url_str)
-		self.copy_resource_data(resource, data)
-
 	def signal_load_changed(self, webview, load_event):
 		self.logger.debug("load status changed to: {0}".format(load_event.value_name))
 		if load_event == WebKit2.LoadEvent.STARTED:
@@ -196,6 +200,7 @@ class WebPageCloner(object):
 		self.load_failed_event = event
 
 	def signal_resource_load_started(self, webveiw, resource, request):
+		self.__web_resources.append(resource)
 		resource.connect('finished', self.signal_resource_load_finished)
 
 	def signal_resource_load_finished(self, resource):

@@ -201,7 +201,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		action.connect('activate', lambda x: tools.KingPhisherClientRPCTerminal(self.config, self, self.get_property('application')))
 		action_group.add_action_with_accel(action, '<control>F1')
 
-		action = Gtk.Action(name='ToolsCloneWebPage', label='Clone A Web Page', tooltip='Clone A Web Page', stock_id=None)
+		action = Gtk.Action(name='ToolsCloneWebPage', label='Clone Web Page', tooltip='Clone A Web Page', stock_id=None)
 		action.connect('activate', lambda x: dialogs.ClonePageDialog(self.config, self).interact())
 		action_group.add_action(action)
 
@@ -219,7 +219,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 	def _add_menu_optional_actions(self, action_group, uimanager):
 		if graphs.has_matplotlib:
-			action = Gtk.Action(name='ToolsGraphMenu', label='Create Graph', tooltip=None, stock_id=None)
+			action = Gtk.Action(name='ToolsGraphMenu', label='Create Graph', tooltip='Create A Graph', stock_id=None)
 			action_group.add_action(action)
 
 			for graph_name in graphs.get_graphs():
