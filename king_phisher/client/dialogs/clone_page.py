@@ -30,6 +30,8 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
+
 from king_phisher.client import gui_utilities
 from king_phisher.client import web_cloner
 
@@ -76,6 +78,10 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 			if not dest_dir:
 				gui_utilities.show_dialog_error('Missing Information', self.dialog, 'Please set the destination directory.')
 				self.set_status('Missing Information')
+				continue
+			if not os.access(dest_dir, os.W_OK):
+				gui_utilities.show_dialog_error('Invalid Directory', self.dialog, 'Can not write to the specified directory.')
+				self.set_status('Invalid Directory')
 				continue
 			self.set_status('Cloning', spinner_active=True)
 			cloner = web_cloner.WebPageCloner(target_url, dest_dir)
