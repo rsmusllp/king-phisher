@@ -31,6 +31,7 @@
 #
 
 import datetime
+import ipaddress
 import logging
 import threading
 import time
@@ -440,10 +441,16 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		msg_details = self.parent.rpc.remote_table_row('messages', visit.message_id, cache=True)
 		if not msg_details:
 			return None
-		geo_location = self.parent.rpc.geoip_lookup(visit.visitor_ip)
+		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
+		if visitor_ip.is_loopback:
+			geo_location = 'N/A (Loopback)'
+		elif visitor_ip.is_private:
+			geo_location = 'N/A (Private)'
+		else:
+			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
 		row = (
 			msg_details.target_email,
-			visit.visitor_ip,
+			str(visitor_ip),
 			visit.visit_count,
 			visit.visitor_details,
 			str(geo_location),

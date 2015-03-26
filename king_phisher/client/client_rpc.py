@@ -144,10 +144,11 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		address in the server's geoip database.
 
 		:param ip: The IP address to lookup.
+		:type ip: str, :py:class:`ipaddress.IPv4Address`
 		:return: The geographic location information for the specified IP address.
 		:rtype: :py:class:`~king_phisher.geoip.GeoLocation`
 		"""
-		result = self.cache_call('geoip/lookup', ip)
+		result = self.cache_call('geoip/lookup', str(ip))
 		return geoip.GeoLocation(ip, result=result)
 
 def vte_child_routine(config):
