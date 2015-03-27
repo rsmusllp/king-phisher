@@ -27,7 +27,7 @@ Functions
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_selection_to_clipboard
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_set_column_names
+.. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_set_column_titles
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_widget_destroy_children
 
@@ -59,3 +59,8 @@ Classes
    :members:
    :special-members: __init__
    :undoc-members:
+
+.. autoclass:: king_phisher.client.gui_utilities.UtilityTreeView
+   :show-inheritance:
+   :members:
+   :special-members: __init__

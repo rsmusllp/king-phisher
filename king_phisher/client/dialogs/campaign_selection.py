@@ -52,7 +52,7 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
-		gui_utilities.gtk_treeview_set_column_names(treeview, ('Campaign Name', 'Created By', 'Creation Date'), column_offset=1)
+		gui_utilities.gtk_treeview_set_column_titles(treeview, ('Campaign Name', 'Created By', 'Creation Date'), column_offset=1)
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
 		self.load_campaigns()
 		# default sort is by campaign creation date, descending

@@ -51,7 +51,7 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 		treeview = self.gtk_builder_get('treeview_resources')
 		treeview.set_model(self.resources)
 		treeview.get_selection().set_mode(Gtk.SelectionMode.NONE)
-		gui_utilities.gtk_treeview_set_column_names(treeview, ('Resource Path', 'MIME Type', 'Size'))
+		gui_utilities.gtk_treeview_set_column_titles(treeview, ('Resource Path', 'MIME Type', 'Size'))
 		self.resources.set_sort_func(2, gui_utilities.gtk_treesortable_sort_func_numeric, 2)
 
 		self.button_cancel = self.gtk_builder_get('button_cancel')
