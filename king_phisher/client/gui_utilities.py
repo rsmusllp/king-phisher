@@ -522,7 +522,7 @@ class UtilityTreeView(object):
 	A class that wraps :py:class:`Gtk.TreeView` objects that use `Gtk.ListStore`
 	models with additional functions for conveniently displaying text data. If
 	*cb_delete* is specified, the callback will be called with the treeview
-	instance as its only parameter.
+	instance, and the selection as the parameters.
 	"""
 	def __init__(self, treeview, cb_delete=None):
 		"""
@@ -595,6 +595,14 @@ class UtilityTreeView(object):
 		self.column_titles.update(enumerate(column_titles, column_offset))
 		return gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset)
 
+	def _call_cb_delete(self):
+		if not self.cb_delete:
+			return
+		selection = self.treeview.get_selection()
+		if not selection.count_selected_rows():
+			return
+		self.cb_delete(self.treeview, selection)
+
 	def signal_button_pressed(self, treeview, event, popup_menu):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
 			return
@@ -612,11 +620,11 @@ class UtilityTreeView(object):
 		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
 			if keyval == Gdk.KEY_c:
 				gtk_treeview_selection_to_clipboard(treeview)
-		elif keyval == Gdk.KEY_Delete and self.cb_delete:
-			self.cb_delete(self.treeview)
+		elif keyval == Gdk.KEY_Delete:
+			self._call_cb_delete()
 
 	def signal_activate_popup_menu_copy(self, menuitem, column_id):
 		gtk_treeview_selection_to_clipboard(self.treeview, column_id)
 
 	def signal_activate_popup_menu_delete(self, menuitem):
-		self.cb_delete(self.treeview)
+		self._call_cb_delete()

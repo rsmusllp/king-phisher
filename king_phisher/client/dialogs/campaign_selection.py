@@ -33,7 +33,6 @@
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
-from gi.repository import Gdk
 from gi.repository import Gtk
 
 __all__ = ['CampaignSelectionDialog']
@@ -52,8 +51,11 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
-		gui_utilities.gtk_treeview_set_column_titles(treeview, ('Campaign Name', 'Created By', 'Creation Date'), column_offset=1)
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		self.treeview_manager = gui_utilities.UtilityTreeView(treeview, cb_delete=self._prompt_to_delete_row)
+		self.treeview_manager.set_column_titles(('Campaign Name', 'Created By', 'Creation Date'), column_offset=1)
+		self.popup_menu = self.treeview_manager.get_popup_menu()
+
 		self.load_campaigns()
 		# default sort is by campaign creation date, descending
 		treeview.get_model().set_sort_column_id(3, Gtk.SortType.DESCENDING)
@@ -68,6 +70,20 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 				return True
 			store_iter = store.iter_next(store_iter)
 		return False
+
+	def _prompt_to_delete_row(self, treeview, selection):
+		(model, tree_iter) = selection.get_selected()
+		if not tree_iter:
+			return
+		campaign_id = model.get_value(tree_iter, 0)
+		if self.config.get('campaign_id') == campaign_id:
+			gui_utilities.show_dialog_warning('Can Not Delete Campaign', self.dialog, 'Can not delete the current campaign.')
+			return
+		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.dialog, 'This action is irreversible, all campaign data will be lost.'):
+			return
+		self.parent.rpc('campaign/delete', campaign_id)
+		self.load_campaigns()
+		self._highlight_campaign(self.config.get('campaign_name'))
 
 	def load_campaigns(self):
 		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
@@ -101,33 +117,6 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 
 	def signal_entry_new_campaign_name_activate(self, entry):
 		self.gobjects['button_new_campaign'].emit('clicked')
-
-	def signal_treeview_key_pressed(self, widget, event):
-		if event.type != Gdk.EventType.KEY_PRESS:
-			return
-
-		treeview = self.gobjects['treeview_campaigns']
-		keyval = event.get_keyval()[1]
-		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
-			if keyval == Gdk.KEY_c:
-				gui_utilities.gtk_treeview_selection_to_clipboard(treeview)
-		elif keyval == Gdk.KEY_F5:
-			self.load_campaigns()
-			self._highlight_campaign(self.config.get('campaign_name'))
-		elif keyval == Gdk.KEY_Delete:
-			treeview_selection = treeview.get_selection()
-			(model, tree_iter) = treeview_selection.get_selected()
-			if not tree_iter:
-				return
-			campaign_id = model.get_value(tree_iter, 0)
-			if self.config.get('campaign_id') == campaign_id:
-				gui_utilities.show_dialog_warning('Can Not Delete Campaign', self.dialog, 'Can not delete the current campaign.')
-				return
-			if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.dialog, 'This action is irreversible, all campaign data will be lost.'):
-				return
-			self.parent.rpc('campaign/delete', campaign_id)
-			self.load_campaigns()
-			self._highlight_campaign(self.config.get('campaign_name'))
 
 	def interact(self):
 		self._highlight_campaign(self.config.get('campaign_name'))

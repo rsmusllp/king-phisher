@@ -48,11 +48,13 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(ClonePageDialog, self).__init__(*args, **kwargs)
 		self.resources = Gtk.ListStore(str, str, str)
-		treeview = self.gtk_builder_get('treeview_resources')
-		treeview.set_model(self.resources)
-		treeview.get_selection().set_mode(Gtk.SelectionMode.NONE)
-		gui_utilities.gtk_treeview_set_column_titles(treeview, ('Resource Path', 'MIME Type', 'Size'))
 		self.resources.set_sort_func(2, gui_utilities.gtk_treesortable_sort_func_numeric, 2)
+		treeview = self.gtk_builder_get('treeview_resources')
+		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
+		treeview.set_model(self.resources)
+		self.treeview_manager = gui_utilities.UtilityTreeView(treeview)
+		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'))
+		self.popup_menu = self.treeview_manager.get_popup_menu()
 
 		self.button_cancel = self.gtk_builder_get('button_cancel')
 		self.entry_directory = self.gtk_builder_get('entry_directory')
