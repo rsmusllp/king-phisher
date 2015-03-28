@@ -44,23 +44,31 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 	Display a dialog for cloning a web page. The logic of the cloning operation
 	is provided by the :py:mod:`.web_cloner` module.
 	"""
+	gobject_ids = [
+		'button_cancel',
+		'entry_clone_directory',
+		'label_status',
+		'spinner_status',
+		'treeview_resources'
+	]
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
 		super(ClonePageDialog, self).__init__(*args, **kwargs)
 		self.resources = Gtk.ListStore(str, str, str)
 		self.resources.set_sort_func(2, gui_utilities.gtk_treesortable_sort_func_numeric, 2)
-		treeview = self.gtk_builder_get('treeview_resources')
+		treeview = self.gobjects['treeview_resources']
 		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
 		treeview.set_model(self.resources)
 		self.treeview_manager = gui_utilities.UtilityTreeView(treeview)
 		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'))
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
-		self.button_cancel = self.gtk_builder_get('button_cancel')
-		self.entry_directory = self.gtk_builder_get('entry_directory')
+		self.button_cancel = self.gobjects['button_cancel']
+		self.entry_directory = self.gobjects['entry_clone_directory']
+		# managed separately to be kept out of the config
 		self.entry_target = self.gtk_builder_get('entry_target')
-		self.label_status = self.gtk_builder_get('label_status')
-		self.spinner_status = self.gtk_builder_get('spinner_status')
+		self.label_status = self.gobjects['label_status']
+		self.spinner_status = self.gobjects['spinner_status']
 
 	def set_status(self, status_text, spinner_active=False):
 		self.label_status.set_text("Status: {0}".format(status_text))
@@ -85,6 +93,8 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 				gui_utilities.show_dialog_error('Invalid Directory', self.dialog, 'Can not write to the specified directory.')
 				self.set_status('Invalid Directory')
 				continue
+			self.objects_save_to_config()
+
 			self.set_status('Cloning', spinner_active=True)
 			cloner = web_cloner.WebPageCloner(target_url, dest_dir)
 			signal_id = self.button_cancel.connect('clicked', lambda _: cloner.stop_cloning())

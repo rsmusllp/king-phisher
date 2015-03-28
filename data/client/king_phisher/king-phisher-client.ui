@@ -724,7 +724,7 @@ Brandan Geise</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="ClonePageDialog.entry_directory">
+                  <object class="GtkEntry" id="ClonePageDialog.entry_clone_directory">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="tooltip_text" translatable="yes">The directory to save the cloned page to.</property>

@@ -80,7 +80,7 @@ class WebPageCloner(object):
 		self.webview.connect('load-changed', self.signal_load_changed)
 		self.webview.connect('load-failed', self.signal_load_failed)
 		self.webview.connect('resource-load-started', self.signal_resource_load_started)
-		self.webview.load_uri(target_url)
+		self.webview.load_uri(self.target_url_str)
 
 	def resource_is_on_target(self, resource):
 		"""
@@ -92,9 +92,9 @@ class WebPageCloner(object):
 		:rtype: bool
 		"""
 		resource_url = urllib.parse.urlparse(resource.get_property('uri'))
-		if resource_url.netloc != self.target_url.netloc:
+		if resource_url.netloc.lower() != self.target_url.netloc.lower():
 			return False
-		if resource_url.scheme != self.target_url.scheme:
+		if resource_url.scheme.lower() != self.target_url.scheme.lower():
 			return False
 		rport = resource_url.port or (443 if resource_url.scheme == 'https' else 80)
 		tport = self.target_url.port or (443 if self.target_url.scheme == 'https' else 80)
@@ -185,7 +185,7 @@ class WebPageCloner(object):
 		if new_target_url_str == self.target_url_str:
 			return
 		# don't allow offsite redirects
-		if new_target_url.netloc != self.target_url.netloc:
+		if new_target_url.netloc.lower() != self.target_url.netloc.lower():
 			return
 		self.target_url = new_target_url
 		self.logger.info("updated the target url to: {0}".format(new_target_url_str))
