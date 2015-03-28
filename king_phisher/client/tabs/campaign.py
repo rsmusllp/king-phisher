@@ -231,16 +231,6 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		destination_file = response['target_path']
 		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
 
-	def signal_treeview_button_pressed(self, widget, event):
-		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
-			return
-		selection = self.gobjects['treeview_campaign'].get_selection()
-		if not selection.count_selected_rows():
-			return
-		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
-		self.popup_menu.popup(None, None, pos_func, None, event.button, event.time)
-		return True
-
 	def signal_treeview_key_pressed(self, treeview, event):
 		if event.type != Gdk.EventType.KEY_PRESS:
 			return

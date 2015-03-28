@@ -539,12 +539,13 @@ class UtilityTreeView(object):
 		"""A dictionary of column titles keyed by their respective storage data columns."""
 		self.treeview.connect('key-press-event', self.signal_key_pressed_copy)
 
-	def get_popup_menu(self):
+	def get_popup_menu(self, handle_button_press=True):
 		"""
 		Create a :py:class:`Gtk.Menu` with entries for copying and optionally
 		delete cell data from within the treeview. The delete option will only
 		be available if a delete callback was previously set.
 
+		:param bool handle_button_press: Whether or not to connect a handler for displaying the popup menu.
 		:return: The populated popup menu.
 		:rtype: :py:class:`Gtk.Menu`
 		"""
@@ -560,6 +561,8 @@ class UtilityTreeView(object):
 			menu_item.connect('activate', self.signal_activate_popup_menu_delete)
 			popup_menu.append(menu_item)
 		popup_menu.show_all()
+		if handle_button_press:
+			self.treeview.connect('button-press-event', self.signal_button_pressed, popup_menu)
 		return popup_menu
 
 	def get_popup_copy_submenu(self):
@@ -591,6 +594,16 @@ class UtilityTreeView(object):
 		"""
 		self.column_titles.update(enumerate(column_titles, column_offset))
 		return gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset)
+
+	def signal_button_pressed(self, treeview, event, popup_menu):
+		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
+			return
+		selection = treeview.get_selection()
+		if not selection.count_selected_rows():
+			return
+		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
+		popup_menu.popup(None, None, pos_func, None, event.button, event.time)
+		return True
 
 	def signal_key_pressed_copy(self, treeview, event):
 		if event.type != Gdk.EventType.KEY_PRESS:
