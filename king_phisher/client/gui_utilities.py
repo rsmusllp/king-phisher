@@ -192,27 +192,31 @@ def gtk_treesortable_sort_func_numeric(model, iter1, iter2, column_id):
 	item2 = model.get_value(iter2, column_id)
 	return cmp(item1, item2)
 
-def gtk_treeview_selection_to_clipboard(treeview, column=1):
+def gtk_treeview_selection_to_clipboard(treeview, columns=0):
 	"""
-	Copy the currently selected values from the specified column in the treeview
-	to the users clipboard. If no value is selected in the treeview, then the
-	clipboard is left unmodified. If multiple values are selected, they will all
-	be placed in the clipboard on separate lines.
+	Copy the currently selected values from the specified columns in the
+	treeview to the users clipboard. If no value is selected in the treeview,
+	then the clipboard is left unmodified. If multiple values are selected, they
+	will all be placed in the clipboard on separate lines.
 
 	:param treeview: The treeview instance to get the selection from.
 	:type treeview: :py:class:`Gtk.TreeView`
-	:param int column: The column number to retrieve the value for.
+	:param column: The column numbers to retrieve the value for.
+	:type column: int, list, tuple
 	"""
 	treeview_selection = treeview.get_selection()
 	(model, tree_paths) = treeview_selection.get_selected_rows()
 	if not tree_paths:
 		return
-
+	if isinstance(columns, int):
+		columns = (columns,)
 	tree_iters = map(model.get_iter, tree_paths)
-	selection_values = [model.get_value(ti, column) for ti in tree_iters]
-	selection_values = os.linesep.join(selection_values)
+	selection_lines = []
+	for ti in tree_iters:
+		selection_lines.append(' '.join(model.get_value(ti, column) for column in columns).strip())
+	selection_lines = os.linesep.join(selection_lines)
 	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-	clipboard.set_text(selection_values, -1)
+	clipboard.set_text(selection_lines, -1)
 
 def gtk_treeview_get_column_titles(treeview):
 	"""
@@ -524,10 +528,12 @@ class UtilityTreeView(object):
 	*cb_delete* is specified, the callback will be called with the treeview
 	instance, and the selection as the parameters.
 	"""
-	def __init__(self, treeview, cb_delete=None):
+	def __init__(self, treeview, selection_mode=None, cb_delete=None):
 		"""
 		:param treeview: The treeview to wrap and manage.
 		:type treeview: :py:class:`Gtk.TreeView`
+		:param selection_mode: The selection mode to set for the treeview.
+		:type selection_mode: :py:class:`Gtk.SelectionMode`
 		:param cb_delete: An optional callback that can be used to delete entries.
 		:type cb_delete: function
 		"""
@@ -538,6 +544,17 @@ class UtilityTreeView(object):
 		self.column_titles = {}
 		"""A dictionary of column titles keyed by their respective storage data columns."""
 		self.treeview.connect('key-press-event', self.signal_key_pressed_copy)
+		if selection_mode == None:
+			selection_mode = Gtk.SelectionMode.SINGLE
+		treeview.get_selection().set_mode(selection_mode)
+
+	def _call_cb_delete(self):
+		if not self.cb_delete:
+			return
+		selection = self.treeview.get_selection()
+		if not selection.count_selected_rows():
+			return
+		self.cb_delete(self.treeview, selection)
 
 	def get_popup_menu(self, handle_button_press=True):
 		"""
@@ -580,6 +597,12 @@ class UtilityTreeView(object):
 			menu_item = Gtk.MenuItem.new_with_label(column_title)
 			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_id)
 			copy_menu.append(menu_item)
+		if len(column_ids) > 1:
+			menu_item = Gtk.SeparatorMenuItem()
+			copy_menu.append(menu_item)
+			menu_item = Gtk.MenuItem.new_with_label('All')
+			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_ids)
+			copy_menu.append(menu_item)
 		return copy_menu
 
 	def set_column_titles(self, column_titles, column_offset=0):
@@ -594,14 +617,6 @@ class UtilityTreeView(object):
 		"""
 		self.column_titles.update(enumerate(column_titles, column_offset))
 		return gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset)
-
-	def _call_cb_delete(self):
-		if not self.cb_delete:
-			return
-		selection = self.treeview.get_selection()
-		if not selection.count_selected_rows():
-			return
-		self.cb_delete(self.treeview, selection)
 
 	def signal_button_pressed(self, treeview, event, popup_menu):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
@@ -618,13 +633,13 @@ class UtilityTreeView(object):
 			return
 		keyval = event.get_keyval()[1]
 		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
-			if keyval == Gdk.KEY_c:
-				gtk_treeview_selection_to_clipboard(treeview)
+			if keyval == Gdk.KEY_c and self.column_titles:
+				gtk_treeview_selection_to_clipboard(treeview, sorted(self.column_titles.keys())[0])
 		elif keyval == Gdk.KEY_Delete:
 			self._call_cb_delete()
 
-	def signal_activate_popup_menu_copy(self, menuitem, column_id):
-		gtk_treeview_selection_to_clipboard(self.treeview, column_id)
+	def signal_activate_popup_menu_copy(self, menuitem, column_ids):
+		gtk_treeview_selection_to_clipboard(self.treeview, column_ids)
 
 	def signal_activate_popup_menu_delete(self, menuitem):
 		self._call_cb_delete()

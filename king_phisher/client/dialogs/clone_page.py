@@ -57,7 +57,6 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 		self.resources = Gtk.ListStore(str, str, str)
 		self.resources.set_sort_func(2, gui_utilities.gtk_treesortable_sort_func_numeric, 2)
 		treeview = self.gobjects['treeview_resources']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
 		treeview.set_model(self.resources)
 		self.treeview_manager = gui_utilities.UtilityTreeView(treeview)
 		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'))

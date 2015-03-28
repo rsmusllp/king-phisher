@@ -104,8 +104,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
-		self.treeview_manager = gui_utilities.UtilityTreeView(treeview, cb_delete=self._prompt_to_delete_row)
+		self.treeview_manager = gui_utilities.UtilityTreeView(treeview, selection_mode=Gtk.SelectionMode.MULTIPLE, cb_delete=self._prompt_to_delete_row)
 		self.treeview_manager.set_column_titles(self.view_columns, column_offset=1)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""

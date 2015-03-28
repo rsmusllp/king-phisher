@@ -51,7 +51,6 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
 		self.treeview_manager = gui_utilities.UtilityTreeView(treeview, cb_delete=self._prompt_to_delete_row)
 		self.treeview_manager.set_column_titles(('Campaign Name', 'Created By', 'Creation Date'), column_offset=1)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
