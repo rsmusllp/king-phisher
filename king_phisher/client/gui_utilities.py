@@ -524,11 +524,15 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 class UtilityTreeView(object):
 	"""
 	A class that wraps :py:class:`Gtk.TreeView` objects that use `Gtk.ListStore`
-	models with additional functions for conveniently displaying text data. If
-	*cb_delete* is specified, the callback will be called with the treeview
+	models with additional functions for conveniently displaying text data.
+
+	If *cb_delete* is specified, the callback will be called with the treeview
 	instance, and the selection as the parameters.
+
+	If *cb_refresh* is specified, the callback will be called without any
+	parameters.
 	"""
-	def __init__(self, treeview, selection_mode=None, cb_delete=None):
+	def __init__(self, treeview, selection_mode=None, cb_delete=None, cb_refresh=None):
 		"""
 		:param treeview: The treeview to wrap and manage.
 		:type treeview: :py:class:`Gtk.TreeView`
@@ -540,7 +544,9 @@ class UtilityTreeView(object):
 		self.treeview = treeview
 		"""The :py:class:`Gtk.TreeView` instance being managed."""
 		self.cb_delete = cb_delete
-		"""An optional callback for deleting entries."""
+		"""An optional callback for deleting entries from the treeview's model."""
+		self.cb_refresh = cb_refresh
+		"""An optional callback for refreshing the data in the treeview's model."""
 		self.column_titles = {}
 		"""A dictionary of column titles keyed by their respective storage data columns."""
 		self.treeview.connect('key-press-event', self.signal_key_pressed_copy)
@@ -635,6 +641,8 @@ class UtilityTreeView(object):
 		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
 			if keyval == Gdk.KEY_c and self.column_titles:
 				gtk_treeview_selection_to_clipboard(treeview, sorted(self.column_titles.keys())[0])
+		elif keyval == Gdk.KEY_F5 and self.cb_refresh:
+			self.cb_refresh()
 		elif keyval == Gdk.KEY_Delete:
 			self._call_cb_delete()
 

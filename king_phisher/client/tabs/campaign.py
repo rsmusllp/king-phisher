@@ -42,7 +42,6 @@ from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 
-from gi.repository import Gdk
 from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -104,7 +103,12 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		self.treeview_manager = gui_utilities.UtilityTreeView(treeview, selection_mode=Gtk.SelectionMode.MULTIPLE, cb_delete=self._prompt_to_delete_row)
+		self.treeview_manager = gui_utilities.UtilityTreeView(
+			treeview,
+			selection_mode=Gtk.SelectionMode.MULTIPLE,
+			cb_delete=self._prompt_to_delete_row,
+			cb_refresh=lambda: self.load_campaign_information(force=True)
+		)
 		self.treeview_manager.set_column_titles(self.view_columns, column_offset=1)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
@@ -226,13 +230,6 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			return
 		destination_file = response['target_path']
 		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
-
-	def signal_treeview_key_pressed(self, treeview, event):
-		if event.type != Gdk.EventType.KEY_PRESS:
-			return
-		keyval = event.get_keyval()[1]
-		if keyval == Gdk.KEY_F5:
-			self.load_campaign_information(force=True)
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""

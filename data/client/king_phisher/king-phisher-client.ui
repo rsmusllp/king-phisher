@@ -243,7 +243,6 @@ Brandan Geise</property>
           <object class="GtkTreeView" id="CampaignViewCredentialsTab.treeview_campaign">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
             <child internal-child="selection">
               <object class="GtkTreeSelection" id="treeview-selection5"/>
             </child>
@@ -449,7 +448,6 @@ Brandan Geise</property>
           <object class="GtkTreeView" id="CampaignViewDeaddropTab.treeview_campaign">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
             <child internal-child="selection">
               <object class="GtkTreeSelection" id="CampaignViewDeaddropTab.treeview-selection6"/>
             </child>
@@ -514,7 +512,6 @@ Brandan Geise</property>
           <object class="GtkTreeView" id="CampaignViewMessagesTab.treeview_campaign">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
             <child internal-child="selection">
               <object class="GtkTreeSelection" id="CampaignViewMessagesTab.treeview-selection7"/>
             </child>
@@ -579,7 +576,6 @@ Brandan Geise</property>
           <object class="GtkTreeView" id="CampaignViewVisitsTab.treeview_campaign">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <signal name="key-press-event" handler="signal_treeview_key_pressed" swapped="no"/>
             <child internal-child="selection">
               <object class="GtkTreeSelection" id="CampaignViewVisitsTab.treeview-selection3"/>
             </child>
