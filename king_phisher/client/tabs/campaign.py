@@ -70,11 +70,11 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		self.loader_thread_lock = threading.Lock()
 		"""The :py:class:`threading.Lock` object used for synchronization between the loader and main threads."""
 
-	def load_campaign_information(self, force=False):
+	def load_campaign_information(self, force=True):
 		raise NotImplementedError()
 
 	def signal_button_clicked_refresh(self, button):
-		self.load_campaign_information(force=True)
+		self.load_campaign_information()
 
 	def signal_destroy(self, gobject):
 		self.is_destroyed.set()
@@ -107,7 +107,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			treeview,
 			selection_mode=Gtk.SelectionMode.MULTIPLE,
 			cb_delete=self._prompt_to_delete_row,
-			cb_refresh=lambda: self.load_campaign_information(force=True)
+			cb_refresh=self.load_campaign_information
 		)
 		self.treeview_manager.set_column_titles(self.view_columns, column_offset=1)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
@@ -132,7 +132,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			self.parent.rpc(self.remote_table_name + '/delete', row_ids[0])
 		else:
 			self.parent.rpc(self.remote_table_name + '/delete/multi', row_ids)
-		self.load_campaign_information(force=True)
+		self.load_campaign_information()
 
 	def format_row_data(self, row):
 		"""
@@ -163,7 +163,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			return ''
 		return str(cell_data)
 
-	def load_campaign_information(self, force=False):
+	def load_campaign_information(self, force=True):
 		"""
 		Load the necessary campaign information from the remote server.
 		Unless *force* is True, the
@@ -335,7 +335,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		self.logger.debug("dashboard refresh frequency set to {0} seconds".format(self.refresh_frequency))
 		GLib.timeout_add_seconds(self.refresh_frequency, self.loader_idle_routine)
 
-	def load_campaign_information(self, force=False):
+	def load_campaign_information(self, force=True):
 		"""
 		Load the necessary campaign information from the remote server.
 		Unless *force* is True, the
@@ -362,7 +362,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		"""The routine which refreshes the campaign data at a regular interval."""
 		if self.parent.rpc:
 			self.logger.debug('idle loader routine called')
-			self.load_campaign_information(force=True)
+			self.load_campaign_information()
 		return True
 
 	def loader_thread_routine(self):
@@ -500,7 +500,7 @@ class CampaignViewTab(object):
 	def signal_kpc_campaign_set(self, kpc, cid):
 		for tab in self.tabs.values():
 			if hasattr(tab, 'load_campaign_information'):
-				tab.load_campaign_information(force=True)
+				tab.load_campaign_information()
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		if not hasattr(self.parent, 'rpc'):
@@ -512,4 +512,4 @@ class CampaignViewTab(object):
 			if current_page != tab.box:
 				continue
 			if hasattr(tab, 'load_campaign_information'):
-				tab.load_campaign_information()
+				tab.load_campaign_information(force=False)
