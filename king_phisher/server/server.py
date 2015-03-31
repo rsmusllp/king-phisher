@@ -348,7 +348,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		try:
 			self.handle_page_visit()
 		except Exception as error:
-			self.server.logger.error('handle_page_visit raised error: ' + error.__class__.__name__)
+			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
 
 		self.end_headers()
 		self.wfile.write(template_data.encode('utf-8', 'ignore'))
