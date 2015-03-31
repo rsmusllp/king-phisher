@@ -117,6 +117,8 @@ def is_valid_email_address(email_address):
 	:return: Whether the email address appears to be valid or not.
 	:rtype: bool
 	"""
+	if email_address == None:
+		return False
 	return EMAIL_REGEX.match(email_address) != None
 
 def is_valid_ip_address(ip_address):

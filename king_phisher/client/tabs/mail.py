@@ -143,7 +143,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if not spf_check_level:
 			return True
 		if not utilities.is_valid_email_address(self.config['mailer.source_email_smtp']):
-			self.text_insert('WARNING: Can not check SPF records for invalid source email address.\n')
+			self.text_insert('WARNING: Can not check SPF records for an invalid source email address.\n')
 			return True
 
 		spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
