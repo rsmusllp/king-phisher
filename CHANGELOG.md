@@ -4,6 +4,7 @@
 1. Added additional graphs including maps when basemap is available
 1. Added geolocation support
 1. Made dashboard layout configurable
+1. Support for cloning web pages
 
 ## Version 0.1.7
 1. Added make_csrf_page function

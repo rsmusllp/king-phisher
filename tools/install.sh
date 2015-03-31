@@ -1,7 +1,7 @@
 #!/bin/bash
-########################################################################
+###############################################################################
 # This is the Linux installation script for the King Phisher Client and
-# Server on Ubuntu and Kali Linux.
+# Server on supported distributions.
 #
 # Project Home Page: https://github.com/securestate/king-phisher/
 # Author: Spencer McIntyre
@@ -9,7 +9,7 @@
 # Quick run command:
 #   wget -q https://github.com/securestate/king-phisher/raw/master/tools/install.sh && sudo bash ./install.sh
 #
-# Supported Linux Flavors:
+# Supported Linux Distributions:
 #   Linux Flavor    | Client | Server |
 #   ----------------|--------|--------|
 #   CentOS          | no     | yes    |
@@ -17,7 +17,7 @@
 #   Kali            | yes    | yes    |
 #   Ubuntu          | yes    | yes    |
 #
-########################################################################
+###############################################################################
 
 E_NOTROOT=87
 FILE_NAME="$(dirname $(readlink -e $0) 2>/dev/null)/$(basename $0)"
@@ -40,7 +40,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-grep -E "Debian GNU\/Linux 8 " /etc/issue > /dev/null 2>&1
+grep -E "Debian GNU\/Linux [7-8] " /etc/issue > /dev/null 2>&1
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Debian"
 fi
@@ -57,7 +57,11 @@ fi
 
 if [ -z "$LINUX_VERSION" ]; then
 	echo "Failed to detect the version of Linux"
-	echo "This installer only supports Ubuntu 13.x/14.x and Kali"
+	echo "This installer only supports the following Linux distributions:"
+	echo "  - CentOS"
+	echo "  - Debian"
+	echo "  - Kali"
+	echo "  - Ubuntu"
 	exit 1
 fi
 echo "Linux version detected as $LINUX_VERSION"
