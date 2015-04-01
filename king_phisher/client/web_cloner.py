@@ -48,7 +48,27 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse
 
-ClonedResourceDetails = collections.namedtuple('ClonedResourceDetails', ['resource', 'mime_type', 'size', 'file_name'])
+class ClonedResourceDetails(collections.namedtuple('ClonedResourceDetails', ['resource', 'mime_type', 'size', 'file_name'])):
+	"""
+	A named tuple which contains details regard a resource that has been cloned.
+
+	.. py:attribute:: resource
+
+		The web resource that has been cloned.
+
+	.. py:attribute:: mime_type
+
+		The MIME type that was provided by the server for the cloned resource.
+
+	.. py:attribute:: size
+
+		The size of the original resource that was provided by the server.
+
+	.. py:attribute:: file_name
+
+		The path to the file which the resource was written to.
+	"""
+	pass
 
 class WebPageCloner(object):
 	"""
@@ -70,6 +90,7 @@ class WebPageCloner(object):
 		self.dest_dir = os.path.abspath(os.path.normpath(dest_dir))
 		self.logger = logging.getLogger('KingPhisher.Client.WebPageScraper')
 		self.cloned_resources = collections.OrderedDict()
+		"""An :py:class:`~collections.OrderedDict` of :py:class:`.ClonedResourceDetails` keyed by the web resource they describe."""
 		self.load_started = False
 		self.load_failed_event = None
 		self.__web_resources = []
@@ -132,6 +153,8 @@ class WebPageCloner(object):
 	def patch_html(self, data):
 		"""
 		Patch the HTML data to include the King Phisher javascript resource.
+		The script tag is inserted just before the closing head tag. If no head
+		tag is present, the data is left unmodified.
 
 		:param str data: The HTML data to patch.
 		:return: The patched HTML data.

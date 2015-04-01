@@ -7,6 +7,9 @@
 Classes
 -------
 
+.. autoclass:: king_phisher.client.web_cloner.ClonedResourceDetails
+   :members:
+
 .. autoclass:: king_phisher.client.web_cloner.WebPageCloner
    :show-inheritance:
    :members:

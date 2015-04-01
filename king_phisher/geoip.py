@@ -142,6 +142,7 @@ def lookup(ip, lang='en'):
 	return result
 
 Coordinates = collections.namedtuple('Coordinates', ['latitude', 'longitude'])
+"""A named tuple for representing GPS coordinates."""
 
 class GeoLocation(object):
 	"""
