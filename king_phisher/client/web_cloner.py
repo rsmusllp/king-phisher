@@ -48,13 +48,15 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse
 
-ClonedResourceDetails = collections.namedtuple('ClonedResourceDetails', ['mime_type', 'size'])
+ClonedResourceDetails = collections.namedtuple('ClonedResourceDetails', ['resource', 'mime_type', 'size', 'file_name'])
 
 class WebPageCloner(object):
 	"""
 	This object is used to clone web pages. It will use the WebKit2GTK+ engine
 	and hook signals to detect what remote resources that are loaded from the
-	target URL. These resources are then written to disk.
+	target URL. These resources are then written to disk. Resources that have
+	a MIME type of text/html have the King Phisher server javascript file
+	patched in..
 	"""
 	def __init__(self, target_url, dest_dir):
 		"""
@@ -65,7 +67,7 @@ class WebPageCloner(object):
 		dest_dir = os.path.abspath(dest_dir)
 		if not os.path.exists(dest_dir):
 			os.mkdir(dest_dir)
-		self.dest_dir = dest_dir
+		self.dest_dir = os.path.abspath(os.path.normpath(dest_dir))
 		self.logger = logging.getLogger('KingPhisher.Client.WebPageScraper')
 		self.cloned_resources = collections.OrderedDict()
 		self.load_started = False
@@ -81,6 +83,68 @@ class WebPageCloner(object):
 		self.webview.connect('load-failed', self.signal_load_failed)
 		self.webview.connect('resource-load-started', self.signal_resource_load_started)
 		self.webview.load_uri(self.target_url_str)
+
+	@property
+	def load_failed(self):
+		return self.load_failed_event != None
+
+	@property
+	def target_url_str(self):
+		return urllib.parse.urlunparse(self.target_url)
+
+	def copy_resource_data(self, resource, data):
+		"""
+		Copy the data from a loaded resource to a local file.
+
+		:param resource: The resource whos data is being copied.
+		:type resource: :py:class:`WebKit2.WebResource`
+		:param data: The raw data of the represented resource.
+		:type data: bytes, str
+		"""
+		resource_url_str = resource.get_property('uri')
+		resource_url = urllib.parse.urlparse(resource_url_str)
+		resource_path = os.path.split(resource_url.path)[0].lstrip('/')
+		directory = self.dest_dir
+		for part in resource_path.split('/'):
+			directory = os.path.join(directory, part)
+			if not os.path.exists(directory):
+				os.mkdir(directory)
+
+		mime_type = None
+		response = resource.get_response()
+		if response:
+			mime_type = response.get_mime_type()
+
+		resource_path = resource_url.path
+		if resource_path.endswith('/'):
+			resource_path += 'index.html'
+		resource_path = resource_path.lstrip('/')
+		resource_path = os.path.join(self.dest_dir, resource_path)
+		if mime_type == 'text/html':
+			data = self.patch_html(data)
+		with open(resource_path, 'wb') as file_h:
+			file_h.write(data)
+
+		crd = ClonedResourceDetails(resource_url.path, mime_type, len(data), resource_path)
+		self.cloned_resources[resource_url.path] = crd
+		self.logger.debug("wrote {0:,} bytes to {1}".format(crd.size, resource_path))
+
+	def patch_html(self, data):
+		"""
+		Patch the HTML data to include the King Phisher javascript resource.
+
+		:param str data: The HTML data to patch.
+		:return: The patched HTML data.
+		:rtype: str
+		"""
+		end_head = data.find('</head>')
+		if end_head == -1:
+			return data
+		patched = ''
+		patched += data[:end_head]
+		patched += '<script src="/kp.js" type="text/javascript">'
+		patched += data[end_head:]
+		return patched
 
 	def resource_is_on_target(self, resource):
 		"""
@@ -102,52 +166,10 @@ class WebPageCloner(object):
 			return False
 		return True
 
-	def copy_resource_data(self, resource, data):
-		"""
-		Copy the data from a loaded resource to a local file.
-
-		:param resource: The resource whos data is being copied.
-		:type resource: :py:class:`WebKit2.WebResource`
-		:param data: The raw data of the represented resource.
-		:type data: bytes, str
-		"""
-		resource_url_str = resource.get_property('uri')
-		resource_url = urllib.parse.urlparse(resource_url_str)
-		resource_path = os.path.split(resource_url.path)[0].lstrip('/')
-		directory = self.dest_dir
-		for part in resource_path.split('/'):
-			directory = os.path.join(directory, part)
-			if not os.path.exists(directory):
-				os.mkdir(directory)
-
-		resource_path = resource_url.path
-		if resource_path.endswith('/'):
-			resource_path += 'index.html'
-		resource_path = resource_path.lstrip('/')
-		resource_path = os.path.join(self.dest_dir, resource_path)
-		with open(resource_path, 'wb') as file_h:
-			file_h.write(data)
-
-		mime_type = None
-		response = resource.get_response()
-		if response:
-			mime_type = response.get_mime_type()
-		crd = ClonedResourceDetails(mime_type, len(data))
-		self.cloned_resources[resource_url.path] = crd
-		self.logger.debug("wrote {0:,} bytes to {1}".format(crd.size, resource_path))
-
 	def stop_cloning(self):
 		"""Stop the current cloning operation if it is running."""
 		if self.webview.get_property('is-loading'):
 			self.webview.stop_loading()
-
-	@property
-	def load_failed(self):
-		return self.load_failed_event != None
-
-	@property
-	def target_url_str(self):
-		return urllib.parse.urlunparse(self.target_url)
 
 	def wait(self):
 		"""
