@@ -143,7 +143,8 @@ def gobject_signal_blocked(gobject, signal_name):
 
 def gtk_list_store_search(list_store, value, column=0):
 	"""
-	Search a GTK ListStore for a value.
+	Search a :py:class:`Gtk.ListStore` for a value and return a
+	:py:class:`Gtk.TreeIter` to the first match.
 
 	:param list_store: The list store to search.
 	:type list_store: :py:class:`Gtk.ListStore`
