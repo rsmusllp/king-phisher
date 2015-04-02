@@ -77,6 +77,10 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 	def interact(self):
 		self.dialog.show_all()
 		self.set_status('Waiting')
+		if not web_cloner.has_webkit2:
+			gui_utilities.show_dialog_error('WebKit2GTK+ Is Unavailable', self.dialog, 'The WebKit2GTK+ package is not available.')
+			self.dialog.destroy()
+			return
 		while self.dialog.run() == Gtk.ResponseType.APPLY:
 			target_url = self.entry_target.get_text()
 			if not target_url:

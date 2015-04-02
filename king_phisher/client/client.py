@@ -218,6 +218,13 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		action_group.add_action(action)
 
 	def _add_menu_optional_actions(self, action_group, uimanager):
+		if sys.platform.startswith('linux'):
+			action = Gtk.Action(name='ToolsSFTPClient', label='SFTP Client', tooltip='SFTP Client', stock_id=None)
+			action.connect('activate', lambda x: self.start_sftp_client())
+			action_group.add_action_with_accel(action, '<control>F2')
+			merge_id = uimanager.new_merge_id()
+			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsSFTPClient', 'ToolsSFTPClient', Gtk.UIManagerItemType.MENUITEM, False)
+
 		if graphs.has_matplotlib:
 			action = Gtk.Action(name='ToolsGraphMenu', label='Create Graph', tooltip='Create A Graph', stock_id=None)
 			action_group.add_action(action)
@@ -234,13 +241,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			for graph_name in sorted(graphs.get_graphs(), key=lambda gn: graphs.get_graph(gn).name_human):
 				action_name = 'ToolsGraph' + graph_name
 				uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu/ToolsGraphMenu', action_name, action_name, Gtk.UIManagerItemType.MENUITEM, False)
-
-		if sys.platform.startswith('linux'):
-			action = Gtk.Action(name='ToolsSFTPClient', label='SFTP Client', tooltip='SFTP Client', stock_id=None)
-			action.connect('activate', lambda x: self.start_sftp_client())
-			action_group.add_action_with_accel(action, '<control>F2')
-			merge_id = uimanager.new_merge_id()
-			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsSFTPClient', 'ToolsSFTPClient', Gtk.UIManagerItemType.MENUITEM, False)
 
 	def _create_ssh_forwarder(self, server, username, password):
 		"""

@@ -40,13 +40,17 @@ import urllib
 
 from king_phisher.client import gui_utilities
 
-from gi.repository import WebKit2
-
 if sys.version_info[0] < 3:
 	import urlparse
 	urllib.parse = urlparse
 else:
 	import urllib.parse
+
+try:
+	from gi.repository import WebKit2
+	has_webkit2 = True
+except ImportError:
+	has_webkit2 = False
 
 class ClonedResourceDetails(collections.namedtuple('ClonedResourceDetails', ['resource', 'mime_type', 'size', 'file_name'])):
 	"""
@@ -83,6 +87,8 @@ class WebPageCloner(object):
 		:param str target_url: The URL of the target web page to clone.
 		:param str dest_dir: The path of a directory to write the resources to.
 		"""
+		if not has_webkit2:
+			raise RuntimeError('cloning requires WebKit2GTK+')
 		self.target_url = urllib.parse.urlparse(target_url)
 		dest_dir = os.path.abspath(dest_dir)
 		if not os.path.exists(dest_dir):
