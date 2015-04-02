@@ -14,6 +14,7 @@
 #   ----------------|--------|--------|
 #   CentOS          | no     | yes    |
 #   Debian          | yes    | yes    |
+#   Fedora          | yes    | yes    |
 #   Kali            | yes    | yes    |
 #   Ubuntu          | yes    | yes    |
 #
@@ -34,23 +35,28 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-grep -E "CentOS Linux release 7(\.[0-9]{1,4}){2}" /etc/redhat-release > /dev/null 2>&1
+grep -E "CentOS Linux release 7(\.[0-9]{1,4}){2}" /etc/redhat-release &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="CentOS"
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-grep -E "Debian GNU\/Linux [7-8] " /etc/issue > /dev/null 2>&1
+grep -E "Fedora release 2[1-2]" /etc/redhat-release &> /dev/null
+if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+	LINUX_VERSION="Fedora"
+fi
+
+grep -E "Debian GNU\/Linux [7-8] " /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Debian"
 fi
 
-grep -E "Kali Linux 1.[0-9]+" /etc/debian_version > /dev/null 2>&1
+grep -E "Kali Linux 1.[0-9]+" /etc/debian_version &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Kali"
 fi
 
-grep -E "Ubuntu 1[34].(04|10)" /etc/issue > /dev/null 2>&1
+grep -E "Ubuntu 1[34].(04|10)" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Ubuntu"
 fi
@@ -60,6 +66,7 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo "This installer only supports the following Linux distributions:"
 	echo "  - CentOS"
 	echo "  - Debian"
+	echo "  - Fedora"
 	echo "  - Kali"
 	echo "  - Ubuntu"
 	exit 1
@@ -82,7 +89,7 @@ if [ ! "$(command -v git)" ]; then
 	fi
 fi
 
-if git status > /dev/null 2>&1; then
+if git status &> /dev/null; then
 	KING_PHISHER_DIR="$(git rev-parse --show-toplevel)"
 	echo "Git repo found at $KING_PHISHER_DIR"
 elif [ -d "$(dirname $(dirname $FILE_NAME))/king_phisher" ]; then
@@ -91,7 +98,7 @@ elif [ -d "$(dirname $(dirname $FILE_NAME))/king_phisher" ]; then
 else
 	echo "Downloading and installing the King Phisher server to $KING_PHISHER_DIR"
 	if [ ! -d "$KING_PHISHER_DIR" ]; then
-		git clone $GIT_CLONE_URL $KING_PHISHER_DIR > /dev/null 2>&1
+		git clone $GIT_CLONE_URL $KING_PHISHER_DIR &> /dev/null
 		if [ $? -ne 0 ]; then
 			echo "Failed to clone the Git repo"
 			exit $?
@@ -106,46 +113,34 @@ if [ "$LINUX_VERSION" == "CentOS" ]; then
 	yum install -y epel-release
 	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
 		postgresql-devel python-devel python-pip
-	if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
-		yum install -y postgresql-devel
-	fi
-elif [ "$LINUX_VERSION" == "Debian" ]; then
+elif [ "$LINUX_VERSION" == "Fedora" ]; then
+	yum install -y freetype-devel gcc gcc-c++ gtk3-devel \
+		libpng-devel postgresql-devel python-devel python-pip
+elif [ "$LINUX_VERSION" == "Debian" ] || \
+	 [ "$LINUX_VERSION" == "Kali"   ] || \
+	 [ "$LINUX_VERSION" == "Ubuntu" ]; then
 	apt-get install -y libfreetype6-dev python-dev python-pip
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
-			gir1.2-webkit2-3.0 python-cairo libgeos++-dev \
+			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
 			libgtk-3-dev python-gi python-gi-cairo \
 			python-gobject python-gobject-dev python-paramiko
+		apt-get install -y gir1.2-webkit2-3.0 &> /dev/null
+		if [ $? -eq 0 ]; then
+			echo "Successfully installed gir1.2-webkit2-3.0 with apt-get"
+		else
+			echo "Failed to install gir1.2-webkit2-3.0 with apt-get"
+		fi
 	fi
 	if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		apt-get install -y libpq-dev
 	fi
-elif [ "$LINUX_VERSION" == "Kali" ]; then
-	apt-get install -y libfreetype6-dev python-dev python-pip
-	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-		apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
-			gir1.2-webkit2-3.0 python-cairo libgeos++-dev \
-			libgtk-3-dev python-gi python-gi-cairo \
-			python-gobject python-gobject-dev python-paramiko
-	fi
-	if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
-		apt-get install -y libpq-dev
-	fi
-	easy_install -U distribute
-elif [ "$LINUX_VERSION" == "Ubuntu" ]; then
-	apt-get install -y libfreetype6-dev python-dev python-pip
-	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-		apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
-			gir1.2-webkit2-3.0 python-cairo libgeos++-dev \
-			libgtk-3-dev python-gi python-gi-cairo \
-			python-gobject python-gobject-dev python-paramiko
-	fi
-	if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
-		apt-get install -y libpq-dev
+	if [ "$LINUX_VERSION" == "Kali" ]; then
+		easy_install -U distribute
 	fi
 fi
 
-echo "Installing Python package dependencies from pypi"
+echo "Installing Python package dependencies from PyPi"
 # six needs to be installed before requirements.txt for matplotlib
 pip install "six>=1.7.0"
 pip install -r requirements.txt
@@ -169,10 +164,17 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 			gtk-update-icon-cache --force /usr/share/icons/hicolor
 		fi
 	fi
+	# try to install basemap but it will fail with newer versions of pip because the package isn't verified
+	pip install "basemap==1.0.7" &> /dev/null
+	if [ $? -eq 0 ]; then
+		echo "Successfully installed basemap with pip"
+	else
+		echo "Failed to install basemap with pip"
+	fi
 fi
 
 if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
-	egrep "^${KING_PHISHER_GROUP}:" /etc/group > /dev/null 2>&1
+	egrep "^${KING_PHISHER_GROUP}:" /etc/group &> /dev/null
 	if [ $? -ne 0 ]; then
 		echo "Creating King Phisher admin group: '$KING_PHISHER_GROUP'"
 		groupadd $KING_PHISHER_GROUP

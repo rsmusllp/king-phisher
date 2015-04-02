@@ -5,6 +5,7 @@
 1. Added geolocation support
 1. Made dashboard layout configurable
 1. Support for cloning web pages
+1. Support for installing on Fedora
 
 ## Version 0.1.7
 1. Added make_csrf_page function
