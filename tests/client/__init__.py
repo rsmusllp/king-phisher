@@ -31,6 +31,8 @@
 #
 
 import logging
+logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
+logging.getLogger('').setLevel(logging.CRITICAL)
 
 from .application import ClientApplicationTests
 from .dialogs import ClientDialogTests
@@ -39,6 +41,3 @@ from .graphs import ClientGraphsTests
 from .gui_utilities import ClientGUIUtilityTests
 from .gui_utilities import ClientGUIUtilityTreeviewTests
 from .mailer import ClientMailerTests
-
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())

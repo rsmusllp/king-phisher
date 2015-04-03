@@ -31,6 +31,8 @@
 #
 
 import logging
+logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
+logging.getLogger('').setLevel(logging.CRITICAL)
 
 from .authenticator import ServerAuthenticatorTests
 from .database import ServerDatabaseTests
@@ -38,6 +40,3 @@ from .rest_api import ServerRESTAPITests
 from .server import CampaignWorkflowTests
 from .server import ServerTests
 from .server_rpc import ServerRPCTests
-
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
