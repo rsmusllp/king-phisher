@@ -94,7 +94,7 @@ def main():
 		data_path = os.path.dirname(__file__)
 		data_path = os.path.join(data_path, 'data', 'client')
 
-	if not os.getuid():
+	if sys.platform.startswith('linux') and not os.getuid():
 		logger.warning('it is not necessary to run the king phisher client as root')
 
 	data_path = os.path.abspath(data_path)
