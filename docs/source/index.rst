@@ -9,6 +9,7 @@ King Phisher Documentation
    king_phisher_api.rst
    client/index.rst
    rpc_api.rst
+   environment_vars.rst
 
 Indices and tables
 ==================

@@ -1,6 +1,8 @@
 Keyboard Shortcuts
 ==================
 
+The following keyboard shortcuts are available for use within the client GUI.
+
 +--------------------+-------------------------------+
 | Key Combination    | Action Description            |
 +====================+===============================+
