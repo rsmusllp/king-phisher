@@ -3,6 +3,10 @@ language: python
 python:
   - "2.7"
 
+env:
+  global:
+    - KING_PHISHER_TEST_GEOIP_DB="./GeoLite2-City.mmdb"
+
 cache:
   - apt
 

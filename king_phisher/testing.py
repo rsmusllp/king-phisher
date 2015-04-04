@@ -124,8 +124,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		config = smoke_zephyr.configuration.Configuration(find.find_data_file('server_config.yml'))
 		config.set('server.address.port', 0)
 		config.set('server.database', 'sqlite://')
-		if os.environ.get('TRAVIS'):
-			config.set('server.geoip.database', 'GeoLite2-City.mmdb')
+		config.set('server.geoip.database', os.environ.get('KING_PHISHER_TEST_GEOIP_DB', './GeoLite2-City.mmdb'))
 		config.set('server.web_root', web_root)
 		config.set('server.rest_api.enabled', True)
 		config.set('server.rest_api.token', rest_api.generate_token())
@@ -214,6 +213,6 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		if not self.shutdown_requested:
 			self.assertTrue(self.server_thread.is_alive())
 		self.server.shutdown()
-		self.server_thread.join(5.0)
+		self.server_thread.join(10.0)
 		self.assertFalse(self.server_thread.is_alive())
 		del self.server

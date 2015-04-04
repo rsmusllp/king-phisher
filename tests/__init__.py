@@ -39,6 +39,7 @@ from .server import *
 
 from .configuration import ServerConfigurationTests
 from .geoip import GeoIPTests
+from .geoip import GeoIPRPCTests
 from .sms import SMSTests
 from .spf import SPFTests
 from .templates import TemplatesTests

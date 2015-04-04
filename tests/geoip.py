@@ -30,12 +30,24 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import ipaddress
+import os
+import unittest
+
 from king_phisher import geoip
+from king_phisher.testing import KingPhisherTestCase
 from king_phisher.testing import KingPhisherServerTestCase
 
 GEO_TEST_IP = '8.8.8.8'
 
-class GeoIPTests(KingPhisherServerTestCase):
+class GeoIPTests(KingPhisherTestCase):
+	def setUp(self):
+		self.db_path = os.environ.get('KING_PHISHER_TEST_GEOIP_DB', './GeoLite2-City.mmdb')
+		self.__geoip_db = geoip.init_database(self.db_path)
+
+	def tearDown(self):
+		self.__geoip_db.close()
+
 	def test_geoip_lookup(self):
 		result = geoip.lookup(GEO_TEST_IP)
 		self.assertIsInstance(result, dict)
@@ -55,3 +67,13 @@ class GeoIPTests(KingPhisherServerTestCase):
 		loc_raw = geoip.GeoLocation(GEO_TEST_IP, result=geoip.lookup(GEO_TEST_IP))
 		for field in geoip.DB_RESULT_FIELDS:
 			self.assertEqual(getattr(loc, field), getattr(loc_raw, field))
+		self.assertIsInstance(loc.ip_address, ipaddress.IPv4Address)
+		self.assertEqual(loc.ip_address, ipaddress.IPv4Address(GEO_TEST_IP))
+
+class GeoIPRPCTests(KingPhisherServerTestCase):
+	def test_geoip_lookup_rpc(self):
+		result = self.rpc.geoip_lookup(GEO_TEST_IP)
+		self.assertIsInstance(result, geoip.GeoLocation)
+
+if __name__ == '__main__':
+	unittest.main()
