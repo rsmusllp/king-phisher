@@ -35,6 +35,7 @@
 import collections
 import logging
 import os
+import string
 import sys
 import urllib
 
@@ -171,7 +172,11 @@ class WebPageCloner(object):
 			return data
 		patched = ''
 		patched += data[:end_head]
-		patched += '<script src="/kp.js" type="text/javascript">'
+		patched += '<script src="/kp.js" type="text/javascript"></script>'
+		ws_cursor = end_head - 1
+		while ws_cursor > 0 and data[ws_cursor] in string.whitespace:
+			ws_cursor -= 1
+		patched += data[ws_cursor + 1:end_head]
 		patched += data[end_head:]
 		return patched
 
