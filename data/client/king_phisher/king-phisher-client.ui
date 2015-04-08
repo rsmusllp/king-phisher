@@ -836,12 +836,11 @@ Brandan Geise</property>
   </object>
   <object class="GtkDialog" id="ExceptionDialog">
     <property name="width_request">550</property>
-    <property name="height_request">225</property>
+    <property name="height_request">175</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher Error</property>
     <property name="window_position">center-on-parent</property>
     <property name="default_width">550</property>
-    <property name="default_height">225</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <property name="urgency_hint">True</property>
@@ -852,7 +851,7 @@ Brandan Geise</property>
         <property name="margin_right">3</property>
         <property name="margin_bottom">3</property>
         <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
+        <property name="spacing">5</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="dialog-action_area8">
             <property name="can_focus">False</property>
@@ -952,13 +951,30 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
+              <object class="GtkLabel" id="label22">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_top">20</property>
+                <property name="label" translatable="yes">Please include the following details if reporting this issue.</property>
+                <attributes>
+                  <attribute name="style" value="italic"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkExpander" id="expander1">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="spacing">3</property>
                 <property name="resize_toplevel">True</property>
                 <child>
                   <object class="GtkScrolledWindow" id="scrolledwindow2">
-                    <property name="height_request">300</property>
+                    <property name="height_request">250</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="shadow_type">in</property>
@@ -982,23 +998,6 @@ Brandan Geise</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="pack_type">end</property>
-                <property name="position">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label22">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Please include the following details if reporting this issue.</property>
-                <attributes>
-                  <attribute name="style" value="italic"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="pack_type">end</property>
                 <property name="position">5</property>
               </packing>
             </child>

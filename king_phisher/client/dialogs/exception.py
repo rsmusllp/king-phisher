@@ -56,7 +56,7 @@ class ExceptionDialog(gui_utilities.UtilityGladeGObject):
 	which occurred.
 	"""
 	top_gobject = 'dialog'
-	def __init__(self, config, parent, exc_info):
+	def __init__(self, config, parent, exc_info=None):
 		"""
 		:param dict config: The King Phisher client configuration.
 		:param parent: The parent window for this object.
