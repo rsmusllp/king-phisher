@@ -10,4 +10,5 @@
    clone_page.rst
    configuration.rst
    entry.rst
+   exception.rst
    login.rst

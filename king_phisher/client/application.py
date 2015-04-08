@@ -35,10 +35,12 @@ import json
 import logging
 import os
 import shutil
+import sys
 
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher.client import client
+from king_phisher.client import dialogs
 from king_phisher.client import graphs
 from king_phisher.client import tools
 
@@ -79,8 +81,13 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.critical('failed to load the client configuration')
 			raise
 
+	def exception_hook(self, exc_type, exc_value, exc_traceback):
+		exc_info = (exc_type, exc_value, exc_traceback)
+		dialogs.ExceptionDialog(self.config, self.get_active_window(), exc_info).interact()
+
 	def do_activate(self):
 		Gtk.Application.do_activate(self)
+		sys.excepthook = self.exception_hook
 
 		win = client.KingPhisherClient(self.config, self)
 		win.set_position(Gtk.WindowPosition.CENTER)
@@ -88,6 +95,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def do_shutdown(self):
 		Gtk.Application.do_shutdown(self)
+		sys.excepthook = sys.__excepthook__
 		self.save_config()
 
 	def load_config(self, load_defaults=False):
