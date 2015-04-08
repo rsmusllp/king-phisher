@@ -149,7 +149,9 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		:rtype: :py:class:`~king_phisher.geoip.GeoLocation`
 		"""
 		result = self.cache_call('geoip/lookup', str(ip))
-		return geoip.GeoLocation(ip, result=result)
+		if result:
+			result = geoip.GeoLocation(ip, result=result)
+		return result
 
 def vte_child_routine(config):
 	"""
