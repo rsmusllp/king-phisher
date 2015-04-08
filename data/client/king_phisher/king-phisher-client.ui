@@ -1545,6 +1545,7 @@ Brandan Geise</property>
     <property name="default_height">200</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <signal name="button-press-event" handler="signal_button_pressed" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox" id="LoginDialog.dialog-vbox5">
         <property name="can_focus">False</property>
