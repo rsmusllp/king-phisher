@@ -510,6 +510,8 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			if visitor_ip.is_loopback or visitor_ip.is_private:
 				continue
 			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
+			if not geo_location:
+				continue
 			pts = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
 			if o_high == o_low:
 				markersize = 2.0

@@ -401,7 +401,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		elif visitor_ip.is_private:
 			geo_location = 'N/A (Private)'
 		else:
-			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
+			geo_location = self.parent.rpc.geoip_lookup(visitor_ip) or 'N/A (Unknown)'
 		row = (
 			msg_details.target_email,
 			str(visitor_ip),
