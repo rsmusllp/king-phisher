@@ -36,12 +36,15 @@ import traceback
 
 from king_phisher import version
 from king_phisher.client import gui_utilities
+from king_phisher.third_party import AdvancedHTTPServer
 
 __all__ = ['ExceptionDialog']
 
 EXCEPTION_DETAILS_TEMPLATE = """
 Error Type: {error_type}
 Error Details: {error_details}
+Error UID: {error_uid}
+RPC Error: {rpc_error_details}
 King Phisher Version: {king_phisher_version}
 Platform Version: {platform_version}
 Python Version: {python_version}
@@ -56,17 +59,19 @@ class ExceptionDialog(gui_utilities.UtilityGladeGObject):
 	which occurred.
 	"""
 	top_gobject = 'dialog'
-	def __init__(self, config, parent, exc_info=None):
+	def __init__(self, config, parent, exc_info=None, error_uid=None):
 		"""
 		:param dict config: The King Phisher client configuration.
 		:param parent: The parent window for this object.
 		:type parent: :py:class:`Gtk.Window`
 		:param tuple exc_info: The exception information as provided by :py:func:`sys.exc_info`.
+		:param str error_uid: An optional unique identifier for the exception that can be provided for tracking purposes.
 		"""
 		super(ExceptionDialog, self).__init__(config, parent)
 		self.error_description = self.gtk_builder_get('label_error_description')
 		self.error_details = self.gtk_builder_get('textview_error_details')
 		self.exc_info = exc_info or sys.exc_info()
+		self.error_uid = error_uid
 
 	def interact(self):
 		exc_type, exc_value, exc_traceback = self.exc_info
@@ -80,9 +85,16 @@ class ExceptionDialog(gui_utilities.UtilityGladeGObject):
 			else:
 				pversion += ' (Frozen=False)'
 		exc_name = "{0}.{1}".format(exc_type.__module__, exc_type.__name__)
+		rpc_error_details = 'N/A (Not an RPC error)'
+		if isinstance(exc_value, AdvancedHTTPServer.AdvancedHTTPServerRPCError):
+			rpc_error_details = "Name: {0}".format(exc_value.remote_exception['name'])
+			if exc_value.remote_exception.get('message'):
+				rpc_error_details += " Message: '{0}'".format(exc_value.remote_exception['message'])
 		details = EXCEPTION_DETAILS_TEMPLATE.format(
 			error_details=repr(exc_value),
 			error_type=exc_name,
+			error_uid=(self.error_uid or 'N/A'),
+			rpc_error_details=rpc_error_details,
 			platform_version=pversion,
 			python_version="{0}.{1}.{2}".format(*sys.version_info),
 			king_phisher_version=version.version,
@@ -90,6 +102,8 @@ class ExceptionDialog(gui_utilities.UtilityGladeGObject):
 		)
 		details = details.strip()
 
+		if exc_name.startswith('king_phisher.third_party.'):
+			exc_name = exc_name[25:]
 		self.error_description.set_text("Error type: {0}".format(exc_name))
 		self.error_details.get_buffer().set_text(details)
 

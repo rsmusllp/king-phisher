@@ -36,6 +36,7 @@ import logging
 import os
 import shutil
 import sys
+import uuid
 
 from king_phisher import find
 from king_phisher import utilities
@@ -83,7 +84,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def exception_hook(self, exc_type, exc_value, exc_traceback):
 		exc_info = (exc_type, exc_value, exc_traceback)
-		dialogs.ExceptionDialog(self.config, self.get_active_window(), exc_info).interact()
+		error_uid = str(uuid.uuid4())
+		self.logger.error("error uid: {0} an unhandled exception was thrown".format(error_uid), exc_info=exc_info)
+		dialogs.ExceptionDialog(self.config, self.get_active_window(), exc_info=exc_info, error_uid=error_uid).interact()
 
 	def do_activate(self):
 		Gtk.Application.do_activate(self)
