@@ -38,6 +38,10 @@ import sys
 import threading
 import time
 
+if getattr(sys, 'frozen', False):
+	# set the basemap data directory for forzen builds
+	os.environ['BASEMAPDATA'] = os.path.join(os.path.dirname(sys.executable), 'mpl-basemap-data')
+
 from king_phisher import find
 from king_phisher import version
 from king_phisher.client import application
