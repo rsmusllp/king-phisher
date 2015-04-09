@@ -38,6 +38,8 @@ from king_phisher import version
 from king_phisher.client import gui_utilities
 from king_phisher.third_party import AdvancedHTTPServer
 
+from gi.repository import Gtk
+
 __all__ = ['ExceptionDialog']
 
 EXCEPTION_DETAILS_TEMPLATE = """
@@ -48,6 +50,7 @@ RPC Error: {rpc_error_details}
 King Phisher Version: {king_phisher_version}
 Platform Version: {platform_version}
 Python Version: {python_version}
+Gtk Version: {gtk_version}
 
 {stack_trace}
 """
@@ -95,9 +98,10 @@ class ExceptionDialog(gui_utilities.UtilityGladeGObject):
 			error_type=exc_name,
 			error_uid=(self.error_uid or 'N/A'),
 			rpc_error_details=rpc_error_details,
+			king_phisher_version=version.version,
 			platform_version=pversion,
 			python_version="{0}.{1}.{2}".format(*sys.version_info),
-			king_phisher_version=version.version,
+			gtk_version="{0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()),
 			stack_trace=''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
 		)
 		details = details.strip()

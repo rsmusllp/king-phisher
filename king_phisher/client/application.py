@@ -62,7 +62,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def __init__(self, config_file=None):
 		super(KingPhisherClientApplication, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.Application')
-		# print version information for debugging purposes
+		# log version information for debugging purposes
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
 		self.logger.debug("gi.repository GObject version: {0}".format('.'.join(map(str, GObject.pygobject_version))))
 		self.logger.debug("gi.repository Gtk version: {0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()))
@@ -83,6 +83,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 			raise
 
 	def exception_hook(self, exc_type, exc_value, exc_traceback):
+		if isinstance(exc_value, KeyboardInterrupt):
+			self.logger.warning('received a KeyboardInterrupt exception')
+			return
 		exc_info = (exc_type, exc_value, exc_traceback)
 		error_uid = str(uuid.uuid4())
 		self.logger.error("error uid: {0} an unhandled exception was thrown".format(error_uid), exc_info=exc_info)
