@@ -124,7 +124,7 @@ class KingPhisherClientRPCTerminal(object):
 			self.terminal.connect('child-exited', lambda vt, status: self.window.destroy())
 		else:
 			# Vte._version <= 2.90
-			vte_pty = self.termina.pty_new(Vte.PtyFlags.DEFAULT)
+			vte_pty = self.terminal.pty_new(Vte.PtyFlags.DEFAULT)
 			self.terminal.set_pty_object(vte_pty)
 			self.terminal.connect('child-exited', lambda vt: self.window.destroy())
 
