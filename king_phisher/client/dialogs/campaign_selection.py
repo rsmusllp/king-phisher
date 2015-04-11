@@ -32,6 +32,7 @@
 
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
+from king_phisher.third_party import AdvancedHTTPServer
 
 from gi.repository import Gtk
 
@@ -44,6 +45,7 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 	"""
 	gobject_ids = [
 		'button_new_campaign',
+		'button_select',
 		'entry_new_campaign_name',
 		'treeview_campaigns'
 	]
@@ -106,8 +108,7 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 			return
 		try:
 			self.parent.rpc('campaign/new', campaign_name)
-		#_TODO: this should probably be an RPC exception
-		except Exception:
+		except AdvancedHTTPServer.AdvancedHTTPServerRPCError:
 			gui_utilities.show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
 			return
 		campaign_name_entry.set_property('text', '')
@@ -116,6 +117,9 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 
 	def signal_entry_new_campaign_name_activate(self, entry):
 		self.gobjects['button_new_campaign'].emit('clicked')
+
+	def signal_treeview_row_activated(self, treeview, treeview_column, treepath):
+		self.gobjects['button_select'].emit('clicked')
 
 	def interact(self):
 		self._highlight_campaign(self.config.get('campaign_name'))

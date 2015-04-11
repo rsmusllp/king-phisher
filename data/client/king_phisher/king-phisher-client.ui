@@ -169,6 +169,7 @@ Brandan Geise</property>
               <object class="GtkTreeView" id="CampaignSelectionDialog.treeview_campaigns">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <signal name="row-activated" handler="signal_treeview_row_activated" swapped="no"/>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection" id="treeview-selection4"/>
                 </child>
