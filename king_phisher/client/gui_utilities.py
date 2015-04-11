@@ -43,6 +43,9 @@ from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import GtkSource
+
+GObject.type_register(GtkSource.View)
 
 GOBJECT_PROPERTY_MAP = {
 	'checkbutton': 'active',

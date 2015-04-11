@@ -46,6 +46,8 @@ from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
 from gi.repository import Gtk
+from gi.repository import GtkSource
+from gi.repository import Pango
 
 if sys.version_info[0] < 3:
 	import urllib2
@@ -420,17 +422,22 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	gobject_ids = [
 		'button_save_as_html_file',
 		'button_save_html_file',
-		'textview_html_file'
+		'view_html_file'
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Edit')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderEditTab, self).__init__(*args, **kwargs)
-		self.textview = self.gobjects['textview_html_file']
+		self.textview = self.gobjects['view_html_file']
 		"""The :py:class:`Gtk.TextView` object of the editor."""
-		self.textbuffer = self.textview.get_buffer()
+		self.textbuffer = GtkSource.Buffer()
 		"""The :py:class:`Gtk.TextBuffer` used by the :py:attr:textview` attribute."""
+		self.textview.set_buffer(self.textbuffer)
+		self.language_manager = GtkSource.LanguageManager()
+		self.textbuffer.set_language(self.language_manager.get_language('html'))
+		self.textbuffer.set_highlight_syntax(True)
+		self.textview.modify_font(Pango.FontDescription('monospace 11'))
 		self.button_save_html_file = self.gobjects['button_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 
@@ -537,7 +544,9 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		with open(html_file, 'rb') as file_h:
 			html_data = file_h.read()
 		html_data = str(html_data.decode('utf-8', 'ignore'))
+		self.textbuffer.begin_not_undoable_action()
 		self.textbuffer.set_text(html_data)
+		self.textbuffer.end_not_undoable_action()
 
 class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 	"""

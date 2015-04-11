@@ -34,6 +34,7 @@ Brandan Geise
 -->
 <interface>
   <requires lib="gtk+" version="3.4"/>
+  <requires lib="gtksourceview" version="3.0"/>
   <!-- interface-license-type bsd3c -->
   <!-- interface-name King Phisher -->
   <!-- interface-description Social Engineering Phishing Toolkit -->
@@ -1092,9 +1093,14 @@ Brandan Geise</property>
                     <property name="margin_bottom">5</property>
                     <property name="shadow_type">etched-in</property>
                     <child>
-                      <object class="GtkTextView" id="MailSenderEditTab.textview_html_file">
+                      <object class="GtkSourceView" id="MailSenderEditTab.view_html_file">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="left_margin">2</property>
+                        <property name="right_margin">2</property>
+                        <property name="show_line_numbers">True</property>
+                        <property name="tab_width">4</property>
+                        <property name="insert_spaces_instead_of_tabs">True</property>
                       </object>
                     </child>
                   </object>
