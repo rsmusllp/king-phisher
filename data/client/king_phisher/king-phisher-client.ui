@@ -3020,4 +3020,118 @@ Brandan Geise</property>
       <action-widget response="-10">TextEntryDialog.button_apply</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkImage" id="RPCTerminalWindow.image_help_api_docs">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-dialog-question</property>
+  </object>
+  <object class="GtkImage" id="RPCTerminalWindow.image_help_wiki">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-help</property>
+  </object>
+  <object class="GtkApplicationWindow" id="RPCTerminalWindow">
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">King Phisher RPC</property>
+    <property name="destroy_with_parent">True</property>
+    <child>
+      <object class="GtkBox" id="RPCTerminalWindow.box_main">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkMenuBar" id="RPCTerminalWindow.menubar">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkMenuItem" id="RPCTerminalWindow.menuitem_edit">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">_Edit</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="RPCTerminalWindow.menu_edit">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_edit_copy">
+                        <property name="label">gtk-copy</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="signal_menuitem_edit_copy" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_edit_paste">
+                        <property name="label">gtk-paste</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="signal_menuitem_edit_paste" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="RPCTerminalWindow.menuitem_help">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">_Help</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="RPCTerminalWindow.menu_help">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_about">
+                        <property name="label">gtk-about</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="signal_menuitem_help_about" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_api_docs">
+                        <property name="label" translatable="yes">API Docs</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="image">RPCTerminalWindow.image_help_api_docs</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="signal_menuitem_help_api_docs" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_wiki">
+                        <property name="label" translatable="yes">Help</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="image">RPCTerminalWindow.image_help_wiki</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="signal_menuitem_help_wiki" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
 </interface>
