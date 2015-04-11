@@ -10,6 +10,10 @@ env:
 cache:
   - apt
 
+branches:
+  except:
+    - screenshots
+
 virtualenv:
   system_site_packages: true
 
