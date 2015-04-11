@@ -100,6 +100,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		super(MailSenderSendTab, self).__init__(*args, **kwargs)
 		self.textview = self.gobjects['textview_mail_sender_progress']
 		"""The :py:class:`Gtk.TextView` object that renders text status messages."""
+		self.textview.modify_font(Pango.FontDescription(self.config['text_font']))
 		self.textbuffer = self.textview.get_buffer()
 		"""The :py:class:`Gtk.TextBuffer` instance associated with :py:attr:`~.MailSenderSendTab.textview`."""
 		self.textbuffer_iter = self.textbuffer.get_start_iter()
@@ -434,10 +435,10 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		self.textbuffer = GtkSource.Buffer()
 		"""The :py:class:`Gtk.TextBuffer` used by the :py:attr:textview` attribute."""
 		self.textview.set_buffer(self.textbuffer)
+		self.textview.modify_font(Pango.FontDescription(self.config['text_font']))
 		self.language_manager = GtkSource.LanguageManager()
 		self.textbuffer.set_language(self.language_manager.get_language('html'))
 		self.textbuffer.set_highlight_syntax(True)
-		self.textview.modify_font(Pango.FontDescription('monospace 11'))
 		self.button_save_html_file = self.gobjects['button_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 
