@@ -20,6 +20,7 @@
 #
 ###############################################################################
 
+E_SOFTWARE=70
 E_NOTROOT=87
 FILE_NAME="$(dirname $(readlink -e $0) 2>/dev/null)/$(basename $0)"
 GIT_CLONE_URL="https://github.com/securestate/king-phisher.git"
@@ -101,7 +102,7 @@ else
 		git clone $GIT_CLONE_URL $KING_PHISHER_DIR &> /dev/null
 		if [ $? -ne 0 ]; then
 			echo "Failed to clone the Git repo"
-			exit $?
+			exit $E_SOFTWARE
 		fi
 		echo "Successfully cloned the git repo"
 	fi
@@ -144,6 +145,10 @@ echo "Installing Python package dependencies from PyPi"
 # six needs to be installed before requirements.txt for matplotlib
 pip install "six>=1.7.0"
 pip install -r requirements.txt
+if [ $? -ne 0 ]; then
+	echo "Failed to install python requirements with pip"
+	exit $E_SOFTWARE
+fi
 
 if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 	DESKTOP_APPLICATIONS_DIR=""
