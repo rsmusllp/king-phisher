@@ -442,6 +442,14 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		self.button_save_html_file = self.gobjects['button_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 
+		scheme_manager = GtkSource.StyleSchemeManager()
+		style_scheme_name = self.config['text_source_theme']
+		style_scheme = scheme_manager.get_scheme(style_scheme_name)
+		if style_scheme:
+			self.textbuffer.set_style_scheme(style_scheme)
+		else:
+			self.logger.error("invalid GTK source theme: '{0}'".format(style_scheme_name))
+
 	def signal_button_save_as(self, button):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
