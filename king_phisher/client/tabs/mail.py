@@ -421,8 +421,8 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	template.
 	"""
 	gobject_ids = [
-		'button_save_as_html_file',
-		'button_save_html_file',
+		'toolbutton_save_as_html_file',
+		'toolbutton_save_html_file',
 		'view_html_file'
 	]
 	top_gobject = 'box'
@@ -439,7 +439,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		self.language_manager = GtkSource.LanguageManager()
 		self.textbuffer.set_language(self.language_manager.get_language('html'))
 		self.textbuffer.set_highlight_syntax(True)
-		self.button_save_html_file = self.gobjects['button_save_html_file']
+		self.toolbutton_save_html_file = self.gobjects['toolbutton_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 
 		scheme_manager = GtkSource.StyleSchemeManager()
@@ -450,12 +450,26 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		else:
 			self.logger.error("invalid GTK source theme: '{0}'".format(style_scheme_name))
 
-	def signal_button_save_as(self, button):
-		html_file = self.config.get('mailer.html_file')
-		if not html_file:
-			return
+	def signal_toolbutton_open(self, button):
+		dialog = gui_utilities.UtilityFileChooser('Choose File', self.parent)
+		dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
+		dialog.quick_add_filter('All Files', '*')
+		response = dialog.run_quick_open()
+		dialog.destroy()
+		if not response:
+			return False
+		self.config['mailer.html_file'] = response['target_path']
+		self.show_tab()
+		return True
+
+	def signal_toolbutton_save_as(self, button):
 		dialog = gui_utilities.UtilityFileChooser('Save HTML File', self.parent)
-		response = dialog.run_quick_save(current_name=os.path.basename(html_file))
+		html_file = self.config.get('mailer.html_file')
+		if html_file:
+			current_name = os.path.basename(html_file)
+		else:
+			current_name = 'message.html'
+		response = dialog.run_quick_save(current_name=current_name)
 		dialog.destroy()
 		if not response:
 			return
@@ -465,8 +479,9 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		html_file_h.write(text)
 		html_file_h.close()
 		self.config['mailer.html_file'] = destination_file
+		self.toolbutton_save_html_file.set_sensitive(True)
 
-	def signal_button_save(self, button):
+	def signal_toolbutton_save(self, button):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
 			return
@@ -545,10 +560,10 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		"""Load the message HTML file from disk and configure the tab for editing."""
 		html_file = self.config.get('mailer.html_file')
 		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
-			self.button_save_html_file.set_sensitive(False)
+			self.toolbutton_save_html_file.set_sensitive(False)
 			self.textview.set_property('editable', False)
 			return
-		self.button_save_html_file.set_sensitive(True)
+		self.toolbutton_save_html_file.set_sensitive(True)
 		self.textview.set_property('editable', True)
 		with open(html_file, 'rb') as file_h:
 			html_data = file_h.read()
