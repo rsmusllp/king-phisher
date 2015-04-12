@@ -1064,6 +1064,16 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
+              <object class="GtkSeparatorToolItem" id="MailSenderEditTab.toolbutton_separator1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkToolButton" id="MailSenderEditTab.toolbutton_save_html_file">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -1087,6 +1097,31 @@ Brandan Geise</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-save-as</property>
                 <signal name="clicked" handler="signal_toolbutton_save_as" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" id="MailSenderEditTab.toolbutton_separator2">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="MailSenderEditTab.toolbutton_template_wiki">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Message Template Help</property>
+                <property name="label" translatable="yes">Template Help</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-info</property>
+                <signal name="clicked" handler="signal_toolbutton_template_wiki" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>

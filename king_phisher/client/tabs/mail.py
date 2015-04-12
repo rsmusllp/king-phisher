@@ -462,7 +462,18 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		self.show_tab()
 		return True
 
-	def signal_toolbutton_save_as(self, button):
+	def signal_toolbutton_save(self, toolbutton):
+		html_file = self.config.get('mailer.html_file')
+		if not html_file:
+			return
+		if not gui_utilities.show_dialog_yes_no('Save HTML the file?', self.parent):
+			return
+		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
+		html_file_h = open(html_file, 'w')
+		html_file_h.write(text)
+		html_file_h.close()
+
+	def signal_toolbutton_save_as(self, toolbutton):
 		dialog = gui_utilities.UtilityFileChooser('Save HTML File', self.parent)
 		html_file = self.config.get('mailer.html_file')
 		if html_file:
@@ -481,16 +492,8 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		self.config['mailer.html_file'] = destination_file
 		self.toolbutton_save_html_file.set_sensitive(True)
 
-	def signal_toolbutton_save(self, button):
-		html_file = self.config.get('mailer.html_file')
-		if not html_file:
-			return
-		if not gui_utilities.show_dialog_yes_no('Save HTML the file?', self.parent):
-			return
-		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
-		html_file_h = open(html_file, 'w')
-		html_file_h.write(text)
-		html_file_h.close()
+	def signal_toolbutton_template_wiki(self, toolbutton):
+		utilities.open_uri('https://github.com/securestate/king-phisher/wiki/Templates#message-templates')
 
 	def signal_textview_populate_popup(self, textview, menu):
 		# create and populate the 'Insert' submenu
