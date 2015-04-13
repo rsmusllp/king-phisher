@@ -39,6 +39,7 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from king_phisher import version
 
 import matplotlib
+from mpl_toolkits import basemap
 from cx_Freeze import setup, Executable
 
 is_debugging_build = bool(os.environ.get('DEBUG'))
@@ -109,6 +110,7 @@ for lib in gtk_libs:
 	include_files.append((os.path.join(include_dll_path, lib), lib))
 
 include_files.append((matplotlib.get_data_path(), 'mpl-data'))
+include_files.append((basemap.basemap_datadir, 'mpl-basemap-data'))
 include_files.append(('data/client/king_phisher', 'king_phisher'))
 
 exe_base = 'Win32GUI'
@@ -127,8 +129,17 @@ executables = [
 
 build_exe_options = dict(
 	compressed=False,
-	packages=['cairo', 'email', 'gi', 'jinja2', 'matplotlib', 'msgpack', 'paramiko'],
-	include_files=include_files
+	include_files=include_files,
+	packages=[
+		'cairo',
+		'email',
+		'gi',
+		'jinja2',
+		'matplotlib',
+		'mpl_toolkits',
+		'msgpack',
+		'paramiko'
+	]
 )
 
 setup(

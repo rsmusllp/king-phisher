@@ -48,11 +48,24 @@ USER_AGENT_REGEX_VERSION = re.compile(r'Version/(([\d\._\-]+)(;|\)| ))')
 RE_POS_OS_NAME = 0
 RE_POS_OS_VERSION = 7
 
-UserAgent = collections.namedtuple('UserAgent', ['os_name', 'os_version', 'os_arch'])
-"""
-A parsed representation of the information available from a browsers user agent
-string. Only the :py:attr:`.os_name` attribute is guaranteed to not be None.
-"""
+class UserAgent(collections.namedtuple('UserAgent', ['os_name', 'os_version', 'os_arch'])):
+	"""
+	A parsed representation of the information available from a browsers user agent
+	string. Only the :py:attr:`.os_name` attribute is guaranteed to not be None.
+
+	.. py:attribute:: os_name
+
+		The :py:class:`~.OSFamily` constant of the name of the operating system.
+
+	.. py:attribute:: os_version
+
+		The version of the operating system.
+
+	.. py:attribute:: os_arch
+
+		The :py:class:`~.OSArch` constant of the architecture of the operating system.
+	"""
+	pass
 
 def parse_user_agent(user_agent):
 	"""

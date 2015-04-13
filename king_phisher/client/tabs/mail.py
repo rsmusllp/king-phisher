@@ -46,7 +46,6 @@ from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
 from gi.repository import Gtk
-from gi.repository import WebKit
 
 if sys.version_info[0] < 3:
 	import urllib2
@@ -57,6 +56,13 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse
 	import urllib.request
+
+try:
+	from gi.repository import WebKit2 as WebKitX
+	has_webkit2 = True
+except ImportError:
+	from gi.repository import WebKit as WebKitX
+	has_webkit2 = False
 
 def test_webserver_url(target_url, secret_id):
 	"""
@@ -143,7 +149,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		if not spf_check_level:
 			return True
 		if not utilities.is_valid_email_address(self.config['mailer.source_email_smtp']):
-			self.text_insert('WARNING: Can not check SPF records for invalid source email address.\n')
+			self.text_insert('WARNING: Can not check SPF records for an invalid source email address.\n')
 			return True
 
 		spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
@@ -362,7 +368,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 
 class MailSenderPreviewTab(object):
 	"""
-	This tab uses webkit to render the HTML of an email so it can be
+	This tab uses the WebKit engine to render the HTML of an email so it can be
 	previewed before it is sent.
 	"""
 	def __init__(self, config, parent):
@@ -379,8 +385,10 @@ class MailSenderPreviewTab(object):
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
-		self.webview = WebKit.WebView()
-		"""The :py:class:`WebKit.WebView` object used to render the message HTML."""
+		self.webview = WebKitX.WebView()
+		"""The :py:class:`WebKit2.WebView` object used to render the message HTML."""
+		if has_webkit2:
+			self.webview.get_context().set_cache_model(WebKitX.CacheModel.DOCUMENT_VIEWER)
 		self.webview.show()
 		scrolled_window = Gtk.ScrolledWindow()
 		scrolled_window.add(self.webview)
@@ -399,7 +407,10 @@ class MailSenderPreviewTab(object):
 		html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
 		if not html_file_uri.startswith('file://'):
 			html_file_uri = 'file://' + html_file_uri
-		self.webview.load_html_string(html_data, html_file_uri)
+		if has_webkit2:
+			self.webview.load_html(html_data, html_file_uri)
+		else:
+			self.webview.load_html_string(html_data, html_file_uri)
 
 class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	"""

@@ -47,7 +47,7 @@ from gi.repository import Gtk
 GOBJECT_PROPERTY_MAP = {
 	'checkbutton': 'active',
 	'combobox': (
-		lambda c, v: c.set_active_iter(search_list_store(c.get_model(), v)),
+		lambda c, v: c.set_active_iter(gtk_list_store_search(c.get_model(), v)),
 		lambda c: c.get_model().get_value(c.get_active_iter() or c.get_model().get_iter_first(), 0)
 	),
 	'entry': 'text',
@@ -141,46 +141,10 @@ def gobject_signal_blocked(gobject, signal_name):
 	yield
 	GObject.signal_handler_unblock(gobject, handler_id)
 
-def gtk_sync():
-	"""Process all pending GTK events."""
-	while Gtk.events_pending():
-		Gtk.main_iteration()
-
-def gtk_widget_destroy_children(widget):
+def gtk_list_store_search(list_store, value, column=0):
 	"""
-	Destroy all GTK child objects of *widget*.
-
-	:param widget: The widget to destroy all the children of.
-	:type widget: :py:class:`Gtk.Widget`
-	"""
-	for child in widget.get_children():
-		child.destroy()
-
-def gtk_treeview_selection_to_clipboard(treeview, column=1):
-	"""
-	Copy the currently selected values from the specified column in the treeview
-	to the users clipboard. If no value is selected in the treeview, then the
-	clipboard is left unmodified. If multiple values are selected, they will all
-	be placed in the clipboard on seperate lines.
-
-	:param treeview: The treeview instance to get the selection from.
-	:type treeview: :py:class:`Gtk.TreeView`
-	:param int column: The column number to retrieve the value for.
-	"""
-	treeview_selection = treeview.get_selection()
-	(model, tree_paths) = treeview_selection.get_selected_rows()
-	if not tree_paths:
-		return
-
-	tree_iters = map(model.get_iter, tree_paths)
-	selection_values = [model.get_value(ti, column) for ti in tree_iters]
-	selection_values = os.linesep.join(selection_values)
-	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-	clipboard.set_text(selection_values, -1)
-
-def search_list_store(list_store, value, column=0):
-	"""
-	Search a GTK ListStore for a value.
+	Search a :py:class:`Gtk.ListStore` for a value and return a
+	:py:class:`Gtk.TreeIter` to the first match.
 
 	:param list_store: The list store to search.
 	:type list_store: :py:class:`Gtk.ListStore`
@@ -193,6 +157,108 @@ def search_list_store(list_store, value, column=0):
 		if row[column] == value:
 			return row.iter
 	return None
+
+def gtk_sync():
+	"""Process all pending GTK events."""
+	while Gtk.events_pending():
+		Gtk.main_iteration()
+
+def gtk_treesortable_sort_func_numeric(model, iter1, iter2, column_id):
+	"""
+	Sort the model by comparing text numeric values with place holders such as
+	1,337. This is meant to be set as a sorting function using
+	:py:func:`Gtk.TreeSortable.set_sort_func`. The user_data parameter must be
+	the column id which contains the numeric values to be sorted.
+
+	:param model: The model that is being sorted.
+	:type model: :py:class:`Gtk.TreeSortable`
+	:param iter1: The iterator of the first item to compare.
+	:type iter1: :py:class:`Gtk.TreeIter`
+	:param iter2: The iterator of the second item to compare.
+	:type iter2: :py:class:`Gtk.TreeIter`
+	:param column_id: The ID of the column containing numeric values.
+	:return: An integer, -1 if item1 should come before item2, 0 if they are the same and 1 if item1 should come after item2.
+	:rtype: int
+	"""
+	column_id = column_id or 0
+	item1 = model.get_value(iter1, column_id).replace(',', '')
+	item2 = model.get_value(iter2, column_id).replace(',', '')
+	if item1.isdigit() and item2.isdigit():
+		return cmp(int(item1), int(item2))
+	if item1.isdigit():
+		return -1
+	elif item2.isdigit():
+		return 1
+	item1 = model.get_value(iter1, column_id)
+	item2 = model.get_value(iter2, column_id)
+	return cmp(item1, item2)
+
+def gtk_treeview_selection_to_clipboard(treeview, columns=0):
+	"""
+	Copy the currently selected values from the specified columns in the
+	treeview to the users clipboard. If no value is selected in the treeview,
+	then the clipboard is left unmodified. If multiple values are selected, they
+	will all be placed in the clipboard on separate lines.
+
+	:param treeview: The treeview instance to get the selection from.
+	:type treeview: :py:class:`Gtk.TreeView`
+	:param column: The column numbers to retrieve the value for.
+	:type column: int, list, tuple
+	"""
+	treeview_selection = treeview.get_selection()
+	(model, tree_paths) = treeview_selection.get_selected_rows()
+	if not tree_paths:
+		return
+	if isinstance(columns, int):
+		columns = (columns,)
+	tree_iters = map(model.get_iter, tree_paths)
+	selection_lines = []
+	for ti in tree_iters:
+		selection_lines.append(' '.join(model.get_value(ti, column) for column in columns).strip())
+	selection_lines = os.linesep.join(selection_lines)
+	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+	clipboard.set_text(selection_lines, -1)
+
+def gtk_treeview_get_column_titles(treeview):
+	"""
+	Iterate over a GTK TreeView and return a tuple containing the id and title
+	of each of it's columns.
+
+	:param treeview: The treeview instance to retrieve columns from.
+	:type treeview: :py:class:`Gtk.TreeView`
+	"""
+	for column_id, column in enumerate(treeview.get_columns()):
+		column_name = column.get_title()
+		yield (column_id, column_name)
+
+def gtk_treeview_set_column_titles(treeview, column_titles, column_offset=0):
+	"""
+	Populate the column names of a GTK TreeView and set their sort IDs.
+
+	:param treeview: The treeview to set column names for.
+	:type treeview: :py:class:`Gtk.TreeView`
+	:param list column_titles: The names of the columns.
+	:param int column_offset: The offset to start setting column names at.
+	:return: A dict of all the :py:class:`Gtk.TreeViewColumn` objects keyed by their column id.
+	:rtype: dict
+	"""
+	columns = {}
+	for column_id, column_title in enumerate(column_titles, column_offset):
+		column = Gtk.TreeViewColumn(column_title, Gtk.CellRendererText(), text=column_id)
+		column.set_sort_column_id(column_id)
+		treeview.append_column(column)
+		columns[column_id] = column
+	return columns
+
+def gtk_widget_destroy_children(widget):
+	"""
+	Destroy all GTK child objects of *widget*.
+
+	:param widget: The widget to destroy all the children of.
+	:type widget: :py:class:`Gtk.Widget`
+	"""
+	for child in widget.get_children():
+		child.destroy()
 
 def show_dialog(message_type, message, parent, secondary_text=None, message_buttons=Gtk.ButtonsType.OK):
 	"""
@@ -442,7 +508,7 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 		Display a dialog which asks the user to select a directory to use. The
 		value of target_path in the returned dictionary is an absolute path.
 
-		:return: A dictionary with target_uri and target_path keys representing the path choosen.
+		:return: A dictionary with target_uri and target_path keys representing the path chosen.
 		:rtype: dict
 		"""
 		self.set_action(Gtk.FileChooserAction.SELECT_FOLDER)
@@ -455,3 +521,134 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 		target_uri = self.get_uri()
 		target_path = self.get_filename()
 		return {'target_uri': target_uri, 'target_path': target_path}
+
+class UtilityTreeView(object):
+	"""
+	A class that wraps :py:class:`Gtk.TreeView` objects that use `Gtk.ListStore`
+	models with additional functions for conveniently displaying text data.
+
+	If *cb_delete* is specified, the callback will be called with the treeview
+	instance, and the selection as the parameters.
+
+	If *cb_refresh* is specified, the callback will be called without any
+	parameters.
+	"""
+	def __init__(self, treeview, selection_mode=None, cb_delete=None, cb_refresh=None):
+		"""
+		:param treeview: The treeview to wrap and manage.
+		:type treeview: :py:class:`Gtk.TreeView`
+		:param selection_mode: The selection mode to set for the treeview.
+		:type selection_mode: :py:class:`Gtk.SelectionMode`
+		:param cb_delete: An optional callback that can be used to delete entries.
+		:type cb_delete: function
+		"""
+		self.treeview = treeview
+		"""The :py:class:`Gtk.TreeView` instance being managed."""
+		self.cb_delete = cb_delete
+		"""An optional callback for deleting entries from the treeview's model."""
+		self.cb_refresh = cb_refresh
+		"""An optional callback for refreshing the data in the treeview's model."""
+		self.column_titles = {}
+		"""A dictionary of column titles keyed by their respective storage data columns."""
+		self.treeview.connect('key-press-event', self.signal_key_pressed_copy)
+		if selection_mode == None:
+			selection_mode = Gtk.SelectionMode.SINGLE
+		treeview.get_selection().set_mode(selection_mode)
+
+	def _call_cb_delete(self):
+		if not self.cb_delete:
+			return
+		selection = self.treeview.get_selection()
+		if not selection.count_selected_rows():
+			return
+		self.cb_delete(self.treeview, selection)
+
+	def get_popup_menu(self, handle_button_press=True):
+		"""
+		Create a :py:class:`Gtk.Menu` with entries for copying and optionally
+		delete cell data from within the treeview. The delete option will only
+		be available if a delete callback was previously set.
+
+		:param bool handle_button_press: Whether or not to connect a handler for displaying the popup menu.
+		:return: The populated popup menu.
+		:rtype: :py:class:`Gtk.Menu`
+		"""
+		popup_copy_submenu = self.get_popup_copy_submenu()
+		popup_menu = Gtk.Menu.new()
+		menu_item = Gtk.MenuItem.new_with_label('Copy')
+		menu_item.set_submenu(popup_copy_submenu)
+		popup_menu.append(menu_item)
+		if self.cb_delete:
+			menu_item = Gtk.SeparatorMenuItem()
+			popup_menu.append(menu_item)
+			menu_item = Gtk.MenuItem.new_with_label('Delete')
+			menu_item.connect('activate', self.signal_activate_popup_menu_delete)
+			popup_menu.append(menu_item)
+		popup_menu.show_all()
+		if handle_button_press:
+			self.treeview.connect('button-press-event', self.signal_button_pressed, popup_menu)
+		return popup_menu
+
+	def get_popup_copy_submenu(self):
+		"""
+		Create a :py:class:`Gtk.Menu` with entries for copying cell data from
+		the treeview.
+
+		:return: The populated copy popup menu.
+		:rtype: :py:class:`Gtk.Menu`
+		"""
+		copy_menu = Gtk.Menu.new()
+		column_ids = sorted(self.column_titles.keys())
+		for column_id in column_ids:
+			column_title = self.column_titles[column_id]
+			menu_item = Gtk.MenuItem.new_with_label(column_title)
+			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_id)
+			copy_menu.append(menu_item)
+		if len(column_ids) > 1:
+			menu_item = Gtk.SeparatorMenuItem()
+			copy_menu.append(menu_item)
+			menu_item = Gtk.MenuItem.new_with_label('All')
+			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_ids)
+			copy_menu.append(menu_item)
+		return copy_menu
+
+	def set_column_titles(self, column_titles, column_offset=0):
+		"""
+		Populate the column names of a GTK TreeView and set their sort IDs. This
+		also populates the :py:attr:`.column_titles` attribute.
+
+		:param list column_titles: The titles of the columns.
+		:param int column_offset: The offset to start setting column names at.
+		:return: A dict of all the :py:class:`Gtk.TreeViewColumn` objects keyed by their column id.
+		:rtype: dict
+		"""
+		self.column_titles.update(enumerate(column_titles, column_offset))
+		return gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset)
+
+	def signal_button_pressed(self, treeview, event, popup_menu):
+		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
+			return
+		selection = treeview.get_selection()
+		if not selection.count_selected_rows():
+			return
+		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
+		popup_menu.popup(None, None, pos_func, None, event.button, event.time)
+		return True
+
+	def signal_key_pressed_copy(self, treeview, event):
+		if event.type != Gdk.EventType.KEY_PRESS:
+			return
+		keyval = event.get_keyval()[1]
+		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
+			if keyval == Gdk.KEY_c and self.column_titles:
+				gtk_treeview_selection_to_clipboard(treeview, sorted(self.column_titles.keys())[0])
+		elif keyval == Gdk.KEY_F5 and self.cb_refresh:
+			self.cb_refresh()
+		elif keyval == Gdk.KEY_Delete:
+			self._call_cb_delete()
+
+	def signal_activate_popup_menu_copy(self, menuitem, column_ids):
+		gtk_treeview_selection_to_clipboard(self.treeview, column_ids)
+
+	def signal_activate_popup_menu_delete(self, menuitem):
+		self._call_cb_delete()

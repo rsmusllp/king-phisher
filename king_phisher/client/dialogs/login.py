@@ -30,8 +30,10 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+from king_phisher.client.dialogs import about
 from king_phisher.client.gui_utilities import UtilityGladeGObject
 
+from gi.repository import Gdk
 from gi.repository import Gtk
 
 __all__ = ['LoginDialog', 'SSHLoginDialog']
@@ -72,11 +74,26 @@ class LoginDialog(BaseLoginDialog):
 	top_level_dependencies = [
 		'PortAdjustment'
 	]
+	def __init__(self, *args, **kwargs):
+		super(LoginDialog, self).__init__(*args, **kwargs)
+		self.popup_menu = Gtk.Menu.new()
+		menu_item = Gtk.MenuItem.new_with_label('About')
+		menu_item.connect('activate', lambda x: about.AboutDialog(self.config, self.dialog).interact())
+		self.popup_menu.append(menu_item)
+		self.popup_menu.show_all()
+
 	def signal_switch_ssl(self, switch, _):
 		if switch.get_property('active'):
 			self.gobjects['spinbutton_server_remote_port'].set_value(443)
 		else:
 			self.gobjects['spinbutton_server_remote_port'].set_value(80)
+
+	def signal_button_pressed(self, widget, event):
+		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
+			return
+		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
+		self.popup_menu.popup(None, None, pos_func, None, event.button, event.time)
+		return True
 
 class SSHLoginDialog(BaseLoginDialog):
 	"""

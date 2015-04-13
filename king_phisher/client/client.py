@@ -199,6 +199,10 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 		action = Gtk.Action(name='ToolsRPCTerminal', label='RPC Terminal', tooltip='RPC Terminal', stock_id=None)
 		action.connect('activate', lambda x: tools.KingPhisherClientRPCTerminal(self.config, self, self.get_property('application')))
+		action_group.add_action_with_accel(action, '<control>F1')
+
+		action = Gtk.Action(name='ToolsCloneWebPage', label='Clone Web Page', tooltip='Clone A Web Page', stock_id=None)
+		action.connect('activate', lambda x: dialogs.ClonePageDialog(self.config, self).interact())
 		action_group.add_action(action)
 
 		# Help Menu Actions
@@ -206,7 +210,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		action_group.add_action(action)
 
 		action = Gtk.Action(name='HelpAbout', label='About', tooltip='About', stock_id=None)
-		action.connect('activate', lambda x: self.show_about_dialog())
+		action.connect('activate', lambda x: dialogs.AboutDialog(self.config, self).interact())
 		action_group.add_action(action)
 
 		action = Gtk.Action(name='HelpWiki', label='Wiki', tooltip='Wiki', stock_id=None)
@@ -214,8 +218,15 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		action_group.add_action(action)
 
 	def _add_menu_optional_actions(self, action_group, uimanager):
+		if sys.platform.startswith('linux'):
+			action = Gtk.Action(name='ToolsSFTPClient', label='SFTP Client', tooltip='SFTP Client', stock_id=None)
+			action.connect('activate', lambda x: self.start_sftp_client())
+			action_group.add_action_with_accel(action, '<control>F2')
+			merge_id = uimanager.new_merge_id()
+			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsSFTPClient', 'ToolsSFTPClient', Gtk.UIManagerItemType.MENUITEM, False)
+
 		if graphs.has_matplotlib:
-			action = Gtk.Action(name='ToolsGraphMenu', label='Create Graph', tooltip=None, stock_id=None)
+			action = Gtk.Action(name='ToolsGraphMenu', label='Create Graph', tooltip='Create A Graph', stock_id=None)
 			action_group.add_action(action)
 
 			for graph_name in graphs.get_graphs():
@@ -230,13 +241,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			for graph_name in sorted(graphs.get_graphs(), key=lambda gn: graphs.get_graph(gn).name_human):
 				action_name = 'ToolsGraph' + graph_name
 				uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu/ToolsGraphMenu', action_name, action_name, Gtk.UIManagerItemType.MENUITEM, False)
-
-		if sys.platform.startswith('linux'):
-			action = Gtk.Action(name='ToolsSFTPClient', label='SFTP Client', tooltip='SFTP Client', stock_id=None)
-			action.connect('activate', lambda x: self.start_sftp_client())
-			action_group.add_action(action)
-			merge_id = uimanager.new_merge_id()
-			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsSFTPClient', 'ToolsSFTPClient', Gtk.UIManagerItemType.MENUITEM, False)
 
 	def _create_ssh_forwarder(self, server, username, password):
 		"""
@@ -402,14 +406,15 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.logger.info("successfully connected to the king phisher server (version: {0} rpc api version: {1}.{2})".format(server_version_info['version'], server_rpc_api_version[0], server_rpc_api_version[1]))
 		self.server_local_port = local_port
 
-		secondary_text = None
+		error_text = None
 		if server_rpc_api_version[0] < version.rpc_api_version.major or (server_rpc_api_version[0] == version.rpc_api_version.major and server_rpc_api_version[1] < version.rpc_api_version.minor):
-			secondary_text = 'The remote server is not up to date with the client version.'
+			error_text = 'The server is running an old and incompatible version.'
+			error_text += '\nPlease update the remote server installation.'
 		elif server_rpc_api_version[0] > version.rpc_api_version.major:
-			secondary_text = 'The local client is not up to date with the server version.'
-		if secondary_text:
-			secondary_text += '\nPlease ensure that both the client and server are fully up to date.'
-			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', self, secondary_text)
+			error_text = 'The client is running an old and incompatible version.'
+			error_text += '\nPlease update the local client installation.'
+		if error_text:
+			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', self, error_text)
 			self.server_disconnect()
 			return
 		dialog.destroy()
@@ -426,7 +431,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 	def load_server_config(self):
 		"""Load the necessary values from the server's configuration."""
-		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image'])
+		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image', 'server.web_root'])
 		return
 
 	def rename_campaign(self):
@@ -474,14 +479,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		destination_file = response['target_path']
 		export.campaign_to_xml(self.rpc, self.config['campaign_id'], destination_file)
 
-	def show_about_dialog(self):
-		"""
-		Display the about dialog showing details about the programs version,
-		license etc.
-		"""
-		about_dialog = dialogs.AboutDialog(self.config, self)
-		about_dialog.interact()
-
 	def show_campaign_graph(self, graph_name):
 		"""
 		Create a new :py:class:`.CampaignGraph` instance and make it into
@@ -521,7 +518,11 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			gui_utilities.show_dialog_warning('Invalid SFTP Configuration', self, "Could not find the SFTP binary '{0}'".format(sftp_bin))
 			return False
 		try:
-			command = command.format(username=self.config['server_username'], server=self.config['server'])
+			command = command.format(
+				server=self.config['server'],
+				username=self.config['server_username'],
+				web_root=self.config['server_config']['server.web_root']
+			)
 		except KeyError:
 			pass
 		self.logger.debug("starting sftp client command: {0}".format(command))

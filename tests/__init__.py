@@ -31,12 +31,15 @@
 #
 
 import logging
+logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
+logging.getLogger('').setLevel(logging.CRITICAL)
 
 from .client import *
 from .server import *
 
 from .configuration import ServerConfigurationTests
 from .geoip import GeoIPTests
+from .geoip import GeoIPRPCTests
 from .sms import SMSTests
 from .spf import SPFTests
 from .templates import TemplatesTests
@@ -44,6 +47,3 @@ from .ua_parser import UserAgentParserTests
 from .utilities import UtilitiesTests
 from .version import VersionTests
 from .xor import XORTests
-
-if hasattr(logging, 'NullHandler'):
-	logging.getLogger('KingPhisher').addHandler(logging.NullHandler())

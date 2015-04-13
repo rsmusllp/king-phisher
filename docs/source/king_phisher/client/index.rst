@@ -17,3 +17,4 @@
    mailer.rst
    client_rpc.rst
    tools.rst
+   web_cloner.rst

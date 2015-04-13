@@ -31,6 +31,7 @@
 #
 
 import datetime
+import ipaddress
 import logging
 import threading
 import time
@@ -41,7 +42,6 @@ from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 
-from gi.repository import Gdk
 from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -70,11 +70,11 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 		self.loader_thread_lock = threading.Lock()
 		"""The :py:class:`threading.Lock` object used for synchronization between the loader and main threads."""
 
-	def load_campaign_information(self, force=False):
+	def load_campaign_information(self, force=True):
 		raise NotImplementedError()
 
 	def signal_button_clicked_refresh(self, button):
-		self.load_campaign_information(force=True)
+		self.load_campaign_information()
 
 	def signal_destroy(self, gobject):
 		self.is_destroyed.set()
@@ -98,51 +98,28 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	]
 	remote_table_name = ''
 	"""The database table represented by this tab."""
-	view_columns = {}
+	view_columns = ()
 	"""The dictionary map of column numbers to column names starting at column 1."""
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		treeview.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
-		popup_copy_submenu = Gtk.Menu.new()
-		self.view_column_renderers = {}
-		columns = self.view_columns
-		for column_id in range(1, len(columns) + 1):
-			column_name = columns[column_id]
-			column = Gtk.TreeViewColumn(column_name, Gtk.CellRendererText(), text=column_id)
-			column.set_sort_column_id(column_id)
-			treeview.append_column(column)
-			self.view_column_renderers[column_id] = column
-
-			menu_item = Gtk.MenuItem.new_with_label(column_name)
-			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_id)
-			popup_copy_submenu.append(menu_item)
-
-		self.popup_menu = Gtk.Menu.new()
+		self.treeview_manager = gui_utilities.UtilityTreeView(
+			treeview,
+			selection_mode=Gtk.SelectionMode.MULTIPLE,
+			cb_delete=self._prompt_to_delete_row,
+			cb_refresh=self.load_campaign_information
+		)
+		self.treeview_manager.set_column_titles(self.view_columns, column_offset=1)
+		self.popup_menu = self.treeview_manager.get_popup_menu()
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
-		menu_item = Gtk.MenuItem.new_with_label('Copy')
-		menu_item.set_submenu(popup_copy_submenu)
-		self.popup_menu.append(menu_item)
 
-		menu_item = Gtk.SeparatorMenuItem()
-		self.popup_menu.append(menu_item)
-
-		menu_item = Gtk.MenuItem.new_with_label('Delete')
-		menu_item.connect('activate', lambda _: self._prompt_to_delete_row())
-		self.popup_menu.append(menu_item)
-		self.popup_menu.show_all()
-
-	def _prompt_to_delete_row(self):
-		selection = self.gobjects['treeview_campaign'].get_selection()
-		if not selection.count_selected_rows():
-			return
+	def _prompt_to_delete_row(self, treeview, selection):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
 			return
 		(model, tree_paths) = selection.get_selected_rows()
 		if not tree_paths:
 			return
-
 		tree_iters = map(model.get_iter, tree_paths)
 		row_ids = [model.get_value(ti, 0) for ti in tree_iters]
 		if len(row_ids) == 1:
@@ -155,7 +132,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			self.parent.rpc(self.remote_table_name + '/delete', row_ids[0])
 		else:
 			self.parent.rpc(self.remote_table_name + '/delete/multi', row_ids)
-		self.load_campaign_information(force=True)
+		self.load_campaign_information()
 
 	def format_row_data(self, row):
 		"""
@@ -186,7 +163,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			return ''
 		return str(cell_data)
 
-	def load_campaign_information(self, force=False):
+	def load_campaign_information(self, force=True):
 		"""
 		Load the necessary campaign information from the remote server.
 		Unless *force* is True, the
@@ -254,48 +231,20 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		destination_file = response['target_path']
 		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
 
-	def signal_treeview_button_pressed(self, widget, event):
-		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
-			return
-		selection = self.gobjects['treeview_campaign'].get_selection()
-		if not selection.count_selected_rows():
-			return
-		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
-		self.popup_menu.popup(None, None, pos_func, None, event.button, event.time)
-		return True
-
-	def signal_treeview_key_pressed(self, widget, event):
-		if event.type != Gdk.EventType.KEY_PRESS:
-			return
-
-		treeview = self.gobjects['treeview_campaign']
-		keyval = event.get_keyval()[1]
-		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
-			if keyval == Gdk.KEY_c:
-				gui_utilities.gtk_treeview_selection_to_clipboard(treeview)
-		elif keyval == Gdk.KEY_F5:
-			self.load_campaign_information(force=True)
-		elif keyval == Gdk.KEY_Delete:
-			self._prompt_to_delete_row()
-
-	def signal_activate_popup_menu_copy(self, widget, column_id):
-		treeview = self.gobjects['treeview_campaign']
-		gui_utilities.gtk_treeview_selection_to_clipboard(treeview, column_id)
-
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""
 	remote_table_name = 'deaddrop_connections'
 	label_text = 'Deaddrop'
-	view_columns = {
-		1: 'Destination',
-		2: 'Visit Count',
-		3: 'IP Address',
-		4: 'Username',
-		5: 'Hostname',
-		6: 'Local IP Addresses',
-		7: 'First Hit',
-		8: 'Last Hit'
-	}
+	view_columns = (
+		'Destination',
+		'Visit Count',
+		'IP Address',
+		'Username',
+		'Hostname',
+		'Local IP Addresses',
+		'First Hit',
+		'Last Hit'
+	)
 	def format_row_data(self, connection):
 		deploy_details = self.parent.rpc.remote_table_row('deaddrop_deployments', connection.deployment_id, cache=True)
 		if not deploy_details:
@@ -316,15 +265,17 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding submitted credentials."""
 	remote_table_name = 'credentials'
 	label_text = 'Credentials'
-	view_columns = {
-		1: 'Email Address',
-		2: 'Username',
-		3: 'Password',
-		4: 'Submitted'
-	}
+	view_columns = (
+		'Email Address',
+		'Username',
+		'Password',
+		'Submitted'
+	)
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
-		self.view_column_renderers[3].set_property('visible', False)
+		treeview = self.gobjects['treeview_campaign']
+		pwd_column_id = self.view_columns.index('Password')
+		treeview.get_column(pwd_column_id).set_property('visible', False)
 
 	def format_row_data(self, credential):
 		msg_details = self.parent.rpc.remote_table_row('messages', credential.message_id, cache=True)
@@ -339,7 +290,9 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		return row
 
 	def signal_button_toggled_show_passwords(self, button):
-		self.view_column_renderers[3].set_property('visible', button.get_property('active'))
+		treeview = self.gobjects['treeview_campaign']
+		pwd_column_id = self.view_columns.index('Password')
+		treeview.get_column(pwd_column_id).set_property('visible', button.get_property('active'))
 
 class CampaignViewDashboardTab(CampaignViewGenericTab):
 	"""Display campaign information on a graphical dash board."""
@@ -382,7 +335,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		self.logger.debug("dashboard refresh frequency set to {0} seconds".format(self.refresh_frequency))
 		GLib.timeout_add_seconds(self.refresh_frequency, self.loader_idle_routine)
 
-	def load_campaign_information(self, force=False):
+	def load_campaign_information(self, force=True):
 		"""
 		Load the necessary campaign information from the remote server.
 		Unless *force* is True, the
@@ -409,7 +362,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		"""The routine which refreshes the campaign data at a regular interval."""
 		if self.parent.rpc:
 			self.logger.debug('idle loader routine called')
-			self.load_campaign_information(force=True)
+			self.load_campaign_information()
 		return True
 
 	def loader_thread_routine(self):
@@ -429,23 +382,29 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding incoming visitors."""
 	remote_table_name = 'visits'
 	label_text = 'Visits'
-	view_columns = {
-		1: 'Email Address',
-		2: 'IP Address',
-		3: 'Visit Count',
-		4: 'Visitor User Agent',
-		5: 'Visitor Location',
-		6: 'First Visit',
-		7: 'Last Visit'
-	}
+	view_columns = (
+		'Email Address',
+		'IP Address',
+		'Visit Count',
+		'Visitor User Agent',
+		'Visitor Location',
+		'First Visit',
+		'Last Visit'
+	)
 	def format_row_data(self, visit):
 		msg_details = self.parent.rpc.remote_table_row('messages', visit.message_id, cache=True)
 		if not msg_details:
 			return None
-		geo_location = self.parent.rpc.geoip_lookup(visit.visitor_ip)
+		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
+		if visitor_ip.is_loopback:
+			geo_location = 'N/A (Loopback)'
+		elif visitor_ip.is_private:
+			geo_location = 'N/A (Private)'
+		else:
+			geo_location = self.parent.rpc.geoip_lookup(visitor_ip) or 'N/A (Unknown)'
 		row = (
 			msg_details.target_email,
-			visit.visitor_ip,
+			str(visitor_ip),
 			visit.visit_count,
 			visit.visitor_details,
 			str(geo_location),
@@ -458,12 +417,12 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding sent messages."""
 	remote_table_name = 'messages'
 	label_text = 'Messages'
-	view_columns = {
-		1: 'Email Address',
-		2: 'Sent',
-		3: 'Opened',
-		4: 'Trained'
-	}
+	view_columns = (
+		'Email Address',
+		'Sent',
+		'Opened',
+		'Trained'
+	)
 	def format_row_data(self, message):
 		row = (
 			message.target_email,
@@ -541,7 +500,7 @@ class CampaignViewTab(object):
 	def signal_kpc_campaign_set(self, kpc, cid):
 		for tab in self.tabs.values():
 			if hasattr(tab, 'load_campaign_information'):
-				tab.load_campaign_information(force=True)
+				tab.load_campaign_information()
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		if not hasattr(self.parent, 'rpc'):
@@ -553,4 +512,4 @@ class CampaignViewTab(object):
 			if current_page != tab.box:
 				continue
 			if hasattr(tab, 'load_campaign_information'):
-				tab.load_campaign_information()
+				tab.load_campaign_information(force=False)

@@ -463,18 +463,25 @@ class KingPhisherRequestHandlerRPC(object):
 
 	def rpc_geoip_lookup(self, ip, lang=None):
 		"""
-		Look up an IP address in the servers GeoIP database.
+		Look up an IP address in the servers GeoIP database. If the IP address
+		can not be found in the database, None will be returned.
 
 		:param str ip: The IP address to look up.
 		:param str lang: The language to prefer for regional names.
 		:return: The geographic information for the specified IP address.
 		:rtype: dict
 		"""
-		return geoip.lookup(ip, lang=lang)
+		try:
+			result = geoip.lookup(ip, lang=lang)
+		except geoip.AddressNotFoundError:
+			result = None
+		return result
 
 	def rpc_geoip_lookup_multi(self, ips, lang=None):
 		"""
-		Look up multiple IP addresses in the servers GeoIP database.
+		Look up multiple IP addresses in the servers GeoIP database. Each IP
+		address that can not be found in the database will have its result set
+		to None.
 
 		:param list ips: The list of IP addresses to look up.
 		:param str lang: The language to prefer for regional names.
@@ -484,5 +491,9 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		results = {}
 		for ip in ips:
-			results[ip] = geoip.lookup(ip, lang=lang)
+			try:
+				result = geoip.lookup(ip, lang=lang)
+			except geoip.AddressNotFoundError:
+				result = None
+			results[ip] = result
 		return results

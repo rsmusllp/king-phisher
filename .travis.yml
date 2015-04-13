@@ -3,6 +3,10 @@ language: python
 python:
   - "2.7"
 
+env:
+  global:
+    - KING_PHISHER_TEST_GEOIP_DB="./GeoLite2-City.mmdb"
+
 cache:
   - apt
 
@@ -16,7 +20,7 @@ before_install:
   - sh -e /etc/init.d/xvfb start
 
 install:
-  - pip install pylint sphinx
+  - pip install pylint sphinx==1.2.2
   - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -r requirements.txt; fi
   - wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
   - gunzip -f GeoLite2-City.mmdb.gz
@@ -32,4 +36,3 @@ notifications:
       - "chat.freenode.net#king-phisher"
     on_success: change
     on_failure: always
-    skip_join: true

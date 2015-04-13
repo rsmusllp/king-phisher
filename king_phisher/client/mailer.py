@@ -331,7 +331,10 @@ class MailSenderThread(threading.Thread):
 		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
 		for target in csv_reader:
 			if not utilities.is_valid_email_address(target['email_address']):
-				self.logger.warning('skipping invalid email address: ' + target['email_address'])
+				if target['email_address']:
+					self.logger.warning('skipping invalid email address: ' + target['email_address'])
+				else:
+					self.logger.warning('skipping blank email address')
 				continue
 			iteration_time = time.time()
 			if self.should_exit.is_set():

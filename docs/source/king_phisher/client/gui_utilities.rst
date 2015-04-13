@@ -19,13 +19,17 @@ Functions
 
 .. autofunction:: king_phisher.client.gui_utilities.gobject_signal_blocked
 
+.. autofunction:: king_phisher.client.gui_utilities.gtk_list_store_search
+
 .. autofunction:: king_phisher.client.gui_utilities.gtk_sync
+
+.. autofunction:: king_phisher.client.gui_utilities.gtk_treesortable_sort_func_numeric
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_selection_to_clipboard
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_widget_destroy_children
+.. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_set_column_titles
 
-.. autofunction:: king_phisher.client.gui_utilities.search_list_store
+.. autofunction:: king_phisher.client.gui_utilities.gtk_widget_destroy_children
 
 .. autofunction:: king_phisher.client.gui_utilities.show_dialog
 
@@ -55,3 +59,8 @@ Classes
    :members:
    :special-members: __init__
    :undoc-members:
+
+.. autoclass:: king_phisher.client.gui_utilities.UtilityTreeView
+   :show-inheritance:
+   :members:
+   :special-members: __init__

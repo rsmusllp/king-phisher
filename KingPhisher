@@ -38,6 +38,10 @@ import sys
 import threading
 import time
 
+if getattr(sys, 'frozen', False):
+	# set the basemap data directory for forzen builds
+	os.environ['BASEMAPDATA'] = os.path.join(os.path.dirname(sys.executable), 'mpl-basemap-data')
+
 from king_phisher import find
 from king_phisher import version
 from king_phisher.client import application
@@ -94,7 +98,7 @@ def main():
 		data_path = os.path.dirname(__file__)
 		data_path = os.path.join(data_path, 'data', 'client')
 
-	if not os.getuid():
+	if sys.platform.startswith('linux') and not os.getuid():
 		logger.warning('it is not necessary to run the king phisher client as root')
 
 	data_path = os.path.abspath(data_path)

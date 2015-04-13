@@ -32,6 +32,7 @@
 
 import collections
 import datetime
+import ipaddress
 import string
 import sys
 
@@ -505,7 +506,12 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		o_high = float(max(ctr.values()))
 		o_low = float(min(ctr.values()))
 		for visitor_ip, occurances in ctr.items():
+			visitor_ip = ipaddress.ip_address(visitor_ip)
+			if visitor_ip.is_loopback or visitor_ip.is_private:
+				continue
 			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
+			if not geo_location:
+				continue
 			pts = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
 			if o_high == o_low:
 				markersize = 2.0

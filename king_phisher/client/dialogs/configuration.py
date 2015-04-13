@@ -103,7 +103,7 @@ class ConfigurationDialog(gui_utilities.UtilityGladeGObject):
 		for dash_position in ['top_left', 'top_right', 'bottom']:
 			combobox = self.gtk_builder_get('combobox_dashboard_' + dash_position)
 			combobox.set_model(graph_providers)
-			ti = gui_utilities.search_list_store(graph_providers, self.config.get('dashboard.' + dash_position), column=1)
+			ti = gui_utilities.gtk_list_store_search(graph_providers, self.config.get('dashboard.' + dash_position), column=1)
 			combobox.set_active_iter(ti)
 
 	def _configure_settings_server(self):

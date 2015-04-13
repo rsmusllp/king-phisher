@@ -12,8 +12,11 @@ data/*/king_phisher/plugins/*
 dist/*
 docs/build/*
 docs/html/*
+
+DODO
 todo.txt
 
+data/client/king_phisher/#king-phisher-client.ui#
 !data/server/king_phisher/error_*.html
 !data/server/king_phisher/server_config.yml
 !data/server/king_phisher/server_config_verification.yml

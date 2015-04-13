@@ -32,6 +32,8 @@
 
 from .about import *
 from .campaign_selection import *
+from .clone_page import *
 from .configuration import *
 from .entry import *
+from .exception import *
 from .login import *

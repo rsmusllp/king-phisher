@@ -28,6 +28,9 @@ Functions
 Classes
 -------
 
+.. autoclass:: king_phisher.geoip.Coordinates
+   :members:
+
 .. autoclass:: king_phisher.geoip.GeoLocation
    :members:
    :special-members: __init__

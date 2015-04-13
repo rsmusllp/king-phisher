@@ -95,7 +95,15 @@ def main():
 		print('[-] \'server.setuid_username\' option in the config file to drop privileges')
 		return os.EX_NOPERM
 
-	config = Configuration(config_file.name)
+	try:
+		config = Configuration(config_file.name)
+	except Exception as error:
+		print('[-] an error occurred while parsing the server configuration file')
+		error_name = "{0}.{1}".format(error.__module__, error.__class__.__name__)
+		if error_name != 'yaml.parser.ParserError':
+			raise
+		print('[-] ' + '[-] '.join(line.rstrip() + '\n' for line in str(error).split('\n'))[:-1])
+		return os.EX_CONFIG
 
 	# configure environment variables
 	data_path = os.path.dirname(__file__)

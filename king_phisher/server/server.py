@@ -303,8 +303,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	def respond_file(self, file_path, attachment=False, query={}):
 		self._respond_file_check_id()
 		file_path = os.path.abspath(file_path)
-		file_ext = os.path.splitext(file_path)[1][1:]
-		if attachment or not file_ext in ['hta', 'htm', 'html', 'txt']:
+		mime_type = self.guess_mime_type(file_path)
+		if attachment or mime_type != 'text/html':
 			self._respond_file_raw(file_path, attachment)
 			return
 		try:
@@ -338,7 +338,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			raise errors.KingPhisherAbortRequestError()
 
 		fs = os.stat(template.filename)
-		mime_type = self.guess_mime_type(file_path)
 		if mime_type.startswith('text'):
 			mime_type = mime_type + '; charset=utf-8'
 		self.send_response(200)
@@ -349,7 +348,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		try:
 			self.handle_page_visit()
 		except Exception as error:
-			self.server.logger.error('handle_page_visit raised error: ' + error.__class__.__name__)
+			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
 
 		self.end_headers()
 		self.wfile.write(template_data.encode('utf-8', 'ignore'))
@@ -608,13 +607,26 @@ class KingPhisherServer(AdvancedHTTPServer):
 	"""
 	The main HTTP and RPC server for King Phisher.
 	"""
-	def __init__(self, config, *args, **kwargs):
+	def __init__(self, config, HandlerClass, *args, **kwargs):
 		"""
 		:param config: Configuration to retrieve settings from.
 		:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 		"""
 		self.logger = logging.getLogger('KingPhisher.Server')
-		super(KingPhisherServer, self).__init__(*args, **kwargs)
+		# additional mime types to be treated as html because they're probably cloned pages
+		HandlerClass.extensions_map.update({
+			'': 'text/html',
+			'.asp': 'text/html',
+			'.aspx': 'text/html',
+			'.cfm': 'text/html',
+			'.cgi': 'text/html',
+			'.do': 'text/html',
+			'.jsp': 'text/html',
+			'.nsf': 'text/html',
+			'.php': 'text/html',
+			'.srf': 'text/html'
+		})
+		super(KingPhisherServer, self).__init__(HandlerClass, *args, **kwargs)
 		self.config = config
 		"""A :py:class:`~smoke_zephyr.configuration.Configuration` instance used as the main King Phisher server configuration."""
 		self.serve_files = True

@@ -42,6 +42,7 @@ import tempfile
 import threading
 
 import geoip2.database
+import geoip2.errors
 
 if sys.version_info[0] < 3:
 	import urllib
@@ -56,8 +57,9 @@ DB_DOWNLOAD_URL = 'http://geolite.maxmind.com/download/geoip/database/GeoLite2-C
 DB_RESULT_FIELDS = ('city', 'continent', 'coordinates', 'country', 'postal_code', 'time_zone')
 """A tuple listing the fields that are required in database results."""
 
+AddressNotFoundError = geoip2.errors.AddressNotFoundError
 _geoip_db = None
-_geoip_db_lock = threading.RLock()
+_geoip_db_lock = threading.Lock()
 logger = logging.getLogger('KingPhisher.geoip')
 
 def _normalize_encoding(word):
@@ -142,6 +144,7 @@ def lookup(ip, lang='en'):
 	return result
 
 Coordinates = collections.namedtuple('Coordinates', ['latitude', 'longitude'])
+"""A named tuple for representing GPS coordinates."""
 
 class GeoLocation(object):
 	"""
