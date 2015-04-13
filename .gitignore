@@ -12,6 +12,8 @@ data/*/king_phisher/plugins/*
 dist/*
 docs/build/*
 docs/html/*
+
+DODO
 todo.txt
 
 data/client/king_phisher/#king-phisher-client.ui#
