@@ -629,11 +629,12 @@ Brandan Geise</property>
     </child>
   </object>
   <object class="GtkDialog" id="ClonePageDialog">
-    <property name="width_request">550</property>
-    <property name="height_request">350</property>
+    <property name="width_request">600</property>
+    <property name="height_request">400</property>
     <property name="can_focus">False</property>
-    <property name="default_width">550</property>
-    <property name="default_height">350</property>
+    <property name="title" translatable="yes">King Phisher</property>
+    <property name="default_width">600</property>
+    <property name="default_height">400</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">

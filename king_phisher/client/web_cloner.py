@@ -125,7 +125,7 @@ class WebPageCloner(object):
 		"""
 		Copy the data from a loaded resource to a local file.
 
-		:param resource: The resource whos data is being copied.
+		:param resource: The resource whose data is being copied.
 		:type resource: :py:class:`WebKit2.WebResource`
 		:param data: The raw data of the represented resource.
 		:type data: bytes, str
@@ -230,6 +230,9 @@ class WebPageCloner(object):
 			if not self.resource_is_on_target(resource):
 				self.logger.debug('loaded external resource: ' + resource_url_str)
 				break
+			if len(data) == 0:
+				self.logger.warning('loaded empty on target resource: ' + resource_url_str)
+				break
 			self.logger.info('loaded on target resource: ' + resource_url_str)
 			self.copy_resource_data(resource, data)
 		self.__web_resources.remove(resource)
@@ -259,7 +262,11 @@ class WebPageCloner(object):
 
 	def signal_resource_load_started(self, webveiw, resource, request):
 		self.__web_resources.append(resource)
+		resource.connect('failed', self.signal_resource_load_failed)
 		resource.connect('finished', self.signal_resource_load_finished)
 
 	def signal_resource_load_finished(self, resource):
 		resource.get_data(callback=self.cb_get_data_finish)
+
+	def signal_resource_load_failed(self, resource, error):
+		self.logger.warning('failed to load resource: ' + resource.get_uri())
