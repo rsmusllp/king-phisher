@@ -35,6 +35,7 @@
 import collections
 import logging
 import os
+import re
 import string
 import sys
 import urllib
@@ -167,9 +168,10 @@ class WebPageCloner(object):
 		:return: The patched HTML data.
 		:rtype: str
 		"""
-		end_head = data.find('</head>')
-		if end_head == -1:
+		match = re.search(r'</head>', data, flags=re.IGNORECASE)
+		if not match:
 			return data
+		end_head = match.start(0)
 		patched = ''
 		patched += data[:end_head]
 		patched += '<script src="/kp.js" type="text/javascript"></script>'
