@@ -1,0 +1,16 @@
+kingphisher:
+  build: .
+  hostname: kingphisher
+  links:
+  - postgres
+  ports:
+  - "4022:4022"
+  - "80:80"
+ postgres:
+   image: securestate/king-phisher-psql
+   hostname: postgres
+   volumes_from:
+   - postgresdata
+ postgresdata:
+   image: securestate/kingp-phisher-psql
+   entrypoint: /bin/true
