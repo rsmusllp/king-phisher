@@ -44,9 +44,12 @@ from king_phisher.client import gui_utilities
 
 if sys.version_info[0] < 3:
 	import urlparse
+	import urllib2
 	urllib.parse = urlparse
+	urllib.request = urllib2
 else:
 	import urllib.parse
+	import urllib.request
 
 try:
 	from gi.repository import WebKit2
@@ -112,6 +115,22 @@ class WebPageCloner(object):
 		self.webview.connect('load-failed', self.signal_load_failed)
 		self.webview.connect('resource-load-started', self.signal_resource_load_started)
 		self.webview.load_uri(self.target_url_str)
+
+	def _webkit_empty_resource_bug_workaround(self, url, expected_len):
+		"""
+		This works around an issue in WebKit2GTK+ that will hopefully be
+		resolved eventually. Sometimes the resource data that is returned is
+		an empty string so attempt to re-request it with Python.
+		"""
+		try:
+			url_h = urllib.request.urlopen(url)
+		except urllib.request.URLError:
+			self.logger.warning('failed to request the empty resource with python')
+			return ''
+		data = url_h.read()
+		if len(data) != expected_len:
+			self.logger.warning('requested the empty resource with python, but the length appears invalid')
+		return data
 
 	@property
 	def load_failed(self):
@@ -224,7 +243,8 @@ class WebPageCloner(object):
 	def cb_get_data_finish(self, resource, task):
 		data = resource.get_data_finish(task)
 		for _ in range(1):
-			if not resource.get_response():
+			response = resource.get_response()
+			if not response:
 				break
 			resource_url_str = resource.get_property('uri')
 			if not self.resource_is_on_target(resource):
@@ -232,8 +252,9 @@ class WebPageCloner(object):
 				break
 			if len(data) == 0:
 				self.logger.warning('loaded empty on target resource: ' + resource_url_str)
-				break
-			self.logger.info('loaded on target resource: ' + resource_url_str)
+				data = self._webkit_empty_resource_bug_workaround(resource_url_str, response.get_content_length())
+			else:
+				self.logger.info('loaded on target resource: ' + resource_url_str)
 			self.copy_resource_data(resource, data)
 		self.__web_resources.remove(resource)
 
