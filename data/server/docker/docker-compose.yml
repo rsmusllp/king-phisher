@@ -12,5 +12,5 @@ postgres:
   volumes_from:
   - postgresdata
 postgresdata:
-  image: securestate/kingp-phisher-psql
+  image: securestate/king-phisher-psql
   entrypoint: /bin/true
