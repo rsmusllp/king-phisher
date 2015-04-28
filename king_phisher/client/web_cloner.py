@@ -35,6 +35,7 @@
 import collections
 import logging
 import os
+import re
 import string
 import sys
 import urllib
@@ -43,9 +44,12 @@ from king_phisher.client import gui_utilities
 
 if sys.version_info[0] < 3:
 	import urlparse
+	import urllib2
 	urllib.parse = urlparse
+	urllib.request = urllib2
 else:
 	import urllib.parse
+	import urllib.request
 
 try:
 	from gi.repository import WebKit2
@@ -112,6 +116,22 @@ class WebPageCloner(object):
 		self.webview.connect('resource-load-started', self.signal_resource_load_started)
 		self.webview.load_uri(self.target_url_str)
 
+	def _webkit_empty_resource_bug_workaround(self, url, expected_len):
+		"""
+		This works around an issue in WebKit2GTK+ that will hopefully be
+		resolved eventually. Sometimes the resource data that is returned is
+		an empty string so attempt to re-request it with Python.
+		"""
+		try:
+			url_h = urllib.request.urlopen(url)
+		except urllib.request.URLError:
+			self.logger.warning('failed to request the empty resource with python')
+			return ''
+		data = url_h.read()
+		if len(data) != expected_len:
+			self.logger.warning('requested the empty resource with python, but the length appears invalid')
+		return data
+
 	@property
 	def load_failed(self):
 		return self.load_failed_event != None
@@ -124,7 +144,7 @@ class WebPageCloner(object):
 		"""
 		Copy the data from a loaded resource to a local file.
 
-		:param resource: The resource whos data is being copied.
+		:param resource: The resource whose data is being copied.
 		:type resource: :py:class:`WebKit2.WebResource`
 		:param data: The raw data of the represented resource.
 		:type data: bytes, str
@@ -167,9 +187,10 @@ class WebPageCloner(object):
 		:return: The patched HTML data.
 		:rtype: str
 		"""
-		end_head = data.find('</head>')
-		if end_head == -1:
+		match = re.search(r'</head>', data, flags=re.IGNORECASE)
+		if not match:
 			return data
+		end_head = match.start(0)
 		patched = ''
 		patched += data[:end_head]
 		patched += '<script src="/kp.js" type="text/javascript"></script>'
@@ -222,13 +243,18 @@ class WebPageCloner(object):
 	def cb_get_data_finish(self, resource, task):
 		data = resource.get_data_finish(task)
 		for _ in range(1):
-			if not resource.get_response():
+			response = resource.get_response()
+			if not response:
 				break
 			resource_url_str = resource.get_property('uri')
 			if not self.resource_is_on_target(resource):
 				self.logger.debug('loaded external resource: ' + resource_url_str)
 				break
-			self.logger.info('loaded on target resource: ' + resource_url_str)
+			if len(data) == 0:
+				self.logger.warning('loaded empty on target resource: ' + resource_url_str)
+				data = self._webkit_empty_resource_bug_workaround(resource_url_str, response.get_content_length())
+			else:
+				self.logger.info('loaded on target resource: ' + resource_url_str)
 			self.copy_resource_data(resource, data)
 		self.__web_resources.remove(resource)
 
@@ -257,7 +283,11 @@ class WebPageCloner(object):
 
 	def signal_resource_load_started(self, webveiw, resource, request):
 		self.__web_resources.append(resource)
+		resource.connect('failed', self.signal_resource_load_failed)
 		resource.connect('finished', self.signal_resource_load_finished)
 
 	def signal_resource_load_finished(self, resource):
 		resource.get_data(callback=self.cb_get_data_finish)
+
+	def signal_resource_load_failed(self, resource, error):
+		self.logger.warning('failed to load resource: ' + resource.get_uri())
