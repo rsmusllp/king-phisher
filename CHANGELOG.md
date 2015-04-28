@@ -1,5 +1,8 @@
 # King Phisher Change Log
 
+## Version 0.2.1
+1. Added syntax highlighting to the message edit tab
+
 ## Version 0.2.0
 1. Added additional graphs including maps when basemap is available
 1. Added geolocation support

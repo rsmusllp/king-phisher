@@ -90,6 +90,19 @@ TEST_MESSAGE_TEMPLATE = """
 """
 """A string representing a message template that can be used for testing."""
 
+def skip_if_offline(test_method):
+	"""
+	A decorator to skip running tests when the KING_PHISHER_TEST_OFFLINE
+	environment variable is set. This allows unit tests which require a internet
+	connection to be skipped when network connectivity is known to be inactive.
+	"""
+	@functools.wraps(test_method)
+	def decorated(self, *args, **kwargs):
+		if os.environ.get('KING_PHISHER_TEST_OFFLINE'):
+			self.skipTest('due to running in offline mode')
+		return test_method(self, *args, **kwargs)
+	return decorated
+
 def skip_on_travis(test_method):
 	"""
 	A decorator to skip running a test when executing in the travis-ci environment.

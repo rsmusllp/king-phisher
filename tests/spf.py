@@ -36,6 +36,7 @@ from king_phisher import testing
 from king_phisher import spf
 
 class SPFTests(testing.KingPhisherTestCase):
+	@testing.skip_if_offline
 	def test_spf_check_host(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'king-phisher.com')
 		check_host_result = s.check_host()
@@ -44,6 +45,7 @@ class SPFTests(testing.KingPhisherTestCase):
 
 		self.assertEqual(spf.check_host('1.2.3.4', 'king-phisher.com'), 'fail')
 
+	@testing.skip_if_offline
 	def test_spf_evaluate_mechanism(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'doesnotexist.king-phisher.com')
 		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip_address, s.domain, s.sender, m, r)

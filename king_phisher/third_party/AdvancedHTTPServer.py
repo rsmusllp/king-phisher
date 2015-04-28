@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '0.4.3' # version 0.4.3-rc1
+__version__ = '1.0.0'
 __all__ = [
 	'AdvancedHTTPServer',
 	'AdvancedHTTPServerRegisterPath',
@@ -1153,12 +1153,13 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		self.server.logger.info('running RPC method: ' + self.path)
 		response = {'result': None, 'exception_occurred': False}
 		try:
-			result = rpc_handler(*data) # pylint: disable=star-args
+			result = rpc_handler(*data)
 			response['result'] = result
 		except Exception as error:
 			response['exception_occurred'] = True
-			response['exception'] = dict(name=error.__class__.__name__, message=getattr(error, 'message', None))
-			self.server.logger.error('error: ' + error.__class__.__name__ + ' occurred while calling RPC method: ' + self.path)
+			exc_name = "{0}.{1}".format(error.__class__.__module__, error.__class__.__name__)
+			response['exception'] = dict(name=exc_name, message=getattr(error, 'message', None))
+			self.server.logger.error('error: ' + exc_name + ' occurred while calling RPC method: ' + self.path)
 
 		try:
 			response = serializer.dumps(response)
