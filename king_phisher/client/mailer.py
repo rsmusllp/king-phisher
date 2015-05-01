@@ -246,7 +246,7 @@ class MailSenderThread(threading.Thread):
 			self._ssh_forwarder.start()
 			time.sleep(0.5)
 		except Exception:
-			self.logger.warning('failed to connect to remote ssh server')
+			self.logger.warning('failed to connect to remote ssh server', exc_info=True)
 			return False
 		self.smtp_server = ('localhost', local_port)
 		return True
@@ -259,14 +259,18 @@ class MailSenderThread(threading.Thread):
 		:rtype: bool
 		"""
 		if self.config.get('smtp_ssl_enable', False):
-			SMTP_CLASS = smtplib.SMTP_SSL
+			SmtpClass = smtplib.SMTP_SSL
 		else:
-			SMTP_CLASS = smtplib.SMTP
+			SmtpClass = smtplib.SMTP
 		try:
-			self.smtp_connection = SMTP_CLASS(*self.smtp_server)
-		except Exception:
-			return False
-		return True
+			self.smtp_connection = SmtpClass(*self.smtp_server)
+		except socket.error:
+			self.logger.warning('received a socket.error while connecting to the SMTP server')
+		except smtplib.smtplib.SMTPException:
+			self.logger.warning('received an SMTPException while connecting to the SMTP server')
+		else:
+			return True
+		return False
 
 	def server_smtp_disconnect(self):
 		"""Clean up and close the connection to the remote SMTP server."""
@@ -479,7 +483,7 @@ class MailSenderThread(threading.Thread):
 					self.send_email(*args, **kwargs)
 					message_sent = True
 					break
-				except Exception:
+				except smtplib.SMTPException:
 					self.tab_notify_status('Failed to send message')
 					time.sleep(1)
 			if not message_sent:
