@@ -27,11 +27,7 @@ Functions
 
 .. autofunction:: king_phisher.utilities.start_process
 
-.. autofunction:: king_phisher.utilities.timedef_to_seconds
-
 .. autofunction:: king_phisher.utilities.unescape_single_quote
-
-.. autofunction:: king_phisher.utilities.unique
 
 .. autofunction:: king_phisher.utilities.which
 

@@ -115,14 +115,6 @@ class UtilitiesTests(testing.KingPhisherTestCase):
 		self.assertEqual(parsed[0], '::1')
 		self.assertEqual(parsed[1], 8080)
 
-	def test_timedef_to_seconds(self):
-		self.assertRaises(ValueError, timedef_to_seconds, 'fake')
-		self.assertEqual(timedef_to_seconds(''), 0)
-		self.assertEqual(timedef_to_seconds('30'), 30)
-		self.assertEqual(timedef_to_seconds('1m30s'), 90)
-		self.assertEqual(timedef_to_seconds('2h1m30s'), 7290)
-		self.assertEqual(timedef_to_seconds('3d2h1m30s'), 266490)
-
 	def test_unescape_single_quote(self):
 		unescaped_string = unescape_single_quote(SINGLE_QUOTE_STRING_ESCAPED)
 		self.assertEqual(unescaped_string, SINGLE_QUOTE_STRING_UNESCAPED)

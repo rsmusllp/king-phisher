@@ -45,6 +45,7 @@ from king_phisher.client import gui_utilities
 from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import Gtk
+from smoke_zephyr.utilities import parse_timespan
 
 class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 	"""
@@ -63,7 +64,7 @@ class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
 
 		self.last_load_time = float('-inf')
 		"""The last time the data was loaded from the server."""
-		self.refresh_frequency = utilities.timedef_to_seconds(str(self.config.get('gui.refresh_frequency', '5m')))
+		self.refresh_frequency = parse_timespan(str(self.config.get('gui.refresh_frequency', '5m')))
 		"""The lifetime in seconds to wait before refreshing the data from the server."""
 		self.loader_thread = None
 		"""The thread object which loads the data from the server."""

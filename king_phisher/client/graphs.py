@@ -37,12 +37,12 @@ import string
 import sys
 
 from king_phisher import ua_parser
-from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.constants import OSFamily
 
 from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
+from smoke_zephyr.utilities import unique
 
 try:
 	import matplotlib
@@ -341,10 +341,10 @@ class CampaignGraphOverview(CampaignGraph):
 		bars = []
 		bars.append(rpc('campaign/messages/count', self.config['campaign_id']))
 		bars.append(len(visits))
-		bars.append(len(utilities.unique(visits, key=lambda visit: visit.message_id)))
+		bars.append(len(unique(visits, key=lambda visit: visit.message_id)))
 		if len(creds):
 			bars.append(len(creds))
-			bars.append(len(utilities.unique(creds, key=lambda cred: cred.message_id)))
+			bars.append(len(unique(creds, key=lambda cred: cred.message_id)))
 		xticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)]
 		bars = self.graph_bar(bars, xticklabels=xticklabels, ylabel='Grand Total')
 		return
@@ -438,8 +438,8 @@ class CampaignGraphMessageResults(CampaignGraph):
 		if not messages_count:
 			self._graph_null_pie('No Messages Sent')
 			return
-		visits_count = len(utilities.unique(info_cache['visits'], key=lambda visit: visit.message_id))
-		credentials_count = len(utilities.unique(info_cache['credentials'], key=lambda cred: cred.message_id))
+		visits_count = len(unique(info_cache['visits'], key=lambda visit: visit.message_id))
+		credentials_count = len(unique(info_cache['credentials'], key=lambda cred: cred.message_id))
 
 		assert credentials_count <= visits_count <= messages_count
 		labels = ['Without Visit', 'With Visit', 'With Credentials']
@@ -473,7 +473,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	mpl_color_without_creds = 'gold'
 	draw_states = False
 	def _load_graph(self, info_cache):
-		visits = utilities.unique(info_cache['visits'], key=lambda visit: visit.message_id)
+		visits = unique(info_cache['visits'], key=lambda visit: visit.message_id)
 		cred_ips = set(cred.message_id for cred in info_cache['credentials'])
 		cred_ips = set([visit.visitor_ip for visit in visits if visit.message_id in cred_ips])
 
