@@ -34,8 +34,8 @@ import collections
 import datetime
 import ipaddress
 import string
-import sys
 
+from king_phisher import its
 from king_phisher import ua_parser
 from king_phisher.client import gui_utilities
 from king_phisher.constants import OSFamily
@@ -57,7 +57,7 @@ except ImportError:
 	has_matplotlib = False
 	"""Whether the :py:mod:`matplotlib` module is available."""
 else:
-	if not getattr(sys, 'frozen', False) and check_requirements(['matplotlib>=1.4.1']):
+	if not its.frozen and check_requirements(['matplotlib>=1.4.1']):
 		has_matplotlib = False
 	else:
 		has_matplotlib = True
@@ -68,7 +68,7 @@ except ImportError:
 	has_matplotlib_basemap = False
 	"""Whether the :py:mod:`mpl_toolkits.basemap` module is available."""
 else:
-	if not getattr(sys, 'frozen', False) and check_requirements(['basemap>=1.0.7']):
+	if not its.frozen and check_requirements(['basemap>=1.0.7']):
 		has_matplotlib_basemap = False
 	else:
 		has_matplotlib_basemap = True

@@ -34,6 +34,7 @@ import platform
 import sys
 import traceback
 
+from king_phisher import its
 from king_phisher import version
 from king_phisher.client import gui_utilities
 from king_phisher.third_party import AdvancedHTTPServer
@@ -79,11 +80,11 @@ class ExceptionDialog(gui_utilities.UtilityGladeGObject):
 	def interact(self):
 		exc_type, exc_value, exc_traceback = self.exc_info
 		pversion = 'UNKNOWN'
-		if sys.platform.startswith('linux'):
+		if its.on_linux:
 			pversion = 'Linux: ' + ' '.join(platform.linux_distribution())
-		elif sys.platform.startswith('win'):
+		elif its.on_windows:
 			pversion = 'Windows: ' + ' '.join(platform.win32_ver())
-			if getattr(sys, 'frozen', False):
+			if its.frozen:
 				pversion += ' (Frozen=True)'
 			else:
 				pversion += ' (Frozen=False)'
