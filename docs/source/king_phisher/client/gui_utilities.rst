@@ -54,6 +54,10 @@ Classes
    :special-members: __init__
    :undoc-members:
 
+.. autoclass:: king_phisher.client.gui_utilities.FileMonitor
+   :show-inheritance:
+   :special-members: __init__
+
 .. autoclass:: king_phisher.client.gui_utilities.UtilityGladeGObject
    :show-inheritance:
    :members:

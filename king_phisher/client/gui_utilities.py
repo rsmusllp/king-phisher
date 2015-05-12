@@ -40,6 +40,7 @@ from king_phisher import find
 from king_phisher import utilities
 
 from gi.repository import Gdk
+from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -524,6 +525,30 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 		target_uri = self.get_uri()
 		target_path = self.get_filename()
 		return {'target_uri': target_uri, 'target_path': target_path}
+
+class FileMonitor(object):
+	"""Monitor a file for changes."""
+	def __init__(self, path, on_changed):
+		"""
+		:param str path: The path to monitor for changes.
+		:param on_changed: The call back function to be called when changes are detected.
+		:type on_changed: function
+		"""
+		self.logger = logging.getLogger('KingPhisher.Utility.FileMonitor')
+		self.on_changed = on_changed
+		self.path = path
+		self._gfile = Gio.file_new_for_path(path)
+		self._gfile_monitor = self._gfile.monitor(Gio.FileMonitorFlags.NONE)
+		self._gfile_monitor.connect('changed', self.cb_changed)
+		self.logger.debug('starting file monitor for: ' + path)
+
+	def __del__(self):
+		self._gfile_monitor.cancel()
+		self.logger.debug('cancelled file monitor for: ' + self.path)
+
+	def cb_changed(self, gfile_monitor, gfile, gfile_other, gfile_monitor_event):
+		self.logger.debug("file monitor {0} received event: {1}".format(self.path, gfile_monitor_event.value_name))
+		self.on_changed(self.path, gfile_monitor_event)
 
 class UtilityTreeView(object):
 	"""

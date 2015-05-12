@@ -45,6 +45,7 @@ from king_phisher.client import mailer
 from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
+from gi.repository import Gio
 from gi.repository import Gtk
 from gi.repository import GtkSource
 from gi.repository import Pango
@@ -449,6 +450,28 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 			self.textbuffer.set_style_scheme(style_scheme)
 		else:
 			self.logger.error("invalid GTK source theme: '{0}'".format(style_scheme_name))
+		self.file_monitor = None
+
+	def _html_file_changed(self, path, monitor_event):
+		if monitor_event in (Gio.FileMonitorEvent.CHANGED, Gio.FileMonitorEvent.CHANGES_DONE_HINT, Gio.FileMonitorEvent.CREATED):
+			self.load_html_file()
+		elif monitor_event == Gio.FileMonitorEvent.MOVED:
+			self.config['mailer.html_file'] = path
+
+	def load_html_file(self):
+		html_file = self.config.get('mailer.html_file')
+		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
+			self.toolbutton_save_html_file.set_sensitive(False)
+			self.textview.set_property('editable', False)
+			return
+		self.toolbutton_save_html_file.set_sensitive(True)
+		self.textview.set_property('editable', True)
+		with open(html_file, 'rb') as file_h:
+			html_data = file_h.read()
+		html_data = str(html_data.decode('utf-8', 'ignore'))
+		self.textbuffer.begin_not_undoable_action()
+		self.textbuffer.set_text(html_data)
+		self.textbuffer.end_not_undoable_action()
 
 	def signal_toolbutton_open(self, button):
 		dialog = gui_utilities.UtilityFileChooser('Choose File', self.parent)
@@ -561,19 +584,10 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 
 	def show_tab(self):
 		"""Load the message HTML file from disk and configure the tab for editing."""
-		html_file = self.config.get('mailer.html_file')
-		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
-			self.toolbutton_save_html_file.set_sensitive(False)
-			self.textview.set_property('editable', False)
+		if self.file_monitor and self.file_monitor.path == self.config['mailer.html_file']:
 			return
-		self.toolbutton_save_html_file.set_sensitive(True)
-		self.textview.set_property('editable', True)
-		with open(html_file, 'rb') as file_h:
-			html_data = file_h.read()
-		html_data = str(html_data.decode('utf-8', 'ignore'))
-		self.textbuffer.begin_not_undoable_action()
-		self.textbuffer.set_text(html_data)
-		self.textbuffer.end_not_undoable_action()
+		self.load_html_file()
+		self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
 
 class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 	"""
