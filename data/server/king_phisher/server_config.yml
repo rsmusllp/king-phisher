@@ -18,6 +18,9 @@ server:
     # Require authenticating users to be a member of the specified group
     #group: king-phisher
 
+  # A cookie to retrieve the client's IP from, useful when a proxy is in place
+  #client_ip_cookie: X-Real-IP
+
   # The name of the cookie used to track users
   cookie_name: KPID
 
