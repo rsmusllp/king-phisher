@@ -543,6 +543,12 @@ class FileMonitor(object):
 		self.logger.debug('starting file monitor for: ' + path)
 
 	def __del__(self):
+		self.stop()
+
+	def stop(self):
+		"""Stop monitoring the file."""
+		if self._gfile_monitor.is_cancelled():
+			return
 		self._gfile_monitor.cancel()
 		self.logger.debug('cancelled file monitor for: ' + self.path)
 

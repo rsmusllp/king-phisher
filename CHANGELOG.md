@@ -2,6 +2,7 @@
 
 ## Version 0.2.1
 1. Added syntax highlighting to the message edit tab
+1. Support for pulling the client IP from a cookie set by an upstream proxy
 
 ## Version 0.2.0
 1. Added additional graphs including maps when basemap is available

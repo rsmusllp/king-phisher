@@ -586,6 +586,11 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		"""Load the message HTML file from disk and configure the tab for editing."""
 		if self.file_monitor and self.file_monitor.path == self.config['mailer.html_file']:
 			return
+		if not self.config['mailer.html_file']:
+			if self.file_monitor:
+				self.file_monitor.stop()
+				self.file_monitor = None
+			return
 		self.load_html_file()
 		self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
 
