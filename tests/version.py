@@ -30,18 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import json
-import sys
 import unittest
 
 from king_phisher import testing
 from king_phisher.version import *
 
-if sys.version_info[0] < 3:
-	import urllib2
-	urllib = type('http', (), {'request': urllib2})
-else:
-	import urllib.request
+import requests
 
 class VersionTests(testing.KingPhisherTestCase):
 	def test_version_info(self):
@@ -55,9 +49,7 @@ class VersionTests(testing.KingPhisherTestCase):
 	@testing.skip_if_offline
 	@testing.skip_on_travis
 	def test_github_releases(self):
-		url_h = urllib.request.urlopen('https://api.github.com/repos/securestate/king-phisher/releases')
-		releases = json.loads(url_h.read().decode('utf-8'))
-		url_h.close()
+		releases = requests.get('https://api.github.com/repos/securestate/king-phisher/releases').json()
 		releases = [release for release in releases if not release['draft']]
 		for release in releases:
 			tag_name_regex = r'v\d+\.\d+\.\d+'

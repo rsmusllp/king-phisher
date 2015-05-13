@@ -32,7 +32,6 @@
 
 import datetime
 import os
-import socket
 import sys
 import urllib
 
@@ -49,16 +48,14 @@ from gi.repository import Gio
 from gi.repository import Gtk
 from gi.repository import GtkSource
 from gi.repository import Pango
+import requests
 
 if sys.version_info[0] < 3:
-	import urllib2
 	import urlparse
 	urllib.parse = urlparse
 	urllib.parse.urlencode = urllib.urlencode
-	urllib.request = urllib2
 else:
 	import urllib.parse
-	import urllib.request
 
 try:
 	from gi.repository import WebKit2 as WebKitX
@@ -79,7 +76,7 @@ def test_webserver_url(target_url, secret_id):
 	query['id'] = [secret_id]
 	query = urllib.parse.urlencode(query, True)
 	target_url = urllib.parse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
-	urllib.request.urlopen(target_url, timeout=5)
+	return requests.get(target_url, timeout=5.0)
 
 class MailSenderSendTab(gui_utilities.GladeGObject):
 	"""
@@ -195,7 +192,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.text_insert('Checking the target URL... ')
 		try:
 			test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
-		except Exception:
+		except requests.exceptions.RequestException:
 			self.text_insert('failed')
 			if not gui_utilities.show_dialog_yes_no('Unable To Open The Web Server URL', self.parent, 'The URL may be invalid, continue sending messages anyways?'):
 				self.text_insert(', sending aborted.\n')
@@ -641,26 +638,29 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
+		error_description = None
 		try:
-			test_webserver_url(target_url, self.config['server_config']['server.secret_id'])
-		except Exception as error:
-			error_description = None
-			if isinstance(error, urllib.request.URLError) and hasattr(error, 'reason') and isinstance(error.reason, Exception):
-				error = error.reason
-			if isinstance(error, urllib.request.HTTPError) and error.getcode():
-				self.logger.warning("verify url HTTPError: {0} {1}".format(error.getcode(), error.reason))
-				error_description = "HTTP status {0} {1}".format(error.getcode(), error.reason)
-			elif isinstance(error, socket.gaierror):
-				self.logger.warning('verify url attempt failed, socket.gaierror')
-				error_description = error.args[-1]
-			elif isinstance(error, socket.timeout):
-				self.logger.warning('verify url attempt failed, connection timeout occurred')
-				error_description = 'Connection timed out'
+			response = test_webserver_url(target_url, self.config['server_config']['server.secret_id'])
+		except requests.exceptions.RequestException as error:
+			if isinstance(error, requests.exceptions.ConnectionError):
+				self.logger.warning('verify url attempt failed, could not connect')
+				error_description = 'Could not connect to the server'
+			elif isinstance(error, requests.exceptions.Timeout):
+				self.logger.warning('verify url attempt failed, a timeout occurred')
+				error_description = 'The HTTP request timed out'
 			else:
 				self.logger.warning('unknown verify url exception: ' + repr(error))
+				error_description = 'An unknown verify URL exception occurred'
+		else:
+			if response.status_code < 200 or response.status_code > 299:
+				self.logger.warning("verify url HTTP error: {0} {1}".format(response.status_code, response.reason))
+				error_description = "HTTP status {0} {1}".format(response.status_code, response.reason)
+			else:
+				self.logger.debug("verify url HTTP status: {0} {1}".format(response.status_code, response.reason))
+		if error_description:
 			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent, error_description)
-			return
-		gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
+		else:
+			gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
 		return
 
 	def signal_entry_activate_open_file(self, entry):

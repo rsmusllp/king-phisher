@@ -11,5 +11,6 @@ paramiko>=1.15.2
 psycopg2>=2.6
 py2-ipaddress==3.4
 PyYAML>=3.11
+requests>=2.7.0
 smoke-zephyr==1.0.1
 SQLAlchemy>=1.0.2

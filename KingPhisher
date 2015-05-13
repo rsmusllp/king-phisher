@@ -55,7 +55,8 @@ from smoke_zephyr.requirements import check_requirements
 __requirements__ = [
 	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),
 	'Jinja2>=2.7.3',
-	'paramiko>=1.15.2'
+	'paramiko>=1.15.2',
+	'requests>=2.7.0'
 ]
 if its.py_v2:
 	__requirements__.append('py2-ipaddress>=3.4')
@@ -73,6 +74,7 @@ def main():
 	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
 	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
 	logging.getLogger(arguments.logger).addHandler(console_log_handler)
+	logging.captureWarnings(True)
 	config_file = arguments.config_file
 	del arguments, parser
 	logger = logging.getLogger('KingPhisher.Client.CLI')

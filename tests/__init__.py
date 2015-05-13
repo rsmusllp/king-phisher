@@ -33,6 +33,7 @@
 import logging
 logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
 logging.getLogger('').setLevel(logging.CRITICAL)
+logging.captureWarnings(True)
 
 from .client import *
 from .server import *
