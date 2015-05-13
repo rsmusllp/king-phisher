@@ -154,6 +154,7 @@ class WebPageCloner(object):
 		resource_url_str = resource.get_property('uri')
 		resource_url = urllib.parse.urlparse(resource_url_str)
 		resource_path = os.path.split(resource_url.path)[0].lstrip('/')
+		resource_path = urllib.parse.unquote(resource_path)
 		directory = self.dest_dir
 		for part in resource_path.split('/'):
 			directory = os.path.join(directory, part)
@@ -165,7 +166,7 @@ class WebPageCloner(object):
 		if response:
 			mime_type = response.get_mime_type()
 
-		resource_path = resource_url.path
+		resource_path = urllib.parse.unquote(resource_url.path)
 		if resource_path.endswith('/'):
 			resource_path += 'index.html'
 		resource_path = resource_path.lstrip('/')
