@@ -111,10 +111,10 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 				self.set_status('Failed')
 				gui_utilities.show_dialog_error('Operation Failed', self.dialog, 'The web page clone operation failed.')
 				continue
-			for resource, resource_details in cloner.cloned_resources.items():
-				if gui_utilities.gtk_list_store_search(self.resources, resource, column=0):
+			for resource in cloner.cloned_resources.values():
+				if gui_utilities.gtk_list_store_search(self.resources, resource.resource, column=0):
 					continue
-				self.resources.append([resource, resource_details.mime_type or 'N/A', "{0:,}".format(resource_details.size)])
+				self.resources.append([resource.resource, resource.mime_type or 'N/A', "{0:,}".format(resource.size)])
 			self.set_status('Done')
 			gui_utilities.gtk_sync()
 		if len(self.resources) and gui_utilities.show_dialog_yes_no('Transfer Cloned Pages', self.dialog, 'Would you like to start the SFTP client\nto upload the cloned pages?'):
