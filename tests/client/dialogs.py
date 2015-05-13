@@ -38,12 +38,12 @@ from king_phisher.client import gui_utilities
 
 class ClientDialogTests(testing.KingPhisherTestCase):
 	def test_client_dialog_classes(self):
-		dialog_names = list(filter(lambda d: d.endswith('Dialog'), dir(dialogs)))
+		dialog_names = list(dialog for dialog in dir(dialogs) if dialog.endswith('Dialog'))
 		self.assertGreater(len(dialog_names), 0, msg='failed to identify any dialog objects')
 		for dialog_name in dialog_names:
 			dialog_obj = getattr(dialogs, dialog_name)
-			msg = "{0} is not a subclass of UtilityGladeGObject".format(dialog_name)
-			self.assertTrue(issubclass(dialog_obj, gui_utilities.UtilityGladeGObject), msg=msg)
+			msg = "{0} is not a subclass of GladeGObject".format(dialog_name)
+			self.assertTrue(issubclass(dialog_obj, gui_utilities.GladeGObject), msg=msg)
 			msg = "{0}.top_gobject is not 'dialog'".format(dialog_name)
 			self.assertEqual(getattr(dialog_obj, 'top_gobject', None), 'dialog', msg=msg)
 			msg = "{0} has no 'interact' method".format(dialog_name)

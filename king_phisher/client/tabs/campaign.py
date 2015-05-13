@@ -47,7 +47,7 @@ from gi.repository import GLib
 from gi.repository import Gtk
 from smoke_zephyr.utilities import parse_timespan
 
-class CampaignViewGenericTab(gui_utilities.UtilityGladeGObject):
+class CampaignViewGenericTab(gui_utilities.GladeGObject):
 	"""
 	This object is meant to be subclassed by all of the tabs which load and
 	display information about the current campaign.
@@ -104,7 +104,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		self.treeview_manager = gui_utilities.UtilityTreeView(
+		self.treeview_manager = gui_utilities.TreeViewManager(
 			treeview,
 			selection_mode=Gtk.SelectionMode.MULTIPLE,
 			cb_delete=self._prompt_to_delete_row,
@@ -223,7 +223,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
 			return
-		dialog = gui_utilities.UtilityFileChooser('Export Data', self.parent)
+		dialog = gui_utilities.FileChooser('Export Data', self.parent)
 		file_name = self.config['campaign_name'] + '.csv'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()

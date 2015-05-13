@@ -31,14 +31,14 @@
 #
 
 from king_phisher.client.dialogs import about
-from king_phisher.client.gui_utilities import UtilityGladeGObject
+from king_phisher.client.gui_utilities import GladeGObject
 
 from gi.repository import Gdk
 from gi.repository import Gtk
 
 __all__ = ['LoginDialog', 'SSHLoginDialog']
 
-class BaseLoginDialog(UtilityGladeGObject):
+class BaseLoginDialog(GladeGObject):
 	"""
 	This object is basic login dialog object that can be inherited from and
 	customized.

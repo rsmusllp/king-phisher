@@ -81,7 +81,7 @@ def test_webserver_url(target_url, secret_id):
 	target_url = urllib.parse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
 	urllib.request.urlopen(target_url, timeout=5)
 
-class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
+class MailSenderSendTab(gui_utilities.GladeGObject):
 	"""
 	This allows the :py:class:`.MailSenderThread` object to be managed
 	by the user through the GUI. These two classes are very interdependent
@@ -416,7 +416,7 @@ class MailSenderPreviewTab(object):
 		else:
 			self.webview.load_html_string(html_data, html_file_uri)
 
-class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
+class MailSenderEditTab(gui_utilities.GladeGObject):
 	"""
 	This is the tab which adds basic text edition for changing an email
 	template.
@@ -474,7 +474,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		self.textbuffer.end_not_undoable_action()
 
 	def signal_toolbutton_open(self, button):
-		dialog = gui_utilities.UtilityFileChooser('Choose File', self.parent)
+		dialog = gui_utilities.FileChooser('Choose File', self.parent)
 		dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -497,7 +497,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		html_file_h.close()
 
 	def signal_toolbutton_save_as(self, toolbutton):
-		dialog = gui_utilities.UtilityFileChooser('Save HTML File', self.parent)
+		dialog = gui_utilities.FileChooser('Save HTML File', self.parent)
 		html_file = self.config.get('mailer.html_file')
 		if html_file:
 			current_name = os.path.basename(html_file)
@@ -570,7 +570,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		return True
 
 	def signal_activate_popup_menu_insert_image(self, widget):
-		dialog = gui_utilities.UtilityFileChooser('Choose Image', self.parent)
+		dialog = gui_utilities.FileChooser('Choose Image', self.parent)
 		dialog.quick_add_filter('Images', ['*.gif', '*.jpeg', '*.jpg', '*.png'])
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -594,7 +594,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		self.load_html_file()
 		self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
 
-class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
+class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	"""
 	This is the tab which allows the user to configure and set parameters
 	for sending messages as part of a campaign.
@@ -650,7 +650,7 @@ class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 		return
 
 	def signal_entry_activate_open_file(self, entry):
-		dialog = gui_utilities.UtilityFileChooser('Choose File', self.parent)
+		dialog = gui_utilities.FileChooser('Choose File', self.parent)
 		if entry == self.gobjects.get('entry_html_file'):
 			dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		elif entry == self.gobjects.get('entry_target_file'):
@@ -768,7 +768,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.UtilityFileChooser('Export Message Configuration', self.parent)
+		dialog = gui_utilities.FileChooser('Export Message Configuration', self.parent)
 		response = dialog.run_quick_save('message.kpm')
 		dialog.destroy()
 		if not response:
@@ -790,7 +790,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.UtilityFileChooser('Import Message Configuration', self.parent)
+		dialog = gui_utilities.FileChooser('Import Message Configuration', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -799,7 +799,7 @@ class MailSenderTab(object):
 			return
 		target_file = response['target_path']
 
-		dialog = gui_utilities.UtilityFileChooser('Destination Directory', self.parent)
+		dialog = gui_utilities.FileChooser('Destination Directory', self.parent)
 		response = dialog.run_quick_select_directory()
 		dialog.destroy()
 		if not response:

@@ -40,7 +40,7 @@ from gi.repository import Gtk
 
 __all__ = ['ConfigurationDialog']
 
-class ConfigurationDialog(gui_utilities.UtilityGladeGObject):
+class ConfigurationDialog(gui_utilities.GladeGObject):
 	"""
 	Display the King Phisher client configuration dialog. Running this
 	dialog via the :py:func:`.interact` method will cause some server

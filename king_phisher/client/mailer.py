@@ -207,7 +207,7 @@ class MailSenderThread(threading.Thread):
 		:param int emails_done: The number of emails that have been sent.
 		:param int emails_total: The total number of emails that are going to be sent.
 		"""
-		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+		if isinstance(self.tab, gui_utilities.GladeGObject):
 			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
 
 	def tab_notify_status(self, message):
@@ -217,14 +217,14 @@ class MailSenderThread(threading.Thread):
 		:param str message: The notification message.
 		"""
 		self.logger.info(message.lower())
-		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+		if isinstance(self.tab, gui_utilities.GladeGObject):
 			GLib.idle_add(self.tab.notify_status, message + '\n')
 
 	def tab_notify_stopped(self):
 		"""
 		Notify the tab that the message sending operation has stopped.
 		"""
-		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+		if isinstance(self.tab, gui_utilities.GladeGObject):
 			GLib.idle_add(self.tab.notify_stopped)
 
 	def server_ssh_connect(self):
@@ -392,7 +392,7 @@ class MailSenderThread(threading.Thread):
 		:rtype: bool
 		"""
 		if set_pause:
-			if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+			if isinstance(self.tab, gui_utilities.GladeGObject):
 				gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
 			else:
 				self.pause()

@@ -53,7 +53,7 @@ except ImportError:
 else:
 	has_vte = True
 
-class RPCTerminalWindow(gui_utilities.UtilityGladeGObject):
+class RPCTerminalWindow(gui_utilities.GladeGObject):
 	gobject_ids = [
 		'box_main',
 		'menu_edit',
