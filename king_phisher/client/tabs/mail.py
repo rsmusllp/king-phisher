@@ -398,9 +398,13 @@ class MailSenderPreviewTab(object):
 		scrolled_window.add(self.webview)
 		scrolled_window.show()
 		self.box.pack_start(scrolled_window, True, True, 0)
+		self.file_monitor = None
 
-	def show_tab(self):
-		"""Configure the webview to preview the the message HTML file."""
+	def _html_file_changed(self, path, monitor_event):
+		if monitor_event in (Gio.FileMonitorEvent.CHANGED, Gio.FileMonitorEvent.CHANGES_DONE_HINT, Gio.FileMonitorEvent.CREATED):
+			self.load_html_file()
+
+	def load_html_file(self):
 		html_file = self.config.get('mailer.html_file')
 		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 			return
@@ -415,6 +419,18 @@ class MailSenderPreviewTab(object):
 			self.webview.load_html(html_data, html_file_uri)
 		else:
 			self.webview.load_html_string(html_data, html_file_uri)
+
+	def show_tab(self):
+		"""Configure the webview to preview the the message HTML file."""
+		if self.file_monitor and self.file_monitor.path == self.config['mailer.html_file']:
+			return
+		if not self.config['mailer.html_file']:
+			if self.file_monitor:
+				self.file_monitor.stop()
+				self.file_monitor = None
+			return
+		self.load_html_file()
+		self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
 
 class MailSenderEditTab(gui_utilities.GladeGObject):
 	"""
@@ -455,8 +471,6 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 	def _html_file_changed(self, path, monitor_event):
 		if monitor_event in (Gio.FileMonitorEvent.CHANGED, Gio.FileMonitorEvent.CHANGES_DONE_HINT, Gio.FileMonitorEvent.CREATED):
 			self.load_html_file()
-		elif monitor_event == Gio.FileMonitorEvent.MOVED:
-			self.config['mailer.html_file'] = path
 
 	def load_html_file(self):
 		html_file = self.config.get('mailer.html_file')
