@@ -63,7 +63,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Kali"
 fi
 
-grep -E "Ubuntu 1[34].(04|10)" /etc/issue &> /dev/null
+grep -E "Ubuntu 1[345].(04|10)" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Ubuntu"
 fi
