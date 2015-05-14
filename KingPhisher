@@ -43,6 +43,7 @@ if getattr(sys, 'frozen', False):
 	os.environ['BASEMAPDATA'] = os.path.join(os.path.dirname(sys.executable), 'mpl-basemap-data')
 
 from king_phisher import find
+from king_phisher import its
 from king_phisher import version
 from king_phisher.client import application
 from king_phisher.client import gui_utilities
@@ -52,12 +53,12 @@ from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
-	"dns{0}>=1.12.0".format('python' if sys.version_info.major == 2 else 'python3'),
-	'Jinja2>=2.7.1',
-	'paramiko>=1.10.1'
+	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),
+	'Jinja2>=2.7.3',
+	'paramiko>=1.15.2'
 ]
-if sys.version_info.major == 2:
-	__requirements__.append('py2-ipaddress>=2.0.0')
+if its.py_v2:
+	__requirements__.append('py2-ipaddress>=3.4')
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Client GUI', conflict_handler='resolve')
@@ -85,7 +86,7 @@ def main():
 		return os.EX_SOFTWARE
 
 	# check and configure the environment
-	if getattr(sys, 'frozen', False):
+	if its.frozen:
 		data_path = os.path.dirname(sys.executable)
 	else:
 		missing_requirements = check_requirements(__requirements__)

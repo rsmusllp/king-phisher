@@ -267,9 +267,9 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			gui_utilities.show_dialog_error(title_ssh_error, self, 'The server responded that the credentials are invalid.')
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, self, title=title_ssh_error)
-		except Exception:
-			self.logger.warning('failed to connect to the remote ssh server')
-			gui_utilities.show_dialog_error(title_ssh_error, self, 'An unknown error occurred.')
+		except Exception as error:
+			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
+			gui_utilities.show_dialog_error(title_ssh_error, self, "An {0}.{1} error occurred.".format(error.__class__.__module__, error.__class__.__name__))
 		else:
 			return local_port
 		self.server_disconnect()
@@ -389,7 +389,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, self)
 		except Exception as error:
-			self.logger.warning('failed to connect to the remote rpc service')
+			self.logger.warning('failed to connect to the remote rpc service', exc_info=True)
 			gui_utilities.show_dialog_error(title_rpc_error, self, 'Ensure that the King Phisher Server is currently running.')
 		else:
 			connection_failed = False

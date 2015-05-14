@@ -34,6 +34,7 @@ Brandan Geise
 -->
 <interface>
   <requires lib="gtk+" version="3.4"/>
+  <requires lib="gtksourceview" version="3.0"/>
   <!-- interface-license-type bsd3c -->
   <!-- interface-name King Phisher -->
   <!-- interface-description Social Engineering Phishing Toolkit -->
@@ -168,6 +169,7 @@ Brandan Geise</property>
               <object class="GtkTreeView" id="CampaignSelectionDialog.treeview_campaigns">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <signal name="row-activated" handler="signal_treeview_row_activated" swapped="no"/>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection" id="treeview-selection4"/>
                 </child>
@@ -232,6 +234,8 @@ Brandan Geise</property>
     </action-widgets>
   </object>
   <object class="GtkBox" id="CampaignViewCredentialsTab">
+    <property name="width_request">400</property>
+    <property name="height_request">300</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
@@ -297,6 +301,8 @@ Brandan Geise</property>
     </child>
   </object>
   <object class="GtkBox" id="CampaignViewDashboardTab">
+    <property name="width_request">400</property>
+    <property name="height_request">300</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
@@ -437,6 +443,8 @@ Brandan Geise</property>
     </child>
   </object>
   <object class="GtkBox" id="CampaignViewDeaddropTab">
+    <property name="width_request">400</property>
+    <property name="height_request">300</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
@@ -501,6 +509,8 @@ Brandan Geise</property>
     </child>
   </object>
   <object class="GtkBox" id="CampaignViewMessagesTab">
+    <property name="width_request">400</property>
+    <property name="height_request">300</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
@@ -565,6 +575,8 @@ Brandan Geise</property>
     </child>
   </object>
   <object class="GtkBox" id="CampaignViewVisitsTab">
+    <property name="width_request">400</property>
+    <property name="height_request">300</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
@@ -1018,6 +1030,8 @@ Brandan Geise</property>
     </action-widgets>
   </object>
   <object class="GtkBox" id="MailSenderEditTab">
+    <property name="width_request">400</property>
+    <property name="height_request">300</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="margin_left">5</property>
@@ -1026,96 +1040,127 @@ Brandan Geise</property>
     <property name="margin_bottom">5</property>
     <property name="orientation">vertical</property>
     <child>
-      <object class="GtkFrame" id="MailSenderEditTab.frame3">
+      <object class="GtkBox" id="MailSenderEditTab.box8">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label_xalign">0</property>
+        <property name="orientation">vertical</property>
         <child>
-          <object class="GtkAlignment" id="MailSenderEditTab.alignment3">
+          <object class="GtkToolbar" id="toolbar1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="toolbar_style">icons</property>
             <child>
-              <object class="GtkBox" id="MailSenderEditTab.box8">
+              <object class="GtkToolButton" id="MailSenderEditTab.toolbutton_open_html_file">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
-                <child>
-                  <object class="GtkButtonBox" id="MailSenderEditTab.buttonbox5">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_right">5</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="spacing">3</property>
-                    <property name="layout_style">end</property>
-                    <child>
-                      <object class="GtkButton" id="MailSenderEditTab.button_save_html_file">
-                        <property name="label" translatable="yes">Save</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <signal name="clicked" handler="signal_button_save" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="pack_type">end</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="MailSenderEditTab.button_save_as_html_file">
-                        <property name="label" translatable="yes">Save As</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <signal name="clicked" handler="signal_button_save_as" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow" id="MailSenderEditTab.scrolledwindow6">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="margin_left">5</property>
-                    <property name="margin_right">5</property>
-                    <property name="margin_top">5</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="shadow_type">etched-in</property>
-                    <child>
-                      <object class="GtkTextView" id="MailSenderEditTab.textview_html_file">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
+                <property name="tooltip_text" translatable="yes">Open</property>
+                <property name="label" translatable="yes">Open</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-open</property>
+                <signal name="clicked" handler="signal_toolbutton_open" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" id="MailSenderEditTab.toolbutton_separator1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="MailSenderEditTab.toolbutton_save_html_file">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Save</property>
+                <property name="label" translatable="yes">Save</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-save</property>
+                <signal name="clicked" handler="signal_toolbutton_save" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="MailSenderEditTab.toolbutton_save_as_html_file">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Save As</property>
+                <property name="label" translatable="yes">Save As</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-save-as</property>
+                <signal name="clicked" handler="signal_toolbutton_save_as" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" id="MailSenderEditTab.toolbutton_separator2">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="MailSenderEditTab.toolbutton_template_wiki">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Message Template Help</property>
+                <property name="label" translatable="yes">Template Help</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-info</property>
+                <signal name="clicked" handler="signal_toolbutton_template_wiki" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="MailSenderEditTab.scrolledwindow6">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">5</property>
+            <property name="shadow_type">etched-in</property>
+            <child>
+              <object class="GtkSourceView" id="MailSenderEditTab.view_html_file">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="left_margin">2</property>
+                <property name="right_margin">2</property>
+                <property name="show_line_numbers">True</property>
+                <property name="tab_width">4</property>
+                <property name="insert_spaces_instead_of_tabs">True</property>
+                <property name="highlight_current_line">True</property>
               </object>
             </child>
           </object>
-        </child>
-        <child type="label">
-          <object class="GtkLabel" id="MailSenderEditTab.label29">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">&lt;b&gt;Message Editor&lt;/b&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
         </child>
       </object>
       <packing>
@@ -1126,6 +1171,8 @@ Brandan Geise</property>
     </child>
   </object>
   <object class="GtkBox" id="MailSenderSendTab">
+    <property name="width_request">400</property>
+    <property name="height_request">300</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="margin_left">5</property>
@@ -1263,6 +1310,8 @@ Brandan Geise</property>
     </data>
   </object>
   <object class="GtkBox" id="MailSenderConfigurationTab">
+    <property name="width_request">400</property>
+    <property name="height_request">300</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="margin_left">5</property>
@@ -1272,6 +1321,8 @@ Brandan Geise</property>
     <property name="orientation">vertical</property>
     <child>
       <object class="GtkGrid" id="MailSenderConfigurationTab.grid">
+        <property name="width_request">400</property>
+        <property name="height_request">300</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="margin_left">5</property>
@@ -1742,11 +1793,10 @@ Brandan Geise</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="LoginDialog.button_cancel">
-                <property name="label">gtk-cancel</property>
+                <property name="label">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1756,11 +1806,10 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkButton" id="LoginDialog.button_connect">
-                <property name="label">gtk-connect</property>
+                <property name="label">Connect</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1925,6 +1974,125 @@ Brandan Geise</property>
       <action-widget response="-6">LoginDialog.button_cancel</action-widget>
       <action-widget response="-10">LoginDialog.button_connect</action-widget>
     </action-widgets>
+  </object>
+  <object class="GtkImage" id="RPCTerminalWindow.image_help_api_docs">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-dialog-question</property>
+  </object>
+  <object class="GtkImage" id="RPCTerminalWindow.image_help_wiki">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-help</property>
+  </object>
+  <object class="GtkApplicationWindow" id="RPCTerminalWindow">
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">King Phisher RPC</property>
+    <property name="destroy_with_parent">True</property>
+    <child>
+      <object class="GtkBox" id="RPCTerminalWindow.box_main">
+        <property name="width_request">-1</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkMenuBar" id="RPCTerminalWindow.menubar">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkMenuItem" id="RPCTerminalWindow.menuitem_edit">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">_Edit</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="RPCTerminalWindow.menu_edit">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_edit_copy">
+                        <property name="label">gtk-copy</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="accel_path">&lt;RPCTerminalWindow&gt;/Edit/Copy</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="signal_menuitem_edit_copy" swapped="no"/>
+                        <accelerator key="c" signal="activate" modifiers="GDK_SHIFT_MASK | GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_edit_paste">
+                        <property name="label">gtk-paste</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="accel_path">&lt;RPCTerminalWindow&gt;/Edit/Paste</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="signal_menuitem_edit_paste" swapped="no"/>
+                        <accelerator key="v" signal="activate" modifiers="GDK_SHIFT_MASK | GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="RPCTerminalWindow.menuitem_help">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">_Help</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="RPCTerminalWindow.menu_help">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_about">
+                        <property name="label">gtk-about</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="signal_menuitem_help_about" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_api_docs">
+                        <property name="label" translatable="yes">API Docs</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="image">RPCTerminalWindow.image_help_api_docs</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="signal_menuitem_help_api_docs" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_wiki">
+                        <property name="label" translatable="yes">Help</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="image">RPCTerminalWindow.image_help_wiki</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="signal_menuitem_help_wiki" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
   </object>
   <object class="GtkListStore" id="SMSCarriers">
     <columns>

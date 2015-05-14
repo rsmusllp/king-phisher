@@ -41,6 +41,7 @@ and configuring a database backend, please see the
 ### Install Script Supported Flavors
 | Linux Flavor | Client Support | Server Support |
 |:-------------|:--------------:|:--------------:|
+| BackBox      | yes            | yes            |
 | CentOS       | no             | yes            |
 | Debian       | yes            | yes            |
 | Fedora       | yes            | yes            |

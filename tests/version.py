@@ -31,7 +31,6 @@
 #
 
 import json
-import re
 import sys
 import unittest
 
@@ -53,12 +52,13 @@ class VersionTests(testing.KingPhisherTestCase):
 		version_regex = r'^\d+\.\d+\.\d+((a|b)\d)?$'
 		self.assertRegex(distutils_version, version_regex, msg='the distutils version format is invalid')
 
+	@testing.skip_if_offline
 	@testing.skip_on_travis
 	def test_github_releases(self):
 		url_h = urllib.request.urlopen('https://api.github.com/repos/securestate/king-phisher/releases')
 		releases = json.loads(url_h.read().decode('utf-8'))
 		url_h.close()
-		releases = filter(lambda release: not release['draft'], releases)
+		releases = [release for release in releases if not release['draft']]
 		for release in releases:
 			tag_name_regex = r'v\d+\.\d+\.\d+'
 			tag_name = release['tag_name']

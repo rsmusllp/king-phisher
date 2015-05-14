@@ -78,7 +78,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The main King Phisher client configuration."""
 		try:
 			self.load_config(load_defaults=True)
-		except Exception:
+		except IOError:
 			self.logger.critical('failed to load the client configuration')
 			raise
 

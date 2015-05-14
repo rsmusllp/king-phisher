@@ -45,7 +45,10 @@ from king_phisher.client import mailer
 from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
+from gi.repository import Gio
 from gi.repository import Gtk
+from gi.repository import GtkSource
+from gi.repository import Pango
 
 if sys.version_info[0] < 3:
 	import urllib2
@@ -98,6 +101,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		super(MailSenderSendTab, self).__init__(*args, **kwargs)
 		self.textview = self.gobjects['textview_mail_sender_progress']
 		"""The :py:class:`Gtk.TextView` object that renders text status messages."""
+		self.textview.modify_font(Pango.FontDescription(self.config['text_font']))
 		self.textbuffer = self.textview.get_buffer()
 		"""The :py:class:`Gtk.TextBuffer` instance associated with :py:attr:`~.MailSenderSendTab.textview`."""
 		self.textbuffer_iter = self.textbuffer.get_start_iter()
@@ -418,39 +422,70 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	template.
 	"""
 	gobject_ids = [
-		'button_save_as_html_file',
-		'button_save_html_file',
-		'textview_html_file'
+		'toolbutton_save_as_html_file',
+		'toolbutton_save_html_file',
+		'view_html_file'
 	]
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Edit')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderEditTab, self).__init__(*args, **kwargs)
-		self.textview = self.gobjects['textview_html_file']
+		self.textview = self.gobjects['view_html_file']
 		"""The :py:class:`Gtk.TextView` object of the editor."""
-		self.textbuffer = self.textview.get_buffer()
+		self.textbuffer = GtkSource.Buffer()
 		"""The :py:class:`Gtk.TextBuffer` used by the :py:attr:textview` attribute."""
-		self.button_save_html_file = self.gobjects['button_save_html_file']
+		self.textview.set_buffer(self.textbuffer)
+		self.textview.modify_font(Pango.FontDescription(self.config['text_font']))
+		self.language_manager = GtkSource.LanguageManager()
+		self.textbuffer.set_language(self.language_manager.get_language('html'))
+		self.textbuffer.set_highlight_syntax(True)
+		self.toolbutton_save_html_file = self.gobjects['toolbutton_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 
-	def signal_button_save_as(self, button):
+		scheme_manager = GtkSource.StyleSchemeManager()
+		style_scheme_name = self.config['text_source_theme']
+		style_scheme = scheme_manager.get_scheme(style_scheme_name)
+		if style_scheme:
+			self.textbuffer.set_style_scheme(style_scheme)
+		else:
+			self.logger.error("invalid GTK source theme: '{0}'".format(style_scheme_name))
+		self.file_monitor = None
+
+	def _html_file_changed(self, path, monitor_event):
+		if monitor_event in (Gio.FileMonitorEvent.CHANGED, Gio.FileMonitorEvent.CHANGES_DONE_HINT, Gio.FileMonitorEvent.CREATED):
+			self.load_html_file()
+		elif monitor_event == Gio.FileMonitorEvent.MOVED:
+			self.config['mailer.html_file'] = path
+
+	def load_html_file(self):
 		html_file = self.config.get('mailer.html_file')
-		if not html_file:
+		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
+			self.toolbutton_save_html_file.set_sensitive(False)
+			self.textview.set_property('editable', False)
 			return
-		dialog = gui_utilities.UtilityFileChooser('Save HTML File', self.parent)
-		response = dialog.run_quick_save(current_name=os.path.basename(html_file))
+		self.toolbutton_save_html_file.set_sensitive(True)
+		self.textview.set_property('editable', True)
+		with open(html_file, 'rb') as file_h:
+			html_data = file_h.read()
+		html_data = str(html_data.decode('utf-8', 'ignore'))
+		self.textbuffer.begin_not_undoable_action()
+		self.textbuffer.set_text(html_data)
+		self.textbuffer.end_not_undoable_action()
+
+	def signal_toolbutton_open(self, button):
+		dialog = gui_utilities.UtilityFileChooser('Choose File', self.parent)
+		dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
+		dialog.quick_add_filter('All Files', '*')
+		response = dialog.run_quick_open()
 		dialog.destroy()
 		if not response:
-			return
-		destination_file = response['target_path']
-		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
-		html_file_h = open(destination_file, 'w')
-		html_file_h.write(text)
-		html_file_h.close()
-		self.config['mailer.html_file'] = destination_file
+			return False
+		self.config['mailer.html_file'] = response['target_path']
+		self.show_tab()
+		return True
 
-	def signal_button_save(self, button):
+	def signal_toolbutton_save(self, toolbutton):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
 			return
@@ -460,6 +495,28 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		html_file_h = open(html_file, 'w')
 		html_file_h.write(text)
 		html_file_h.close()
+
+	def signal_toolbutton_save_as(self, toolbutton):
+		dialog = gui_utilities.UtilityFileChooser('Save HTML File', self.parent)
+		html_file = self.config.get('mailer.html_file')
+		if html_file:
+			current_name = os.path.basename(html_file)
+		else:
+			current_name = 'message.html'
+		response = dialog.run_quick_save(current_name=current_name)
+		dialog.destroy()
+		if not response:
+			return
+		destination_file = response['target_path']
+		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
+		html_file_h = open(destination_file, 'w')
+		html_file_h.write(text)
+		html_file_h.close()
+		self.config['mailer.html_file'] = destination_file
+		self.toolbutton_save_html_file.set_sensitive(True)
+
+	def signal_toolbutton_template_wiki(self, toolbutton):
+		utilities.open_uri('https://github.com/securestate/king-phisher/wiki/Templates#message-templates')
 
 	def signal_textview_populate_popup(self, textview, menu):
 		# create and populate the 'Insert' submenu
@@ -527,17 +584,15 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 
 	def show_tab(self):
 		"""Load the message HTML file from disk and configure the tab for editing."""
-		html_file = self.config.get('mailer.html_file')
-		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
-			self.button_save_html_file.set_sensitive(False)
-			self.textview.set_property('editable', False)
+		if self.file_monitor and self.file_monitor.path == self.config['mailer.html_file']:
 			return
-		self.button_save_html_file.set_sensitive(True)
-		self.textview.set_property('editable', True)
-		with open(html_file, 'rb') as file_h:
-			html_data = file_h.read()
-		html_data = str(html_data.decode('utf-8', 'ignore'))
-		self.textbuffer.set_text(html_data)
+		if not self.config['mailer.html_file']:
+			if self.file_monitor:
+				self.file_monitor.stop()
+				self.file_monitor = None
+			return
+		self.load_html_file()
+		self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
 
 class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 	"""

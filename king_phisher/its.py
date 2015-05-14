@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/version.py
+#  king_phisher/its.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,32 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
+import sys
 
-version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(0, 2, 1)
-"""A tuple representing the version information in the format ('major', 'minor', 'micro')"""
+frozen = getattr(sys, 'frozen', False)
 
-version_label = 'beta'
-"""A version lable such as alpha or beta."""
-version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)
-"""A string representing the full version information."""
+on_linux = sys.platform.startswith('linux')
+on_windows = sys.platform.startswith('win')
 
-# distutils_version is compatible with distutils.version classes
-distutils_version = version
-"""A string sutiable for being parsed by :py:mod:`distutils.version` classes."""
-
-if version_label:
-	version += '-' + version_label
-	distutils_version += version_label[0]
-	if version_label[-1].isdigit():
-		distutils_version += version_label[-1]
-	else:
-		distutils_version += '0'
-
-rpc_api_version = collections.namedtuple('rpc_api_version', ['major', 'minor'])(3, 0)
-"""
-A tuple representing the local version of the RPC API for use with compatibility
-checks. The major version is incremented when backwards incompatible changes are
-made and the minor version is incremented when backwards compatible changes are
-made.
-"""
+py_v2 = sys.version_info[0] == 2
+py_v3 = sys.version_info[0] == 3

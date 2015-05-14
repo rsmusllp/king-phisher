@@ -181,7 +181,7 @@ def init_database(connection_url):
 		try:
 			alembic.command.upgrade(config, 'head')
 		except Exception as error:
-			logger.critical("database schema upgrade failed with exception: {0}.{1} {2}".format(error.__class__.__module__, error.__class__.__name__, getattr(error, 'message', '')).rstrip())
+			logger.critical("database schema upgrade failed with exception: {0}.{1} {2}".format(error.__class__.__module__, error.__class__.__name__, getattr(error, 'message', '')).rstrip(), exc_info=True)
 			raise errors.KingPhisherDatabaseError('failed to upgrade to the latest database schema')
 	set_meta_data('schema_version', models.SCHEMA_VERSION)
 

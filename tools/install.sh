@@ -12,6 +12,7 @@
 # Supported Linux Distributions:
 #   Linux Flavor    | Client | Server |
 #   ----------------|--------|--------|
+#   BackBox         | yes    | yes    |
 #   CentOS          | no     | yes    |
 #   Debian          | yes    | yes    |
 #   Fedora          | yes    | yes    |
@@ -36,6 +37,11 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
+grep -E "BackBox Linux 4\.2" /etc/issue &> /dev/null
+if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+	LINUX_VERSION="BackBox"
+fi
+
 grep -E "CentOS Linux release 7(\.[0-9]{1,4}){2}" /etc/redhat-release &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="CentOS"
@@ -57,7 +63,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Kali"
 fi
 
-grep -E "Ubuntu 1[34].(04|10)" /etc/issue &> /dev/null
+grep -E "Ubuntu 1[345].(04|10)" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Ubuntu"
 fi
@@ -65,6 +71,7 @@ fi
 if [ -z "$LINUX_VERSION" ]; then
 	echo "Failed to detect the version of Linux"
 	echo "This installer only supports the following Linux distributions:"
+	echo "  - BackBox"
 	echo "  - CentOS"
 	echo "  - Debian"
 	echo "  - Fedora"
@@ -83,7 +90,8 @@ fi
 
 # install git if necessary
 if [ ! "$(command -v git)" ]; then
-	if [ "$LINUX_VERSION" == "CentOS" ]; then
+	if [ "$LINUX_VERSION" == "CentOS" ] || \
+	   [ "$LINUX_VERSION" == "Fedora" ]; then
 		yum install -y -q git
 	else
 		apt-get install -y -qq git
@@ -117,12 +125,13 @@ if [ "$LINUX_VERSION" == "CentOS" ]; then
 elif [ "$LINUX_VERSION" == "Fedora" ]; then
 	yum install -y freetype-devel gcc gcc-c++ gtk3-devel \
 		libpng-devel postgresql-devel python-devel python-pip
-elif [ "$LINUX_VERSION" == "Debian" ] || \
-	 [ "$LINUX_VERSION" == "Kali"   ] || \
-	 [ "$LINUX_VERSION" == "Ubuntu" ]; then
+elif [ "$LINUX_VERSION" == "BackBox" ] || \
+	 [ "$LINUX_VERSION" == "Debian"  ] || \
+	 [ "$LINUX_VERSION" == "Kali"    ] || \
+	 [ "$LINUX_VERSION" == "Ubuntu"  ]; then
 	apt-get install -y libfreetype6-dev python-dev python-pip
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-		apt-get install -y gir1.2-gtk-3.0 gir1.2-vte-2.90 \
+		apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 gir1.2-vte-2.90 \
 			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
 			libgtk-3-dev python-gi python-gi-cairo \
 			python-gobject python-gobject-dev python-paramiko

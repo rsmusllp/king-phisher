@@ -36,7 +36,6 @@ import os
 import select
 import signal
 
-from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import client_rpc
@@ -53,6 +52,47 @@ except ImportError:
 	"""Whether the :py:mod:`gi.repository.Vte` module is available."""
 else:
 	has_vte = True
+
+class RPCTerminalWindow(gui_utilities.UtilityGladeGObject):
+	gobject_ids = [
+		'box_main',
+		'menu_edit',
+		'menu_help'
+	]
+	top_gobject = 'window'
+	top_level_dependencies = [
+		'RPCTerminalWindow.image_help_api_docs',
+		'RPCTerminalWindow.image_help_wiki'
+	]
+	def __init__(self, terminal, *args, **kwargs):
+		super(RPCTerminalWindow, self).__init__(*args, **kwargs)
+		self.terminal = terminal
+		self.child_pid = None
+		self.gobjects['box_main'].pack_end(self.terminal, True, True, 0)
+
+	def signal_menuitem_edit_copy(self, menuitem):
+		self.terminal.copy_clipboard()
+
+	def signal_menuitem_edit_paste(self, menuitem):
+		self.terminal.paste_clipboard()
+
+	def signal_menuitem_help_about(self, menuitem):
+		dialogs.AboutDialog(self.config, self.window).interact()
+
+	def signal_menuitem_help_api_docs(self, menuitem):
+		rpc_api_docs_url = "http://king-phisher.readthedocs.org/en/{0}/rpc_api.html".format('latest' if version.version_label in ('alpha', 'beta') else 'stable')
+		utilities.open_uri(rpc_api_docs_url)
+
+	def signal_menuitem_help_wiki(self, menuitem):
+		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
+
+	def signal_window_destroy(self, window):
+		if self.child_pid == None:
+			self.logger.error('signal_window_destory was called but the child pid is None')
+			return
+		if os.path.exists("/proc/{0}".format(self.child_pid)):
+			self.logger.debug("sending sigkill to child process: {0}".format(self.child_pid))
+			os.kill(self.child_pid, signal.SIGKILL)
 
 class KingPhisherClientRPCTerminal(object):
 	"""
@@ -77,35 +117,22 @@ class KingPhisherClientRPCTerminal(object):
 			gui_utilities.show_dialog_error('RPC Terminal Is Unavailable', parent, 'VTE is not installed')
 			return
 
-		self.window = Gtk.ApplicationWindow(application=application)
-		self.window.set_property('title', 'King Phisher RPC')
-		self.window.set_transient_for(parent)
-		self.window.set_destroy_with_parent(True)
-		self.window.connect('destroy', self.signal_window_destroy)
 		self.terminal = Vte.Terminal()
 		self.terminal.set_property('rewrap-on-resize', True)
 		self.terminal.set_scroll_on_keystroke(True)
-		vbox = Gtk.VBox()
-		self.window.add(vbox)
-		vbox.pack_end(self.terminal, True, True, 0)
-
-		action_group = Gtk.ActionGroup("rpc_terminal_window_actions")
-		self._add_menu_actions(action_group)
-		uimanager = self._create_ui_manager()
-		uimanager.insert_action_group(action_group)
-		menubar = uimanager.get_widget("/MenuBar")
-		vbox.pack_start(menubar, False, False, 0)
+		self.rpc_window = RPCTerminalWindow(self.terminal, config, parent)
 
 		rpc = self.parent.rpc
-		config = {}
-		config['campaign_id'] = self.config['campaign_id']
-		config['campaign_name'] = self.config['campaign_name']
-		config['rpc_data'] = {
-			'address': (rpc.host, rpc.port),
-			'use_ssl': rpc.use_ssl,
-			'username': rpc.username,
-			'uri_base': rpc.uri_base,
-			'hmac_key': rpc.hmac_key,
+		config = {
+			'campaign_id': self.config['campaign_id'],
+			'campaign_name': self.config['campaign_name'],
+			'rpc_data': {
+				'address': (rpc.host, rpc.port),
+				'use_ssl': rpc.use_ssl,
+				'username': rpc.username,
+				'uri_base': rpc.uri_base,
+				'hmac_key': rpc.hmac_key
+			}
 		}
 
 		module_path = os.path.dirname(client_rpc.__file__) + ((os.path.sep + '..') * client_rpc.__name__.count('.'))
@@ -121,12 +148,12 @@ class KingPhisherClientRPCTerminal(object):
 			# Vte._version >= 2.91
 			vte_pty = self.terminal.pty_new_sync(Vte.PtyFlags.DEFAULT)
 			self.terminal.set_pty(vte_pty)
-			self.terminal.connect('child-exited', lambda vt, status: self.window.destroy())
+			self.terminal.connect('child-exited', lambda vt, status: self.rpc_window.window.destroy())
 		else:
 			# Vte._version <= 2.90
 			vte_pty = self.terminal.pty_new(Vte.PtyFlags.DEFAULT)
 			self.terminal.set_pty_object(vte_pty)
-			self.terminal.connect('child-exited', lambda vt: self.window.destroy())
+			self.terminal.connect('child-exited', lambda vt: self.rpc_window.window.destroy())
 
 		child_pid, _, _, _ = GLib.spawn_async(
 			working_directory=os.getcwd(),
@@ -141,7 +168,8 @@ class KingPhisherClientRPCTerminal(object):
 		self.child_pid = child_pid
 		self.terminal.watch_child(child_pid)
 		GLib.spawn_close_pid(child_pid)
-		self.window.show_all()
+		self.rpc_window.window.show_all()
+		self.rpc_window.child_pid = child_pid
 
 		# automatically enter the password
 		vte_pty_fd = vte_pty.get_fd()
@@ -149,49 +177,5 @@ class KingPhisherClientRPCTerminal(object):
 			os.write(vte_pty_fd, rpc.password + '\n')
 		return
 
-	def _add_menu_actions(self, action_group):
-		# Edit Menu Actions
-		action_editmenu = Gtk.Action("EditMenu", "Edit", None, None)
-		action_group.add_action(action_editmenu)
-
-		action_copy = Gtk.Action("EditCopy", "Copy", "Copy", None)
-		action_copy.connect("activate", lambda x: self.terminal.copy_clipboard())
-		action_group.add_action_with_accel(action_copy, "<control><shift>C")
-
-		action_paste = Gtk.Action("EditPaste", "Paste", "Paste", None)
-		action_paste.connect("activate", lambda x: self.terminal.paste_clipboard())
-		action_group.add_action_with_accel(action_paste, "<control><shift>V")
-
-		# Help Menu Actions
-		action = Gtk.Action('HelpMenu', 'Help', None, None)
-		action_group.add_action(action)
-
-		action = Gtk.Action('HelpAbout', 'About', 'About', None)
-		action.connect('activate', lambda x: dialogs.AboutDialog(self.config, self.window).interact())
-		action_group.add_action(action)
-
-		rpc_api_docs_url = "http://king-phisher.readthedocs.org/en/{0}/rpc_api.html".format('latest' if version.version_label in ('alpha', 'beta') else 'stable')
-		action = Gtk.Action('HelpApiDocs', 'API Documentation', 'API Documentation', None)
-		action.connect('activate', lambda x: utilities.open_uri(rpc_api_docs_url))
-		action_group.add_action(action)
-
-		action = Gtk.Action('HelpWiki', 'Wiki', 'Wiki', None)
-		action.connect('activate', lambda x: utilities.open_uri('https://github.com/securestate/king-phisher/wiki'))
-		action_group.add_action(action)
-
 	def _child_setup(self, vte_pty):
 		vte_pty.child_setup()
-
-	def _create_ui_manager(self):
-		uimanager = Gtk.UIManager()
-		with open(find.find_data_file('ui_info/rpc_terminal_window.xml')) as ui_info_file:
-			ui_data = ui_info_file.read()
-		uimanager.add_ui_from_string(ui_data)
-		accelgroup = uimanager.get_accel_group()
-		self.window.add_accel_group(accelgroup)
-		return uimanager
-
-	def signal_window_destroy(self, window):
-		if os.path.exists("/proc/{0}".format(self.child_pid)):
-			self.logger.debug("sending sigkill to child process: {0}".format(self.child_pid))
-			os.kill(self.child_pid, signal.SIGKILL)

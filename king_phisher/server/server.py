@@ -300,11 +300,36 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		"""The value of the Host HTTP header."""
 		return self.headers.get('host', '').split(':')[0]
 
+	def get_client_ip(self):
+		"""
+		Intelligently get the IP address of the HTTP client, optionally
+		accounting for proxies that may be in use.
+
+		:return: The clients IP address
+		:rtype: str
+		"""
+		address = self.client_address[0]
+		cookie_name = self.config.get_if_exists('server.client_ip_cookie')
+		if not cookie_name:
+			return address
+		cookie_value = self.headers.get(cookie_name, '')
+		if not cookie_value:
+			return address
+		if cookie_value.startswith('['):
+			# cookie_value looks like an IPv6 address
+			cookie_value = cookie_value.split(']:', 1)[0]
+		else:
+			# treat cookie_value ad an IPv4 address
+			cookie_value = cookie_value.split(':', 1)[0]
+		if utilities.is_valid_ip_address(cookie_value):
+			address = cookie_value
+		return address
+
 	def respond_file(self, file_path, attachment=False, query={}):
 		self._respond_file_check_id()
 		file_path = os.path.abspath(file_path)
 		mime_type = self.guess_mime_type(file_path)
-		if attachment or mime_type != 'text/html':
+		if attachment or (mime_type != 'text/html' and mime_type != 'text/plain'):
 			self._respond_file_raw(file_path, attachment)
 			return
 		try:
@@ -317,7 +342,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 		template_vars = {
 			'client': {
-				'address': self.client_address[0]
+				'address': self.get_client_ip()
 			},
 			'request': {
 				'command': self.command,
@@ -533,7 +558,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return
 		if not self.campaign_id:
 			return
-		self.logger.info("handling a page visit for campaign id: {0} from IP address: {1}".format(self.campaign_id, self.client_address[0]))
+		client_ip = self.get_client_ip()
+		self.logger.info("handling a page visit for campaign id: {0} from IP address: {1}".format(self.campaign_id, client_ip))
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
@@ -560,7 +586,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
 			self.send_header('Set-Cookie', cookie)
 			visit = db_models.Visit(id=visit_id, campaign_id=self.campaign_id, message_id=self.message_id)
-			visit.visitor_ip = self.client_address[0]
+			visit.visitor_ip = client_ip
 			visit.visitor_details = self.headers.get('user-agent', '')
 			session.add(visit)
 			visit_count = len(campaign.visits)

@@ -1,11 +1,16 @@
 # King Phisher Change Log
 
+## Version 0.2.1
+1. Added syntax highlighting to the message edit tab
+1. Support for pulling the client IP from a cookie set by an upstream proxy
+
 ## Version 0.2.0
 1. Added additional graphs including maps when basemap is available
 1. Added geolocation support
 1. Made dashboard layout configurable
 1. Support for cloning web pages
 1. Support for installing on Fedora
+1. Support for running the server with Docker
 
 ## Version 0.1.7
 1. Added make_csrf_page function
