@@ -29,7 +29,6 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=C0325
 
 import argparse
 import logging
@@ -42,6 +41,7 @@ if getattr(sys, 'frozen', False):
 	# set the basemap data directory for forzen builds
 	os.environ['BASEMAPDATA'] = os.path.join(os.path.dirname(sys.executable), 'mpl-basemap-data')
 
+from king_phisher import color
 from king_phisher import find
 from king_phisher import its
 from king_phisher import version
@@ -72,7 +72,10 @@ def main():
 	logging.getLogger(arguments.logger).setLevel(logging.DEBUG)
 	console_log_handler = logging.StreamHandler()
 	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
-	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
+	if its.on_linux:
+		console_log_handler.setFormatter(color.ColoredLogFormatter("%(levelname)s %(message)s"))
+	else:
+		console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
 	logging.getLogger(arguments.logger).addHandler(console_log_handler)
 	logging.captureWarnings(True)
 	config_file = arguments.config_file
@@ -80,11 +83,11 @@ def main():
 	logger = logging.getLogger('KingPhisher.Client.CLI')
 
 	if sys.platform.startswith('linux') and not os.environ.get('DISPLAY'):
-		print('[-] no display was detected, this must be run with an interactive X session')
+		color.print_error('no display was detected, this must be run with an interactive X session')
 		return os.EX_UNAVAILABLE
 
 	if Gtk.check_version(3, 4, 0):
-		print('[-] the GTK+ version is too old (minimum required is 3.4)')
+		color.print_error('the GTK+ version is too old (minimum required is 3.4)')
 		return os.EX_SOFTWARE
 
 	# check and configure the environment
@@ -93,10 +96,10 @@ def main():
 	else:
 		missing_requirements = check_requirements(__requirements__)
 		if missing_requirements:
-			print('[-] the following package requirements are missing or incompatible:')
+			color.print_error('the following package requirements are missing or incompatible:')
 			for missing_req in missing_requirements:
-				print('[-]   - ' + missing_req)
-			print('[-] please install the missing requirements with pip')
+				color.print_error('  - ' + missing_req)
+			color.print_error('please install the missing requirements with pip')
 			return os.EX_SOFTWARE
 		data_path = os.path.dirname(__file__)
 		data_path = os.path.join(data_path, 'data', 'client')
@@ -115,7 +118,7 @@ def main():
 		find.data_path_append(data_path)
 
 	if not gui_utilities.which_glade():
-		print('[-] unable to locate the glade ui data file')
+		color.print_error('unable to locate the glade ui data file')
 		return 0
 
 	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
@@ -127,7 +130,7 @@ def main():
 		app = application.KingPhisherClientApplication(config_file=config_file)
 	except Exception as error:
 		logger.critical("ititialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
-		print('[-] failed to initialize the King Phisher client')
+		color.print_error('failed to initialize the King Phisher client')
 		return 0
 	logger.debug("client loaded in {0:.2f} seconds".format(time.time() - start_time))
 

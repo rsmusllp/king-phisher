@@ -29,7 +29,7 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=C0325, R0914
+# pylint: disable=R0914
 
 import argparse
 import logging
@@ -39,6 +39,7 @@ import signal
 import sys
 import threading
 
+from king_phisher import color
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
@@ -78,7 +79,7 @@ def main():
 	logging.getLogger('').setLevel(logging.DEBUG)
 	console_log_handler = logging.StreamHandler()
 	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
-	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
+	console_log_handler.setFormatter(color.ColoredLogFormatter("%(levelname)s %(message)s"))
 	logging.getLogger('').addHandler(console_log_handler)
 	logging.captureWarnings(True)
 	config_file = arguments.config_file
@@ -87,25 +88,26 @@ def main():
 
 	missing_requirements = check_requirements(__requirements__)
 	if missing_requirements:
-		print('[-] the following package requirements are missing or incompatible:')
+		color.print_error('the following package requirements are missing or incompatible:')
 		for missing_req in missing_requirements:
-			print('[-]   - ' + missing_req)
-		print('[-] please install the missing requirements with pip')
+			color.print_error('  - ' + missing_req)
+		color.print_error('please install the missing requirements with pip')
 		return os.EX_SOFTWARE
 
 	if os.getuid():
-		print('[-] the server must be started as root, configure the')
-		print('[-] \'server.setuid_username\' option in the config file to drop privileges')
+		color.print_error('the server must be started as root, configure the')
+		color.print_error('\'server.setuid_username\' option in the config file to drop privileges')
 		return os.EX_NOPERM
 
 	try:
 		config = Configuration(config_file.name)
 	except Exception as error:
-		print('[-] an error occurred while parsing the server configuration file')
+		color.print_error('an error occurred while parsing the server configuration file')
 		error_name = "{0}.{1}".format(error.__module__, error.__class__.__name__)
 		if error_name != 'yaml.parser.ParserError':
 			raise
-		print('[-] ' + '[-] '.join(line.rstrip() + '\n' for line in str(error).split('\n'))[:-1])
+		for line in str(error).split('\n'):
+			color.print_error(line.rstrip())
 		return os.EX_CONFIG
 
 	# configure environment variables
@@ -125,26 +127,26 @@ def main():
 	# check the configuration for missing and incompatible options
 	verify_config = find.find_data_file('server_config_verification.yml')
 	if not verify_config:
-		print('[-] could not load server config verification data')
+		color.print_error('could not load server config verification data')
 		return os.EX_NOINPUT
 	missing_options = config.get_missing(verify_config)
 	if missing_options:
 		if 'missing' in missing_options:
-			print('[-] the following required options are missing from the server configuration:')
+			color.print_error('the following required options are missing from the server configuration:')
 			for option in missing_options['missing']:
-				print('[-]   - ' + option)
+				color.print_error('  - ' + option)
 		if 'incompatible' in missing_options:
-			print('[-] the following options are of an incompatible data type in the server configuraiton:')
+			color.print_error('the following options are of an incompatible data type in the server configuraiton:')
 			for option in missing_options['incompatible']:
-				print("[-]   - {0} (type: {1})".format(option[0], option[1]))
+				color.print_error("  - {0} (type: {1})".format(option[0], option[1]))
 		return os.EX_CONFIG
 	if arguments.verify_config:
-		print('[+] configuration verification passed')
+		color.print_good('configuration verification passed')
 		return os.EX_OK
 	if arguments.update_geoip_db:
-		print('[*] downloading a new geoip database')
+		color.print_status('downloading a new geoip database')
 		geoip.download_geolite2_city_db(config.get('server.geoip.database'))
-		print('[+] download complete')
+		color.print_good('download complete')
 		return os.EX_OK
 
 	# setup logging based on the configuration
@@ -154,7 +156,7 @@ def main():
 		if config.has_option('logging.file') and config.get('logging.file'):
 			log_file_path = config.get('logging.file')
 			file_handler = logging.FileHandler(log_file_path)
-			file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-10s %(message)s"))
+			file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-8s %(message)s"))
 			logging.getLogger('').addHandler(file_handler)
 			file_handler.setLevel(log_level)
 		if config.has_option('logging.console') and config.get('logging.console'):
