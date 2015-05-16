@@ -37,6 +37,7 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from king_phisher import color
 from king_phisher import spf
 from king_phisher import utilities
 from king_phisher import version
@@ -59,11 +60,11 @@ def main():
 	target_email = arguments.target_email
 
 	if not utilities.is_valid_ip_address(server_ip):
-		print('[-] the smtp server ip address specified is invalid')
+		color.print_error('the smtp server ip address specified is invalid')
 		return
 
 	if not utilities.is_valid_email_address(target_email):
-		print('[-] the email address specified is invalid')
+		color.print_error('the email address specified is invalid')
 		return
 
 	spf_sender, spf_domain = target_email.split('@')
@@ -71,20 +72,20 @@ def main():
 	try:
 		result = spf_test.check_host()
 	except spf.SPFPermError:
-		print('[-] check_host failed with error: permerror')
+		color.print_error('check_host failed with error: permerror')
 		return
 	except spf.SPFTempError:
-		print('[-] check_host failed with error: temperror')
+		color.print_error('check_host failed with error: temperror')
 		return
 	if not result:
-		print('[*] no spf policy was found for the specified domain')
+		color.print_status('no spf policy was found for the specified domain')
 		return
 
-	print("[+] spf policy result: {0}".format(result))
-	print('[*] top level spf records found:')
+	color.print_good("spf policy result: {0}".format(result))
+	color.print_status('top level spf records found:')
 	for rid in range(len(spf_test.spf_records)):
 		record = spf.record_unparse(spf_test.spf_records[rid])
-		print("[*]   #{0} {1: <10} {2}".format(rid + 1, ('(matched)' if rid == spf_test.spf_record_id else ''), record))
+		color.print_status("  #{0} {1: <10} {2}".format(rid + 1, ('(matched)' if rid == spf_test.spf_record_id else ''), record))
 
 if __name__ == '__main__':
 	sys.exit(main())
