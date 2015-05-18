@@ -32,6 +32,7 @@
 # pylint: disable=C0325
 
 import logging
+import os
 import re
 import traceback
 
@@ -62,10 +63,10 @@ class ColoredLogFormatter(logging.Formatter):
 	def formatException(exc_info):
 		tb_lines = traceback.format_exception(*exc_info)
 		for line_no, line in enumerate(tb_lines):
-			search = re.search(r'File (\"[^"]+"), line ([\d,]+), in', line)
+			search = re.search(r'File \"([^"]+)", line ([\d,]+), in', line)
 			if search:
 				new_line = line[:search.start(1)]
-				new_line += termcolor.colored(search.group(1), 'yellow', attrs=['bold'])
+				new_line += termcolor.colored(search.group(1), 'yellow', attrs=['underline'])
 				new_line += line[search.end(1):search.start(2)]
 				new_line += termcolor.colored(search.group(2), 'white', attrs=['bold'])
 				new_line += line[search.end(2):]
@@ -73,8 +74,10 @@ class ColoredLogFormatter(logging.Formatter):
 		line = tb_lines[-1]
 		if line.find(':'):
 			idx = line.find(':')
-			new_line = termcolor.colored(line[:idx], 'red', attrs=['bold']) + line[idx:]
-			tb_lines[-1] = new_line
+			line = termcolor.colored(line[:idx], 'red', attrs=['bold']) + line[idx:]
+		if line.endswith(os.linesep):
+			line = line[:-len(os.linesep)]
+		tb_lines[-1] = line
 		return ''.join(tb_lines)
 
 def print_error(message):
