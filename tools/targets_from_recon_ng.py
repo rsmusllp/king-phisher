@@ -41,7 +41,12 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from king_phisher import color
 from king_phisher import version
 
-PARSER_EPILOG = """The format string uses Python's native .format syntax.
+PROG_DESCRIPTION = """King Phisher Recon-ng Converter.
+This tool is used to convert the output from the recon-ng reporting/csv module
+to a CSV file for use with King Phisher.
+"""
+
+PROG_EPILOG = """The format string uses Python's native .format syntax.
 
 Format string examples:
   first initial followed by the last name (default)
@@ -51,35 +56,39 @@ Format string examples:
 """
 
 def main():
-	parser = argparse.ArgumentParser(description='King Phisher Recon-ng Converter', conflict_handler='resolve', formatter_class=argparse.RawTextHelpFormatter)
+	parser = argparse.ArgumentParser(
+		conflict_handler='resolve',
+		description=PROG_DESCRIPTION,
+		epilog=PROG_EPILOG,
+		formatter_class=argparse.RawTextHelpFormatter
+	)
 	parser.add_argument('-f', '--format', dest='email_format', default='{first:.1}{last}', help='the email format string to use')
 	parser.add_argument('-n', '--number', dest='limit', type=int, help='only process the specified number of contacts')
 	parser.add_argument('--shuffle', action='store_true', default=False, help='shuffle the contacts to randomize their order')
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('in_file', help='the csv file of contacts from recon-ng')
-	parser.add_argument('out_file', help='the target csv file to create for')
+	parser.add_argument('in_file', type=argparse.FileType('r'), help='the csv file of contacts from recon-ng')
+	parser.add_argument('out_file', type=argparse.FileType('w'), help='the target csv file to create for')
 	parser.add_argument('domain', help='the domain to append to emails')
-	parser.epilog = PARSER_EPILOG
 	arguments = parser.parse_args()
 
 	targets = []
-	color.print_status('reading contacts from: ' + os.path.abspath(arguments.in_file))
-	with open(arguments.in_file, 'r') as file_h:
-		for row in csv.reader(file_h):
-			targets.append((row[0], row[2]))
+	color.print_status('reading contacts from: ' + os.path.abspath(arguments.in_file.name))
+	for row in csv.reader(arguments.in_file):
+		targets.append((row[0], row[2]))
+	arguments.in_file.close()
 
 	color.print_status("read in {0:,} contacts from recon-ng csv output".format(len(targets)))
 	if arguments.shuffle:
 		random.shuffle(targets)
-		color.print_status("shuffled the list of contacts")
+		color.print_status('shuffled the list of contacts')
 
-	color.print_status('writing the results to: ' + os.path.abspath(arguments.out_file))
-	with open(arguments.out_file, 'w') as file_h:
-		writer = csv.writer(file_h)
-		for first_name, last_name in targets[:arguments.limit]:
-			email_address = arguments.email_format.format(first=first_name.lower(), last=last_name.lower())
-			email_address += '@' + arguments.domain
-			writer.writerow([first_name, last_name, email_address])
+	color.print_status('writing the results to: ' + os.path.abspath(arguments.out_file.name))
+	writer = csv.writer(arguments.out_file)
+	for first_name, last_name in targets[:arguments.limit]:
+		email_address = arguments.email_format.format(first=first_name.lower(), last=last_name.lower())
+		email_address += '@' + arguments.domain
+		writer.writerow([first_name, last_name, email_address])
+	arguments.out_file.close()
 
 if __name__ == '__main__':
 	sys.exit(main())
