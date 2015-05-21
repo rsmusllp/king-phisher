@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import codecs
 import datetime
 import os
 import sys
@@ -405,9 +406,8 @@ class MailSenderPreviewTab(object):
 		html_file = self.config.get('mailer.html_file')
 		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 			return
-		with open(html_file, 'rb') as file_h:
+		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
-		html_data = str(html_data.decode('utf-8', 'ignore'))
 		html_data = mailer.format_message(html_data, self.config)
 		html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
 		if not html_file_uri.startswith('file://'):
@@ -477,9 +477,8 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 			return
 		self.toolbutton_save_html_file.set_sensitive(True)
 		self.textview.set_property('editable', True)
-		with open(html_file, 'rb') as file_h:
+		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
-		html_data = str(html_data.decode('utf-8', 'ignore'))
 		self.textbuffer.begin_not_undoable_action()
 		self.textbuffer.set_text(html_data)
 		self.textbuffer.end_not_undoable_action()
@@ -755,7 +754,8 @@ class MailSenderTab(object):
 				text = edit_tab.textbuffer.get_text(edit_tab.textbuffer.get_start_iter(), edit_tab.textbuffer.get_end_iter(), False)
 				if not text:
 					break
-				old_text = open(html_file, 'r').read()
+				with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
+					old_text = file_h.read()
 				if old_text == text:
 					break
 				if not gui_utilities.show_dialog_yes_no('Save HTML the file?', self.parent):

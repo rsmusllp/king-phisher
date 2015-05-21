@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import codecs
 import csv
 import logging
 import mimetypes
@@ -437,11 +438,10 @@ class MailSenderThread(threading.Thread):
 		msg.preamble = 'This is a multi-part message in MIME format.'
 		msg_alt = MIMEMultipart('alternative')
 		msg.attach(msg_alt)
-		with open(self.config['mailer.html_file'], 'rb') as file_h:
+		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
-		msg_template = str(msg_template.decode('utf-8', 'ignore'))
 		formatted_msg = format_message(msg_template, self.config, first_name=first_name, last_name=last_name, uid=uid, target_email=target_email)
-		msg_body = MIMEText(formatted_msg, "html")
+		msg_body = MIMEText(formatted_msg, 'html', 'utf-8')
 		msg_alt.attach(msg_body)
 
 		# process attachments
@@ -470,7 +470,8 @@ class MailSenderThread(threading.Thread):
 		return attachments
 
 	def _prepare_env(self):
-		msg_template = open(self.config['mailer.html_file'], 'r').read()
+		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
+			msg_template = file_h.read()
 		template_environment.set_mode(template_environment.MODE_ANALYZE)
 		format_message(msg_template, self.config, uid=make_uid())
 		template_environment.set_mode(template_environment.MODE_SEND)
