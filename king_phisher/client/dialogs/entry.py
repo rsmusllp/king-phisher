@@ -36,7 +36,7 @@ from gi.repository import Gtk
 
 __all__ = ['TextEntryDialog']
 
-class TextEntryDialog(gui_utilities.UtilityGladeGObject):
+class TextEntryDialog(gui_utilities.GladeGObject):
 	"""
 	Display a :py:class:`Gtk.Dialog` with a text entry suitable for prompting
 	users for text input. If the user confirms the action, the text within the

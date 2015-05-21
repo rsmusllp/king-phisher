@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import codecs
 import csv
 import logging
 import mimetypes
@@ -207,7 +208,7 @@ class MailSenderThread(threading.Thread):
 		:param int emails_done: The number of emails that have been sent.
 		:param int emails_total: The total number of emails that are going to be sent.
 		"""
-		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+		if isinstance(self.tab, gui_utilities.GladeGObject):
 			GLib.idle_add(lambda x: self.tab.notify_sent(*x), (emails_done, emails_total))
 
 	def tab_notify_status(self, message):
@@ -217,14 +218,14 @@ class MailSenderThread(threading.Thread):
 		:param str message: The notification message.
 		"""
 		self.logger.info(message.lower())
-		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+		if isinstance(self.tab, gui_utilities.GladeGObject):
 			GLib.idle_add(self.tab.notify_status, message + '\n')
 
 	def tab_notify_stopped(self):
 		"""
 		Notify the tab that the message sending operation has stopped.
 		"""
-		if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+		if isinstance(self.tab, gui_utilities.GladeGObject):
 			GLib.idle_add(self.tab.notify_stopped)
 
 	def server_ssh_connect(self):
@@ -392,7 +393,7 @@ class MailSenderThread(threading.Thread):
 		:rtype: bool
 		"""
 		if set_pause:
-			if isinstance(self.tab, gui_utilities.UtilityGladeGObject):
+			if isinstance(self.tab, gui_utilities.GladeGObject):
 				gui_utilities.glib_idle_add_wait(lambda: self.tab.pause_button.set_property('active', True))
 			else:
 				self.pause()
@@ -437,11 +438,10 @@ class MailSenderThread(threading.Thread):
 		msg.preamble = 'This is a multi-part message in MIME format.'
 		msg_alt = MIMEMultipart('alternative')
 		msg.attach(msg_alt)
-		with open(self.config['mailer.html_file'], 'rb') as file_h:
+		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
-		msg_template = str(msg_template.decode('utf-8', 'ignore'))
 		formatted_msg = format_message(msg_template, self.config, first_name=first_name, last_name=last_name, uid=uid, target_email=target_email)
-		msg_body = MIMEText(formatted_msg, "html")
+		msg_body = MIMEText(formatted_msg, 'html', 'utf-8')
 		msg_alt.attach(msg_body)
 
 		# process attachments
@@ -470,7 +470,8 @@ class MailSenderThread(threading.Thread):
 		return attachments
 
 	def _prepare_env(self):
-		msg_template = open(self.config['mailer.html_file'], 'r').read()
+		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
+			msg_template = file_h.read()
 		template_environment.set_mode(template_environment.MODE_ANALYZE)
 		format_message(msg_template, self.config, uid=make_uid())
 		template_environment.set_mode(template_environment.MODE_SEND)

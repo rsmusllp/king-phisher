@@ -56,7 +56,7 @@ Gtk Version: {gtk_version}
 {stack_trace}
 """
 
-class ExceptionDialog(gui_utilities.UtilityGladeGObject):
+class ExceptionDialog(gui_utilities.GladeGObject):
 	"""
 	Display a dialog which shows an error message for a python exception.
 	The dialog includes useful details for reporting and debugging the exception

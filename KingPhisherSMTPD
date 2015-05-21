@@ -51,6 +51,7 @@ def main():
 	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
 	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
 	logging.getLogger('').addHandler(console_log_handler)
+	logging.captureWarnings(True)
 	del parser
 
 	if (not arguments.foreground) and os.fork():

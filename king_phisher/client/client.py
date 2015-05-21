@@ -470,7 +470,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""
-		dialog = gui_utilities.UtilityFileChooser('Export Campaign XML Data', self)
+		dialog = gui_utilities.FileChooser('Export Campaign XML Data', self)
 		file_name = self.config['campaign_name'] + '.xml'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()

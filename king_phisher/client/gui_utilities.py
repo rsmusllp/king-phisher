@@ -333,7 +333,7 @@ def show_dialog_yes_no(*args, **kwargs):
 	kwargs['message_buttons'] = Gtk.ButtonsType.YES_NO
 	return show_dialog(Gtk.MessageType.QUESTION, *args, **kwargs) == Gtk.ResponseType.YES
 
-class UtilityGladeGObject(object):
+class GladeGObject(object):
 	"""
 	A base object to wrap GTK widgets loaded from Glade data files. This
 	provides a number of convenience methods for managing the main widget
@@ -347,7 +347,7 @@ class UtilityGladeGObject(object):
 	top_level_dependencies = []
 	"""Additional top level GObjects to load from the Glade data file."""
 	config_prefix = ''
-	"""A prefix to be used for keys when looking up value in the :py:attr:`~.UtilityGladeGObject.config`."""
+	"""A prefix to be used for keys when looking up value in the :py:attr:`~.GladeGObject.config`."""
 	top_gobject = 'gobject'
 	"""The name of the attribute to set a reference of the top level GObject to."""
 	def __init__(self, config, parent):
@@ -403,7 +403,7 @@ class UtilityGladeGObject(object):
 	def objects_load_from_config(self):
 		"""
 		Iterate through :py:attr:`.gobjects` and set the GObject's value
-		from the corresponding value in the :py:attr:`~.UtilityGladeGObject.config`.
+		from the corresponding value in the :py:attr:`~.GladeGObject.config`.
 		"""
 		for gobject_id, gobject in self.gobjects.items():
 			gtype, config_name = gobject_id.split('_', 1)
@@ -426,7 +426,7 @@ class UtilityGladeGObject(object):
 				continue
 			self.config[config_name] = gobject_get_value(gobject, gtype)
 
-class UtilityFileChooser(_Gtk_FileChooserDialog):
+class FileChooser(_Gtk_FileChooserDialog):
 	"""Display a file chooser dialog."""
 	def __init__(self, title, parent, **kwargs):
 		"""
@@ -435,7 +435,7 @@ class UtilityFileChooser(_Gtk_FileChooserDialog):
 		:type parent: :py:class:`Gtk.Window`
 		"""
 		assert isinstance(parent, Gtk.Window)
-		super(UtilityFileChooser, self).__init__(title, parent, **kwargs)
+		super(FileChooser, self).__init__(title, parent, **kwargs)
 		self.parent = self.get_parent_window()
 
 	def quick_add_filter(self, name, patterns):
@@ -556,7 +556,7 @@ class FileMonitor(object):
 		self.logger.debug("file monitor {0} received event: {1}".format(self.path, gfile_monitor_event.value_name))
 		self.on_changed(self.path, gfile_monitor_event)
 
-class UtilityTreeView(object):
+class TreeViewManager(object):
 	"""
 	A class that wraps :py:class:`Gtk.TreeView` objects that use `Gtk.ListStore`
 	models with additional functions for conveniently displaying text data.

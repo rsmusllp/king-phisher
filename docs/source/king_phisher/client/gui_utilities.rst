@@ -48,7 +48,7 @@ Functions
 Classes
 -------
 
-.. autoclass:: king_phisher.client.gui_utilities.UtilityFileChooser
+.. autoclass:: king_phisher.client.gui_utilities.FileChooser
    :show-inheritance:
    :members:
    :special-members: __init__
@@ -58,13 +58,13 @@ Classes
    :show-inheritance:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.gui_utilities.UtilityGladeGObject
+.. autoclass:: king_phisher.client.gui_utilities.GladeGObject
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.gui_utilities.UtilityTreeView
+.. autoclass:: king_phisher.client.gui_utilities.TreeViewManager
    :show-inheritance:
    :members:
    :special-members: __init__

@@ -30,9 +30,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import codecs
 import datetime
 import os
-import socket
 import sys
 import urllib
 
@@ -49,16 +49,14 @@ from gi.repository import Gio
 from gi.repository import Gtk
 from gi.repository import GtkSource
 from gi.repository import Pango
+import requests
 
 if sys.version_info[0] < 3:
-	import urllib2
 	import urlparse
 	urllib.parse = urlparse
 	urllib.parse.urlencode = urllib.urlencode
-	urllib.request = urllib2
 else:
 	import urllib.parse
-	import urllib.request
 
 try:
 	from gi.repository import WebKit2 as WebKitX
@@ -79,9 +77,9 @@ def test_webserver_url(target_url, secret_id):
 	query['id'] = [secret_id]
 	query = urllib.parse.urlencode(query, True)
 	target_url = urllib.parse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
-	urllib.request.urlopen(target_url, timeout=5)
+	return requests.get(target_url, timeout=5.0)
 
-class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
+class MailSenderSendTab(gui_utilities.GladeGObject):
 	"""
 	This allows the :py:class:`.MailSenderThread` object to be managed
 	by the user through the GUI. These two classes are very interdependent
@@ -195,7 +193,7 @@ class MailSenderSendTab(gui_utilities.UtilityGladeGObject):
 		self.text_insert('Checking the target URL... ')
 		try:
 			test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
-		except Exception:
+		except requests.exceptions.RequestException:
 			self.text_insert('failed')
 			if not gui_utilities.show_dialog_yes_no('Unable To Open The Web Server URL', self.parent, 'The URL may be invalid, continue sending messages anyways?'):
 				self.text_insert(', sending aborted.\n')
@@ -398,15 +396,18 @@ class MailSenderPreviewTab(object):
 		scrolled_window.add(self.webview)
 		scrolled_window.show()
 		self.box.pack_start(scrolled_window, True, True, 0)
+		self.file_monitor = None
 
-	def show_tab(self):
-		"""Configure the webview to preview the the message HTML file."""
+	def _html_file_changed(self, path, monitor_event):
+		if monitor_event in (Gio.FileMonitorEvent.CHANGED, Gio.FileMonitorEvent.CHANGES_DONE_HINT, Gio.FileMonitorEvent.CREATED):
+			self.load_html_file()
+
+	def load_html_file(self):
 		html_file = self.config.get('mailer.html_file')
 		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 			return
-		with open(html_file, 'rb') as file_h:
+		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
-		html_data = str(html_data.decode('utf-8', 'ignore'))
 		html_data = mailer.format_message(html_data, self.config)
 		html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
 		if not html_file_uri.startswith('file://'):
@@ -416,7 +417,19 @@ class MailSenderPreviewTab(object):
 		else:
 			self.webview.load_html_string(html_data, html_file_uri)
 
-class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
+	def show_tab(self):
+		"""Configure the webview to preview the the message HTML file."""
+		if self.file_monitor and self.file_monitor.path == self.config['mailer.html_file']:
+			return
+		if not self.config['mailer.html_file']:
+			if self.file_monitor:
+				self.file_monitor.stop()
+				self.file_monitor = None
+			return
+		self.load_html_file()
+		self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
+
+class MailSenderEditTab(gui_utilities.GladeGObject):
 	"""
 	This is the tab which adds basic text edition for changing an email
 	template.
@@ -455,8 +468,6 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 	def _html_file_changed(self, path, monitor_event):
 		if monitor_event in (Gio.FileMonitorEvent.CHANGED, Gio.FileMonitorEvent.CHANGES_DONE_HINT, Gio.FileMonitorEvent.CREATED):
 			self.load_html_file()
-		elif monitor_event == Gio.FileMonitorEvent.MOVED:
-			self.config['mailer.html_file'] = path
 
 	def load_html_file(self):
 		html_file = self.config.get('mailer.html_file')
@@ -466,15 +477,14 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 			return
 		self.toolbutton_save_html_file.set_sensitive(True)
 		self.textview.set_property('editable', True)
-		with open(html_file, 'rb') as file_h:
+		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
-		html_data = str(html_data.decode('utf-8', 'ignore'))
 		self.textbuffer.begin_not_undoable_action()
 		self.textbuffer.set_text(html_data)
 		self.textbuffer.end_not_undoable_action()
 
 	def signal_toolbutton_open(self, button):
-		dialog = gui_utilities.UtilityFileChooser('Choose File', self.parent)
+		dialog = gui_utilities.FileChooser('Choose File', self.parent)
 		dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -497,7 +507,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		html_file_h.close()
 
 	def signal_toolbutton_save_as(self, toolbutton):
-		dialog = gui_utilities.UtilityFileChooser('Save HTML File', self.parent)
+		dialog = gui_utilities.FileChooser('Save HTML File', self.parent)
 		html_file = self.config.get('mailer.html_file')
 		if html_file:
 			current_name = os.path.basename(html_file)
@@ -570,7 +580,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		return True
 
 	def signal_activate_popup_menu_insert_image(self, widget):
-		dialog = gui_utilities.UtilityFileChooser('Choose Image', self.parent)
+		dialog = gui_utilities.FileChooser('Choose Image', self.parent)
 		dialog.quick_add_filter('Images', ['*.gif', '*.jpeg', '*.jpg', '*.png'])
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -594,7 +604,7 @@ class MailSenderEditTab(gui_utilities.UtilityGladeGObject):
 		self.load_html_file()
 		self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
 
-class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
+class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	"""
 	This is the tab which allows the user to configure and set parameters
 	for sending messages as part of a campaign.
@@ -627,30 +637,33 @@ class MailSenderConfigurationTab(gui_utilities.UtilityGladeGObject):
 
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
+		error_description = None
 		try:
-			test_webserver_url(target_url, self.config['server_config']['server.secret_id'])
-		except Exception as error:
-			error_description = None
-			if isinstance(error, urllib.request.URLError) and hasattr(error, 'reason') and isinstance(error.reason, Exception):
-				error = error.reason
-			if isinstance(error, urllib.request.HTTPError) and error.getcode():
-				self.logger.warning("verify url HTTPError: {0} {1}".format(error.getcode(), error.reason))
-				error_description = "HTTP status {0} {1}".format(error.getcode(), error.reason)
-			elif isinstance(error, socket.gaierror):
-				self.logger.warning('verify url attempt failed, socket.gaierror')
-				error_description = error.args[-1]
-			elif isinstance(error, socket.timeout):
-				self.logger.warning('verify url attempt failed, connection timeout occurred')
-				error_description = 'Connection timed out'
+			response = test_webserver_url(target_url, self.config['server_config']['server.secret_id'])
+		except requests.exceptions.RequestException as error:
+			if isinstance(error, requests.exceptions.ConnectionError):
+				self.logger.warning('verify url attempt failed, could not connect')
+				error_description = 'Could not connect to the server'
+			elif isinstance(error, requests.exceptions.Timeout):
+				self.logger.warning('verify url attempt failed, a timeout occurred')
+				error_description = 'The HTTP request timed out'
 			else:
 				self.logger.warning('unknown verify url exception: ' + repr(error))
+				error_description = 'An unknown verify URL exception occurred'
+		else:
+			if response.status_code < 200 or response.status_code > 299:
+				self.logger.warning("verify url HTTP error: {0} {1}".format(response.status_code, response.reason))
+				error_description = "HTTP status {0} {1}".format(response.status_code, response.reason)
+			else:
+				self.logger.debug("verify url HTTP status: {0} {1}".format(response.status_code, response.reason))
+		if error_description:
 			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent, error_description)
-			return
-		gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
+		else:
+			gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
 		return
 
 	def signal_entry_activate_open_file(self, entry):
-		dialog = gui_utilities.UtilityFileChooser('Choose File', self.parent)
+		dialog = gui_utilities.FileChooser('Choose File', self.parent)
 		if entry == self.gobjects.get('entry_html_file'):
 			dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		elif entry == self.gobjects.get('entry_target_file'):
@@ -741,7 +754,8 @@ class MailSenderTab(object):
 				text = edit_tab.textbuffer.get_text(edit_tab.textbuffer.get_start_iter(), edit_tab.textbuffer.get_end_iter(), False)
 				if not text:
 					break
-				old_text = open(html_file, 'r').read()
+				with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
+					old_text = file_h.read()
 				if old_text == text:
 					break
 				if not gui_utilities.show_dialog_yes_no('Save HTML the file?', self.parent):
@@ -768,7 +782,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.UtilityFileChooser('Export Message Configuration', self.parent)
+		dialog = gui_utilities.FileChooser('Export Message Configuration', self.parent)
 		response = dialog.run_quick_save('message.kpm')
 		dialog.destroy()
 		if not response:
@@ -790,7 +804,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.UtilityFileChooser('Import Message Configuration', self.parent)
+		dialog = gui_utilities.FileChooser('Import Message Configuration', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -799,7 +813,7 @@ class MailSenderTab(object):
 			return
 		target_file = response['target_path']
 
-		dialog = gui_utilities.UtilityFileChooser('Destination Directory', self.parent)
+		dialog = gui_utilities.FileChooser('Destination Directory', self.parent)
 		response = dialog.run_quick_select_directory()
 		dialog.destroy()
 		if not response:

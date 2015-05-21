@@ -282,7 +282,7 @@ class CampaignGraph(object):
 		return True
 
 	def signal_activate_popup_menu_export(self, action):
-		dialog = gui_utilities.UtilityFileChooser('Export Graph', self.parent)
+		dialog = gui_utilities.FileChooser('Export Graph', self.parent)
 		file_name = self.config['campaign_name'] + '.png'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()

@@ -60,7 +60,7 @@ class ClientGUIUtilityTests(testing.KingPhisherTestCase):
 class ClientGUIUtilityTreeviewTests(testing.KingPhisherTestCase):
 	def test_column_titles(self):
 		treeview = Gtk.TreeView()
-		treeview_manager = gui_utilities.UtilityTreeView(treeview)
+		treeview_manager = gui_utilities.TreeViewManager(treeview)
 		self.assertEqual(len(treeview_manager.column_titles), 0)
 		treeview_manager.set_column_titles(('col0', 'col1'))
 		self.assertEqual(len(treeview_manager.column_titles), 2)
@@ -69,7 +69,7 @@ class ClientGUIUtilityTreeviewTests(testing.KingPhisherTestCase):
 
 	def test_popup_copy_submenu(self):
 		treeview = Gtk.TreeView()
-		treeview_manager = gui_utilities.UtilityTreeView(treeview)
+		treeview_manager = gui_utilities.TreeViewManager(treeview)
 		treeview_manager.set_column_titles(('col0',))
 		menu = treeview_manager.get_popup_copy_submenu()
 		self.assertEqual(len(menu.get_children()), 1, msg='the copy submenu contains an invalid number or entries')
@@ -81,7 +81,7 @@ class ClientGUIUtilityTreeviewTests(testing.KingPhisherTestCase):
 
 	def test_popup_menu(self):
 		treeview = Gtk.TreeView()
-		treeview_manager = gui_utilities.UtilityTreeView(treeview)
+		treeview_manager = gui_utilities.TreeViewManager(treeview)
 		treeview_manager.set_column_titles(('col0', 'col1'))
 		menu = treeview_manager.get_popup_menu()
 		self.assertEqual(len(menu.get_children()), 1, msg='the popup menu contains more than one entry')
@@ -93,12 +93,12 @@ class ClientGUIUtilityTreeviewTests(testing.KingPhisherTestCase):
 
 	def test_selection_mode(self):
 		treeview = Gtk.TreeView()
-		_ = gui_utilities.UtilityTreeView(treeview)
+		_ = gui_utilities.TreeViewManager(treeview)
 		self.assertEqual(treeview.get_selection().get_mode(), Gtk.SelectionMode.SINGLE)
 		treeview.destroy()
 
 		treeview = Gtk.TreeView()
-		_ = gui_utilities.UtilityTreeView(treeview, selection_mode=Gtk.SelectionMode.NONE)
+		_ = gui_utilities.TreeViewManager(treeview, selection_mode=Gtk.SelectionMode.NONE)
 		self.assertEqual(treeview.get_selection().get_mode(), Gtk.SelectionMode.NONE)
 		treeview.destroy()
 

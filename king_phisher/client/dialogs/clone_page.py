@@ -39,7 +39,7 @@ from gi.repository import Gtk
 
 __all__ = ['ClonePageDialog']
 
-class ClonePageDialog(gui_utilities.UtilityGladeGObject):
+class ClonePageDialog(gui_utilities.GladeGObject):
 	"""
 	Display a dialog for cloning a web page. The logic of the cloning operation
 	is provided by the :py:mod:`.web_cloner` module.
@@ -58,7 +58,7 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 		self.resources.set_sort_func(2, gui_utilities.gtk_treesortable_sort_func_numeric, 2)
 		treeview = self.gobjects['treeview_resources']
 		treeview.set_model(self.resources)
-		self.treeview_manager = gui_utilities.UtilityTreeView(treeview)
+		self.treeview_manager = gui_utilities.TreeViewManager(treeview)
 		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'))
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
@@ -111,10 +111,10 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 				self.set_status('Failed')
 				gui_utilities.show_dialog_error('Operation Failed', self.dialog, 'The web page clone operation failed.')
 				continue
-			for resource, resource_details in cloner.cloned_resources.items():
-				if gui_utilities.gtk_list_store_search(self.resources, resource, column=0):
+			for resource in cloner.cloned_resources.values():
+				if gui_utilities.gtk_list_store_search(self.resources, resource.resource, column=0):
 					continue
-				self.resources.append([resource, resource_details.mime_type or 'N/A', "{0:,}".format(resource_details.size)])
+				self.resources.append([resource.resource, resource.mime_type or 'N/A', "{0:,}".format(resource.size)])
 			self.set_status('Done')
 			gui_utilities.gtk_sync()
 		if len(self.resources) and gui_utilities.show_dialog_yes_no('Transfer Cloned Pages', self.dialog, 'Would you like to start the SFTP client\nto upload the cloned pages?'):
@@ -122,7 +122,7 @@ class ClonePageDialog(gui_utilities.UtilityGladeGObject):
 		self.dialog.destroy()
 
 	def signal_multi_set_directory(self, _):
-		dialog = gui_utilities.UtilityFileChooser('Destination Directory', self.dialog)
+		dialog = gui_utilities.FileChooser('Destination Directory', self.dialog)
 		response = dialog.run_quick_select_directory()
 		dialog.destroy()
 		if response:

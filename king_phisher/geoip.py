@@ -43,12 +43,7 @@ import threading
 
 import geoip2.database
 import geoip2.errors
-
-if sys.version_info[0] < 3:
-	import urllib
-	urllib.request = urllib
-else:
-	import urllib.request
+import requests
 
 __all__ = ['init_database', 'lookup', 'GeoLocation']
 
@@ -73,17 +68,18 @@ def download_geolite2_city_db(dest):
 
 	:param str dest: The file path to save the database to.
 	"""
-	url_h = urllib.request.urlopen(DB_DOWNLOAD_URL)
+	response = requests.get(DB_DOWNLOAD_URL, stream=True)
 	tfile = tempfile.mkstemp()
 	os.close(tfile[0])
 	tfile = tfile[1]
 	try:
 		with open(tfile, 'wb') as file_h:
-			shutil.copyfileobj(url_h, file_h)
+			for chunk in response.iter_content(chunk_size=1024):
+				file_h.write(chunk)
+				file_h.flush()
 		with open(dest, 'wb') as file_h:
 			shutil.copyfileobj(gzip.GzipFile(tfile, mode='rb'), file_h)
 	finally:
-		url_h.close()
 		os.remove(tfile)
 	return os.stat(dest).st_size
 

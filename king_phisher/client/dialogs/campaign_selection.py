@@ -38,7 +38,7 @@ from gi.repository import Gtk
 
 __all__ = ['CampaignSelectionDialog']
 
-class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
+class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	"""
 	Display a dialog which allows a new campaign to be created or an
 	existing campaign to be opened.
@@ -53,7 +53,7 @@ class CampaignSelectionDialog(gui_utilities.UtilityGladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
-		self.treeview_manager = gui_utilities.UtilityTreeView(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
+		self.treeview_manager = gui_utilities.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
 		self.treeview_manager.set_column_titles(('Campaign Name', 'Created By', 'Creation Date'), column_offset=1)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 

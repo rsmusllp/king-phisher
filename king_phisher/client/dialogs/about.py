@@ -39,7 +39,7 @@ from gi.repository import GdkPixbuf
 
 __all__ = ['AboutDialog']
 
-class AboutDialog(gui_utilities.UtilityGladeGObject):
+class AboutDialog(gui_utilities.GladeGObject):
 	"""
 	Display a :py:class:`Gtk.AboutDialog` with information regarding the King
 	Phisher client.

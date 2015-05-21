@@ -42,14 +42,13 @@ import urllib
 
 from king_phisher.client import gui_utilities
 
+import requests
+
 if sys.version_info[0] < 3:
 	import urlparse
-	import urllib2
 	urllib.parse = urlparse
-	urllib.request = urllib2
 else:
 	import urllib.parse
-	import urllib.request
 
 try:
 	from gi.repository import WebKit2
@@ -123,11 +122,14 @@ class WebPageCloner(object):
 		an empty string so attempt to re-request it with Python.
 		"""
 		try:
-			url_h = urllib.request.urlopen(url)
-		except urllib.request.URLError:
+			response = requests.get(url, timeout=10)
+		except requests.exceptions.RequestException:
 			self.logger.warning('failed to request the empty resource with python')
 			return ''
-		data = url_h.read()
+		if response.status_code < 200 or response.status_code > 299:
+			self.logger.warning("requested the empty resource with python, but received status: {0} ({1})".format(response.status_code, response.reason))
+			return ''
+		data = response.content
 		if len(data) != expected_len:
 			self.logger.warning('requested the empty resource with python, but the length appears invalid')
 		return data
@@ -152,6 +154,7 @@ class WebPageCloner(object):
 		resource_url_str = resource.get_property('uri')
 		resource_url = urllib.parse.urlparse(resource_url_str)
 		resource_path = os.path.split(resource_url.path)[0].lstrip('/')
+		resource_path = urllib.parse.unquote(resource_path)
 		directory = self.dest_dir
 		for part in resource_path.split('/'):
 			directory = os.path.join(directory, part)
@@ -163,7 +166,7 @@ class WebPageCloner(object):
 		if response:
 			mime_type = response.get_mime_type()
 
-		resource_path = resource_url.path
+		resource_path = urllib.parse.unquote(resource_url.path)
 		if resource_path.endswith('/'):
 			resource_path += 'index.html'
 		resource_path = resource_path.lstrip('/')
@@ -173,7 +176,7 @@ class WebPageCloner(object):
 		with open(resource_path, 'wb') as file_h:
 			file_h.write(data)
 
-		crd = ClonedResourceDetails(resource_url.path, mime_type, len(data), resource_path)
+		crd = ClonedResourceDetails(urllib.parse.unquote(resource_url.path), mime_type, len(data), resource_path)
 		self.cloned_resources[resource_url.path] = crd
 		self.logger.debug("wrote {0:,} bytes to {1}".format(crd.size, resource_path))
 
@@ -238,6 +241,7 @@ class WebPageCloner(object):
 			gui_utilities.gtk_sync()
 		while self.webview.get_property('is-loading') or len(self.__web_resources):
 			gui_utilities.gtk_sync()
+		self.webview.destroy()
 		return not self.load_failed
 
 	def cb_get_data_finish(self, resource, task):
@@ -255,7 +259,8 @@ class WebPageCloner(object):
 				data = self._webkit_empty_resource_bug_workaround(resource_url_str, response.get_content_length())
 			else:
 				self.logger.info('loaded on target resource: ' + resource_url_str)
-			self.copy_resource_data(resource, data)
+			if len(data):
+				self.copy_resource_data(resource, data)
 		self.__web_resources.remove(resource)
 
 	def signal_decide_policy(self, webview, decision, decision_type):
