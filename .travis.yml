@@ -32,7 +32,7 @@ install:
 script:
   - pylint --rcfile data/pylintrc king_phisher
   - python -m unittest -v tests
-  - sphinx-build docs/source docs/html
+  - sphinx-build -v -b html docs/source docs/html
 
 notifications:
   irc:

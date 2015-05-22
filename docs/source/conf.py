@@ -12,6 +12,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+GITHUB_BRANCH = 'dev'
+GITHUB_REPO = 'securestate/king-phisher'
+
 import sys
 import os
 
@@ -41,8 +44,16 @@ needs_sphinx = '1.3'
 extensions = [
 	'sphinx.ext.autodoc',
 	'sphinx.ext.intersphinx',
-	'sphinx.ext.viewcode'
+	'sphinx.ext.linkcode'
 ]
+
+def linkcode_resolve(domain, info):
+	if domain != 'py':
+		return None
+	if not info['module']:
+		return None
+	file_name = info['module'].replace('.', '/') + '.py'
+	return "https://github.com/{0}/blob/{1}/{2}".format(GITHUB_REPO, GITHUB_BRANCH, file_name)
 
 intersphinx_mapping = {'smoke-zephyr': ('https://smoke-zephyr.readthedocs.org/en/latest/', None)}
 
@@ -193,14 +204,14 @@ htmlhelp_basename = 'king_phisher_doc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
+    # The paper size ('letterpaper' or 'a4paper').
+    #'papersize': 'letterpaper',
 
-# The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
+    # The font size ('10pt', '11pt' or '12pt').
+    #'pointsize': '10pt',
 
-# Additional stuff for the LaTeX preamble.
-#'preamble': '',
+    # Additional stuff for the LaTeX preamble.
+    #'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
