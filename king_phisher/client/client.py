@@ -35,7 +35,6 @@ import logging
 import random
 import shlex
 import socket
-import sys
 import time
 
 from king_phisher import find
@@ -62,6 +61,50 @@ if isinstance(Gtk.ApplicationWindow, utilities.Mock):
 	_Gtk_ApplicationWindow.__module__ = ''
 else:
 	_Gtk_ApplicationWindow = Gtk.ApplicationWindow
+
+class MainMenuBar(gui_utilities.GladeGObject):
+	top_gobject = 'menubar'
+	def do_edit_delete_campaign(self, _):
+		self.parent.delete_campaign()
+
+	def do_edit_rename_campaign(self, _):
+		self.parent.rename_campaign()
+
+	def do_edit_preferences(self, _):
+		self.parent.edit_preferences()
+
+	def do_edit_stop_service(self, _):
+		self.parent.stop_remote_service()
+
+	def do_export_campaign_xml(self, _):
+		self.parent.export_campaign_xml()
+
+	def do_export_message_data(self, _):
+		self.parent.tabs['mailer'].export_message_data()
+
+	def do_import_message_data(self, _):
+		self.parent.tabs['mailer'].import_message_data()
+
+	def do_show_campaign_selection(self, _):
+		self.parent.show_campaign_selection()
+
+	def do_quit(self, _):
+		self.parent.emit('exit-confirm')
+
+	def do_tools_rpc_terminal(self, _):
+		tools.KingPhisherClientRPCTerminal(self.config, self.parent, self.parent.get_property('application'))
+
+	def do_tools_clone_page(self, _):
+		dialogs.ClonePageDialog(self.config, self.parent).interact()
+
+	def do_tools_sftp_client(self, _):
+		self.parent.start_sftp_client()
+
+	def do_help_about(self, _):
+		dialogs.AboutDialog(self.config, self.parent).interact()
+
+	def do_help_wiki(self, _):
+		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
 
 class KingPhisherClient(_Gtk_ApplicationWindow):
 	"""
@@ -100,6 +143,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		if default_icon_file:
 			icon_pixbuf = GdkPixbuf.Pixbuf.new_from_file(default_icon_file)
 			self.set_default_icon(icon_pixbuf)
+		"""
 		action_group = Gtk.ActionGroup(name="client_window_actions")
 		self._add_menu_actions(action_group)
 		uimanager = self._create_ui_manager()
@@ -107,8 +151,10 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.add_accel_group(uimanager.get_accel_group())
 		uimanager.insert_action_group(action_group)
 		self.uimanager = uimanager
-		menubar = uimanager.get_widget("/MenuBar")
-		vbox.pack_start(menubar, False, False, 0)
+		vbox.pack_start(uimanager.get_widget("/MenuBar"), False, False, 0)
+		"""
+		self.menubar = MainMenuBar(self.config, self)
+		vbox.pack_start(self.menubar.menubar, False, False, 0)
 
 		# create notebook and tabs
 		self.notebook = Gtk.Notebook()
@@ -142,89 +188,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		login_dialog.dialog.connect('response', self.signal_login_dialog_response, login_dialog)
 		login_dialog.dialog.show()
 
-	def _add_menu_actions(self, action_group):
-		# File Menu Actions
-		action = Gtk.Action(name='FileMenu', label='File', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileOpenCampaign', label='_Open Campaign', tooltip='Open a Campaign', stock_id=Gtk.STOCK_NEW)
-		action.connect('activate', lambda x: self.show_campaign_selection())
-		action_group.add_action_with_accel(action, '<control>O')
-
-		action = Gtk.Action(name='FileImportMenu', label='Import', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileImportMessageConfiguration', label='Message Configuration', tooltip='Message Configuration', stock_id=None)
-		action.connect('activate', lambda x: self.tabs['mailer'].import_message_data())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileExportMenu', label='Export', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileExportCampaignXML', label='Campaign XML', tooltip='Campaign XML', stock_id=None)
-		action.connect('activate', lambda x: self.export_campaign_xml())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileExportMessageConfiguration', label='Message Configuration', tooltip='Message Configuration', stock_id=None)
-		action.connect('activate', lambda x: self.tabs['mailer'].export_message_data())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileQuit', label=None, tooltip=None, stock_id=Gtk.STOCK_QUIT)
-		action.connect('activate', lambda x: self.emit('exit-confirm'))
-		action_group.add_action_with_accel(action, '<control>Q')
-
-		# Edit Menu Actions
-		action = Gtk.Action(name='EditMenu', label='Edit', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='EditPreferences', label='Preferences', tooltip='Edit Preferences', stock_id=Gtk.STOCK_EDIT)
-		action.connect('activate', lambda x: self.edit_preferences())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='EditDeleteCampaign', label='Delete Campaign', tooltip='Delete Campaign', stock_id=None)
-		action.connect('activate', lambda x: self.delete_campaign())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='EditRenameCampaign', label='Rename Campaign', tooltip='Rename Campaign', stock_id=None)
-		action.connect('activate', lambda x: self.rename_campaign())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='EditStopService', label='Stop Service', tooltip='Stop The Remote King-Phisher Service', stock_id=None)
-		action.connect('activate', lambda x: self.stop_remote_service())
-		action_group.add_action(action)
-
-		# Tools Menu Action
-		action = Gtk.Action(name='ToolsMenu', label='Tools', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='ToolsRPCTerminal', label='RPC Terminal', tooltip='RPC Terminal', stock_id=None)
-		action.connect('activate', lambda x: tools.KingPhisherClientRPCTerminal(self.config, self, self.get_property('application')))
-		action_group.add_action_with_accel(action, '<control>F1')
-
-		action = Gtk.Action(name='ToolsCloneWebPage', label='Clone Web Page', tooltip='Clone A Web Page', stock_id=None)
-		action.connect('activate', lambda x: dialogs.ClonePageDialog(self.config, self).interact())
-		action_group.add_action(action)
-
-		# Help Menu Actions
-		action = Gtk.Action(name='HelpMenu', label='Help', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='HelpAbout', label='About', tooltip='About', stock_id=None)
-		action.connect('activate', lambda x: dialogs.AboutDialog(self.config, self).interact())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='HelpWiki', label='Wiki', tooltip='Wiki', stock_id=None)
-		action.connect('activate', lambda x: utilities.open_uri('https://github.com/securestate/king-phisher/wiki'))
-		action_group.add_action(action)
-
 	def _add_menu_optional_actions(self, action_group, uimanager):
-		if sys.platform.startswith('linux'):
-			action = Gtk.Action(name='ToolsSFTPClient', label='SFTP Client', tooltip='SFTP Client', stock_id=None)
-			action.connect('activate', lambda x: self.start_sftp_client())
-			action_group.add_action_with_accel(action, '<control>F2')
-			merge_id = uimanager.new_merge_id()
-			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsSFTPClient', 'ToolsSFTPClient', Gtk.UIManagerItemType.MENUITEM, False)
-
 		if graphs.has_matplotlib:
 			action = Gtk.Action(name='ToolsGraphMenu', label='Create Graph', tooltip='Create A Graph', stock_id=None)
 			action_group.add_action(action)

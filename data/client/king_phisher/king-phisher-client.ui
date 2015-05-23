@@ -1272,6 +1272,244 @@ Brandan Geise</property>
       </packing>
     </child>
   </object>
+  <object class="GtkMenuBar" id="MainMenuBar">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_File</property>
+        <property name="use_underline">True</property>
+        <child type="submenu">
+          <object class="GtkMenu" id="MainMenuBar.menu_file">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_open">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="accel_path">&lt;MainMenuBar&gt;/File/Open</property>
+                <property name="label" translatable="yes">Open Campaign</property>
+                <signal name="activate" handler="do_show_campaign_selection" swapped="no"/>
+                <accelerator key="o" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_import">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="accel_path">&lt;MainMenuBar&gt;/File/Import</property>
+                <property name="label" translatable="yes">Import</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="MainMenuBar.menu_file_import">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_import_message_configuration">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Message Configuration</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_import_message_data" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="accel_path">&lt;MainMenuBar&gt;/File/Export</property>
+                <property name="label" translatable="yes">Export</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="MainMenuBar.menu_file_export">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xml">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Campaign XML</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_export_campaign_xml" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_message_configuration">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Message Configuration</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_export_message_data" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparatorMenuItem" id="separatormenuitem1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkImageMenuItem" id="MainMenuBar.menuitem_file_quit">
+                <property name="label">gtk-quit</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="accel_path">&lt;MainMenuBar&gt;/File/Quit</property>
+                <property name="use_underline">True</property>
+                <property name="use_stock">True</property>
+                <signal name="activate" handler="do_quit" swapped="no"/>
+                <accelerator key="q" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="MainMenuBar.menuitem_edit">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Edit</property>
+        <property name="use_underline">True</property>
+        <child type="submenu">
+          <object class="GtkMenu" id="MainMenuBar.menu_edit">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_edit_preferences">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Preferences</property>
+                <signal name="activate" handler="do_edit_preferences" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparatorMenuItem" id="menuitem10">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_edit_delete_campaign">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Delete Campaign</property>
+                <signal name="activate" handler="do_edit_delete_campaign" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_edit_rename_campaign">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Rename Campaign</property>
+                <signal name="activate" handler="do_edit_rename_campaign" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_edit_stop_service">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Stop Service</property>
+                <signal name="activate" handler="do_edit_stop_service" swapped="no"/>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="MainMenuBar.menuitem_tools">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Tools</property>
+        <property name="use_underline">True</property>
+        <child type="submenu">
+          <object class="GtkMenu" id="MainMenuBar.menu_tools">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkMenuItem" id="menuitem11">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">RPC Terminal</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_tools_rpc_terminal" swapped="no"/>
+                <accelerator key="F1" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="menuitem12">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Clone Web Page</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_tools_clone_page" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="menuitem13">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">SFTP Client</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_tools_sftp_client" swapped="no"/>
+                <accelerator key="F2" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="menuitem14">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Create Graph</property>
+                <property name="use_underline">True</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="MainMenuBar.menuitem_help">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Help</property>
+        <property name="use_underline">True</property>
+        <child type="submenu">
+          <object class="GtkMenu" id="MainMenuBar.menu_help">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkMenuItem" id="imagemenuitem10">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">About</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_help_about" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="menuitem15">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Wiki</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_help_wiki" swapped="no"/>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkListStore" id="MsgImportance">
     <columns>
       <!-- column-name gchararray1 -->
