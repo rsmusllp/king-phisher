@@ -55,10 +55,11 @@ class CampaignViewGenericTab(gui_utilities.GladeGObject):
 	label_text = 'Unknown'
 	"""The label of the tab for display in the GUI."""
 	top_gobject = 'box'
-	def __init__(self, *args, **kwargs):
+	def __init__(self, config, window, application):
+		super(CampaignViewGenericTab, self).__init__(config, window)
+		self.application = application
 		self.label = Gtk.Label(label=self.label_text)
 		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`~.CampaignViewGenericTab.label_text`."""
-		super(CampaignViewGenericTab, self).__init__(*args, **kwargs)
 		self.is_destroyed = threading.Event()
 		getattr(self, self.top_gobject).connect('destroy', self.signal_destroy)
 
@@ -70,6 +71,10 @@ class CampaignViewGenericTab(gui_utilities.GladeGObject):
 		"""The thread object which loads the data from the server."""
 		self.loader_thread_lock = threading.Lock()
 		"""The :py:class:`threading.Lock` object used for synchronization between the loader and main threads."""
+
+	@property
+	def rpc(self):
+		return self.application.rpc
 
 	def load_campaign_information(self, force=True):
 		raise NotImplementedError()
@@ -130,9 +135,9 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
 		if len(row_ids) == 1:
-			self.parent.rpc(self.remote_table_name + '/delete', row_ids[0])
+			self.rpc(self.remote_table_name + '/delete', row_ids[0])
 		else:
-			self.parent.rpc(self.remote_table_name + '/delete/multi', row_ids)
+			self.rpc(self.remote_table_name + '/delete/multi', row_ids)
 		self.load_campaign_information()
 
 	def format_row_data(self, row):
@@ -204,12 +209,12 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		:type store: :py:class:`Gtk.ListStore`
 		"""
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
-		for row in self.parent.rpc.remote_table('campaign/' + self.remote_table_name, self.config['campaign_id']):
+		for row in self.rpc.remote_table('campaign/' + self.remote_table_name, self.config['campaign_id']):
 			if self.is_destroyed.is_set():
 				break
 			row_data = self.format_row_data(row)
 			if row_data == None:
-				self.parent.rpc(self.remote_table_name + '/delete', row_id)
+				self.rpc(self.remote_table_name + '/delete', row_id)
 				continue
 			row_data = list(map(self.format_cell_data, row_data))
 			row_data.insert(0, str(row.id))
@@ -247,7 +252,7 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 		'Last Hit'
 	)
 	def format_row_data(self, connection):
-		deploy_details = self.parent.rpc.remote_table_row('deaddrop_deployments', connection.deployment_id, cache=True)
+		deploy_details = self.rpc.remote_table_row('deaddrop_deployments', connection.deployment_id, cache=True)
 		if not deploy_details:
 			return None
 		row = (
@@ -279,7 +284,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		treeview.get_column(pwd_column_id).set_property('visible', False)
 
 	def format_row_data(self, credential):
-		msg_details = self.parent.rpc.remote_table_row('messages', credential.message_id, cache=True)
+		msg_details = self.rpc.remote_table_row('messages', credential.message_id, cache=True)
 		if not msg_details:
 			return None
 		row = (
@@ -329,7 +334,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 					image.show()
 					self.gobjects['scrolledwindow_' + dash_port].add(image)
 				continue
-			graph_inst = Klass(self.config, self.parent, details)
+			graph_inst = Klass(self.config, self.parent, self.application, details)
 			self.gobjects['scrolledwindow_' + dash_port].add_with_viewport(graph_inst.canvas)
 			self.gobjects['box_' + dash_port].pack_end(graph_inst.navigation_toolbar, False, False, 0)
 			self.graphs.append(graph_inst)
@@ -361,7 +366,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 
 	def loader_idle_routine(self):
 		"""The routine which refreshes the campaign data at a regular interval."""
-		if self.parent.rpc:
+		if self.rpc:
 			self.logger.debug('idle loader routine called')
 			self.load_campaign_information()
 		return True
@@ -370,7 +375,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		"""The loading routine to be executed within a thread."""
 		if not 'campaign_id' in self.config:
 			return
-		if not self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id']):
+		if not self.rpc.remote_table_row('campaigns', self.config['campaign_id']):
 			return
 		info_cache = {}
 		for graph in self.graphs:
@@ -393,7 +398,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		'Last Visit'
 	)
 	def format_row_data(self, visit):
-		msg_details = self.parent.rpc.remote_table_row('messages', visit.message_id, cache=True)
+		msg_details = self.rpc.remote_table_row('messages', visit.message_id, cache=True)
 		if not msg_details:
 			return None
 		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
@@ -402,7 +407,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		elif visitor_ip.is_private:
 			geo_location = 'N/A (Private)'
 		else:
-			geo_location = self.parent.rpc.geoip_lookup(visitor_ip) or 'N/A (Unknown)'
+			geo_location = self.rpc.geoip_lookup(visitor_ip) or 'N/A (Unknown)'
 		row = (
 			msg_details.target_email,
 			str(visitor_ip),
@@ -470,33 +475,33 @@ class CampaignViewTab(object):
 
 		if graphs.has_matplotlib:
 			self.logger.info('matplotlib is installed, dashboard will be available')
-			dashboard_tab = CampaignViewDashboardTab(self.config, self.parent)
+			dashboard_tab = CampaignViewDashboardTab(self.config, self.parent, application)
 			self.tabs['dashboard'] = dashboard_tab
 			self.notebook.append_page(dashboard_tab.box, dashboard_tab.label)
 		else:
 			self.logger.warning('matplotlib is not installed, dashboard will not be available')
 
-		messages_tab = CampaignViewMessagesTab(self.config, self.parent)
+		messages_tab = CampaignViewMessagesTab(self.config, self.parent, application)
 		self.tabs['messages'] = messages_tab
 		self.notebook.append_page(messages_tab.box, messages_tab.label)
 
-		visits_tab = CampaignViewVisitsTab(self.config, self.parent)
+		visits_tab = CampaignViewVisitsTab(self.config, self.parent, application)
 		self.tabs['visits'] = visits_tab
 		self.notebook.append_page(visits_tab.box, visits_tab.label)
 
-		credentials_tab = CampaignViewCredentialsTab(self.config, self.parent)
+		credentials_tab = CampaignViewCredentialsTab(self.config, self.parent, application)
 		self.tabs['credentials'] = credentials_tab
 		self.notebook.append_page(credentials_tab.box, credentials_tab.label)
 
 		if self.config.get('gui.show_deaddrop', False):
-			deaddrop_connections_tab = CampaignViewDeaddropTab(self.config, self.parent)
+			deaddrop_connections_tab = CampaignViewDeaddropTab(self.config, self.parent, application)
 			self.tabs['deaddrop_connections'] = deaddrop_connections_tab
 			self.notebook.append_page(deaddrop_connections_tab.box, deaddrop_connections_tab.label)
 
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()
-		self.parent.connect('campaign-set', self.signal_kpc_campaign_set)
+		self.application.connect('campaign-set', self.signal_kpc_campaign_set)
 
 	def signal_kpc_campaign_set(self, kpc, cid):
 		for tab in self.tabs.values():
