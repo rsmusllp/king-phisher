@@ -30,32 +30,23 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import ipaddress
 import logging
-import random
 import shlex
-import socket
-import sys
-import time
 
 from king_phisher import find
 from king_phisher import utilities
-from king_phisher import version
 from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client import tools
-from king_phisher.client.client_rpc import KingPhisherRPCClient
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.mail import MailSenderTab
-from king_phisher.ssh_forward import SSHTCPForwarder
-from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from gi.repository import Gdk
 from gi.repository import GdkPixbuf
 from gi.repository import GObject
 from gi.repository import Gtk
-import paramiko
 
 if isinstance(Gtk.ApplicationWindow, utilities.Mock):
 	_Gtk_ApplicationWindow = type('Gtk.ApplicationWindow', (object,), {})
@@ -63,20 +54,92 @@ if isinstance(Gtk.ApplicationWindow, utilities.Mock):
 else:
 	_Gtk_ApplicationWindow = Gtk.ApplicationWindow
 
+class MainMenuBar(gui_utilities.GladeGObject):
+	top_gobject = 'menubar'
+	def __init__(self, config, window, application):
+		self.application = application
+		super(MainMenuBar, self).__init__(config, window)
+		self._add_accelerators()
+		graphs_menu_item = self.gtk_builder_get('menuitem_tools_create_graph')
+		if graphs.has_matplotlib:
+			graphs_submenu = Gtk.Menu.new()
+			for graph_name in graphs.get_graphs():
+				graph = graphs.get_graph(graph_name)
+				menu_item = Gtk.MenuItem.new_with_label(graph.name_human)
+				menu_item.connect('activate', self.do_tools_show_campaign_graph, graph_name)
+				graphs_submenu.append(menu_item)
+			graphs_menu_item.set_submenu(graphs_submenu)
+			graphs_menu_item.show_all()
+		else:
+			graphs_menu_item.set_sensitive(False)
+
+	def _add_accelerators(self):
+		accelerators = (
+			('file_open', Gdk.KEY_o, Gdk.ModifierType.CONTROL_MASK),
+			('file_quit', Gdk.KEY_q, Gdk.ModifierType.CONTROL_MASK),
+			('tools_rpc_terminal', Gdk.KEY_F1, Gdk.ModifierType.CONTROL_MASK),
+			('tools_sftp_client', Gdk.KEY_F2, Gdk.ModifierType.CONTROL_MASK)
+		)
+		for menu_name, key, modifier in accelerators:
+			menu_item = self.gtk_builder_get('menuitem_' + menu_name)
+			menu_item.add_accelerator('activate', self.parent.accel_group, key, modifier, Gtk.AccelFlags.VISIBLE)
+
+	def do_edit_delete_campaign(self, _):
+		self.parent.delete_campaign()
+
+	def do_edit_rename_campaign(self, _):
+		self.parent.rename_campaign()
+
+	def do_edit_preferences(self, _):
+		self.parent.edit_preferences()
+
+	def do_edit_stop_service(self, _):
+		self.parent.stop_remote_service()
+
+	def do_export_campaign_xml(self, _):
+		self.parent.export_campaign_xml()
+
+	def do_export_message_data(self, _):
+		self.parent.tabs['mailer'].export_message_data()
+
+	def do_import_message_data(self, _):
+		self.parent.tabs['mailer'].import_message_data()
+
+	def do_show_campaign_selection(self, _):
+		self.application.show_campaign_selection()
+
+	def do_quit(self, _):
+		self.parent.emit('exit-confirm')
+
+	def do_tools_rpc_terminal(self, _):
+		tools.KingPhisherClientRPCTerminal(self.config, self.parent, self.parent.get_property('application'))
+
+	def do_tools_clone_page(self, _):
+		dialogs.ClonePageDialog(self.config, self.parent).interact()
+
+	def do_tools_sftp_client(self, _):
+		self.parent.start_sftp_client()
+
+	def do_tools_show_campaign_graph(self, _, graph_name):
+		self.application.show_campaign_graph(graph_name)
+
+	def do_help_about(self, _):
+		dialogs.AboutDialog(self.config, self.parent).interact()
+
+	def do_help_wiki(self, _):
+		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
+
 class KingPhisherClient(_Gtk_ApplicationWindow):
 	"""
 	This is the top level King Phisher client object. It contains the
-	custom GObject signals, keeps all the GUI references, and manages
-	the RPC client object. This is also the parent window for most
-	GTK objects.
+	custom GObject signals, and keeps all the GUI references. This is also the
+	parent window for most GTK objects.
 
-	:GObject Signals: :ref:`gobject-signals-kingphisher-client-label`
+	:GObject Signals: :ref:`gobject-signals-window-label`
 	"""
 	__gsignals__ = {
-		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
-		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
-		'server-connected': (GObject.SIGNAL_RUN_FIRST, None, ())
+		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
 	def __init__(self, config, application):
 		"""
@@ -90,7 +153,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')
 		self.config = config
 		"""The main King Phisher client configuration."""
-		self._ssh_forwarder = None
 		self.set_property('title', 'King Phisher')
 		vbox = Gtk.Box()
 		vbox.set_property('orientation', Gtk.Orientation.VERTICAL)
@@ -100,15 +162,10 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		if default_icon_file:
 			icon_pixbuf = GdkPixbuf.Pixbuf.new_from_file(default_icon_file)
 			self.set_default_icon(icon_pixbuf)
-		action_group = Gtk.ActionGroup(name="client_window_actions")
-		self._add_menu_actions(action_group)
-		uimanager = self._create_ui_manager()
-		self._add_menu_optional_actions(action_group, uimanager)
-		self.add_accel_group(uimanager.get_accel_group())
-		uimanager.insert_action_group(action_group)
-		self.uimanager = uimanager
-		menubar = uimanager.get_widget("/MenuBar")
-		vbox.pack_start(menubar, False, False, 0)
+		self.accel_group = Gtk.AccelGroup()
+		self.add_accel_group(self.accel_group)
+		self.menubar = MainMenuBar(self.config, self, application)
+		vbox.pack_start(self.menubar.menubar, False, False, 0)
 
 		# create notebook and tabs
 		self.notebook = Gtk.Notebook()
@@ -142,89 +199,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		login_dialog.dialog.connect('response', self.signal_login_dialog_response, login_dialog)
 		login_dialog.dialog.show()
 
-	def _add_menu_actions(self, action_group):
-		# File Menu Actions
-		action = Gtk.Action(name='FileMenu', label='File', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileOpenCampaign', label='_Open Campaign', tooltip='Open a Campaign', stock_id=Gtk.STOCK_NEW)
-		action.connect('activate', lambda x: self.show_campaign_selection())
-		action_group.add_action_with_accel(action, '<control>O')
-
-		action = Gtk.Action(name='FileImportMenu', label='Import', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileImportMessageConfiguration', label='Message Configuration', tooltip='Message Configuration', stock_id=None)
-		action.connect('activate', lambda x: self.tabs['mailer'].import_message_data())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileExportMenu', label='Export', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileExportCampaignXML', label='Campaign XML', tooltip='Campaign XML', stock_id=None)
-		action.connect('activate', lambda x: self.export_campaign_xml())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileExportMessageConfiguration', label='Message Configuration', tooltip='Message Configuration', stock_id=None)
-		action.connect('activate', lambda x: self.tabs['mailer'].export_message_data())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='FileQuit', label=None, tooltip=None, stock_id=Gtk.STOCK_QUIT)
-		action.connect('activate', lambda x: self.emit('exit-confirm'))
-		action_group.add_action_with_accel(action, '<control>Q')
-
-		# Edit Menu Actions
-		action = Gtk.Action(name='EditMenu', label='Edit', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='EditPreferences', label='Preferences', tooltip='Edit Preferences', stock_id=Gtk.STOCK_EDIT)
-		action.connect('activate', lambda x: self.edit_preferences())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='EditDeleteCampaign', label='Delete Campaign', tooltip='Delete Campaign', stock_id=None)
-		action.connect('activate', lambda x: self.delete_campaign())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='EditRenameCampaign', label='Rename Campaign', tooltip='Rename Campaign', stock_id=None)
-		action.connect('activate', lambda x: self.rename_campaign())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='EditStopService', label='Stop Service', tooltip='Stop The Remote King-Phisher Service', stock_id=None)
-		action.connect('activate', lambda x: self.stop_remote_service())
-		action_group.add_action(action)
-
-		# Tools Menu Action
-		action = Gtk.Action(name='ToolsMenu', label='Tools', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='ToolsRPCTerminal', label='RPC Terminal', tooltip='RPC Terminal', stock_id=None)
-		action.connect('activate', lambda x: tools.KingPhisherClientRPCTerminal(self.config, self, self.get_property('application')))
-		action_group.add_action_with_accel(action, '<control>F1')
-
-		action = Gtk.Action(name='ToolsCloneWebPage', label='Clone Web Page', tooltip='Clone A Web Page', stock_id=None)
-		action.connect('activate', lambda x: dialogs.ClonePageDialog(self.config, self).interact())
-		action_group.add_action(action)
-
-		# Help Menu Actions
-		action = Gtk.Action(name='HelpMenu', label='Help', tooltip=None, stock_id=None)
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='HelpAbout', label='About', tooltip='About', stock_id=None)
-		action.connect('activate', lambda x: dialogs.AboutDialog(self.config, self).interact())
-		action_group.add_action(action)
-
-		action = Gtk.Action(name='HelpWiki', label='Wiki', tooltip='Wiki', stock_id=None)
-		action.connect('activate', lambda x: utilities.open_uri('https://github.com/securestate/king-phisher/wiki'))
-		action_group.add_action(action)
-
 	def _add_menu_optional_actions(self, action_group, uimanager):
-		if sys.platform.startswith('linux'):
-			action = Gtk.Action(name='ToolsSFTPClient', label='SFTP Client', tooltip='SFTP Client', stock_id=None)
-			action.connect('activate', lambda x: self.start_sftp_client())
-			action_group.add_action_with_accel(action, '<control>F2')
-			merge_id = uimanager.new_merge_id()
-			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsSFTPClient', 'ToolsSFTPClient', Gtk.UIManagerItemType.MENUITEM, False)
-
 		if graphs.has_matplotlib:
 			action = Gtk.Action(name='ToolsGraphMenu', label='Create Graph', tooltip='Create A Graph', stock_id=None)
 			action_group.add_action(action)
@@ -235,55 +210,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 				action = Gtk.Action(name=action_name, label=graph.name_human, tooltip=graph.name_human, stock_id=None)
 				action.connect('activate', self.signal_activate_popup_menu_create_graph, graph_name)
 				action_group.add_action(action)
-
-			merge_id = uimanager.new_merge_id()
-			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsGraphMenu', 'ToolsGraphMenu', Gtk.UIManagerItemType.MENU, False)
-			for graph_name in sorted(graphs.get_graphs(), key=lambda gn: graphs.get_graph(gn).name_human):
-				action_name = 'ToolsGraph' + graph_name
-				uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu/ToolsGraphMenu', action_name, action_name, Gtk.UIManagerItemType.MENUITEM, False)
-
-	def _create_ssh_forwarder(self, server, username, password):
-		"""
-		Create and set the :py:attr:`~.KingPhisherClient._ssh_forwarder`
-		attribute.
-
-		:param tuple server: The server information as a host and port tuple.
-		:param str username: The username to authenticate to the SSH server with.
-		:param str password: The password to authenticate to the SSH server with.
-		:rtype: int
-		:return: The local port that is forwarded to the remote server or None if the connection failed.
-		"""
-		title_ssh_error = 'Failed To Connect To The SSH Service'
-		server_remote_port = self.config['server_remote_port']
-		local_port = random.randint(2000, 6000)
-
-		try:
-			self._ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
-			self._ssh_forwarder.start()
-			time.sleep(0.5)
-			self.logger.info('started ssh port forwarding')
-		except paramiko.AuthenticationException:
-			self.logger.warning('failed to authenticate to the remote ssh server')
-			gui_utilities.show_dialog_error(title_ssh_error, self, 'The server responded that the credentials are invalid.')
-		except socket.error as error:
-			gui_utilities.show_dialog_exc_socket_error(error, self, title=title_ssh_error)
-		except Exception as error:
-			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
-			gui_utilities.show_dialog_error(title_ssh_error, self, "An {0}.{1} error occurred.".format(error.__class__.__module__, error.__class__.__name__))
-		else:
-			return local_port
-		self.server_disconnect()
-		return
-
-	def _create_ui_manager(self):
-		uimanager = Gtk.UIManager()
-		with open(find.find_data_file('ui_info/client_window.xml')) as ui_info_file:
-			ui_data = ui_info_file.read()
-		uimanager.add_ui_from_string(ui_data)
-		return uimanager
-
-	def signal_activate_popup_menu_create_graph(self, _, graph_name):
-		return self.show_campaign_graph(graph_name)
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		#previous_page = notebook.get_nth_page(self.last_page_id)
@@ -305,39 +231,16 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.emit('exit-confirm')
 		return True
 
-	def do_campaign_set(self, campaign_id):
-		self.rpc.cache_clear()
-		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
-
 	def do_exit(self):
 		self.hide()
 		gui_utilities.gtk_widget_destroy_children(self)
 		gui_utilities.gtk_sync()
-		self.server_disconnect()
+		self.application.server_disconnect()
 		self.destroy()
 		return
 
 	def do_exit_confirm(self):
 		self.emit('exit')
-
-	def do_server_connected(self):
-		self.load_server_config()
-		campaign_id = self.config.get('campaign_id')
-		if campaign_id == None:
-			if not self.show_campaign_selection():
-				self.logger.debug('no campaign selected, disconnecting and exiting')
-				self.emit('exit')
-				return True
-		campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True)
-		if campaign_info == None:
-			if not self.show_campaign_selection():
-				self.logger.debug('no campaign selected, disconnecting and exiting')
-				self.emit('exit')
-				return True
-			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True, refresh=True)
-		self.config['campaign_name'] = campaign_info.name
-		self.emit('campaign-set', self.config['campaign_id'])
-		return
 
 	def client_quit(self):
 		"""
@@ -348,91 +251,14 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.emit('exit')
 
 	def signal_login_dialog_response(self, dialog, response, glade_dialog):
-		server_version_info = None
-		title_rpc_error = 'Failed To Connect To The King Phisher RPC Service'
-
 		if response == Gtk.ResponseType.CANCEL or response == Gtk.ResponseType.DELETE_EVENT:
 			dialog.destroy()
 			self.emit('exit')
 			return True
 		glade_dialog.objects_save_to_config()
-		server = utilities.server_parse(self.config['server'], 22)
-		username = self.config['server_username']
-		password = self.config['server_password']
-		if server[0] == 'localhost' or (utilities.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
-			local_port = self.config['server_remote_port']
-			self.logger.info("connecting to local king-phisher instance")
-		else:
-			local_port = self._create_ssh_forwarder(server, username, password)
-		if not local_port:
-			return
-
-		self.rpc = KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl'))
-		if self.config.get('rpc.serializer'):
-			try:
-				self.rpc.set_serializer(self.config['rpc.serializer'])
-			except ValueError as error:
-				self.logger.error("failed to set the rpc serializer, error: '{0}'".format(error.message))
-
-		connection_failed = True
-		try:
-			assert self.rpc('client/initialize')
-			server_version_info = self.rpc('version')
-			assert server_version_info != None
-		except AdvancedHTTPServerRPCError as err:
-			if err.status == 401:
-				self.logger.warning('failed to authenticate to the remote king phisher service')
-				gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded that the credentials are invalid.')
-			else:
-				self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
-				gui_utilities.show_dialog_error(title_rpc_error, self, 'The server responded with HTTP status: ' + str(err.status))
-		except socket.error as error:
-			gui_utilities.show_dialog_exc_socket_error(error, self)
-		except Exception as error:
-			self.logger.warning('failed to connect to the remote rpc service', exc_info=True)
-			gui_utilities.show_dialog_error(title_rpc_error, self, 'Ensure that the King Phisher Server is currently running.')
-		else:
-			connection_failed = False
-		finally:
-			if connection_failed:
-				self.rpc = None
-				self.server_disconnect()
-				return
-
-		server_rpc_api_version = server_version_info.get('rpc_api_version', -1)
-		if isinstance(server_rpc_api_version, int):
-			# compatibility with pre-0.2.0 version
-			server_rpc_api_version = (server_rpc_api_version, 0)
-		self.logger.info("successfully connected to the king phisher server (version: {0} rpc api version: {1}.{2})".format(server_version_info['version'], server_rpc_api_version[0], server_rpc_api_version[1]))
-		self.server_local_port = local_port
-
-		error_text = None
-		if server_rpc_api_version[0] < version.rpc_api_version.major or (server_rpc_api_version[0] == version.rpc_api_version.major and server_rpc_api_version[1] < version.rpc_api_version.minor):
-			error_text = 'The server is running an old and incompatible version.'
-			error_text += '\nPlease update the remote server installation.'
-		elif server_rpc_api_version[0] > version.rpc_api_version.major:
-			error_text = 'The client is running an old and incompatible version.'
-			error_text += '\nPlease update the local client installation.'
-		if error_text:
-			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', self, error_text)
-			self.server_disconnect()
-			return
+		self.application.server_connect()
+		self.rpc = self.application.rpc
 		dialog.destroy()
-		self.emit('server-connected')
-		return
-
-	def server_disconnect(self):
-		"""Clean up the SSH TCP connections and disconnect from the server."""
-		if self._ssh_forwarder:
-			self._ssh_forwarder.stop()
-			self._ssh_forwarder = None
-			self.logger.info('stopped ssh port forwarding')
-		return
-
-	def load_server_config(self):
-		"""Load the necessary values from the server's configuration."""
-		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image', 'server.web_root'])
-		return
 
 	def rename_campaign(self):
 		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
@@ -453,7 +279,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible, all campaign data will be lost.'):
 			return
 		self.rpc('campaign/delete', self.config['campaign_id'])
-		if not self.show_campaign_selection():
+		if not self.application.show_campaign_selection():
 			gui_utilities.show_dialog_error('Now Exiting', self, 'A campaign must be selected.')
 			self.client_quit()
 
@@ -478,31 +304,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			return
 		destination_file = response['target_path']
 		export.campaign_to_xml(self.rpc, self.config['campaign_id'], destination_file)
-
-	def show_campaign_graph(self, graph_name):
-		"""
-		Create a new :py:class:`.CampaignGraph` instance and make it into
-		a window. *graph_name* must be the name of a valid, exported
-		graph provider.
-
-		:param str graph_name: The name of the graph to make a window of.
-		"""
-		cls = graphs.get_graph(graph_name)
-		graph_inst = cls(self.config, self)
-		graph_inst.load_graph()
-		window = graph_inst.make_window()
-		window.show()
-
-	def show_campaign_selection(self):
-		"""
-		Display the campaign selection dialog in a new
-		:py:class:`.CampaignSelectionDialog` instance.
-
-		:return: The status of the dialog.
-		:rtype: bool
-		"""
-		dialog = dialogs.CampaignSelectionDialog(self.config, self)
-		return dialog.interact() == Gtk.ResponseType.APPLY
 
 	def start_sftp_client(self):
 		"""

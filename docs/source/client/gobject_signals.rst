@@ -1,10 +1,10 @@
 GObject Signals
 ===============
 
-.. _gobject-signals-kingphisher-client-label:
+.. _gobject-signals-application-label:
 
-KingPhisherClient Signals
--------------------------
+KingPhisherClientApplication Signals
+------------------------------------
 
 .. py:function:: campaign-set(campaign_id)
 
@@ -12,8 +12,22 @@ KingPhisherClient Signals
    to this signal can use it to update and refresh information for the current
    campaign.
 
-   :object: :py:class:`~king_phisher.client.client.KingPhisherClient`
+   :object: :py:class:`~king_phisher.client.application.KingPhisherClientApplication`
    :param str campaign_id: The ID of the new campaign.
+
+.. py:function:: server-connected()
+
+   This signal is emitted with the client has connected to the King Phisher
+   Server. The default handler sets the initial campaign optionally prompting
+   the user to select one if one has not already been selected.
+
+   :object: :py:class:`~king_phisher.client.application.KingPhisherClientApplication`
+
+
+.. _gobject-signals-window-label:
+
+KingPhisherClient Signals
+-------------------------
 
 .. py:function:: exit()
 
@@ -29,13 +43,5 @@ KingPhisherClient Signals
    This signal is emitted when the client has requested that the application
    exit. Subscribers to this signal can use it as a chance to display a warning
    dialog and cancel the operation.
-
-   :object: :py:class:`~king_phisher.client.client.KingPhisherClient`
-
-.. py:function:: server-connected()
-
-   This signal is emitted with the client has connected to the King Phisher
-   Server. The default handler sets the initial campaign optionally prompting
-   the user to select one if one has not already been selected.
 
    :object: :py:class:`~king_phisher.client.client.KingPhisherClient`

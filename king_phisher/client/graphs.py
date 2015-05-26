@@ -145,7 +145,7 @@ class CampaignGraph(object):
 	table_subscriptions = []
 	"""A list of tables from which information is needed to produce the graph."""
 	is_available = True
-	def __init__(self, config, parent, size_request=None):
+	def __init__(self, config, parent, application, size_request=None):
 		"""
 		:param dict config: The King Phisher client configuration.
 		:param parent: The parent window for this object.
@@ -156,6 +156,7 @@ class CampaignGraph(object):
 		"""A reference to the King Phisher client configuration."""
 		self.parent = parent
 		"""The parent :py:class:`Gtk.Window` instance."""
+		self.application = application
 		self.figure, _ = pyplot.subplots()
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
@@ -181,6 +182,10 @@ class CampaignGraph(object):
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
 		self.navigation_toolbar.hide()
+
+	@property
+	def rpc(self):
+		return self.application.rpc
 
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
@@ -313,13 +318,13 @@ class CampaignGraph(object):
 		:rtype: dict
 		"""
 		info_cache = (info_cache or {})
-		if not self.parent.rpc:
+		if not self.rpc:
 			return info_cache
 		for table in self.table_subscriptions:
 			if stop_event and stop_event.is_set():
 				return info_cache
 			if not table in info_cache:
-				info_cache[table] = tuple(self.parent.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
+				info_cache[table] = tuple(self.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
 		for ax in self.axes:
 			ax.clear()
 		self._load_graph(info_cache)
@@ -334,7 +339,7 @@ class CampaignGraphOverview(CampaignGraph):
 	name_human = 'Bar - Campaign Overview'
 	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
-		rpc = self.parent.rpc
+		rpc = self.rpc
 		visits = info_cache['visits']
 		creds = info_cache['credentials']
 
@@ -433,7 +438,7 @@ class CampaignGraphMessageResults(CampaignGraph):
 	name_human = 'Pie - Message Results'
 	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
-		rpc = self.parent.rpc
+		rpc = self.rpc
 		messages_count = rpc('campaign/messages/count', self.config['campaign_id'])
 		if not messages_count:
 			self._graph_null_pie('No Messages Sent')
@@ -505,18 +510,20 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
 		o_high = float(max(ctr.values()))
 		o_low = float(min(ctr.values()))
-		for visitor_ip, occurances in ctr.items():
+		for visitor_ip, occurrences in ctr.items():
 			visitor_ip = ipaddress.ip_address(visitor_ip)
 			if visitor_ip.is_loopback or visitor_ip.is_private:
 				continue
-			geo_location = self.parent.rpc.geoip_lookup(visitor_ip)
+			geo_location = self.rpc.geoip_lookup(visitor_ip)
 			if not geo_location:
+				continue
+			if not (geo_location.coordinates.longitude and geo_location.coordinates.latitude):
 				continue
 			pts = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
 			if o_high == o_low:
 				markersize = 2.0
 			else:
-				markersize = 1.0 + (float(occurances) - o_low) / (o_high - o_low)
+				markersize = 1.0 + (float(occurrences) - o_low) / (o_high - o_low)
 			markersize = markersize * base_markersize
 			bm.plot(pts[0], pts[1], 'o', markerfacecolor=(self.mpl_color_with_creds if visitor_ip in cred_ips else self.mpl_color_without_creds), markersize=markersize)
 		return

@@ -6,5 +6,5 @@ Client GUI Documentation
    :numbered:
    :titlesonly:
 
-   gobject_signals.rst
-   key_shortcuts.rst
+   client/gobject_signals.rst
+   client/key_shortcuts.rst

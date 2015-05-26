@@ -7,7 +7,7 @@ King Phisher Documentation
    :titlesonly:
 
    king_phisher_api.rst
-   client/index.rst
+   client_gui.rst
    rpc_api.rst
    environment_vars.rst
 
