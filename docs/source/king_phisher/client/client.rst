@@ -11,3 +11,8 @@ Classes
    :show-inheritance:
    :members:
    :special-members: __init__
+
+.. autoclass:: king_phisher.client.client.MainMenuBar
+   :show-inheritance:
+   :members:
+   :special-members: __init__

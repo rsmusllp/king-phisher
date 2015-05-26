@@ -55,9 +55,15 @@ else:
 	_Gtk_ApplicationWindow = Gtk.ApplicationWindow
 
 class MainMenuBar(gui_utilities.GladeGObject):
+	"""
+	The main menu bar for the primary application window. This configures any
+	optional menu items as well as handles all the menu item signals
+	appropriately.
+	"""
 	top_gobject = 'menubar'
 	def __init__(self, config, window, application):
 		self.application = application
+		assert isinstance(window, KingPhisherClient)
 		super(MainMenuBar, self).__init__(config, window)
 		self._add_accelerators()
 		graphs_menu_item = self.gtk_builder_get('menuitem_tools_create_graph')
