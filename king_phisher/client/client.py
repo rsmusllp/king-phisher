@@ -199,18 +199,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		login_dialog.dialog.connect('response', self.signal_login_dialog_response, login_dialog)
 		login_dialog.dialog.show()
 
-	def _add_menu_optional_actions(self, action_group, uimanager):
-		if graphs.has_matplotlib:
-			action = Gtk.Action(name='ToolsGraphMenu', label='Create Graph', tooltip='Create A Graph', stock_id=None)
-			action_group.add_action(action)
-
-			for graph_name in graphs.get_graphs():
-				action_name = 'ToolsGraph' + graph_name
-				graph = graphs.get_graph(graph_name)
-				action = Gtk.Action(name=action_name, label=graph.name_human, tooltip=graph.name_human, stock_id=None)
-				action.connect('activate', self.signal_activate_popup_menu_create_graph, graph_name)
-				action_group.add_action(action)
-
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		#previous_page = notebook.get_nth_page(self.last_page_id)
 		self.last_page_id = index
