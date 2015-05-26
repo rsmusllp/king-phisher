@@ -51,6 +51,7 @@ from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from gi.repository import Gdk
 from gi.repository import GdkPixbuf
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -64,6 +65,21 @@ else:
 
 class MainMenuBar(gui_utilities.GladeGObject):
 	top_gobject = 'menubar'
+	def __init__(self, *args, **kwargs):
+		super(MainMenuBar, self).__init__(*args, **kwargs)
+		self._add_accelerators()
+
+	def _add_accelerators(self):
+		accelerators = (
+			('file_open', Gdk.KEY_o, Gdk.ModifierType.CONTROL_MASK),
+			('file_quit', Gdk.KEY_q, Gdk.ModifierType.CONTROL_MASK),
+			('tools_rpc_terminal', Gdk.KEY_F1, Gdk.ModifierType.CONTROL_MASK),
+			('tools_sftp_client', Gdk.KEY_F2, Gdk.ModifierType.CONTROL_MASK)
+		)
+		for menu_name, key, modifier in accelerators:
+			menu_item = self.gtk_builder_get('menuitem_' + menu_name)
+			menu_item.add_accelerator('activate', self.parent.accel_group, key, modifier, Gtk.AccelFlags.VISIBLE)
+
 	def do_edit_delete_campaign(self, _):
 		self.parent.delete_campaign()
 
@@ -153,6 +169,8 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.uimanager = uimanager
 		vbox.pack_start(uimanager.get_widget("/MenuBar"), False, False, 0)
 		"""
+		self.accel_group = Gtk.AccelGroup()
+		self.add_accel_group(self.accel_group)
 		self.menubar = MainMenuBar(self.config, self)
 		vbox.pack_start(self.menubar.menubar, False, False, 0)
 
