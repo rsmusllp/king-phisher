@@ -300,6 +300,20 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.rpc = None
 		return
 
+	def show_campaign_graph(self, graph_name):
+		"""
+		Create a new :py:class:`.CampaignGraph` instance and make it into
+		a window. *graph_name* must be the name of a valid, exported
+		graph provider.
+
+		:param str graph_name: The name of the graph to make a window of.
+		"""
+		cls = graphs.get_graph(graph_name)
+		graph_inst = cls(self.config, self.get_active_window(), self)
+		graph_inst.load_graph()
+		window = graph_inst.make_window()
+		window.show()
+
 	def show_campaign_selection(self):
 		"""
 		Display the campaign selection dialog in a new

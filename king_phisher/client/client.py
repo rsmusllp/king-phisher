@@ -60,6 +60,18 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		self.application = application
 		super(MainMenuBar, self).__init__(config, window)
 		self._add_accelerators()
+		graphs_menu_item = self.gtk_builder_get('menuitem_tools_create_graph')
+		if graphs.has_matplotlib:
+			graphs_submenu = Gtk.Menu.new()
+			for graph_name in graphs.get_graphs():
+				graph = graphs.get_graph(graph_name)
+				menu_item = Gtk.MenuItem.new_with_label(graph.name_human)
+				menu_item.connect('activate', self.do_tools_show_campaign_graph, graph_name)
+				graphs_submenu.append(menu_item)
+			graphs_menu_item.set_submenu(graphs_submenu)
+			graphs_menu_item.show_all()
+		else:
+			graphs_menu_item.set_sensitive(False)
 
 	def _add_accelerators(self):
 		accelerators = (
@@ -107,6 +119,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 
 	def do_tools_sftp_client(self, _):
 		self.parent.start_sftp_client()
+
+	def do_tools_show_campaign_graph(self, _, graph_name):
+		self.application.show_campaign_graph(graph_name)
 
 	def do_help_about(self, _):
 		dialogs.AboutDialog(self.config, self.parent).interact()
@@ -195,15 +210,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 				action = Gtk.Action(name=action_name, label=graph.name_human, tooltip=graph.name_human, stock_id=None)
 				action.connect('activate', self.signal_activate_popup_menu_create_graph, graph_name)
 				action_group.add_action(action)
-
-			merge_id = uimanager.new_merge_id()
-			uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu', 'ToolsGraphMenu', 'ToolsGraphMenu', Gtk.UIManagerItemType.MENU, False)
-			for graph_name in sorted(graphs.get_graphs(), key=lambda gn: graphs.get_graph(gn).name_human):
-				action_name = 'ToolsGraph' + graph_name
-				uimanager.add_ui(merge_id, '/MenuBar/ToolsMenu/ToolsGraphMenu', action_name, action_name, Gtk.UIManagerItemType.MENUITEM, False)
-
-	def signal_activate_popup_menu_create_graph(self, _, graph_name):
-		return self.show_campaign_graph(graph_name)
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		#previous_page = notebook.get_nth_page(self.last_page_id)
@@ -298,20 +304,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			return
 		destination_file = response['target_path']
 		export.campaign_to_xml(self.rpc, self.config['campaign_id'], destination_file)
-
-	def show_campaign_graph(self, graph_name):
-		"""
-		Create a new :py:class:`.CampaignGraph` instance and make it into
-		a window. *graph_name* must be the name of a valid, exported
-		graph provider.
-
-		:param str graph_name: The name of the graph to make a window of.
-		"""
-		cls = graphs.get_graph(graph_name)
-		graph_inst = cls(self.config, self, self.application)
-		graph_inst.load_graph()
-		window = graph_inst.make_window()
-		window.show()
 
 	def start_sftp_client(self):
 		"""
