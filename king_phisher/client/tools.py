@@ -77,7 +77,7 @@ class RPCTerminalWindow(gui_utilities.GladeGObject):
 		self.terminal.paste_clipboard()
 
 	def signal_menuitem_help_about(self, menuitem):
-		dialogs.AboutDialog(self.config, self.window).interact()
+		dialogs.AboutDialog(self.application).interact()
 
 	def signal_menuitem_help_api_docs(self, menuitem):
 		rpc_api_docs_url = "http://king-phisher.readthedocs.org/en/{0}/rpc_api.html".format('latest' if version.version_label in ('alpha', 'beta') else 'stable')
@@ -100,32 +100,28 @@ class KingPhisherClientRPCTerminal(object):
 	within the King Phisher client. This is primarily useful for
 	unofficial and advanced features or debugging and development.
 	"""
-	def __init__(self, config, parent, application):
+	def __init__(self, application):
 		"""
-		:param dict config: The King Phisher client configuration.
-		:param parent: The parent window for this object.
-		:type parent: :py:class:`Gtk.Window`
 		:param application: The application instance to which this window belongs.
 		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
 		assert isinstance(application, Gtk.Application)
-		self.config = config
-		self.parent = parent
 		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		if not has_vte:
-			gui_utilities.show_dialog_error('RPC Terminal Is Unavailable', parent, 'VTE is not installed')
+			gui_utilities.show_dialog_error('RPC Terminal Is Unavailable', self.application.get_active_window(), 'VTE is not installed')
 			return
+		config = application.config
 
 		self.terminal = Vte.Terminal()
 		self.terminal.set_property('rewrap-on-resize', True)
 		self.terminal.set_scroll_on_keystroke(True)
-		self.rpc_window = RPCTerminalWindow(self.terminal, config, parent)
+		self.rpc_window = RPCTerminalWindow(self.terminal, self.application)
 
-		rpc = self.parent.rpc
+		rpc = self.application.rpc
 		config = {
-			'campaign_id': self.config['campaign_id'],
-			'campaign_name': self.config['campaign_name'],
+			'campaign_id': config['campaign_id'],
+			'campaign_name': config['campaign_name'],
 			'rpc_data': {
 				'address': (rpc.host, rpc.port),
 				'use_ssl': rpc.use_ssl,

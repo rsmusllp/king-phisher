@@ -55,9 +55,8 @@ class CampaignViewGenericTab(gui_utilities.GladeGObject):
 	label_text = 'Unknown'
 	"""The label of the tab for display in the GUI."""
 	top_gobject = 'box'
-	def __init__(self, config, window, application):
-		super(CampaignViewGenericTab, self).__init__(config, window)
-		self.application = application
+	def __init__(self, *args, **kwargs):
+		super(CampaignViewGenericTab, self).__init__(*args, **kwargs)
 		self.label = Gtk.Label(label=self.label_text)
 		"""The :py:class:`Gtk.Label` representing this tab with text from :py:attr:`~.CampaignViewGenericTab.label_text`."""
 		self.is_destroyed = threading.Event()
@@ -325,8 +324,8 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		}
 		for dash_port, details in dash_ports.items():
 			graph_name = self.config['dashboard.' + dash_port]
-			Klass = graphs.get_graph(graph_name)
-			if not Klass:
+			cls = graphs.get_graph(graph_name)
+			if not cls:
 				self.logger.warning('could not get graph: ' + graph_name)
 				logo_file_path = find.find_data_file('king-phisher-icon.svg')
 				if logo_file_path:
@@ -334,7 +333,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 					image.show()
 					self.gobjects['scrolledwindow_' + dash_port].add(image)
 				continue
-			graph_inst = Klass(self.config, self.parent, self.application, details)
+			graph_inst = cls(self.application, details)
 			self.gobjects['scrolledwindow_' + dash_port].add_with_viewport(graph_inst.canvas)
 			self.gobjects['box_' + dash_port].pack_end(graph_inst.navigation_toolbar, False, False, 0)
 			self.graphs.append(graph_inst)
@@ -354,7 +353,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		"""
 		if not force and ((time.time() - self.last_load_time) < self.refresh_frequency):
 			return
-		if not hasattr(self.parent, 'rpc'):
+		if not self.application.rpc:
 			self.logger.warning('skipping load_campaign_information because rpc is not initialized')
 			return
 		with self.loader_thread_lock:
@@ -444,17 +443,16 @@ class CampaignViewTab(object):
 	manages the sub-tabs which display all the information regarding
 	the current campaign.
 	"""
-	def __init__(self, config, parent, application):
+	def __init__(self, parent, application):
 		"""
-		:param dict config: The King Phisher client configuration.
 		:param parent: The parent window for this object.
 		:type parent: :py:class:`Gtk.Window`
 		:param application: The main client application instance.
 		:type application: :py:class:`Gtk.Application`
 		"""
-		self.config = config
 		self.parent = parent
 		self.application = application
+		self.config = application.config
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
@@ -475,26 +473,26 @@ class CampaignViewTab(object):
 
 		if graphs.has_matplotlib:
 			self.logger.info('matplotlib is installed, dashboard will be available')
-			dashboard_tab = CampaignViewDashboardTab(self.config, self.parent, application)
+			dashboard_tab = CampaignViewDashboardTab(application)
 			self.tabs['dashboard'] = dashboard_tab
 			self.notebook.append_page(dashboard_tab.box, dashboard_tab.label)
 		else:
 			self.logger.warning('matplotlib is not installed, dashboard will not be available')
 
-		messages_tab = CampaignViewMessagesTab(self.config, self.parent, application)
+		messages_tab = CampaignViewMessagesTab(application)
 		self.tabs['messages'] = messages_tab
 		self.notebook.append_page(messages_tab.box, messages_tab.label)
 
-		visits_tab = CampaignViewVisitsTab(self.config, self.parent, application)
+		visits_tab = CampaignViewVisitsTab(application)
 		self.tabs['visits'] = visits_tab
 		self.notebook.append_page(visits_tab.box, visits_tab.label)
 
-		credentials_tab = CampaignViewCredentialsTab(self.config, self.parent, application)
+		credentials_tab = CampaignViewCredentialsTab(application)
 		self.tabs['credentials'] = credentials_tab
 		self.notebook.append_page(credentials_tab.box, credentials_tab.label)
 
 		if self.config.get('gui.show_deaddrop', False):
-			deaddrop_connections_tab = CampaignViewDeaddropTab(self.config, self.parent, application)
+			deaddrop_connections_tab = CampaignViewDeaddropTab(application)
 			self.tabs['deaddrop_connections'] = deaddrop_connections_tab
 			self.notebook.append_page(deaddrop_connections_tab.box, deaddrop_connections_tab.label)
 

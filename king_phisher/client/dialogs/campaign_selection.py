@@ -82,7 +82,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			return
 		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.dialog, 'This action is irreversible, all campaign data will be lost.'):
 			return
-		self.parent.rpc('campaign/delete', campaign_id)
+		self.application.rpc('campaign/delete', campaign_id)
 		self.load_campaigns()
 		self._highlight_campaign(self.config.get('campaign_name'))
 
@@ -95,7 +95,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		for campaign in self.parent.rpc.remote_table('campaigns'):
+		for campaign in self.application.rpc.remote_table('campaigns'):
 			created_ts = utilities.datetime_utc_to_local(campaign.created)
 			created_ts = utilities.format_datetime(created_ts)
 			store.append([str(campaign.id), campaign.name, campaign.user_id, created_ts])
@@ -107,7 +107,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			gui_utilities.show_dialog_warning('Invalid Campaign Name', self.dialog, 'Please specify a new campaign name')
 			return
 		try:
-			self.parent.rpc('campaign/new', campaign_name)
+			self.application.rpc('campaign/new', campaign_name)
 		except AdvancedHTTPServer.AdvancedHTTPServerRPCError:
 			gui_utilities.show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
 			return
@@ -141,6 +141,6 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			campaign_name = model.get_value(tree_iter, 1)
 			self.config['campaign_name'] = campaign_name
 			if not (campaign_id == old_campaign_id and campaign_name == old_campaign_name):
-				self.parent.emit('campaign-set', campaign_id)
+				self.application.emit('campaign-set', campaign_id)
 		self.dialog.destroy()
 		return response

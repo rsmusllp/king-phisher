@@ -79,10 +79,10 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			remote_method = 'campaign/alerts/subscribe'
 		else:
 			remote_method = 'campaign/alerts/unsubscribe'
-		self.parent.rpc(remote_method, self.config['campaign_id'])
+		self.application.rpc(remote_method, self.config['campaign_id'])
 
 	def signal_toggle_reject_after_credentials(self, cbutton):
-		self.parent.rpc('campaigns/set', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
+		self.application.rpc('campaigns/set', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
 
 	def signal_changed_spf_check_level(self, combobox):
 		ti = combobox.get_active_iter()
@@ -111,18 +111,18 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
 		cb_reject_after_creds = self.gtk_builder_get('checkbutton_reject_after_credentials')
 		entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
-		server_config = self.parent.rpc('config/get', ['beef.hook_url', 'server.require_id', 'server.secret_id'])
+		server_config = self.application.rpc('config/get', ['beef.hook_url', 'server.require_id', 'server.secret_id'])
 		entry_beef_hook.set_property('text', server_config.get('beef.hook_url', ''))
 		self.config['server_config']['server.require_id'] = server_config['server.require_id']
 		self.config['server_config']['server.secret_id'] = server_config['server.secret_id']
 		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
 		if GObject.pygobject_version < (3, 10):
-			cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-			cb_reject_after_creds.set_property('active', self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id']).reject_after_credentials)
+			cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
+			cb_reject_after_creds.set_property('active', self.application.rpc.remote_table_row('campaigns', self.config['campaign_id']).reject_after_credentials)
 		else:
 			with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
-				cb_subscribed.set_property('active', self.parent.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-				cb_reject_after_creds.set_property('active', self.parent.rpc.remote_table_row('campaigns', self.config['campaign_id']).reject_after_credentials)
+				cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
+				cb_reject_after_creds.set_property('active', self.application.rpc.remote_table_row('campaigns', self.config['campaign_id']).reject_after_credentials)
 		cb_reject_after_creds.set_sensitive(self.config['server_config']['server.require_id'])
 
 	def _finialize_settings_dashboard(self):
@@ -152,7 +152,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			self.objects_save_to_config()
 			self.verify_sms_settings()
 			entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
-			self.parent.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
+			self.application.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
 			if graphs.has_matplotlib:
 				self._finialize_settings_dashboard()
 		self.dialog.destroy()
@@ -174,4 +174,4 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must contain exactly 10 digits')
 				return
 			username = self.config['server_username']
-			self.parent.rpc('users/set', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))
+			self.application.rpc('users/set', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))

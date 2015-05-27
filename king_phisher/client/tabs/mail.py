@@ -108,8 +108,8 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.pause_button = self.gobjects['togglebutton_mail_sender_pause']
 		self.sender_thread = None
 		"""The :py:class:`.MailSenderThread` instance that is being used to send messages."""
-		self.parent.connect('exit', self.signal_kpc_exit)
-		self.parent.connect('exit-confirm', self.signal_kpc_exit_confirm)
+		self.application.connect('exit', self.signal_kpc_exit)
+		self.application.connect('exit-confirm', self.signal_kpc_exit_confirm)
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 
 	def _sender_precheck_settings(self):
@@ -238,7 +238,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		if self.config['smtp_ssh_enable']:
 			while True:
 				self.text_insert('Connecting to SSH... ')
-				login_dialog = dialogs.SSHLoginDialog(self.config, self.parent)
+				login_dialog = dialogs.SSHLoginDialog(self.application)
 				login_dialog.objects_load_from_config()
 				response = login_dialog.interact()
 				if response != Gtk.ResponseType.APPLY:
@@ -373,16 +373,13 @@ class MailSenderPreviewTab(object):
 	This tab uses the WebKit engine to render the HTML of an email so it can be
 	previewed before it is sent.
 	"""
-	def __init__(self, config, parent):
+	def __init__(self, config):
 		"""
 		:param dict config: The King Phisher client configuration.
-		:param parent: The parent window for this object.
-		:type parent: :py:class:`Gtk.Window`
 		"""
 		self.label = Gtk.Label(label='Preview')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		self.config = config
-		self.parent = parent
 
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
@@ -633,7 +630,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.label = Gtk.Label(label='Configuration')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderConfigurationTab, self).__init__(*args, **kwargs)
-		self.parent.connect('exit', self.signal_kpc_exit)
+		self.application.connect('exit', self.signal_kpc_exit)
 
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
@@ -689,17 +686,16 @@ class MailSenderTab(object):
 	manages the sub-tabs which display useful information for
 	configuring, previewing and sending messages as part of a campaign.
 	"""
-	def __init__(self, config, parent, application):
+	def __init__(self, parent, application):
 		"""
-		:param dict config: The King Phisher client configuration.
 		:param parent: The parent window for this object.
 		:type parent: :py:class:`Gtk.Window`
 		:param application: The main client application instance.
 		:type application: :py:class:`Gtk.Application`
 		"""
-		self.config = config
 		self.parent = parent
 		self.application = application
+		self.config = application.config
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
@@ -717,19 +713,19 @@ class MailSenderTab(object):
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
 
-		config_tab = MailSenderConfigurationTab(self.config, self.parent)
+		config_tab = MailSenderConfigurationTab(self.application)
 		self.tabs['config'] = config_tab
 		self.notebook.append_page(config_tab.box, config_tab.label)
 
-		edit_tab = MailSenderEditTab(self.config, self.parent)
+		edit_tab = MailSenderEditTab(self.application)
 		self.tabs['edit'] = edit_tab
 		self.notebook.append_page(edit_tab.box, edit_tab.label)
 
-		preview_tab = MailSenderPreviewTab(self.config, self.parent)
+		preview_tab = MailSenderPreviewTab(self.config)
 		self.tabs['preview'] = preview_tab
 		self.notebook.append_page(preview_tab.box, preview_tab.label)
 
-		send_messages_tab = MailSenderSendTab(self.config, self.parent)
+		send_messages_tab = MailSenderSendTab(self.application)
 		self.tabs['send_messages'] = send_messages_tab
 		self.notebook.append_page(send_messages_tab.box, send_messages_tab.label)
 

@@ -350,17 +350,16 @@ class GladeGObject(object):
 	"""A prefix to be used for keys when looking up value in the :py:attr:`~.GladeGObject.config`."""
 	top_gobject = 'gobject'
 	"""The name of the attribute to set a reference of the top level GObject to."""
-	def __init__(self, config, parent):
+	def __init__(self, application):
 		"""
-		:param dict config: The King Phisher client configuration.
-		:param parent: The parent window for this object.
-		:type parent: :py:class:`Gtk.Window`
+		:param application: The parent application for this object.
+		:type application: :py:class:`Gtk.Application`
 		"""
-		assert isinstance(parent, Gtk.Window)
-		self.config = config
+		assert isinstance(application, Gtk.Application)
+		self.config = application.config
 		"""A reference to the King Phisher client configuration."""
-		self.parent = parent
-		"""The parent :py:class:`Gtk.Window` instance."""
+		self.application = application
+		"""The parent :py:class:`Gtk.Application` instance."""
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 
 		builder = Gtk.Builder()
@@ -371,7 +370,7 @@ class GladeGObject(object):
 		builder.connect_signals(self)
 		gobject = builder.get_object(self.__class__.__name__)
 		if isinstance(gobject, Gtk.Window):
-			gobject.set_transient_for(self.parent)
+			gobject.set_transient_for(self.application.get_active_window())
 			if isinstance(gobject, Gtk.Dialog):
 				gobject.set_modal(True)
 		setattr(self, self.top_gobject, gobject)
@@ -387,6 +386,10 @@ class GladeGObject(object):
 				raise TypeError("gobject {0} is of type {1} expected {2}".format(gobject_id, gobject.__class__.__name__, gtype))
 			self.gobjects[gobject_id] = gobject
 		self.objects_load_from_config()
+
+	@property
+	def parent(self):
+		return self.application.get_active_window()
 
 	def gtk_builder_get(self, gobject_id):
 		"""

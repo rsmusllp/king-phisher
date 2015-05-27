@@ -45,7 +45,6 @@ from king_phisher.client.tabs.mail import MailSenderTab
 
 from gi.repository import Gdk
 from gi.repository import GdkPixbuf
-from gi.repository import GObject
 from gi.repository import Gtk
 
 if isinstance(Gtk.ApplicationWindow, utilities.Mock):
@@ -61,10 +60,11 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	appropriately.
 	"""
 	top_gobject = 'menubar'
-	def __init__(self, config, window, application):
-		self.application = application
+	def __init__(self, application, window):
+		# TODO: remove references to self.window for self._accel_group
 		assert isinstance(window, KingPhisherClient)
-		super(MainMenuBar, self).__init__(config, window)
+		super(MainMenuBar, self).__init__(application)
+		self.window = window
 		self._add_accelerators()
 		graphs_menu_item = self.gtk_builder_get('menuitem_tools_create_graph')
 		if graphs.has_matplotlib:
@@ -88,49 +88,49 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		)
 		for menu_name, key, modifier in accelerators:
 			menu_item = self.gtk_builder_get('menuitem_' + menu_name)
-			menu_item.add_accelerator('activate', self.parent.accel_group, key, modifier, Gtk.AccelFlags.VISIBLE)
+			menu_item.add_accelerator('activate', self.window.accel_group, key, modifier, Gtk.AccelFlags.VISIBLE)
 
 	def do_edit_delete_campaign(self, _):
-		self.parent.delete_campaign()
+		self.window.delete_campaign()
 
 	def do_edit_rename_campaign(self, _):
-		self.parent.rename_campaign()
+		self.window.rename_campaign()
 
 	def do_edit_preferences(self, _):
-		self.parent.edit_preferences()
+		self.window.edit_preferences()
 
 	def do_edit_stop_service(self, _):
-		self.parent.stop_remote_service()
+		self.window.stop_remote_service()
 
 	def do_export_campaign_xml(self, _):
-		self.parent.export_campaign_xml()
+		self.window.export_campaign_xml()
 
 	def do_export_message_data(self, _):
-		self.parent.tabs['mailer'].export_message_data()
+		self.window.tabs['mailer'].export_message_data()
 
 	def do_import_message_data(self, _):
-		self.parent.tabs['mailer'].import_message_data()
+		self.window.tabs['mailer'].import_message_data()
 
 	def do_show_campaign_selection(self, _):
 		self.application.show_campaign_selection()
 
 	def do_quit(self, _):
-		self.parent.emit('exit-confirm')
+		self.application.emit('exit-confirm')
 
 	def do_tools_rpc_terminal(self, _):
-		tools.KingPhisherClientRPCTerminal(self.config, self.parent, self.parent.get_property('application'))
+		tools.KingPhisherClientRPCTerminal(self.application)
 
 	def do_tools_clone_page(self, _):
-		dialogs.ClonePageDialog(self.config, self.parent).interact()
+		dialogs.ClonePageDialog(self.application).interact()
 
 	def do_tools_sftp_client(self, _):
-		self.parent.start_sftp_client()
+		self.window.start_sftp_client()
 
 	def do_tools_show_campaign_graph(self, _, graph_name):
 		self.application.show_campaign_graph(graph_name)
 
 	def do_help_about(self, _):
-		dialogs.AboutDialog(self.config, self.parent).interact()
+		dialogs.AboutDialog(self.application).interact()
 
 	def do_help_wiki(self, _):
 		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
@@ -140,13 +140,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 	This is the top level King Phisher client object. It contains the
 	custom GObject signals, and keeps all the GUI references. This is also the
 	parent window for most GTK objects.
-
-	:GObject Signals: :ref:`gobject-signals-window-label`
 	"""
-	__gsignals__ = {
-		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
-		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ())
-	}
 	def __init__(self, config, application):
 		"""
 		:param dict config: The main King Phisher client configuration.
@@ -170,7 +164,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			self.set_default_icon(icon_pixbuf)
 		self.accel_group = Gtk.AccelGroup()
 		self.add_accel_group(self.accel_group)
-		self.menubar = MainMenuBar(self.config, self, application)
+		self.menubar = MainMenuBar(application, self)
 		vbox.pack_start(self.menubar.menubar, False, False, 0)
 
 		# create notebook and tabs
@@ -184,12 +178,12 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
 
-		mailer_tab = MailSenderTab(self.config, self, self.application)
+		mailer_tab = MailSenderTab(self, self.application)
 		self.tabs['mailer'] = mailer_tab
 		self.notebook.insert_page(mailer_tab.box, mailer_tab.label, current_page + 1)
 		self.notebook.set_current_page(current_page + 1)
 
-		campaign_tab = CampaignViewTab(self.config, self, self.application)
+		campaign_tab = CampaignViewTab(self, self.application)
 		campaign_tab.box.show()
 		self.tabs['campaign'] = campaign_tab
 		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page + 2)
@@ -201,7 +195,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.rpc = None # needs to be initialized last
 		"""The :py:class:`.KingPhisherRPCClient` instance."""
 
-		login_dialog = dialogs.LoginDialog(self.config, self)
+		login_dialog = dialogs.LoginDialog(self.application)
 		login_dialog.dialog.connect('response', self.signal_login_dialog_response, login_dialog)
 		login_dialog.dialog.show()
 
@@ -222,19 +216,8 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 			notebook.emit('switch-page', notebook.get_nth_page(index), index)
 
 	def signal_delete_event(self, x, y):
-		self.emit('exit-confirm')
+		self.application.emit('exit-confirm')
 		return True
-
-	def do_exit(self):
-		self.hide()
-		gui_utilities.gtk_widget_destroy_children(self)
-		gui_utilities.gtk_sync()
-		self.application.server_disconnect()
-		self.destroy()
-		return
-
-	def do_exit_confirm(self):
-		self.emit('exit')
 
 	def client_quit(self):
 		"""
@@ -242,12 +225,12 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		operations. The exit-confirm signal will not be sent so there will not
 		be any opportunities for the client to cancel the operation.
 		"""
-		self.emit('exit')
+		self.application.emit('exit')
 
 	def signal_login_dialog_response(self, dialog, response, glade_dialog):
 		if response == Gtk.ResponseType.CANCEL or response == Gtk.ResponseType.DELETE_EVENT:
 			dialog.destroy()
-			self.emit('exit')
+			self.application.emit('exit')
 			return True
 		glade_dialog.objects_save_to_config()
 		self.application.server_connect()
@@ -256,7 +239,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 
 	def rename_campaign(self):
 		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
-		prompt = dialogs.TextEntryDialog.build_prompt(self.config, self, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
+		prompt = dialogs.TextEntryDialog.build_prompt(self.application, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
 		response = prompt.interact()
 		if response == None or response == campaign.name:
 			return
@@ -283,10 +266,9 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		:py:class:`.dialogs.configuration.ConfigurationDialog`
 		instance and saves the configuration to disk if cancel is not selected.
 		"""
-		dialog = dialogs.ConfigurationDialog(self.config, self)
+		dialog = dialogs.ConfigurationDialog(self.application)
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
-			app = self.get_property('application')
-			app.save_config()
+			self.application.save_config()
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""

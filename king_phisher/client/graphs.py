@@ -145,18 +145,13 @@ class CampaignGraph(object):
 	table_subscriptions = []
 	"""A list of tables from which information is needed to produce the graph."""
 	is_available = True
-	def __init__(self, config, parent, application, size_request=None):
+	def __init__(self, application, size_request=None):
 		"""
-		:param dict config: The King Phisher client configuration.
-		:param parent: The parent window for this object.
-		:type parent: :py:class:`Gtk.Window`
 		:param tuple size_request: The size to set for the canvas.
 		"""
-		self.config = config
-		"""A reference to the King Phisher client configuration."""
-		self.parent = parent
-		"""The parent :py:class:`Gtk.Window` instance."""
 		self.application = application
+		self.config = application.config
+		"""A reference to the King Phisher client configuration."""
 		self.figure, _ = pyplot.subplots()
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
@@ -165,7 +160,7 @@ class CampaignGraph(object):
 			self.canvas.set_size_request(*size_request)
 		self.canvas.mpl_connect('button_press_event', self.mpl_signal_canvas_button_pressed)
 		self.canvas.show()
-		self.navigation_toolbar = NavigationToolbar(self.canvas, self.parent)
+		self.navigation_toolbar = NavigationToolbar(self.canvas, self.application.get_active_window())
 		self.popup_menu = Gtk.Menu.new()
 
 		menu_item = Gtk.MenuItem.new_with_label('Export')
@@ -271,7 +266,7 @@ class CampaignGraph(object):
 		self.navigation_toolbar = self.manager.toolbar
 		self._menu_item_show_toolbar.set_active(True)
 		window = self.manager.window
-		window.set_transient_for(self.parent)
+		window.set_transient_for(self.application.get_active_window())
 		window.set_title(self.graph_title)
 		return window
 
@@ -287,7 +282,7 @@ class CampaignGraph(object):
 		return True
 
 	def signal_activate_popup_menu_export(self, action):
-		dialog = gui_utilities.FileChooser('Export Graph', self.parent)
+		dialog = gui_utilities.FileChooser('Export Graph', self.application.get_active_window())
 		file_name = self.config['campaign_name'] + '.png'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()

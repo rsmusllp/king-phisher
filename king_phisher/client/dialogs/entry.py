@@ -52,14 +52,13 @@ class TextEntryDialog(gui_utilities.GladeGObject):
 		button.grab_default()
 
 	@classmethod
-	def build_prompt(cls, config, parent, title, label_text, entry_text=None, entry_tooltip_text=None):
+	def build_prompt(cls, application, title, label_text, entry_text=None, entry_tooltip_text=None):
 		"""
 		Create a :py:class:`.TextEntryDialog` instance configured with the
 		specified text prompts.
 
-		:param dict config: The King Phisher client configuration.
-		:param parent: The parent window for this object.
-		:type parent: :py:class:`Gtk.Window`
+		:param application: The parent application for this object.
+		:type application: :py:class:`Gtk.Application`
 		:param str title: The title to set for the dialog window.
 		:param str label_text: The text to display in the entry's label.
 		:param str entry_text: Text to place in the entry.
@@ -67,7 +66,7 @@ class TextEntryDialog(gui_utilities.GladeGObject):
 		:return: If the prompt is submitted by the user, the text within the entry is returned.
 		:rtype: str
 		"""
-		prompt = cls(config, parent)
+		prompt = cls(application)
 		prompt.dialog.set_property('title', title)
 		prompt.label.set_text(label_text)
 		if entry_text:

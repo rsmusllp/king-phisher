@@ -79,6 +79,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 	"""
 	__gsignals__ = {
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_FIRST, None, ())
 	}
 	def __init__(self, config_file=None):
@@ -98,6 +100,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The file containing the King Phisher client configuration."""
 		self.config = None
 		"""The main King Phisher client configuration."""
+		self.main_window = None
 		self.rpc = None
 		self._ssh_forwarder = None
 		"""The SSH forwarder responsible for tunneling RPC communications."""
@@ -148,19 +151,30 @@ class KingPhisherClientApplication(_Gtk_Application):
 		exc_info = (exc_type, exc_value, exc_traceback)
 		error_uid = str(uuid.uuid4())
 		self.logger.error("error uid: {0} an unhandled exception was thrown".format(error_uid), exc_info=exc_info)
-		dialogs.ExceptionDialog(self.config, self.get_active_window(), exc_info=exc_info, error_uid=error_uid).interact()
+		dialogs.ExceptionDialog(self, exc_info=exc_info, error_uid=error_uid).interact()
 
 	def do_activate(self):
 		Gtk.Application.do_activate(self)
 		sys.excepthook = self.exception_hook
 
-		win = client.KingPhisherClient(self.config, self)
-		win.set_position(Gtk.WindowPosition.CENTER)
-		win.show()
+		self.main_window = client.KingPhisherClient(self.config, self)
+		self.main_window.set_position(Gtk.WindowPosition.CENTER)
+		self.main_window.show()
 
 	def do_campaign_set(self, campaign_id):
 		self.rpc.cache_clear()
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
+
+	def do_exit(self):
+		self.main_window.hide()
+		gui_utilities.gtk_widget_destroy_children(self.main_window)
+		gui_utilities.gtk_sync()
+		self.server_disconnect()
+		self.main_window.destroy()
+		return
+
+	def do_exit_confirm(self):
+		self.emit('exit')
 
 	def do_server_connected(self):
 		self.load_server_config()
@@ -309,7 +323,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		:param str graph_name: The name of the graph to make a window of.
 		"""
 		cls = graphs.get_graph(graph_name)
-		graph_inst = cls(self.config, self.get_active_window(), self)
+		graph_inst = cls(self)
 		graph_inst.load_graph()
 		window = graph_inst.make_window()
 		window.show()
@@ -322,5 +336,5 @@ class KingPhisherClientApplication(_Gtk_Application):
 		:return: The status of the dialog.
 		:rtype: bool
 		"""
-		dialog = dialogs.CampaignSelectionDialog(self.config, self.get_active_window())
+		dialog = dialogs.CampaignSelectionDialog(self)
 		return dialog.interact() == Gtk.ResponseType.APPLY

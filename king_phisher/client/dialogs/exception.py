@@ -63,15 +63,14 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 	which occurred.
 	"""
 	top_gobject = 'dialog'
-	def __init__(self, config, parent, exc_info=None, error_uid=None):
+	def __init__(self, application, exc_info=None, error_uid=None):
 		"""
-		:param dict config: The King Phisher client configuration.
-		:param parent: The parent window for this object.
-		:type parent: :py:class:`Gtk.Window`
+		:param application: The parent application for this object.
+		:type application: :py:class:`Gtk.Application`
 		:param tuple exc_info: The exception information as provided by :py:func:`sys.exc_info`.
 		:param str error_uid: An optional unique identifier for the exception that can be provided for tracking purposes.
 		"""
-		super(ExceptionDialog, self).__init__(config, parent)
+		super(ExceptionDialog, self).__init__(application)
 		self.error_description = self.gtk_builder_get('label_error_description')
 		self.error_details = self.gtk_builder_get('textview_error_details')
 		self.exc_info = exc_info or sys.exc_info()
