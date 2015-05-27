@@ -304,13 +304,13 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		Start the client's preferred sftp client application.
 		"""
 		if not self.config['sftp_client']:
-			gui_utilities.show_dialog_warning('Invalid SFTP Configuration', self, 'An SFTP client is not configured')
+			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self, 'An SFTP client is not configured')
 			return False
 		command = str(self.config['sftp_client'])
 		sftp_bin = shlex.split(command)[0]
 		if not utilities.which(sftp_bin):
-			self.logger.warning('could not locate the sftp binary: ' + sftp_bin)
-			gui_utilities.show_dialog_warning('Invalid SFTP Configuration', self, "Could not find the SFTP binary '{0}'".format(sftp_bin))
+			self.logger.error('could not locate the sftp binary: ' + sftp_bin)
+			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self, "Could not find the SFTP binary '{0}'".format(sftp_bin))
 			return False
 		try:
 			command = command.format(
@@ -318,8 +318,10 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 				username=self.config['server_username'],
 				web_root=self.config['server_config']['server.web_root']
 			)
-		except KeyError:
-			pass
+		except KeyError as error:
+			self.logger.error("key error while parsing the sftp command for token: {0}".format(error.args[0]))
+			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self, "Invalid token '{0}' in the SFTP command.".format(error.args[0]))
+			return False
 		self.logger.debug("starting sftp client command: {0}".format(command))
 		utilities.start_process(command, wait=False)
 		return

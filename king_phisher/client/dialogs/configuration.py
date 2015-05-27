@@ -57,6 +57,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		'spinbutton_smtp_max_send_rate',
 		'switch_smtp_ssl_enable',
 		'switch_smtp_ssh_enable',
+		'entry_sftp_client',
 		'entry_ssh_server',
 		'entry_ssh_username',
 		# Client Tab
