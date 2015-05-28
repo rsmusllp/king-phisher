@@ -7,7 +7,7 @@
 Classes
 -------
 
-.. autoclass:: king_phisher.client.client.KingPhisherClient
+.. autoclass:: king_phisher.client.client.MainApplicationWindow
    :show-inheritance:
    :members:
    :special-members: __init__

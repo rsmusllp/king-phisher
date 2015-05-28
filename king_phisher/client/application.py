@@ -196,7 +196,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Gtk.Application.do_activate(self)
 		sys.excepthook = self.exception_hook
 
-		self.main_window = client.KingPhisherClient(self.config, self)
+		self.main_window = client.MainApplicationWindow(self.config, self)
 		self.main_window.set_position(Gtk.WindowPosition.CENTER)
 		self.main_window.show()
 

@@ -61,7 +61,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	top_gobject = 'menubar'
 	def __init__(self, application, window):
 		# TODO: remove references to self.window for self._accel_group
-		assert isinstance(window, KingPhisherClient)
+		assert isinstance(window, MainApplicationWindow)
 		super(MainMenuBar, self).__init__(application)
 		self.window = window
 		self._add_accelerators()
@@ -134,11 +134,10 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def do_help_wiki(self, _):
 		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
 
-class KingPhisherClient(_Gtk_ApplicationWindow):
+class MainApplicationWindow(_Gtk_ApplicationWindow):
 	"""
-	This is the top level King Phisher client object. It contains the
-	custom GObject signals, and keeps all the GUI references. This is also the
-	parent window for most GTK objects.
+	This is the top level King Phisher client window. This is also the parent
+	window for most GTK objects.
 	"""
 	def __init__(self, config, application):
 		"""
@@ -147,7 +146,7 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
 		assert isinstance(application, Gtk.Application)
-		super(KingPhisherClient, self).__init__(application=application)
+		super(MainApplicationWindow, self).__init__(application=application)
 		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')
 		self.config = config

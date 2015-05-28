@@ -221,7 +221,7 @@ def message_data_to_kpm(message_config, target_file):
 	"""
 	Save details describing a message to the target file.
 
-	:param dict message_config: The message details from the :py:attr:`~.KingPhisherClient.config`.
+	:param dict message_config: The message details from the client configuration.
 	:param str target_file: The file to write the data to.
 	"""
 	message_config = copy.copy(message_config)

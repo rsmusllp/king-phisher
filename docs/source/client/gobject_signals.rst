@@ -22,7 +22,7 @@ KingPhisherClientApplication Signals
    client is disconnected from the server. At this point the exit operation can
    not be cancelled.
 
-   :object: :py:class:`~king_phisher.client.client.KingPhisherClient`
+   :object: :py:class:`~king_phisher.client.application.KingPhisherClientApplication`
 
 .. py:function:: exit-confirm()
 
@@ -30,7 +30,7 @@ KingPhisherClientApplication Signals
    exit. Subscribers to this signal can use it as a chance to display a warning
    dialog and cancel the operation.
 
-   :object: :py:class:`~king_phisher.client.client.KingPhisherClient`
+   :object: :py:class:`~king_phisher.client.application.KingPhisherClientApplication`
 
 .. py:function:: server-connected()
 
