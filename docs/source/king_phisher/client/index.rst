@@ -10,7 +10,6 @@
    tabs/index.rst
 
    application.rst
-   client.rst
    export.rst
    graphs.rst
    gui_utilities.rst
@@ -18,3 +17,4 @@
    client_rpc.rst
    tools.rst
    web_cloner.rst
+   windows.rst

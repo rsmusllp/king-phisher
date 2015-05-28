@@ -46,12 +46,12 @@ import uuid
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
-from king_phisher.client import client
 from king_phisher.client import client_rpc
 from king_phisher.client import dialogs
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client import tools
+from king_phisher.client import windows
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
@@ -196,7 +196,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Gtk.Application.do_activate(self)
 		sys.excepthook = self.exception_hook
 
-		self.main_window = client.MainApplicationWindow(self.config, self)
+		self.main_window = windows.MainApplicationWindow(self.config, self)
 		self.main_window.set_position(Gtk.WindowPosition.CENTER)
 		self.main_window.show()
 
