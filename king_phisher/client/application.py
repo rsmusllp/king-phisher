@@ -102,9 +102,11 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.config_file = (config_file or CONFIG_FILE_PATH)
 		"""The file containing the King Phisher client configuration."""
 		self.config = None
-		"""The main King Phisher client configuration."""
+		"""The primary King Phisher client configuration."""
 		self.main_window = None
+		"""The primary top-level :py:class:`~.MainApplicationWindow` instance."""
 		self.rpc = None
+		"""The :py:class:`~.KingPhisherRPCClient` instance for the application."""
 		self._ssh_forwarder = None
 		"""The SSH forwarder responsible for tunneling RPC communications."""
 		try:
