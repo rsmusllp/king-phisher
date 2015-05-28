@@ -400,6 +400,10 @@ class MailSenderPreviewTab(object):
 			self.load_html_file()
 
 	def load_html_file(self):
+		"""
+		Load the configured HTML file into the WebKit engine so the contents can
+		be previewed.
+		"""
 		html_file = self.config.get('mailer.html_file')
 		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 			return
@@ -407,7 +411,16 @@ class MailSenderPreviewTab(object):
 			html_data = file_h.read()
 		html_data = mailer.format_message(html_data, self.config)
 		html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
-		if not html_file_uri.startswith('file://'):
+		self.load_html_data(html_data, html_file_uri)
+
+	def load_html_data(self, html_data, html_file_uri=None):
+		"""
+		Load arbitrary HTML data into the WebKit engine to be rendered.
+
+		:param str html_data: The HTML data to load into WebKit.
+		:param str html_file_uri: The URI of the file where the HTML data came from.
+		"""
+		if isinstance(html_file_uri, str) and not html_file_uri.startswith('file://'):
 			html_file_uri = 'file://' + html_file_uri
 		if has_webkit2:
 			self.webview.load_html(html_data, html_file_uri)
@@ -420,9 +433,14 @@ class MailSenderPreviewTab(object):
 			if self.file_monitor:
 				self.file_monitor.stop()
 				self.file_monitor = None
+			self.load_html_data('')
 			return
 		self.load_html_file()
-		self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
+		if self.file_monitor and self.file_monitor.path != self.config['mailer.html_file']:
+			self.file_monitor.stop()
+			self.file_monitor = None
+		if not self.file_monitor:
+			self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
 
 class MailSenderEditTab(gui_utilities.GladeGObject):
 	"""
