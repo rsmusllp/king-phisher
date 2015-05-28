@@ -44,6 +44,7 @@ from king_phisher.client import gui_utilities
 
 from gi.repository import GLib
 from gi.repository import Gtk
+from smoke_zephyr.utilities import which
 
 try:
 	from gi.repository import Vte
@@ -153,7 +154,7 @@ class KingPhisherClientRPCTerminal(object):
 
 		child_pid, _, _, _ = GLib.spawn_async(
 			working_directory=os.getcwd(),
-			argv=[utilities.which('python'), '-c', python_command],
+			argv=[which('python'), '-c', python_command],
 			envp=['PYTHONPATH=' + module_path],
 			flags=(GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD),
 			child_setup=self._child_setup,

@@ -59,6 +59,8 @@ from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
 import paramiko
+from smoke_zephyr.utilities import parse_server
+from smoke_zephyr.utilities import which
 
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 """The default search location for the client configuration file."""
@@ -281,7 +283,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		title_rpc_error = 'Failed To Connect To The King Phisher RPC Service'
 		active_window = self.get_active_window()
 
-		server = utilities.server_parse(self.config['server'], 22)
+		server = parse_server(self.config['server'], 22)
 		username = self.config['server_username']
 		password = self.config['server_password']
 		if server[0] == 'localhost' or (utilities.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
@@ -397,7 +399,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return False
 		command = str(self.config['sftp_client'])
 		sftp_bin = shlex.split(command)[0]
-		if not utilities.which(sftp_bin):
+		if not which(sftp_bin):
 			self.logger.error('could not locate the sftp binary: ' + sftp_bin)
 			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self.get_active_window(), "Could not find the SFTP binary '{0}'".format(sftp_bin))
 			return False

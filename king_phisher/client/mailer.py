@@ -49,6 +49,7 @@ from king_phisher.client import gui_utilities
 from king_phisher.ssh_forward import SSHTCPForwarder
 
 from gi.repository import GLib
+from smoke_zephyr.utilities import parse_server
 
 if sys.version_info[0] < 3:
 	from email import Encoders as encoders
@@ -192,7 +193,7 @@ class MailSenderThread(threading.Thread):
 		self._ssh_forwarder = None
 		self.smtp_connection = None
 		"""The :py:class:`smtplib.SMTP` connection instance."""
-		self.smtp_server = utilities.server_parse(self.config['smtp_server'], 25)
+		self.smtp_server = parse_server(self.config['smtp_server'], 25)
 		self.running = threading.Event()
 		"""A :py:class:`threading.Event` object indicating if emails are being sent."""
 		self.paused = threading.Event()
@@ -237,10 +238,10 @@ class MailSenderThread(threading.Thread):
 		:return: The connection status.
 		:rtype: bool
 		"""
-		server = utilities.server_parse(self.config['ssh_server'], 22)
+		server = parse_server(self.config['ssh_server'], 22)
 		username = self.config['ssh_username']
 		password = self.config['ssh_password']
-		remote_server = utilities.server_parse(self.config['smtp_server'], 25)
+		remote_server = parse_server(self.config['smtp_server'], 25)
 		local_port = random.randint(2000, 6000)
 		try:
 			self._ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server, preferred_private_key=self.config.get('ssh_preferred_key'))

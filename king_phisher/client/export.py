@@ -42,8 +42,10 @@ import shutil
 import tarfile
 import xml.etree.ElementTree as ET
 
-from king_phisher import utilities
 from king_phisher.errors import KingPhisherInputValidationError
+
+from smoke_zephyr.utilities import escape_single_quote
+from smoke_zephyr.utilities import unescape_single_quote
 
 __all__ = [
 	'campaign_to_xml',
@@ -69,12 +71,12 @@ def message_template_to_kpm(template):
 		match = KPM_INLINE_IMAGE_REGEXP.search(template[cursor:])
 		if not match:
 			break
-		file_path = utilities.unescape_single_quote(match.group(1)[1:-1])
+		file_path = unescape_single_quote(match.group(1)[1:-1])
 		files.append(file_path)
 		file_name = os.path.basename(file_path)
 		start = cursor + match.start()
 		end = cursor + match.end()
-		inline_tag = "{{{{ inline_image('{0}') }}}}".format(utilities.escape_single_quote(file_name))
+		inline_tag = "{{{{ inline_image('{0}') }}}}".format(escape_single_quote(file_name))
 		template = template[:start] + inline_tag + template[end:]
 		cursor = start + len(inline_tag)
 	return template, files
@@ -87,14 +89,14 @@ def message_template_from_kpm(template, files):
 		match = KPM_INLINE_IMAGE_REGEXP.search(template[cursor:])
 		if not match:
 			break
-		file_name = utilities.unescape_single_quote(match.group(1)[1:-1])
+		file_name = unescape_single_quote(match.group(1)[1:-1])
 		file_path = files.get(file_name)
 		start = cursor + match.start()
 		end = cursor + match.end()
 		if not file_path:
 			cursor = end
 			continue
-		insert_tag = "{{{{ inline_image('{0}') }}}}".format(utilities.escape_single_quote(file_path))
+		insert_tag = "{{{{ inline_image('{0}') }}}}".format(escape_single_quote(file_path))
 		template = template[:start] + insert_tag + template[end:]
 		cursor = start + len(insert_tag)
 	return template

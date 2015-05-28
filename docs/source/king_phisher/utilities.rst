@@ -9,8 +9,6 @@ Functions
 
 .. autofunction:: king_phisher.utilities.datetime_utc_to_local
 
-.. autofunction:: king_phisher.utilities.escape_single_quote
-
 .. autofunction:: king_phisher.utilities.format_datetime
 
 .. autofunction:: king_phisher.utilities.is_valid_email_address
@@ -23,13 +21,7 @@ Functions
 
 .. autofunction:: king_phisher.utilities.random_string_lower_numeric
 
-.. autofunction:: king_phisher.utilities.server_parse
-
 .. autofunction:: king_phisher.utilities.start_process
-
-.. autofunction:: king_phisher.utilities.unescape_single_quote
-
-.. autofunction:: king_phisher.utilities.which
 
 Classes
 -------

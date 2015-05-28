@@ -50,6 +50,7 @@ from gi.repository import Gtk
 from gi.repository import GtkSource
 from gi.repository import Pango
 import requests
+from smoke_zephyr.utilities import escape_single_quote
 
 if sys.version_info[0] < 3:
 	import urlparse
@@ -601,7 +602,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		if not response:
 			return
 		target_path = response['target_path']
-		target_path = utilities.escape_single_quote(target_path)
+		target_path = escape_single_quote(target_path)
 		text = "{{{{ inline_image('{0}') }}}}".format(target_path)
 		return self.signal_activate_popup_menu_insert(widget, text)
 

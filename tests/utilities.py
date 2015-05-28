@@ -36,14 +36,7 @@ import unittest
 from king_phisher import testing
 from king_phisher.utilities import *
 
-SINGLE_QUOTE_STRING_ESCAPED = """C:\\\\Users\\\\Alice\\\\Desktop\\\\Alice\\'s Secret File.txt"""
-SINGLE_QUOTE_STRING_UNESCAPED = """C:\\Users\\Alice\\Desktop\\Alice's Secret File.txt"""
-
 class UtilitiesTests(testing.KingPhisherTestCase):
-	def test_escape_single_quote(self):
-		escaped_string = escape_single_quote(SINGLE_QUOTE_STRING_UNESCAPED)
-		self.assertEqual(escaped_string, SINGLE_QUOTE_STRING_ESCAPED)
-
 	def test_is_valid_email_address(self):
 		valid_emails = [
 			'aliddle@wonderland.com',
@@ -97,27 +90,6 @@ class UtilitiesTests(testing.KingPhisherTestCase):
 		mock = Mock()
 		result = mock()
 		self.assertIsInstance(result, Mock)
-
-	def test_server_parse(self):
-		parsed = server_parse('127.0.0.1', 80)
-		self.assertIsInstance(parsed, tuple)
-		self.assertEqual(len(parsed), 2)
-		self.assertEqual(parsed[0], '127.0.0.1')
-		self.assertEqual(parsed[1], 80)
-		parsed = server_parse('127.0.0.1:8080', 80)
-		self.assertIsInstance(parsed, tuple)
-		self.assertEqual(len(parsed), 2)
-		self.assertEqual(parsed[0], '127.0.0.1')
-		self.assertEqual(parsed[1], 8080)
-		parsed = server_parse('[::1]:8080', 80)
-		self.assertIsInstance(parsed, tuple)
-		self.assertEqual(len(parsed), 2)
-		self.assertEqual(parsed[0], '::1')
-		self.assertEqual(parsed[1], 8080)
-
-	def test_unescape_single_quote(self):
-		unescaped_string = unescape_single_quote(SINGLE_QUOTE_STRING_ESCAPED)
-		self.assertEqual(unescaped_string, SINGLE_QUOTE_STRING_UNESCAPED)
 
 if __name__ == '__main__':
 	unittest.main()

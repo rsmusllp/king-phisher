@@ -41,6 +41,8 @@ import subprocess
 import sys
 import time
 
+from smoke_zephyr.utilities import which
+
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
 
 class Mock(object):
@@ -82,17 +84,6 @@ def datetime_utc_to_local(dt):
 	:rtype: :py:class:`datetime.datetime`
 	"""
 	return dt - datetime.timedelta(seconds=time.timezone)
-
-def escape_single_quote(string):
-	"""
-	Escape a string containing single quotes and backslashes with backslashes.
-	This is useful when a string is evaluated in some way.
-
-	:param str string: The string to escape.
-	:return: The escaped string.
-	:rtype: str
-	"""
-	return re.sub('(\'|\\\)', r'\\\1', string)
 
 def format_datetime(dt):
 	"""
@@ -181,31 +172,6 @@ def random_string_lower_numeric(size):
 	"""
 	return ''.join(random.choice(string.ascii_lowercase + string.digits) for x in range(size))
 
-def server_parse(server, default_port):
-	"""
-	Convert a server string to a tuple suitable for passing to connect, for
-	example converting 'www.google.com:443' to ('www.google.com', 443).
-
-	:param str server: The server string to convert.
-	:param int default_port: The port to use in case one is not specified
-		in the server string.
-	:return: The parsed server information.
-	:rtype: tuple
-	"""
-	server = server.rsplit(':', 1)
-	host = server[0]
-	if host.startswith('[') and host.endswith(']'):
-		host = host[1:-1]
-	if len(server) == 1:
-		return (host, default_port)
-	else:
-		port = server[1]
-		if not port:
-			port = default_port
-		else:
-			port = int(port)
-		return (host, port)
-
 def start_process(proc_args, wait=True):
 	"""
 	Start an external process.
@@ -229,35 +195,3 @@ def start_process(proc_args, wait=True):
 	if not wait:
 		return proc_h
 	return proc_h.wait() == 0
-
-# Also in Smoke-Zephyr
-def unescape_single_quote(string):
-	"""
-	Unescape a string which uses backslashes to escape single quotes.
-
-	:param str string: The string to unescape.
-	:return: The unescaped string.
-	:rtype: str
-	"""
-	string = string.replace('\\\\', '\\')
-	string = string.replace('\\\'', '\'')
-	return string
-
-# Also in Smoke-Zephyr
-def which(program):
-	"""
-	Locate an executable binary's full path by its name.
-
-	:param str program: The executable's name.
-	:return: The full path to the executable.
-	:rtype: str
-	"""
-	is_exe = lambda fpath: (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
-	for path in os.environ['PATH'].split(os.pathsep):
-		path = path.strip('"')
-		exe_file = os.path.join(path, program)
-		if is_exe(exe_file):
-			return exe_file
-	if is_exe(program):
-		return os.path.abspath(program)
-	return None
