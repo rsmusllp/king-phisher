@@ -36,6 +36,7 @@ import json
 import logging
 import os
 import random
+import shlex
 import shutil
 import socket
 import sys
@@ -144,6 +145,33 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.server_disconnect()
 		return
 
+	def campaign_rename(self):
+		"""
+		Show a dialog prompting the user to for the a new name to assign to the
+		currently selected campaign.
+		"""
+		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
+		prompt = dialogs.TextEntryDialog.build_prompt(self, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
+		response = prompt.interact()
+		if response == None or response == campaign.name:
+			return
+		self.rpc('campaigns/set', self.config['campaign_id'], ('name',), (response,))
+		gui_utilities.show_dialog_info('Campaign Name Updated', self.get_active_window(), 'The campaign name was successfully changed.')
+
+	def campaign_delete(self):
+		"""
+		Delete the campaign on the server. A confirmation dialog will be
+		displayed before the operation is performed. If the campaign is
+		deleted and a new campaign is not selected with
+		:py:meth:`.show_campaign_selection`, the client will quit.
+		"""
+		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.get_active_window(), 'This action is irreversible, all campaign data will be lost.'):
+			return
+		self.rpc('campaign/delete', self.config['campaign_id'])
+		if not self.show_campaign_selection():
+			gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'A campaign must be selected.')
+			self.quit()
+
 	def exception_hook(self, exc_type, exc_value, exc_traceback):
 		if isinstance(exc_value, KeyboardInterrupt):
 			self.logger.warning('received a KeyboardInterrupt exception')
@@ -152,6 +180,17 @@ class KingPhisherClientApplication(_Gtk_Application):
 		error_uid = str(uuid.uuid4())
 		self.logger.error("error uid: {0} an unhandled exception was thrown".format(error_uid), exc_info=exc_info)
 		dialogs.ExceptionDialog(self, exc_info=exc_info, error_uid=error_uid).interact()
+
+	def quit(self, optional=False):
+		"""
+		Quit the client and perform any necessary clean up operations. If
+		*optional* is False then the exit-confirm signal will not be sent and
+		there will not be any opportunities for the client to cancel the
+		operation.
+
+		:param bool optional: Whether the quit is request is optional or not.
+		"""
+		self.emit('exit-confirm' if optional else 'exit')
 
 	def do_activate(self):
 		Gtk.Application.do_activate(self)
@@ -333,8 +372,60 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Display the campaign selection dialog in a new
 		:py:class:`.CampaignSelectionDialog` instance.
 
-		:return: The status of the dialog.
+		:return: Whether or not a campaign was selected.
 		:rtype: bool
 		"""
 		dialog = dialogs.CampaignSelectionDialog(self)
 		return dialog.interact() == Gtk.ResponseType.APPLY
+
+	def show_preferences(self):
+		"""
+		Display a
+		:py:class:`.dialogs.configuration.ConfigurationDialog`
+		instance and saves the configuration to disk if cancel is not selected.
+		"""
+		dialog = dialogs.ConfigurationDialog(self)
+		if dialog.interact() != Gtk.ResponseType.CANCEL:
+			self.save_config()
+
+	def start_sftp_client(self):
+		"""
+		Start the client's preferred sftp client application in a new process.
+		"""
+		if not self.config['sftp_client']:
+			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self.get_active_window(), 'An SFTP client is not configured')
+			return False
+		command = str(self.config['sftp_client'])
+		sftp_bin = shlex.split(command)[0]
+		if not utilities.which(sftp_bin):
+			self.logger.error('could not locate the sftp binary: ' + sftp_bin)
+			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self.get_active_window(), "Could not find the SFTP binary '{0}'".format(sftp_bin))
+			return False
+		try:
+			command = command.format(
+				server=self.config['server'],
+				username=self.config['server_username'],
+				web_root=self.config['server_config']['server.web_root']
+			)
+		except KeyError as error:
+			self.logger.error("key error while parsing the sftp command for token: {0}".format(error.args[0]))
+			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self.get_active_window(), "Invalid token '{0}' in the SFTP command.".format(error.args[0]))
+			return False
+		self.logger.debug("starting sftp client command: {0}".format(command))
+		utilities.start_process(command, wait=False)
+		return
+
+	def stop_remote_service(self):
+		"""
+		Stop the remote King Phisher server. This will request that the
+		server stop processing new requests and exit. This will display
+		a confirmation dialog before performing the operation. If the
+		remote service is stopped, the client will quit.
+		"""
+		if not gui_utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self.get_active_window(), 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
+			return
+		self.rpc('shutdown')
+		self.logger.info('the remote king phisher service has been stopped')
+		gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'The remote service has been stopped.')
+		self.quit()
+		return

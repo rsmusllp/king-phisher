@@ -835,4 +835,4 @@ class MailSenderTab(object):
 				continue
 			self.config[unset_key] = config_type()
 		config_tab.objects_load_from_config()
-		gui_utilities.show_dialog_info('Successfully imported the message', self.parent)
+		gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message.')

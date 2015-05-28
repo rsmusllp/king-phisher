@@ -31,7 +31,6 @@
 #
 
 import logging
-import shlex
 
 from king_phisher import find
 from king_phisher import utilities
@@ -91,31 +90,31 @@ class MainMenuBar(gui_utilities.GladeGObject):
 			menu_item.add_accelerator('activate', self.window.accel_group, key, modifier, Gtk.AccelFlags.VISIBLE)
 
 	def do_edit_delete_campaign(self, _):
-		self.window.delete_campaign()
+		self.application.campaign_delete()
 
 	def do_edit_rename_campaign(self, _):
-		self.window.rename_campaign()
+		self.application.campaign_rename()
 
 	def do_edit_preferences(self, _):
-		self.window.edit_preferences()
+		self.application.show_preferences()
 
 	def do_edit_stop_service(self, _):
-		self.window.stop_remote_service()
+		self.application.stop_remote_service()
 
 	def do_export_campaign_xml(self, _):
 		self.window.export_campaign_xml()
 
 	def do_export_message_data(self, _):
-		self.window.tabs['mailer'].export_message_data()
+		self.window.export_message_data()
 
 	def do_import_message_data(self, _):
-		self.window.tabs['mailer'].import_message_data()
+		self.window.import_message_data()
 
 	def do_show_campaign_selection(self, _):
 		self.application.show_campaign_selection()
 
 	def do_quit(self, _):
-		self.application.emit('exit-confirm')
+		self.application.quit(optional=True)
 
 	def do_tools_rpc_terminal(self, _):
 		tools.KingPhisherClientRPCTerminal(self.application)
@@ -124,7 +123,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		dialogs.ClonePageDialog(self.application).interact()
 
 	def do_tools_sftp_client(self, _):
-		self.window.start_sftp_client()
+		self.application.start_sftp_client()
 
 	def do_tools_show_campaign_graph(self, _, graph_name):
 		self.application.show_campaign_graph(graph_name)
@@ -219,14 +218,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.application.emit('exit-confirm')
 		return True
 
-	def client_quit(self):
-		"""
-		Unconditionally quit the client and perform any necessary clean up
-		operations. The exit-confirm signal will not be sent so there will not
-		be any opportunities for the client to cancel the operation.
-		"""
-		self.application.emit('exit')
-
 	def signal_login_dialog_response(self, dialog, response, glade_dialog):
 		if response == Gtk.ResponseType.CANCEL or response == Gtk.ResponseType.DELETE_EVENT:
 			dialog.destroy()
@@ -236,39 +227,6 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		self.application.server_connect()
 		self.rpc = self.application.rpc
 		dialog.destroy()
-
-	def rename_campaign(self):
-		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
-		prompt = dialogs.TextEntryDialog.build_prompt(self.application, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
-		response = prompt.interact()
-		if response == None or response == campaign.name:
-			return
-		self.rpc('campaigns/set', self.config['campaign_id'], ('name',), (response,))
-		gui_utilities.show_dialog_info('Campaign Name Updated', self, 'The campaign name was successfully changed')
-
-	def delete_campaign(self):
-		"""
-		Delete the campaign on the server. A confirmation dialog will be
-		displayed before the operation is performed. If the campaign is
-		deleted and a new campaign is not selected with
-		:py:meth:`.show_campaign_selection`, the client will quit.
-		"""
-		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self, 'This action is irreversible, all campaign data will be lost.'):
-			return
-		self.rpc('campaign/delete', self.config['campaign_id'])
-		if not self.application.show_campaign_selection():
-			gui_utilities.show_dialog_error('Now Exiting', self, 'A campaign must be selected.')
-			self.client_quit()
-
-	def edit_preferences(self):
-		"""
-		Display a
-		:py:class:`.dialogs.configuration.ConfigurationDialog`
-		instance and saves the configuration to disk if cancel is not selected.
-		"""
-		dialog = dialogs.ConfigurationDialog(self.application)
-		if dialog.interact() != Gtk.ResponseType.CANCEL:
-			self.application.save_config()
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""
@@ -281,44 +239,8 @@ class KingPhisherClient(_Gtk_ApplicationWindow):
 		destination_file = response['target_path']
 		export.campaign_to_xml(self.rpc, self.config['campaign_id'], destination_file)
 
-	def start_sftp_client(self):
-		"""
-		Start the client's preferred sftp client application.
-		"""
-		if not self.config['sftp_client']:
-			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self, 'An SFTP client is not configured')
-			return False
-		command = str(self.config['sftp_client'])
-		sftp_bin = shlex.split(command)[0]
-		if not utilities.which(sftp_bin):
-			self.logger.error('could not locate the sftp binary: ' + sftp_bin)
-			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self, "Could not find the SFTP binary '{0}'".format(sftp_bin))
-			return False
-		try:
-			command = command.format(
-				server=self.config['server'],
-				username=self.config['server_username'],
-				web_root=self.config['server_config']['server.web_root']
-			)
-		except KeyError as error:
-			self.logger.error("key error while parsing the sftp command for token: {0}".format(error.args[0]))
-			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self, "Invalid token '{0}' in the SFTP command.".format(error.args[0]))
-			return False
-		self.logger.debug("starting sftp client command: {0}".format(command))
-		utilities.start_process(command, wait=False)
-		return
+	def export_message_data(self, *args, **kwargs):
+		self.tabs['mailer'].export_message_data(*args, **kwargs)
 
-	def stop_remote_service(self):
-		"""
-		Stop the remote King Phisher server. This will request that the
-		server stop processing new requests and exit. This will display
-		a confirmation dialog before performing the operation. If the
-		remote service is stopped, the client will quit.
-		"""
-		if not gui_utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self, 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
-			return
-		self.rpc('shutdown')
-		self.logger.info('the remote king phisher service has been stopped')
-		gui_utilities.show_dialog_error('Now Exiting', self, 'The remote service has been stopped.')
-		self.client_quit()
-		return
+	def import_message_data(self, *args, **kwargs):
+		self.tabs['mailer'].import_message_data(*args, **kwargs)
