@@ -53,6 +53,7 @@ from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
+	'boltons>=0.6.4',
 	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),
 	'Jinja2>=2.7.3',
 	'paramiko>=1.15.2',

@@ -52,6 +52,7 @@ from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
 	'alembic>=0.6.7',
+	'boltons>=0.6.4',
 	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),
 	'geoip2>=2.1.0',
 	'Jinja2>=2.7.3',

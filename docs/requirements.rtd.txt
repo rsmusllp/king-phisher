@@ -1,6 +1,7 @@
 # this is a pip requirements file specifically for the ReadTheDocs environment
 # because it can not install certain packages such as matplotlib
 alembic>=0.6.7
+boltons>=0.6.4
 dnspython>=1.12.0
 geoip2>=2.1.0
 Jinja2>=2.7.3

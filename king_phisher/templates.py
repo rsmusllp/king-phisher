@@ -39,6 +39,7 @@ import random
 from king_phisher import utilities
 from king_phisher import version
 
+import boltons.strutils
 import jinja2
 
 if sys.version_info[0] < 3:
@@ -61,6 +62,14 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		extensions = ['jinja2.ext.autoescape', 'jinja2.ext.do']
 		super(BaseTemplateEnvironment, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
 
+		# misc. string filters
+		self.filters['cardinalize'] = boltons.strutils.cardinalize
+		self.filters['ordinalize'] = boltons.strutils.ordinalize
+		self.filters['pluralize'] = boltons.strutils.pluralize
+		self.filters['singularize'] = boltons.strutils.singularize
+		self.filters['possessive'] = lambda word: word + ('\'' if word.endswith('s') else '\'s')
+
+		# time filters
 		self.filters['strftime'] = self._filter_strftime
 		self.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
 		self.filters['next_week'] = lambda dt: dt + datetime.timedelta(weeks=1)
@@ -70,6 +79,7 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		self.filters['last_week'] = lambda dt: dt + datetime.timedelta(weeks=-1)
 		self.filters['last_month'] = lambda dt: dt + datetime.timedelta(days=-30)
 		self.filters['last_year'] = lambda dt: dt + datetime.timedelta(days=-365)
+
 		# global variables
 		self.globals['version'] = version.version
 		# global functions

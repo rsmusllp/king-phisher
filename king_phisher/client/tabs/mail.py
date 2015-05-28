@@ -416,8 +416,6 @@ class MailSenderPreviewTab(object):
 
 	def show_tab(self):
 		"""Configure the webview to preview the the message HTML file."""
-		if self.file_monitor and self.file_monitor.path == self.config['mailer.html_file']:
-			return
 		if not self.config['mailer.html_file']:
 			if self.file_monitor:
 				self.file_monitor.stop()
@@ -496,7 +494,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		html_file = self.config.get('mailer.html_file')
 		if not html_file:
 			return
-		if not gui_utilities.show_dialog_yes_no('Save HTML the file?', self.parent):
+		if not gui_utilities.show_dialog_yes_no('Save HTML File', self.parent, 'Do you want to save the changes?'):
 			return
 		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
 		html_file_h = open(html_file, 'w')
