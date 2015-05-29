@@ -60,7 +60,6 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	"""
 	top_gobject = 'menubar'
 	def __init__(self, application, window):
-		# TODO: remove references to self.window for self._accel_group
 		assert isinstance(window, MainApplicationWindow)
 		super(MainMenuBar, self).__init__(application)
 		self.window = window

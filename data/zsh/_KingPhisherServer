@@ -43,6 +43,6 @@ _arguments \
   "--update-geoip-db[update the geoip database and exit]" \
   "--verify-config[verify the configuration and exit]" \
   {-L,--log}"[set the logging level]:loglvl:(DEBUG INFO WARNING ERROR CRITICAL)" \
-  {-f,--foreground}"[run in forground (do not fork)]" \
+  {-f,--foreground}"[run in the foreground (do not fork)]" \
   {-h,--help}"[show help text]" \
   {-v,--version}"[show version information]"

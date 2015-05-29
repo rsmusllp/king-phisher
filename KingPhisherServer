@@ -47,6 +47,7 @@ from king_phisher import its
 from king_phisher import version
 from king_phisher.server import server
 
+from boltons import strutils
 from smoke_zephyr.configuration import Configuration
 from smoke_zephyr.requirements import check_requirements
 
@@ -70,7 +71,7 @@ def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
 	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='WARNING', help='set the logging level')
-	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in forground (do not fork)')
+	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in the foreground (do not fork)')
 	parser.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
 	parser.add_argument('--update-geoip-db', dest='update_geoip_db', action='store_true', default=False, help='update the geoip database and exit')
 
@@ -137,7 +138,7 @@ def main():
 			for option in missing_options['missing']:
 				color.print_error('  - ' + option)
 		if 'incompatible' in missing_options:
-			color.print_error('the following options are of an incompatible data type in the server configuraiton:')
+			color.print_error('the following options are of an incompatible data type in the server configuration:')
 			for option in missing_options['incompatible']:
 				color.print_error("  - {0} (type: {1})".format(option[0], option[1]))
 		return os.EX_CONFIG
@@ -146,8 +147,8 @@ def main():
 		return os.EX_OK
 	if arguments.update_geoip_db:
 		color.print_status('downloading a new geoip database')
-		geoip.download_geolite2_city_db(config.get('server.geoip.database'))
-		color.print_good('download complete')
+		size = geoip.download_geolite2_city_db(config.get('server.geoip.database'))
+		color.print_good("download complete, file size: {0}".format(strutils.bytes2human(size)))
 		return os.EX_OK
 
 	# setup logging based on the configuration
