@@ -45,6 +45,7 @@ from king_phisher.client import mailer
 from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
+from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import Gtk
 from gi.repository import GtkSource
@@ -469,6 +470,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		self.textbuffer.set_highlight_syntax(True)
 		self.toolbutton_save_html_file = self.gobjects['toolbutton_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
+		self.textview.connect('key-press-event', self.signal_textview_key_pressed)
 
 		scheme_manager = GtkSource.StyleSchemeManager()
 		style_scheme_name = self.config['text_source_theme']
@@ -484,18 +486,47 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 			self.load_html_file()
 
 	def load_html_file(self):
+		"""Load the contents of the configured HTML file into the editor."""
 		html_file = self.config.get('mailer.html_file')
 		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 			self.toolbutton_save_html_file.set_sensitive(False)
-			self.textview.set_property('editable', False)
 			return
 		self.toolbutton_save_html_file.set_sensitive(True)
-		self.textview.set_property('editable', True)
 		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
 		self.textbuffer.begin_not_undoable_action()
 		self.textbuffer.set_text(html_data)
 		self.textbuffer.end_not_undoable_action()
+
+	def save_html_file(self, force_prompt=False):
+		"""
+		Save the contents from the editor into an HTML file if one is configured
+		otherwise prompt to user to select a file to save as. The user may abort
+		the operation by declining to select a file to save as if they are
+		prompted to do so.
+
+		:param force_prompt: Force prompting the user to select the file to save as.
+		:rtype: bool
+		:return: Whether the contents were saved or not.
+		"""
+		html_file = self.config.get('mailer.html_file')
+		if not html_file or force_prompt:
+			if html_file:
+				current_name = os.path.basename(html_file)
+			else:
+				current_name = 'message.html'
+			dialog = gui_utilities.FileChooser('Save HTML File', self.parent)
+			response = dialog.run_quick_save(current_name=current_name)
+			dialog.destroy()
+			if not response:
+				return False
+			html_file = response['target_path']
+			self.config['mailer.html_file'] = html_file
+		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
+		with open(html_file, 'w') as file_h:
+			file_h.write(text)
+		self.toolbutton_save_html_file.set_sensitive(True)
+		return True
 
 	def signal_toolbutton_open(self, button):
 		dialog = gui_utilities.FileChooser('Choose File', self.parent)
@@ -515,29 +546,10 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 			return
 		if not gui_utilities.show_dialog_yes_no('Save HTML File', self.parent, 'Do you want to save the changes?'):
 			return
-		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
-		html_file_h = open(html_file, 'w')
-		html_file_h.write(text)
-		html_file_h.close()
+		self.save_html_file()
 
 	def signal_toolbutton_save_as(self, toolbutton):
-		dialog = gui_utilities.FileChooser('Save HTML File', self.parent)
-		html_file = self.config.get('mailer.html_file')
-		if html_file:
-			current_name = os.path.basename(html_file)
-		else:
-			current_name = 'message.html'
-		response = dialog.run_quick_save(current_name=current_name)
-		dialog.destroy()
-		if not response:
-			return
-		destination_file = response['target_path']
-		text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
-		html_file_h = open(destination_file, 'w')
-		html_file_h.write(text)
-		html_file_h.close()
-		self.config['mailer.html_file'] = destination_file
-		self.toolbutton_save_html_file.set_sensitive(True)
+		self.save_html_file(force_prompt=True)
 
 	def signal_toolbutton_template_wiki(self, toolbutton):
 		utilities.open_uri('https://github.com/securestate/king-phisher/wiki/Templates#message-templates')
@@ -589,6 +601,16 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		insert_submenu.show_all()
 		return True
 
+	def signal_textview_key_pressed(self, textview, event):
+		if event.type != Gdk.EventType.KEY_PRESS:
+			return
+		keyval = event.get_keyval()[1]
+		if event.get_state() != Gdk.ModifierType.CONTROL_MASK:
+			return
+		if keyval != Gdk.KEY_s:
+			return
+		self.save_html_file()
+
 	def signal_activate_popup_menu_insert(self, widget, text):
 		self.textbuffer.insert_at_cursor(text)
 		return True
@@ -614,6 +636,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 			if self.file_monitor:
 				self.file_monitor.stop()
 				self.file_monitor = None
+			self.toolbutton_save_html_file.set_sensitive(False)
 			return
 		self.load_html_file()
 		self.file_monitor = gui_utilities.FileMonitor(self.config['mailer.html_file'], self._html_file_changed)
