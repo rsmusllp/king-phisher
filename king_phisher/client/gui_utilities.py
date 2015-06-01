@@ -39,6 +39,7 @@ import threading
 from king_phisher import find
 from king_phisher import utilities
 
+import boltons.strutils
 from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
@@ -70,10 +71,13 @@ parameters, the object and the value and the get function will just be
 provided the object.
 """
 
-if isinstance(Gtk.FileChooserDialog, utilities.Mock):
+if isinstance(Gtk.Widget, utilities.Mock):
+	_Gtk_CellRendererText = type('Gtk.CellRendererText', (object,), {})
+	_Gtk_CellRendererText.__module__ = ''
 	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {})
 	_Gtk_FileChooserDialog.__module__ = ''
 else:
+	_Gtk_CellRendererText = Gtk.CellRendererText
 	_Gtk_FileChooserDialog = Gtk.FileChooserDialog
 
 def which_glade():
@@ -235,7 +239,7 @@ def gtk_treeview_get_column_titles(treeview):
 		column_name = column.get_title()
 		yield (column_id, column_name)
 
-def gtk_treeview_set_column_titles(treeview, column_titles, column_offset=0):
+def gtk_treeview_set_column_titles(treeview, column_titles, column_offset=0, renderers=None):
 	"""
 	Populate the column names of a GTK TreeView and set their sort IDs.
 
@@ -243,12 +247,14 @@ def gtk_treeview_set_column_titles(treeview, column_titles, column_offset=0):
 	:type treeview: :py:class:`Gtk.TreeView`
 	:param list column_titles: The names of the columns.
 	:param int column_offset: The offset to start setting column names at.
+	:param list renderers: A list containing custom renderers to use for each column.
 	:return: A dict of all the :py:class:`Gtk.TreeViewColumn` objects keyed by their column id.
 	:rtype: dict
 	"""
 	columns = {}
 	for column_id, column_title in enumerate(column_titles, column_offset):
-		column = Gtk.TreeViewColumn(column_title, Gtk.CellRendererText(), text=column_id)
+		renderer = renderers[column_id] if renderers else Gtk.CellRendererText()
+		column = Gtk.TreeViewColumn(column_title, renderer, text=column_id)
 		column.set_sort_column_id(column_id)
 		treeview.append_column(column)
 		columns[column_id] = column
@@ -332,6 +338,14 @@ def show_dialog_yes_no(*args, **kwargs):
 	"""
 	kwargs['message_buttons'] = Gtk.ButtonsType.YES_NO
 	return show_dialog(Gtk.MessageType.QUESTION, *args, **kwargs) == Gtk.ResponseType.YES
+
+class CellRenderTextBytes(_Gtk_CellRendererText):
+	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
+	def do_render(self, *args, **kwargs):
+		original = self.get_property('text')
+		if original.isdigit():
+			self.set_property('text', boltons.strutils.bytes2human(int(original), 1))
+		Gtk.CellRendererText.do_render(self, *args, **kwargs)
 
 class GladeGObject(object):
 	"""
@@ -653,18 +667,19 @@ class TreeViewManager(object):
 			copy_menu.append(menu_item)
 		return copy_menu
 
-	def set_column_titles(self, column_titles, column_offset=0):
+	def set_column_titles(self, column_titles, column_offset=0, renderers=None):
 		"""
 		Populate the column names of a GTK TreeView and set their sort IDs. This
 		also populates the :py:attr:`.column_titles` attribute.
 
 		:param list column_titles: The titles of the columns.
 		:param int column_offset: The offset to start setting column names at.
+		:param list renderers: A list containing custom renderers to use for each column.
 		:return: A dict of all the :py:class:`Gtk.TreeViewColumn` objects keyed by their column id.
 		:rtype: dict
 		"""
 		self.column_titles.update(enumerate(column_titles, column_offset))
-		return gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset)
+		return gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset, renderers=renderers)
 
 	def signal_button_pressed(self, treeview, event, popup_menu):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):

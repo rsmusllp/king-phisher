@@ -15,6 +15,7 @@ docs/html/*
 
 DODO
 todo.txt
+notes.txt
 
 data/client/king_phisher/#king-phisher-client.ui#
 !data/server/docker/docker-compose.yml

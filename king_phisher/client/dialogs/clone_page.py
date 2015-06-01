@@ -54,12 +54,11 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
 		super(ClonePageDialog, self).__init__(*args, **kwargs)
-		self.resources = Gtk.ListStore(str, str, str)
-		self.resources.set_sort_func(2, gui_utilities.gtk_treesortable_sort_func_numeric, 2)
+		self.resources = Gtk.ListStore(str, str, int)
 		treeview = self.gobjects['treeview_resources']
 		treeview.set_model(self.resources)
 		self.treeview_manager = gui_utilities.TreeViewManager(treeview)
-		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'))
+		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'), renderers=(Gtk.CellRendererText(), Gtk.CellRendererText(), gui_utilities.CellRenderTextBytes()))
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
 		self.button_cancel = self.gobjects['button_cancel']
@@ -114,7 +113,7 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 			for resource in cloner.cloned_resources.values():
 				if gui_utilities.gtk_list_store_search(self.resources, resource.resource, column=0):
 					continue
-				self.resources.append([resource.resource, resource.mime_type or 'N/A', "{0:,}".format(resource.size)])
+				self.resources.append([resource.resource, resource.mime_type or 'N/A', resource.size])
 			self.set_status('Done')
 			gui_utilities.gtk_sync()
 		if len(self.resources) and gui_utilities.show_dialog_yes_no('Transfer Cloned Pages', self.dialog, 'Would you like to start the SFTP client\nto upload the cloned pages?'):
