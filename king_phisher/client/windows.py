@@ -192,9 +192,11 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		self.rpc = None # needs to be initialized last
 		"""The :py:class:`.KingPhisherRPCClient` instance."""
 
-		login_dialog = dialogs.LoginDialog(self.application)
-		login_dialog.dialog.connect('response', self.signal_login_dialog_response, login_dialog)
-		login_dialog.dialog.show()
+		self.application.connect('server-connected', self.signal_kp_server_connected)
+
+		self.login_dialog = dialogs.LoginDialog(self.application)
+		self.login_dialog.dialog.connect('response', self.signal_login_dialog_response)
+		self.login_dialog.dialog.show()
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		#previous_page = notebook.get_nth_page(self.last_page_id)
@@ -216,15 +218,19 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		self.application.emit('exit-confirm')
 		return True
 
-	def signal_login_dialog_response(self, dialog, response, glade_dialog):
+	def signal_kp_server_connected(self, _):
+		self.rpc = self.application.rpc
+		if self.login_dialog:
+			self.login_dialog.destroy()
+			self.login_dialog = None
+
+	def signal_login_dialog_response(self, dialog, response):
 		if response == Gtk.ResponseType.CANCEL or response == Gtk.ResponseType.DELETE_EVENT:
 			dialog.destroy()
 			self.application.emit('exit')
 			return True
-		glade_dialog.objects_save_to_config()
+		self.login_dialog.objects_save_to_config()
 		self.application.server_connect()
-		self.rpc = self.application.rpc
-		dialog.destroy()
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""

@@ -387,6 +387,10 @@ class GladeGObject(object):
 			self.gobjects[gobject_id] = gobject
 		self.objects_load_from_config()
 
+	def destroy(self):
+		"""Destroy the top-level GObject."""
+		getattr(self, self.top_gobject).destroy()
+
 	@property
 	def parent(self):
 		return self.application.get_active_window()
