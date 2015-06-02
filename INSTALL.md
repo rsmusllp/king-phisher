@@ -19,6 +19,10 @@ require a valid local account on the King Phisher Server.
 
 ## Linux Install Steps
 
+The following steps walk through installing King Phisher on Linux into a
+self contained directory. Installing King Phisher into ```/opt/king-phisher```
+is recommended.
+
 King Phisher comes with an install script for a convenient installation process.
 It will handle installing all of the operating system dependencies, the required
 Python packages, and basic configuration. The automated install scripts supports
@@ -69,31 +73,7 @@ likely missing libraries that will need to be installed through the native
 package manager.
 
 ## Required Packages
-The following sections document the packages required for both the client
-and server components. All packages are listed in the provided ```requirements.txt```
-file to be easily installed with pip. Some packages may not install correctly
-due to missing native libraries. The automated install script will handle the
+All required packages are listed in the provided ```requirements.txt``` file to
+be easily installed with pip. Some packages may not install correctly due to
+missing native libraries. The automated install script will handle the
 installation of these libraries for the supported flavors of Linux.
-
-### Client Required Packages
-* [Jinja2](http://jinja.pocoo.org/)
-* [Paramiko](https://github.com/paramiko/paramiko/)
-* [PyGObject](https://wiki.gnome.org/PyGObject/)
-* [Smoke-Zephyr](https://github.com/zeroSteiner/smoke-zephyr/)
-
-### Client Optional Packages
-* [Matplotlib](http://matplotlib.org/)
-* [Msgpack-Python](https://github.com/msgpack/msgpack-python/)
-
-### Server Required Packages
-* [Alembic](http://alembic.readthedocs.org/en/latest/)
-* [dnspython](http://www.dnspython.org/)
-* [Jinja2](http://jinja.pocoo.org/)
-* [Msgpack-Python](https://github.com/msgpack/msgpack-python/)
-* [PyYAML](http://pyyaml.org/)
-* [Smoke-Zephyr](https://github.com/zeroSteiner/smoke-zephyr/)
-* [SQLAlchemy](http://www.sqlalchemy.org/)
-
-The following steps walk through installing King Phisher on Linux into a
-self contained directory. Installing King Phisher into ```/opt/king-phisher```
-is recommended.
