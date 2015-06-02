@@ -1,5 +1,5 @@
-Client GUI Documentation
-========================
+Client GUI
+==========
 
 .. toctree::
    :maxdepth: 1
