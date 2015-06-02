@@ -44,6 +44,7 @@ from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
 from king_phisher import its
+from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import server
 
@@ -69,8 +70,7 @@ if its.py_v2:
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
-	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='WARNING', help='set the logging level')
+	utilities.argp_add_args(parser)
 	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in the foreground (do not fork)')
 	parser.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
 	parser.add_argument('--update-geoip-db', dest='update_geoip_db', action='store_true', default=False, help='update the geoip database and exit')
@@ -78,12 +78,7 @@ def main():
 	parser.add_argument('config_file', action='store', type=argparse.FileType('r'), help='configuration file to use')
 	arguments = parser.parse_args()
 
-	logging.getLogger('').setLevel(logging.DEBUG)
-	console_log_handler = logging.StreamHandler()
-	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
-	console_log_handler.setFormatter(color.ColoredLogFormatter("%(levelname)s %(message)s"))
-	logging.getLogger('').addHandler(console_log_handler)
-	logging.captureWarnings(True)
+	console_log_handler = utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
 	config_file = arguments.config_file
 	del parser
 	logger = logging.getLogger('KingPhisher.Server.CLI')

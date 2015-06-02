@@ -32,6 +32,7 @@
 
 import datetime
 import ipaddress
+import logging
 import os
 import random
 import re
@@ -40,6 +41,10 @@ import string
 import subprocess
 import sys
 import time
+
+from king_phisher import color
+from king_phisher import its
+from king_phisher import version
 
 from smoke_zephyr.utilities import which
 
@@ -72,6 +77,48 @@ class Mock(object):
 
 	def __setitem__(self, name, value):
 		pass
+
+def argp_add_args(parser, default_root=''):
+	"""
+	Add standard arguments to a new :py:class:`argparse.ArgumentParser` instance
+	for configuring logging options from the command line and displaying the
+	version information.
+
+	:param parser: The parser to add arguments to.
+	:type parser: :py:class:`argparse.ArgumentParser`
+	:param str default_root: The default root logger to specify.
+	"""
+	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
+	parser.add_argument('-L', '--log', dest='loglvl', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='WARNING', help='set the logging level')
+	parser.add_argument('--logger', default=default_root, help='specify the root logger')
+
+def configure_stream_logger(level, logger):
+	"""
+	Configure the default stream handler for logging messages to the console.
+	This also configures the basic logging environment for the application.
+
+	:param level: The level to set the logger to.
+	:type level: int, str
+	:param str logger: The logger to add the stream handler for.
+	:return: The new configured stream handler.
+	:rtype: :py:class:`logging.StreamHandler`
+	"""
+	if isinstance(level, str):
+		level = getattr(logging, level)
+	root_logger = logging.getLogger('')
+	for handler in root_logger.handlers:
+		root_logger.removeHandler(handler)
+
+	logging.getLogger(logger).setLevel(logging.DEBUG)
+	console_log_handler = logging.StreamHandler()
+	console_log_handler.setLevel(level)
+	if its.on_linux:
+		console_log_handler.setFormatter(color.ColoredLogFormatter("%(levelname)s %(message)s"))
+	else:
+		console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
+	logging.getLogger(logger).addHandler(console_log_handler)
+	logging.captureWarnings(True)
+	return console_log_handler
 
 def datetime_utc_to_local(dt):
 	"""

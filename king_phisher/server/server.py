@@ -638,7 +638,6 @@ class KingPhisherServer(AdvancedHTTPServer):
 		:param config: Configuration to retrieve settings from.
 		:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 		"""
-		self.logger = logging.getLogger('KingPhisher.Server')
 		# additional mime types to be treated as html because they're probably cloned pages
 		HandlerClass.extensions_map.update({
 			'': 'text/html',
@@ -653,6 +652,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 			'.srf': 'text/html'
 		})
 		super(KingPhisherServer, self).__init__(HandlerClass, *args, **kwargs)
+		self.logger = logging.getLogger('KingPhisher.Server')
 		self.config = config
 		"""A :py:class:`~smoke_zephyr.configuration.Configuration` instance used as the main King Phisher server configuration."""
 		self.serve_files = True

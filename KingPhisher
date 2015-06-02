@@ -38,12 +38,13 @@ import threading
 import time
 
 if getattr(sys, 'frozen', False):
-	# set the basemap data directory for forzen builds
+	# set the basemap data directory for frozen builds
 	os.environ['BASEMAPDATA'] = os.path.join(os.path.dirname(sys.executable), 'mpl-basemap-data')
 
 from king_phisher import color
 from king_phisher import find
 from king_phisher import its
+from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import application
 from king_phisher.client import gui_utilities
@@ -64,21 +65,11 @@ if its.py_v2:
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Client GUI', conflict_handler='resolve')
+	utilities.argp_add_args(parser, default_root='KingPhisher')
 	parser.add_argument('-c', '--config', dest='config_file', required=False, help='specify a configuration file to use')
-	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='WARNING', help='set the logging level')
-	parser.add_argument('--logger', default='KingPhisher', help='specify the root logger')
 	arguments = parser.parse_args()
 
-	logging.getLogger(arguments.logger).setLevel(logging.DEBUG)
-	console_log_handler = logging.StreamHandler()
-	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
-	if its.on_linux:
-		console_log_handler.setFormatter(color.ColoredLogFormatter("%(levelname)s %(message)s"))
-	else:
-		console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
-	logging.getLogger(arguments.logger).addHandler(console_log_handler)
-	logging.captureWarnings(True)
+	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
 	config_file = arguments.config_file
 	del arguments, parser
 	logger = logging.getLogger('KingPhisher.Client.CLI')

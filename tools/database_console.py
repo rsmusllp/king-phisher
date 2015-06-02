@@ -32,13 +32,12 @@
 
 import argparse
 import code
-import logging
 import os
 import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from king_phisher import version
+from king_phisher import utilities
 from king_phisher.server.database import manager
 from king_phisher.server.database import models
 
@@ -54,18 +53,13 @@ else:
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Interactive Database Console', conflict_handler='resolve')
-	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
+	utilities.argp_add_args(parser)
 	config_group = parser.add_mutually_exclusive_group(required=True)
 	config_group.add_argument('-c', '--config', dest='server_config', type=argparse.FileType('r'), help='the server configuration file')
 	config_group.add_argument('-u', '--url', dest='database_url', help='the database connection url')
 	arguments = parser.parse_args()
 
-	logging.getLogger('').setLevel(logging.DEBUG)
-	console_log_handler = logging.StreamHandler()
-	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
-	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
-	logging.getLogger('').addHandler(console_log_handler)
+	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
 
 	if arguments.database_url:
 		database_connection_url = arguments.database_url
