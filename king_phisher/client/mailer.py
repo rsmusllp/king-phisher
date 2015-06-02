@@ -265,7 +265,7 @@ class MailSenderThread(threading.Thread):
 		else:
 			SmtpClass = smtplib.SMTP
 		try:
-			self.smtp_connection = SmtpClass(*self.smtp_server)
+			self.smtp_connection = SmtpClass(*self.smtp_server, timeout=10)
 		except socket.error:
 			self.logger.warning('received a socket.error while connecting to the SMTP server')
 		except smtplib.smtplib.SMTPException:

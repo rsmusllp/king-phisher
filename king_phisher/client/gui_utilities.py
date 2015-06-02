@@ -339,7 +339,7 @@ def show_dialog_yes_no(*args, **kwargs):
 	kwargs['message_buttons'] = Gtk.ButtonsType.YES_NO
 	return show_dialog(Gtk.MessageType.QUESTION, *args, **kwargs) == Gtk.ResponseType.YES
 
-class CellRenderTextBytes(_Gtk_CellRendererText):
+class CellRendererTextBytes(_Gtk_CellRendererText):
 	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
 	def do_render(self, *args, **kwargs):
 		original = self.get_property('text')

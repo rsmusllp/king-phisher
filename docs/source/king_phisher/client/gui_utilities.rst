@@ -48,7 +48,7 @@ Functions
 Classes
 -------
 
-.. autoclass:: king_phisher.client.gui_utilities.CellRenderTextBytes
+.. autoclass:: king_phisher.client.gui_utilities.CellRendererTextBytes
    :show-inheritance:
 
 .. autoclass:: king_phisher.client.gui_utilities.FileChooser

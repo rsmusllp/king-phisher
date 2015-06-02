@@ -41,7 +41,7 @@ __all__ = ['ClonePageDialog']
 
 class ClonePageDialog(gui_utilities.GladeGObject):
 	"""
-	Display a dialog for cloning a web page. The logic of the cloning operation
+	Display a dialog for cloning a web page. The logic for the cloning operation
 	is provided by the :py:mod:`.web_cloner` module.
 	"""
 	gobject_ids = [
@@ -58,7 +58,7 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 		treeview = self.gobjects['treeview_resources']
 		treeview.set_model(self.resources)
 		self.treeview_manager = gui_utilities.TreeViewManager(treeview)
-		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'), renderers=(Gtk.CellRendererText(), Gtk.CellRendererText(), gui_utilities.CellRenderTextBytes()))
+		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'), renderers=(Gtk.CellRendererText(), Gtk.CellRendererText(), gui_utilities.CellRendererTextBytes()))
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
 		self.button_cancel = self.gobjects['button_cancel']
