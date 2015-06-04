@@ -1,4 +1,6 @@
-.. image:: https://raw.githubusercontent.com/securestate/king-phisher/master/data/king-phisher-logo.png
+.. logo file located in data/
+.. image:: ../../data/king-phisher-logo.png
+   :align: center
 
 King Phisher Documentation
 ==========================
@@ -20,6 +22,7 @@ the `GitHub Homepage`_.
    client_gui.rst
    rpc_api.rst
    environment_vars.rst
+   change_log.rst
 
 Indices and tables
 ==================
