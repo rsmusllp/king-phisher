@@ -1,4 +1,4 @@
-Client GUI
+Server API
 ==========
 
 .. toctree::
@@ -6,5 +6,5 @@ Client GUI
    :numbered:
    :titlesonly:
 
-   client/gobject_signals.rst
-   client/key_shortcuts.rst
+   rest_api.rst
+   rpc_api.rst

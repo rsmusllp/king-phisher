@@ -19,8 +19,8 @@ the `GitHub Homepage`_.
    :maxdepth: 1
 
    king_phisher_api.rst
-   client_gui.rst
-   rpc_api.rst
+   client/index.rst
+   server_api/index.rst
    environment_vars.rst
    change_log.rst
 

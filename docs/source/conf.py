@@ -44,7 +44,8 @@ needs_sphinx = '1.3'
 extensions = [
 	'sphinx.ext.autodoc',
 	'sphinx.ext.intersphinx',
-	'sphinx.ext.linkcode'
+	'sphinx.ext.linkcode',
+	'sphinxcontrib.httpdomain'
 ]
 
 def linkcode_resolve(domain, info):
@@ -87,6 +88,10 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns = []
+
+# HTTP domain specifc settings http://pythonhosted.org/sphinxcontrib-httpdomain/#additional-configuration
+http_index_shortname = 'rest-api'
+http_index_localname = "{0} REST API".format(project)
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.

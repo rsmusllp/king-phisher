@@ -68,12 +68,12 @@ Campaign API
 Campaign Table API
 ^^^^^^^^^^^^^^^^^^
 
-.. py:function:: campaign/< table_name >/count(campaign_id)
+.. py:function:: campaign/(str:table_name)/count(campaign_id)
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
-.. py:function:: campaign/< table_name >/view(campaign_id, page=0)
+.. py:function:: campaign/(str:table_name)/view(campaign_id, page=0)
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
@@ -138,37 +138,37 @@ Message API
 Table API
 ---------
 
-.. py:function:: < table_name >/count()
+.. py:function:: (str:table_name)/count()
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
-.. py:function:: < table_name >/delete(row_id)
+.. py:function:: (str:table_name)/delete(row_id)
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_row_by_id`
 
-.. py:function:: < table_name >/delete/multi(row_ids)
+.. py:function:: (str:table_name)/delete/multi(row_ids)
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_rows_by_id`
 
-.. py:function:: < table_name >/get(row_id)
+.. py:function:: (str:table_name)/get(row_id)
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_row_by_id`
 
-.. py:function:: < table_name >/insert(keys, values)
+.. py:function:: (str:table_name)/insert(keys, values)
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_insert_row`
 
-.. py:function:: < table_name >/set(row_id, keys, values)
+.. py:function:: (str:table_name)/set(row_id, keys, values)
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_set_row_value`
 
-.. py:function:: < table_name >/view(page=0)
+.. py:function:: (str:table_name)/view(page=0)
    :noindex:
 
    :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
