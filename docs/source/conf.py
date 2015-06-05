@@ -56,7 +56,7 @@ def linkcode_resolve(domain, info):
 	file_name = info['module'].replace('.', '/') + '.py'
 	return "https://github.com/{0}/blob/{1}/{2}".format(GITHUB_REPO, GITHUB_BRANCH, file_name)
 
-intersphinx_mapping = {'smoke-zephyr': ('https://smoke-zephyr.readthedocs.org/en/latest/', None)}
+intersphinx_mapping = {'smokezephyr': ('https://smoke-zephyr.readthedocs.org/en/latest/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
