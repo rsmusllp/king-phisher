@@ -18,4 +18,5 @@ termcolor>=1.1.
 
 # additional sphinx-specific requirements
 sphinx>=1.3.0
+sphinxcontrib-domaintools>=0.1
 sphinxcontrib-httpdomain>=1.3.0

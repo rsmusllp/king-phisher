@@ -3,172 +3,161 @@
 RPC API
 =======
 
-.. py:function:: client/initialize()
-   :noindex:
+Overview
+--------
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_client_initialize`
+The RPC API is used by the King Phisher client to communicate with the server.
+It uses the RPC capabilities provided by the
+:py:mod:`~king_phisher.third_party.AdvancedHTTPServer` module for the
+underlying communications. The RPC API provides a way for the client to
+retrieve and set information regarding campaigns as well as the server's
+configuration. RPC requests must be authenticated and are only permitted from
+the loopback interface. The client is responsible for using SSH to set up a port
+forward for requests.
 
-.. py:function:: ping()
-   :noindex:
+.. _rpc-api-general-api-label:
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_ping`
+General API
+-----------
 
-.. py:function:: shutdown()
-   :noindex:
+.. rpc:function:: client/initialize()
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_shutdown`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_client_initialize`
 
-.. py:function:: version()
-   :noindex:
+.. rpc:function:: ping()
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_version`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_ping`
+
+.. rpc:function:: shutdown()
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_shutdown`
+
+.. rpc:function:: version()
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_version`
 
 .. _rpc-api-campaign-api-label:
 
 Campaign API
 ------------
 
-.. py:function:: campaign/alerts/is_subscribed(campaign_id)
-   :noindex:
+.. rpc:function:: campaign/alerts/is_subscribed(campaign_id)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_is_subscribed`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_is_subscribed`
 
-.. py:function:: campaign/alerts/subscribe(campaign_id)
-   :noindex:
+.. rpc:function:: campaign/alerts/subscribe(campaign_id)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_subscribe`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_subscribe`
 
-.. py:function:: campaign/alerts/unsubscribe(campaign_id)
-   :noindex:
+.. rpc:function:: campaign/alerts/unsubscribe(campaign_id)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_unsubscribe`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_unsubscribe`
 
-.. py:function:: campaign/delete(campaign_id)
-   :noindex:
+.. rpc:function:: campaign/delete(campaign_id)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_delete`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_delete`
 
-.. py:function:: campaign/landing_page/new(campaign_id, hostname, page)
-   :noindex:
+.. rpc:function:: campaign/landing_page/new(campaign_id, hostname, page)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_landing_page_new`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_landing_page_new`
 
-.. py:function:: campaign/message/new(campaign_id, email_id, email_target, company_name, first_name, last_name)
-   :noindex:
+.. rpc:function:: campaign/message/new(campaign_id, email_id, email_target, company_name, first_name, last_name)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_message_new`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_message_new`
 
-.. py:function:: campaign/new(name)
-   :noindex:
+.. rpc:function:: campaign/new(name)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_new`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_new`
 
 .. _rpc-api-campaign-table-api-label:
 
 Campaign Table API
 ^^^^^^^^^^^^^^^^^^
 
-.. py:function:: campaign/(str:table_name)/count(campaign_id)
-   :noindex:
+.. rpc:function:: campaign/(str:table_name)/count(campaign_id)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
-.. py:function:: campaign/(str:table_name)/view(campaign_id, page=0)
-   :noindex:
+.. rpc:function:: campaign/(str:table_name)/view(campaign_id, page=0)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
 
 .. _rpc-api-configuration-api-label:
 
 Configuration API
 -----------------
 
-.. py:function:: config/get(option_name)
-   :noindex:
+.. rpc:function:: config/get(option_name)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_config_get`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_config_get`
 
-.. py:function:: config/set(options)
-   :noindex:
+.. rpc:function:: config/set(options)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_config_set`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_config_set`
 
 .. _rpc-api-geoip-api-label:
 
 GeoIP API
 ---------
 
-.. py:function:: geoip/lookup(ip, lang=None)
-   :noindex:
+.. rpc:function:: geoip/lookup(ip, lang=None)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_geoip_lookup`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_geoip_lookup`
 
-.. py:function:: geoip/lookup/multi(ips, lang=None)
-   :noindex:
+.. rpc:function:: geoip/lookup/multi(ips, lang=None)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_geoip_lookup_multi`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_geoip_lookup_multi`
 
 .. _rpc-api-message-api-label:
 
 Message API
 -----------
 
-.. py:function:: message/credentials/count(message_id)
-   :noindex:
+.. rpc:function:: message/credentials/count(message_id)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
-.. py:function:: message/credentials/view(message_id, page=0)
-   :noindex:
+.. rpc:function:: message/credentials/view(message_id, page=0)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
 
-.. py:function:: message/visits/count(message_id)
-   :noindex:
+.. rpc:function:: message/visits/count(message_id)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
-.. py:function:: message/visits/view(message_id, page=0)
-   :noindex:
+.. rpc:function:: message/visits/view(message_id, page=0)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
 
 .. _rpc-api-table-api-label:
 
 Table API
 ---------
 
-.. py:function:: (str:table_name)/count()
-   :noindex:
+.. rpc:function:: (str:table_name)/count()
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
-.. py:function:: (str:table_name)/delete(row_id)
-   :noindex:
+.. rpc:function:: (str:table_name)/delete(row_id)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_row_by_id`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_row_by_id`
 
-.. py:function:: (str:table_name)/delete/multi(row_ids)
-   :noindex:
+.. rpc:function:: (str:table_name)/delete/multi(row_ids)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_rows_by_id`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_rows_by_id`
 
-.. py:function:: (str:table_name)/get(row_id)
-   :noindex:
+.. rpc:function:: (str:table_name)/get(row_id)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_row_by_id`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_row_by_id`
 
-.. py:function:: (str:table_name)/insert(keys, values)
-   :noindex:
+.. rpc:function:: (str:table_name)/insert(keys, values)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_insert_row`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_insert_row`
 
-.. py:function:: (str:table_name)/set(row_id, keys, values)
-   :noindex:
+.. rpc:function:: (str:table_name)/set(row_id, keys, values)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_set_row_value`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_set_row_value`
 
-.. py:function:: (str:table_name)/view(page=0)
-   :noindex:
+.. rpc:function:: (str:table_name)/view(page=0)
 
-   :Handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`

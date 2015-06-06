@@ -81,7 +81,7 @@ class RPCTerminalWindow(gui_utilities.GladeGObject):
 		dialogs.AboutDialog(self.application).interact()
 
 	def signal_menuitem_help_api_docs(self, menuitem):
-		rpc_api_docs_url = "http://king-phisher.readthedocs.org/en/{0}/rpc_api.html".format('latest' if version.version_label in ('alpha', 'beta') else 'stable')
+		rpc_api_docs_url = "http://king-phisher.readthedocs.org/en/{0}/server_api/rpc_api.html".format('latest' if version.version_label in ('alpha', 'beta') else 'stable')
 		utilities.open_uri(rpc_api_docs_url)
 
 	def signal_menuitem_help_wiki(self, menuitem):
