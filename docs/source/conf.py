@@ -44,10 +44,15 @@ needs_sphinx = '1.3'
 extensions = [
 	'king_phisher.rpc_docs',
 	'sphinx.ext.autodoc',
+	'sphinx.ext.extlinks',
 	'sphinx.ext.intersphinx',
 	'sphinx.ext.linkcode',
 	'sphinxcontrib.httpdomain'
 ]
+
+extlinks = {
+	'release': ("https://github.com/{0}/releases/tag/v%s".format(GITHUB_REPO), 'v')
+}
 
 def linkcode_resolve(domain, info):
 	if domain != 'py':
