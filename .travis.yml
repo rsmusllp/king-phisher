@@ -24,7 +24,7 @@ before_install:
   - sh -e /etc/init.d/xvfb start
 
 install:
-  - pip install docutils pylint sphinx 
+  - pip install docutils pylint sphinx
   - pip install sphinxcontrib-domaintools sphinxcontrib-httpdomain
   - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -r requirements.txt; fi
   - wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz

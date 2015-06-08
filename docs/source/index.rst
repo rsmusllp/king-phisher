@@ -7,7 +7,7 @@ King Phisher Documentation
 
 King Phisher is an open source Phishing Campaign Toolkit. This is its technical
 documentation intended for use by contributors. The source code is available on
-the `GitHub Homepage`_.
+the `GitHub homepage`_.
 
 .. _GitHub Homepage: https://github.com/securestate/king-phisher
 

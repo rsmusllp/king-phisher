@@ -213,7 +213,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 				break
 			row_data = self.format_row_data(row)
 			if row_data == None:
-				self.rpc(self.remote_table_name + '/delete', row_id)
+				self.rpc(self.remote_table_name + '/delete', row.id)
 				continue
 			row_data = list(map(self.format_cell_data, row_data))
 			row_data.insert(0, str(row.id))
