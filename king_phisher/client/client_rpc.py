@@ -144,7 +144,7 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		address in the server's geoip database.
 
 		:param ip: The IP address to lookup.
-		:type ip: :py:class:`ipaddress.IPv4Address`, list, set, str, tuple
+		:type ip: :py:class:`ipaddress.IPv4Address`, str
 		:return: The geographic location information for the specified IP address.
 		:rtype: :py:class:`~king_phisher.geoip.GeoLocation`
 		"""

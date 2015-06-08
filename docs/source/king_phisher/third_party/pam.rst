@@ -1,5 +1,5 @@
-:mod:`pam` --- PAM module for Python
-====================================
+:mod:`pam`
+==========
 
 .. module:: pam
    :synopsis: PAM module for Python

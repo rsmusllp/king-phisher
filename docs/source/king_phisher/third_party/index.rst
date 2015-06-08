@@ -1,5 +1,5 @@
-:mod:`third_party` --- Pre-packaged third party modules
-=======================================================
+:mod:`third_party`
+==================
 
 .. module:: third_party
    :synopsis: Packaged third party modules

@@ -1,5 +1,5 @@
-:mod:`AdvancedHTTPServer` --- Python HTTP Server
-================================================
+:mod:`AdvancedHTTPServer`
+=========================
 
 .. module:: king_phisher.third_party.AdvancedHTTPServer
    :synopsis: Python HTTP Server
