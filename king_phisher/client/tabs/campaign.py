@@ -42,10 +42,13 @@ from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 
+from boltons import iterutils
 from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import Gtk
 from smoke_zephyr.utilities import parse_timespan
+
+UNKNOWN_LOCATION_STRING = 'N/A (Unknown)'
 
 class CampaignViewGenericTab(gui_utilities.GladeGObject):
 	"""
@@ -396,27 +399,48 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		'First Visit',
 		'Last Visit'
 	)
+	def __init__(self, *args, **kwargs):
+		super(CampaignViewVisitsTab, self).__init__(*args, **kwargs)
+		self._ips_for_georesolution = {}
+
 	def format_row_data(self, visit):
 		msg_details = self.rpc.remote_table_row('messages', visit.message_id, cache=True)
 		if not msg_details:
 			return None
 		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
+		geo_location = UNKNOWN_LOCATION_STRING
 		if visitor_ip.is_loopback:
 			geo_location = 'N/A (Loopback)'
 		elif visitor_ip.is_private:
 			geo_location = 'N/A (Private)'
+		elif isinstance(visitor_ip, ipaddress.IPv6Address):
+			geo_location = 'N/A (IPv6 Address)'
 		else:
-			geo_location = self.rpc.geoip_lookup(visitor_ip) or 'N/A (Unknown)'
+			if not visitor_ip in self._ips_for_georesolution:
+				self._ips_for_georesolution[visitor_ip] = visit.first_visit
+			elif self._ips_for_georesolution[visitor_ip] > visit.first_visit:
+				self._ips_for_georesolution[visitor_ip] = visit.first_visit
 		row = (
 			msg_details.target_email,
 			str(visitor_ip),
 			visit.visit_count,
 			visit.visitor_details,
-			str(geo_location),
+			geo_location,
 			visit.first_visit,
 			visit.last_visit
 		)
 		return row
+
+	def loader_thread_routine(self, store):
+		self._ips_for_georesolution = {}
+		super(CampaignViewVisitsTab, self).loader_thread_routine(store)
+		ips_for_geores = [ip for (ip, _) in sorted(self._ips_for_georesolution.items(), key=lambda x: x[1])]
+		locations = {}
+		for ip_addresses in iterutils.chunked(ips_for_geores, 50):
+			locations.update(self.rpc.geoip_lookup_multi(ip_addresses))
+		for row in store:
+			if row[2] in locations:
+				row[5] = str(locations[row[2]])
 
 class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding sent messages."""

@@ -144,7 +144,7 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		address in the server's geoip database.
 
 		:param ip: The IP address to lookup.
-		:type ip: str, :py:class:`ipaddress.IPv4Address`
+		:type ip: :py:class:`ipaddress.IPv4Address`, list, set, str, tuple
 		:return: The geographic location information for the specified IP address.
 		:rtype: :py:class:`~king_phisher.geoip.GeoLocation`
 		"""
@@ -152,6 +152,24 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		if result:
 			result = geoip.GeoLocation(ip, result=result)
 		return result
+
+	def geoip_lookup_multi(self, ips):
+		"""
+		Look up the geographic location information for the specified IP
+		addresses in the server's geoip database. Because results are cached
+		for optimal performance, IP addresses to be queried should be grouped
+		and sorted in a way that is unlikely to change, i.e. by a timestamp.
+
+		:param ips: The IP addresses to lookup.
+		:type ips: list, set, tuple
+		:return: The geographic location information for the specified IP address.
+		:rtype: dict
+		"""
+		ips = [str(ip) for ip in ips]
+		results = self.cache_call('geoip/lookup/multi', ips)
+		for ip, data in results.items():
+			results[ip] = geoip.GeoLocation(ip, result=data)
+		return results
 
 def vte_child_routine(config):
 	"""
