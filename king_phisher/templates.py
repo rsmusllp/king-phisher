@@ -33,16 +33,16 @@
 import datetime
 import logging
 import os
-import sys
 import random
 
+from king_phisher import its
 from king_phisher import utilities
 from king_phisher import version
 
 import boltons.strutils
 import jinja2
 
-if sys.version_info[0] < 3:
+if its.py_v2:
 	import cgi as html
 else:
 	import html
@@ -82,8 +82,10 @@ class BaseTemplateEnvironment(jinja2.Environment):
 
 		# global variables
 		self.globals['version'] = version.version
+
 		# global functions
 		self.globals['random_integer'] = random.randint
+
 		# additional globals
 		if global_vars:
 			for key, value in global_vars.items():

@@ -673,6 +673,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		global_vars = {}
 		if config.has_section('server.page_variables'):
 			global_vars = config.get('server.page_variables')
+		global_vars['embed_youtube_video'] = pages.embed_youtube_video
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
 		self.http_server.template_env = templates.BaseTemplateEnvironment(loader=loader, global_vars=global_vars)

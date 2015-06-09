@@ -30,16 +30,33 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import sys
+from king_phisher import its
+from king_phisher import utilities
 
 import markupsafe
 
-from king_phisher import utilities
-
-if sys.version_info[0] < 3:
+if its.py_v2:
 	import cgi as html
 else:
 	import html
+
+def embed_youtube_video(video_id, autoplay=True, enable_js=False):
+	"""
+	A Jinja function to embed a video into a web page using YouTube's
+	`iframe API <https://developers.google.com/youtube/iframe_api_reference>`_.
+	In order to enable a training button after the video has ended the
+	youtube.js file needs to be included and *enable_js* just be set to True.
+
+	:param str video_id: The id of the YouTube video to embed.
+	:param bool autoplay: Start playing the video as soon as the page loads.
+	:param bool enable_js: Enable the Javascript API.
+	"""
+	autoplay = int(autoplay)
+	yt_url = "https://www.youtube.com/embed/{0}?autoplay={1}&modestbranding=1&rel=0&showinfo=0".format(video_id, autoplay)
+	if enable_js:
+		yt_url += '&enablejsapi=1'
+	iframe_tag = "<iframe id=\"ytplayer\" type=\"text/html\" width=\"720\" height=\"405\" src=\"{0}\" frameborder=\"0\" allowfullscreen></iframe>".format(yt_url)
+	return markupsafe.Markup(iframe_tag)
 
 def make_csrf_page(url, params, method='POST'):
 	"""
