@@ -34,27 +34,42 @@ from king_phisher import its
 from king_phisher import utilities
 
 import markupsafe
+import smoke_zephyr.utilities
 
 if its.py_v2:
 	import cgi as html
 else:
 	import html
 
-def embed_youtube_video(video_id, autoplay=True, enable_js=False):
+def embed_youtube_video(video_id, autoplay=True, enable_js=False, start=0, end=None):
 	"""
 	A Jinja function to embed a video into a web page using YouTube's
 	`iframe API <https://developers.google.com/youtube/iframe_api_reference>`_.
 	In order to enable a training button after the video has ended the
-	youtube.js file needs to be included and *enable_js* just be set to True.
+	youtube.js file needs to be included and *enable_js* just be set to True. If
+	*start* or *end* are specified as strings, the must be in a format suitable
+	to be parsed by :py:func:`~smoke_zephyr.utilities.parse_timespan`.
 
 	:param str video_id: The id of the YouTube video to embed.
 	:param bool autoplay: Start playing the video as soon as the page loads.
 	:param bool enable_js: Enable the Javascript API.
+	:param start: The time offset at which the video should begin playing.
+	:type start: int, str
+	:param end: The time offset at which the video should stop playing.
+	:type end: int, str
 	"""
 	autoplay = int(autoplay)
 	yt_url = "https://www.youtube.com/embed/{0}?autoplay={1}&modestbranding=1&rel=0&showinfo=0".format(video_id, autoplay)
 	if enable_js:
 		yt_url += '&enablejsapi=1'
+	if start:
+		if isinstance(start, str):
+			start = smoke_zephyr.utilities.parse_timespan(start)
+		yt_url += "&start={0}".format(start)
+	if end:
+		if isinstance(end, str):
+			end = smoke_zephyr.utilities.parse_timespan(end)
+		yt_url += "&end={0}".format(end)
 	iframe_tag = "<iframe id=\"ytplayer\" type=\"text/html\" width=\"720\" height=\"405\" src=\"{0}\" frameborder=\"0\" allowfullscreen></iframe>".format(yt_url)
 	return markupsafe.Markup(iframe_tag)
 
