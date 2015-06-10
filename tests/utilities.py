@@ -30,13 +30,18 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import logging
 import os
 import unittest
 
 from king_phisher import testing
-from king_phisher.utilities import *
+from king_phisher import utilities
 
 class UtilitiesTests(testing.KingPhisherTestCase):
+	def test_configure_stream_logger(self):
+		logger = utilities.configure_stream_logger('INFO', 'KingPhisher')
+		self.assertEqual(logger.level, logging.INFO)
+
 	def test_is_valid_email_address(self):
 		valid_emails = [
 			'aliddle@wonderland.com',
@@ -54,9 +59,9 @@ class UtilitiesTests(testing.KingPhisherTestCase):
 			'aliddle@.com'
 		]
 		for address in valid_emails:
-			self.assertTrue(is_valid_email_address(address))
+			self.assertTrue(utilities.is_valid_email_address(address))
 		for address in invalid_emails:
-			self.assertFalse(is_valid_email_address(address))
+			self.assertFalse(utilities.is_valid_email_address(address))
 
 	def test_is_valid_ip_address(self):
 		valid_ips = [
@@ -72,24 +77,26 @@ class UtilitiesTests(testing.KingPhisherTestCase):
 			''
 		]
 		for address in valid_ips:
-			self.assertTrue(is_valid_ip_address(address))
+			self.assertTrue(utilities.is_valid_ip_address(address))
 		for address in invalid_ips:
-			self.assertFalse(is_valid_ip_address(address))
+			self.assertFalse(utilities.is_valid_ip_address(address))
 
-	def test_mock_attributes(self):
-		mock = Mock()
-		self.assertIsInstance(mock.foo, Mock)
-		self.assertIsInstance(mock.foo.bar, Mock)
-		self.assertEqual(mock.__file__, os.devnull)
-		self.assertEqual(mock.__path__, os.devnull)
-		mock_cls = Mock
+	def test_mock_calls(self):
+		mock = utilities.Mock()
+		result = mock()
+		self.assertIsInstance(result, utilities.Mock)
+
+	def test_mock_class_attribute(self):
+		mock_cls = utilities.Mock
 		mock_cls.foobar = 123
 		self.assertEqual(mock_cls.foobar, 123)
 
-	def test_mock_calls(self):
-		mock = Mock()
-		result = mock()
-		self.assertIsInstance(result, Mock)
+	def test_mock_instance_attributes(self):
+		mock = utilities.Mock()
+		self.assertIsInstance(mock.foo, utilities.Mock)
+		self.assertIsInstance(mock.foo.bar, utilities.Mock)
+		self.assertEqual(mock.__file__, os.devnull)
+		self.assertEqual(mock.__path__, os.devnull)
 
 if __name__ == '__main__':
 	unittest.main()

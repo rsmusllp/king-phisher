@@ -43,7 +43,7 @@ class TemplatesTests(testing.KingPhisherTestCase):
 		test_value = random_string(20)
 		global_vars = {test_key: test_value}
 		env = BaseTemplateEnvironment(global_vars=global_vars)
-		test_string = test_string = '<html>{{ ' + test_key + ' }}</html>'
+		test_string = '<html>{{ ' + test_key + ' }}</html>'
 		template = env.from_string(test_string)
 		result = template.render()
 		self.assertTrue(test_value in result)
