@@ -14,7 +14,7 @@ requests>=2.7.0
 six>=1.7.0
 smoke-zephyr==1.0.1
 SQLAlchemy>=1.0.2
-termcolor>=1.1.
+termcolor>=1.1.0
 
 # additional sphinx-specific requirements
 docutils>=0.12

@@ -10,10 +10,13 @@ Version 0.2.x
 Version 0.2.1
 ^^^^^^^^^^^^^
 
+*In Progress*
+
 * Added syntax highlighting to the message edit tab
 * Technical documentation improvements, including documenting the REST API
 * Support reloading message templates when they change from an external editor
 * Support for pulling the client IP from a cookie set by an upstream proxy
+* Support for embedding training videos from YouTube
 
 Version 0.2.0
 ^^^^^^^^^^^^^
