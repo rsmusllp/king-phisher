@@ -559,7 +559,7 @@ class FileMonitor(object):
 		self.on_changed = on_changed
 		self.path = path
 		self._gfile = Gio.file_new_for_path(path)
-		self._gfile_monitor = self._gfile.monitor(Gio.FileMonitorFlags.NONE)
+		self._gfile_monitor = self._gfile.monitor(Gio.FileMonitorFlags.NONE, None)
 		self._gfile_monitor.connect('changed', self.cb_changed)
 		self.logger.debug('starting file monitor for: ' + path)
 

@@ -46,6 +46,7 @@ is_debugging_build = bool(os.environ.get('DEBUG'))
 
 include_dll_path = os.path.join(site.getsitepackages()[1], 'gnome')
 
+# DLLs from site-packages\gnome\
 missing_dlls = [
 	'libaspell-15.dll',
 	'libatk-1.0-0.dll',
@@ -79,6 +80,7 @@ missing_dlls = [
 	'libgsttag-1.0-0.dll',
 	'libgstvideo-1.0-0.dll',
 	'libgtk-3-0.dll',
+	'libgtksourceview-3.0-1.dll',
 	'libharfbuzz-gobject-0.dll',
 	'libintl-8.dll',
 	'libjavascriptcoregtk-3.0-0.dll',
