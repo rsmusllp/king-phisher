@@ -78,7 +78,7 @@ class LoginDialog(BaseLoginDialog):
 		super(LoginDialog, self).__init__(*args, **kwargs)
 		self.popup_menu = Gtk.Menu.new()
 		menu_item = Gtk.MenuItem.new_with_label('About')
-		menu_item.connect('activate', lambda x: about.AboutDialog(self.config, self.dialog).interact())
+		menu_item.connect('activate', lambda x: about.AboutDialog(self.application).interact())
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
 
