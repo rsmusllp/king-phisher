@@ -100,7 +100,7 @@ class WebPageCloner(object):
 		self.dest_dir = os.path.abspath(os.path.normpath(dest_dir))
 		self.logger = logging.getLogger('KingPhisher.Client.WebPageScraper')
 		self.cloned_resources = collections.OrderedDict()
-		"""An :py:class:`~collections.OrderedDict` of :py:class:`.ClonedResourceDetails` keyed by the web resource they describe."""
+		"""A :py:class:`collections.OrderedDict` instance of :py:class:`.ClonedResourceDetails` keyed by the web resource they describe."""
 		self.load_started = False
 		self.load_failed_event = None
 		self.__web_resources = []

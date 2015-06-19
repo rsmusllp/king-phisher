@@ -119,7 +119,7 @@ def gobject_get_value(gobject, gtype=None):
 	can be processed by this function.
 
 	:param gobject: The object to retrieve the value for.
-	:type gobject: :py:class:`GObject.GObject`
+	:type gobject: :py:class:`GObject.Object`
 	:param str gtype: An explicit type to treat *gobject* as.
 	:return: The value of *gobject*.
 	:rtype: str
@@ -142,7 +142,7 @@ def gobject_signal_blocked(gobject, signal_name):
 	to execute a block of code while *signal_name* is blocked.
 
 	:param gobject: The object to block the signal on.
-	:type gobject: :py:class:`GObject.GObject`
+	:type gobject: :py:class:`GObject.Object`
 	:param str signal_name: The name of the signal to block.
 	"""
 	signal_id = GObject.signal_lookup(signal_name, gobject.__class__)
@@ -189,7 +189,7 @@ def gtk_treesortable_sort_func_numeric(model, iter1, iter2, column_id):
 	"""
 	Sort the model by comparing text numeric values with place holders such as
 	1,337. This is meant to be set as a sorting function using
-	:py:func:`Gtk.TreeSortable.set_sort_func`. The user_data parameter must be
+	:py:meth:`Gtk.TreeSortable.set_sort_func`. The user_data parameter must be
 	the column id which contains the numeric values to be sorted.
 
 	:param model: The model that is being sorted.
@@ -404,6 +404,7 @@ class GladeGObject(object):
 		setattr(self, self.top_gobject, gobject)
 
 		self.gobjects = {}
+		"""A dict which maps gobjects to their unique id."""
 		for gobject_id in self.gobject_ids:
 			gobject = self.gtk_builder_get(gobject_id)
 			# the following five lines ensure that the types match up, this is to enforce clean development
@@ -429,7 +430,7 @@ class GladeGObject(object):
 
 		:param str gobject_id: The object name to look for.
 		:return: The GObject as found by the GTK builder.
-		:rtype: :py:class:`GObject.GObject`
+		:rtype: :py:class:`GObject.Object`
 		"""
 		gtkbuilder_id = "{0}.{1}".format(self.__class__.__name__, gobject_id)
 		self.logger.debug('loading GTK builder object with id: ' + gtkbuilder_id)

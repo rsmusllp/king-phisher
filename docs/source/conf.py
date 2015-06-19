@@ -62,7 +62,13 @@ def linkcode_resolve(domain, info):
 	file_name = info['module'].replace('.', '/') + '.py'
 	return "https://github.com/{0}/blob/{1}/{2}".format(GITHUB_REPO, GITHUB_BRANCH, file_name)
 
-intersphinx_mapping = {'smokezephyr': ('https://smoke-zephyr.readthedocs.org/en/latest/', None)}
+intersphinx_mapping = {
+	'glib': ('http://lazka.github.io/pgi-docs/GLib-2.0/', None),
+	'gobject': ('http://lazka.github.io/pgi-docs/GObject-2.0/', None),
+	'gtk': ('http://lazka.github.io/pgi-docs/Gtk-3.0/', None),
+	'smokezephyr': ('https://smoke-zephyr.readthedocs.org/en/latest/', None),
+	'webkit2': ('http://lazka.github.io/pgi-docs/WebKit2-4.0/', None)
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

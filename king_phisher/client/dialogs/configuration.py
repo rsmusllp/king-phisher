@@ -43,8 +43,8 @@ __all__ = ['ConfigurationDialog']
 class ConfigurationDialog(gui_utilities.GladeGObject):
 	"""
 	Display the King Phisher client configuration dialog. Running this
-	dialog via the :py:func:`.interact` method will cause some server
-	settings to be loaded.
+	dialog via the :py:meth:`.interact` method will cause some server settings
+	to be loaded.
 	"""
 	gobject_ids = [
 		# Server Tab

@@ -50,7 +50,7 @@ try:
 	from gi.repository import Vte
 except ImportError:
 	has_vte = False
-	"""Whether the :py:mod:`gi.repository.Vte` module is available."""
+	"""Whether the :py:mod:`Vte` module is available or not."""
 else:
 	has_vte = True
 

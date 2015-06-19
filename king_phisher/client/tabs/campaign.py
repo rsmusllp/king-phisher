@@ -346,11 +346,10 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 	def load_campaign_information(self, force=True):
 		"""
 		Load the necessary campaign information from the remote server.
-		Unless *force* is True, the
-		:py:attr:`~.CampaignViewDashboardTab.last_load_time` is compared
-		with the :py:attr:`~.CampaignViewDashboardTab.refresh_frequency` to
-		check if the information is stale. If the local data is not
-		stale, this function will return without updating the table.
+		Unless *force* is True, the :py:attr:`~.last_load_time` is compared with
+		the :py:attr:`~.refresh_frequency` to check if the information is stale.
+		If the local data is not stale, this function will return without
+		updating the table.
 
 		:param bool force: Ignore the load life time and force loading the remote data.
 		"""
