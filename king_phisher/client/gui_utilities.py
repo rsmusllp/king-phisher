@@ -31,6 +31,7 @@
 #
 
 import contextlib
+import functools
 import logging
 import os
 import socket
@@ -102,6 +103,7 @@ def glib_idle_add_wait(function, *args):
 	"""
 	gsource_completed = threading.Event()
 	results = []
+	@functools.wraps(function)
 	def wrapper():
 		results.append(function(*args)) # pylint: disable=star-args
 		gsource_completed.set()
@@ -166,8 +168,20 @@ def gtk_list_store_search(list_store, value, column=0):
 			return row.iter
 	return None
 
+def gtk_menu_position(menu, x, y, event=None):
+	"""
+	Create a menu at the given location for an event. This function is meant to
+	be used as the *func* parameter for the :py:meth:`Gtk.Menu.popup` method.
+	The *event* object must be passed in as the *user_data* parameter to
+	:py:meth:`~Gtk.Menu.popup`.
+	"""
+	if not hasattr(event, 'get_root_coords'):
+		raise TypeError('event object has no get_root_coords method')
+	coords = event.get_root_coords()
+	return (coords[0], coords[1], True)
+
 def gtk_sync():
-	"""Process all pending GTK events."""
+	"""Wait while all pending GTK events are processed."""
 	while Gtk.events_pending():
 		Gtk.main_iteration()
 
@@ -687,8 +701,7 @@ class TreeViewManager(object):
 		selection = treeview.get_selection()
 		if not selection.count_selected_rows():
 			return
-		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
-		popup_menu.popup(None, None, pos_func, None, event.button, event.time)
+		popup_menu.popup(None, None, gtk_menu_position, event, event.button, event.time)
 		return True
 
 	def signal_key_pressed_copy(self, treeview, event):

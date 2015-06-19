@@ -21,6 +21,8 @@ Functions
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_list_store_search
 
+.. autofunction:: king_phisher.client.gui_utilities.gtk_menu_position
+
 .. autofunction:: king_phisher.client.gui_utilities.gtk_sync
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_treesortable_sort_func_numeric

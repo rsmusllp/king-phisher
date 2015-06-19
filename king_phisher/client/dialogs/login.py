@@ -30,15 +30,15 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+from king_phisher.client import gui_utilities
 from king_phisher.client.dialogs import about
-from king_phisher.client.gui_utilities import GladeGObject
 
 from gi.repository import Gdk
 from gi.repository import Gtk
 
 __all__ = ['LoginDialog', 'SSHLoginDialog']
 
-class BaseLoginDialog(GladeGObject):
+class BaseLoginDialog(gui_utilities.GladeGObject):
 	"""
 	This object is basic login dialog object that can be inherited from and
 	customized.
@@ -91,8 +91,7 @@ class LoginDialog(BaseLoginDialog):
 	def signal_button_pressed(self, widget, event):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
 			return
-		pos_func = lambda m, d: (event.get_root_coords()[0], event.get_root_coords()[1], True)
-		self.popup_menu.popup(None, None, pos_func, None, event.button, event.time)
+		self.popup_menu.popup(None, None, gui_utilities.gtk_menu_position, event, event.button, event.time)
 		return True
 
 class SSHLoginDialog(BaseLoginDialog):
