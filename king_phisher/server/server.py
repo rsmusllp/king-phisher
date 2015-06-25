@@ -190,8 +190,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		:rtype: dict
 		"""
 		client_vars = {
-			'address': self.get_client_ip(),
-			'user_agent': self.headers.get('user-agent')
+			'address': self.get_client_ip()
 		}
 		if not self.message_id:
 			return client_vars
@@ -349,7 +348,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			'request': {
 				'command': self.command,
 				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
-				'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys())))
+				'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys()))),
+				'user_agent': self.headers.get('user-agent')
 			},
 			'server': {
 				'hostname': self.vhost,
