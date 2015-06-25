@@ -189,8 +189,12 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		:return: The client specific template variables.
 		:rtype: dict
 		"""
+		client_vars = {
+			'address': self.get_client_ip(),
+			'user_agent': self.headers.get('user-agent')
+		}
 		if not self.message_id:
-			return
+			return client_vars
 		visit_count = 0
 		result = None
 		if self.message_id == self.config.get('server.secret_id'):
@@ -203,14 +207,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 				result = [message.target_email, message.company_name, message.first_name, message.last_name, message.trained]
 			session.close()
 		if not result:
-			return
-		client_vars = {}
+			return client_vars
 		client_vars['email_address'] = result[0]
 		client_vars['company_name'] = result[1]
 		client_vars['first_name'] = result[2]
 		client_vars['last_name'] = result[3]
 		client_vars['is_trained'] = result[4]
 		client_vars['message_id'] = self.message_id
+
 		client_vars['visit_count'] = visit_count
 		if self.visit_id:
 			client_vars['visit_id'] = self.visit_id
@@ -341,9 +345,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			raise errors.KingPhisherAbortRequestError()
 
 		template_vars = {
-			'client': {
-				'address': self.get_client_ip()
-			},
+			'client': self.get_template_vars_client(),
 			'request': {
 				'command': self.command,
 				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
@@ -355,7 +357,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			}
 		}
 		template_vars.update(self.server.template_env.standard_variables)
-		template_vars['client'].update(self.get_template_vars_client() or {})
 		try:
 			template_data = template.render(template_vars)
 		except jinja2.TemplateError as error:

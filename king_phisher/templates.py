@@ -36,6 +36,7 @@ import os
 import random
 
 from king_phisher import its
+from king_phisher import ua_parser
 from king_phisher import utilities
 from king_phisher import version
 
@@ -85,6 +86,7 @@ class BaseTemplateEnvironment(jinja2.Environment):
 
 		# global functions
 		self.globals['random_integer'] = random.randint
+		self.globals['parse_user_agent'] = ua_parser.parse_user_agent
 
 		# additional globals
 		if global_vars:

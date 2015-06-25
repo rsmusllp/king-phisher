@@ -4,6 +4,13 @@
 #}
 # Client Vars
 client.address:         {{ client.address }}
+client.user_agent:      {{ client.user_agent }}
+
+## Client User Agent Information
+{% set ua_info = parse_user_agent(client.user_agent) %}
+os_name:                {{ ua_info.os_name }}
+os_version:             {{ ua_info.os_version }}
+os_arch:                {{ ua_info.os_arch }}
 {% if client.message_id is defined %}
 
 ## Client Session Vars
