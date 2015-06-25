@@ -591,7 +591,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			session.add(visit)
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in [1, 10, 25]) or ((visit_count % 50) == 0)):
-				alert_text = "{0} vists reached for campaign: {{campaign_name}}".format(visit_count)
+				alert_text = "{0} visits reached for campaign: {{campaign_name}}".format(visit_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
 
 		self._handle_page_visit_creds(session, visit_id)

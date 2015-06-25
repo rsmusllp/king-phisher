@@ -276,9 +276,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		for key in self.config.keys():
 			if 'password' in key or key == 'server_config':
 				del config[key]
-		config_file = os.path.expanduser(self.config_file)
-		config_file_h = open(config_file, 'w')
-		json.dump(config, config_file_h, sort_keys=True, indent=2, separators=(',', ': '))
+		with open(os.path.expanduser(self.config_file), 'w') as config_file_h:
+			json.dump(config, config_file_h, sort_keys=True, indent=2, separators=(',', ': '))
 
 	def server_connect(self):
 		server_version_info = None
