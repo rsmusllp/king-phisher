@@ -12,6 +12,7 @@ data/*/king_phisher/plugins/*
 dist/*
 docs/build/*
 docs/html/*
+ssl/*
 
 DODO
 todo.txt
