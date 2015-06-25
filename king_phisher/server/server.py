@@ -359,7 +359,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		template_vars.update(self.server.template_env.standard_variables)
 		try:
 			template_data = template.render(template_vars)
-		except jinja2.TemplateError as error:
+		except (TypeError, jinja2.TemplateError) as error:
 			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
 			raise errors.KingPhisherAbortRequestError()
 
