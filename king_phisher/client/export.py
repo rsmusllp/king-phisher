@@ -34,6 +34,7 @@ import copy
 import csv
 import datetime
 import io
+import ipaddress
 import json
 import logging
 import os
@@ -44,6 +45,8 @@ import xml.etree.ElementTree as ET
 
 from king_phisher.errors import KingPhisherInputValidationError
 
+from boltons import iterutils
+import geojson
 from smoke_zephyr.utilities import escape_single_quote
 from smoke_zephyr.utilities import unescape_single_quote
 
@@ -150,6 +153,40 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 
 	element_tree = ET.ElementTree(root)
 	element_tree.write(xml_file, encoding='utf-8', xml_declaration=True)
+
+def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
+	"""
+	Export the geo location information for all the visits of a campaign into
+	the GeoJSON format.
+
+	:param rpc: The connected RPC instance to load the information with.
+	:type rpc: :py:class:`.KingPhisherRPCClient`
+	:param campaign_id: The ID of the campaign to load the information for.
+	:param str geojson_file: The destination file for the GeoJSON data.
+	"""
+	ips_for_georesolution = {}
+	for visit in rpc.remote_table('campaign/visits', campaign_id):
+		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
+		if not isinstance(visitor_ip, ipaddress.IPv4Address):
+			continue
+		if visitor_ip.is_loopback or visitor_ip.is_private:
+			continue
+		if not visitor_ip in ips_for_georesolution:
+			ips_for_georesolution[visitor_ip] = visit.first_visit
+		elif ips_for_georesolution[visitor_ip] > visit.first_visit:
+			ips_for_georesolution[visitor_ip] = visit.first_visit
+	ips_for_georesolution = [ip for (ip, _) in sorted(ips_for_georesolution.items(), key=lambda x: x[1])]
+	locations = {}
+	for ip_addresses in iterutils.chunked(ips_for_georesolution, 50):
+		locations.update(rpc.geoip_lookup_multi(ip_addresses))
+	points = []
+	for location in locations.values():
+		if not (location.coordinates and location.coordinates[0] and location.coordinates[1]):
+			continue
+		points.append(geojson.Point((location.coordinates.longitude, location.coordinates.latitude)))
+	feature_collection = geojson.FeatureCollection((geojson.Feature(geometry=geojson.GeometryCollection(points)),))
+	with open(geojson_file, 'w') as file_h:
+		json.dump(feature_collection, file_h, indent=2, separators=(',', ': '))
 
 def message_data_from_kpm(target_file, dest_dir):
 	"""

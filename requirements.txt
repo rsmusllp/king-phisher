@@ -4,6 +4,7 @@ alembic>=0.6.7
 boltons>=0.6.4
 dnspython>=1.12.0
 geoip2>=2.1.0
+geojson>=1.2
 Jinja2>=2.7.3
 markupsafe>=0.23
 matplotlib>=1.4.1

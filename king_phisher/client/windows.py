@@ -103,6 +103,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def do_export_campaign_xml(self, _):
 		self.window.export_campaign_xml()
 
+	def do_export_campaign_visit_geojson(self, _):
+		self.window.export_campaign_visit_geojson()
+
 	def do_export_message_data(self, _):
 		self.window.export_message_data()
 
@@ -245,6 +248,19 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 
 	def export_message_data(self, *args, **kwargs):
 		self.tabs['mailer'].export_message_data(*args, **kwargs)
+
+	def export_campaign_visit_geojson(self):
+		"""
+		Export the current campaign visit information to a GeoJSON data file.
+		"""
+		dialog = gui_utilities.FileChooser('Export Campaign Visit GeoJSON Data', self)
+		file_name = self.config['campaign_name'] + '.geojson'
+		response = dialog.run_quick_save(file_name)
+		dialog.destroy()
+		if not response:
+			return
+		destination_file = response['target_path']
+		export.campaign_visits_to_geojson(self.rpc, self.config['campaign_id'], destination_file)
 
 	def import_message_data(self, *args, **kwargs):
 		self.tabs['mailer'].import_message_data(*args, **kwargs)
