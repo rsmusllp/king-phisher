@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import copy
 import csv
 import datetime
@@ -165,7 +166,9 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	:param str geojson_file: The destination file for the GeoJSON data.
 	"""
 	ips_for_georesolution = {}
+	ip_counter = collections.Counter()
 	for visit in rpc.remote_table('campaign/visits', campaign_id):
+		ip_counter.update((visit.visitor_ip,))
 		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
 		if not isinstance(visitor_ip, ipaddress.IPv4Address):
 			continue
@@ -180,10 +183,13 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	for ip_addresses in iterutils.chunked(ips_for_georesolution, 50):
 		locations.update(rpc.geoip_lookup_multi(ip_addresses))
 	points = []
-	for location in locations.values():
+	for ip, location in locations.items():
 		if not (location.coordinates and location.coordinates[0] and location.coordinates[1]):
 			continue
-		points.append(geojson.Point((location.coordinates.longitude, location.coordinates.latitude)))
+		points.append(geojson.Point(
+			(location.coordinates.longitude, location.coordinates.latitude),
+			properties=dict(count=ip_counter[ip], ip_address=ip)
+		))
 	feature_collection = geojson.FeatureCollection((geojson.Feature(geometry=geojson.GeometryCollection(points)),))
 	with open(geojson_file, 'w') as file_h:
 		json.dump(feature_collection, file_h, indent=2, separators=(',', ': '))

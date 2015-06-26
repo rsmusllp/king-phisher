@@ -159,7 +159,7 @@ class GeoLocation(object):
 		if not result:
 			result = lookup(ip, lang=lang)
 		self.ip_address = ip
-		"""The :py:class:`~ipaddress.IPv4Address` which this geographc location data describes."""
+		"""The :py:class:`~ipaddress.IPv4Address` which this geographic location data describes."""
 		for field in DB_RESULT_FIELDS:
 			if not field in result:
 				raise RuntimeError('the retrieved information is missing required data')
