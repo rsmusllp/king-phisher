@@ -48,6 +48,15 @@ class GeoIPTests(KingPhisherTestCase):
 	def tearDown(self):
 		self.__geoip_db.close()
 
+	def test_geoip_geo_interface(self):
+		location = geoip.GeoLocation(GEO_TEST_IP)
+		self.assertTrue(hasattr(location, '__geo_interface__'))
+		interface = location.__geo_interface__
+		self.assertIsInstance(interface, dict)
+		self.assertEqual(interface.get('type'), 'Point')
+		coordinates = interface.get('coordinates')
+		self.assertIsInstance(coordinates, tuple)
+
 	def test_geoip_lookup(self):
 		result = geoip.lookup(GEO_TEST_IP)
 		self.assertIsInstance(result, dict)
