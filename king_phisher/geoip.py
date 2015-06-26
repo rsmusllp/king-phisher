@@ -144,7 +144,7 @@ Coordinates = collections.namedtuple('Coordinates', ['latitude', 'longitude'])
 
 class GeoLocation(object):
 	"""
-	The geographic location information for a given IP address. If *results* are
+	The geographic location information for a given IP address. If *result* is
 	not specified, :py:func:`.lookup` will be used to obtain the information.
 	"""
 	__slots__ = ('city', 'continent', 'coordinates', 'country', 'ip_address', 'postal_code', 'time_zone')
@@ -167,6 +167,19 @@ class GeoLocation(object):
 				continue
 			setattr(self, field, result[field])
 		self.coordinates = Coordinates(latitude=result['coordinates'][0], longitude=result['coordinates'][1])
+
+	@property
+	def __geo_interface__(self):
+		"""
+		A simple implementation of the Python
+		`__geo_interface__ <https://gist.github.com/sgillies/2217756>`_
+		specification. This allows this object to be used with modules which
+		also support this interface such as :py:mod:`geojson`.
+
+		:return: A dictionary describing a this location as a GeoJSON Point.
+		:rtype: dict
+		"""
+		return {'type': 'Point', 'coordinates': (self.coordinates.longitude, self.coordinates.latitude)}
 
 	def __repr__(self):
 		return "<{0} ip={1} >".format(self.__class__.__name__, self.ip_address)

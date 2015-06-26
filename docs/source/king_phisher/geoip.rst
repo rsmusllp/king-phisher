@@ -33,5 +33,5 @@ Classes
 
 .. autoclass:: king_phisher.geoip.GeoLocation
    :members:
-   :special-members: __init__
+   :special-members: __init__, __geo_interface__
    :undoc-members:

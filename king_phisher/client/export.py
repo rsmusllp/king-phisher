@@ -158,7 +158,7 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	"""
 	Export the geo location information for all the visits of a campaign into
-	the GeoJSON format.
+	the `GeoJSON <http://geojson.org/>`_ format.
 
 	:param rpc: The connected RPC instance to load the information with.
 	:type rpc: :py:class:`.KingPhisherRPCClient`
@@ -186,11 +186,8 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	for ip, location in locations.items():
 		if not (location.coordinates and location.coordinates[0] and location.coordinates[1]):
 			continue
-		points.append(geojson.Point(
-			(location.coordinates.longitude, location.coordinates.latitude),
-			properties=dict(count=ip_counter[ip], ip_address=ip)
-		))
-	feature_collection = geojson.FeatureCollection((geojson.Feature(geometry=geojson.GeometryCollection(points)),))
+		points.append(geojson.Feature(geometry=location, properties=dict(count=ip_counter[ip], ip_address=ip)))
+	feature_collection = geojson.FeatureCollection(points)
 	with open(geojson_file, 'w') as file_h:
 		json.dump(feature_collection, file_h, indent=2, separators=(',', ': '))
 
