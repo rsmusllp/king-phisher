@@ -30,6 +30,8 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import functools
+
 from king_phisher.client import gui_utilities
 from king_phisher.client.dialogs import about
 
@@ -91,7 +93,7 @@ class LoginDialog(BaseLoginDialog):
 	def signal_button_pressed(self, widget, event):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
 			return
-		self.popup_menu.popup(None, None, gui_utilities.gtk_menu_position, event, event.button, event.time)
+		self.popup_menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
 		return True
 
 class SSHLoginDialog(BaseLoginDialog):

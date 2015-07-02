@@ -168,12 +168,14 @@ def gtk_list_store_search(list_store, value, column=0):
 			return row.iter
 	return None
 
-def gtk_menu_position(menu, x, y, event=None):
+def gtk_menu_position(event, *args):
 	"""
 	Create a menu at the given location for an event. This function is meant to
 	be used as the *func* parameter for the :py:meth:`Gtk.Menu.popup` method.
-	The *event* object must be passed in as the *user_data* parameter to
-	:py:meth:`~Gtk.Menu.popup`.
+	The *event* object must be passed in as the first parameter, which can be
+	accomplished using :py:func:`functools.partial`.
+
+	:param event: The event to retrieve the coordinates for.
 	"""
 	if not hasattr(event, 'get_root_coords'):
 		raise TypeError('event object has no get_root_coords method')
@@ -702,7 +704,7 @@ class TreeViewManager(object):
 		selection = treeview.get_selection()
 		if not selection.count_selected_rows():
 			return
-		popup_menu.popup(None, None, gtk_menu_position, event, event.button, event.time)
+		popup_menu.popup(None, None, functools.partial(gtk_menu_position, event), None, event.button, event.time)
 		return True
 
 	def signal_key_pressed_copy(self, treeview, event):
