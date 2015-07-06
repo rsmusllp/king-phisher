@@ -2,7 +2,7 @@
 The [SMS](./sms.rb) plugin uses King Phisher's [REST API](https://king-phisher.readthedocs.org/en/latest/server_api/rest_api.html?highlight=sms#get--_-api-sms-send) to send SMS messages when a new [Metasploit](https://github.com/rapid7/metasploit-framework) session is received. King Phisher's REST API is accessible externally which allows running the SMS plugin, within Metasploit, on a system other than the King Phisher server. The system running Metasploit only needs to be able to make a HTTP GET request to the King Phisher server.
 
 ## King Phisher Configuration
-Within King Phisher's `server_config.yml` file, under the `rest_api` set the `enabled` value to `true`.
+Edit King Phisher's `server_config.yml` file, under the `rest_api` set the `enabled` value to `true`.
 
 Change the `token` value from `null` to a secret string that will be used to access the King Phisher server's REST API remotely. Running this one-liner in Linux will return a randomly generated 32 character string.
 
