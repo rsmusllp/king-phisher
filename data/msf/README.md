@@ -11,7 +11,7 @@ Change the `token` value from `null` to a secret string that will be used to acc
 Save the server configuration file and restart the King Phisher server.
 
 ## Metasploit Configuration and Usage
-Add the [sms.rb](./sms.rb) file to your Metasploit [plugins](https://github.com/rapid7/metasploit-framework/tree/master/plugins) directory.
+Add the [sms.rb](./sms.rb) file to your Metasploit `~/.msf4/plugins` directory.
 
 If this is the first time using the SMS plugin you will need to set four values which will be saved in `~/.msf4/sms.yaml`. On future use these settings will automatically be loaded and do not need to be set again. Additionally, you can see descriptions of the SMS plugin commands by running `help` in msfconsole.
 
