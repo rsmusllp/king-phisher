@@ -10,7 +10,7 @@ Version 0.2.x
 Version 0.2.1
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`0.2.1` on July 14th, 2015
 
 * Added syntax highlighting to the message edit tab
 * Technical documentation improvements, including documenting the REST API

@@ -16,9 +16,10 @@ Pre Release Steps
 Release Steps
 -------------
 
-#. Commit the final changes, and ensure the commit is signed
-#. Create a signed tag of the release commit
-#. Merge dev into master and push both to GitHub
+#. Create a final signed commit on the dev branch
+#. Push the dev branch to GitHub and ensure the Travis-CI build passes
+#. Merge dev into master and push master to GitHub
+#. Create and push a signed tag of the release commit
 #. Create a new release on GitHub
 
    #. Upload the final Windows build
