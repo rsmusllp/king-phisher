@@ -35,14 +35,14 @@ import collections
 version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(0, 2, 1)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
 
-version_label = 'beta'
-"""A version lable such as alpha or beta."""
+version_label = ''
+"""A version label such as alpha or beta."""
 version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)
 """A string representing the full version information."""
 
 # distutils_version is compatible with distutils.version classes
 distutils_version = version
-"""A string sutiable for being parsed by :py:mod:`distutils.version` classes."""
+"""A string suitable for being parsed by :py:mod:`distutils.version` classes."""
 
 if version_label:
 	version += '-' + version_label

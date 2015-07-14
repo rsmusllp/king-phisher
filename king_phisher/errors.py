@@ -42,7 +42,11 @@ class KingPhisherAbortRequestError(KingPhisherError):
 	An exception that can be raised which when caught will cause the handler to
 	immediately stop processing the current request.
 	"""
-	pass
+	def __init__(self, response_sent=False):
+		"""
+		:param bool response_sent: Whether or not a response has already been sent to the client.
+		"""
+		self.response_sent = response_sent
 
 class KingPhisherDatabaseError(KingPhisherError):
 	"""
