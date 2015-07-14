@@ -17,6 +17,8 @@ Version 0.2.1
 * Support reloading message templates when they change from an external editor
 * Support for pulling the client IP from a cookie set by an upstream proxy
 * Support for embedding training videos from YouTube
+* Added a Metasploit plugin for using the REST API to send SMS messages
+* Support for exporting visit information to GeoJSON
 
 Version 0.2.0
 ^^^^^^^^^^^^^

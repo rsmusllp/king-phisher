@@ -23,6 +23,7 @@ the `GitHub homepage`_.
    server_api/index.rst
    environment_vars.rst
    change_log.rst
+   release_steps.rst
 
 Indices and tables
 ==================
