@@ -147,7 +147,7 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	# Tables with a campaign_id field
 	for table_name in ['landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']:
 		table_element = ET.SubElement(campaign, table_name)
-		for table_row in rpc.remote_table('campaign/' + table_name, campaign_id):
+		for table_row in rpc.remote_table(table_name, query_filter={'campaign_id': campaign_id}):
 			table_row_element = ET.SubElement(table_element, table_name[:-1])
 			for key, value in table_row._asdict().items():
 				ET.SubElement(table_row_element, key).text = convert_value(table_name, key, value)
@@ -167,7 +167,7 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	"""
 	ips_for_georesolution = {}
 	ip_counter = collections.Counter()
-	for visit in rpc.remote_table('campaign/visits', campaign_id):
+	for visit in rpc.remote_table('visits', query_filter={'campaign_id': campaign_id}):
 		ip_counter.update((visit.visitor_ip,))
 		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
 		if not isinstance(visitor_ip, ipaddress.IPv4Address):

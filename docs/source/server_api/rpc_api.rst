@@ -53,10 +53,6 @@ Campaign API
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_unsubscribe`
 
-.. rpc:function:: campaign/delete(campaign_id)
-
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_delete`
-
 .. rpc:function:: campaign/landing_page/new(campaign_id, hostname, page)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_landing_page_new`
@@ -80,7 +76,7 @@ Campaign Table API
 
 .. rpc:function:: campaign/(str:table_name)/view(campaign_id, page=0)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_view_rows`
 
 .. _rpc-api-configuration-api-label:
 
@@ -119,7 +115,7 @@ Message API
 
 .. rpc:function:: message/credentials/view(message_id, page=0)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_view_rows`
 
 .. rpc:function:: message/visits/count(message_id)
 
@@ -127,7 +123,7 @@ Message API
 
 .. rpc:function:: message/visits/view(message_id, page=0)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_view_rows`
 
 .. _rpc-api-table-api-label:
 
@@ -160,4 +156,4 @@ Table API
 
 .. rpc:function:: (str:table_name)/view(page=0)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_view_rows`

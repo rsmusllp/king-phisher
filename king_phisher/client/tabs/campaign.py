@@ -137,9 +137,9 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
 		if len(row_ids) == 1:
-			self.rpc(self.remote_table_name + '/delete', row_ids[0])
+			self.rpc('db/table/delete', self.remote_table_name, row_ids[0])
 		else:
-			self.rpc(self.remote_table_name + '/delete/multi', row_ids)
+			self.rpc('db/table/delete/multi', self.remote_table_name, row_ids)
 		self.load_campaign_information()
 
 	def format_row_data(self, row):
@@ -211,12 +211,12 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		:type store: :py:class:`Gtk.ListStore`
 		"""
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
-		for row in self.rpc.remote_table('campaign/' + self.remote_table_name, self.config['campaign_id']):
+		for row in self.rpc.remote_table(self.remote_table_name, query_filter={'campaign_id': self.config['campaign_id']}):
 			if self.is_destroyed.is_set():
 				break
 			row_data = self.format_row_data(row)
-			if row_data == None:
-				self.rpc(self.remote_table_name + '/delete', row.id)
+			if row_data is None:
+				self.rpc('db/table/delete', self.remote_table_name, row.id)
 				continue
 			row_data = list(map(self.format_cell_data, row_data))
 			row_data.insert(0, str(row.id))

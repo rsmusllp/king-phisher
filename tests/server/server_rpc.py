@@ -30,16 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import random
-import string
-import time
 import types
 import unittest
 
 from king_phisher import version
 from king_phisher.server.database import models as db_models
 from king_phisher.testing import KingPhisherServerTestCase
-from king_phisher.third_party import AdvancedHTTPServer
 from king_phisher.utilities import random_string
 
 class ServerRPCTests(KingPhisherServerTestCase):
@@ -59,7 +55,7 @@ class ServerRPCTests(KingPhisherServerTestCase):
 	def test_rpc_campaign_delete(self):
 		campaign_name = random_string(10)
 		campaign_id = self.rpc('campaign/new', campaign_name)
-		self.rpc('campaign/delete', campaign_id)
+		self.rpc('db/table/delete', 'campaigns', campaign_id)
 
 	def test_rpc_campaign_new(self):
 		campaign_name = random_string(10)
@@ -98,15 +94,15 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.shutdown_requested = True
 
 	def test_rpc_table_count(self):
-		self.assertEqual(self.rpc('campaigns/count'), 0)
-		self.assertEqual(self.rpc('messages/count'), 0)
-		self.assertEqual(self.rpc('visits/count'), 0)
+		self.assertEqual(self.rpc('db/table/count', 'campaigns'), 0)
+		self.assertEqual(self.rpc('db/table/count', 'messages'), 0)
+		self.assertEqual(self.rpc('db/table/count', 'visits'), 0)
 		self.test_rpc_campaign_new()
-		self.assertEqual(self.rpc('campaigns/count'), 1)
+		self.assertEqual(self.rpc('db/table/count', 'campaigns'), 1)
 
 	def test_rpc_table_view(self):
 		self.test_rpc_campaign_new()
-		campaign = self.rpc('campaigns/view')
+		campaign = self.rpc('db/table/view', 'campaigns')
 		self.assertTrue(bool(campaign))
 		self.assertEqual(len(campaign['rows']), 1)
 		self.assertEqual(len(campaign['rows'][0]), len(db_models.DATABASE_TABLES['campaigns']))
@@ -119,7 +115,7 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		campaign = self.rpc.remote_table_row('campaigns', campaign_id)
 		self.assertEqual(campaign.id, campaign_id)
 		self.assertEqual(campaign.name, campaign_name)
-		self.rpc('campaigns/set', campaign_id, 'name', new_campaign_name)
+		self.rpc('db/table/set', 'campaigns', campaign_id, 'name', new_campaign_name)
 		campaign = self.rpc.remote_table_row('campaigns', campaign_id)
 		self.assertEqual(campaign.name, new_campaign_name)
 

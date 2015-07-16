@@ -159,7 +159,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		response = prompt.interact()
 		if response == None or response == campaign.name:
 			return
-		self.rpc('campaigns/set', self.config['campaign_id'], ('name',), (response,))
+		self.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'name', response)
 		gui_utilities.show_dialog_info('Campaign Name Updated', self.get_active_window(), 'The campaign name was successfully changed.')
 
 	def campaign_delete(self):
@@ -171,7 +171,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""
 		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.get_active_window(), 'This action is irreversible, all campaign data will be lost.'):
 			return
-		self.rpc('campaign/delete', self.config['campaign_id'])
+		self.rpc('db/table/delete', 'campaigns', self.config['campaign_id'])
 		if not self.show_campaign_selection():
 			gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'A campaign must be selected.')
 			self.quit()

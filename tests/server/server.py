@@ -110,19 +110,19 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 	def step_2_send_messages(self):
 		self.landing_page = next(f for f in self.web_root_files() if os.path.splitext(f)[1] == '.html')
 		self.rpc('campaign/landing_page/new', self.campaign_id, 'localhost', self.landing_page)
-		message_count = self.rpc('campaign/messages/count', self.campaign_id)
+		message_count = self.rpc('db/table/count', 'messages', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(message_count, 0)
 		self.message_id = random_string(16)
 		self.rpc('campaign/message/new', self.campaign_id, self.message_id, 'test@test.com', 'testers, inc.', 'test', 'test')
-		message_count = self.rpc('campaign/messages/count', self.campaign_id)
+		message_count = self.rpc('db/table/count', 'messages', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(message_count, 1)
 
 	def step_3_get_visits(self):
-		visit_count = self.rpc('campaign/visits/count', self.campaign_id)
+		visit_count = self.rpc('db/table/count', 'visits', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(visit_count, 0)
 		response = self.http_request('/' + self.landing_page, include_id=self.message_id)
 		self.assertHTTPStatus(response, 200)
-		visit_count = self.rpc('campaign/visits/count', self.campaign_id)
+		visit_count = self.rpc('db/table/count', 'visits', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(visit_count, 1)
 		cookie = response.getheader('Set-Cookie')
 		self.assertIsNotNone(cookie)
@@ -132,7 +132,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.visit_id = cookie[len(cookie_name) + 1:]
 
 	def step_4_get_passwords(self):
-		creds_count = self.rpc('campaign/credentials/count', self.campaign_id)
+		creds_count = self.rpc('db/table/count', 'credentials', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(creds_count, 0)
 		username = random_string(8)
 		password = random_string(10)
@@ -140,9 +140,9 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		headers = {'Cookie': "{0}={1}".format(self.config.get('server.cookie_name'), self.visit_id)}
 		response = self.http_request('/' + self.landing_page, method='POST', include_id=False, body=body, headers=headers)
 		self.assertHTTPStatus(response, 200)
-		creds_count = self.rpc('campaign/credentials/count', self.campaign_id)
+		creds_count = self.rpc('db/table/count', 'credentials', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(creds_count, 1)
-		cred = next(self.rpc.remote_table('campaign/credentials', self.campaign_id))
+		cred = next(self.rpc.remote_table('credentials', {'campaign_id': self.campaign_id}))
 		self.assertEqual(cred.username, username)
 		self.assertEqual(cred.password, password)
 		self.assertEqual(cred.message_id, self.message_id)

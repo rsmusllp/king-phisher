@@ -52,7 +52,7 @@ if version_label:
 	else:
 		distutils_version += '0'
 
-rpc_api_version = collections.namedtuple('rpc_api_version', ['major', 'minor'])(3, 0)
+rpc_api_version = collections.namedtuple('rpc_api_version', ['major', 'minor'])(4, 0)
 """
 A tuple representing the local version of the RPC API for use with compatibility
 checks. The major version is incremented when backwards incompatible changes are

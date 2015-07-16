@@ -82,7 +82,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		self.application.rpc(remote_method, self.config['campaign_id'])
 
 	def signal_toggle_reject_after_credentials(self, cbutton):
-		self.application.rpc('campaigns/set', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
+		self.application.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
 
 	def signal_changed_spf_check_level(self, combobox):
 		ti = combobox.get_active_iter()
@@ -174,4 +174,4 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must contain exactly 10 digits')
 				return
 			username = self.config['server_username']
-			self.application.rpc('users/set', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))
+			self.application.rpc('db/table/set', 'users', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))

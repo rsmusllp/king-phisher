@@ -319,7 +319,7 @@ class CampaignGraph(object):
 			if stop_event and stop_event.is_set():
 				return info_cache
 			if not table in info_cache:
-				info_cache[table] = tuple(self.rpc.remote_table('campaign/' + table, self.config['campaign_id']))
+				info_cache[table] = tuple(self.rpc.remote_table(table, query_filter={'campaign_id': self.config['campaign_id']}))
 		for ax in self.axes:
 			ax.clear()
 		self._load_graph(info_cache)
@@ -339,7 +339,7 @@ class CampaignGraphOverview(CampaignGraph):
 		creds = info_cache['credentials']
 
 		bars = []
-		bars.append(rpc('campaign/messages/count', self.config['campaign_id']))
+		bars.append(rpc('db/table/count', 'messages', query_filter={'campaign_id': self.config['campaign_id']}))
 		bars.append(len(visits))
 		bars.append(len(unique(visits, key=lambda visit: visit.message_id)))
 		if len(creds):
@@ -434,7 +434,7 @@ class CampaignGraphMessageResults(CampaignGraph):
 	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
 		rpc = self.rpc
-		messages_count = rpc('campaign/messages/count', self.config['campaign_id'])
+		messages_count = rpc('db/table/count', 'messages', query_filter={'campaign_id': self.config['campaign_id']})
 		if not messages_count:
 			self._graph_null_pie('No Messages Sent')
 			return

@@ -89,7 +89,7 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 	def __repr__(self):
 		return "<{0} '{1}@{2}:{3}{4}'>".format(self.__class__.__name__, self.username, self.host, self.port, self.uri_base)
 
-	def remote_table(self, table, *args):
+	def remote_table(self, table, query_filter=None):
 		"""
 		Iterate over a remote database table hosted on the server. Rows are
 		yielded as named tuples whose fields are the columns of the specified
@@ -99,12 +99,8 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		:return: A generator which yields rows of named tuples.
 		:rtype: tuple
 		"""
-		table_method = table + '/view'
-		table = table.rsplit('/', 1)[-1]
 		page = 0
-		args = list(args)
-		args.append(page)
-		results = self.call(table_method, *args)
+		results = self.call('db/table/view', table, page, query_filter=query_filter)
 		results_length = len(results or '')
 		row_cls = _table_row_classes[table]
 		while results:
@@ -112,8 +108,8 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 				yield row_cls(*row)
 			if len(results) < results_length:
 				break
-			args[-1] += 1
-			results = self.call(table_method, *args)
+			page += 1
+			results = self.call('db/table/view', table, page, query_filter=query_filter)
 
 	def remote_table_row(self, table, row_id, cache=False, refresh=False):
 		"""
@@ -126,14 +122,13 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		:return: The remote row as a named tuple of the specified table.
 		:rtype: tuple
 		"""
-		table_method = table + '/get'
 		if cache and refresh:
-			row = self.cache_call_refresh(table_method, row_id)
+			row = self.cache_call_refresh('db/table/get', table, row_id)
 		elif cache and not refresh:
-			row = self.cache_call(table_method, row_id)
+			row = self.cache_call('db/table/get', table, row_id)
 		else:
-			row = self.call(table_method, row_id)
-		if row == None:
+			row = self.call('db/table/get', table, row_id)
+		if row is None:
 			return None
 		row_cls = _table_row_classes[table]
 		return row_cls(**row)

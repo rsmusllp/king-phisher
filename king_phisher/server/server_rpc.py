@@ -67,26 +67,15 @@ class KingPhisherRequestHandlerRPC(object):
 		self.rpc_handler_map['^/campaign/landing_page/new$'] = self.rpc_campaign_landing_page_new
 		self.rpc_handler_map['^/campaign/message/new$'] = self.rpc_campaign_message_new
 		self.rpc_handler_map['^/campaign/new$'] = self.rpc_campaign_new
-		self.rpc_handler_map['^/campaign/delete$'] = self.rpc_campaign_delete
 
-		for table_name in DATABASE_TABLES.keys():
-			self.rpc_handler_map['^/' + table_name + '/count$'] = self.rpc_database_count_rows
-			self.rpc_handler_map['^/' + table_name + '/delete$'] = self.rpc_database_delete_row_by_id
-			self.rpc_handler_map['^/' + table_name + '/delete/multi'] = self.rpc_database_delete_rows_by_id
-			self.rpc_handler_map['^/' + table_name + '/get$'] = self.rpc_database_get_row_by_id
-			self.rpc_handler_map['^/' + table_name + '/insert'] = self.rpc_database_insert_row
-			self.rpc_handler_map['^/' + table_name + '/set$'] = self.rpc_database_set_row_value
-			self.rpc_handler_map['^/' + table_name + '/view$'] = self.rpc_database_get_rows
-
-		# Tables with a campaign_id field
-		for table_name in db_models.get_tables_with_column_id('campaign_id'):
-			self.rpc_handler_map['^/campaign/' + table_name + '/count$'] = self.rpc_database_count_rows
-			self.rpc_handler_map['^/campaign/' + table_name + '/view$'] = self.rpc_database_get_rows
-
-		# Tables with a message_id field
-		for table_name in db_models.get_tables_with_column_id('message_id'):
-			self.rpc_handler_map['^/message/' + table_name + '/count$'] = self.rpc_database_count_rows
-			self.rpc_handler_map['^/message/' + table_name + '/view$'] = self.rpc_database_get_rows
+		# all the direct database methods
+		self.rpc_handler_map['^/db/table/count$'] = self.rpc_database_count_rows
+		self.rpc_handler_map['^/db/table/delete$'] = self.rpc_database_delete_row_by_id
+		self.rpc_handler_map['^/db/table/delete/multi$'] = self.rpc_database_delete_rows_by_id
+		self.rpc_handler_map['^/db/table/get$'] = self.rpc_database_get_row_by_id
+		self.rpc_handler_map['^/db/table/insert$'] = self.rpc_database_insert_row
+		self.rpc_handler_map['^/db/table/set$'] = self.rpc_database_set_row_value
+		self.rpc_handler_map['^/db/table/view$'] = self.rpc_database_view_rows
 
 	def rpc_ping(self):
 		"""
@@ -280,65 +269,53 @@ class KingPhisherRequestHandlerRPC(object):
 		session.close()
 		return
 
-	def rpc_campaign_delete(self, campaign_id):
-		"""
-		Remove a campaign from the database and delete all associated
-		information with it.
-
-		.. warning::
-			This action can not be reversed and there is no confirmation before it
-			takes place.
-		"""
-		session = db_manager.Session()
-		session.delete(db_manager.get_row_by_id(session, db_models.Campaign, campaign_id))
-		session.commit()
-		session.close()
-		return
-
-	def rpc_database_count_rows(self, *args):
+	def rpc_database_count_rows(self, table_name, query_filter=None):
 		"""
 		Get a count of the rows in the specified table where the search
 		criteria matches.
 
+		:param str table_name: The name of the database table to query.
+		:param dict query_filter: A dictionary mapping optional search criteria for matching the query.
 		:return: The number of matching rows.
 		:rtype: int
 		"""
-		args = list(args)
-		fields = self.path.split('/')[1:-2]
-		assert len(fields) == len(args)
-		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert table
+		query_filter = query_filter or {}
+		columns = DATABASE_TABLES[table_name]
+		for column in query_filter.keys():
+			assert column in columns
 		session = db_manager.Session()
 		query = session.query(table)
-		query = query.filter_by(**dict(zip((f + '_id' for f in fields), args)))
+		query = query.filter_by(**query_filter)
 		result = query.count()
 		session.close()
 		return result
 
-	def rpc_database_get_rows(self, *args):
+	def rpc_database_view_rows(self, table_name, page=0, query_filter=None):
 		"""
 		Retrieve the rows from the specified table where the search
 		criteria matches.
 
+		:param str table_name: The name of the database table to query.
+		:param int page: The page number to retrieve results for.
+		:param dict query_filter: A dictionary mapping optional search criteria for matching the query.
 		:return: A dictionary with columns and rows keys.
 		:rtype: dict
 		"""
-		args = list(args)
-		offset = 0
-		fields = self.path.split('/')[1:-2]
-		if len(args) == (len(fields) + 1):
-			offset = (args.pop() * VIEW_ROW_COUNT)
-		assert len(fields) == len(args)
-		table_name = self.path.split('/')[-2]
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert table
-
-		# it's critical that the columns are in the order that the client is expecting
+		query_filter = query_filter or {}
 		columns = DATABASE_TABLES[table_name]
+		for column in query_filter.keys():
+			assert column in columns
+
+		offset = page * VIEW_ROW_COUNT
+		# it's critical that the columns are in the order that the client is expecting
 		rows = []
 		session = db_manager.Session()
 		query = session.query(table)
-		query = query.filter_by(**dict(zip((f + '_id' for f in fields), args)))
+		query = query.filter_by(**query_filter)
 		for row in query[offset:offset + VIEW_ROW_COUNT]:
 			rows.append([getattr(row, c) for c in columns])
 		session.close()
@@ -346,13 +323,13 @@ class KingPhisherRequestHandlerRPC(object):
 			return None
 		return {'columns': columns, 'rows': rows}
 
-	def rpc_database_delete_row_by_id(self, row_id):
+	def rpc_database_delete_row_by_id(self, table, row_id):
 		"""
 		Delete a row from a table with the specified value in the id column.
 
 		:param row_id: The id value.
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-2])
+		table = DATABASE_TABLE_OBJECTS.get(table)
 		assert table
 		session = db_manager.Session()
 		try:
@@ -362,7 +339,7 @@ class KingPhisherRequestHandlerRPC(object):
 			session.close()
 		return
 
-	def rpc_database_delete_rows_by_id(self, row_ids):
+	def rpc_database_delete_rows_by_id(self, table, row_ids):
 		"""
 		Delete multiple rows from a table with the specified values in the id
 		column. If a row id specified in *row_ids* does not exist, then it will
@@ -372,7 +349,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: The row ids that were deleted.
 		:rtype: list
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(self.path.split('/')[-3])
+		table = DATABASE_TABLE_OBJECTS.get(table)
 		assert table
 		deleted_rows = []
 		session = db_manager.Session()
@@ -388,7 +365,7 @@ class KingPhisherRequestHandlerRPC(object):
 			session.close()
 		return deleted_rows
 
-	def rpc_database_get_row_by_id(self, row_id):
+	def rpc_database_get_row_by_id(self, table_name, row_id):
 		"""
 		Retrieve a row from a given table with the specified value in the
 		id column.
@@ -397,7 +374,6 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: The specified row data.
 		:rtype: dict
 		"""
-		table_name = self.path.split('/')[-2]
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert table
 		columns = DATABASE_TABLES[table_name]
@@ -408,7 +384,7 @@ class KingPhisherRequestHandlerRPC(object):
 		session.close()
 		return row
 
-	def rpc_database_insert_row(self, keys, values):
+	def rpc_database_insert_row(self, table_name, keys, values):
 		"""
 		Insert a new row into the specified table.
 
@@ -420,7 +396,6 @@ class KingPhisherRequestHandlerRPC(object):
 		if not isinstance(values, (list, tuple)):
 			values = (values,)
 		assert len(keys) == len(values)
-		table_name = self.path.split('/')[-2]
 		for key, value in zip(keys, values):
 			assert key in DATABASE_TABLES[table_name]
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
@@ -433,7 +408,7 @@ class KingPhisherRequestHandlerRPC(object):
 		session.close()
 		return
 
-	def rpc_database_set_row_value(self, row_id, keys, values):
+	def rpc_database_set_row_value(self, table_name, row_id, keys, values):
 		"""
 		Set values for a row in the specified table with an id of *row_id*.
 
@@ -445,7 +420,6 @@ class KingPhisherRequestHandlerRPC(object):
 		if not isinstance(values, (list, tuple)):
 			values = (values,)
 		assert len(keys) == len(values)
-		table_name = self.path.split('/')[-2]
 		for key, value in zip(keys, values):
 			assert key in DATABASE_TABLES[table_name]
 		table = DATABASE_TABLE_OBJECTS.get(table_name)
