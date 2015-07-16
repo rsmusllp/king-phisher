@@ -185,6 +185,13 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.logger.error("error uid: {0} an unhandled exception was thrown".format(error_uid), exc_info=exc_info)
 		dialogs.ExceptionDialog(self, exc_info=exc_info, error_uid=error_uid).interact()
 
+	def get_active_window(self):
+		# work around for Gtk < 3.6
+		super_cls = super(KingPhisherClientApplication, self)
+		if not hasattr(super_cls, 'get_active_window'):
+			return None
+		return super_cls.get_active_window()
+
 	def quit(self, optional=False):
 		"""
 		Quit the client and perform any necessary clean up operations. If
