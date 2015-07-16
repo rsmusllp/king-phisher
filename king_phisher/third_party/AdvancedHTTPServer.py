@@ -494,7 +494,10 @@ class AdvancedHTTPServerRPCClient(object):
 		:param str method: The name of the remote procedure to execute.
 		:return: The return value from the remote function.
 		"""
-		options = self.encode(dict(args=args, kwargs=kwargs))
+		if kwargs:
+			options = self.encode(dict(args=args, kwargs=kwargs))
+		else:
+			options = self.encode(args)
 
 		headers = {}
 		headers['Content-Type'] = self.serializer.content_type
