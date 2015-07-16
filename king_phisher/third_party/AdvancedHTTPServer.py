@@ -65,7 +65,7 @@ ExecStop=/bin/kill -INT $MAINPID
 WantedBy=multi-user.target
 """
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 __all__ = [
 	'AdvancedHTTPServer',
 	'AdvancedHTTPServerRegisterPath',
@@ -203,7 +203,7 @@ def resolve_ssl_protocol_version(version=None):
 	:return: A protocol constant from the :py:mod:`ssl` module.
 	:rtype: int
 	"""
-	if version == None:
+	if version is None:
 		protocol_preference = ('TLSv1_2', 'TLSv1_1', 'TLSv1', 'SSLv3', 'SSLv23', 'SSLv2')
 		for protocol in protocol_preference:
 			if hasattr(ssl, 'PROTOCOL_' + protocol):
@@ -341,7 +341,7 @@ def build_server_from_config(config, section_name, ServerClass=None, HandlerClas
 		server.auth_add_creds(username, password, pwtype=password_type)
 		cred_idx += 1
 
-	if web_root == None:
+	if web_root is None:
 		server.serve_files = False
 	else:
 		server.serve_files = True
@@ -371,7 +371,7 @@ class AdvancedHTTPServerRegisterPath(object):
 		"""
 		self.path = path
 		self.is_rpc = is_rpc
-		if handler == None or isinstance(handler, str):
+		if handler is None or isinstance(handler, str):
 			self.handler = handler
 		elif hasattr(handler, '__name__'):
 			self.handler = handler.__name__
@@ -413,7 +413,7 @@ class AdvancedHTTPServerRPCError(Exception):
 
 		:type: bool
 		"""
-		return bool(self.remote_exception != None)
+		return bool(self.remote_exception is not None)
 
 class AdvancedHTTPServerRPCClient(object):
 	"""
@@ -441,8 +441,8 @@ class AdvancedHTTPServerRPCClient(object):
 
 		self.use_ssl = bool(use_ssl)
 		self.uri_base = str(uri_base)
-		self.username = (str(username) if username != None else None)
-		self.password = (str(password) if password != None else None)
+		self.username = (None if username is None else str(username))
+		self.password = (None if password is None else str(password))
 		if isinstance(hmac_key, str):
 			hmac_key = hmac_key.encode('UTF-8')
 		self.hmac_key = hmac_key
@@ -486,7 +486,7 @@ class AdvancedHTTPServerRPCClient(object):
 			self.client = http.client.HTTPConnection(self.host, self.port)
 		self.lock.release()
 
-	def call(self, method, *options):
+	def call(self, method, *args, **kwargs):
 		"""
 		Issue a call to the remote end point to execute the specified
 		procedure.
@@ -494,30 +494,30 @@ class AdvancedHTTPServerRPCClient(object):
 		:param str method: The name of the remote procedure to execute.
 		:return: The return value from the remote function.
 		"""
-		options = self.encode(options)
+		options = self.encode(dict(args=args, kwargs=kwargs))
 
 		headers = {}
 		headers['Content-Type'] = self.serializer.content_type
 		headers['Content-Length'] = str(len(options))
 
-		if self.hmac_key != None:
+		if self.hmac_key is not None:
 			hmac_calculator = hmac.new(self.hmac_key, digestmod=hashlib.sha1)
 			hmac_calculator.update(options)
 			headers['X-RPC-HMAC'] = hmac_calculator.hexdigest()
 
-		if self.username != None and self.password != None:
+		if self.username is not None and self.password is not None:
 			headers['Authorization'] = 'Basic ' + base64.b64encode((self.username + ':' + self.password).encode('UTF-8')).decode('UTF-8')
 
 		method = os.path.join(self.uri_base, method)
 		self.logger.debug('calling RPC method: ' + method[1:])
 		with self.lock:
-			self.client.request("RPC", method, options, headers)
+			self.client.request('RPC', method, options, headers)
 			resp = self.client.getresponse()
 		if resp.status != 200:
 			raise AdvancedHTTPServerRPCError(resp.reason, resp.status)
 
 		resp_data = resp.read()
-		if self.hmac_key != None:
+		if self.hmac_key is not None:
 			hmac_digest = resp.getheader('X-RPC-HMAC')
 			if not isinstance(hmac_digest, str):
 				raise AdvancedHTTPServerRPCError('hmac validation error', resp.status)
@@ -984,11 +984,12 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		"""
 		Check for the presence of a basic auth Authorization header and
 		if the credentials contained within in are valid.
+
 		:return: Whether or not the credentials are valid.
 		:rtype: bool
 		"""
 		try:
-			if self.server.basic_auth == None:
+			if self.server.basic_auth is None:
 				return True
 			auth_info = self.headers.get('Authorization')
 			if not auth_info:
@@ -1099,12 +1100,12 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 			return
 
 		data_length = self.headers.get('content-length')
-		if data_length == None:
+		if data_length is None:
 			self.send_error(411)
 			return
 
 		content_type = self.headers.get('content-type')
-		if content_type == None:
+		if content_type is None:
 			self.send_error(400, 'Missing Header: Content-Type')
 			return
 
@@ -1115,7 +1116,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 			self.send_error(400, 'Invalid Data')
 			return
 
-		if self.server.rpc_hmac_key != None:
+		if self.server.rpc_hmac_key is not None:
 			hmac_digest = self.headers.get('X-RPC-HMAC')
 			if not isinstance(hmac_digest, str):
 				self.respond_unauthorized(request_authentication=True)
@@ -1141,6 +1142,17 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 			self.send_error(400, 'Invalid Data')
 			return
 
+		if isinstance(data, (list, tuple)):
+			meth_args = data
+			meth_kwargs = {}
+		elif isinstance(data, dict):
+			meth_args = data.get('args', ())
+			meth_kwargs = data.get('kwargs', {})
+		else:
+			self.server.logger.warning('received data does not match the calling convention')
+			self.send_error(400, 'Invalid Data')
+			return
+
 		rpc_handler = None
 		for (path_regex, handler) in self.rpc_handler_map.items():
 			if re.match(path_regex, self.path):
@@ -1153,8 +1165,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 		self.server.logger.info('running RPC method: ' + self.path)
 		response = {'result': None, 'exception_occurred': False}
 		try:
-			result = rpc_handler(*data)
-			response['result'] = result
+			response['result'] = rpc_handler(*meth_args, **meth_kwargs)
 		except Exception as error:
 			response['exception_occurred'] = True
 			exc_name = "{0}.{1}".format(error.__class__.__module__, error.__class__.__name__)
@@ -1169,7 +1180,7 @@ class AdvancedHTTPServerRequestHandler(http.server.BaseHTTPRequestHandler, objec
 
 		self.send_response(200)
 		self.send_header('Content-Type', serializer.content_type)
-		if self.server.rpc_hmac_key != None:
+		if self.server.rpc_hmac_key is not None:
 			hmac_calculator = hmac.new(self.server.rpc_hmac_key, digestmod=hashlib.sha1)
 			hmac_calculator.update(response)
 			self.send_header('X-RPC-HMAC', hmac_calculator.hexdigest())
@@ -1308,7 +1319,7 @@ class AdvancedHTTPServer(object):
 		:param ssl_version: The SSL protocol version to use.
 		"""
 		self.use_ssl = bool(ssl_certfile)
-		if address == None:
+		if address is None:
 			if self.use_ssl:
 				if os.getuid():
 					address = ('0.0.0.0', 8443)
@@ -1333,7 +1344,7 @@ class AdvancedHTTPServer(object):
 		self.logger.info('listening on ' + address[0] + ':' + str(address[1]))
 
 		if self.use_ssl:
-			if ssl_version == None or isinstance(ssl_version, str):
+			if ssl_version is None or isinstance(ssl_version, str):
 				ssl_version = resolve_ssl_protocol_version(ssl_version)
 			self.http_server.socket = ssl.wrap_socket(self.http_server.socket, keyfile=ssl_keyfile, certfile=ssl_certfile, server_side=True, ssl_version=ssl_version)
 			self.http_server.using_ssl = True
@@ -1499,7 +1510,7 @@ class AdvancedHTTPServer(object):
 		pwtype = pwtype.lower()
 		if not pwtype in ('plain', 'md5', 'sha1', 'sha256', 'sha384', 'sha512'):
 			raise ValueError('invalid password type, must be \'plain\', or supported by hashlib')
-		if self.http_server.basic_auth == None:
+		if self.http_server.basic_auth is None:
 			self.http_server.basic_auth = {}
 			self.logger.info(self.address[0] + ':' + str(self.address[1]) + ' - basic authentication has been enabled')
 		if pwtype != 'plain':
