@@ -31,7 +31,6 @@
 #
 
 import code
-import collections
 import getpass
 import json
 import logging
@@ -48,80 +47,116 @@ try:
 except ImportError:
 	has_msgpack = False
 
+_table_row_classes = {}
 _tag_mixin_fields = ('id', 'name', 'description')
-AlertSubscription = collections.namedtuple(
-	'AlertSubscription',
-	('id', 'user_id', 'campaign_id', 'type', 'mute_timestamp')
-)
-Campaign = collections.namedtuple(
-	'Campaign',
-	('id', 'name', 'user_id', 'created', 'reject_after_credentials', 'expiration', 'campaign_type_id', 'company_id')
-)
-CampaignType = collections.namedtuple(
-	'CampaignType',
-	_tag_mixin_fields
-)
-Company = collections.namedtuple(
-	'Company',
-	('id', 'name', 'description', 'industry_id', 'url_main', 'url_email', 'url_remote_access')
-)
-CompanyDepartment = collections.namedtuple(
-	'CompanyDepartment',
-	_tag_mixin_fields
-)
-Credential = collections.namedtuple(
-	'Credential',
-	('id', 'visit_id', 'message_id', 'campaign_id', 'username', 'password', 'submitted')
-)
-DeaddropConnection = collections.namedtuple(
-	'DeaddropConnection',
-	('id', 'deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit')
-)
-DeaddropDeployment = collections.namedtuple(
-	'DeaddropDeployment',
-	('id', 'campaign_id', 'destination')
-)
-Industry = collections.namedtuple(
-	'Industry',
-	_tag_mixin_fields
-)
-LandingPage = collections.namedtuple(
-	'LandingPage',
-	('id', 'campaign_id', 'hostname', 'page')
-)
-Message = collections.namedtuple(
-	'Message',
-	('id', 'campaign_id', 'target_email', 'company_name', 'first_name', 'last_name', 'opened', 'sent', 'trained', 'department_id')
-)
-MetaData = collections.namedtuple(
-	'MetaData',
-	('id', 'value_type', 'value')
-)
-User = collections.namedtuple(
-	'User',
-	('id', 'phone_carrier', 'phone_number', 'email_address', 'otp_secret')
-)
-Visit = collections.namedtuple(
-	'Visit',
-	('id', 'message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit')
-)
 
-_table_row_classes = {
-	'alert_subscriptions': AlertSubscription,
-	'campaigns': Campaign,
-	'campaign_types': CampaignType,
-	'companies': Company,
-	'company_departments': CompanyDepartment,
-	'credentials': Credential,
-	'deaddrop_connections': DeaddropConnection,
-	'deaddrop_deployments': DeaddropDeployment,
-	'industries': Industry,
-	'landing_pages': LandingPage,
-	'messages': Message,
-	'meta_data': MetaData,
-	'users': User,
-	'visits': Visit
-}
+class RemoteRowMeta(type):
+	def __new__(mcs, name, bases, dct):
+		dct['__slots__'] = ('__rpc__',) + dct.get('__slots__', ())
+		return super(RemoteRowMeta, mcs).__new__(mcs, name, bases, dct)
+
+	def __init__(cls, *args, **kwargs):
+		table_name = getattr(cls, '__table__', None)
+		if table_name:
+			_table_row_classes[table_name] = cls
+		super(RemoteRowMeta, cls).__init__(*args, **kwargs)
+
+# stylized metaclass definition to be Python 2.7 and 3.x compatible
+class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
+	__table__ = None
+	__xref_attr__ = None
+	__slots__ = ()
+	def __init__(self, rpc, *args, **kwargs):
+		if not isinstance(rpc, KingPhisherRPCClient):
+			raise ValueError('rpc is not a KingPhisherRPCClient instance')
+		self.__rpc__ = rpc
+		slots = self.__slots__[1:]
+		if args:
+			if not len(args) == len(slots):
+				raise RuntimeError('all arguments must be specified')
+			kwargs = dict(zip(self.__slots__[1:], args))
+		elif kwargs:
+			if not len(kwargs) == len(kwargs):
+				raise RuntimeError('all key word arguments must be specified')
+		else:
+			raise RuntimeError('all arguments must be specified in either args or kwargs')
+		for key, value in kwargs.items():
+			setattr(self, key, value)
+
+	def __getattr__(self, item):
+		if hasattr(self, item + '_id'):
+			row_id = getattr(self, item + '_id', None)
+			for table, table_cls in _table_row_classes.items():
+				if table_cls.__xref_attr__ == item:
+					return self.__rpc__.remote_table_row(table, row_id, cache=True)
+		raise AttributeError("object has no attribute '{0}'".format(item))
+
+	def _asdict(self):
+		return dict(zip(self.__slots__[1:], (getattr(self, prop) for prop in self.__slots__[1:])))
+
+class AlertSubscription(RemoteRow):
+	__table__ = 'alert_subscriptions'
+	__slots__ = ('id', 'user_id', 'campaign_id', 'type', 'mute_timestamp')
+
+class Campaign(RemoteRow):
+	__table__ = 'campaigns'
+	__xref_attr__ = 'campaign'
+	__slots__ = ('id', 'name', 'user_id', 'created', 'reject_after_credentials', 'expiration', 'campaign_type_id', 'company_id')
+
+class CampaignType(RemoteRow):
+	__table__ = 'campaign_types'
+	__xref_attr__ = 'campaign_type'
+	__slots__ = _tag_mixin_fields
+
+class Company(RemoteRow):
+	__table__ = 'company'
+	__slots__ = ('id', 'name', 'description', 'industry_id', 'url_main', 'url_email', 'url_remote_access')
+
+class CompanyDepartment(RemoteRow):
+	__table__ = 'company_departments'
+	__xref_attr__ = 'company_department'
+	__slots__ = _tag_mixin_fields
+
+class Credential(RemoteRow):
+	__table__ = 'credentials'
+	__slots__ = ('id', 'visit_id', 'message_id', 'campaign_id', 'username', 'password', 'submitted')
+
+class DeaddropConnection(RemoteRow):
+	__table__ = 'deaddrop_connections'
+	__slots__ = ('id', 'deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit')
+
+class DeaddropDeployment(RemoteRow):
+	__table__ = 'deaddrop_deployments'
+	__xref_attr__ = 'deployment'
+	__slots__ = ('id', 'campaign_id', 'destination')
+
+class Industry(RemoteRow):
+	__table__ = 'industries'
+	__xref_attr__ = 'industry'
+	__slots__ = _tag_mixin_fields
+
+class LandingPage(RemoteRow):
+	__table__ = 'landing_Pages'
+	__slots__ = ('id', 'campaign_id', 'hostname', 'page')
+
+class Message(RemoteRow):
+	__table__ = 'messages'
+	__xref_attr__ = 'message'
+	__slots__ = ('id', 'campaign_id', 'target_email', 'company_name', 'first_name', 'last_name', 'opened', 'sent', 'trained', 'company_department_id')
+
+class MetaData(RemoteRow):
+	__table__ = 'meta_data'
+	__slots__ = ('id', 'value_type', 'value')
+
+class User(RemoteRow):
+	__table__ = 'users'
+	__xref_attr__ = 'user'
+	__slots__ = ('id', 'phone_carrier', 'phone_number', 'email_address', 'otp_secret')
+
+class Visit(RemoteRow):
+	__table__ = 'visits'
+	__xref_attr__ = 'visit'
+	__slots__ = ('id', 'message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit')
 
 class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached):
 	"""
@@ -156,7 +191,7 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		row_cls = _table_row_classes[table]
 		while results:
 			for row in results['rows']:
-				yield row_cls(*row)
+				yield row_cls(self, *row)
 			if len(results) < results_length:
 				break
 			page += 1
@@ -182,7 +217,7 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		if row is None:
 			return None
 		row_cls = _table_row_classes[table]
-		return row_cls(**row)
+		return row_cls(self, **row)
 
 	def geoip_lookup(self, ip):
 		"""
