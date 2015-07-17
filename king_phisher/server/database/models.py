@@ -99,7 +99,7 @@ class AlertSubscription(Base):
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
-	type = sqlalchemy.Column(sqlalchemy.Enum('email', 'sms', name='alert_subscription_type'), default='sms', nullable=False)
+	type = sqlalchemy.Column(sqlalchemy.Enum('email', 'sms', name='alert_subscription_type'), default='sms', server_default='sms', nullable=False)
 	mute_timestamp = sqlalchemy.Column(sqlalchemy.DateTime)
 
 @register_table

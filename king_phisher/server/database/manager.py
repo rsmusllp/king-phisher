@@ -148,11 +148,14 @@ def init_database(connection_url):
 
 	Session.remove()
 	Session.configure(bind=engine)
-	try:
-		models.Base.metadata.create_all(engine)
-	except sqlalchemy.exc.SQLAlchemyError as error:
-		error_lines = (line.strip() for line in error.message.split('\n'))
-		raise errors.KingPhisherDatabaseError('SQLAlchemyError: ' + ' '.join(error_lines).strip())
+	inspector = sqlalchemy.inspect(engine)
+	if not 'meta_data' in inspector.get_table_names():
+		logger.debug('meta_data table not found, creating all new tables')
+		try:
+			models.Base.metadata.create_all(engine)
+		except sqlalchemy.exc.SQLAlchemyError as error:
+			error_lines = (line.strip() for line in error.message.split('\n'))
+			raise errors.KingPhisherDatabaseError('SQLAlchemyError: ' + ' '.join(error_lines).strip())
 
 	session = Session()
 	set_meta_data('database_driver', connection_url.drivername, session=session)
@@ -183,6 +186,10 @@ def init_database(connection_url):
 		except Exception as error:
 			logger.critical("database schema upgrade failed with exception: {0}.{1} {2}".format(error.__class__.__module__, error.__class__.__name__, getattr(error, 'message', '')).rstrip(), exc_info=True)
 			raise errors.KingPhisherDatabaseError('failed to upgrade to the latest database schema')
+		# reset it because it may have been altered by alembic
+		Session.remove()
+		Session.configure(bind=engine)
+		session = Session()
 	set_meta_data('schema_version', models.SCHEMA_VERSION)
 
 	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
