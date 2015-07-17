@@ -42,7 +42,7 @@ DATABASE_TABLES = {}
 """A dictionary which contains all the database tables and their columns."""
 DATABASE_TABLE_OBJECTS = {}
 """A dictionary which contains all the database tables and their primitive objects."""
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 """The schema version of the database, used for compatibility checks."""
 
 def current_timestamp(*args, **kwargs):
@@ -69,7 +69,7 @@ def register_table(table):
 	Register a database table. This will populate the information provided in
 	DATABASE_TABLES dictionary.
 
-	:param table: The table to register.
+	:param cls table: The table to register.
 	"""
 	columns = tuple(col.name for col in table.__table__.columns)
 	DATABASE_TABLES[table.__tablename__] = columns
@@ -86,6 +86,12 @@ class Base(object):
 		return description
 Base = sqlalchemy.ext.declarative.declarative_base(cls=Base)
 
+class TagMixin(object):
+	__repr_attributes__ = ('name',)
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+	description = sqlalchemy.Column(sqlalchemy.String)
+
 @register_table
 class AlertSubscription(Base):
 	__repr_attributes__ = ('campaign_id', 'user_id')
@@ -93,6 +99,8 @@ class AlertSubscription(Base):
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
+	type = sqlalchemy.Column(sqlalchemy.Enum('email', 'sms', name='alert_subscription_type'), default='sms', nullable=False)
+	mute_timestamp = sqlalchemy.Column(sqlalchemy.DateTime)
 
 @register_table
 class Campaign(Base):
@@ -103,6 +111,9 @@ class Campaign(Base):
 	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	reject_after_credentials = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
+	expiration = sqlalchemy.Column(sqlalchemy.DateTime)
+	campaign_type_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaign_types.id'))
+	company_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('companies.id'))
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='campaign', cascade='all, delete-orphan')
 	credentials = sqlalchemy.orm.relationship('Credential', backref='campaign', cascade='all, delete-orphan')
@@ -111,6 +122,32 @@ class Campaign(Base):
 	landing_pages = sqlalchemy.orm.relationship('LandingPage', backref='campaign', cascade='all, delete-orphan')
 	messages = sqlalchemy.orm.relationship('Message', backref='campaign', cascade='all, delete-orphan')
 	visits = sqlalchemy.orm.relationship('Visit', backref='campaign', cascade='all, delete-orphan')
+
+@register_table
+class CampaignType(TagMixin, Base):
+	__tablename__ = 'campaign_types'
+	# relationships
+	campaigns = sqlalchemy.orm.relationship('Campaign', backref='campaign_type', cascade='all')
+
+@register_table
+class Company(Base):
+	__repr_attributes__ = ('name',)
+	__tablename__ = 'companies'
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
+	description = sqlalchemy.Column(sqlalchemy.String)
+	industry_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('industries.id'))
+	url_main = sqlalchemy.Column(sqlalchemy.String)
+	url_email = sqlalchemy.Column(sqlalchemy.String)
+	url_remote_access = sqlalchemy.Column(sqlalchemy.String)
+	# relationships
+	campaigns = sqlalchemy.orm.relationship('Campaign', backref='company', cascade='all')
+
+@register_table
+class CompanyDepartment(TagMixin, Base):
+	__tablename__ = 'company_departments'
+	# relationships
+	messages = sqlalchemy.orm.relationship('Message', backref='company_department', cascade='all')
 
 @register_table
 class Credential(Base):
@@ -150,6 +187,12 @@ class DeaddropConnection(Base):
 	last_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 
 @register_table
+class Industry(TagMixin, Base):
+	__tablename__ = 'industries'
+	# relationships
+	companies = sqlalchemy.orm.relationship('Company', backref='industry', cascade='all')
+
+@register_table
 class LandingPage(Base):
 	__repr_attributes__ = ('campaign_id', 'hostname', 'page')
 	__tablename__ = 'landing_pages'
@@ -171,6 +214,7 @@ class Message(Base):
 	opened = sqlalchemy.Column(sqlalchemy.DateTime)
 	sent = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	trained = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
+	company_department_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('company_departments.id'))
 	# relationships
 	credentials = sqlalchemy.orm.relationship('Credential', backref='message', cascade='all, delete-orphan')
 	visits = sqlalchemy.orm.relationship('Visit', backref='message', cascade='all, delete-orphan')
@@ -189,6 +233,8 @@ class User(Base):
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	phone_carrier = sqlalchemy.Column(sqlalchemy.String)
 	phone_number = sqlalchemy.Column(sqlalchemy.String)
+	email_address = sqlalchemy.Column(sqlalchemy.String)
+	otp_secret = sqlalchemy.Column(sqlalchemy.String(16))
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')

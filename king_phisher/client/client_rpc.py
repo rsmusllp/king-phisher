@@ -48,23 +48,74 @@ try:
 except ImportError:
 	has_msgpack = False
 
-AlertSubscription = collections.namedtuple('AlertSubscription', ('id', 'user_id', 'campaign_id'))
-Campaign = collections.namedtuple('Campaign', ('id', 'name', 'user_id', 'created', 'reject_after_credentials'))
-Credential = collections.namedtuple('Credential', ('id', 'visit_id', 'message_id', 'campaign_id', 'username', 'password', 'submitted'))
-DeaddropConnection = collections.namedtuple('DeaddropConnection', ('id', 'deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit'))
-DeaddropDeployment = collections.namedtuple('DeaddropDeployment', ('id', 'campaign_id', 'destination'))
-LandingPage = collections.namedtuple('LandingPage', ('id', 'campaign_id', 'hostname', 'page'))
-Message = collections.namedtuple('Message', ('id', 'campaign_id', 'target_email', 'company_name', 'first_name', 'last_name', 'opened', 'sent', 'trained'))
-MetaData = collections.namedtuple('MetaData', ('id', 'value_type', 'value'))
-User = collections.namedtuple('User', ('id', 'phone_carrier', 'phone_number'))
-Visit = collections.namedtuple('Visit', ('id', 'message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit'))
+_tag_mixin_fields = ('id', 'name', 'description')
+AlertSubscription = collections.namedtuple(
+	'AlertSubscription',
+	('id', 'user_id', 'campaign_id', 'type', 'mute_timestamp')
+)
+Campaign = collections.namedtuple(
+	'Campaign',
+	('id', 'name', 'user_id', 'created', 'reject_after_credentials', 'expiration', 'campaign_type_id', 'company_id')
+)
+CampaignType = collections.namedtuple(
+	'CampaignType',
+	_tag_mixin_fields
+)
+Company = collections.namedtuple(
+	'Company',
+	('id', 'name', 'description', 'industry_id', 'url_main', 'url_email', 'url_remote_access')
+)
+CompanyDepartment = collections.namedtuple(
+	'CompanyDepartment',
+	_tag_mixin_fields
+)
+Credential = collections.namedtuple(
+	'Credential',
+	('id', 'visit_id', 'message_id', 'campaign_id', 'username', 'password', 'submitted')
+)
+DeaddropConnection = collections.namedtuple(
+	'DeaddropConnection',
+	('id', 'deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit')
+)
+DeaddropDeployment = collections.namedtuple(
+	'DeaddropDeployment',
+	('id', 'campaign_id', 'destination')
+)
+Industry = collections.namedtuple(
+	'Industry',
+	_tag_mixin_fields
+)
+LandingPage = collections.namedtuple(
+	'LandingPage',
+	('id', 'campaign_id', 'hostname', 'page')
+)
+Message = collections.namedtuple(
+	'Message',
+	('id', 'campaign_id', 'target_email', 'company_name', 'first_name', 'last_name', 'opened', 'sent', 'trained', 'department_id')
+)
+MetaData = collections.namedtuple(
+	'MetaData',
+	('id', 'value_type', 'value')
+)
+User = collections.namedtuple(
+	'User',
+	('id', 'phone_carrier', 'phone_number', 'email_address', 'otp_secret')
+)
+Visit = collections.namedtuple(
+	'Visit',
+	('id', 'message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit')
+)
 
 _table_row_classes = {
 	'alert_subscriptions': AlertSubscription,
 	'campaigns': Campaign,
+	'campaign_types': CampaignType,
+	'companies': Company,
+	'company_departments': CompanyDepartment,
 	'credentials': Credential,
 	'deaddrop_connections': DeaddropConnection,
 	'deaddrop_deployments': DeaddropDeployment,
+	'industries': Industry,
 	'landing_pages': LandingPage,
 	'messages': Message,
 	'meta_data': MetaData,

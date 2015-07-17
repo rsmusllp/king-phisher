@@ -77,10 +77,14 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 	def test_get_tables_id(self):
 		tables = set([
 			'alert_subscriptions',
+			'campaign_types',
 			'campaigns',
+			'company_departments',
+			'companies',
 			'credentials',
 			'deaddrop_connections',
 			'deaddrop_deployments',
+			'industries',
 			'landing_pages',
 			'messages',
 			'meta_data',
