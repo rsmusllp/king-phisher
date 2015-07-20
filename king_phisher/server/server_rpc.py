@@ -157,17 +157,18 @@ class KingPhisherRequestHandlerRPC(object):
 			self.config.set(option_name, option_value)
 		return
 
-	def rpc_campaign_new(self, name):
+	def rpc_campaign_new(self, name, description=None):
 		"""
 		Create a new King Phisher campaign and initialize the database
 		information.
 
 		:param str name: The new campaign's name.
+		:param str description: The new campaign's description.
 		:return: The ID of the new campaign.
 		:rtype: int
 		"""
 		session = db_manager.Session()
-		campaign = db_models.Campaign(name=name, user_id=self.basic_auth_user)
+		campaign = db_models.Campaign(name=name, description=description, user_id=self.basic_auth_user)
 		session.add(campaign)
 		session.commit()
 		return campaign.id
@@ -323,13 +324,14 @@ class KingPhisherRequestHandlerRPC(object):
 			return None
 		return {'columns': columns, 'rows': rows}
 
-	def rpc_database_delete_row_by_id(self, table, row_id):
+	def rpc_database_delete_row_by_id(self, table_name, row_id):
 		"""
 		Delete a row from a table with the specified value in the id column.
 
+		:param str table_name: The name of the database table to delete a row from.
 		:param row_id: The id value.
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(table)
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert table
 		session = db_manager.Session()
 		try:
@@ -339,17 +341,18 @@ class KingPhisherRequestHandlerRPC(object):
 			session.close()
 		return
 
-	def rpc_database_delete_rows_by_id(self, table, row_ids):
+	def rpc_database_delete_rows_by_id(self, table_name, row_ids):
 		"""
 		Delete multiple rows from a table with the specified values in the id
 		column. If a row id specified in *row_ids* does not exist, then it will
 		be skipped and no error will be thrown.
 
+		:param str table_name: The name of the database table to delete rows from.
 		:param list row_ids: The row ids to delete.
 		:return: The row ids that were deleted.
 		:rtype: list
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(table)
+		table = DATABASE_TABLE_OBJECTS.get(table_name)
 		assert table
 		deleted_rows = []
 		session = db_manager.Session()
@@ -370,6 +373,7 @@ class KingPhisherRequestHandlerRPC(object):
 		Retrieve a row from a given table with the specified value in the
 		id column.
 
+		:param str table_name: The name of the database table to retrieve a row from.
 		:param row_id: The id value.
 		:return: The specified row data.
 		:rtype: dict
@@ -388,6 +392,7 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		Insert a new row into the specified table.
 
+		:param str table_name: The name of the database table to insert a new row into.
 		:param tuple keys: The column names of *values*.
 		:param tuple values: The values to be inserted in the row.
 		"""
@@ -412,6 +417,7 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		Set values for a row in the specified table with an id of *row_id*.
 
+		:param str table_name: The name of the database table to set the values of the specified row.
 		:param tuple keys: The column names of *values*.
 		:param tuple values: The values to be updated in the row.
 		"""

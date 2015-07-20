@@ -61,22 +61,9 @@ Campaign API
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_message_new`
 
-.. rpc:function:: campaign/new(name)
+.. rpc:function:: campaign/new(name, description=None)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_new`
-
-.. _rpc-api-campaign-table-api-label:
-
-Campaign Table API
-^^^^^^^^^^^^^^^^^^
-
-.. rpc:function:: campaign/(str:table_name)/count(campaign_id)
-
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
-
-.. rpc:function:: campaign/(str:table_name)/view(campaign_id, page=0)
-
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_view_rows`
 
 .. _rpc-api-configuration-api-label:
 
@@ -104,56 +91,35 @@ GeoIP API
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_geoip_lookup_multi`
 
-.. _rpc-api-message-api-label:
-
-Message API
------------
-
-.. rpc:function:: message/credentials/count(message_id)
-
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
-
-.. rpc:function:: message/credentials/view(message_id, page=0)
-
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_view_rows`
-
-.. rpc:function:: message/visits/count(message_id)
-
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
-
-.. rpc:function:: message/visits/view(message_id, page=0)
-
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_view_rows`
-
 .. _rpc-api-table-api-label:
 
 Table API
 ---------
 
-.. rpc:function:: (str:table_name)/count()
+.. rpc:function:: db/table/count(table_name, query_filter=None)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
 
-.. rpc:function:: (str:table_name)/delete(row_id)
+.. rpc:function:: db/table/delete(table_name, row_id)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_row_by_id`
 
-.. rpc:function:: (str:table_name)/delete/multi(row_ids)
+.. rpc:function:: db/table/delete/multi(table_name, row_ids)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_rows_by_id`
 
-.. rpc:function:: (str:table_name)/get(row_id)
+.. rpc:function:: db/table/get(table_name, row_id)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_row_by_id`
 
-.. rpc:function:: (str:table_name)/insert(keys, values)
+.. rpc:function:: db/table/insert(table_name, keys, values)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_insert_row`
 
-.. rpc:function:: (str:table_name)/set(row_id, keys, values)
+.. rpc:function:: db/table/set(table_name, row_id, keys, values)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_set_row_value`
 
-.. rpc:function:: (str:table_name)/view(page=0)
+.. rpc:function:: db/table/view(table_name, page=0, query_filter=None)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_view_rows`
