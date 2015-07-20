@@ -12,7 +12,7 @@ down_revision = ${repr(down_revision)}
 
 import os
 import sys
-sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')))
+sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), *['..'] * 5)))
 
 from alembic import op
 from king_phisher.server.database import manager as db_manager

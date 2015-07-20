@@ -42,7 +42,7 @@ DATABASE_TABLES = {}
 """A dictionary which contains all the database tables and their columns."""
 DATABASE_TABLE_OBJECTS = {}
 """A dictionary which contains all the database tables and their primitive objects."""
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 """The schema version of the database, used for compatibility checks."""
 
 def current_timestamp(*args, **kwargs):
@@ -108,6 +108,7 @@ class Campaign(Base):
 	__tablename__ = 'campaigns'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
+	description = sqlalchemy.Column(sqlalchemy.String)
 	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	reject_after_credentials = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
@@ -212,6 +213,8 @@ class Message(Base):
 	first_name = sqlalchemy.Column(sqlalchemy.String)
 	last_name = sqlalchemy.Column(sqlalchemy.String)
 	opened = sqlalchemy.Column(sqlalchemy.DateTime)
+	opener_ip = sqlalchemy.Column(sqlalchemy.String)
+	opener_user_agent = sqlalchemy.Column(sqlalchemy.String)
 	sent = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	trained = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 	company_department_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('company_departments.id'))
