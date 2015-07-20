@@ -54,12 +54,12 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
 		self.treeview_manager = gui_utilities.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
-		self.treeview_manager.set_column_titles(('Campaign Name', 'Type', 'Created By', 'Creation Date'), column_offset=1)
+		self.treeview_manager.set_column_titles(('Campaign Name', 'Type', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
 		self.load_campaigns()
 		# default sort is by campaign creation date, descending
-		treeview.get_model().set_sort_column_id(3, Gtk.SortType.DESCENDING)
+		treeview.get_model().set_sort_column_id(4, Gtk.SortType.DESCENDING)
 
 	def _highlight_campaign(self, campaign_name):
 		treeview = self.gobjects['treeview_campaigns']
@@ -90,8 +90,8 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
 		treeview = self.gobjects['treeview_campaigns']
 		store = treeview.get_model()
-		if store == None:
-			store = Gtk.ListStore(str, str, str, str, str)
+		if store is None:
+			store = Gtk.ListStore(str, str, str, str, str, str)
 			treeview.set_model(store)
 		else:
 			store.clear()
@@ -101,9 +101,11 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			campaign_type = campaign.campaign_type
 			if campaign_type:
 				campaign_type = campaign_type.name
-			else:
-				campaign_type = ''
-			store.append([str(campaign.id), campaign.name, campaign_type, campaign.user_id, created_ts])
+			expiration_ts = campaign.expiration
+			if not expiration_ts is None:
+				expiration_ts = utilities.datetime_utc_to_local(campaign.expiration)
+				expiration_ts = utilities.format_datetime(expiration_ts)
+			store.append([str(campaign.id), campaign.name, campaign_type, campaign.user_id, created_ts, expiration_ts])
 
 	def signal_button_clicked(self, button):
 		campaign_name_entry = self.gobjects['entry_new_campaign_name']

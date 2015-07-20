@@ -111,10 +111,11 @@ Brandan Geise</property>
     </child>
   </object>
   <object class="GtkDialog" id="CampaignSelectionDialog">
-    <property name="width_request">550</property>
+    <property name="width_request">650</property>
     <property name="height_request">350</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
+    <property name="title" translatable="yes">King Phisher Campaigns</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="CampaignSelectionDialog.dialog-vbox4">
