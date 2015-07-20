@@ -31,8 +31,8 @@
 #
 
 from king_phisher import utilities
+from king_phisher.client.assistants import CampaignCreationAssistant
 from king_phisher.client import gui_utilities
-from king_phisher.third_party import AdvancedHTTPServer
 
 from gi.repository import Gtk
 
@@ -46,7 +46,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	gobject_ids = [
 		'button_new_campaign',
 		'button_select',
-		'entry_new_campaign_name',
+		'label_campaign_info',
 		'treeview_campaigns'
 	]
 	top_gobject = 'dialog'
@@ -106,21 +106,15 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 				expiration_ts = utilities.datetime_utc_to_local(campaign.expiration)
 				expiration_ts = utilities.format_datetime(expiration_ts)
 			store.append([str(campaign.id), campaign.name, campaign_type, campaign.user_id, created_ts, expiration_ts])
+		self.gobjects['label_campaign_info'].set_text("Showing {0:,} Campaign{1}".format(len(store), ('' if len(store) == 1 else 's')))
 
 	def signal_button_clicked(self, button):
-		campaign_name_entry = self.gobjects['entry_new_campaign_name']
-		campaign_name = campaign_name_entry.get_property('text')
-		if not campaign_name:
-			gui_utilities.show_dialog_warning('Invalid Campaign Name', self.dialog, 'Please specify a new campaign name')
-			return
-		try:
-			self.application.rpc('campaign/new', campaign_name)
-		except AdvancedHTTPServer.AdvancedHTTPServerRPCError:
-			gui_utilities.show_dialog_error('Failed To Create New Campaign', self.dialog, 'Encountered an error creating the new campaign')
-			return
-		campaign_name_entry.set_property('text', '')
+		assistant = CampaignCreationAssistant(self.application)
+		assistant.interact()
+		assistant.assistant.set_transient_for(self.dialog)
+		assistant.assistant.set_modal(True)
 		self.load_campaigns()
-		self._highlight_campaign(campaign_name)
+		#self._highlight_campaign(campaign_name)
 
 	def signal_entry_new_campaign_name_activate(self, entry):
 		self.gobjects['button_new_campaign'].emit('clicked')

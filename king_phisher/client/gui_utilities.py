@@ -380,6 +380,8 @@ class GladeGObject(object):
 	"""A prefix to be used for keys when looking up value in the :py:attr:`~.GladeGObject.config`."""
 	top_gobject = 'gobject'
 	"""The name of the attribute to set a reference of the top level GObject to."""
+	objects_persist = True
+	"""Whether objects should be automatically loaded from and saved to the configuration."""
 	def __init__(self, application):
 		"""
 		:param application: The parent application for this object.
@@ -416,7 +418,8 @@ class GladeGObject(object):
 			elif gobject.__class__.__name__.lower() != gtype:
 				raise TypeError("gobject {0} is of type {1} expected {2}".format(gobject_id, gobject.__class__.__name__, gtype))
 			self.gobjects[gobject_id] = gobject
-		self.objects_load_from_config()
+		if self.objects_persist:
+			self.objects_load_from_config()
 
 	def destroy(self):
 		"""Destroy the top-level GObject."""

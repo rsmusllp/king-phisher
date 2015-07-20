@@ -86,7 +86,7 @@ class Base(object):
 		return description
 Base = sqlalchemy.ext.declarative.declarative_base(cls=Base)
 
-class TagMixin(object):
+class TagMixIn(object):
 	__repr_attributes__ = ('name',)
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
@@ -125,7 +125,7 @@ class Campaign(Base):
 	visits = sqlalchemy.orm.relationship('Visit', backref='campaign', cascade='all, delete-orphan')
 
 @register_table
-class CampaignType(TagMixin, Base):
+class CampaignType(TagMixIn, Base):
 	__tablename__ = 'campaign_types'
 	# relationships
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='campaign_type', cascade='all')
@@ -145,7 +145,7 @@ class Company(Base):
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='company', cascade='all')
 
 @register_table
-class CompanyDepartment(TagMixin, Base):
+class CompanyDepartment(TagMixIn, Base):
 	__tablename__ = 'company_departments'
 	# relationships
 	messages = sqlalchemy.orm.relationship('Message', backref='company_department', cascade='all')
@@ -188,7 +188,7 @@ class DeaddropConnection(Base):
 	last_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 
 @register_table
-class Industry(TagMixin, Base):
+class Industry(TagMixIn, Base):
 	__tablename__ = 'industries'
 	# relationships
 	companies = sqlalchemy.orm.relationship('Company', backref='industry', cascade='all')
