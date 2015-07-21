@@ -108,11 +108,18 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			store.append([str(campaign.id), campaign.name, campaign_type, campaign.user_id, created_ts, expiration_ts])
 		self.gobjects['label_campaign_info'].set_text("Showing {0:,} Campaign{1}".format(len(store), ('' if len(store) == 1 else 's')))
 
+	def signal_assistant_destroy(self, _, campaign_creation_assistant):
+		campaign_name = campaign_creation_assistant.campaign_name
+		if not campaign_name:
+			return
+		self.load_campaigns()
+		self._highlight_campaign(campaign_name)
+
 	def signal_button_clicked(self, button):
 		assistant = CampaignCreationAssistant(self.application)
 		assistant.assistant.set_transient_for(self.dialog)
 		assistant.assistant.set_modal(True)
-		assistant.assistant.connect('destroy', lambda _: self.load_campaigns())
+		assistant.assistant.connect('destroy', self.signal_assistant_destroy, assistant)
 		assistant.interact()
 
 	def signal_entry_new_campaign_name_activate(self, entry):

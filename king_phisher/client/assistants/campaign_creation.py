@@ -59,6 +59,10 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 				self._page_titles[page_title] = page_n
 		self.gobjects['combobox_campaign_type'].set_model(Gtk.ListStore(str, int))
 
+	@property
+	def campaign_name(self):
+		return self.gobjects['entry_campaign_name'].get_text()
+
 	def _get_campaign_type_id(self):
 		combobox_campaign_type = self.gobjects['combobox_campaign_type']
 		model = combobox_campaign_type.get_model()
