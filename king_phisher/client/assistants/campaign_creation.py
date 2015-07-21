@@ -42,6 +42,8 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 	Display an assistant which walks the user through creating a campaign.
 	"""
 	gobject_ids = [
+		'checkbutton_alert_subscribe',
+		'checkbutton_reject_after_credentials',
 		'combobox_campaign_type',
 		'entry_campaign_name',
 		'entry_campaign_description'
@@ -58,6 +60,9 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			if page_title:
 				self._page_titles[page_title] = page_n
 		self.gobjects['combobox_campaign_type'].set_model(Gtk.ListStore(str, int))
+		if not self.config['server_config']['server.require_id']:
+			self.gobjects['checkbutton_reject_after_credentials'].set_sensitive(False)
+			self.gobjects['checkbutton_reject_after_credentials'].set_property('active', False)
 
 	@property
 	def campaign_name(self):
@@ -81,9 +86,11 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
 		campaign_name = self.gobjects['entry_campaign_name'].get_text()
+		# have to do it this way because the next page will be selected when the apply signal is complete
+		set_current_page = lambda page_name: self.assistant.set_current_page(max(0, self._page_titles[page_name] - 1))
 		if not campaign_name:
 			gui_utilities.show_dialog_error('Invalid Campaign Name', self.parent, 'A unique and valid campaign name must be specified.')
-			self.assistant.set_current_page(self._page_titles['Basic Settings'])
+			set_current_page('Basic Settings')
 			return True
 
 		try:
@@ -95,15 +102,19 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 				raise error
 			error_message = error.remote_exception.get('message', 'an unknown error occurred').capitalize() + '.'
 			gui_utilities.show_dialog_error('Failed To Create Campaign', self.parent, error_message)
-			self.assistant.set_current_page(self._page_titles['Basic Settings'])
+			set_current_page('Basic Settings')
 			return True
 
 		properties = {}
 		campaign_type = self._get_campaign_type_id()
 		if campaign_type:
 			properties['campaign_type_id'] = campaign_type
-
+		properties['reject_after_credentials'] = self.gobjects['checkbutton_reject_after_credentials'].get_property('active')
 		self.application.rpc('db/table/set', 'campaigns', cid, properties.keys(), properties.values())
+
+		if self.gobjects['checkbutton_alert_subscribe'].get_property('active'):
+			self.application.rpc('campaign/alerts/subscribe', cid)
+
 		self._close_ready = True
 		return
 
