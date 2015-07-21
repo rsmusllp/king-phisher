@@ -31,6 +31,9 @@
 #
 
 from king_phisher.client import gui_utilities
+from king_phisher.third_party import AdvancedHTTPServer
+
+from gi.repository import Gtk
 
 __all__ = ['CampaignCreationAssistant']
 
@@ -39,6 +42,7 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 	Display an assistant which walks the user through creating a campaign.
 	"""
 	gobject_ids = [
+		'combobox_campaign_type',
 		'entry_campaign_name',
 		'entry_campaign_description'
 	]
@@ -53,6 +57,22 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			page_title = self.assistant.get_page_title(page)
 			if page_title:
 				self._page_titles[page_title] = page_n
+		self.gobjects['combobox_campaign_type'].set_model(Gtk.ListStore(str, int))
+
+	def _get_campaign_type_id(self):
+		combobox_campaign_type = self.gobjects['combobox_campaign_type']
+		model = combobox_campaign_type.get_model()
+		if model is None:
+			return
+		model_iter = combobox_campaign_type.get_active_iter()
+		if model_iter is None:
+			campaign_type = combobox_campaign_type.get_child().get_text()
+			if not campaign_type:
+				return
+			model_iter = gui_utilities.gtk_list_store_search(model, campaign_type)
+			if model_iter is None:
+				return self.application.rpc('db/table/insert', 'campaign_types', 'name', campaign_type)
+		return model.get_value(model_iter, 1)
 
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
@@ -62,11 +82,23 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			self.assistant.set_current_page(self._page_titles['Basic Settings'])
 			return True
 
-		cid = self.application.rpc('campaign/new', campaign_name)
+		try:
+			cid = self.application.rpc('campaign/new', campaign_name, description=self.gobjects['entry_campaign_description'].get_text())
+		except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
+			if not error.is_remote_exception:
+				raise error
+			if not error.remote_exception['name'] == 'exceptions.ValueError':
+				raise error
+			error_message = error.remote_exception.get('message', 'an unknown error occurred').capitalize() + '.'
+			gui_utilities.show_dialog_error('Failed To Create Campaign', self.parent, error_message)
+			self.assistant.set_current_page(self._page_titles['Basic Settings'])
+			return True
+
 		properties = {}
-		prop = self.gobjects['entry_campaign_description'].get_text()
-		if prop:
-			properties['description'] = prop
+		campaign_type = self._get_campaign_type_id()
+		if campaign_type:
+			properties['campaign_type_id'] = campaign_type
+
 		self.application.rpc('db/table/set', 'campaigns', cid, properties.keys(), properties.values())
 		self._close_ready = True
 		return
@@ -78,6 +110,15 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		if self._close_ready:
 			self.assistant.destroy()
 		self._close_ready = True
+
+	def signal_assistant_prepare(self, _, page):
+		page_title = self.assistant.get_page_title(page)
+		if page_title == 'Basic Settings':
+			combobox = self.gobjects['combobox_campaign_type']
+			model = combobox.get_model()
+			model.clear()
+			for campaign_type in self.application.rpc.remote_table('campaign_types'):
+				model.append((campaign_type.name, campaign_type.id))
 
 	def interact(self):
 		self.assistant.show_all()

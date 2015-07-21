@@ -110,11 +110,10 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 
 	def signal_button_clicked(self, button):
 		assistant = CampaignCreationAssistant(self.application)
-		assistant.interact()
 		assistant.assistant.set_transient_for(self.dialog)
 		assistant.assistant.set_modal(True)
-		self.load_campaigns()
-		#self._highlight_campaign(campaign_name)
+		assistant.assistant.connect('destroy', lambda _: self.load_campaigns())
+		assistant.interact()
 
 	def signal_entry_new_campaign_name_activate(self, entry):
 		self.gobjects['button_new_campaign'].emit('clicked')

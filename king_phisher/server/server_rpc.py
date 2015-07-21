@@ -168,10 +168,14 @@ class KingPhisherRequestHandlerRPC(object):
 		:rtype: int
 		"""
 		session = db_manager.Session()
+		if session.query(db_models.Campaign).filter_by(name=name).count():
+			raise ValueError('the specified campaign name already exists')
 		campaign = db_models.Campaign(name=name, description=description, user_id=self.basic_auth_user)
 		session.add(campaign)
 		session.commit()
-		return campaign.id
+		campaign_id = campaign.id
+		session.close()
+		return campaign_id
 
 	def rpc_campaign_alerts_is_subscribed(self, campaign_id):
 		"""
@@ -395,6 +399,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:param str table_name: The name of the database table to insert a new row into.
 		:param tuple keys: The column names of *values*.
 		:param tuple values: The values to be inserted in the row.
+		:return: The id of the new row that has been added.
 		"""
 		if not isinstance(keys, (list, tuple)):
 			keys = (keys,)
@@ -410,8 +415,10 @@ class KingPhisherRequestHandlerRPC(object):
 		for key, value in zip(keys, values):
 			setattr(row, key, value)
 		session.add(row)
+		session.commit()
+		row_id = row.id
 		session.close()
-		return
+		return row_id
 
 	def rpc_database_set_row_value(self, table_name, row_id, keys, values):
 		"""
