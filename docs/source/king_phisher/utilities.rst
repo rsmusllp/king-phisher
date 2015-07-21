@@ -11,6 +11,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.configure_stream_logger
 
+.. autofunction:: king_phisher.utilities.datetime_local_to_utc
+
 .. autofunction:: king_phisher.utilities.datetime_utc_to_local
 
 .. autofunction:: king_phisher.utilities.format_datetime

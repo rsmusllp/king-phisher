@@ -30,6 +30,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import datetime
+
+from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.third_party import AdvancedHTTPServer
 
@@ -42,13 +45,19 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 	Display an assistant which walks the user through creating a campaign.
 	"""
 	gobject_ids = [
+		'calendar_campaign_expiration',
 		'checkbutton_alert_subscribe',
+		'checkbutton_expire_campaign',
 		'checkbutton_reject_after_credentials',
 		'combobox_campaign_type',
 		'entry_campaign_name',
-		'entry_campaign_description'
+		'entry_campaign_description',
+		'frame_campaign_expiration',
+		'spinbutton_campaign_expiration_hour',
+		'spinbutton_campaign_expiration_minute'
 	]
 	top_gobject = 'assistant'
+	top_level_dependencies = ['ClockHourAdjustment', 'ClockMinuteAdjustment']
 	objects_persist = False
 	def __init__(self, *args, **kwargs):
 		super(CampaignCreationAssistant, self).__init__(*args, **kwargs)
@@ -110,6 +119,16 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		if campaign_type:
 			properties['campaign_type_id'] = campaign_type
 		properties['reject_after_credentials'] = self.gobjects['checkbutton_reject_after_credentials'].get_property('active')
+		if self.gobjects['checkbutton_expire_campaign'].get_property('active'):
+			expiration = datetime.datetime.combine(
+				gui_utilities.gtk_calendar_to_date(self.gobjects['calendar_campaign_expiration']),
+				datetime.time(
+					int(self.gobjects['spinbutton_campaign_expiration_hour'].get_value()),
+					int(self.gobjects['spinbutton_campaign_expiration_minute'].get_value())
+				)
+			)
+			expiration = utilities.datetime_local_to_utc(expiration)
+			properties['expiration'] = expiration
 		self.application.rpc('db/table/set', 'campaigns', cid, properties.keys(), properties.values())
 
 		if self.gobjects['checkbutton_alert_subscribe'].get_property('active'):
@@ -134,6 +153,17 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			model.clear()
 			for campaign_type in self.application.rpc.remote_table('campaign_types'):
 				model.append((campaign_type.name, campaign_type.id))
+
+	def signal_calendar_prev(self, calendar):
+		today = datetime.date.today()
+		calendar_day = gui_utilities.gtk_calendar_to_date(calendar)
+		if calendar_day >= today:
+			return
+		calendar.select_month(today.month - 1, today.year)
+
+	def signal_checkbutton_expire_campaign_toggled(self, _):
+		active = self.gobjects['checkbutton_expire_campaign'].get_property('active')
+		self.gobjects['frame_campaign_expiration'].set_sensitive(active)
 
 	def interact(self):
 		self.assistant.show_all()

@@ -120,6 +120,18 @@ def configure_stream_logger(level, logger):
 	logging.captureWarnings(True)
 	return console_log_handler
 
+def datetime_local_to_utc(dt):
+	"""
+	Convert a :py:class:`datetime.datetime` instance from the local time to UTC
+	time.
+
+	:param dt: The time to convert from local to UTC.
+	:type dt: :py:class:`datetime.datetime`
+	:return: The time converted to the UTC timezone.
+	:rtype: :py:class:`datetime.datetime`
+	"""
+	return dt + datetime.timedelta(seconds=time.timezone)
+
 def datetime_utc_to_local(dt):
 	"""
 	Convert a :py:class:`datetime.datetime` instance from UTC time to the local

@@ -31,6 +31,7 @@
 #
 
 import contextlib
+import datetime
 import functools
 import logging
 import os
@@ -150,6 +151,20 @@ def gobject_signal_blocked(gobject, signal_name):
 	GObject.signal_handler_block(gobject, handler_id)
 	yield
 	GObject.signal_handler_unblock(gobject, handler_id)
+
+def gtk_calendar_to_date(calendar):
+	"""
+	Get the date from a :py:class:`Gtk.Calendar` instance.
+
+	:param calendar: The calendar to get the date from.
+	:type calendar: :py:class:`Gtk.Calendar`
+	:return: The date as returned by the calendar's :py:meth:`~Gtk.Calendar.get_date` method.
+	:rtype: :py:class:`datetime.date`
+	"""
+	if not isinstance(calendar, Gtk.Calendar):
+		raise ValueError('calendar must be a Gtk.Calendar instance')
+	calendar_day = calendar.get_date()
+	return datetime.date(calendar_day[0], calendar_day[1] + 1, calendar_day[2])
 
 def gtk_list_store_search(list_store, value, column=0):
 	"""
