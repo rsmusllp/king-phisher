@@ -5,6 +5,8 @@
    :maxdepth: 2
    :titlesonly:
 
+   assistants/index.rst
+
    dialogs/index.rst
 
    tabs/index.rst

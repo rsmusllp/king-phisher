@@ -42,9 +42,10 @@ __all__ = ['CampaignCreationAssistant']
 
 class CampaignCreationAssistant(gui_utilities.GladeGObject):
 	"""
-	Display an assistant which walks the user through creating a campaign.
+	Display an assistant which walks the user through creating and configuring a
+	new campaign.
 	"""
-	gobject_ids = [
+	gobject_ids = (
 		'calendar_campaign_expiration',
 		'checkbutton_alert_subscribe',
 		'checkbutton_expire_campaign',
@@ -55,9 +56,9 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		'frame_campaign_expiration',
 		'spinbutton_campaign_expiration_hour',
 		'spinbutton_campaign_expiration_minute'
-	]
+	)
 	top_gobject = 'assistant'
-	top_level_dependencies = ['ClockHourAdjustment', 'ClockMinuteAdjustment']
+	top_level_dependencies = ('ClockHourAdjustment', 'ClockMinuteAdjustment')
 	objects_persist = False
 	def __init__(self, *args, **kwargs):
 		super(CampaignCreationAssistant, self).__init__(*args, **kwargs)
@@ -75,6 +76,11 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 
 	@property
 	def campaign_name(self):
+		"""
+		The string value of the configured campaign name. This may be set even
+		when the campaign was not created, which would be the case if the user
+		closed the window.
+		"""
 		return self.gobjects['entry_campaign_name'].get_text()
 
 	def _get_campaign_type_id(self):
