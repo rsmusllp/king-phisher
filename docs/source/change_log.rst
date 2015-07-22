@@ -4,6 +4,19 @@ Change Log
 This document contains notes on the major changes for each version of King
 Phisher.
 
+Version 0.3.x
+-------------
+
+Version 0.3.0
+^^^^^^^^^^^^^
+
+*In Progress*
+
+* Added a new campaign creation assistant
+* Support for expiring campaigns at a specified time
+* Track more details when messages are opened such as the IP address and User Agent
+* Support for tagging campaign types
+
 Version 0.2.x
 -------------
 
