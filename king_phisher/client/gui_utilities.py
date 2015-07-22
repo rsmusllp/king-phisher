@@ -387,9 +387,9 @@ class GladeGObject(object):
 	be identical to the name of the object they represent in the Glade
 	data file.
 	"""
-	gobject_ids = []
-	"""A list of children GObjects to load from the Glade data file."""
-	top_level_dependencies = []
+	gobject_ids = ()
+	"""A tuple of children GObjects to load from the Glade data file."""
+	top_level_dependencies = ()
 	"""Additional top level GObjects to load from the Glade data file."""
 	config_prefix = ''
 	"""A prefix to be used for keys when looking up value in the :py:attr:`~.GladeGObject.config`."""
@@ -413,7 +413,10 @@ class GladeGObject(object):
 		self.gtk_builder = builder
 		"""A :py:class:`Gtk.Builder` instance used to load Glade data with."""
 
-		builder.add_objects_from_file(which_glade(), self.top_level_dependencies + [self.__class__.__name__])
+		top_level_dependencies = [self.__class__.__name__]
+		if self.top_level_dependencies is not None:
+			top_level_dependencies.extend(self.top_level_dependencies)
+		builder.add_objects_from_file(which_glade(), top_level_dependencies)
 		builder.connect_signals(self)
 		gobject = builder.get_object(self.__class__.__name__)
 		if isinstance(gobject, Gtk.Window):
@@ -428,7 +431,7 @@ class GladeGObject(object):
 			gobject = self.gtk_builder_get(gobject_id)
 			# the following five lines ensure that the types match up, this is to enforce clean development
 			gtype = gobject_id.split('_', 1)[0]
-			if gobject == None:
+			if gobject is None:
 				raise TypeError("gobject {0} could not be found in the glade file".format(gobject_id))
 			elif gobject.__class__.__name__.lower() != gtype:
 				raise TypeError("gobject {0} is of type {1} expected {2}".format(gobject_id, gobject.__class__.__name__, gtype))

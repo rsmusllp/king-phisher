@@ -100,14 +100,33 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
-		campaign_name = self.gobjects['entry_campaign_name'].get_text()
 		# have to do it this way because the next page will be selected when the apply signal is complete
 		set_current_page = lambda page_name: self.assistant.set_current_page(max(0, self._page_titles[page_name] - 1))
+
+		# get and validate the campaign name
+		campaign_name = self.gobjects['entry_campaign_name'].get_text()
 		if not campaign_name:
 			gui_utilities.show_dialog_error('Invalid Campaign Name', self.parent, 'A unique and valid campaign name must be specified.')
 			set_current_page('Basic Settings')
 			return True
 
+		# get and validate the campaign expiration
+		expiration = None
+		if self.gobjects['checkbutton_expire_campaign'].get_property('active'):
+			expiration = datetime.datetime.combine(
+				gui_utilities.gtk_calendar_to_date(self.gobjects['calendar_campaign_expiration']),
+				datetime.time(
+					int(self.gobjects['spinbutton_campaign_expiration_hour'].get_value()),
+					int(self.gobjects['spinbutton_campaign_expiration_minute'].get_value())
+				)
+			)
+			expiration = utilities.datetime_local_to_utc(expiration)
+			if expiration <= datetime.datetime.now():
+				gui_utilities.show_dialog_error('Invalid Campaign Expiration', self.parent, 'The expiration date is set in the past.')
+				set_current_page('Expiration')
+				return True
+
+		# create the campaign, point of no return
 		try:
 			cid = self.application.rpc('campaign/new', campaign_name, description=self.gobjects['entry_campaign_description'].get_text())
 		except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
@@ -121,20 +140,9 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			return True
 
 		properties = {}
-		campaign_type = self._get_campaign_type_id()
-		if campaign_type:
-			properties['campaign_type_id'] = campaign_type
+		properties['campaign_type_id'] = self._get_campaign_type_id()
+		properties['expiration'] = expiration
 		properties['reject_after_credentials'] = self.gobjects['checkbutton_reject_after_credentials'].get_property('active')
-		if self.gobjects['checkbutton_expire_campaign'].get_property('active'):
-			expiration = datetime.datetime.combine(
-				gui_utilities.gtk_calendar_to_date(self.gobjects['calendar_campaign_expiration']),
-				datetime.time(
-					int(self.gobjects['spinbutton_campaign_expiration_hour'].get_value()),
-					int(self.gobjects['spinbutton_campaign_expiration_minute'].get_value())
-				)
-			)
-			expiration = utilities.datetime_local_to_utc(expiration)
-			properties['expiration'] = expiration
 		self.application.rpc('db/table/set', 'campaigns', cid, properties.keys(), properties.values())
 
 		if self.gobjects['checkbutton_alert_subscribe'].get_property('active'):
