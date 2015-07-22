@@ -794,21 +794,18 @@ class MailSenderTab(object):
 			config_tab.objects_save_to_config()
 		elif edit_tab and previous_page == edit_tab.box:
 			for _ in range(1):
-				html_file = self.config.get('mailer.html_file')
-				if not html_file:
-					break
 				text = edit_tab.textbuffer.get_text(edit_tab.textbuffer.get_start_iter(), edit_tab.textbuffer.get_end_iter(), False)
 				if not text:
 					break
-				with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
-					old_text = file_h.read()
-				if old_text == text:
+				html_file = self.config.get('mailer.html_file')
+				if html_file:
+					with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
+						old_text = file_h.read()
+					if old_text == text:
+						break
+				if not gui_utilities.show_dialog_yes_no('Save HTML', self.parent, 'Save message HTML the file?'):
 					break
-				if not gui_utilities.show_dialog_yes_no('Save HTML the file?', self.parent):
-					break
-				html_file_h = open(html_file, 'w')
-				html_file_h.write(text)
-				html_file_h.close()
+				edit_tab.save_html_file()
 
 		if config_tab and current_page == config_tab.box:
 			config_tab.objects_load_from_config()
