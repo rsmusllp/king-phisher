@@ -590,12 +590,12 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		visit_id = make_uid()
 		if self.visit_id:
 			set_new_visit = False
-			visit_id = self.visit_id
 			query = session.query(db_models.LandingPage)
 			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
 			if query.count():
-				visit = db_manager.get_row_by_id(session, db_models.Visit, visit_id)
+				visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
 				if visit.message_id == self.message_id:
+					visit_id = self.visit_id
 					visit.visit_count += 1
 				else:
 					set_new_visit = True
