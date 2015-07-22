@@ -147,7 +147,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			user = subscription.user
 			carrier = user.phone_carrier
 			number = user.phone_number
-			if carrier == None or number == None:
+			if carrier is None or number is None:
 				self.server.logger.warning("skipping alert because user {0} has missing information".format(user.id))
 				continue
 			self.server.logger.debug("sending alert SMS message to {0} ({1})".format(number, carrier))
@@ -309,7 +309,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		Intelligently get the IP address of the HTTP client, optionally
 		accounting for proxies that may be in use.
 
-		:return: The clients IP address
+		:return: The clients IP address.
 		:rtype: str
 		"""
 		address = self.client_address[0]
@@ -366,7 +366,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 		fs = os.stat(template.filename)
 		if mime_type.startswith('text'):
-			mime_type = mime_type + '; charset=utf-8'
+			mime_type += '; charset=utf-8'
 		self.send_response(200)
 		self.send_header('Content-Type', mime_type)
 		self.send_header('Content-Length', str(len(template_data)))
@@ -417,7 +417,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.server.logger.warning('denying request with not found due to invalid hostname')
 			session.close()
 			raise errors.KingPhisherAbortRequestError()
-		if campaign.reject_after_credentials and self.visit_id == None:
+		if campaign.has_expired:
+			self.server.logger.warning('denying request because the campaign has expired')
+			session.close()
+			raise errors.KingPhisherAbortRequestError()
+		if campaign.reject_after_credentials and self.visit_id is None:
 			query = session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
 			if query.count():
@@ -473,6 +477,10 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			session.close()
 			self.logger.error('dead drop request received for an unknown campaign')
 			return
+		if deployment.campaign.has_expired:
+			session.close()
+			self.logger.info('dead drop request received for an expired campaign')
+			return
 
 		local_username = data.get('local_username')
 		local_hostname = data.get('local_hostname')
@@ -525,7 +533,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		query = session.query(db_models.Message)
 		query = query.filter_by(id=msg_id, opened=None)
 		message = query.first()
-		if message:
+		if message and not message.campaign.has_expired:
 			message.opened = db_models.current_timestamp()
 			session.commit()
 		session.close()
@@ -561,12 +569,17 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not self.campaign_id:
 			return
 		client_ip = self.get_client_ip()
-		self.logger.info("handling a page visit for campaign id: {0} from IP address: {1}".format(self.campaign_id, client_ip))
+
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
+		if campaign.has_expired:
+			self.logger.info("ignoring page visit for expired campaign id: {0} from IP address: {1}".format(self.campaign_id, client_ip))
+			session.close()
+			return
+		self.logger.info("handling a page visit for campaign id: {0} from IP address: {1}".format(self.campaign_id, client_ip))
 		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
 
-		if message.opened == None and self.config.get_if_exists('server.set_message_opened_on_visit', True):
+		if message.opened is None and self.config.get_if_exists('server.set_message_opened_on_visit', True):
 			message.opened = db_models.current_timestamp()
 
 		set_new_visit = True

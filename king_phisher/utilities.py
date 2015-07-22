@@ -40,12 +40,12 @@ import shlex
 import string
 import subprocess
 import sys
-import time
 
 from king_phisher import color
 from king_phisher import its
 from king_phisher import version
 
+from dateutil import tz
 from smoke_zephyr.utilities import which
 
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
@@ -130,7 +130,9 @@ def datetime_local_to_utc(dt):
 	:return: The time converted to the UTC timezone.
 	:rtype: :py:class:`datetime.datetime`
 	"""
-	return dt + datetime.timedelta(seconds=time.timezone)
+	dt = dt.replace(tzinfo=tz.tzlocal())
+	dt = dt.astimezone(tz.tzutc())
+	return dt.replace(tzinfo=None)
 
 def datetime_utc_to_local(dt):
 	"""
@@ -142,7 +144,9 @@ def datetime_utc_to_local(dt):
 	:return: The time converted to the local timezone.
 	:rtype: :py:class:`datetime.datetime`
 	"""
-	return dt - datetime.timedelta(seconds=time.timezone)
+	dt = dt.replace(tzinfo=tz.tzutc())
+	dt = dt.astimezone(tz.tzlocal())
+	return dt.replace(tzinfo=None)
 
 def format_datetime(dt):
 	"""

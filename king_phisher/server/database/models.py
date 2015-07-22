@@ -124,6 +124,14 @@ class Campaign(Base):
 	messages = sqlalchemy.orm.relationship('Message', backref='campaign', cascade='all, delete-orphan')
 	visits = sqlalchemy.orm.relationship('Visit', backref='campaign', cascade='all, delete-orphan')
 
+	@property
+	def has_expired(self):
+		if self.expiration is None:
+			return False
+		if self.expiration > current_timestamp():
+			return False
+		return True
+
 @register_table
 class CampaignType(TagMixIn, Base):
 	__tablename__ = 'campaign_types'
