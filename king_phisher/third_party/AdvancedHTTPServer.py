@@ -439,6 +439,8 @@ class AdvancedHTTPServerRPCClient(object):
 		if not hasattr(self, 'logger'):
 			self.logger = logging.getLogger('AdvancedHTTPServer.RPCClient')
 
+		self.headers = None
+		"""An optional dictionary of headers to include with each RPC request."""
 		self.use_ssl = bool(use_ssl)
 		self.uri_base = str(uri_base)
 		self.username = (None if username is None else str(username))
@@ -447,6 +449,9 @@ class AdvancedHTTPServerRPCClient(object):
 			hmac_key = hmac_key.encode('UTF-8')
 		self.hmac_key = hmac_key
 		self.lock = threading.Lock()
+		"""A :py:class:`threading.Lock` instance used to synchronize operations."""
+		self.serializer = None
+		"""The :py:class:`.AdvancedHTTPServerSerializer` instance to use for encoding RPC data to the server."""
 		self.set_serializer('application/json')
 		self.reconnect()
 
@@ -500,6 +505,8 @@ class AdvancedHTTPServerRPCClient(object):
 			options = self.encode(args)
 
 		headers = {}
+		if self.headers:
+			headers.update(self.headers)
 		headers['Content-Type'] = self.serializer.content_type
 		headers['Content-Length'] = str(len(options))
 
