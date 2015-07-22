@@ -448,15 +448,19 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	view_columns = (
 		'Email Address',
 		'Sent',
+		'Trained',
 		'Opened',
-		'Trained'
+		'Opener IP Address',
+		'Opener User Agent'
 	)
 	def format_row_data(self, message):
 		row = (
 			message.target_email,
 			message.sent,
+			('Yes' if message.trained else ''),
 			message.opened,
-			('Yes' if message.trained else '')
+			message.opener_ip,
+			message.opener_user_agent
 		)
 		return row
 

@@ -535,6 +535,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		message = query.first()
 		if message and not message.campaign.has_expired:
 			message.opened = db_models.current_timestamp()
+			message.opener_ip = self.get_client_ip()
+			message.opener_user_agent = self.headers.get('user-agent', None)
 			session.commit()
 		session.close()
 
@@ -581,6 +583,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 		if message.opened is None and self.config.get_if_exists('server.set_message_opened_on_visit', True):
 			message.opened = db_models.current_timestamp()
+			message.opener_ip = self.get_client_ip()
+			message.opener_user_agent = self.headers.get('user-agent', None)
 
 		set_new_visit = True
 		visit_id = make_uid()
