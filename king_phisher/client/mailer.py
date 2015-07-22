@@ -334,7 +334,7 @@ class MailSenderThread(threading.Thread):
 		self.logger.debug("loaded {0:,} MIME attachments".format(len(self._mime_attachments)))
 
 		target_file_h = open(self.target_file, 'rU')
-		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
+		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address', 'department'])
 		for target in csv_reader:
 			if not utilities.is_valid_email_address(target['email_address']):
 				if target['email_address']:
@@ -361,7 +361,12 @@ class MailSenderThread(threading.Thread):
 			self.tab_notify_sent(emails_done, emails_total)
 			campaign_id = self.config['campaign_id']
 			company_name = self.config.get('mailer.company_name', '')
-			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], company_name, target['first_name'], target['last_name'])
+			department = target['department']
+			if department is not None:
+				department = department.strip()
+				if department == '':
+					department = None
+			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], company_name, target['first_name'], target['last_name'], department)
 
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)

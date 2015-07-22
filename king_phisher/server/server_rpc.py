@@ -248,7 +248,7 @@ class KingPhisherRequestHandlerRPC(object):
 		session.close()
 		return
 
-	def rpc_campaign_message_new(self, campaign_id, email_id, target_email, company_name, first_name, last_name):
+	def rpc_campaign_message_new(self, campaign_id, email_id, target_email, company_name, first_name, last_name, department_name=None):
 		"""
 		Record a message that has been sent as part of a campaign. These
 		details can be retrieved later for value substitution in template
@@ -260,8 +260,16 @@ class KingPhisherRequestHandlerRPC(object):
 		:param str company_name: The company name value for the message.
 		:param str first_name: The first name of the message's recipient.
 		:param str last_name: The last name of the message's recipient.
+		:param str department_name: The name of the company department that the message's recipient belongs to.
 		"""
 		session = db_manager.Session()
+		department = None
+		if department_name is not None:
+			department = session.query(db_models.CompanyDepartment).filter_by(name=department_name).first()
+			if department is None:
+				department = db_models.CompanyDepartment(name=department_name)
+				session.add(department)
+				session.commit()
 		message = db_models.Message()
 		message.id = email_id
 		message.campaign_id = campaign_id
@@ -269,6 +277,8 @@ class KingPhisherRequestHandlerRPC(object):
 		message.company_name = company_name
 		message.first_name = first_name
 		message.last_name = last_name
+		if department is not None:
+			message.company_department_id = department.id
 		session.add(message)
 		session.commit()
 		session.close()
