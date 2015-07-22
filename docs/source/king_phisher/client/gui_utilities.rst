@@ -19,7 +19,9 @@ Functions
 
 .. autofunction:: king_phisher.client.gui_utilities.gobject_signal_blocked
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_calendar_to_date
+.. autofunction:: king_phisher.client.gui_utilities.gtk_calendar_get_pydate
+
+.. autofunction:: king_phisher.client.gui_utilities.gtk_calendar_set_pydate
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_list_store_search
 

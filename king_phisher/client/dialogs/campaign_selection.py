@@ -57,6 +57,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.treeview_manager.set_column_titles(('Campaign Name', 'Type', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
+		self._creation_assistant = None
 		self.load_campaigns()
 		# default sort is by campaign creation date, descending
 		treeview.get_model().set_sort_column_id(4, Gtk.SortType.DESCENDING)
@@ -102,13 +103,14 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			if campaign_type:
 				campaign_type = campaign_type.name
 			expiration_ts = campaign.expiration
-			if not expiration_ts is None:
+			if expiration_ts is not None:
 				expiration_ts = utilities.datetime_utc_to_local(campaign.expiration)
 				expiration_ts = utilities.format_datetime(expiration_ts)
 			store.append([str(campaign.id), campaign.name, campaign_type, campaign.user_id, created_ts, expiration_ts])
 		self.gobjects['label_campaign_info'].set_text("Showing {0:,} Campaign{1}".format(len(store), ('' if len(store) == 1 else 's')))
 
 	def signal_assistant_destroy(self, _, campaign_creation_assistant):
+		self._creation_assistant = None
 		campaign_name = campaign_creation_assistant.campaign_name
 		if not campaign_name:
 			return
@@ -116,14 +118,15 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self._highlight_campaign(campaign_name)
 
 	def signal_button_clicked(self, button):
+		if self._creation_assistant is not None:
+			gui_utilities.show_dialog_warning('Campaign Creation Assistant', self.dialog, 'The campaign creation assistant is already active.')
+			return
 		assistant = CampaignCreationAssistant(self.application)
 		assistant.assistant.set_transient_for(self.dialog)
 		assistant.assistant.set_modal(True)
 		assistant.assistant.connect('destroy', self.signal_assistant_destroy, assistant)
 		assistant.interact()
-
-	def signal_entry_new_campaign_name_activate(self, entry):
-		self.gobjects['button_new_campaign'].emit('clicked')
+		self._creation_assistant = assistant
 
 	def signal_treeview_row_activated(self, treeview, treeview_column, treepath):
 		self.gobjects['button_select'].emit('clicked')

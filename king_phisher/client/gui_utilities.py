@@ -152,9 +152,9 @@ def gobject_signal_blocked(gobject, signal_name):
 	yield
 	GObject.signal_handler_unblock(gobject, handler_id)
 
-def gtk_calendar_to_date(calendar):
+def gtk_calendar_get_pydate(calendar):
 	"""
-	Get the date from a :py:class:`Gtk.Calendar` instance.
+	Get the Python date from a :py:class:`Gtk.Calendar` instance.
 
 	:param calendar: The calendar to get the date from.
 	:type calendar: :py:class:`Gtk.Calendar`
@@ -165,6 +165,19 @@ def gtk_calendar_to_date(calendar):
 		raise ValueError('calendar must be a Gtk.Calendar instance')
 	calendar_day = calendar.get_date()
 	return datetime.date(calendar_day[0], calendar_day[1] + 1, calendar_day[2])
+
+def gtk_calendar_set_pydate(calendar, pydate):
+	"""
+	Set the date on a :py:class:`Gtk.Calendar` instance from a Python
+	:py:class:`datetime.date` object.
+
+	:param calendar: The calendar to set the date for.
+	:type calendar: :py:class:`Gtk.Calendar`
+	:param pydate: The date to set on the calendar.
+	:type pydate: :py:class:`datetime.date`
+	"""
+	calendar.select_month(pydate.month - 1, pydate.year)
+	calendar.select_day(pydate.day)
 
 def gtk_list_store_search(list_store, value, column=0):
 	"""

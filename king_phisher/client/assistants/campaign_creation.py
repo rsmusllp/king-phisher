@@ -114,7 +114,7 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		expiration = None
 		if self.gobjects['checkbutton_expire_campaign'].get_property('active'):
 			expiration = datetime.datetime.combine(
-				gui_utilities.gtk_calendar_to_date(self.gobjects['calendar_campaign_expiration']),
+				gui_utilities.gtk_calendar_get_pydate(self.gobjects['calendar_campaign_expiration']),
 				datetime.time(
 					int(self.gobjects['spinbutton_campaign_expiration_hour'].get_value()),
 					int(self.gobjects['spinbutton_campaign_expiration_minute'].get_value())
@@ -151,12 +151,12 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		self._close_ready = True
 		return
 
-	def signal_assistant_cancel(self, _):
-		self.assistant.destroy()
+	def signal_assistant_cancel(self, assistant):
+		assistant.destroy()
 
-	def signal_assistant_close(self, _):
+	def signal_assistant_close(self, assistant):
 		if self._close_ready:
-			self.assistant.destroy()
+			assistant.destroy()
 		self._close_ready = True
 
 	def signal_assistant_prepare(self, _, page):
@@ -167,13 +167,17 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			model.clear()
 			for campaign_type in self.application.rpc.remote_table('campaign_types'):
 				model.append((campaign_type.name, campaign_type.id))
+		elif page_title == 'Expiration':
+			calendar = self.gobjects['calendar_campaign_expiration']
+			default_day = datetime.datetime.today() + datetime.timedelta(days=31)
+			gui_utilities.gtk_calendar_set_pydate(calendar, default_day)
 
 	def signal_calendar_prev(self, calendar):
 		today = datetime.date.today()
-		calendar_day = gui_utilities.gtk_calendar_to_date(calendar)
+		calendar_day = gui_utilities.gtk_calendar_get_pydate(calendar)
 		if calendar_day >= today:
 			return
-		calendar.select_month(today.month - 1, today.year)
+		gui_utilities.gtk_calendar_set_pydate(calendar, today)
 
 	def signal_checkbutton_expire_campaign_toggled(self, _):
 		active = self.gobjects['checkbutton_expire_campaign'].get_property('active')
