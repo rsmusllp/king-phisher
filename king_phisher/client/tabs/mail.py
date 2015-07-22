@@ -114,6 +114,13 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.application.connect('exit-confirm', self.signal_kpc_exit_confirm)
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 
+	def _sender_precheck_campaign(self):
+		campaign = self.application.rpc.remote_table_row('campaigns', self.config['campaign_id'])
+		if campaign.expiration and campaign.expiration < datetime.datetime.utcnow():
+			gui_utilities.show_dialog_warning('Campaign Is Expired', self.parent, 'The current campaign has already expired')
+			return False
+		return True
+
 	def _sender_precheck_settings(self):
 		required_settings = {
 			'mailer.webserver_url': 'Web Server URL',
@@ -194,8 +201,9 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 	def _sender_precheck_url(self):
 		self.text_insert('Checking the target URL... ')
 		try:
-			test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
-		except requests.exceptions.RequestException:
+			response = test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
+			assert response.ok
+		except AssertionError, requests.exceptions.RequestException:
 			self.text_insert('failed')
 			if not gui_utilities.show_dialog_yes_no('Unable To Open The Web Server URL', self.parent, 'The URL may be invalid, continue sending messages anyways?'):
 				self.text_insert(', sending aborted.\n')
@@ -211,6 +219,8 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 
 	def signal_button_clicked_sender_start(self, button):
 		if not self._sender_precheck_settings():
+			return
+		if not self._sender_precheck_campaign():
 			return
 		if not self._sender_precheck_url():
 			return
@@ -260,7 +270,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		landing_page_hostname = parsed_target_url.netloc
 		landing_page = parsed_target_url.path
 		landing_page = landing_page.lstrip('/')
-		self.parent.rpc('campaign/landing_page/new', self.config['campaign_id'], landing_page_hostname, landing_page)
+		self.application.rpc('campaign/landing_page/new', self.config['campaign_id'], landing_page_hostname, landing_page)
 
 		self.sender_thread.start()
 		self.gobjects['togglebutton_mail_sender_pause'].set_sensitive(True)
@@ -688,11 +698,11 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 				self.logger.warning('unknown verify url exception: ' + repr(error))
 				error_description = 'An unknown verify URL exception occurred'
 		else:
-			if response.status_code < 200 or response.status_code > 299:
+			if response.ok:
+				self.logger.debug("verify url HTTP status: {0} {1}".format(response.status_code, response.reason))
+			else:
 				self.logger.warning("verify url HTTP error: {0} {1}".format(response.status_code, response.reason))
 				error_description = "HTTP status {0} {1}".format(response.status_code, response.reason)
-			else:
-				self.logger.debug("verify url HTTP status: {0} {1}".format(response.status_code, response.reason))
 		if error_description:
 			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent, error_description)
 		else:

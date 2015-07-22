@@ -199,7 +199,7 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 
 	def remote_table_row(self, table, row_id, cache=False, refresh=False):
 		"""
-		Get a row from the specified table by it's id, optionally cacheing it.
+		Get a row from the specified table by it's id, optionally caching it.
 
 		:param str table: The table in which the row exists.
 		:param row_id: The value of the row's id column.
