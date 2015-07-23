@@ -94,20 +94,47 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		"""
 		return self.gobjects['entry_campaign_name'].get_text()
 
-	def _get_campaign_type_id(self):
-		combobox_campaign_type = self.gobjects['combobox_campaign_type']
-		model = combobox_campaign_type.get_model()
-		if model is None:
-			return
-		model_iter = combobox_campaign_type.get_active_iter()
+	def _get_tag_from_combobox(self, combobox, db_table):
+		model = combobox.get_model()
+		model_iter = combobox.get_active_iter()
 		if model_iter is None:
-			campaign_type = combobox_campaign_type.get_child().get_text()
+			campaign_type = combobox.get_child().get_text()
 			if not campaign_type:
 				return
 			model_iter = gui_utilities.gtk_list_store_search(model, campaign_type)
 			if model_iter is None:
-				return self.application.rpc('db/table/insert', 'campaign_types', 'name', campaign_type)
+				return self.application.rpc('db/table/insert', db_table, 'name', campaign_type)
 		return model.get_value(model_iter, 1)
+
+	def _get_company_existing_id(self):
+		combobox_company = self.gobjects['combobox_company_existing']
+		model = combobox_company.get_model()
+		model_iter = combobox_company.get_active_iter()
+		if model is None or model_iter is None:
+			return
+		return model.get_value(model_iter, 1)
+
+	def _get_company_new_id(self):
+		name = self.gobjects['entry_company_new_name'].get_text()
+		name = name.strip()
+		# check if this company name already exists in the model
+		model = self.gobjects['combobox_company_existing'].get_model()
+		model_iter = gui_utilities.gtk_list_store_search(model, name)
+		if model_iter is not None:
+			return model.get_value(model_iter, 1)
+		# check if this company name already exists remotely
+		remote_companies = list(self.application.rpc.remote_table('companies', query_filter={'name': name}))
+		if len(remote_companies):
+			return remote_companies[0].id
+
+		description = self.gobjects['entry_company_new_description'].get_text()
+		description = description.strip()
+		if description == '':
+			description = None
+		industry_id = self._get_tag_from_combobox(self.gobjects['combobox_company_industry'], 'industries')
+		company_id = self.application.rpc('db/table/insert', 'companies', ('name', 'description', 'industry_id'), (name, description, industry_id))
+		self.gobjects['radiobutton_company_existing'].set_active(True)
+		return company_id
 
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
@@ -116,10 +143,26 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 
 		# get and validate the campaign name
 		campaign_name = self.gobjects['entry_campaign_name'].get_text()
+		campaign_name = campaign_name.strip()
 		if not campaign_name:
 			gui_utilities.show_dialog_error('Invalid Campaign Name', self.parent, 'A unique and valid campaign name must be specified.')
 			set_current_page('Basic Settings')
 			return True
+
+		# validate the company
+		company_id = None
+		if self.gobjects['radiobutton_company_existing'].get_active():
+			company_id = self._get_company_existing_id()
+			if company_id is None:
+				gui_utilities.show_dialog_error('Invalid Company', self.parent, 'A valid existing company must be specified.')
+				set_current_page('Company')
+				return True
+		elif self.gobjects['radiobutton_company_new'].get_active():
+			company_id = self._get_company_new_id()
+			if company_id is None:
+				gui_utilities.show_dialog_error('Invalid Company', self.parent, 'The new company settings are invalid.')
+				set_current_page('Company')
+				return True
 
 		# get and validate the campaign expiration
 		expiration = None
@@ -138,8 +181,12 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 				return True
 
 		# create the campaign, point of no return
+		campaign_description = self.gobjects['entry_campaign_description'].get_text()
+		campaign_description = campaign_description.strip()
+		if campaign_description == '':
+			campaign_description = None
 		try:
-			cid = self.application.rpc('campaign/new', campaign_name, description=self.gobjects['entry_campaign_description'].get_text())
+			cid = self.application.rpc('campaign/new', campaign_name, description=campaign_description)
 		except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
 			if not error.is_remote_exception:
 				raise error
@@ -151,7 +198,8 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			return True
 
 		properties = {}
-		properties['campaign_type_id'] = self._get_campaign_type_id()
+		properties['campaign_type_id'] = self._get_tag_from_combobox(self.gobjects['combobox_campaign_type'], 'campaign_types')
+		properties['company_id'] = company_id
 		properties['expiration'] = expiration
 		properties['reject_after_credentials'] = self.gobjects['checkbutton_reject_after_credentials'].get_property('active')
 		self.application.rpc('db/table/set', 'campaigns', cid, properties.keys(), properties.values())
@@ -184,7 +232,12 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			model.clear()
 			for row in self.application.rpc.remote_table('companies'):
 				model.append((row.name, row.id))
-
+			company_name = self.gobjects['entry_company_new_name'].get_text()
+			if company_name:
+				model_iter = gui_utilities.gtk_list_store_search(model, company_name)
+				if model_iter is not None:
+					combobox.set_active_iter(model_iter)
+					self.gobjects['radiobutton_company_existing'].set_active(True)
 			combobox = self.gobjects['combobox_company_industry']
 			model = combobox.get_model()
 			model.clear()

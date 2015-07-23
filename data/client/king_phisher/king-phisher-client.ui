@@ -1152,7 +1152,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="CampaignCreationAssistant.entry_company_new_name">
+                      <object class="GtkEntry" id="CampaignCreationAssistant.entry_company_new_description">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="hexpand">True</property>
@@ -1164,7 +1164,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="CampaignCreationAssistant.entry_company_new_description">
+                      <object class="GtkEntry" id="CampaignCreationAssistant.entry_company_new_name">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="hexpand">True</property>
