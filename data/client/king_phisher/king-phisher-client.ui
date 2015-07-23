@@ -961,6 +961,7 @@ Brandan Geise</property>
           <object class="GtkBox" id="box17">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="tooltip_text" translatable="yes">Select whether to create a new company, use an existing one or none at all.</property>
             <property name="homogeneous">True</property>
             <child>
               <object class="GtkLabel" id="label47">
@@ -972,23 +973,6 @@ Brandan Geise</property>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkRadioButton" id="CampaignCreationAssistant.radiobutton_company_none">
-                <property name="label" translatable="yes">None</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="xalign">0</property>
-                <property name="active">True</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="signal_radiobutton_toggled" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -1005,7 +989,7 @@ Brandan Geise</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -1017,6 +1001,23 @@ Brandan Geise</property>
                 <property name="xalign">0</property>
                 <property name="draw_indicator">True</property>
                 <property name="group">CampaignCreationAssistant.radiobutton_company_none</property>
+                <signal name="toggled" handler="signal_radiobutton_toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="CampaignCreationAssistant.radiobutton_company_none">
+                <property name="label" translatable="yes">None</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="xalign">0</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
                 <signal name="toggled" handler="signal_radiobutton_toggled" swapped="no"/>
               </object>
               <packing>
@@ -1049,7 +1050,6 @@ Brandan Geise</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="spacing">10</property>
-                    <property name="homogeneous">True</property>
                     <child>
                       <object class="GtkLabel" id="label43">
                         <property name="visible">True</property>
@@ -1066,6 +1066,7 @@ Brandan Geise</property>
                       <object class="GtkComboBox" id="CampaignCreationAssistant.combobox_company_existing">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">The name of the existing company to associate this campaign with.</property>
                         <property name="has_entry">True</property>
                         <property name="entry_text_column">0</property>
                         <property name="id_column">0</property>
@@ -1073,11 +1074,12 @@ Brandan Geise</property>
                           <object class="GtkEntry" id="combobox-entry3">
                             <property name="can_focus">False</property>
                             <property name="editable">False</property>
+                            <property name="placeholder_text" translatable="yes">company name (OPTIONAL)</property>
                           </object>
                         </child>
                       </object>
                       <packing>
-                        <property name="expand">False</property>
+                        <property name="expand">True</property>
                         <property name="fill">True</property>
                         <property name="position">1</property>
                       </packing>
@@ -1155,6 +1157,7 @@ Brandan Geise</property>
                       <object class="GtkEntry" id="CampaignCreationAssistant.entry_company_new_description">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">A description of the new company.</property>
                         <property name="hexpand">True</property>
                         <property name="placeholder_text" translatable="yes">company description (OPTIONAL)</property>
                       </object>
@@ -1167,6 +1170,7 @@ Brandan Geise</property>
                       <object class="GtkEntry" id="CampaignCreationAssistant.entry_company_new_name">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The name of the new company to create.</property>
                         <property name="hexpand">True</property>
                         <property name="placeholder_text" translatable="yes">company name (REQUIRED)</property>
                       </object>
@@ -1179,6 +1183,7 @@ Brandan Geise</property>
                       <object class="GtkComboBox" id="CampaignCreationAssistant.combobox_company_industry">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">The industry in which the new company operates.</property>
                         <property name="hexpand">True</property>
                         <property name="has_entry">True</property>
                         <property name="entry_text_column">0</property>
@@ -1247,7 +1252,7 @@ Brandan Geise</property>
           <object class="GtkLabel" id="label34">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Campaigns can optionally be set to expire after a user specified date. After the expiration date, no more data will be collected for the campaign.</property>
+            <property name="label" translatable="yes">Campaigns can optionally be set to expire after a user specified date and time. After the campaign expires, no more data will be collected for the campaign.</property>
             <property name="wrap">True</property>
             <property name="max_width_chars">45</property>
           </object>
@@ -1463,7 +1468,7 @@ Brandan Geise</property>
               <object class="GtkLabel" id="label38">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Verify all settings are correct then hit "Apply" to create the new campaign.</property>
+                <property name="label" translatable="yes">Verify all settings are correct in the previous sections, then hit "Apply" to create the new King Phisher campaign.</property>
                 <property name="wrap">True</property>
                 <property name="max_width_chars">45</property>
               </object>
