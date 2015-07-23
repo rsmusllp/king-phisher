@@ -109,7 +109,7 @@ class CampaignType(RemoteRow):
 	__slots__ = _tag_mixin_fields
 
 class Company(RemoteRow):
-	__table__ = 'company'
+	__table__ = 'companies'
 	__slots__ = ('id', 'name', 'description', 'industry_id', 'url_main', 'url_email', 'url_remote_access')
 
 class CompanyDepartment(RemoteRow):

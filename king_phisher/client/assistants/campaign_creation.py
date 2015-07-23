@@ -51,9 +51,18 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		'checkbutton_expire_campaign',
 		'checkbutton_reject_after_credentials',
 		'combobox_campaign_type',
+		'combobox_company_existing',
+		'combobox_company_industry',
 		'entry_campaign_name',
 		'entry_campaign_description',
+		'entry_company_new_name',
+		'entry_company_new_description',
 		'frame_campaign_expiration',
+		'frame_company_existing',
+		'frame_company_new',
+		'radiobutton_company_existing',
+		'radiobutton_company_new',
+		'radiobutton_company_none',
 		'spinbutton_campaign_expiration_hour',
 		'spinbutton_campaign_expiration_minute'
 	)
@@ -70,6 +79,8 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			if page_title:
 				self._page_titles[page_title] = page_n
 		self.gobjects['combobox_campaign_type'].set_model(Gtk.ListStore(str, int))
+		self.gobjects['combobox_company_existing'].set_model(Gtk.ListStore(str, int))
+		self.gobjects['combobox_company_industry'].set_model(Gtk.ListStore(str, int))
 		if not self.config['server_config']['server.require_id']:
 			self.gobjects['checkbutton_reject_after_credentials'].set_sensitive(False)
 			self.gobjects['checkbutton_reject_after_credentials'].set_property('active', False)
@@ -165,8 +176,20 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			combobox = self.gobjects['combobox_campaign_type']
 			model = combobox.get_model()
 			model.clear()
-			for campaign_type in self.application.rpc.remote_table('campaign_types'):
-				model.append((campaign_type.name, campaign_type.id))
+			for row in self.application.rpc.remote_table('campaign_types'):
+				model.append((row.name, row.id))
+		elif page_title == 'Company':
+			combobox = self.gobjects['combobox_company_existing']
+			model = combobox.get_model()
+			model.clear()
+			for row in self.application.rpc.remote_table('companies'):
+				model.append((row.name, row.id))
+
+			combobox = self.gobjects['combobox_company_industry']
+			model = combobox.get_model()
+			model.clear()
+			for row in self.application.rpc.remote_table('industries'):
+				model.append((row.name, row.id))
 		elif page_title == 'Expiration':
 			calendar = self.gobjects['calendar_campaign_expiration']
 			default_day = datetime.datetime.today() + datetime.timedelta(days=31)
@@ -182,6 +205,19 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 	def signal_checkbutton_expire_campaign_toggled(self, _):
 		active = self.gobjects['checkbutton_expire_campaign'].get_property('active')
 		self.gobjects['frame_campaign_expiration'].set_sensitive(active)
+
+	def signal_radiobutton_toggled(self, radiobutton):
+		if not radiobutton.get_active():
+			return
+		if radiobutton == self.gobjects['radiobutton_company_existing']:
+			self.gobjects['frame_company_existing'].set_sensitive(True)
+			self.gobjects['frame_company_new'].set_sensitive(False)
+		elif radiobutton == self.gobjects['radiobutton_company_new']:
+			self.gobjects['frame_company_existing'].set_sensitive(False)
+			self.gobjects['frame_company_new'].set_sensitive(True)
+		elif radiobutton == self.gobjects['radiobutton_company_none']:
+			self.gobjects['frame_company_existing'].set_sensitive(False)
+			self.gobjects['frame_company_new'].set_sensitive(False)
 
 	def interact(self):
 		self.assistant.show_all()
