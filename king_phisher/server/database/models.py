@@ -136,7 +136,7 @@ class Campaign(Base):
 class CampaignType(TagMixIn, Base):
 	__tablename__ = 'campaign_types'
 	# relationships
-	campaigns = sqlalchemy.orm.relationship('Campaign', backref='campaign_type', cascade='all')
+	campaigns = sqlalchemy.orm.relationship('Campaign', backref='campaign_type')
 
 @register_table
 class Company(Base):
@@ -156,7 +156,7 @@ class Company(Base):
 class CompanyDepartment(TagMixIn, Base):
 	__tablename__ = 'company_departments'
 	# relationships
-	messages = sqlalchemy.orm.relationship('Message', backref='company_department', cascade='all')
+	messages = sqlalchemy.orm.relationship('Message', backref='company_department')
 
 @register_table
 class Credential(Base):
@@ -199,7 +199,7 @@ class DeaddropConnection(Base):
 class Industry(TagMixIn, Base):
 	__tablename__ = 'industries'
 	# relationships
-	companies = sqlalchemy.orm.relationship('Company', backref='industry', cascade='all')
+	companies = sqlalchemy.orm.relationship('Company', backref='industry')
 
 @register_table
 class LandingPage(Base):
