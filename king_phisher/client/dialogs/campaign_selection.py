@@ -54,23 +54,21 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
 		self.treeview_manager = gui_utilities.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
-		self.treeview_manager.set_column_titles(('Campaign Name', 'Type', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
+		self.treeview_manager.set_column_titles(('Campaign Name', 'Company', 'Type', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
 		self._creation_assistant = None
 		self.load_campaigns()
 		# default sort is by campaign creation date, descending
-		treeview.get_model().set_sort_column_id(4, Gtk.SortType.DESCENDING)
+		treeview.get_model().set_sort_column_id(5, Gtk.SortType.DESCENDING)
 
 	def _highlight_campaign(self, campaign_name):
 		treeview = self.gobjects['treeview_campaigns']
-		store = treeview.get_model()
-		store_iter = store.get_iter_first()
-		while store_iter:
-			if store.get_value(store_iter, 1) == campaign_name:
-				treeview.set_cursor(store.get_path(store_iter), None, False)
-				return True
-			store_iter = store.iter_next(store_iter)
+		model = treeview.get_model()
+		model_iter = gui_utilities.gtk_list_store_search(model, campaign_name, column=1)
+		if model_iter:
+			treeview.set_cursor(model.get_path(model_iter), None, False)
+			return True
 		return False
 
 	def _prompt_to_delete_row(self, treeview, selection):
@@ -92,11 +90,14 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		treeview = self.gobjects['treeview_campaigns']
 		store = treeview.get_model()
 		if store is None:
-			store = Gtk.ListStore(str, str, str, str, str, str)
+			store = Gtk.ListStore(str, str, str, str, str, str, str)
 			treeview.set_model(store)
 		else:
 			store.clear()
 		for campaign in self.application.rpc.remote_table('campaigns'):
+			company = campaign.company
+			if company:
+				company = company.name
 			created_ts = utilities.datetime_utc_to_local(campaign.created)
 			created_ts = utilities.format_datetime(created_ts)
 			campaign_type = campaign.campaign_type
@@ -106,7 +107,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			if expiration_ts is not None:
 				expiration_ts = utilities.datetime_utc_to_local(campaign.expiration)
 				expiration_ts = utilities.format_datetime(expiration_ts)
-			store.append([str(campaign.id), campaign.name, campaign_type, campaign.user_id, created_ts, expiration_ts])
+			store.append([str(campaign.id), campaign.name, company, campaign_type, campaign.user_id, created_ts, expiration_ts])
 		self.gobjects['label_campaign_info'].set_text("Showing {0:,} Campaign{1}".format(len(store), ('' if len(store) == 1 else 's')))
 
 	def signal_assistant_destroy(self, _, campaign_creation_assistant):

@@ -104,7 +104,7 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 			gtk_version="{0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()),
 			stack_trace=''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
 		)
-		details = details.strip()
+		details = details.strip() + '\n'
 
 		if exc_name.startswith('king_phisher.third_party.'):
 			exc_name = exc_name[25:]

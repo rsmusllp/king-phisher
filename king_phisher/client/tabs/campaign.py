@@ -454,19 +454,10 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 		'Opener IP Address',
 		'Opener User Agent'
 	)
-	def __init__(self, *args, **kwargs):
-		super(CampaignViewMessagesTab, self).__init__(*args, **kwargs)
-		self._department_ids = {}
-
 	def format_row_data(self, message):
-		if message.company_department_id is None:
-			department = None
-		elif message.company_department_id in self._department_ids:
-			department = self._department_ids[message.company_department_id]
-		else:
-			department = self.application.rpc.remote_table_row('company_departments', message.company_department_id)
+		department = message.company_department
+		if department:
 			department = department.name
-			self._department_ids[message.company_department_id] = department
 		row = (
 			message.target_email,
 			message.sent,
@@ -477,10 +468,6 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 			message.opener_user_agent
 		)
 		return row
-
-	def loader_thread_routine(self, store):
-		self._department_ids = {}
-		super(CampaignViewMessagesTab, self).loader_thread_routine(store)
 
 class CampaignViewTab(object):
 	"""

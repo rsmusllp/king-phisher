@@ -110,6 +110,7 @@ class CampaignType(RemoteRow):
 
 class Company(RemoteRow):
 	__table__ = 'companies'
+	__xref_attr__ = 'company'
 	__slots__ = ('id', 'name', 'description', 'industry_id', 'url_main', 'url_email', 'url_remote_access')
 
 class CompanyDepartment(RemoteRow):
@@ -136,7 +137,7 @@ class Industry(RemoteRow):
 	__slots__ = _tag_mixin_fields
 
 class LandingPage(RemoteRow):
-	__table__ = 'landing_Pages'
+	__table__ = 'landing_pages'
 	__slots__ = ('id', 'campaign_id', 'hostname', 'page')
 
 class Message(RemoteRow):
