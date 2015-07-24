@@ -7,10 +7,10 @@
 Data
 ----
 
-.. autodata:: king_phisher.server.database.models.DATABASE_TABLES
+.. autodata:: king_phisher.server.database.models.database_table_objects
    :annotation:
 
-.. autodata:: king_phisher.server.database.models.DATABASE_TABLE_OBJECTS
+.. autodata:: king_phisher.server.database.models.database_tables
    :annotation:
 
 .. autodata:: king_phisher.server.database.models.SCHEMA_VERSION

@@ -47,7 +47,7 @@ try:
 except ImportError:
 	has_msgpack = False
 
-_table_row_classes = {}
+database_table_objects = {}
 _tag_mixin_fields = ('id', 'name', 'description')
 
 class RemoteRowMeta(type):
@@ -58,7 +58,7 @@ class RemoteRowMeta(type):
 	def __init__(cls, *args, **kwargs):
 		table_name = getattr(cls, '__table__', None)
 		if table_name:
-			_table_row_classes[table_name] = cls
+			database_table_objects[table_name] = cls
 		super(RemoteRowMeta, cls).__init__(*args, **kwargs)
 
 # stylized metaclass definition to be Python 2.7 and 3.x compatible
@@ -86,7 +86,7 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 	def __getattr__(self, item):
 		if hasattr(self, item + '_id'):
 			row_id = getattr(self, item + '_id', None)
-			for table, table_cls in _table_row_classes.items():
+			for table, table_cls in database_table_objects.items():
 				if table_cls.__xref_attr__ == item:
 					return self.__rpc__.remote_table_row(table, row_id, cache=True)
 		raise AttributeError("object has no attribute '{0}'".format(item))
@@ -189,7 +189,7 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		page = 0
 		results = self.call('db/table/view', table, page, query_filter=query_filter)
 		results_length = len(results or '')
-		row_cls = _table_row_classes[table]
+		row_cls = database_table_objects[table]
 		while results:
 			for row in results['rows']:
 				yield row_cls(self, *row)
@@ -217,7 +217,7 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 			row = self.call('db/table/get', table, row_id)
 		if row is None:
 			return None
-		row_cls = _table_row_classes[table]
+		row_cls = database_table_objects[table]
 		return row_cls(self, **row)
 
 	def geoip_lookup(self, ip):

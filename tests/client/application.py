@@ -31,27 +31,23 @@
 #
 
 import json
-import sys
 import unittest
 
 from king_phisher import find
 from king_phisher import testing
 from king_phisher.client import application
 
-from gi.repository import GObject
-from gi.repository import Gtk
-
 class ClientApplicationTests(testing.KingPhisherTestCase):
 	def test_client_main_window_initialize(self):
 		find.data_path_append('data/client')
-		app = application.KingPhisherClientApplication()
+		application.KingPhisherClientApplication()
 
 	def test_client_template_config(self):
 		find.data_path_append('data/client')
 		config_h = open(find.find_data_file('client_config.json'))
 		try:
 			json.load(config_h)
-		except:
+		except Exceptiongit:
 			self.fail("failed to parse the client JSON configuration file")
 		finally:
 			config_h.close()

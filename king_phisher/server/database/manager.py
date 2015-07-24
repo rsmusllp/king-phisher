@@ -79,7 +79,7 @@ def get_row_by_id(session, table, row_id):
 	:return: The object representing the specified row or None if it does not exist.
 	"""
 	if not issubclass(table, models.Base):
-		table = models.DATABASE_TABLE_OBJECTS[table]
+		table = models.database_table_objects[table]
 	query = session.query(table)
 	query = query.filter_by(id=row_id)
 	result = query.first()

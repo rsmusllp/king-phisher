@@ -39,8 +39,9 @@ from king_phisher.server.database import models as db_models
 
 VIEW_ROW_COUNT = 50
 """The default number of rows to return when one of the /view methods are called."""
-DATABASE_TABLES = db_models.DATABASE_TABLES
-DATABASE_TABLE_OBJECTS = db_models.DATABASE_TABLE_OBJECTS
+
+database_tables = db_models.database_tables
+database_table_objects = db_models.database_table_objects
 
 class KingPhisherRequestHandlerRPC(object):
 	"""
@@ -294,10 +295,10 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: The number of matching rows.
 		:rtype: int
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(table_name)
+		table = database_table_objects.get(table_name)
 		assert table
 		query_filter = query_filter or {}
-		columns = DATABASE_TABLES[table_name]
+		columns = database_tables[table_name]
 		for column in query_filter.keys():
 			assert column in columns
 		session = db_manager.Session()
@@ -318,10 +319,10 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: A dictionary with columns and rows keys.
 		:rtype: dict
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(table_name)
+		table = database_table_objects.get(table_name)
 		assert table
 		query_filter = query_filter or {}
-		columns = DATABASE_TABLES[table_name]
+		columns = database_tables[table_name]
 		for column in query_filter.keys():
 			assert column in columns
 
@@ -345,7 +346,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:param str table_name: The name of the database table to delete a row from.
 		:param row_id: The id value.
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(table_name)
+		table = database_table_objects.get(table_name)
 		assert table
 		session = db_manager.Session()
 		try:
@@ -366,7 +367,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: The row ids that were deleted.
 		:rtype: list
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(table_name)
+		table = database_table_objects.get(table_name)
 		assert table
 		deleted_rows = []
 		session = db_manager.Session()
@@ -392,9 +393,9 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: The specified row data.
 		:rtype: dict
 		"""
-		table = DATABASE_TABLE_OBJECTS.get(table_name)
+		table = database_table_objects.get(table_name)
 		assert table
-		columns = DATABASE_TABLES[table_name]
+		columns = database_tables[table_name]
 		session = db_manager.Session()
 		row = db_manager.get_row_by_id(session, table, row_id)
 		if row:
@@ -417,8 +418,8 @@ class KingPhisherRequestHandlerRPC(object):
 			values = (values,)
 		assert len(keys) == len(values)
 		for key, value in zip(keys, values):
-			assert key in DATABASE_TABLES[table_name]
-		table = DATABASE_TABLE_OBJECTS.get(table_name)
+			assert key in database_tables[table_name]
+		table = database_table_objects.get(table_name)
 		assert table
 		session = db_manager.Session()
 		row = table()
@@ -444,8 +445,8 @@ class KingPhisherRequestHandlerRPC(object):
 			values = (values,)
 		assert len(keys) == len(values)
 		for key, value in zip(keys, values):
-			assert key in DATABASE_TABLES[table_name]
-		table = DATABASE_TABLE_OBJECTS.get(table_name)
+			assert key in database_tables[table_name]
+		table = database_table_objects.get(table_name)
 		assert table
 		session = db_manager.Session()
 		row = db_manager.get_row_by_id(session, table, row_id)

@@ -38,12 +38,13 @@ import sqlalchemy.orm
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-DATABASE_TABLES = {}
-"""A dictionary which contains all the database tables and their columns."""
-DATABASE_TABLE_OBJECTS = {}
-"""A dictionary which contains all the database tables and their primitive objects."""
 SCHEMA_VERSION = 4
 """The schema version of the database, used for compatibility checks."""
+
+database_tables = {}
+"""A dictionary which contains all the database tables and their columns."""
+database_table_objects = {}
+"""A dictionary which contains all the database tables and their primitive objects."""
 
 def current_timestamp(*args, **kwargs):
 	"""
@@ -62,7 +63,7 @@ def get_tables_with_column_id(column_id):
 	:return: The list of matching tables.
 	:rtype: set
 	"""
-	return set(x[0] for x in DATABASE_TABLES.items() if column_id in x[1])
+	return set(x[0] for x in database_tables.items() if column_id in x[1])
 
 def register_table(table):
 	"""
@@ -72,8 +73,8 @@ def register_table(table):
 	:param cls table: The table to register.
 	"""
 	columns = tuple(col.name for col in table.__table__.columns)
-	DATABASE_TABLES[table.__tablename__] = columns
-	DATABASE_TABLE_OBJECTS[table.__tablename__] = table
+	database_tables[table.__tablename__] = columns
+	database_table_objects[table.__tablename__] = table
 	return table
 
 class Base(object):

@@ -94,7 +94,7 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 		self.assertSetEqual(get_tables_with_column_id('id'), tables)
 
 	def test_table_names(self):
-		for table_name in db_models.DATABASE_TABLES.keys():
+		for table_name in db_models.database_tables.keys():
 			self.assertRegex(table_name, '^' + db_models.DATABASE_TABLE_REGEX + '$')
 
 	def test_get_tables_campaign_id(self):
