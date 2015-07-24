@@ -84,7 +84,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
-		'server-connected': (GObject.SIGNAL_RUN_FIRST, None, ())
+		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
 	def __init__(self, config_file=None):
 		super(KingPhisherClientApplication, self).__init__()
