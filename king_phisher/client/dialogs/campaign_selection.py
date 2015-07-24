@@ -30,7 +30,10 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import datetime
+
 from king_phisher import utilities
+from king_phisher.constants import ColorHexCode
 from king_phisher.client.assistants import CampaignCreationAssistant
 from king_phisher.client import gui_utilities
 
@@ -55,6 +58,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		treeview = self.gobjects['treeview_campaigns']
 		self.treeview_manager = gui_utilities.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
 		self.treeview_manager.set_column_titles(('Campaign Name', 'Company', 'Type', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
+		self.treeview_manager.set_column_color('background', 7)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
 		self._creation_assistant = None
@@ -90,7 +94,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		treeview = self.gobjects['treeview_campaigns']
 		store = treeview.get_model()
 		if store is None:
-			store = Gtk.ListStore(str, str, str, str, str, str, str)
+			store = Gtk.ListStore(str, str, str, str, str, str, str, str)
 			treeview.set_model(store)
 		else:
 			store.clear()
@@ -104,10 +108,22 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			if campaign_type:
 				campaign_type = campaign_type.name
 			expiration_ts = campaign.expiration
+			expiration_color = ColorHexCode.WHITE
 			if expiration_ts is not None:
 				expiration_ts = utilities.datetime_utc_to_local(campaign.expiration)
+				if expiration_ts < datetime.datetime.now():
+					expiration_color = ColorHexCode.LIGHT_YELLOW
 				expiration_ts = utilities.format_datetime(expiration_ts)
-			store.append([str(campaign.id), campaign.name, company, campaign_type, campaign.user_id, created_ts, expiration_ts])
+			store.append((
+				str(campaign.id),
+				campaign.name,
+				company,
+				campaign_type,
+				campaign.user_id,
+				created_ts,
+				expiration_ts,
+				expiration_color
+			))
 		self.gobjects['label_campaign_info'].set_text("Showing {0:,} Campaign{1}".format(len(store), ('' if len(store) == 1 else 's')))
 
 	def signal_assistant_destroy(self, _, campaign_creation_assistant):

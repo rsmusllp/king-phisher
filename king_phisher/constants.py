@@ -63,6 +63,12 @@ class ConstantGroup:
 				continue
 			yield getattr(cls, name)
 
+class ColorHexCode(ConstantGroup):
+	"""Constants for the hex code representations of different colors."""
+	BLACK = intern('#000000')
+	LIGHT_YELLOW = intern('#ffffb2')
+	WHITE = intern('#ffffff')
+
 class OSArch(ConstantGroup):
 	"""Constants for different operating system architectures."""
 	PPC = intern('PPC')

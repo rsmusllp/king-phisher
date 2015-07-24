@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import contextlib
 import datetime
 import functools
@@ -266,7 +267,7 @@ def gtk_treeview_selection_to_clipboard(treeview, columns=0):
 	tree_iters = map(model.get_iter, tree_paths)
 	selection_lines = []
 	for ti in tree_iters:
-		selection_lines.append(' '.join(model.get_value(ti, column) for column in columns).strip())
+		selection_lines.append(' '.join((model.get_value(ti, column) or '') for column in columns).strip())
 	selection_lines = os.linesep.join(selection_lines)
 	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 	clipboard.set_text(selection_lines, -1)
@@ -299,6 +300,7 @@ def gtk_treeview_set_column_titles(treeview, column_titles, column_offset=0, ren
 	for column_id, column_title in enumerate(column_titles, column_offset):
 		renderer = renderers[column_id] if renderers else Gtk.CellRendererText()
 		column = Gtk.TreeViewColumn(column_title, renderer, text=column_id)
+		column.set_property('reorderable', True)
 		column.set_sort_column_id(column_id)
 		treeview.append_column(column)
 		columns[column_id] = column
@@ -654,10 +656,12 @@ class TreeViewManager(object):
 		"""An optional callback for deleting entries from the treeview's model."""
 		self.cb_refresh = cb_refresh
 		"""An optional callback for refreshing the data in the treeview's model."""
-		self.column_titles = {}
-		"""A dictionary of column titles keyed by their respective storage data columns."""
+		self.column_titles = collections.OrderedDict()
+		"""An ordered dictionary of storage data columns keyed by their respective column titles."""
+		self.column_views = {}
+		"""A dictionary of column treeview's keyed by their column titles."""
 		self.treeview.connect('key-press-event', self.signal_key_pressed_copy)
-		if selection_mode == None:
+		if selection_mode is None:
 			selection_mode = Gtk.SelectionMode.SINGLE
 		treeview.get_selection().set_mode(selection_mode)
 
@@ -704,17 +708,15 @@ class TreeViewManager(object):
 		:rtype: :py:class:`Gtk.Menu`
 		"""
 		copy_menu = Gtk.Menu.new()
-		column_ids = sorted(self.column_titles.keys())
-		for column_id in column_ids:
-			column_title = self.column_titles[column_id]
+		for column_title, store_id in self.column_titles.items():
 			menu_item = Gtk.MenuItem.new_with_label(column_title)
-			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_id)
+			menu_item.connect('activate', self.signal_activate_popup_menu_copy, store_id)
 			copy_menu.append(menu_item)
-		if len(column_ids) > 1:
+		if len(self.column_titles) > 1:
 			menu_item = Gtk.SeparatorMenuItem()
 			copy_menu.append(menu_item)
 			menu_item = Gtk.MenuItem.new_with_label('All')
-			menu_item.connect('activate', self.signal_activate_popup_menu_copy, column_ids)
+			menu_item.connect('activate', self.signal_activate_popup_menu_copy, self.column_titles.values())
 			copy_menu.append(menu_item)
 		return copy_menu
 
@@ -729,8 +731,36 @@ class TreeViewManager(object):
 		:return: A dict of all the :py:class:`Gtk.TreeViewColumn` objects keyed by their column id.
 		:rtype: dict
 		"""
-		self.column_titles.update(enumerate(column_titles, column_offset))
-		return gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset, renderers=renderers)
+		self.column_titles.update((v, k) for (k, v) in enumerate(column_titles, column_offset))
+		columns = gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset, renderers=renderers)
+		for store_id, column_title in enumerate(column_titles, column_offset):
+			self.column_views[column_title] = columns[store_id]
+		return columns
+
+	def set_column_color(self, ground, store_id, column_titles=None):
+		"""
+		Set a column in the model to be used as either the background or
+		foreground color for a cell.
+
+		:param str ground: Either background or foreground.
+		:param int store_id: The column id of the model to use as the color.
+		:param column_titles: The columns to set the color for, if None is specified all columns will be set.
+		:type column_titles: str, tuple
+		"""
+		if not ground in ('background', 'foreground'):
+			raise ValueError('ground must be either background or foreground')
+		if column_titles is None:
+			column_titles = self.column_titles.keys()
+		elif isinstance(column_titles, str):
+			column_titles = (column_titles,)
+		for column_title in column_titles:
+			column = self.column_views[column_title]
+			cell = column.get_cells()[0]
+			cell.set_property(ground + '-set', True)
+			if ground == 'background':
+				column.set_attributes(cell, text=self.column_titles[column_title], background=store_id)
+			elif ground == 'foreground':
+				column.set_attributes(cell, text=self.column_titles[column_title], foreground=store_id)
 
 	def signal_button_pressed(self, treeview, event, popup_menu):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
@@ -747,7 +777,7 @@ class TreeViewManager(object):
 		keyval = event.get_keyval()[1]
 		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
 			if keyval == Gdk.KEY_c and self.column_titles:
-				gtk_treeview_selection_to_clipboard(treeview, sorted(self.column_titles.keys())[0])
+				gtk_treeview_selection_to_clipboard(treeview, self.column_titles.values()[0])
 		elif keyval == Gdk.KEY_F5 and self.cb_refresh:
 			self.cb_refresh()
 		elif keyval == Gdk.KEY_Delete:

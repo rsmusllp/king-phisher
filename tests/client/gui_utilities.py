@@ -64,8 +64,8 @@ class ClientGUIUtilityTreeviewTests(testing.KingPhisherTestCase):
 		self.assertEqual(len(treeview_manager.column_titles), 0)
 		treeview_manager.set_column_titles(('col0', 'col1'))
 		self.assertEqual(len(treeview_manager.column_titles), 2)
-		self.assertEqual(treeview_manager.column_titles.get(0), 'col0')
-		self.assertEqual(treeview_manager.column_titles.get(1), 'col1')
+		self.assertEqual(treeview_manager.column_titles.get('col0'), 0)
+		self.assertEqual(treeview_manager.column_titles.get('col1'), 1)
 
 	def test_popup_copy_submenu(self):
 		treeview = Gtk.TreeView()
