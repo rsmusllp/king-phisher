@@ -59,6 +59,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.treeview_manager = gui_utilities.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
 		self.treeview_manager.set_column_titles(('Campaign Name', 'Company', 'Type', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
 		self.treeview_manager.set_column_color('background', 7)
+		treeview.set_tooltip_column(8)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
 		self._creation_assistant = None
@@ -94,7 +95,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		treeview = self.gobjects['treeview_campaigns']
 		store = treeview.get_model()
 		if store is None:
-			store = Gtk.ListStore(str, str, str, str, str, str, str, str)
+			store = Gtk.ListStore(str, str, str, str, str, str, str, str, str)
 			treeview.set_model(store)
 		else:
 			store.clear()
@@ -122,7 +123,8 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 				campaign.user_id,
 				created_ts,
 				expiration_ts,
-				expiration_color
+				expiration_color,
+				(campaign.description if campaign.description else None)
 			))
 		self.gobjects['label_campaign_info'].set_text("Showing {0:,} Campaign{1}".format(len(store), ('' if len(store) == 1 else 's')))
 
