@@ -183,7 +183,8 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 	if [ $? -eq 0 ]; then
 		echo "Successfully installed basemap with pip"
 	else
-		echo "Failed to install basemap with PIP, this is not a required dependency for KingPhisher; see https://github.com/securestate/king-phisher/wiki/Graphs#installing-basemap-with-pip for more information."
+		echo "Failed to install basemap with PIP, this is not a required dependency for KingPhisher"
+		echo "See https://github.com/securestate/king-phisher/wiki/Graphs#installing-basemap-with-pip for more information."
 	fi
 fi
 
