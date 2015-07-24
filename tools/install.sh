@@ -37,7 +37,7 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-grep -E "BackBox Linux 4\.2" /etc/issue &> /dev/null
+grep -E "BackBox Linux 4\.[2-4]" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="BackBox"
 fi
@@ -183,7 +183,8 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 	if [ $? -eq 0 ]; then
 		echo "Successfully installed basemap with pip"
 	else
-		echo "Failed to install basemap with pip"
+		echo "Failed to install basemap with PIP, this is not a required dependency for KingPhisher"
+		echo "See https://github.com/securestate/king-phisher/wiki/Graphs#installing-basemap-with-pip for more information."
 	fi
 fi
 
