@@ -37,7 +37,7 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-grep -E "BackBox Linux 4\.2" /etc/issue &> /dev/null
+grep -E "BackBox Linux 4\.[2-4]" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="BackBox"
 fi
