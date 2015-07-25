@@ -55,6 +55,7 @@ from king_phisher.client import windows
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -84,6 +85,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'rpc-cache-clear': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
 	def __init__(self, config_file=None):
@@ -114,6 +116,20 @@ class KingPhisherClientApplication(_Gtk_Application):
 		except IOError:
 			self.logger.critical('failed to load the client configuration')
 			raise
+
+		self.connect('window-added', self.signal_window_added)
+		self.actions = {}
+		self._create_actions()
+
+	def _create_actions(self):
+		action = Gio.SimpleAction.new('emit-application-signal', GLib.VariantType.new('s'))
+		action.connect('activate', self.action_emit_application_signal)
+		if Gtk.check_version(3, 14, 0):
+			self.add_accelerator('<Control><Shift>F1', 'win.emit-application-signal', GLib.Variant.new_string('rpc-cache-clear'))
+		else:
+			self.set_accels_for_action('win.emit-application-signal(\'rpc-cache-clear\')', ['<Control><Shift>F1'])
+		self.actions['emit-application-signal'] = action
+		self.add_action(action)
 
 	def _create_ssh_forwarder(self, server, username, password):
 		"""
@@ -203,6 +219,11 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""
 		self.emit('exit-confirm' if optional else 'exit')
 
+	def action_emit_application_signal(self, _, signal_name):
+		signal_name = signal_name.get_string()
+		self.logger.debug('action emit-application-signal invoked for ' + signal_name)
+		self.emit(signal_name)
+
 	def do_activate(self):
 		Gtk.Application.do_activate(self)
 		sys.excepthook = self.exception_hook
@@ -212,8 +233,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.main_window.show()
 
 	def do_campaign_set(self, campaign_id):
-		self.rpc.cache_clear()
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
+		self.emit('rpc-cache-clear')
 
 	def do_exit(self):
 		self.main_window.hide()
@@ -225,6 +246,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def do_exit_confirm(self):
 		self.emit('exit')
+
+	def do_rpc_cache_clear(self):
+		if self.rpc:
+			self.rpc.cache_clear()
 
 	def do_server_connected(self):
 		self.load_server_config()
@@ -397,6 +422,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		dialog = dialogs.ConfigurationDialog(self)
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
 			self.save_config()
+
+	def signal_window_added(self, _, window):
+		for action in self.actions.values():
+			window.add_action(action)
 
 	def start_sftp_client(self):
 		"""
