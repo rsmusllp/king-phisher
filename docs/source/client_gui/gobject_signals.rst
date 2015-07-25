@@ -34,6 +34,6 @@ events.
 
 .. py:function:: server-connected()
 
-   This signal is emitted with the client has connected to the King Phisher
-   Server. The default handler sets the initial campaign optionally prompting
+   This signal is emitted when the client has connected to the King Phisher
+   server. The default handler sets the initial campaign optionally prompting
    the user to select one if one has not already been selected.

@@ -229,13 +229,13 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def do_server_connected(self):
 		self.load_server_config()
 		campaign_id = self.config.get('campaign_id')
-		if campaign_id == None:
+		if campaign_id is None:
 			if not self.show_campaign_selection():
 				self.logger.debug('no campaign selected, disconnecting and exiting')
 				self.emit('exit')
 				return True
 		campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True)
-		if campaign_info == None:
+		if campaign_info is None:
 			if not self.show_campaign_selection():
 				self.logger.debug('no campaign selected, disconnecting and exiting')
 				self.emit('exit')
