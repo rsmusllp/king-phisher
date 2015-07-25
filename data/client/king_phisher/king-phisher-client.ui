@@ -1614,6 +1614,7 @@ Brandan Geise</property>
                     <property name="tooltip_text" translatable="yes">The directory to save the cloned page to.</property>
                     <property name="hexpand">True</property>
                     <property name="editable">False</property>
+                    <property name="primary_icon_stock">gtk-directory</property>
                     <property name="placeholder_text" translatable="yes">/path/to/clone/to</property>
                     <signal name="activate" handler="signal_multi_set_directory" swapped="no"/>
                   </object>
@@ -2633,6 +2634,8 @@ Brandan Geise</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The HTML message template file.</property>
                 <property name="hexpand">True</property>
+                <property name="editable">False</property>
+                <property name="primary_icon_stock">gtk-file</property>
                 <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
                 <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
               </object>
@@ -2676,6 +2679,7 @@ Brandan Geise</property>
                 <property name="hexpand">True</property>
                 <property name="editable">False</property>
                 <property name="invisible_char">●</property>
+                <property name="primary_icon_stock">gtk-file</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
                 <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
@@ -2722,6 +2726,7 @@ Brandan Geise</property>
                 <property name="hexpand">True</property>
                 <property name="editable">False</property>
                 <property name="invisible_char">●</property>
+                <property name="primary_icon_stock">gtk-file</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
                 <property name="primary_icon_tooltip_text" translatable="yes">Attach a file to the messages.</property>
@@ -2928,10 +2933,11 @@ Brandan Geise</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="LoginDialog.button_cancel">
-                <property name="label">Cancel</property>
+                <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -2941,10 +2947,11 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkButton" id="LoginDialog.button_connect">
-                <property name="label">Connect</property>
+                <property name="label">gtk-connect</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -4280,10 +4287,11 @@ Brandan Geise</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="TextEntryDialog.button_cancel">
-                <property name="label" translatable="yes">Cancel</property>
+                <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -4293,11 +4301,12 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkButton" id="TextEntryDialog.button_apply">
-                <property name="label" translatable="yes">Apply</property>
+                <property name="label">gtk-apply</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="can_default">True</property>
                 <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">True</property>
