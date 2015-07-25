@@ -39,7 +39,9 @@ import sys
 
 from king_phisher import find
 from king_phisher import geoip
+from king_phisher import utilities
 from king_phisher.third_party import AdvancedHTTPServer
+
 try:
 	import msgpack # pylint: disable=unused-import
 	has_msgpack = True
@@ -47,7 +49,7 @@ try:
 except ImportError:
 	has_msgpack = False
 
-database_table_objects = {}
+database_table_objects = utilities.FreezableDict()
 _tag_mixin_fields = ('id', 'name', 'description')
 
 class RemoteRowMeta(type):
@@ -158,6 +160,8 @@ class Visit(RemoteRow):
 	__table__ = 'visits'
 	__xref_attr__ = 'visit'
 	__slots__ = ('id', 'message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit')
+
+database_table_objects.freeze()
 
 class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached):
 	"""

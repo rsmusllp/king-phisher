@@ -440,8 +440,8 @@ class GladeGObject(object):
 				gobject.set_modal(True)
 		setattr(self, self.top_gobject, gobject)
 
-		self.gobjects = {}
-		"""A dict which maps gobjects to their unique id."""
+		self.gobjects = utilities.FreezableDict()
+		"""A :py:class:`~king_phisher.utilities.FreezableDict` which maps gobjects to their unique GTK Builder id."""
 		for gobject_id in self.gobject_ids:
 			gobject = self.gtk_builder_get(gobject_id)
 			# the following five lines ensure that the types match up, this is to enforce clean development
@@ -451,6 +451,7 @@ class GladeGObject(object):
 			elif gobject.__class__.__name__.lower() != gtype:
 				raise TypeError("gobject {0} is of type {1} expected {2}".format(gobject_id, gobject.__class__.__name__, gtype))
 			self.gobjects[gobject_id] = gobject
+		self.gobjects.freeze()
 		if self.objects_persist:
 			self.objects_load_from_config()
 

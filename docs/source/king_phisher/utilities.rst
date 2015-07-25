@@ -32,5 +32,9 @@ Functions
 Classes
 -------
 
+.. autoclass:: king_phisher.utilities.FreezableDict
+   :show-inheritance:
+   :members:
+
 .. autoclass:: king_phisher.utilities.Mock
    :show-inheritance:

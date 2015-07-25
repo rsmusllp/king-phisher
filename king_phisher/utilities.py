@@ -50,6 +50,71 @@ from smoke_zephyr.utilities import which
 
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
 
+class FreezableDict(dict):
+	"""
+	A dictionary that can be frozen to prevent further editing. Useful for
+	debugging. If any function tries to edit a frozen dictionary, a
+	:py:exc:`RuntimeError` will be raised and a traceback will occur.
+	"""
+	__slots__ = ('_frozen',)
+	def __init__(self, *args, **kwargs):
+		super(FreezableDict, self).__init__(*args, **kwargs)
+		self._frozen = False
+
+	def __repr__(self):
+		return "<{0} frozen={1} {2}>".format(self.__class__.__name__, self._frozen, super(FreezableDict, self).__repr__())
+
+	def __setitem__(self, *args, **kwargs):
+		if self._frozen:
+			raise RuntimeError('Frozen dictionary cannot be modified')
+		super(FreezableDict, self).__setitem__(*args, **kwargs)
+
+	def __delitem__(self, *args, **kwargs):
+		if self._frozen:
+			raise RuntimeError('Frozen dictionary cannot be modified')
+		super(FreezableDict, self).__delitem__(*args, **kwargs)
+
+	def pop(self, *args, **kwargs):
+		if self._frozen:
+			raise RuntimeError('Frozen dictionary cannot be modified')
+		super(FreezableDict, self).pop(*args, **kwargs)
+
+	def update(self, *args, **kwargs):
+		if self._frozen:
+			raise RuntimeError('Frozen dictionary cannot be modified')
+		super(FreezableDict, self).update(*args, **kwargs)
+
+	def popitem(self, *args, **kwargs):
+		if self._frozen:
+			raise RuntimeError('Frozen dictionary cannot be modified')
+		super(FreezableDict, self).popitem(*args, **kwargs)
+
+	def clear(self, *args, **kwargs):
+		if self._frozen:
+			raise RuntimeError('Frozen dictionary cannot be modified')
+		super(FreezableDict, self).clear(*args, **kwargs)
+
+	def freeze(self):
+		"""
+		Freeze the dictionary to prevent further editing.
+		"""
+		self._frozen = True
+
+	def thaw(self):
+		"""
+		Thaw the dictionary to once again enable editing.
+		"""
+		self._frozen = False
+
+	@property
+	def frozen(self):
+		"""
+		Whether or not the dictionary is frozen and can not be modified.
+
+		:rtype: bool
+		"""
+		return self._frozen
+
 class Mock(object):
 	"""
 	A fake object used to replace missing imports when generating documentation.
