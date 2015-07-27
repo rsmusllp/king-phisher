@@ -32,6 +32,12 @@ events.
    exit. Subscribers to this signal can use it as a chance to display a warning
    dialog and cancel the operation.
 
+.. py:function:: rpc-cache-clear()
+
+   This signal is emitted to clear the RPC objects cached information.
+   Subsequent invocations of RPC cache enabled methods will return fresh
+   information from the server.
+
 .. py:function:: server-connected()
 
    This signal is emitted when the client has connected to the King Phisher
