@@ -35,6 +35,7 @@ import sys
 import traceback
 
 from king_phisher import its
+from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import gui_utilities
 from king_phisher.third_party import AdvancedHTTPServer
@@ -62,6 +63,7 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 	The dialog includes useful details for reporting and debugging the exception
 	which occurred.
 	"""
+	gobject_ids = ('linkbutton_github_issues',)
 	top_gobject = 'dialog'
 	def __init__(self, application, exc_info=None, error_uid=None):
 		"""
@@ -75,6 +77,9 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 		self.error_details = self.gtk_builder_get('textview_error_details')
 		self.exc_info = exc_info or sys.exc_info()
 		self.error_uid = error_uid
+		linkbutton = self.gobjects['linkbutton_github_issues']
+		linkbutton.set_label('Project Issue Tracker')
+		linkbutton.connect('activate-link', lambda _: utilities.open_uri(linkbutton.get_property('uri')))
 
 	def interact(self):
 		exc_type, exc_value, exc_traceback = self.exc_info

@@ -1825,7 +1825,7 @@ Brandan Geise</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -1837,7 +1837,7 @@ Brandan Geise</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">3</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -1849,6 +1849,22 @@ Brandan Geise</property>
                 <attributes>
                   <attribute name="style" value="italic"/>
                 </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLinkButton" id="ExceptionDialog.linkbutton_github_issues">
+                <property name="label" translatable="yes">button</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="receives_default">False</property>
+                <property name="tooltip_text" translatable="yes">Report this issue on the projects GitHub page.</property>
+                <property name="relief">none</property>
+                <property name="uri">https://github.com/securestate/king-phisher/issues</property>
               </object>
               <packing>
                 <property name="expand">False</property>
