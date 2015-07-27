@@ -9,6 +9,11 @@ Data
 
 .. autodata:: king_phisher.server.server_rpc.VIEW_ROW_COUNT
 
+Functions
+---------
+
+.. autofunction:: king_phisher.server.server_rpc.database_access
+
 Classes
 -------
 
