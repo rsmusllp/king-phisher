@@ -55,16 +55,16 @@ else:
 	has_vte = True
 
 class RPCTerminalWindow(gui_utilities.GladeGObject):
-	gobject_ids = [
+	gobject_ids = (
 		'box_main',
 		'menu_edit',
 		'menu_help'
-	]
+	)
 	top_gobject = 'window'
-	top_level_dependencies = [
-		'RPCTerminalWindow.image_help_api_docs',
-		'RPCTerminalWindow.image_help_wiki'
-	]
+	top_level_dependencies = (
+		'StockImage.dialog_question',
+		'StockImage.help'
+	)
 	def __init__(self, terminal, *args, **kwargs):
 		super(RPCTerminalWindow, self).__init__(*args, **kwargs)
 		self.terminal = terminal

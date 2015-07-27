@@ -86,15 +86,16 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 	This allows the :py:class:`.MailSenderThread` object to be managed
 	by the user through the GUI. These two classes are very interdependent
 	"""
-	gobject_ids = [
+	gobject_ids = (
 		'button_mail_sender_start',
 		'button_mail_sender_stop',
 		'textview_mail_sender_progress',
 		'togglebutton_mail_sender_pause',
 		'progressbar_mail_sender',
 		'scrolledwindow_mail_sender_progress'
-	]
+	)
 	top_gobject = 'box'
+	top_level_dependencies = ('StockImage.media_play',)
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Send')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""

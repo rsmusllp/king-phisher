@@ -59,6 +59,12 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	appropriately.
 	"""
 	top_gobject = 'menubar'
+	top_level_dependencies = (
+		'StockImage.delete',
+		'StockImage.edit',
+		'StockImage.help',
+		'StockImage.stop'
+	)
 	def __init__(self, application, window):
 		assert isinstance(window, MainApplicationWindow)
 		super(MainMenuBar, self).__init__(application)
