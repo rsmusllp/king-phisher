@@ -831,7 +831,7 @@ Brandan Geise</property>
                 <property name="tooltip_text" translatable="yes">The type of this campaign.</property>
                 <property name="hexpand">True</property>
                 <property name="has_entry">True</property>
-                <property name="entry_text_column">0</property>
+                <property name="entry_text_column">1</property>
                 <property name="id_column">0</property>
                 <child internal-child="entry">
                   <object class="GtkEntry" id="combobox-entry">
@@ -1084,7 +1084,7 @@ Brandan Geise</property>
                         <property name="can_focus">False</property>
                         <property name="tooltip_text" translatable="yes">The name of the existing company to associate this campaign with.</property>
                         <property name="has_entry">True</property>
-                        <property name="entry_text_column">0</property>
+                        <property name="entry_text_column">1</property>
                         <property name="id_column">0</property>
                         <child internal-child="entry">
                           <object class="GtkEntry" id="combobox-entry3">
@@ -1204,7 +1204,7 @@ Brandan Geise</property>
                         <property name="tooltip_text" translatable="yes">The industry in which the new company operates.</property>
                         <property name="hexpand">True</property>
                         <property name="has_entry">True</property>
-                        <property name="entry_text_column">0</property>
+                        <property name="entry_text_column">1</property>
                         <property name="id_column">0</property>
                         <child internal-child="entry">
                           <object class="GtkEntry" id="combobox-entry2">

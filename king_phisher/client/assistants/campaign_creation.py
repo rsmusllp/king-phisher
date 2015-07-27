@@ -34,9 +34,11 @@ import datetime
 
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
+from king_phisher.constants import ColorHexCode
 from king_phisher.third_party import AdvancedHTTPServer
 
 from gi.repository import Gtk
+from gi.repository import Pango
 
 __all__ = ['CampaignCreationAssistant']
 
@@ -78,9 +80,21 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			page_title = self.assistant.get_page_title(page)
 			if page_title:
 				self._page_titles[page_title] = page_n
-		self.gobjects['combobox_campaign_type'].set_model(Gtk.ListStore(str, int))
-		self.gobjects['combobox_company_existing'].set_model(Gtk.ListStore(str, int))
-		self.gobjects['combobox_company_industry'].set_model(Gtk.ListStore(str, int))
+
+		description_font_desc = Pango.FontDescription()
+		description_font_desc.set_style(Pango.Style.ITALIC)
+
+		for combobox in ('campaign_type', 'company_existing', 'company_industry'):
+			combobox = self.gobjects['combobox_' + combobox]
+			combobox.set_model(Gtk.ListStore(int, str, str))
+			renderer = Gtk.CellRendererText()
+			renderer.set_property('ellipsize', Pango.EllipsizeMode.END)
+			renderer.set_property('font-desc', description_font_desc)
+			renderer.set_property('foreground', ColorHexCode.GRAY)
+			renderer.set_property('max-width-chars', 20)
+			combobox.pack_start(renderer, True)
+			combobox.add_attribute(renderer, 'text', 2)
+
 		if not self.config['server_config']['server.require_id']:
 			self.gobjects['checkbutton_reject_after_credentials'].set_sensitive(False)
 			self.gobjects['checkbutton_reject_after_credentials'].set_property('active', False)
@@ -101,10 +115,10 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			campaign_type = combobox.get_child().get_text()
 			if not campaign_type:
 				return
-			model_iter = gui_utilities.gtk_list_store_search(model, campaign_type)
+			model_iter = gui_utilities.gtk_list_store_search(model, campaign_type, column=1)
 			if model_iter is None:
 				return self.application.rpc('db/table/insert', db_table, 'name', campaign_type)
-		return model.get_value(model_iter, 1)
+		return model.get_value(model_iter, 0)
 
 	def _get_company_existing_id(self):
 		combobox_company = self.gobjects['combobox_company_existing']
@@ -112,16 +126,16 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		model_iter = combobox_company.get_active_iter()
 		if model is None or model_iter is None:
 			return
-		return model.get_value(model_iter, 1)
+		return model.get_value(model_iter, 0)
 
 	def _get_company_new_id(self):
 		name = self.gobjects['entry_company_new_name'].get_text()
 		name = name.strip()
 		# check if this company name already exists in the model
 		model = self.gobjects['combobox_company_existing'].get_model()
-		model_iter = gui_utilities.gtk_list_store_search(model, name)
+		model_iter = gui_utilities.gtk_list_store_search(model, name, column=1)
 		if model_iter is not None:
-			return model.get_value(model_iter, 1)
+			return model.get_value(model_iter, 0)
 		# check if this company name already exists remotely
 		remote_companies = list(self.application.rpc.remote_table('companies', query_filter={'name': name}))
 		if len(remote_companies):
@@ -225,16 +239,16 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			model = combobox.get_model()
 			model.clear()
 			for row in self.application.rpc.remote_table('campaign_types'):
-				model.append((row.name, row.id))
+				model.append((row.id, row.name, row.description))
 		elif page_title == 'Company':
 			combobox = self.gobjects['combobox_company_existing']
 			model = combobox.get_model()
 			model.clear()
 			for row in self.application.rpc.remote_table('companies'):
-				model.append((row.name, row.id))
+				model.append((row.id, row.name, row.description))
 			company_name = self.gobjects['entry_company_new_name'].get_text()
 			if company_name:
-				model_iter = gui_utilities.gtk_list_store_search(model, company_name)
+				model_iter = gui_utilities.gtk_list_store_search(model, company_name, column=1)
 				if model_iter is not None:
 					combobox.set_active_iter(model_iter)
 					self.gobjects['radiobutton_company_existing'].set_active(True)
@@ -242,7 +256,7 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			model = combobox.get_model()
 			model.clear()
 			for row in self.application.rpc.remote_table('industries'):
-				model.append((row.name, row.id))
+				model.append((row.id, row.name, row.description))
 		elif page_title == 'Expiration':
 			calendar = self.gobjects['calendar_campaign_expiration']
 			default_day = datetime.datetime.today() + datetime.timedelta(days=31)
