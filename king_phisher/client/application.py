@@ -432,7 +432,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Start the client's preferred sftp client application in a new process.
 		"""
 		if not self.config['sftp_client']:
-			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self.get_active_window(), 'An SFTP client is not configured')
+			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self.get_active_window(), 'An SFTP client is not configured.\nOne can be configured in the Client Preferences.')
 			return False
 		command = str(self.config['sftp_client'])
 		sftp_bin = shlex.split(command)[0]

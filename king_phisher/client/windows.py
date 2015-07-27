@@ -100,6 +100,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def do_edit_stop_service(self, _):
 		self.application.stop_remote_service()
 
+	def do_edit_tags(self, _):
+		dialogs.TagEditorDialog(self.application).interact()
+
 	def do_export_campaign_xml(self, _):
 		self.window.export_campaign_xml()
 

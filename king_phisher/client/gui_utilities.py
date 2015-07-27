@@ -298,7 +298,7 @@ def gtk_treeview_set_column_titles(treeview, column_titles, column_offset=0, ren
 	"""
 	columns = {}
 	for column_id, column_title in enumerate(column_titles, column_offset):
-		renderer = renderers[column_id] if renderers else Gtk.CellRendererText()
+		renderer = renderers[column_id - column_offset] if renderers else Gtk.CellRendererText()
 		column = Gtk.TreeViewColumn(column_title, renderer, text=column_id)
 		column.set_property('reorderable', True)
 		column.set_sort_column_id(column_id)

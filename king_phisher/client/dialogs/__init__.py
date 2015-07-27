@@ -37,3 +37,4 @@ from .configuration import *
 from .entry import *
 from .exception import *
 from .login import *
+from .tag_editor import *
