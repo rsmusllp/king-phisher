@@ -49,6 +49,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	gobject_ids = [
 		'button_new_campaign',
 		'button_select',
+		'drawingarea_color_key',
 		'label_campaign_info',
 		'treeview_campaigns'
 	]
@@ -146,6 +147,13 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		assistant.assistant.connect('destroy', self.signal_assistant_destroy, assistant)
 		assistant.interact()
 		self._creation_assistant = assistant
+
+	def signal_drawingarea_draw(self, drawingarea, context):
+		width, height = drawingarea.get_size_request()
+		context.rectangle(0, 0, width, height)
+		context.stroke_preserve()
+		context.set_source_rgb(*utilities.hex_color_to_float_tuple(ColorHexCode.LIGHT_YELLOW))
+		context.fill()
 
 	def signal_treeview_row_activated(self, treeview, treeview_column, treepath):
 		self.gobjects['button_select'].emit('clicked')

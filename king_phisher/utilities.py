@@ -228,6 +228,23 @@ def format_datetime(dt):
 		return ''
 	return dt.strftime('%Y-%m-%d %H:%M:%S')
 
+def hex_color_to_float_tuple(hex_color):
+	"""
+	Converts an RGB hex triplet such as #ff0000 into an RGB tuple where each
+	value is on a scale from 0.0 to 1.0.
+
+	:param str hex_color: The hex code for the desired color.
+	:return: The color as a red, green, blue tuple.
+	:rtype: tuple
+	"""
+	if hex_color.startswith('#'):
+		hex_color = hex_color.split('#')[1]
+	if len(hex_color) != 6:
+		raise ValueError('hex color code is in an invalid format')
+	rgb = (int(x, 16) for x in (hex_color[i:i + 2] for i in range(0, 6, 2)))
+	rgb = tuple(float(x) / 255.0 for x in rgb)
+	return rgb
+
 def is_valid_email_address(email_address):
 	"""
 	Check that the string specified appears to be a valid email address.
