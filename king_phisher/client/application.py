@@ -55,6 +55,7 @@ from king_phisher.client import windows
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import GObject
@@ -228,6 +229,22 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Gtk.Application.do_activate(self)
 		sys.excepthook = self.exception_hook
 
+		# load a custom css file if one is available
+		css_file = find.find_data_file('king-phisher-client.css')
+		if css_file:
+			self.logger.debug('loading custom css file: ' + css_file)
+			css_file = Gio.File.new_for_path(css_file)
+			style_provider = Gtk.CssProvider()
+			style_provider.load_from_file(css_file)
+			Gtk.StyleContext.add_provider_for_screen(
+				Gdk.Screen.get_default(),
+				style_provider,
+				Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+			)
+		else:
+			self.logger.debug('no custom css file was found')
+
+		# create and show the main window
 		self.main_window = windows.MainApplicationWindow(self.config, self)
 		self.main_window.set_position(Gtk.WindowPosition.CENTER)
 		self.main_window.show()

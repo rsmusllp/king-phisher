@@ -238,7 +238,7 @@ def hex_color_to_float_tuple(hex_color):
 	:rtype: tuple
 	"""
 	if hex_color.startswith('#'):
-		hex_color = hex_color.split('#')[1]
+		hex_color = hex_color[1:]
 	if len(hex_color) != 6:
 		raise ValueError('hex color code is in an invalid format')
 	rgb = (int(x, 16) for x in (hex_color[i:i + 2] for i in range(0, 6, 2)))
