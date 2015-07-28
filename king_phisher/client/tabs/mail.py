@@ -438,7 +438,7 @@ class MailSenderPreviewTab(object):
 		if has_webkit2:
 			self.webview.load_html(html_data, html_file_uri)
 		else:
-			self.webview.load_html_string(html_data, html_file_uri)
+			self.webview.load_html_string(html_data, (html_file_uri or os.devnull))
 
 	def show_tab(self):
 		"""Configure the webview to preview the the message HTML file."""
@@ -804,7 +804,10 @@ class MailSenderTab(object):
 						old_text = file_h.read()
 					if old_text == text:
 						break
-				if not gui_utilities.show_dialog_yes_no('Save HTML', self.parent, 'Save message HTML the file?'):
+				message = 'Save the message HTML file?'
+				if preview_tab and current_page == preview_tab.box:
+					message += '\nSaving is required to preview the HTML.'
+				if not gui_utilities.show_dialog_yes_no('Save HTML', self.parent, message):
 					break
 				edit_tab.save_html_file()
 
