@@ -42,6 +42,9 @@ __all__ = ['TagEditorDialog']
 
 class TagEditorDialog(gui_utilities.GladeGObject):
 	"""
+	Display a dialog which can be used to edit the various tags that are
+	present on the remote server. This can be used to rename tags and modify
+	their descriptions.
 	"""
 	gobject_ids = (
 		'notebook',

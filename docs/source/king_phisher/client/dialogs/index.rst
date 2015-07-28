@@ -12,3 +12,4 @@
    entry.rst
    exception.rst
    login.rst
+   tag_editor.rst
