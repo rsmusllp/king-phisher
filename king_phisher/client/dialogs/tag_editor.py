@@ -36,6 +36,7 @@ from king_phisher.client import gui_utilities
 from king_phisher.third_party import AdvancedHTTPServer
 
 from gi.repository import Gtk
+from gi.repository import Pango
 
 __all__ = ['TagEditorDialog']
 
@@ -66,6 +67,7 @@ class TagEditorDialog(gui_utilities.GladeGObject):
 			description_renderer = Gtk.CellRendererText()
 			description_renderer.connect('edited', self.signal_renderer_edited, (tag_table, 2, 'description'))
 			description_renderer.set_property('editable', True)
+			description_renderer.set_property('ellipsize', Pango.EllipsizeMode.END)
 			tvm.set_column_titles(
 				('Name', 'Description'),
 				column_offset=1,

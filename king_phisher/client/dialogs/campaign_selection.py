@@ -46,14 +46,15 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	Display a dialog which allows a new campaign to be created or an
 	existing campaign to be opened.
 	"""
-	gobject_ids = [
+	gobject_ids = (
 		'button_new_campaign',
 		'button_select',
 		'drawingarea_color_key',
 		'label_campaign_info',
 		'treeview_campaigns'
-	]
+	)
 	top_gobject = 'dialog'
+	top_level_dependencies = ('StockImage.add',)
 	def __init__(self, *args, **kwargs):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
