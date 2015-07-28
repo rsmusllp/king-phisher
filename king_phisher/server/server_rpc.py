@@ -333,11 +333,12 @@ class KingPhisherRequestHandlerRPC(object):
 		rows = []
 		query = session.query(table)
 		query = query.filter_by(**query_filter)
+		total_rows = query.count()
 		for row in query[offset:offset + VIEW_ROW_COUNT]:
 			rows.append([getattr(row, c) for c in columns])
 		if not len(rows):
 			return None
-		return {'columns': columns, 'rows': rows}
+		return {'columns': columns, 'rows': rows, 'total_rows': total_rows, 'page_size': VIEW_ROW_COUNT}
 
 	@database_access
 	def rpc_database_delete_row_by_id(self, session, table_name, row_id):

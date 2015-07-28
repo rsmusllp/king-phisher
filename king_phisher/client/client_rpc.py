@@ -192,14 +192,19 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		"""
 		page = 0
 		results = self.call('db/table/view', table, page, query_filter=query_filter)
-		results_length = len(results or '')
+		if results is None:
+			return
+		results_length = len(results['rows'])
 		row_cls = database_table_objects[table]
 		while results:
 			for row in results['rows']:
 				yield row_cls(self, *row)
-			if len(results) < results_length:
-				break
 			page += 1
+			if 'page_size' in results and 'total_rows' in results:
+				if results['page_size'] * page >= results['total_rows']:
+					break
+			if len(results['rows']) < results_length:
+				break
 			results = self.call('db/table/view', table, page, query_filter=query_filter)
 
 	def remote_table_row(self, table, row_id, cache=False, refresh=False):
