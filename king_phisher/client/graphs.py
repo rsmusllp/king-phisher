@@ -260,7 +260,7 @@ class CampaignGraph(object):
 		:return: The graph in a new, dedicated window.
 		:rtype: :py:class:`Gtk.Window`
 		"""
-		if self.manager == None:
+		if self.manager is None:
 			self.manager = FigureManager(self.canvas, 0)
 		self.navigation_toolbar.destroy()
 		self.navigation_toolbar = self.manager.toolbar
@@ -460,8 +460,9 @@ class CampaignGraphMessageResults(CampaignGraph):
 			colors.pop()
 			explode.pop()
 		ax = self.axes[0]
-		ax.pie(sizes, explode=explode, labels=labels, labeldistance=1.05, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
+		ax.pie(sizes, explode=explode, labels=tuple("{0:.1f}%".format(s) for s in sizes), labeldistance=1.15, colors=colors, shadow=True, startangle=45)
 		ax.axis('equal')
+		self.add_legend_patch(zip(colors, labels), fontsize='x-small')
 		return
 
 class CampaignGraphVisitsMap(CampaignGraph):
