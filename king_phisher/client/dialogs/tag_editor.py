@@ -55,12 +55,17 @@ class TagEditorDialog(gui_utilities.GladeGObject):
 	tag_tables = ('campaign_types', 'company_departments', 'industries')
 	def __init__(self, *args, **kwargs):
 		super(TagEditorDialog, self).__init__(*args, **kwargs)
+		self.popup_menus = {}
 		self.treeview_managers = {}
 		for tag_table in self.tag_tables:
 			treeview = self.gobjects['treeview_' + tag_table]
 			model = Gtk.ListStore(int, str, str)
 			treeview.set_model(model)
-			tvm = gui_utilities.TreeViewManager(treeview, cb_refresh=functools.partial(self.load_tags, tag_table))
+			tvm = gui_utilities.TreeViewManager(
+				treeview,
+				cb_delete=functools.partial(self.delete_tag, tag_table),
+				cb_refresh=functools.partial(self.load_tags, tag_table)
+			)
 			name_renderer = Gtk.CellRendererText()
 			name_renderer.connect('edited', self.signal_renderer_edited, (tag_table, 1, 'name'))
 			name_renderer.set_property('editable', True)
@@ -73,7 +78,19 @@ class TagEditorDialog(gui_utilities.GladeGObject):
 				column_offset=1,
 				renderers=(name_renderer, description_renderer)
 			)
+			self.treeview_managers[tag_table] = tvm
+			self.popup_menus[tag_table] = tvm.get_popup_menu()
 		self.load_tags()
+
+	def delete_tag(self, tag_table, treeview, selection):
+		(model, tree_iter) = selection.get_selected()
+		if not tree_iter:
+			return
+		tag_id = model.get_value(tree_iter, 0)
+		if not gui_utilities.show_dialog_yes_no('Delete This Tag?', self.dialog, 'This action is irreversible.'):
+			return
+		self.application.rpc('db/table/delete', tag_table, tag_id)
+		self.load_tags(tag_table)
 
 	def load_tags(self, tags=None):
 		if tags is None:
@@ -103,4 +120,3 @@ class TagEditorDialog(gui_utilities.GladeGObject):
 			gui_utilities.show_dialog_error('Failed To Modify', self.dialog, 'An error occurred while modifying the information.')
 		else:
 			model.set_value(model_iter, store_id, property_value)
-
