@@ -188,6 +188,9 @@ class SenderPolicyFramework(object):
 			raise SPFPermError('failed to parse spf data')
 
 		records = record[7:].split(' ')
+		records = tuple(record for record in records if len(record))
+		self.logger.debug("parsing {0:,} records for domain: {1}".format(len(records), domain))
+
 		if not len(records):
 			raise SPFPermError('failed to parse spf data')
 
