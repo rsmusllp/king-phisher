@@ -497,6 +497,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		connection = query.first()
 		if connection:
 			connection.visit_count += 1
+			new_connection = False
 		else:
 			connection = db_models.DeaddropConnection(campaign_id=deployment.campaign_id, deployment_id=deployment.id)
 			connection.visitor_ip = self.get_client_ip()
@@ -504,13 +505,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			connection.local_hostname = local_hostname
 			connection.local_ip_addresses = local_ip_addresses
 			session.add(connection)
+			new_connection = True
 		session.commit()
 
 		query = session.query(db_models.DeaddropConnection)
 		query = query.filter_by(campaign_id=deployment.campaign_id)
 		visit_count = query.count()
 		session.close()
-		if visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
+		if new_connection and visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
 			alert_text = "{0} deaddrop connections reached for campaign: {{campaign_name}}".format(visit_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, deployment.campaign_id))
 		return
