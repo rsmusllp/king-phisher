@@ -70,6 +70,9 @@ class RPCTerminalWindow(gui_utilities.GladeGObject):
 		self.terminal = terminal
 		self.child_pid = None
 		self.gobjects['box_main'].pack_end(self.terminal, True, True, 0)
+		if hasattr(self.terminal.props, 'rewrap_on_resize'):
+			self.terminal.set_property('rewrap-on-resize', True)
+		self.terminal.set_scroll_on_keystroke(True)
 
 	def signal_menuitem_edit_copy(self, menuitem):
 		self.terminal.copy_clipboard()
@@ -115,8 +118,6 @@ class KingPhisherClientRPCTerminal(object):
 		config = application.config
 
 		self.terminal = Vte.Terminal()
-		self.terminal.set_property('rewrap-on-resize', True)
-		self.terminal.set_scroll_on_keystroke(True)
 		self.rpc_window = RPCTerminalWindow(self.terminal, self.application)
 
 		rpc = self.application.rpc
