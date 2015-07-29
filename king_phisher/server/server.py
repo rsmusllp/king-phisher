@@ -460,8 +460,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self.logger.warning('dead drop request received with no \'token\' parameter')
 			return
 		try:
-			data = base64.b64decode('base64')
-		except binascii.Error:
+			data = base64.b64decode(data)
+		except (binascii.Error, TypeError):
 			self.logger.error('dead drop request received with invalid \'token\' data')
 			return
 		data = xor.xor_decode(data)
