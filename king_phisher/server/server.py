@@ -484,7 +484,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 
 		local_username = data.get('local_username')
 		local_hostname = data.get('local_hostname')
-		if local_username == None or local_hostname == None:
+		if local_username is None or local_hostname is None:
 			session.close()
 			self.logger.error('dead drop request received with missing data')
 			return
@@ -493,13 +493,13 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			local_ip_addresses = ' '.join(local_ip_addresses)
 
 		query = session.query(db_models.DeaddropConnection)
-		query = query.filter_by(id=deployment.id, local_username=local_username, local_hostname=local_hostname)
+		query = query.filter_by(deployment_id=deployment.id, local_username=local_username, local_hostname=local_hostname)
 		connection = query.first()
 		if connection:
 			connection.visit_count += 1
 		else:
-			connection = db_models.Connection(campaign_id=deployment.campaign_id, deployment_id=deployment.id)
-			connection.visitor_ip = self.client_address
+			connection = db_models.DeaddropConnection(campaign_id=deployment.campaign_id, deployment_id=deployment.id)
+			connection.visitor_ip = self.get_client_ip()
 			connection.local_username = local_username
 			connection.local_hostname = local_hostname
 			connection.local_ip_addresses = local_ip_addresses
@@ -512,7 +512,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		session.close()
 		if visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
 			alert_text = "{0} deaddrop connections reached for campaign: {{campaign_name}}".format(visit_count)
-			self.server.job_manager.job_run(self.issue_alert, (alert_text, campaign_id))
+			self.server.job_manager.job_run(self.issue_alert, (alert_text, deployment.campaign_id))
 		return
 
 	def handle_email_opened(self, query):
