@@ -100,10 +100,10 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	occur and it uses an internal timer to represent the last time the
 	data was refreshed.
 	"""
-	gobject_ids = [
+	gobject_ids = (
 		'button_refresh',
 		'treeview_campaign'
-	]
+	)
 	remote_table_name = ''
 	"""The database table represented by this tab."""
 	view_columns = ()
@@ -304,14 +304,14 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 
 class CampaignViewDashboardTab(CampaignViewGenericTab):
 	"""Display campaign information on a graphical dash board."""
-	gobject_ids = [
+	gobject_ids = (
 		'box_top_left',
 		'box_top_right',
 		'box_bottom',
 		'scrolledwindow_top_left',
 		'scrolledwindow_top_right',
 		'scrolledwindow_bottom'
-	]
+	)
 	label_text = 'Dashboard'
 	"""The tabs label for display in the GUI."""
 	def __init__(self, *args, **kwargs):

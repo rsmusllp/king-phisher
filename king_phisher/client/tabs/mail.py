@@ -460,11 +460,11 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 	This is the tab which adds basic text edition for changing an email
 	template.
 	"""
-	gobject_ids = [
+	gobject_ids = (
 		'toolbutton_save_as_html_file',
 		'toolbutton_save_html_file',
 		'view_html_file'
-	]
+	)
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Edit')
@@ -657,7 +657,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	This is the tab which allows the user to configure and set parameters
 	for sending messages as part of a campaign.
 	"""
-	gobject_ids = [
+	gobject_ids = (
 		'entry_webserver_url',
 		'entry_company_name',
 		'entry_source_email',
@@ -670,13 +670,13 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		'entry_attachment_file',
 		'combobox_importance',
 		'combobox_sensitivity'
-	]
+	)
 	config_prefix = 'mailer.'
 	top_gobject = 'box'
-	top_level_dependencies = [
+	top_level_dependencies = (
 		'MsgImportance',
 		'MsgSensitivity'
-	]
+	)
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Configuration')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""

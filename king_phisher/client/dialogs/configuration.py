@@ -46,7 +46,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 	dialog via the :py:meth:`.interact` method will cause some server settings
 	to be loaded.
 	"""
-	gobject_ids = [
+	gobject_ids = (
 		# Server Tab
 		'entry_server',
 		'entry_server_username',
@@ -62,13 +62,13 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		'entry_ssh_username',
 		# Client Tab
 		'combobox_spf_check_level'
-	]
+	)
 	top_gobject = 'dialog'
-	top_level_dependencies = [
+	top_level_dependencies = (
 		'SMSCarriers',
 		'SMTPSendRate',
 		'SPFCheckLevels'
-	]
+	)
 	def signal_switch_smtp_ssh(self, switch, _):
 		active = switch.get_property('active')
 		self.gtk_builder_get('frame_smtp_ssh').set_sensitive(active)

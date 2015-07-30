@@ -69,7 +69,10 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		'spinbutton_campaign_expiration_minute'
 	)
 	top_gobject = 'assistant'
-	top_level_dependencies = ('ClockHourAdjustment', 'ClockMinuteAdjustment')
+	top_level_dependencies = (
+		'ClockHourAdjustment',
+		'ClockMinuteAdjustment'
+	)
 	objects_persist = False
 	def __init__(self, *args, **kwargs):
 		super(CampaignCreationAssistant, self).__init__(*args, **kwargs)

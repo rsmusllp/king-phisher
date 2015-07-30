@@ -65,17 +65,15 @@ class LoginDialog(BaseLoginDialog):
 	It allows the user to specify the host and port to connect to and
 	credentials for authentication.
 	"""
-	gobject_ids = [
+	gobject_ids = (
 		'button_connect',
 		'entry_server',
 		'entry_server_username',
 		'entry_server_password',
 		'spinbutton_server_remote_port',
 		'switch_server_use_ssl'
-	]
-	top_level_dependencies = [
-		'PortAdjustment'
-	]
+	)
+	top_level_dependencies = ('PortAdjustment',)
 	def __init__(self, *args, **kwargs):
 		super(LoginDialog, self).__init__(*args, **kwargs)
 		self.popup_menu = Gtk.Menu.new()
@@ -104,9 +102,9 @@ class SSHLoginDialog(BaseLoginDialog):
 	It allows the user to specify the host and port to connect to and
 	credentials for authentication.
 	"""
-	gobject_ids = [
+	gobject_ids = (
 		'button_connect',
 		'entry_ssh_server',
 		'entry_ssh_username',
 		'entry_ssh_password'
-	]
+	)
