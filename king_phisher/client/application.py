@@ -235,12 +235,17 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.debug('loading custom css file: ' + css_file)
 			css_file = Gio.File.new_for_path(css_file)
 			style_provider = Gtk.CssProvider()
-			style_provider.load_from_file(css_file)
-			Gtk.StyleContext.add_provider_for_screen(
-				Gdk.Screen.get_default(),
-				style_provider,
-				Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-			)
+			style_provider.connect('parsing-error', self.signal_css_provider_parsing_error)
+			try:
+				style_provider.load_from_file(css_file)
+			except GLib.Error:
+				self.logger.error('there was an error parsing the css file, it will not be applied as a style provider')
+			else:
+				Gtk.StyleContext.add_provider_for_screen(
+					Gdk.Screen.get_default(),
+					style_provider,
+					Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+				)
 		else:
 			self.logger.debug('no custom css file was found')
 
@@ -439,6 +444,15 @@ class KingPhisherClientApplication(_Gtk_Application):
 		dialog = dialogs.ConfigurationDialog(self)
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
 			self.save_config()
+
+	def signal_css_provider_parsing_error(self, css_provider, css_section, gerror):
+		file_path = css_section.get_file()
+		if file_path:
+			file_path = file_path.get_path()
+		else:
+			file_path = '[ unknown file ]'
+		self.logger.error("css parser error ({0}) in {1}:{2}".format(gerror.message, file_path, css_section.get_start_line()))
+		return
 
 	def signal_window_added(self, _, window):
 		for action in self.actions.values():
