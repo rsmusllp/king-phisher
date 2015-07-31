@@ -552,7 +552,7 @@ Brandan Geise</property>
             <property name="halign">center</property>
             <property name="spacing">5</property>
             <child>
-              <object class="GtkImage" id="image3">
+              <object class="GtkImage" id="CampaignCreationAssistant.image_intro_title">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
@@ -566,7 +566,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label27">
+              <object class="GtkLabel" id="CampaignCreationAssistant.label_intro_title">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
@@ -590,7 +590,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="label28">
+          <object class="GtkLabel" id="CampaignCreationAssistant.label_intro_body">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">This assistant will walk you through creating and configuring a new King Phisher campaign.</property>
@@ -655,7 +655,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="CampaignCreationAssistant.entry_campaign_name">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">The name of the new campaign to create.</property>
+                <property name="tooltip_text" translatable="yes">The name of this campaign.</property>
                 <property name="hexpand">True</property>
                 <property name="max_length">60</property>
                 <property name="invisible_char">●</property>
@@ -683,7 +683,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="CampaignCreationAssistant.entry_campaign_description">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">Any descriptive notes to store with the campaign.</property>
+                <property name="tooltip_text" translatable="yes">Any descriptive notes to store with this campaign.</property>
                 <property name="hexpand">True</property>
                 <property name="max_length">200</property>
                 <property name="placeholder_text" translatable="yes">campaign description (OPTIONAL)</property>
@@ -1313,48 +1313,18 @@ Brandan Geise</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
-          <object class="GtkBox" id="CampaignCreationAssistant.page7">
+          <object class="GtkBox" id="box16">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
-            <property name="spacing">10</property>
+            <property name="halign">center</property>
+            <property name="spacing">5</property>
             <child>
-              <object class="GtkBox" id="box16">
+              <object class="GtkImage" id="CampaignCreationAssistant.image_confirm_title">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="halign">center</property>
-                <property name="spacing">5</property>
-                <child>
-                  <object class="GtkImage" id="image2">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">end</property>
-                    <property name="stock">gtk-add</property>
-                    <property name="icon_size">6</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label1">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="label" translatable="yes">Confirm New Campaign</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                      <attribute name="scale" value="1.5"/>
-                    </attributes>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
+                <property name="halign">end</property>
+                <property name="stock">gtk-add</property>
+                <property name="icon_size">6</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1363,12 +1333,15 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label38">
+              <object class="GtkLabel" id="CampaignCreationAssistant.label_confirm_title">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Verify all settings are correct in the previous sections, then hit "Apply" to create the new King Phisher campaign.</property>
-                <property name="wrap">True</property>
-                <property name="max_width_chars">45</property>
+                <property name="halign">start</property>
+                <property name="label" translatable="yes">Confirm New Campaign</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                  <attribute name="scale" value="1.5"/>
+                </attributes>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1381,6 +1354,20 @@ Brandan Geise</property>
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="CampaignCreationAssistant.label_confirm_body">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Verify all settings are correct in the previous sections, then hit "Apply" to create the new King Phisher campaign.</property>
+            <property name="wrap">True</property>
+            <property name="max_width_chars">45</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
           </packing>
         </child>
       </object>
