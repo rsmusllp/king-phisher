@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/client/__init__.py
+#  tests/client/gtk_builder_lint.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,16 +30,27 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
+import unittest
+import xml.etree.ElementTree as ElementTree
 
-from .application import ClientApplicationTests
-from .client_rpc import ClientRPCRemoteRowTests
-from .dialogs import ClientDialogTests
-from .export import ClientExportTests
-from .graphs import ClientGraphsTests
-from .gtk_builder import ClientGtkBuilderLint
-from .gui_utilities import ClientGUIUtilityTests
-from .gui_utilities import ClientGUIUtilityTreeviewTests
-from .mailer import ClientMailerTests
+from king_phisher import find
+from king_phisher import testing
+
+GOBJECT_TOP_REGEX = r'^[A-Z][a-zA-Z0-9]+$'
+
+class ClientGtkBuilderLint(testing.KingPhisherTestCase):
+	def setUp(self):
+		find.data_path_append('data/client')
+		builder_xml = find.find_data_file('king-phisher-client.ui')
+		self.xml_tree = ElementTree.parse(builder_xml)
+		self.xml_root = self.xml_tree.getroot()
+
+	def test_object_ids_are_valid(self):
+		for child in self.xml_root:
+			if child.tag != 'object':
+				continue
+			gobject_id = child.attrib['id']
+			self.assertRegex(gobject_id, GOBJECT_TOP_REGEX, "invalid gobject id '{0}'".format(gobject_id))
+
+if __name__ == '__main__':
+	unittest.main()

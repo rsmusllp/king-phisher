@@ -54,7 +54,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		'treeview_campaigns'
 	)
 	top_gobject = 'dialog'
-	top_level_dependencies = ('StockImage.add',)
+	top_level_dependencies = ('StockAddImage',)
 	def __init__(self, *args, **kwargs):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']

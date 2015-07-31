@@ -53,8 +53,8 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 	)
 	top_gobject = 'dialog'
 	top_level_dependencies = (
-		'StockImage.execute',
-		'StockImage.stop'
+		'StockExecuteImage',
+		'StockStopImage'
 	)
 	def __init__(self, *args, **kwargs):
 		super(ClonePageDialog, self).__init__(*args, **kwargs)

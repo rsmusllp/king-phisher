@@ -62,8 +62,8 @@ class RPCTerminalWindow(gui_utilities.GladeGObject):
 	)
 	top_gobject = 'window'
 	top_level_dependencies = (
-		'StockImage.dialog_question',
-		'StockImage.help'
+		'StockDialogQuestionImage',
+		'StockHelpImage'
 	)
 	def __init__(self, terminal, *args, **kwargs):
 		super(RPCTerminalWindow, self).__init__(*args, **kwargs)

@@ -95,7 +95,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		'scrolledwindow_mail_sender_progress'
 	)
 	top_gobject = 'box'
-	top_level_dependencies = ('StockImage.media_play',)
+	top_level_dependencies = ('StockMediaPlayImage',)
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Send')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""

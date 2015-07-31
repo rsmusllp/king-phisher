@@ -3463,7 +3463,7 @@ Brandan Geise</property>
       <action-widget response="-10">SSHLoginDialog.button_connect</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkImage" id="StockImage.add">
+  <object class="GtkImage" id="StockAddImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-add</property>
@@ -3609,7 +3609,7 @@ Brandan Geise</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="tooltip_text" translatable="yes">Create a new campaign.</property>
-                <property name="image">StockImage.add</property>
+                <property name="image">StockAddImage</property>
                 <signal name="clicked" handler="signal_button_clicked" swapped="no"/>
               </object>
               <packing>
@@ -3633,27 +3633,27 @@ Brandan Geise</property>
       <action-widget response="-10">CampaignSelectionDialog.button_select</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkImage" id="StockImage.delete">
+  <object class="GtkImage" id="StockDeleteImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-delete</property>
   </object>
-  <object class="GtkImage" id="StockImage.dialog_question">
+  <object class="GtkImage" id="StockDialogQuestionImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-dialog-question</property>
   </object>
-  <object class="GtkImage" id="StockImage.edit">
+  <object class="GtkImage" id="StockEditImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-edit</property>
   </object>
-  <object class="GtkImage" id="StockImage.execute">
+  <object class="GtkImage" id="StockExecuteImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-execute</property>
   </object>
-  <object class="GtkImage" id="StockImage.help">
+  <object class="GtkImage" id="StockHelpImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-help</property>
@@ -3735,7 +3735,7 @@ Brandan Geise</property>
                         <property name="label" translatable="yes">API Docs</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="image">StockImage.dialog_question</property>
+                        <property name="image">StockDialogQuestionImage</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="signal_menuitem_help_api_docs" swapped="no"/>
                       </object>
@@ -3745,7 +3745,7 @@ Brandan Geise</property>
                         <property name="label" translatable="yes">Help</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="image">StockImage.help</property>
+                        <property name="image">StockHelpImage</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="signal_menuitem_help_wiki" swapped="no"/>
                       </object>
@@ -3767,7 +3767,7 @@ Brandan Geise</property>
       </object>
     </child>
   </object>
-  <object class="GtkImage" id="StockImage.media_play">
+  <object class="GtkImage" id="StockMediaPlayImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-media-play</property>
@@ -3859,7 +3859,7 @@ Brandan Geise</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <property name="image">StockImage.media_play</property>
+            <property name="image">StockMediaPlayImage</property>
             <signal name="clicked" handler="signal_button_clicked_sender_start" swapped="no"/>
           </object>
           <packing>
@@ -3877,7 +3877,7 @@ Brandan Geise</property>
       </packing>
     </child>
   </object>
-  <object class="GtkImage" id="StockImage.stop">
+  <object class="GtkImage" id="StockStopImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-stop</property>
@@ -3908,7 +3908,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="image">StockImage.stop</property>
+                <property name="image">StockStopImage</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -3922,7 +3922,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="image">StockImage.execute</property>
+                <property name="image">StockExecuteImage</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -4247,7 +4247,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Edit/Delete Campaign</property>
-                <property name="image">StockImage.delete</property>
+                <property name="image">StockDeleteImage</property>
                 <property name="use_stock">False</property>
                 <signal name="activate" handler="do_edit_delete_campaign" swapped="no"/>
               </object>
@@ -4258,7 +4258,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Edit/Rename Campaign</property>
-                <property name="image">StockImage.edit</property>
+                <property name="image">StockEditImage</property>
                 <property name="use_stock">False</property>
                 <signal name="activate" handler="do_edit_rename_campaign" swapped="no"/>
               </object>
@@ -4269,7 +4269,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Edit/Stop Service</property>
-                <property name="image">StockImage.stop</property>
+                <property name="image">StockStopImage</property>
                 <property name="use_stock">False</property>
                 <signal name="activate" handler="do_edit_stop_service" swapped="no"/>
               </object>
@@ -4360,7 +4360,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Help/Wiki</property>
-                <property name="image">StockImage.help</property>
+                <property name="image">StockHelpImage</property>
                 <property name="use_stock">False</property>
                 <signal name="activate" handler="do_help_wiki" swapped="no"/>
               </object>
