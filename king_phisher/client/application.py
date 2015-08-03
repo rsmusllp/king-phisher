@@ -168,7 +168,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		return
 
 	def campaign_configure(self):
-		assistant = assistants.CampaignCreationAssistant(self, campaign_id=self.config['campaign_id'])
+		assistant = assistants.CampaignAssistant(self, campaign_id=self.config['campaign_id'])
 		assistant.assistant.set_transient_for(self.get_active_window())
 		assistant.assistant.set_modal(True)
 		assistant.interact()

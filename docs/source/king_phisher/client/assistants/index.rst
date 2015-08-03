@@ -5,4 +5,4 @@
    :maxdepth: 2
    :titlesonly:
 
-   campaign_creation.rst
+   campaign.rst

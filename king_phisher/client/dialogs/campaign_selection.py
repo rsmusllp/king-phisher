@@ -34,7 +34,7 @@ import datetime
 
 from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
-from king_phisher.client.assistants import CampaignCreationAssistant
+from king_phisher.client.assistants import CampaignAssistant
 from king_phisher.client import gui_utilities
 
 from gi.repository import Gtk
@@ -142,7 +142,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		if self._creation_assistant is not None:
 			gui_utilities.show_dialog_warning('Campaign Creation Assistant', self.dialog, 'The campaign creation assistant is already active.')
 			return
-		assistant = CampaignCreationAssistant(self.application)
+		assistant = CampaignAssistant(self.application)
 		assistant.assistant.set_transient_for(self.dialog)
 		assistant.assistant.set_modal(True)
 		assistant.assistant.connect('destroy', self.signal_assistant_destroy, assistant)

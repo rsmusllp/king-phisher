@@ -527,7 +527,7 @@ Brandan Geise</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkAssistant" id="CampaignCreationAssistant">
+  <object class="GtkAssistant" id="CampaignAssistant">
     <property name="width_request">450</property>
     <property name="height_request">350</property>
     <property name="can_focus">False</property>
@@ -540,7 +540,7 @@ Brandan Geise</property>
     <signal name="close" handler="signal_assistant_close" swapped="no"/>
     <signal name="prepare" handler="signal_assistant_prepare" swapped="no"/>
     <child>
-      <object class="GtkBox" id="CampaignCreationAssistant.page1">
+      <object class="GtkBox" id="CampaignAssistant.page1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
@@ -552,7 +552,7 @@ Brandan Geise</property>
             <property name="halign">center</property>
             <property name="spacing">5</property>
             <child>
-              <object class="GtkImage" id="CampaignCreationAssistant.image_intro_title">
+              <object class="GtkImage" id="CampaignAssistant.image_intro_title">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
@@ -566,7 +566,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="CampaignCreationAssistant.label_intro_title">
+              <object class="GtkLabel" id="CampaignAssistant.label_intro_title">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
@@ -590,7 +590,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="CampaignCreationAssistant.label_intro_body">
+          <object class="GtkLabel" id="CampaignAssistant.label_intro_body">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">This assistant will walk you through creating and configuring a new King Phisher campaign.</property>
@@ -611,7 +611,7 @@ Brandan Geise</property>
       </packing>
     </child>
     <child>
-      <object class="GtkBox" id="CampaignCreationAssistant.page2">
+      <object class="GtkBox" id="CampaignAssistant.page2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
@@ -652,7 +652,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="CampaignCreationAssistant.entry_campaign_name">
+              <object class="GtkEntry" id="CampaignAssistant.entry_campaign_name">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The name of this campaign.</property>
@@ -680,7 +680,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="CampaignCreationAssistant.entry_campaign_description">
+              <object class="GtkEntry" id="CampaignAssistant.entry_campaign_description">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">Any descriptive notes to store with this campaign.</property>
@@ -705,7 +705,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkComboBox" id="CampaignCreationAssistant.combobox_campaign_type">
+              <object class="GtkComboBox" id="CampaignAssistant.combobox_campaign_type">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="tooltip_text" translatable="yes">The type of this campaign.</property>
@@ -740,7 +740,7 @@ Brandan Geise</property>
       </packing>
     </child>
     <child>
-      <object class="GtkBox" id="CampaignCreationAssistant.page3">
+      <object class="GtkBox" id="CampaignAssistant.page3">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
@@ -770,7 +770,7 @@ Brandan Geise</property>
             <property name="margin_bottom">5</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkCheckButton" id="CampaignCreationAssistant.checkbutton_alert_subscribe">
+              <object class="GtkCheckButton" id="CampaignAssistant.checkbutton_alert_subscribe">
                 <property name="label" translatable="yes">Subscribe To SMS Alerts</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -786,7 +786,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="CampaignCreationAssistant.checkbutton_reject_after_credentials">
+              <object class="GtkCheckButton" id="CampaignAssistant.checkbutton_reject_after_credentials">
                 <property name="label" translatable="yes">Deny Requests After Credential Submission</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -815,7 +815,7 @@ Brandan Geise</property>
       </packing>
     </child>
     <child>
-      <object class="GtkBox" id="CampaignCreationAssistant.page4">
+      <object class="GtkBox" id="CampaignAssistant.page4">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
@@ -862,14 +862,14 @@ Brandan Geise</property>
                 <property name="spacing">10</property>
                 <property name="homogeneous">True</property>
                 <child>
-                  <object class="GtkRadioButton" id="CampaignCreationAssistant.radiobutton_company_existing">
+                  <object class="GtkRadioButton" id="CampaignAssistant.radiobutton_company_existing">
                     <property name="label" translatable="yes">Existing</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="xalign">0</property>
                     <property name="draw_indicator">True</property>
-                    <property name="group">CampaignCreationAssistant.radiobutton_company_none</property>
+                    <property name="group">CampaignAssistant.radiobutton_company_none</property>
                     <signal name="toggled" handler="signal_radiobutton_toggled" swapped="no"/>
                   </object>
                   <packing>
@@ -879,14 +879,14 @@ Brandan Geise</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkRadioButton" id="CampaignCreationAssistant.radiobutton_company_new">
+                  <object class="GtkRadioButton" id="CampaignAssistant.radiobutton_company_new">
                     <property name="label" translatable="yes">New</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="xalign">0</property>
                     <property name="draw_indicator">True</property>
-                    <property name="group">CampaignCreationAssistant.radiobutton_company_none</property>
+                    <property name="group">CampaignAssistant.radiobutton_company_none</property>
                     <signal name="toggled" handler="signal_radiobutton_toggled" swapped="no"/>
                   </object>
                   <packing>
@@ -896,7 +896,7 @@ Brandan Geise</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkRadioButton" id="CampaignCreationAssistant.radiobutton_company_none">
+                  <object class="GtkRadioButton" id="CampaignAssistant.radiobutton_company_none">
                     <property name="label" translatable="yes">None</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -928,7 +928,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkFrame" id="CampaignCreationAssistant.frame_company_existing">
+          <object class="GtkFrame" id="CampaignAssistant.frame_company_existing">
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">False</property>
@@ -959,7 +959,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkComboBox" id="CampaignCreationAssistant.combobox_company_existing">
+                      <object class="GtkComboBox" id="CampaignAssistant.combobox_company_existing">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="tooltip_text" translatable="yes">The name of the existing company to associate this campaign with.</property>
@@ -999,7 +999,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkFrame" id="CampaignCreationAssistant.frame_company_new">
+          <object class="GtkFrame" id="CampaignAssistant.frame_company_new">
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">False</property>
@@ -1052,7 +1052,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="CampaignCreationAssistant.entry_company_new_description">
+                      <object class="GtkEntry" id="CampaignAssistant.entry_company_new_description">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">A description of the new company.</property>
@@ -1065,7 +1065,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="CampaignCreationAssistant.entry_company_new_name">
+                      <object class="GtkEntry" id="CampaignAssistant.entry_company_new_name">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The name of the new company to create.</property>
@@ -1078,7 +1078,7 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkComboBox" id="CampaignCreationAssistant.combobox_company_industry">
+                      <object class="GtkComboBox" id="CampaignAssistant.combobox_company_industry">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="tooltip_text" translatable="yes">The industry in which the new company operates.</property>
@@ -1124,7 +1124,7 @@ Brandan Geise</property>
       </packing>
     </child>
     <child>
-      <object class="GtkBox" id="CampaignCreationAssistant.page5">
+      <object class="GtkBox" id="CampaignAssistant.page5">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
@@ -1161,7 +1161,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkCheckButton" id="CampaignCreationAssistant.checkbutton_expire_campaign">
+          <object class="GtkCheckButton" id="CampaignAssistant.checkbutton_expire_campaign">
             <property name="label" translatable="yes">Enable Campaign Expiration</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -1177,7 +1177,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkFrame" id="CampaignCreationAssistant.frame_campaign_expiration">
+          <object class="GtkFrame" id="CampaignAssistant.frame_campaign_expiration">
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">False</property>
@@ -1195,7 +1195,7 @@ Brandan Geise</property>
                     <property name="orientation">vertical</property>
                     <property name="spacing">5</property>
                     <child>
-                      <object class="GtkCalendar" id="CampaignCreationAssistant.calendar_campaign_expiration">
+                      <object class="GtkCalendar" id="CampaignAssistant.calendar_campaign_expiration">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="year">2015</property>
@@ -1216,7 +1216,7 @@ Brandan Geise</property>
                         <property name="can_focus">False</property>
                         <property name="spacing">5</property>
                         <child>
-                          <object class="GtkSpinButton" id="CampaignCreationAssistant.spinbutton_campaign_expiration_minute">
+                          <object class="GtkSpinButton" id="CampaignAssistant.spinbutton_campaign_expiration_minute">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="tooltip_text" translatable="yes">The minute for the campaign expiration time.</property>
@@ -1260,7 +1260,7 @@ Brandan Geise</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkSpinButton" id="CampaignCreationAssistant.spinbutton_campaign_expiration_hour">
+                          <object class="GtkSpinButton" id="CampaignAssistant.spinbutton_campaign_expiration_hour">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="tooltip_text" translatable="yes">The hour for the campaign expiration time on a 24-hour clock.</property>
@@ -1307,7 +1307,7 @@ Brandan Geise</property>
       </packing>
     </child>
     <child>
-      <object class="GtkBox" id="CampaignCreationAssistant.page6">
+      <object class="GtkBox" id="CampaignAssistant.page6">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
@@ -1319,7 +1319,7 @@ Brandan Geise</property>
             <property name="halign">center</property>
             <property name="spacing">5</property>
             <child>
-              <object class="GtkImage" id="CampaignCreationAssistant.image_confirm_title">
+              <object class="GtkImage" id="CampaignAssistant.image_confirm_title">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
@@ -1333,7 +1333,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="CampaignCreationAssistant.label_confirm_title">
+              <object class="GtkLabel" id="CampaignAssistant.label_confirm_title">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
@@ -1357,7 +1357,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="CampaignCreationAssistant.label_confirm_body">
+          <object class="GtkLabel" id="CampaignAssistant.label_confirm_body">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Verify all settings are correct in the previous sections, then hit "Apply" to create the new King Phisher campaign.</property>
@@ -1378,7 +1378,7 @@ Brandan Geise</property>
       </packing>
     </child>
     <child internal-child="action_area">
-      <object class="GtkBox" id="CampaignCreationAssistant.action_area">
+      <object class="GtkBox" id="CampaignAssistant.action_area">
         <property name="can_focus">False</property>
       </object>
     </child>

@@ -40,12 +40,13 @@ from king_phisher.third_party import AdvancedHTTPServer
 from gi.repository import Gtk
 from gi.repository import Pango
 
-__all__ = ['CampaignCreationAssistant']
+__all__ = ['CampaignAssistant']
 
-class CampaignCreationAssistant(gui_utilities.GladeGObject):
+class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
-	Display an assistant which walks the user through creating and configuring a
-	new campaign.
+	Display an assistant which walks the user through creating a new campaign or
+	configuring an existing campaign. If no *campaign_id* is specified a new
+	campaign will be created.
 	"""
 	gobject_ids = (
 		'calendar_campaign_expiration',
@@ -80,7 +81,12 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 	)
 	objects_persist = False
 	def __init__(self, application, campaign_id=None):
-		super(CampaignCreationAssistant, self).__init__(application)
+		"""
+		:param application: The application instance which this object belongs to.
+		:type application: :py:class:`~king_phisher.client.application.KingPhisherClientApplication`
+		:param campaign_id: The ID of the campaign to edit.
+		"""
+		super(CampaignAssistant, self).__init__(application)
 		self.campaign_id = campaign_id
 		self._close_ready = True
 		self._page_titles = {}
@@ -153,8 +159,8 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 
 	def _set_defaults(self):
 		"""
-		Set up any default values. Also load settings from the existing campaign
-		if one was specified.
+		Set any default values for widgets. Also load settings from the existing
+		campaign if one was specified.
 		"""
 		calendar = self.gobjects['calendar_campaign_expiration']
 		default_day = datetime.datetime.today() + datetime.timedelta(days=31)
