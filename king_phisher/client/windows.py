@@ -63,6 +63,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		'StockDeleteImage',
 		'StockEditImage',
 		'StockHelpImage',
+		'StockPropertiesImage',
 		'StockStopImage'
 	)
 	def __init__(self, application, window):
@@ -93,6 +94,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		for menu_name, key, modifier in accelerators:
 			menu_item = self.gtk_builder_get('menuitem_' + menu_name)
 			menu_item.add_accelerator('activate', self.window.accel_group, key, modifier, Gtk.AccelFlags.VISIBLE)
+
+	def do_edit_configure_campaign(self, _):
+		self.application.campaign_configure()
 
 	def do_edit_delete_campaign(self, _):
 		self.application.campaign_delete()

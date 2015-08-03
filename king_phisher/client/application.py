@@ -46,6 +46,7 @@ import uuid
 from king_phisher import find
 from king_phisher import utilities
 from king_phisher import version
+from king_phisher.client import assistants
 from king_phisher.client import client_rpc
 from king_phisher.client import dialogs
 from king_phisher.client import graphs
@@ -166,18 +167,11 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.server_disconnect()
 		return
 
-	def campaign_rename(self):
-		"""
-		Show a dialog prompting the user to for the a new name to assign to the
-		currently selected campaign.
-		"""
-		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
-		prompt = dialogs.TextEntryDialog.build_prompt(self, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
-		response = prompt.interact()
-		if response == None or response == campaign.name:
-			return
-		self.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'name', response)
-		gui_utilities.show_dialog_info('Campaign Name Updated', self.get_active_window(), 'The campaign name was successfully changed.')
+	def campaign_configure(self):
+		assistant = assistants.CampaignCreationAssistant(self, campaign_id=self.config['campaign_id'])
+		assistant.assistant.set_transient_for(self.get_active_window())
+		assistant.assistant.set_modal(True)
+		assistant.interact()
 
 	def campaign_delete(self):
 		"""
@@ -192,6 +186,19 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if not self.show_campaign_selection():
 			gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'A campaign must be selected.')
 			self.quit()
+
+	def campaign_rename(self):
+		"""
+		Show a dialog prompting the user to for the a new name to assign to the
+		currently selected campaign.
+		"""
+		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
+		prompt = dialogs.TextEntryDialog.build_prompt(self, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
+		response = prompt.interact()
+		if response == None or response == campaign.name:
+			return
+		self.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'name', response)
+		gui_utilities.show_dialog_info('Campaign Name Updated', self.get_active_window(), 'The campaign name was successfully changed.')
 
 	def exception_hook(self, exc_type, exc_value, exc_traceback):
 		if isinstance(exc_value, KeyboardInterrupt):

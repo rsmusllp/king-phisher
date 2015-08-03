@@ -1337,7 +1337,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="label" translatable="yes">Confirm New Campaign</property>
+                <property name="label" translatable="yes">Confirm Configuration</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>
                   <attribute name="scale" value="1.5"/>
@@ -3877,6 +3877,11 @@ Brandan Geise</property>
       </packing>
     </child>
   </object>
+  <object class="GtkImage" id="StockPropertiesImage">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-properties</property>
+  </object>
   <object class="GtkImage" id="StockStopImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -4239,6 +4244,17 @@ Brandan Geise</property>
               <object class="GtkSeparatorMenuItem" id="menuitem10">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkImageMenuItem" id="MainMenuBar.menuitem_edit_configure_campaign">
+                <property name="label" translatable="yes">Configure Campaign</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="accel_path">&lt;KingPhisherClient&gt;/Edit/Configure Campaign</property>
+                <property name="image">StockPropertiesImage</property>
+                <property name="use_stock">False</property>
+                <signal name="activate" handler="do_edit_configure_campaign" swapped="no"/>
               </object>
             </child>
             <child>

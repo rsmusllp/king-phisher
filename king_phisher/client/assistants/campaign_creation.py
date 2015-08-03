@@ -62,7 +62,6 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		'frame_campaign_expiration',
 		'frame_company_existing',
 		'frame_company_new',
-		'image_confirm_title',
 		'image_intro_title',
 		'label_confirm_body',
 		'label_confirm_title',
@@ -80,8 +79,9 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 		'ClockMinuteAdjustment'
 	)
 	objects_persist = False
-	def __init__(self, *args, **kwargs):
-		super(CampaignCreationAssistant, self).__init__(*args, **kwargs)
+	def __init__(self, application, campaign_id=None):
+		super(CampaignCreationAssistant, self).__init__(application)
+		self.campaign_id = campaign_id
 		self._close_ready = True
 		self._page_titles = {}
 		for page_n in range(self.assistant.get_n_pages()):
@@ -90,6 +90,36 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			if page_title:
 				self._page_titles[page_title] = page_n
 
+		self._set_comboboxes()
+		self._set_defaults()
+
+		if not self.config['server_config']['server.require_id']:
+			self.gobjects['checkbutton_reject_after_credentials'].set_sensitive(False)
+			self.gobjects['checkbutton_reject_after_credentials'].set_property('active', False)
+
+		confirm_preamble = 'Verify all settings are correct in the previous sections'
+		if campaign_id:
+			# re-configuring an existing campaign
+			self.gobjects['label_confirm_body'].set_text(confirm_preamble + ', then hit "Apply" to update the King Phisher campaign with the new settings.')
+			self.gobjects['label_intro_body'].set_text('This assistant will walk you through reconfiguring the selected King Phisher campaign.')
+			self.gobjects['label_intro_title'].set_text('Configure Campaign')
+		else:
+			# creating a new campaign
+			self.gobjects['label_confirm_body'].set_text(confirm_preamble + ', then hit "Apply" to create the new King Phisher campaign.')
+			self.gobjects['label_intro_body'].set_text('This assistant will walk you through creating and configuring a new King Phisher campaign.')
+			self.gobjects['label_intro_title'].set_text('New Campaign')
+
+	@property
+	def campaign_name(self):
+		"""
+		The string value of the configured campaign name. This may be set even
+		when the campaign was not created, which would be the case if the user
+		closed the window.
+		"""
+		return self.gobjects['entry_campaign_name'].get_text()
+
+	def _set_comboboxes(self):
+		"""Set up all the comboboxes and load the data for their models."""
 		description_font_desc = Pango.FontDescription()
 		description_font_desc.set_style(Pango.Style.ITALIC)
 
@@ -104,18 +134,63 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 			combobox.pack_start(renderer, True)
 			combobox.add_attribute(renderer, 'text', 2)
 
-		if not self.config['server_config']['server.require_id']:
-			self.gobjects['checkbutton_reject_after_credentials'].set_sensitive(False)
-			self.gobjects['checkbutton_reject_after_credentials'].set_property('active', False)
+		combobox = self.gobjects['combobox_campaign_type']
+		model = combobox.get_model()
+		model.clear()
+		for row in self.application.rpc.remote_table('campaign_types'):
+			model.append((row.id, row.name, row.description))
 
-	@property
-	def campaign_name(self):
+		combobox = self.gobjects['combobox_company_existing']
+		model = combobox.get_model()
+		model.clear()
+		for row in self.application.rpc.remote_table('companies'):
+			model.append((row.id, row.name, row.description))
+		combobox = self.gobjects['combobox_company_industry']
+		model = combobox.get_model()
+		model.clear()
+		for row in self.application.rpc.remote_table('industries'):
+			model.append((row.id, row.name, row.description))
+
+	def _set_defaults(self):
 		"""
-		The string value of the configured campaign name. This may be set even
-		when the campaign was not created, which would be the case if the user
-		closed the window.
+		Set up any default values. Also load settings from the existing campaign
+		if one was specified.
 		"""
-		return self.gobjects['entry_campaign_name'].get_text()
+		calendar = self.gobjects['calendar_campaign_expiration']
+		default_day = datetime.datetime.today() + datetime.timedelta(days=31)
+		gui_utilities.gtk_calendar_set_pydate(calendar, default_day)
+
+		if self.campaign_id is None:
+			return
+		campaign = self.application.rpc.remote_table_row('campaigns', self.campaign_id, cache=True, refresh=True)
+
+		self.gobjects['entry_campaign_name'].set_text(campaign.name)
+		if campaign.description is not None:
+			self.gobjects['entry_campaign_description'].set_text(campaign.description)
+		if campaign.campaign_type_id is not None:
+			combobox = self.gobjects['combobox_campaign_type']
+			model = combobox.get_model()
+			model_iter = gui_utilities.gtk_list_store_search(model, campaign.campaign_type_id, column=0)
+			if model_iter is not None:
+				combobox.set_active_iter(model_iter)
+
+		self.gobjects['checkbutton_alert_subscribe'].set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.campaign_id))
+		self.gobjects['checkbutton_reject_after_credentials'].set_property('active', campaign.reject_after_credentials)
+
+		if campaign.company_id is not None:
+			self.gobjects['radiobutton_company_existing'].set_active(True)
+			combobox = self.gobjects['combobox_company_existing']
+			model = combobox.get_model()
+			model_iter = gui_utilities.gtk_list_store_search(model, campaign.company_id, column=0)
+			if model_iter is not None:
+				combobox.set_active_iter(model_iter)
+
+		if campaign.expiration is not None:
+			expiration = utilities.datetime_utc_to_local(campaign.expiration)
+			self.gobjects['checkbutton_expire_campaign'].set_active(True)
+			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration)
+			self.gobjects['spinbutton_campaign_expiration_hour'].set_value(expiration.hour)
+			self.gobjects['spinbutton_campaign_expiration_minute'].set_value(expiration.minute)
 
 	def _get_tag_from_combobox(self, combobox, db_table):
 		model = combobox.get_model()
@@ -203,33 +278,42 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 				set_current_page('Expiration')
 				return True
 
-		# create the campaign, point of no return
+		properties = {}
+
+		# point of no return
 		campaign_description = self.gobjects['entry_campaign_description'].get_text()
 		campaign_description = campaign_description.strip()
 		if campaign_description == '':
 			campaign_description = None
-		try:
-			cid = self.application.rpc('campaign/new', campaign_name, description=campaign_description)
-		except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
-			if not error.is_remote_exception:
-				raise error
-			if not error.remote_exception['name'] == 'exceptions.ValueError':
-				raise error
-			error_message = error.remote_exception.get('message', 'an unknown error occurred').capitalize() + '.'
-			gui_utilities.show_dialog_error('Failed To Create Campaign', self.parent, error_message)
-			set_current_page('Basic Settings')
-			return True
+		if self.campaign_id:
+			properties['name'] = self.campaign_name
+			properties['description'] = campaign_description
+			cid = self.campaign_id
+		else:
+			try:
+				cid = self.application.rpc('campaign/new', campaign_name, description=campaign_description)
+			except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
+				if not error.is_remote_exception:
+					raise error
+				if not error.remote_exception['name'] == 'exceptions.ValueError':
+					raise error
+				error_message = error.remote_exception.get('message', 'an unknown error occurred').capitalize() + '.'
+				gui_utilities.show_dialog_error('Failed To Create Campaign', self.parent, error_message)
+				set_current_page('Basic Settings')
+				return True
 
-		properties = {}
 		properties['campaign_type_id'] = self._get_tag_from_combobox(self.gobjects['combobox_campaign_type'], 'campaign_types')
 		properties['company_id'] = company_id
 		properties['expiration'] = expiration
 		properties['reject_after_credentials'] = self.gobjects['checkbutton_reject_after_credentials'].get_property('active')
 		self.application.rpc('db/table/set', 'campaigns', cid, properties.keys(), properties.values())
 
-		if self.gobjects['checkbutton_alert_subscribe'].get_property('active'):
-			self.application.rpc('campaign/alerts/subscribe', cid)
-
+		should_subscribe = self.gobjects['checkbutton_alert_subscribe'].get_property('active')
+		if should_subscribe != self.application.rpc('campaign/alerts/is_subscribed', cid):
+			if should_subscribe:
+				self.application.rpc('campaign/alerts/subscribe', cid)
+			else:
+				self.application.rpc('campaign/alerts/unsubscribe', cid)
 		self._close_ready = True
 		return
 
@@ -243,33 +327,15 @@ class CampaignCreationAssistant(gui_utilities.GladeGObject):
 
 	def signal_assistant_prepare(self, _, page):
 		page_title = self.assistant.get_page_title(page)
-		if page_title == 'Basic Settings':
-			combobox = self.gobjects['combobox_campaign_type']
-			model = combobox.get_model()
-			model.clear()
-			for row in self.application.rpc.remote_table('campaign_types'):
-				model.append((row.id, row.name, row.description))
-		elif page_title == 'Company':
+		if page_title == 'Company':
 			combobox = self.gobjects['combobox_company_existing']
 			model = combobox.get_model()
-			model.clear()
-			for row in self.application.rpc.remote_table('companies'):
-				model.append((row.id, row.name, row.description))
 			company_name = self.gobjects['entry_company_new_name'].get_text()
 			if company_name:
 				model_iter = gui_utilities.gtk_list_store_search(model, company_name, column=1)
 				if model_iter is not None:
 					combobox.set_active_iter(model_iter)
 					self.gobjects['radiobutton_company_existing'].set_active(True)
-			combobox = self.gobjects['combobox_company_industry']
-			model = combobox.get_model()
-			model.clear()
-			for row in self.application.rpc.remote_table('industries'):
-				model.append((row.id, row.name, row.description))
-		elif page_title == 'Expiration':
-			calendar = self.gobjects['calendar_campaign_expiration']
-			default_day = datetime.datetime.today() + datetime.timedelta(days=31)
-			gui_utilities.gtk_calendar_set_pydate(calendar, default_day)
 
 	def signal_calendar_prev(self, calendar):
 		today = datetime.date.today()
