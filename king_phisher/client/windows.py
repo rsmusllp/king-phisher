@@ -101,9 +101,6 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def do_edit_delete_campaign(self, _):
 		self.application.campaign_delete()
 
-	def do_edit_rename_campaign(self, _):
-		self.application.campaign_rename()
-
 	def do_edit_preferences(self, _):
 		self.application.show_preferences()
 

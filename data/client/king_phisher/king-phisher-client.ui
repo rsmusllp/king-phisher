@@ -570,7 +570,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="label" translatable="yes">New Campaign</property>
+                <property name="label" translatable="yes">place holder</property>
                 <attributes>
                   <attribute name="weight" value="bold"/>
                   <attribute name="scale" value="1.5"/>
@@ -593,7 +593,7 @@ Brandan Geise</property>
           <object class="GtkLabel" id="CampaignAssistant.label_intro_body">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">This assistant will walk you through creating and configuring a new King Phisher campaign.</property>
+            <property name="label" translatable="yes">place holder</property>
             <property name="wrap">True</property>
             <property name="max_width_chars">45</property>
           </object>
@@ -1360,7 +1360,7 @@ Brandan Geise</property>
           <object class="GtkLabel" id="CampaignAssistant.label_confirm_body">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Verify all settings are correct in the previous sections, then hit "Apply" to create the new King Phisher campaign.</property>
+            <property name="label" translatable="yes">place holder</property>
             <property name="wrap">True</property>
             <property name="max_width_chars">45</property>
           </object>
@@ -3643,11 +3643,6 @@ Brandan Geise</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-dialog-question</property>
   </object>
-  <object class="GtkImage" id="StockEditImage">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-edit</property>
-  </object>
   <object class="GtkImage" id="StockExecuteImage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -4269,17 +4264,6 @@ Brandan Geise</property>
               </object>
             </child>
             <child>
-              <object class="GtkImageMenuItem" id="MainMenuBar.menuitem_edit_rename_campaign">
-                <property name="label" translatable="yes">Rename Campaign</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="accel_path">&lt;KingPhisherClient&gt;/Edit/Rename Campaign</property>
-                <property name="image">StockEditImage</property>
-                <property name="use_stock">False</property>
-                <signal name="activate" handler="do_edit_rename_campaign" swapped="no"/>
-              </object>
-            </child>
-            <child>
               <object class="GtkImageMenuItem" id="MainMenuBar.menuitem_edit_stop_service">
                 <property name="label" translatable="yes">Stop Service</property>
                 <property name="visible">True</property>
@@ -4569,7 +4553,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="label" translatable="yes">label</property>
+                <property name="label" translatable="yes">place holder</property>
               </object>
               <packing>
                 <property name="expand">False</property>
