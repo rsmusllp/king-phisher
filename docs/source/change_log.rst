@@ -16,6 +16,8 @@ Version 0.3.0
 * Support for expiring campaigns at a specified time
 * Track more details when messages are opened such as the IP address and User Agent
 * Support for tagging campaign types
+* Support for organizing campaigns by companies
+* Support for storing email recipients department name
 
 Version 0.2.x
 -------------

@@ -30,7 +30,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import ipaddress
 import json
+import logging
 
 from king_phisher import geoip
 from king_phisher import sms
@@ -41,6 +43,7 @@ __all__ = ['generate_token']
 
 REST_API_BASE = '_/api/'
 """The base URI path for REST API requests."""
+logger = logging.getLogger('KingPhisher.Server.RESTAPI')
 
 def generate_token():
 	"""
@@ -60,10 +63,31 @@ def rest_handler(handle_function):
 	:param handle_function: The REST API handler.
 	"""
 	def wrapped(handler, params):
-		if not handler.config.get('server.rest_api.enabled'):
+		client_ip = ipaddress.ip_address(handler.client_address[0])
+		config = handler.config
+		if not config.get('server.rest_api.enabled'):
+			logger.warning("denying REST API request from {0} (REST API is disabled)".format(client_ip))
 			handler.respond_unauthorized()
 			return
-		if handler.config.get('server.rest_api.token') == None or handler.config.get('server.rest_api.token') != handler.get_query('token'):
+		networks = config.get_if_exists('server.rest_api.networks')
+		if networks is not None:
+			if isinstance(networks, str):
+				networks = (networks,)
+			found = False
+			for network in networks:
+				if client_ip in ipaddress.ip_network(network, strict=False):
+					found = True
+					break
+			if not found:
+				logger.warning("denying REST API request from {0} (origin is from an unauthorized network)".format(client_ip))
+				handler.respond_unauthorized()
+				return
+		if not handler.config.get('server.rest_api.token'):
+			logger.warning("denying REST API request from {0} (configured token is invalid)".format(client_ip))
+			handler.respond_unauthorized()
+			return
+		if config.get('server.rest_api.token') != handler.get_query('token'):
+			logger.warning("denying REST API request from {0} (invalid authentication token)".format(client_ip))
 			handler.respond_unauthorized()
 			return
 		response = dict(result=handle_function(handler, params))
