@@ -17,7 +17,9 @@ Functions
 
 .. autofunction:: king_phisher.utilities.format_datetime
 
-.. autofunction:: king_phisher.utilities.hex_color_to_float_tuple
+.. autofunction:: king_phisher.utilities.color_hex_to_tuple
+
+.. autofunction:: king_phisher.utilities.color_tuple_to_hex
 
 .. autofunction:: king_phisher.utilities.is_valid_email_address
 

@@ -153,7 +153,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		width, height = drawingarea.get_size_request()
 		context.rectangle(0, 0, width, height)
 		context.stroke_preserve()
-		context.set_source_rgb(*utilities.hex_color_to_float_tuple(ColorHexCode.LIGHT_YELLOW))
+		context.set_source_rgb(*utilities.color_hex_to_tuple(ColorHexCode.LIGHT_YELLOW))
 		context.fill()
 
 	def signal_treeview_row_activated(self, treeview, treeview_column, treepath):
