@@ -87,6 +87,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'reload-css-style': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'rpc-cache-clear': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
@@ -113,6 +114,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The :py:class:`~.KingPhisherRPCClient` instance for the application."""
 		self._ssh_forwarder = None
 		"""The SSH forwarder responsible for tunneling RPC communications."""
+		self.style_provider = None
 		try:
 			self.load_config(load_defaults=True)
 		except IOError:
@@ -126,10 +128,15 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def _create_actions(self):
 		action = Gio.SimpleAction.new('emit-application-signal', GLib.VariantType.new('s'))
 		action.connect('activate', self.action_emit_application_signal)
-		if Gtk.check_version(3, 14, 0):
-			self.add_accelerator('<Control><Shift>F1', 'win.emit-application-signal', GLib.Variant.new_string('rpc-cache-clear'))
-		else:
-			self.set_accels_for_action('win.emit-application-signal(\'rpc-cache-clear\')', ['<Control><Shift>F1'])
+		accelerators = (
+			('<Control><Shift>F1', 'rpc-cache-clear'),
+			('<Control><Shift>F12', 'reload-css-style')
+		)
+		for key, signal_name in accelerators:
+			if Gtk.check_version(3, 14, 0):
+				self.add_accelerator(key, 'win.emit-application-signal', GLib.Variant.new_string(signal_name))
+			else:
+				self.set_accels_for_action("win.emit-application-signal('{0}')".format(signal_name), (key,))
 		self.actions['emit-application-signal'] = action
 		self.add_action(action)
 
@@ -239,20 +246,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		# load a custom css file if one is available
 		css_file = find.find_data_file('king-phisher-client.css')
 		if css_file:
-			self.logger.debug('loading custom css file: ' + css_file)
-			css_file = Gio.File.new_for_path(css_file)
-			style_provider = Gtk.CssProvider()
-			style_provider.connect('parsing-error', self.signal_css_provider_parsing_error)
-			try:
-				style_provider.load_from_file(css_file)
-			except GLib.Error:
-				self.logger.error('there was an error parsing the css file, it will not be applied as a style provider')
-			else:
-				Gtk.StyleContext.add_provider_for_screen(
-					Gdk.Screen.get_default(),
-					style_provider,
-					Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-				)
+			self.style_provider = self.load_style_css(css_file)
 		else:
 			self.logger.debug('no custom css file was found')
 
@@ -275,6 +269,17 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def do_exit_confirm(self):
 		self.emit('exit')
+
+	def do_reload_css_style(self):
+		if self.style_provider:
+			Gtk.StyleContext.remove_provider_for_screen(
+				Gdk.Screen.get_default(),
+				self.style_provider
+			)
+			self.style_provider = None
+		css_file = find.find_data_file('king-phisher-client.css')
+		if css_file:
+			self.style_provider = self.load_style_css(css_file)
 
 	def do_rpc_cache_clear(self):
 		if self.rpc:
@@ -329,6 +334,23 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""Load the necessary values from the server's configuration."""
 		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image', 'server.web_root'])
 		return
+
+	def load_style_css(self, css_file):
+		self.logger.debug('loading style from css file: ' + css_file)
+		css_file = Gio.File.new_for_path(css_file)
+		style_provider = Gtk.CssProvider()
+		style_provider.connect('parsing-error', self.signal_css_provider_parsing_error)
+		try:
+			style_provider.load_from_file(css_file)
+		except GLib.Error:
+			self.logger.error('there was an error parsing the css file, it will not be applied as a style provider')
+			return None
+		Gtk.StyleContext.add_provider_for_screen(
+			Gdk.Screen.get_default(),
+			style_provider,
+			Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+		)
+		return style_provider
 
 	def save_config(self):
 		"""Write the client configuration to disk."""

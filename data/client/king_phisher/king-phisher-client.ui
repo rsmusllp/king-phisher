@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 
+<!-- Generated with glade 3.18.3
 
 Copyright (c) 2013-2015, SecureState LLC
 All rights reserved.
@@ -140,6 +140,10 @@ Brandan Geise</property>
       <object class="GtkButtonBox" id="CampaignViewCredentialsTab.buttonbox1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">5</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">5</property>
         <child>
           <object class="GtkToggleButton" id="CampaignViewCredentialsTab.togglebutton_show_passwords">
             <property name="label" translatable="yes">Show Passwords</property>
@@ -296,6 +300,10 @@ Brandan Geise</property>
       <object class="GtkButtonBox" id="CampaignViewDashboardTab.buttonbox1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">5</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">5</property>
         <property name="layout_style">end</property>
         <child>
           <object class="GtkButton" id="CampaignViewDashboardTab.button_refresh">
@@ -349,6 +357,10 @@ Brandan Geise</property>
       <object class="GtkButtonBox" id="CampaignViewDeaddropTab.buttonbox2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">5</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">5</property>
         <child>
           <object class="GtkButton" id="CampaignViewDeaddropTab.button_export">
             <property name="label" translatable="yes">Export</property>
@@ -415,6 +427,10 @@ Brandan Geise</property>
       <object class="GtkButtonBox" id="CampaignViewMessagesTab.buttonbox3">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">5</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">5</property>
         <child>
           <object class="GtkButton" id="CampaignViewMessagesTab.button_export">
             <property name="label" translatable="yes">Export</property>
@@ -481,6 +497,10 @@ Brandan Geise</property>
       <object class="GtkButtonBox" id="CampaignViewVisitsTab.buttonbox4">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">5</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">5</property>
         <child>
           <object class="GtkButton" id="CampaignViewVisitsTab.button_export">
             <property name="label" translatable="yes">Export</property>
@@ -1404,6 +1424,8 @@ Brandan Geise</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="dialog-action_area8">
             <property name="can_focus">False</property>
+            <property name="margin_right">5</property>
+            <property name="margin_bottom">5</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button1">
@@ -1610,6 +1632,9 @@ Brandan Geise</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-open</property>
                 <signal name="clicked" handler="signal_toolbutton_open" swapped="no"/>
+                <style>
+                  <class name="background-remove"/>
+                </style>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1930,6 +1955,9 @@ Brandan Geise</property>
                 <property name="position">1</property>
               </packing>
             </child>
+            <style>
+              <class name="background-remove"/>
+            </style>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -1973,6 +2001,9 @@ Brandan Geise</property>
                 <property name="position">1</property>
               </packing>
             </child>
+            <style>
+              <class name="background-remove"/>
+            </style>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -2020,6 +2051,9 @@ Brandan Geise</property>
                 <property name="position">1</property>
               </packing>
             </child>
+            <style>
+              <class name="background-remove"/>
+            </style>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -2067,6 +2101,9 @@ Brandan Geise</property>
                 <property name="position">1</property>
               </packing>
             </child>
+            <style>
+              <class name="background-remove"/>
+            </style>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -2160,6 +2197,9 @@ Brandan Geise</property>
                 <attribute name="text">0</attribute>
               </attributes>
             </child>
+            <style>
+              <class name="background-remove"/>
+            </style>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -2178,6 +2218,9 @@ Brandan Geise</property>
                 <attribute name="text">0</attribute>
               </attributes>
             </child>
+            <style>
+              <class name="background-remove"/>
+            </style>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -2217,6 +2260,9 @@ Brandan Geise</property>
         <property name="position">0</property>
       </packing>
     </child>
+    <style>
+      <class name="background-add"/>
+    </style>
   </object>
   <object class="GtkAdjustment" id="PortAdjustment">
     <property name="lower">1</property>
@@ -2241,9 +2287,9 @@ Brandan Geise</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="LoginDialog.dialog-action_area5">
             <property name="can_focus">False</property>
-            <property name="margin_right">3</property>
+            <property name="margin_right">5</property>
             <property name="margin_top">5</property>
-            <property name="margin_bottom">3</property>
+            <property name="margin_bottom">5</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="LoginDialog.button_cancel">
@@ -2510,6 +2556,9 @@ Brandan Geise</property>
           <object class="GtkButtonBox" id="ConfigurationDialog.dialog-action_area3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="margin_right">5</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">5</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="ConfigurationDialog.button_cancel">
@@ -3325,9 +3374,9 @@ Brandan Geise</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="SSHLoginDialog.dialog-action_area5">
             <property name="can_focus">False</property>
-            <property name="margin_right">3</property>
+            <property name="margin_right">5</property>
             <property name="margin_top">5</property>
-            <property name="margin_bottom">3</property>
+            <property name="margin_bottom">5</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="SSHLoginDialog.button_cancel">
