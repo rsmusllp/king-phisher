@@ -7,6 +7,10 @@
 Functions
 ---------
 
+.. autofunction:: king_phisher.utilities.convert_hex_to_tuple
+
+.. autofunction:: king_phisher.utilities.convert_tuple_to_hex
+
 .. autofunction:: king_phisher.color.print_error
 
 .. autofunction:: king_phisher.color.print_good
