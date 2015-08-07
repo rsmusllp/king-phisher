@@ -38,6 +38,7 @@ logging.captureWarnings(True)
 from .client import *
 from .server import *
 
+from .color import ColorConversionTests
 from .configuration import ServerConfigurationTests
 from .geoip import GeoIPTests
 from .geoip import GeoIPRPCTests
