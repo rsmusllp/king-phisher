@@ -182,6 +182,48 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 	do_POST = _do_http_method
 	do_RPC = _do_http_method
 
+	def get_query_creds(self, check_query=True):
+		"""
+		Get credentials that have been submitted in the request. For credentials
+		to be returned at least a username must have been specified. The
+		returned username will be None or a non-empty string. The returned
+		password will be None if the parameter was not found or a string which
+		maybe empty. This functions checks the query data for credentials first
+		if *check_query* is True, and then checks the contents of an
+		Authorization header.
+
+		:param bool check_query: Whether or not to check the query data in addition to an Authorization header.
+		:return: The submitted credentials.
+		:rtype: tuple
+		"""
+		username = None
+		password = ''
+
+		for pname in ('username', 'user', 'u'):
+			username = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
+			if username:
+				break
+		if username:
+			for pname in ('password', 'pass', 'p'):
+				password = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
+				if password:
+					break
+			return username, (password or '')
+
+		basic_auth = self.headers.get('authorization')
+		if basic_auth is None:
+			return None, ''
+		basic_auth = basic_auth.split()
+		if len(basic_auth) == 2 and basic_auth[0] == 'Basic':
+			try:
+				basic_auth = base64.b64decode(basic_auth[1])
+			except TypeError:
+				return None, ''
+			basic_auth = basic_auth.split(':', 1)
+			if len(basic_auth) == 2 and len(basic_auth[0]):
+				username, password = basic_auth
+		return username, password
+
 	def get_template_vars_client(self):
 		"""
 		Build a dictionary of variables for a client with an associated
@@ -344,6 +386,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		except jinja2.exceptions.TemplateError:
 			raise errors.KingPhisherAbortRequestError()
 
+		template_data = ''
+		headers = []
 		template_vars = {
 			'client': self.get_template_vars_client(),
 			'request': {
@@ -358,19 +402,26 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			}
 		}
 		template_vars.update(self.server.template_env.standard_variables)
-		try:
-			template_data = template.render(template_vars)
-		except (TypeError, jinja2.TemplateError) as error:
-			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
-			raise errors.KingPhisherAbortRequestError()
+		template_module = template.make_module(template_vars)
+		if getattr(template_module, 'require_basic_auth', False) and not all(self.get_query_creds(check_query=False)):
+			mime_type = 'text/html'
+			self.send_response(401)
+			headers.append(('WWW-Authenticate', "Basic realm=\"{0}\"".format(getattr(template_module, 'basic_auth_realm', 'Authentication Required'))))
+		else:
+			try:
+				template_data = template.render(template_vars)
+			except (TypeError, jinja2.TemplateError) as error:
+				self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
+				raise errors.KingPhisherAbortRequestError()
+			self.send_response(200)
+			headers.append(('Last-Modified', self.date_time_string(os.stat(template.filename).st_mtime)))
 
-		fs = os.stat(template.filename)
 		if mime_type.startswith('text'):
 			mime_type += '; charset=utf-8'
-		self.send_response(200)
 		self.send_header('Content-Type', mime_type)
 		self.send_header('Content-Length', str(len(template_data)))
-		self.send_header('Last-Modified', self.date_time_string(fs.st_mtime))
+		for header in headers:
+			self.send_header(*header)
 
 		try:
 			self.handle_page_visit()
@@ -623,19 +674,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		session.close()
 
 	def _handle_page_visit_creds(self, session, visit_id):
-		username = None
-		for pname in ['username', 'user', 'u']:
-			username = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
-			if username:
-				break
-		if not username:
+		username, password = self.get_query_creds()
+		if username is None:
 			return
-		password = None
-		for pname in ['password', 'pass', 'p']:
-			password = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
-			if password:
-				break
-		password = (password or '')
 		cred_count = 0
 		query = session.query(db_models.Credential)
 		query = query.filter_by(message_id=self.message_id, username=username, password=password)
