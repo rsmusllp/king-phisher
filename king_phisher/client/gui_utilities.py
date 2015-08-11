@@ -211,6 +211,23 @@ def gtk_menu_position(event, *args):
 	coords = event.get_root_coords()
 	return (coords[0], coords[1], True)
 
+def gtk_style_context_get_color(sc, color_name):
+	"""
+	Look up a color by it's name in the :py:class:`Gtk.StyleContext` specified
+	in *sc*, and return it as an RGB tuple if the color is defined. If the color
+	is not found, None is returned.
+
+	:param sc: The style context to use.
+	:type sc: :py:class:`Gtk.StyleContext`
+	:param str color_name: The name of the color to lookup.
+	:return: The color as an RGB tuple.
+	:rtype: tuple
+	"""
+	found, color_rgba = sc.lookup_color(color_name)
+	if not found:
+		return None
+	return color_rgba.red, color_rgba.green, color_rgba.blue
+
 def gtk_sync():
 	"""Wait while all pending GTK events are processed."""
 	while Gtk.events_pending():
