@@ -58,12 +58,12 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Debian"
 fi
 
-grep -E "Kali Linux 1.[0-9]+" /etc/debian_version &> /dev/null
+grep -E "Kali Linux [1-2]\.[0-9]+" /etc/debian_version &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Kali"
 fi
 
-grep -E "Ubuntu 1[345].(04|10)" /etc/issue &> /dev/null
+grep -E "Ubuntu 1[345]\.(04|10)" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Ubuntu"
 fi
@@ -147,6 +147,7 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	fi
 	if [ "$LINUX_VERSION" == "Kali" ]; then
 		easy_install -U distribute
+		apt-get install -y postgresql-server-dev-all &> /dev/null
 	fi
 fi
 
