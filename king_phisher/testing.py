@@ -200,7 +200,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 
 	def web_root_files(self, limit=None):
 		"""
-		A generator object that yeilds valid files which are contained in the
+		A generator object that yields valid files which are contained in the
 		web root of the test server instance. This can be used to find resources
 		which the server should process as files. The function will fail if
 		no files can be found in the web root.

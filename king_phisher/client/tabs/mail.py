@@ -50,6 +50,7 @@ from gi.repository import Gio
 from gi.repository import Gtk
 from gi.repository import GtkSource
 from gi.repository import Pango
+import jinja2
 import requests
 from smoke_zephyr.utilities import escape_single_quote
 
@@ -386,13 +387,15 @@ class MailSenderPreviewTab(object):
 	This tab uses the WebKit engine to render the HTML of an email so it can be
 	previewed before it is sent.
 	"""
-	def __init__(self, config):
+	def __init__(self, application):
 		"""
-		:param dict config: The King Phisher client configuration.
+		:param application: The application instance.
+		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
 		self.label = Gtk.Label(label='Preview')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
-		self.config = config
+		self.application = application
+		self.config = application.config
 
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
@@ -405,6 +408,19 @@ class MailSenderPreviewTab(object):
 		scrolled_window = Gtk.ScrolledWindow()
 		scrolled_window.add(self.webview)
 		scrolled_window.show()
+
+		self.info_bar = Gtk.InfoBar()
+		self.info_bar.set_no_show_all(True)
+		self.info_bar_label = Gtk.Label('Template Error!')
+		self.info_bar_label.show()
+		image = Gtk.Image.new_from_stock('gtk-dialog-error', Gtk.IconSize.DIALOG)
+		image.show()
+		self.info_bar.get_content_area().add(image)
+		self.info_bar.get_content_area().add(self.info_bar_label)
+		self.info_bar.add_button('OK', Gtk.ResponseType.OK)
+		self.info_bar.connect('response', lambda x, y: self.info_bar.hide())
+		self.box.pack_start(self.info_bar, False, True, 0)
+
 		self.box.pack_start(scrolled_window, True, True, 0)
 		self.file_monitor = None
 
@@ -422,9 +438,18 @@ class MailSenderPreviewTab(object):
 			return
 		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
-		html_data = mailer.format_message(html_data, self.config)
-		html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
-		self.load_html_data(html_data, html_file_uri)
+		try:
+			html_data = mailer.format_message(html_data, self.config)
+		except jinja2.TemplateSyntaxError as error:
+			self.info_bar_label.set_text("Template syntax error: {error.message} on line {error.lineno}.".format(error=error))
+			self.info_bar.show()
+		except jinja2.UndefinedError as error:
+			self.info_bar_label.set_text("Template undefined error: {error.message}.".format(error=error))
+			self.info_bar.show()
+		else:
+			html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
+			self.load_html_data(html_data, html_file_uri)
+			self.info_bar.hide()
 
 	def load_html_data(self, html_data, html_file_uri=None):
 		"""
@@ -772,7 +797,7 @@ class MailSenderTab(object):
 		self.tabs['edit'] = edit_tab
 		self.notebook.append_page(edit_tab.box, edit_tab.label)
 
-		preview_tab = MailSenderPreviewTab(self.config)
+		preview_tab = MailSenderPreviewTab(self.application)
 		self.tabs['preview'] = preview_tab
 		self.notebook.append_page(preview_tab.box, preview_tab.label)
 

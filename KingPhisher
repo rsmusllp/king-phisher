@@ -122,7 +122,7 @@ def main():
 	try:
 		app = application.KingPhisherClientApplication(config_file=config_file)
 	except Exception as error:
-		logger.critical("ititialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
+		logger.critical("initialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
 		color.print_error('failed to initialize the King Phisher client')
 		return 0
 	logger.debug("client loaded in {0:.2f} seconds".format(time.time() - start_time))
