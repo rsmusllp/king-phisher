@@ -117,6 +117,20 @@ else
 fi
 cd $KING_PHISHER_DIR
 
+if [ "$LINUX_VERSION" == "Kali" ]; then
+	grep -E "Kali Linux 2\.[0-9]+" /etc/debian_version &> /dev/null
+	if [ $? -eq 0 ]; then
+		echo "Checking Kali 2 apt sources"
+		grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null
+		if [ $? -ne 0 ]; then
+			echo "Standard Kali 2 apt sources are missing, now adding them"
+			echo "See http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
+			echo "deb http://http.kali.org/kali sana main non-free contrib" >> /etc/apt/sources.list
+			apt-get update
+		fi
+	fi
+fi
+
 echo "Installing $LINUX_VERSION dependencies"
 if [ "$LINUX_VERSION" == "CentOS" ]; then
 	yum install -y epel-release
