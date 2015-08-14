@@ -402,7 +402,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			}
 		}
 		template_vars.update(self.server.template_env.standard_variables)
-		template_module = template.make_module(template_vars)
+		try:
+			template_module = template.make_module(template_vars)
+		except (TypeError, jinja2.TemplateError) as error:
+			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
+			raise errors.KingPhisherAbortRequestError()
 		if getattr(template_module, 'require_basic_auth', False) and not all(self.get_query_creds(check_query=False)):
 			mime_type = 'text/html'
 			self.send_response(401)
