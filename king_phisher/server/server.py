@@ -644,18 +644,22 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			message.opener_user_agent = self.headers.get('user-agent', None)
 
 		set_new_visit = True
-		visit_id = make_uid()
+		visit_id = None
 		if self.visit_id:
+			visit_id = self.visit_id
 			set_new_visit = False
 			query = session.query(db_models.LandingPage)
 			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
 			if query.count():
 				visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
 				if visit.message_id == self.message_id:
-					visit_id = self.visit_id
 					visit.visit_count += 1
 				else:
 					set_new_visit = True
+					visit_id = None
+
+		if visit_id is None:
+			visit_id = make_uid()
 
 		if set_new_visit:
 			kp_cookie_name = self.config.get('server.cookie_name')
@@ -666,10 +670,11 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			visit.visitor_details = self.headers.get('user-agent', '')
 			session.add(visit)
 			visit_count = len(campaign.visits)
-			if visit_count > 0 and ((visit_count in [1, 10, 25]) or ((visit_count % 50) == 0)):
+			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
 				alert_text = "{0} visits reached for campaign: {{campaign_name}}".format(visit_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
 
+		assert visit_id is not None, 'the visit id has not been set'
 		self._handle_page_visit_creds(session, visit_id)
 		trained = self.get_query('trained')
 		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
