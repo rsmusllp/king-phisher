@@ -118,6 +118,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.assertEqual(message_count, 1)
 
 	def step_3_get_visits(self):
+		# simulate a user visiting the landing page by clicking their link
 		visit_count = self.rpc('db/table/count', 'visits', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(visit_count, 0)
 		response = self.http_request('/' + self.landing_page, include_id=self.message_id)
@@ -132,6 +133,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.visit_id = cookie[len(cookie_name) + 1:]
 
 	def step_4_get_passwords(self):
+		# simulate a user entering their credentials
 		creds_count = self.rpc('db/table/count', 'credentials', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(creds_count, 0)
 		username = random_string(8)
@@ -149,13 +151,32 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		self.assertEqual(cred.visit_id, self.visit_id)
 
 	def step_5_get_repeat_visit(self):
+		# simulate a user returning to the landing page without specifying the message id in the parameters
 		visit = self.rpc.remote_table_row('visits', self.visit_id)
 		visit_count = visit.visit_count
-		headers = {'Cookie': "{0}={1}".format(self.config.get('server.cookie_name'), self.visit_id)}
-		response = self.http_request('/' + self.landing_page, include_id=False, headers=headers)
+		self.headers = {'Cookie': "{0}={1}".format(self.config.get('server.cookie_name'), self.visit_id)}
+		response = self.http_request('/' + self.landing_page, include_id=False, headers=self.headers)
 		self.assertHTTPStatus(response, 200)
 		visit = self.rpc.remote_table_row('visits', self.visit_id)
 		self.assertEqual(visit.visit_count, visit_count + 1)
+
+	def step_6_get_new_message_visit(self):
+		# simulate a user who has already been issued a visit id in a cookie clicking a link in a new message
+		message_id = random_string(16)
+		self.rpc('campaign/message/new', self.campaign_id, message_id, 'test@test.com', 'testers, inc.', 'test', 'test')
+		message_count = self.rpc('db/table/count', 'messages', query_filter={'campaign_id': self.campaign_id})
+		self.assertEqual(message_count, 2)
+
+		headers = {'Cookie': "{0}={1}".format(self.config.get('server.cookie_name'), self.visit_id)}
+		response = self.http_request('/' + self.landing_page, include_id=message_id, headers=headers)
+		self.assertHTTPStatus(response, 200)
+		cookie = response.getheader('Set-Cookie')
+		self.assertIsNotNone(cookie)
+		cookie = cookie.split(';')[0]
+		cookie_name = self.config.get('server.cookie_name')
+		cookie = cookie[len(cookie_name) + 1:]
+		self.assertNotEqual(self.visit_id, cookie)
+		self.assertEqual(len(self.visit_id), len(cookie))
 
 	def steps(self):
 		steps = [f for f in dir(self) if f.startswith('step_')]

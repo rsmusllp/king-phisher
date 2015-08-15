@@ -3,7 +3,6 @@
 # King Phisher
 Phishing Campaign Toolkit
 
-[![Build Status](http://img.shields.io/travis/securestate/king-phisher.svg?style=flat-square)](https://travis-ci.org/securestate/king-phisher)
 [![Documentation Status](https://readthedocs.org/projects/king-phisher/badge/?version=latest&style=flat-square)](http://king-phisher.readthedocs.org/en/latest)
 [![Github Issues](http://img.shields.io/github/issues/securestate/king-phisher.svg?style=flat-square)](https://github.com/securestate/king-phisher/issues)
 
