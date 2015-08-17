@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>{{ client.company_name }} Antivirus Verification</title>
+  <link href="./include/style-scan-new.css" media="screen" rel="stylesheet" type="text/css">
+  <script src="./include/progress_bar.js" type="text/javascript"></script>
+  <link rel="SHORTCUT ICON" href="./images/favicon.ico">
+</head>
+<body class="index">
+  <div id="container">
+    <header>
+      <h1>
+        <img src="./images/logo.png" height="75">
+      </h1>
+    </header>
+    <div id="stage">
+      <section class="intro" style="display: none">
+        <h2>Performing Initial Scan and Checking for Updates</h2>
+      </section>
+      <section class="work">
+        <div class="ui-progress-bar ui-container" id="progress_bar">
+          <div class="ui-progress" style="width: 7%">
+            <span class="ui-label" style="display:none">
+              Scanning
+              <b class="value">7%</b>
+            </span>
+          </div>
+        </div>
+      </section>
+      <section class="compatibility" style="display: none">
+        <article>
+          <h3>Your Antivirus is Up To Date</h3>
+          <br>
+          <p>Your antivirus is currently up to date and registered. To submit the scan results and confirm your validation of this scan, please click the green "Continue" button below.</p>
+        </article>
+        <div class="download">
+          <ol class="links">
+            <li class="link">
+              <a class="btn download" href="http://www.{{client.company_name}}.com">
+                <span>Continue</span>
+              </a>
+            </li>
+          </ol>
+        </div>
+      </section>
+    </div>
+    <script>
+      //<![CDATA[
+      $(function() {
+        App.init();
+      });
+      //]]>
+    </script>
+    <footer style="display: none">
+      <p class="copy">Copyright &copy; {{ time.local|strftime('%Y') }} {{ client.company_name }}, All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>
