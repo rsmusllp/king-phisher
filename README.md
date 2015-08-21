@@ -35,23 +35,25 @@ the [LICENSE](https://github.com/securestate/king-phisher/blob/master/LICENSE) f
 Special Thanks (QA / Beta Testing):
 
  - Jake Garlie - jagar
-
  - Ken Smith - p4tchw0rk
-
  - Brianna Whittaker
 
 King Phisher Development Team:
 
  - Brandan Geise - coldfusion ([@coldfusion39](https://twitter.com/coldfusion39))
-
  - Jeff McCutchan - jamcut ([@jamcut](https://twitter.com/jamcut))
-
  - Spencer McIntyre - zeroSteiner ([@zeroSteiner](https://twitter.com/zeroSteiner))
+
+## Template Files
+Template files for both messages and server pages can be found in the separate
+King Phisher [Templates repository](https://github.com/securestate/king-phisher-templates).
+Any contributions regarding templates should also be submitted via a pull
+request to the templates repository.
 
 ## Code Documentation
 King Phisher uses Sphinx for internal code documentation. This
 documentation can be generated from source with the command
-```sphinx-build docs/source docs/html```. The latest documentation is
+```sphinx-build -b html docs/source docs/html```. The latest documentation is
 kindly hosted on [ReadTheDocs](https://readthedocs.org/) at
 [king-phisher.readthedocs.org](https://king-phisher.readthedocs.org/en/latest/).
 
