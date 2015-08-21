@@ -8,7 +8,7 @@ client.address:         {{ client.address }}
 
 ## Client Session Vars
 client.company_name:    {{ client.company_name }}
-client.email:           {{ client.email }}
+client.email_address:   {{ client.email_address }}
 client.first_name:      {{ client.first_name }}
 client.last_name:       {{ client.last_name }}
 client.is_trained:      {{ client.is_trained }}

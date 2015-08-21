@@ -240,24 +240,23 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		visit_count = 0
 		result = None
 		if self.message_id == self.config.get('server.secret_id'):
-			result = ['aliddle@wonderland.com', 'Wonderland Inc.', 'Alice', 'Liddle', 0]
+			client_vars['company_name'] = 'Wonderland Inc.'
+			result = ('aliddle@wonderland.com', 'Alice', 'Liddle', 0)
 		elif self.message_id:
 			session = db_manager.Session()
 			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
 			if message:
 				visit_count = len(message.visits)
-				company_name = None
 				if message.campaign.company:
-					company_name = message.campaign.company.name
-				result = [message.target_email, company_name, message.first_name, message.last_name, message.trained]
+					client_vars['company_name'] = message.campaign.company.name
+				result = [message.target_email, message.first_name, message.last_name, message.trained]
 			session.close()
 		if not result:
 			return client_vars
 		client_vars['email_address'] = result[0]
-		client_vars['company_name'] = result[1]
-		client_vars['first_name'] = result[2]
-		client_vars['last_name'] = result[3]
-		client_vars['is_trained'] = result[4]
+		client_vars['first_name'] = result[1]
+		client_vars['last_name'] = result[2]
+		client_vars['is_trained'] = result[3]
 		client_vars['message_id'] = self.message_id
 
 		client_vars['visit_count'] = visit_count
