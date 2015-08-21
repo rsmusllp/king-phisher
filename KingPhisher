@@ -79,8 +79,8 @@ def main():
 		color.print_error('no display was detected, this must be run with an interactive X session')
 		return 0
 
-	if Gtk.check_version(3, 4, 0):
-		color.print_error('the GTK+ version is too old (minimum required is 3.4)')
+	if Gtk.check_version(3, 8, 0):
+		color.print_error('the GTK+ version is too old (minimum required is 3.8)')
 		return 0
 
 	# check and configure the environment

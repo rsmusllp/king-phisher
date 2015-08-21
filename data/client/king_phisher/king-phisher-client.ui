@@ -33,7 +33,7 @@ Brandan Geise
 
 -->
 <interface>
-  <requires lib="gtk+" version="3.4"/>
+  <requires lib="gtk+" version="3.8"/>
   <requires lib="gtksourceview" version="3.0"/>
   <!-- interface-license-type bsd3c -->
   <!-- interface-name King Phisher -->

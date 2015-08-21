@@ -58,12 +58,12 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Debian"
 fi
 
-grep -E "Kali Linux [1-2]\.[0-9]+" /etc/debian_version &> /dev/null
+grep -E "Kali Linux 2\.[0-9]+" /etc/debian_version &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Kali"
 fi
 
-grep -E "Ubuntu 1[345]\.(04|10)" /etc/issue &> /dev/null
+grep -E "Ubuntu 1[45]\.(04|10)" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Ubuntu"
 fi
@@ -77,6 +77,9 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo "  - Fedora"
 	echo "  - Kali"
 	echo "  - Ubuntu"
+	echo ""
+	echo "If the current version of Linux is one of these flavors but it is"
+	echo "not recognized, please open a support ticket and include the version."
 	exit 1
 fi
 echo "Linux version detected as $LINUX_VERSION"
@@ -118,16 +121,13 @@ fi
 cd $KING_PHISHER_DIR
 
 if [ "$LINUX_VERSION" == "Kali" ]; then
-	grep -E "Kali Linux 2\.[0-9]+" /etc/debian_version &> /dev/null
-	if [ $? -eq 0 ]; then
-		echo "Checking Kali 2 apt sources"
-		grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null
-		if [ $? -ne 0 ]; then
-			echo "Standard Kali 2 apt sources are missing, now adding them"
-			echo "See http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
-			echo "deb http://http.kali.org/kali sana main non-free contrib" >> /etc/apt/sources.list
-			apt-get update
-		fi
+	echo "Checking Kali 2 apt sources"
+	grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null
+	if [ $? -ne 0 ]; then
+		echo "Standard Kali 2 apt sources are missing, now adding them"
+		echo "See http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
+		echo "deb http://http.kali.org/kali sana main non-free contrib" >> /etc/apt/sources.list
+		apt-get update
 	fi
 fi
 
