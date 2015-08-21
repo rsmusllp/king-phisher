@@ -14,8 +14,10 @@ client file is meant to connect to the daemon over SSH from a remote system. The
 server must be running SSH and allow ports to be forwarded. The client after
 connecting, communicates via RPC to the server through the encrypted SSH tunnel.
 
-Additionally, the user logging in with the King Phisher Client will
-require a valid local account on the King Phisher Server.
+Additionally, the user logging in with the King Phisher Client will require a
+valid local account on the King Phisher Server. The King Phisher Server runs a
+self contained HTTP server and does not require an additional one such as
+Apache, or Nginx.
 
 ## Linux Install Steps
 

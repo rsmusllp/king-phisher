@@ -4,7 +4,15 @@ Change Log
 This document contains notes on the major changes for each version of King
 Phisher.
 
-Version 0.3.x
+Version 1.x.x
+-------------
+
+Version 1.0.0
+^^^^^^^^^^^^^
+
+*In Progress*
+
+Version 0.x.x
 -------------
 
 Version 0.3.0
@@ -18,9 +26,7 @@ Released :release:`0.3.0` on August 21st, 2015
 * Support for tagging campaign types
 * Support for organizing campaigns by companies
 * Support for storing email recipients department name
-
-Version 0.2.x
--------------
+* Support for collecting credentials via Basic Auth
 
 Version 0.2.1
 ^^^^^^^^^^^^^
@@ -46,9 +52,6 @@ Released :release:`0.2.0` on April 28th, 2015
 * Support for cloning web pages
 * Support for installing on Fedora
 * Support for running the server with Docker
-
-Version 0.1.x
--------------
 
 Version 0.1.7
 ^^^^^^^^^^^^^
