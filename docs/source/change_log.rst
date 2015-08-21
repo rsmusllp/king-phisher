@@ -10,7 +10,7 @@ Version 0.3.x
 Version 0.3.0
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`0.3.0` on August 21st, 2015
 
 * Added a new campaign creation assistant
 * Support for expiring campaigns at a specified time

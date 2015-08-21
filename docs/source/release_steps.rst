@@ -10,14 +10,13 @@ Pre Release Steps
 #. Test and fix any issues with the Windows MSI build
 #. Ensure unit tests pass with Python 2.7 & Python 3.4
 #. Remove the version label
-#. Create the final Windows build
+#. Create the final Windows MSI build
 #. Update the change log
 
 Release Steps
 -------------
 
-#. Create a final signed commit on the dev branch
-#. Push the dev branch to GitHub and ensure the Travis-CI build passes
+#. Create a final signed commit on the dev branch and push it to GitHub
 #. Merge dev into master and push master to GitHub
 #. Create and push a signed tag of the release commit
 #. Create a new release on GitHub
