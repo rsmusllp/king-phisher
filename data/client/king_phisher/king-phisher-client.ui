@@ -2113,7 +2113,7 @@ Brandan Geise</property>
         <child>
           <object class="GtkEntry" id="MailSenderConfigurationTab.entry_company_name">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
+            <property name="can_focus">False</property>
             <property name="tooltip_text" translatable="yes">The company name if a company is associated with the campaign.</property>
             <property name="editable">False</property>
           </object>

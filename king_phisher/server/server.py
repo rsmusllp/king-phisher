@@ -239,19 +239,18 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return client_vars
 		visit_count = 0
 		result = None
+		session = db_manager.Session()
 		if self.message_id == self.config.get('server.secret_id'):
 			client_vars['company_name'] = 'Wonderland Inc.'
 			result = ('aliddle@wonderland.com', 'Alice', 'Liddle', 0)
 		elif self.message_id:
-			session = db_manager.Session()
 			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
 			if message:
-				visit_count = len(message.visits)
 				if message.campaign.company:
 					client_vars['company_name'] = message.campaign.company.name
-				result = [message.target_email, message.first_name, message.last_name, message.trained]
-			session.close()
+				result = (message.target_email, message.first_name, message.last_name, message.trained)
 		if not result:
+			session.close()
 			return client_vars
 		client_vars['email_address'] = result[0]
 		client_vars['first_name'] = result[1]
@@ -259,12 +258,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		client_vars['is_trained'] = result[3]
 		client_vars['message_id'] = self.message_id
 
-		client_vars['visit_count'] = visit_count
 		if self.visit_id:
-			client_vars['visit_id'] = self.visit_id
-		else:
-			# if the visit_id is not set then this is a new visit so increment the count preemptively
-			client_vars['visit_count'] += 1
+			visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
+			client_vars['visit_id'] = visit.id
+			visit_count = visit.visit_count
+		# increment the count preemptively
+		client_vars['visit_count'] = visit_count + 1
+
+		session.close()
 		return client_vars
 
 	def custom_authentication(self, username, password):
