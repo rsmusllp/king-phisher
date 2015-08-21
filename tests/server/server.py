@@ -38,12 +38,12 @@ from king_phisher.utilities import random_string
 
 class ServerTests(KingPhisherServerTestCase):
 	def test_http_method_get(self):
-		for phile in self.web_root_files(3):
+		for phile in self.web_root_files(3, include_templates=False):
 			http_response = self.http_request(phile)
 			self.assertHTTPStatus(http_response, 200)
 
 	def test_http_method_head(self):
-		for phile in self.web_root_files(3):
+		for phile in self.web_root_files(3, include_templates=False):
 			http_response = self.http_request(phile, method='HEAD')
 			self.assertHTTPStatus(http_response, 200)
 
@@ -56,13 +56,13 @@ class ServerTests(KingPhisherServerTestCase):
 	def test_secret_id(self):
 		old_require_id = self.config.get('server.require_id')
 		self.config.set('server.require_id', True)
-		for phile in self.web_root_files(3):
+		for phile in self.web_root_files(3, include_templates=False):
 			http_response = self.http_request(phile, include_id=True)
 			self.assertHTTPStatus(http_response, 200)
 			http_response = self.http_request(phile, include_id=False)
 			self.assertHTTPStatus(http_response, 404)
 		self.config.set('server.require_id', False)
-		for phile in self.web_root_files(3):
+		for phile in self.web_root_files(3, include_templates=False):
 			http_response = self.http_request(phile, include_id=False)
 			self.assertHTTPStatus(http_response, 200)
 		self.config.set('server.require_id', old_require_id)

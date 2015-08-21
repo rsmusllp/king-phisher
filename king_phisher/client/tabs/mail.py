@@ -706,6 +706,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.label = Gtk.Label(label='Configuration')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderConfigurationTab, self).__init__(*args, **kwargs)
+		self.application.connect('campaign-changed', self.signal_kpc_campaign_load)
+		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
 		self.application.connect('exit', self.signal_kpc_exit)
 
 	def signal_button_clicked_verify(self, button):
@@ -752,6 +754,16 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	def signal_entry_backspace(self, entry):
 		entry.set_text('')
 		return True
+
+	def signal_kpc_campaign_load(self, _, campaign_id):
+		if not campaign_id == self.config.get('campaign_id'):
+			return
+		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
+		if campaign.company_id is None:
+			self.config['mailer.company_name'] = None
+		else:
+			self.config['mailer.company_name'] = campaign.company.name
+		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
 
 	def signal_kpc_exit(self, kpc):
 		self.objects_save_to_config()

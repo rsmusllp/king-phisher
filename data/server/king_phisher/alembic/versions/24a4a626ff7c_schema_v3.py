@@ -1,4 +1,4 @@
-"""Database Schema v3
+"""Schema v3
 
 Revision ID: 24a4a626ff7c
 Revises: None

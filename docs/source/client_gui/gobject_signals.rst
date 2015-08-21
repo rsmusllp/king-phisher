@@ -11,6 +11,14 @@ The following are the signals for the
 object. These signals can be used by the client API to subscribe to specific
 events.
 
+.. py:function:: campaign-changed(campaign_id)
+
+   This signal is emitted when campaign attributes are changed. Subscribers to
+   this signal can use it to update and refresh information for the modified
+   campaign.
+
+   :param str campaign_id: The ID of the campaign whose information was changed.
+
 .. py:function:: campaign-set(campaign_id)
 
    This signal is emitted when the user sets the current campaign. Subscribers

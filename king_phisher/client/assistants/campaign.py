@@ -320,6 +320,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				self.application.rpc('campaign/alerts/subscribe', cid)
 			else:
 				self.application.rpc('campaign/alerts/unsubscribe', cid)
+
+		self.application.emit('campaign-changed', cid)
 		self._close_ready = True
 		return
 

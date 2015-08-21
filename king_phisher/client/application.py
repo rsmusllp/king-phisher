@@ -84,6 +84,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 	:GObject Signals: :ref:`gobject-signals-application-label`
 	"""
 	__gsignals__ = {
+		'campaign-changed': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
@@ -254,6 +255,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.main_window = windows.MainApplicationWindow(self.config, self)
 		self.main_window.set_position(Gtk.WindowPosition.CENTER)
 		self.main_window.show()
+
+	def do_campaign_changed(self, campaign_id):
+		pass
 
 	def do_campaign_set(self, campaign_id):
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))

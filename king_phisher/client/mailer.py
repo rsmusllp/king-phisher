@@ -102,7 +102,7 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	template_client_vars['first_name'] = first_name
 	template_client_vars['last_name'] = last_name
 	template_client_vars['email_address'] = target_email
-	template_client_vars['company_name'] = config.get('mailer.company_name', 'Wonderland Inc.')
+	template_client_vars['company_name'] = config.get('mailer.company_name')
 	template_client_vars['message_id'] = uid
 
 	template_vars['client'] = template_client_vars
@@ -360,13 +360,12 @@ class MailSenderThread(threading.Thread):
 
 			self.tab_notify_sent(emails_done, emails_total)
 			campaign_id = self.config['campaign_id']
-			company_name = self.config.get('mailer.company_name', '')
 			department = target['department']
 			if department is not None:
 				department = department.strip()
 				if department == '':
 					department = None
-			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], company_name, target['first_name'], target['last_name'], department)
+			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], target['first_name'], target['last_name'], department)
 
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)

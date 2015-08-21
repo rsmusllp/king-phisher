@@ -38,7 +38,7 @@ import sqlalchemy.orm
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 """The schema version of the database, used for compatibility checks."""
 
 database_tables = {}
@@ -218,7 +218,6 @@ class Message(Base):
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 	target_email = sqlalchemy.Column(sqlalchemy.String)
-	company_name = sqlalchemy.Column(sqlalchemy.String)
 	first_name = sqlalchemy.Column(sqlalchemy.String)
 	last_name = sqlalchemy.Column(sqlalchemy.String)
 	opened = sqlalchemy.Column(sqlalchemy.DateTime)

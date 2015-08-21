@@ -2,7 +2,7 @@
 
 Revision ID: 7c315088952
 Revises: 24a4a626ff7c
-Create Date: 2015-07-20 16:04:51.799979
+Create Date: 2015-07-20
 
 """
 

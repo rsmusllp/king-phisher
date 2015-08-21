@@ -12,6 +12,8 @@ Version 1.0.0
 
 *In Progress*
 
+* Moved templates to a dedicated separate repository
+
 Version 0.x.x
 -------------
 

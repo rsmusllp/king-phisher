@@ -198,7 +198,7 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		conn.close()
 		return response
 
-	def web_root_files(self, limit=None):
+	def web_root_files(self, limit=None, include_templates=True):
 		"""
 		A generator object that yields valid files which are contained in the
 		web root of the test server instance. This can be used to find resources
@@ -206,20 +206,19 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		no files can be found in the web root.
 
 		:param int limit: A limit to the number of files to return.
+		:param bool include_templates: Whether or not to include files that might be templates.
 		"""
 		limit = (limit or float('inf'))
 		philes_yielded = 0
 		web_root = self.config.get('server.web_root')
 		self.assertTrue(os.path.isdir(web_root), msg='The test web root does not exist')
-		directories = (p for p in os.listdir(web_root) if os.path.isdir(os.path.join(web_root, p)))
-		for directory in directories:
-			full_directory = os.path.join(web_root, directory)
-			philes = (p for p in os.listdir(full_directory) if os.path.isfile(os.path.join(full_directory, p)))
-			for phile in philes:
-				phile = os.path.join(directory, phile)
-				if philes_yielded < limit:
-					yield phile
-					philes_yielded += 1
+		philes = (phile for phile in os.listdir(web_root) if os.path.isfile(os.path.join(web_root, phile)))
+		for phile in philes:
+			if not include_templates and os.path.splitext(phile)[1] in ('.txt', '.html'):
+				continue
+			if philes_yielded < limit:
+				yield phile
+				philes_yielded += 1
 		self.assertGreater(philes_yielded, 0, msg='No files were found in the web root')
 
 	def tearDown(self):

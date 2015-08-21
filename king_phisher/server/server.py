@@ -246,7 +246,10 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
 			if message:
 				visit_count = len(message.visits)
-				result = [message.target_email, message.company_name, message.first_name, message.last_name, message.trained]
+				company_name = None
+				if message.campaign.company:
+					company_name = message.campaign.company.name
+				result = [message.target_email, company_name, message.first_name, message.last_name, message.trained]
 			session.close()
 		if not result:
 			return client_vars
