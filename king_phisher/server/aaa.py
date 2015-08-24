@@ -95,6 +95,13 @@ class AuthenticatedSessionManager(object):
 		session_id = utilities.random_string_alphanumeric(64)
 		with self._lock:
 			self.clean()
+			# limit users to one valid session
+			remove = []
+			for session_id, session in self._sessions.items():
+				if session.user == user:
+					remove.append(session_id)
+			for session_id in remove:
+				del self._sessions[session_id]
 			while session_id in self._sessions:
 				session_id = utilities.random_string_alphanumeric(64)
 			self._sessions[session_id] = session
