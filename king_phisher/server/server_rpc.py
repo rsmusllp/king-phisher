@@ -30,13 +30,17 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import datetime
 import functools
+import ipaddress
 import threading
 
 from king_phisher import geoip
 from king_phisher import version
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
+
+import pyotp
 
 VIEW_ROW_COUNT = 50
 """The default number of rows to return when one of the /view methods are called."""
@@ -74,7 +78,6 @@ class KingPhisherRequestHandlerRPC(object):
 		self.rpc_handler_map['^/geoip/lookup$'] = self.rpc_geoip_lookup
 		self.rpc_handler_map['^/geoip/lookup/multi$'] = self.rpc_geoip_lookup_multi
 
-		self.rpc_handler_map['^/client/initialize$'] = self.rpc_client_initialize
 		self.rpc_handler_map['^/config/get$'] = self.rpc_config_get
 		self.rpc_handler_map['^/config/set$'] = self.rpc_config_set
 
@@ -94,6 +97,8 @@ class KingPhisherRequestHandlerRPC(object):
 		self.rpc_handler_map['^/db/table/set$'] = self.rpc_database_set_row_value
 		self.rpc_handler_map['^/db/table/view$'] = self.rpc_database_view_rows
 
+		self.rpc_handler_map['^/login$'] = self.rpc_login
+
 	def rpc_ping(self):
 		"""
 		An RPC method that can be used by clients to assert the status
@@ -102,23 +107,6 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: This method always returns True.
 		:rtype: bool
 		"""
-		return True
-
-	@database_access
-	def rpc_client_initialize(self, session):
-		"""
-		Initialize any client information necessary.
-
-		:return: This method always returns True.
-		:rtype: bool
-		"""
-		username = self.basic_auth_user
-		if not username:
-			return True
-		if not db_manager.get_row_by_id(session, db_models.User, username):
-			user = db_models.User(id=username)
-			session.add(user)
-			session.commit()
 		return True
 
 	def rpc_shutdown(self):
@@ -140,8 +128,13 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: A dictionary with version information.
 		:rtype: dict
 		"""
-		vinfo = {'version': version.version, 'version_info': version.version_info._asdict()}
-		vinfo['rpc_api_version'] = version.rpc_api_version
+		assert ipaddress.ip_address(self.client_address[0]).is_loopback
+
+		vinfo = {
+			'rpc_api_version': version.rpc_api_version,
+			'version': version.version,
+			'version_info': version.version_info._asdict()
+		}
 		return vinfo
 
 	def rpc_config_get(self, option_name):
@@ -186,7 +179,7 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		if session.query(db_models.Campaign).filter_by(name=name).count():
 			raise ValueError('the specified campaign name already exists')
-		campaign = db_models.Campaign(name=name, description=description, user_id=self.basic_auth_user)
+		campaign = db_models.Campaign(name=name, description=description, user_id=self.rpc_session.user)
 		session.add(campaign)
 		session.commit()
 		return campaign.id
@@ -200,7 +193,7 @@ class KingPhisherRequestHandlerRPC(object):
 		:return: The alert subscription status.
 		:rtype: bool
 		"""
-		username = self.basic_auth_user
+		username = self.rpc_session.user
 		query = session.query(db_models.AlertSubscription)
 		query = query.filter_by(campaign_id=campaign_id, user_id=username)
 		return query.count()
@@ -212,7 +205,7 @@ class KingPhisherRequestHandlerRPC(object):
 
 		:param int campaign_id: The ID of the campaign.
 		"""
-		username = self.basic_auth_user
+		username = self.rpc_session.user
 		query = session.query(db_models.AlertSubscription)
 		query = query.filter_by(campaign_id=campaign_id, user_id=username)
 		if query.count() == 0:
@@ -227,7 +220,7 @@ class KingPhisherRequestHandlerRPC(object):
 
 		:param int campaign_id: The ID of the campaign.
 		"""
-		username = self.basic_auth_user
+		username = self.rpc_session.user
 		query = session.query(db_models.AlertSubscription)
 		query = query.filter_by(campaign_id=campaign_id, user_id=username)
 		subscription = query.first()
@@ -483,3 +476,32 @@ class KingPhisherRequestHandlerRPC(object):
 				result = None
 			results[ip] = result
 		return results
+
+	@database_access
+	def rpc_login(self, session, username, password, otp=None):
+		assert ipaddress.ip_address(self.client_address[0]).is_loopback
+		fail_default = (False, 'invalid parameters', None)
+		fail_otp = (False, 'invalid otp', None)
+
+		if not username and password:
+			return fail_default
+		if not self.server.forked_authenticator.authenticate(username, password):
+			return fail_default
+
+		user = db_manager.get_row_by_id(session, db_models.User, username)
+		if not user:
+			user = db_models.User(id=username)
+			session.add(user)
+			session.commit()
+		elif user.otp_secret:
+			if not isinstance(otp, str) and len(otp) == 6 and otp.isdigit():
+				return fail_otp
+			otp = int(otp)
+			totp = pyotp.TOTP(user.otp_secret)
+			now = datetime.datetime.utcnow()
+			if not otp in (totp.at(now + datetime.timedelta(seconds=offset)) for offset in (0, -30, 30)):
+				return fail_otp
+		return True, 'success', self.server.session_manager.put(username)
+
+	def rpc_logout(self):
+		self.server.session_manager.remove(self.rpc_session_id)

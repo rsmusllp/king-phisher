@@ -115,8 +115,12 @@ def skip_on_travis(test_method):
 	return decorated
 
 class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
-	def custom_authentication(self, *args, **kwargs):
-		return True
+	def install_handlers(self):
+		super(KingPhisherRequestHandlerTest, self).install_handlers()
+		self.rpc_handler_map['^/login$'] = self.rpc_test_login
+
+	def rpc_test_login(self, username, password, otp=None):
+		return True, 'success', self.server.session_manager.put(username)
 
 class KingPhisherTestCase(smoke_zephyr.utilities.TestCase):
 	"""
@@ -150,7 +154,8 @@ class KingPhisherServerTestCase(unittest.TestCase):
 		self.server_thread.start()
 		self.assertTrue(self.server_thread.is_alive())
 		self.shutdown_requested = False
-		self.rpc = client_rpc.KingPhisherRPCClient(('localhost', self.config.get('server.address.port')), username='unittest', password='unittest')
+		self.rpc = client_rpc.KingPhisherRPCClient(('localhost', self.config.get('server.address.port')))
+		self.rpc.login(username='unittest', password='unittest')
 
 	def assertHTTPStatus(self, http_response, status):
 		"""

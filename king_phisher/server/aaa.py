@@ -38,9 +38,12 @@ import os
 import pwd
 import random
 import string
+import threading
 import time
 
 from king_phisher.third_party import pam
+
+from smoke_zephyr import utilities
 
 __all__ = ['ForkedAuthenticator']
 
@@ -58,6 +61,62 @@ def get_groups_for_user(username):
 	groups = set(g.gr_name for g in grp.getgrall() if username in g.gr_mem)
 	groups.add(grp.getgrgid(pwd.getpwnam(username).pw_gid).gr_name)
 	return groups
+
+class AuthenticatedSession(object):
+	__slots__ = ('user', 'created', 'last_seen')
+	def __init__(self, user):
+		self.user = user
+		self.created = time.time()
+		self.last_seen = self.created
+
+class AuthenticatedSessionManager(object):
+	def __init__(self, timeout='30m'):
+		self.session_timeout = utilities.parse_timespan(timeout)
+		self._sessions = {}
+		self._lock = threading.Lock()
+
+	def clean(self):
+		should_lock = not self._lock.locked()
+		if should_lock:
+			self._lock.acquire()
+		oldest = time.time() - self.session_timeout
+		remove = []
+		for session_id, session in self._sessions.items():
+			if session.last_seen < oldest:
+				remove.append(session_id)
+		for session_id in remove:
+			del self._sessions[session_id]
+		if should_lock:
+			self._lock.release()
+		return
+
+	def put(self, user):
+		session = AuthenticatedSession(user)
+		session_id = utilities.random_string_alphanumeric(64)
+		with self._lock:
+			self.clean()
+			while session_id in self._sessions:
+				session_id = utilities.random_string_alphanumeric(64)
+			self._sessions[session_id] = session
+		return session_id
+
+	def get(self, session_id, update_timestamp=True):
+		if session_id is None:
+			return None
+		with self._lock:
+			session = self._sessions.get(session_id)
+			if session is None:
+				return None
+			if session.last_seen < time.time() - self.session_timeout:
+				del self._sessions[session_id]
+				return None
+			if update_timestamp:
+				session.last_seen = time.time()
+		return session
+
+	def remove(self, session_id):
+		with self._lock:
+			del self._sessions[session_id]
 
 class ForkedAuthenticator(object):
 	"""

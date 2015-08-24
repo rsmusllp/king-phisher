@@ -202,7 +202,7 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		self.connect('delete-event', self.signal_delete_event)
 		self.notebook.show()
 		self.show()
-		self.rpc = None # needs to be initialized last
+		self.rpc = None  # needs to be initialized last
 		"""The :py:class:`.KingPhisherRPCClient` instance."""
 
 		self.application.connect('server-connected', self.signal_kp_server_connected)
@@ -243,7 +243,9 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 			self.application.emit('exit')
 			return True
 		self.login_dialog.objects_save_to_config()
-		self.application.server_connect()
+		username = self.config['server_username']
+		password = self.config['server_password']
+		self.application.server_connect(username, password)
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""

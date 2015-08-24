@@ -359,14 +359,13 @@ class KingPhisherClientApplication(_Gtk_Application):
 		with open(os.path.expanduser(self.config_file), 'w') as config_file_h:
 			json.dump(config, config_file_h, sort_keys=True, indent=2, separators=(',', ': '))
 
-	def server_connect(self):
+	def server_connect(self, username, password, otp=None):
+		# pylint: disable=too-many-locals
 		server_version_info = None
 		title_rpc_error = 'Failed To Connect To The King Phisher RPC Service'
 		active_window = self.get_active_window()
 
 		server = parse_server(self.config['server'], 22)
-		username = self.config['server_username']
-		password = self.config['server_password']
 		if server[0] == 'localhost' or (utilities.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
 			local_port = self.config['server_remote_port']
 			self.logger.info("connecting to local king-phisher instance")
@@ -375,25 +374,20 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if not local_port:
 			return
 
-		self.rpc = client_rpc.KingPhisherRPCClient(('localhost', local_port), username=username, password=password, use_ssl=self.config.get('server_use_ssl'))
+		rpc = client_rpc.KingPhisherRPCClient(('localhost', local_port), use_ssl=self.config.get('server_use_ssl'))
 		if self.config.get('rpc.serializer'):
 			try:
-				self.rpc.set_serializer(self.config['rpc.serializer'])
+				rpc.set_serializer(self.config['rpc.serializer'])
 			except ValueError as error:
 				self.logger.error("failed to set the rpc serializer, error: '{0}'".format(error.message))
 
 		connection_failed = True
 		try:
-			server_version_info = self.rpc('version')
+			server_version_info = rpc('version')
 			assert server_version_info is not None
-			assert self.rpc('client/initialize')
 		except AdvancedHTTPServerRPCError as err:
-			if err.status == 401:
-				self.logger.warning('failed to authenticate to the remote king phisher service')
-				gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded that the credentials are invalid.')
-			else:
-				self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
-				gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded with HTTP status: ' + str(err.status))
+			self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
+			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded with HTTP status: ' + str(err.status))
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, active_window)
 		except Exception:
@@ -403,7 +397,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 			connection_failed = False
 		finally:
 			if connection_failed:
-				self.rpc = None
 				self.server_disconnect()
 				return
 
@@ -424,6 +417,18 @@ class KingPhisherClientApplication(_Gtk_Application):
 			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', active_window, error_text)
 			self.server_disconnect()
 			return
+
+		login_result, login_reason = rpc.login(username, password, otp)
+		if not login_result:
+			self.logger.warning('failed to authenticate to the remote king phisher service, reason: ' + login_reason)
+			if login_reason == 'invalid otp':
+				gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded that an OTP is required.')
+			else:
+				gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded that the credentials are invalid.')
+			self.server_disconnect()
+			return
+
+		self.rpc = rpc
 		self.emit('server-connected')
 		return
 

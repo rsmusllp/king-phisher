@@ -268,9 +268,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		session.close()
 		return client_vars
 
-	def custom_authentication(self, username, password):
-		return self.server.forked_authenticator.authenticate(username, password)
-
 	def check_authorization(self):
 		# don't require authentication for non-RPC requests
 		if self.command != 'RPC':
@@ -278,7 +275,16 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
 			False
 
-		return super(KingPhisherRequestHandler, self).check_authorization()
+		if self.path in ('/version', '/login'):
+			return True
+		self.rpc_session = self.server.session_manager.get(self.rpc_session_id)
+		if self.rpc_session is None:
+			return False
+		return True
+
+	@property
+	def rpc_session_id(self):
+		return self.headers.get('X-RPC-Auth', None)
 
 	@property
 	def campaign_id(self):
@@ -740,6 +746,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		self.http_server.throttle_semaphore = threading.Semaphore()
 		self.http_server.forked_authenticator = aaa.ForkedAuthenticator(required_group=config.get_if_exists('server.authentication.group'))
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
+		self.http_server.session_manager = aaa.AuthenticatedSessionManager()
 		self.job_manager = job.JobManager()
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()

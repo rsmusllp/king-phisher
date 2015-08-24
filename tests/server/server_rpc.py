@@ -39,9 +39,6 @@ from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
 
 class ServerRPCTests(KingPhisherServerTestCase):
-	def test_rpc_client_initialize(self):
-		self.assertTrue(self.rpc('client/initialize'))
-
 	def test_rpc_config_get(self):
 		self.assertEqual(self.rpc('config/get', 'server.address.port'), self.config.get('server.address.port'))
 		server_address = self.rpc('config/get', ['server.address.host', 'server.address.port'])

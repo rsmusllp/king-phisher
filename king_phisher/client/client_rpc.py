@@ -262,6 +262,14 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 			results[ip] = geoip.GeoLocation(ip, result=data)
 		return results
 
+	def login(self, username, password, otp=None):
+		login_result, login_reason, login_session = self.call('login', username, password, otp)
+		if login_result:
+			if self.headers is None:
+				self.headers = {}
+			self.headers['X-RPC-Auth'] = login_session
+		return login_result, login_reason
+
 def vte_child_routine(config):
 	"""
 	This is the method which is executed within the child process spawned
