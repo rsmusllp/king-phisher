@@ -433,11 +433,13 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def server_disconnect(self):
 		"""Clean up the SSH TCP connections and disconnect from the server."""
+		if self.rpc is not None:
+			self.rpc('logout')
+			self.rpc = None
 		if self._ssh_forwarder:
 			self._ssh_forwarder.stop()
 			self._ssh_forwarder = None
 			self.logger.info('stopped ssh port forwarding')
-		self.rpc = None
 		return
 
 	def show_campaign_graph(self, graph_name):

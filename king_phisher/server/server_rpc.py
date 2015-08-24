@@ -100,6 +100,7 @@ class KingPhisherRequestHandlerRPC(object):
 		self.rpc_handler_map['^/db/table/view$'] = self.rpc_database_view_rows
 
 		self.rpc_handler_map['^/login$'] = self.rpc_login
+		self.rpc_handler_map['^/logout$'] = self.rpc_logout
 
 	def rpc_ping(self):
 		"""

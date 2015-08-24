@@ -20,9 +20,13 @@ forward for requests.
 General API
 -----------
 
-.. rpc:function:: client/initialize()
+.. rpc:function:: login()
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_client_initialize`
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_login`
+
+.. rpc:function:: logout()
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_logout`
 
 .. rpc:function:: ping()
 

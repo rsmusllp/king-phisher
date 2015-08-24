@@ -45,7 +45,7 @@ from king_phisher.third_party import pam
 
 from smoke_zephyr import utilities
 
-__all__ = ['ForkedAuthenticator']
+__all__ = ['AuthenticatedSessionManager', 'ForkedAuthenticator']
 
 make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for x in range(random.randint(5, 8)))
 make_hash = lambda pw: hashlib.sha512(pw.encode('utf-8')).digest()
@@ -63,19 +63,29 @@ def get_groups_for_user(username):
 	return groups
 
 class AuthenticatedSession(object):
+	"""A container to store information associated with an authenticated session."""
 	__slots__ = ('user', 'created', 'last_seen')
 	def __init__(self, user):
+		"""
+		:param user: The unique identifier for the authenticated user.
+		"""
 		self.user = user
 		self.created = time.time()
 		self.last_seen = self.created
 
 class AuthenticatedSessionManager(object):
+	"""A container for managing authenticated sessions."""
 	def __init__(self, timeout='30m'):
+		"""
+		:param timeout: The length of time in seconds for which sessions are valid.
+		:type timeout: int, str
+		"""
 		self.session_timeout = utilities.parse_timespan(timeout)
 		self._sessions = {}
 		self._lock = threading.Lock()
 
 	def clean(self):
+		"""Remove sessions which have expired."""
 		should_lock = not self._lock.locked()
 		if should_lock:
 			self._lock.acquire()
@@ -91,6 +101,14 @@ class AuthenticatedSessionManager(object):
 		return
 
 	def put(self, user):
+		"""
+		Create and store a new :py:class:`.AuthenticatedSession` object for the
+		specified user id. Any previously existing sessions for the specified
+		user are removed from the manager.
+
+		:return: The unique identifier for this session.
+		:rtype: str
+		"""
 		session = AuthenticatedSession(user)
 		session_id = utilities.random_string_alphanumeric(64)
 		with self._lock:
@@ -108,6 +126,16 @@ class AuthenticatedSessionManager(object):
 		return session_id
 
 	def get(self, session_id, update_timestamp=True):
+		"""
+		Look up an :py:class:`.AuthenticatedSession` instance from it's unique
+		identifier and optionally update the last seen timestamp. If the session
+		is not found or has expired, None will be returned.
+
+		:param str session_id: The unique identifier of the session to retrieve.
+		:param bool update_timestamp: Whether or not to update the last seen timestamp for the session.
+		:return: The session if it exists and is active.
+		:rtype: :py:class:`.AuthenticatedSession`
+		"""
 		if session_id is None:
 			return None
 		with self._lock:
@@ -122,6 +150,11 @@ class AuthenticatedSessionManager(object):
 		return session
 
 	def remove(self, session_id):
+		"""
+		Remove the specified session from the manager.
+
+		:param str session_id: The unique identifier for the session to remove.
+		"""
 		with self._lock:
 			del self._sessions[session_id]
 

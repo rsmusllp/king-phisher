@@ -12,6 +12,18 @@ Functions
 Classes
 -------
 
+.. autoclass:: king_phisher.server.aaa.AuthenticatedSession
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: king_phisher.server.aaa.AuthenticatedSessionManager
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
 .. autoclass:: king_phisher.server.aaa.ForkedAuthenticator
    :show-inheritance:
    :members:
