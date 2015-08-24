@@ -53,6 +53,7 @@ from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client import tools
 from king_phisher.client import windows
+from king_phisher.constants import ConnectionErrorReason
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
@@ -372,7 +373,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		else:
 			local_port = self._create_ssh_forwarder(server, username, password)
 		if not local_port:
-			return False, 'port forward error'
+			return False, ConnectionErrorReason.ERROR_PORT_FORWARD
 
 		rpc = client_rpc.KingPhisherRPCClient(('localhost', local_port), use_ssl=self.config.get('server_use_ssl'))
 		if self.config.get('rpc.serializer'):
@@ -398,7 +399,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		finally:
 			if connection_failed:
 				self.server_disconnect()
-				return False, 'connection error'
+				return False, ConnectionErrorReason.ERROR_CONNECTION
 
 		server_rpc_api_version = server_version_info.get('rpc_api_version', -1)
 		if isinstance(server_rpc_api_version, int):
@@ -416,19 +417,19 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if error_text:
 			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', active_window, error_text)
 			self.server_disconnect()
-			return False, 'incompatible versions'
+			return False, ConnectionErrorReason.ERROR_INCOMPATIBLE_VERSIONS
 
 		login_result, login_reason = rpc.login(username, password, otp)
 		if not login_result:
 			self.logger.warning('failed to authenticate to the remote king phisher service, reason: ' + login_reason)
-			if login_reason != 'invalid otp':
+			if login_reason != ConnectionErrorReason.ERROR_INVALID_OTP:
 				gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded that the credentials are invalid.')
 			self.server_disconnect()
 			return False, login_reason
 
 		self.rpc = rpc
 		self.emit('server-connected')
-		return True, 'success'
+		return True, ConnectionErrorReason.SUCCESS
 
 	def server_disconnect(self):
 		"""Clean up the SSH TCP connections and disconnect from the server."""

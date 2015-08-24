@@ -38,6 +38,7 @@ import threading
 
 from king_phisher import geoip
 from king_phisher import version
+from king_phisher.constants import ConnectionErrorReason
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
@@ -484,8 +485,8 @@ class KingPhisherRequestHandlerRPC(object):
 		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
 			logger.warning("failed login request from {0} for user {1}, (invalid source address)".format(self.client_address[0], username))
 			raise ValueError('invalid source address for login')
-		fail_default = (False, 'invalid parameters', None)
-		fail_otp = (False, 'invalid otp', None)
+		fail_default = (False, ConnectionErrorReason.ERROR_INVALID_PARAMETERS, None)
+		fail_otp = (False, ConnectionErrorReason.ERROR_INVALID_OTP, None)
 
 		if not username and password:
 			logger.warning("failed login request from {0} for user {1}, (invalid username or password)".format(self.client_address[0], username))
@@ -512,7 +513,7 @@ class KingPhisherRequestHandlerRPC(object):
 				logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(self.client_address[0], username))
 				return fail_otp
 		logger.warning("successful login request from {0} for user {1}".format(self.client_address[0], username))
-		return True, 'success', self.server.session_manager.put(username)
+		return True, ConnectionErrorReason.SUCCESS, self.server.session_manager.put(username)
 
 	def rpc_logout(self):
 		self.server.session_manager.remove(self.rpc_session_id)

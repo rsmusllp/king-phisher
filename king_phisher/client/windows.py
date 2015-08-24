@@ -41,6 +41,7 @@ from king_phisher.client import gui_utilities
 from king_phisher.client import tools
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.mail import MailSenderTab
+from king_phisher.constants import ConnectionErrorReason
 
 from gi.repository import Gdk
 from gi.repository import GdkPixbuf
@@ -249,7 +250,7 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		if not otp:
 			otp = None
 		_, reason = self.application.server_connect(username, password, otp)
-		if reason == 'invalid otp':
+		if reason == ConnectionErrorReason.ERROR_INVALID_OTP:
 			self.login_dialog.gobjects['label_server_one_time_password'].show()
 			entry = self.login_dialog.gobjects['entry_server_one_time_password']
 			entry.show()
