@@ -33,6 +33,7 @@
 import datetime
 import functools
 import ipaddress
+import logging
 import threading
 
 from king_phisher import geoip
@@ -479,13 +480,18 @@ class KingPhisherRequestHandlerRPC(object):
 
 	@database_access
 	def rpc_login(self, session, username, password, otp=None):
-		assert ipaddress.ip_address(self.client_address[0]).is_loopback
+		logger = logging.getLogger('KingPhisher.Server.Authentication')
+		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
+			logger.warning("failed login request from {0} for user {1}, (invalid source address)".format(self.client_address[0], username))
+			raise ValueError('invalid source address for login')
 		fail_default = (False, 'invalid parameters', None)
 		fail_otp = (False, 'invalid otp', None)
 
 		if not username and password:
+			logger.warning("failed login request from {0} for user {1}, (invalid username or password)".format(self.client_address[0], username))
 			return fail_default
 		if not self.server.forked_authenticator.authenticate(username, password):
+			logger.warning("failed login request from {0} for user {1}, (invalid username or password)".format(self.client_address[0], username))
 			return fail_default
 
 		user = db_manager.get_row_by_id(session, db_models.User, username)
@@ -494,13 +500,15 @@ class KingPhisherRequestHandlerRPC(object):
 			session.add(user)
 			session.commit()
 		elif user.otp_secret:
-			if not isinstance(otp, str) and len(otp) == 6 and otp.isdigit():
+			if not (isinstance(otp, str) and len(otp) == 6 and otp.isdigit()):
 				return fail_otp
 			otp = int(otp)
 			totp = pyotp.TOTP(user.otp_secret)
 			now = datetime.datetime.utcnow()
 			if not otp in (totp.at(now + datetime.timedelta(seconds=offset)) for offset in (0, -30, 30)):
+				logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(self.client_address[0], username))
 				return fail_otp
+		logger.warning("successful login request from {0} for user {1}".format(self.client_address[0], username))
 		return True, 'success', self.server.session_manager.put(username)
 
 	def rpc_logout(self):
