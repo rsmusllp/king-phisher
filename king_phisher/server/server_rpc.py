@@ -500,11 +500,14 @@ class KingPhisherRequestHandlerRPC(object):
 			session.add(user)
 			session.commit()
 		elif user.otp_secret:
-			if not (isinstance(otp, str) and len(otp) == 6 and otp.isdigit()):
+			if otp is None:
+				logger.debug("failed login request from {0} for user {1}, (missing otp)".format(self.client_address[0], username))
 				return fail_otp
-			otp = int(otp)
+			if not (isinstance(otp, str) and len(otp) == 6 and otp.isdigit()):
+				logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(self.client_address[0], username))
+				return fail_otp
 			totp = pyotp.TOTP(user.otp_secret)
-			now = datetime.datetime.utcnow()
+			now = datetime.datetime.now()
 			if not otp in (totp.at(now + datetime.timedelta(seconds=offset)) for offset in (0, -30, 30)):
 				logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(self.client_address[0], username))
 				return fail_otp

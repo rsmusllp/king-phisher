@@ -70,6 +70,8 @@ class LoginDialog(BaseLoginDialog):
 		'entry_server',
 		'entry_server_username',
 		'entry_server_password',
+		'entry_server_one_time_password',
+		'label_server_one_time_password',
 		'spinbutton_server_remote_port',
 		'switch_server_use_ssl'
 	)

@@ -245,7 +245,15 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		self.login_dialog.objects_save_to_config()
 		username = self.config['server_username']
 		password = self.config['server_password']
-		self.application.server_connect(username, password)
+		otp = self.config['server_one_time_password']
+		if not otp:
+			otp = None
+		_, reason = self.application.server_connect(username, password, otp)
+		if reason == 'invalid otp':
+			self.login_dialog.gobjects['label_server_one_time_password'].show()
+			entry = self.login_dialog.gobjects['entry_server_one_time_password']
+			entry.show()
+			entry.grab_focus()
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""

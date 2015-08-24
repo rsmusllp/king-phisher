@@ -372,7 +372,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		else:
 			local_port = self._create_ssh_forwarder(server, username, password)
 		if not local_port:
-			return
+			return False, 'port forward error'
 
 		rpc = client_rpc.KingPhisherRPCClient(('localhost', local_port), use_ssl=self.config.get('server_use_ssl'))
 		if self.config.get('rpc.serializer'):
@@ -398,7 +398,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		finally:
 			if connection_failed:
 				self.server_disconnect()
-				return
+				return False, 'connection error'
 
 		server_rpc_api_version = server_version_info.get('rpc_api_version', -1)
 		if isinstance(server_rpc_api_version, int):
@@ -416,21 +416,19 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if error_text:
 			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', active_window, error_text)
 			self.server_disconnect()
-			return
+			return False, 'incompatible versions'
 
 		login_result, login_reason = rpc.login(username, password, otp)
 		if not login_result:
 			self.logger.warning('failed to authenticate to the remote king phisher service, reason: ' + login_reason)
-			if login_reason == 'invalid otp':
-				gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded that an OTP is required.')
-			else:
+			if login_reason != 'invalid otp':
 				gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded that the credentials are invalid.')
 			self.server_disconnect()
-			return
+			return False, login_reason
 
 		self.rpc = rpc
 		self.emit('server-connected')
-		return
+		return True, 'success'
 
 	def server_disconnect(self):
 		"""Clean up the SSH TCP connections and disconnect from the server."""

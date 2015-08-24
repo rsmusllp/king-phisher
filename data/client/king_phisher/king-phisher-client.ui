@@ -2414,6 +2414,28 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
+              <object class="GtkLabel" id="label10">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">HTTP Port</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label11">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">HTTP SSL</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">4</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkSpinButton" id="LoginDialog.spinbutton_server_remote_port">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -2425,7 +2447,7 @@ Brandan Geise</property>
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="top_attach">4</property>
+                <property name="top_attach">5</property>
               </packing>
             </child>
             <child>
@@ -2439,28 +2461,29 @@ Brandan Geise</property>
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="top_attach">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label10">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">HTTP Port</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
                 <property name="top_attach">4</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label11">
-                <property name="visible">True</property>
+              <object class="GtkLabel" id="LoginDialog.label_server_one_time_password">
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">HTTP SSL</property>
+                <property name="label" translatable="yes">OTP</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
+                <property name="top_attach">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="LoginDialog.entry_server_one_time_password">
+                <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The one time password for this account.</property>
+                <property name="max_length">6</property>
+                <property name="placeholder_text" translatable="yes">one time password</property>
+                <property name="input_purpose">digits</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
                 <property name="top_attach">3</property>
               </packing>
             </child>
