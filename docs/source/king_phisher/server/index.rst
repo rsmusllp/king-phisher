@@ -7,7 +7,7 @@
 
    database/index.rst
 
-   authenticator.rst
+   aaa.rst
    pages.rst
    rest_api.rst
    server.rst

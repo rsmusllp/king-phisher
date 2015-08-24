@@ -30,15 +30,14 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os
 import unittest
 
 from king_phisher import testing
-from king_phisher.server.authenticator import *
+from king_phisher.server import aaa
 
-class ServerAuthenticatorTests(testing.KingPhisherTestCase):
+class ServerAuthenticationTests(testing.KingPhisherTestCase):
 	def test_authenticator_bad_credentials(self):
-		auth = ForkedAuthenticator()
+		auth = aaa.ForkedAuthenticator()
 		self.assertFalse(auth.authenticate('fakeuser', 'FakePassword1'))
 		self.assertFalse(auth.authenticate('root', 'FakePassword1'))
 		auth.stop()

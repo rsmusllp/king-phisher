@@ -47,7 +47,7 @@ from king_phisher import sms
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher import xor
-from king_phisher.server import authenticator
+from king_phisher.server import aaa
 from king_phisher.server import pages
 from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
@@ -275,9 +275,10 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		# don't require authentication for non-RPC requests
 		if self.command != 'RPC':
 			return True
-		if ipaddress.ip_address(self.client_address[0]).is_loopback:
-			return super(KingPhisherRequestHandler, self).check_authorization()
-		return False
+		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
+			False
+
+		return super(KingPhisherRequestHandler, self).check_authorization()
 
 	@property
 	def campaign_id(self):
@@ -737,7 +738,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 
 		self.http_server.config = config
 		self.http_server.throttle_semaphore = threading.Semaphore()
-		self.http_server.forked_authenticator = authenticator.ForkedAuthenticator(required_group=config.get_if_exists('server.authentication.group'))
+		self.http_server.forked_authenticator = aaa.ForkedAuthenticator(required_group=config.get_if_exists('server.authentication.group'))
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.job_manager = job.JobManager()
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""

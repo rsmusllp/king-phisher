@@ -384,9 +384,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		connection_failed = True
 		try:
-			assert self.rpc('client/initialize')
 			server_version_info = self.rpc('version')
-			assert server_version_info != None
+			assert server_version_info is not None
+			assert self.rpc('client/initialize')
 		except AdvancedHTTPServerRPCError as err:
 			if err.status == 401:
 				self.logger.warning('failed to authenticate to the remote king phisher service')
@@ -396,7 +396,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 				gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded with HTTP status: ' + str(err.status))
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, active_window)
-		except Exception as error:
+		except Exception:
 			self.logger.warning('failed to connect to the remote rpc service', exc_info=True)
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'Ensure that the King Phisher Server is currently running.')
 		else:
