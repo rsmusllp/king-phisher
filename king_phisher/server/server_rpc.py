@@ -513,7 +513,7 @@ class KingPhisherRequestHandlerRPC(object):
 			if not otp in (totp.at(now + datetime.timedelta(seconds=offset)) for offset in (0, -30, 30)):
 				logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(self.client_address[0], username))
 				return fail_otp
-		logger.warning("successful login request from {0} for user {1}".format(self.client_address[0], username))
+		logger.info("successful login request from {0} for user {1}".format(self.client_address[0], username))
 		return True, ConnectionErrorReason.SUCCESS, self.server.session_manager.put(username)
 
 	def rpc_logout(self):

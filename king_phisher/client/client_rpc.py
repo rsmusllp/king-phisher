@@ -31,7 +31,6 @@
 #
 
 import code
-import getpass
 import json
 import logging
 import os
@@ -283,7 +282,7 @@ def vte_child_routine(config):
 	config = json.loads(config)
 	try:
 		import readline
-		import rlcompleter # pylint: disable=unused-variable
+		import rlcompleter  # pylint: disable=unused-variable
 	except ImportError:
 		pass
 	else:
@@ -292,24 +291,17 @@ def vte_child_routine(config):
 	if plugins_directory:
 		sys.path.append(plugins_directory)
 
+	headers = config['rpc_data'].pop('headers')
 	rpc = KingPhisherRPCClient(**config['rpc_data'])
-	logged_in = False
-	for _ in range(0, 3):
-		rpc.password = getpass.getpass("{0}@{1}'s password: ".format(rpc.username, rpc.host))
-		try:
-			logged_in = rpc('ping')
-		except AdvancedHTTPServer.AdvancedHTTPServerRPCError:
-			print('Permission denied, please try again.') # pylint: disable=C0325
-			continue
-		else:
-			break
-	if not logged_in:
-		return
+	if rpc.headers is None:
+		rpc.headers = {}
+	for name, value in headers.items():
+		rpc.headers[str(name)] = str(value)
 
 	banner = "Python {0} on {1}".format(sys.version, sys.platform)
-	print(banner) # pylint: disable=C0325
+	print(banner)  # pylint: disable=C0325
 	information = "Campaign Name: '{0}'  ID: {1}".format(config['campaign_name'], config['campaign_id'])
-	print(information) # pylint: disable=C0325
+	print(information)  # pylint: disable=C0325
 	console_vars = {
 		'CAMPAIGN_NAME': config['campaign_name'],
 		'CAMPAIGN_ID': config['campaign_id'],

@@ -33,7 +33,6 @@
 import json
 import logging
 import os
-import select
 import signal
 
 from king_phisher import utilities
@@ -129,6 +128,7 @@ class KingPhisherClientRPCTerminal(object):
 				'use_ssl': rpc.use_ssl,
 				'username': rpc.username,
 				'uri_base': rpc.uri_base,
+				'headers': rpc.headers,
 				'hmac_key': rpc.hmac_key
 			}
 		}
@@ -168,11 +168,6 @@ class KingPhisherClientRPCTerminal(object):
 		GLib.spawn_close_pid(child_pid)
 		self.rpc_window.window.show_all()
 		self.rpc_window.child_pid = child_pid
-
-		# automatically enter the password
-		vte_pty_fd = vte_pty.get_fd()
-		if len(select.select([vte_pty_fd], [], [], 1)[0]):
-			os.write(vte_pty_fd, rpc.password + '\n')
 		return
 
 	def _child_setup(self, vte_pty):

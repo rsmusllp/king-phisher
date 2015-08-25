@@ -2276,7 +2276,6 @@ Brandan Geise</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher</property>
     <property name="default_width">300</property>
-    <property name="default_height">200</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <signal name="button-press-event" handler="signal_button_pressed" swapped="no"/>
@@ -2481,6 +2480,7 @@ Brandan Geise</property>
                 <property name="max_length">6</property>
                 <property name="placeholder_text" translatable="yes">one time password</property>
                 <property name="input_purpose">digits</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
