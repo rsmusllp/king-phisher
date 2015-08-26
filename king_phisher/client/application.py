@@ -180,6 +180,12 @@ class KingPhisherClientApplication(_Gtk_Application):
 		assistant = assistants.CampaignAssistant(self, campaign_id=self.config['campaign_id'])
 		assistant.assistant.set_transient_for(self.get_active_window())
 		assistant.assistant.set_modal(True)
+
+		# do this to keep a reference to prevent garbage collection
+		attr_name = '_tmpref_campaign_assistant'
+		setattr(self, attr_name, assistant)
+		assistant.assistant.connect('destroy', lambda widget: delattr(self, attr_name))
+
 		assistant.interact()
 
 	def campaign_delete(self):
