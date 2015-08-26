@@ -68,6 +68,7 @@ from smoke_zephyr.utilities import which
 
 CONFIG_FILE_PATH = '~/.king_phisher.json'
 """The default search location for the client configuration file."""
+GTK3_DEFAULT_THEME = 'Adwaita'
 
 if isinstance(Gtk.Application, utilities.Mock):
 	_Gtk_Application = type('Gtk.Application', (object,), {})
@@ -243,6 +244,15 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def do_activate(self):
 		Gtk.Application.do_activate(self)
 		sys.excepthook = self.exception_hook
+
+		# reset theme settings to defaults so we have a standard baseline
+		settings = Gtk.Settings.get_default()
+		if settings.get_property('gtk-theme-name') != GTK3_DEFAULT_THEME:
+			self.logger.debug('resetting the gtk-theme-name property to it\'s default value')
+			settings.set_property('gtk-theme-name', GTK3_DEFAULT_THEME)
+		if settings.get_property('gtk-icon-theme-name') != GTK3_DEFAULT_THEME:
+			self.logger.debug('resetting the gtk-icon-theme-name property to it\'s default value')
+			settings.set_property('gtk-icon-theme-name', GTK3_DEFAULT_THEME)
 
 		# load a custom css file if one is available
 		css_file = find.find_data_file('king-phisher-client.css')
