@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import time
 import unittest
 
 from king_phisher import testing
@@ -41,6 +42,24 @@ class ServerAuthenticationTests(testing.KingPhisherTestCase):
 		self.assertFalse(auth.authenticate('fakeuser', 'FakePassword1'))
 		self.assertFalse(auth.authenticate('root', 'FakePassword1'))
 		auth.stop()
+
+class ServerAuthenticatedSessionManagerTests(testing.KingPhisherTestCase):
+	def test_session_creation(self):
+		manager = aaa.AuthenticatedSessionManager()
+		self.assertEqual(len(manager), 0)
+		username = 'alice'
+		manager.put(username)
+		self.assertEqual(len(manager), 1)
+		manager.put(username)
+		self.assertEqual(len(manager), 1)
+
+	def test_session_expiration(self):
+		manager = aaa.AuthenticatedSessionManager(timeout=0.5)
+		session_id = manager.put('alice')
+		self.assertIsNotNone(manager.get(session_id))
+		time.sleep(0.75)
+		self.assertIsNone(manager.get(session_id))
+		self.assertEqual(len(manager), 0)
 
 if __name__ == '__main__':
 	unittest.main()

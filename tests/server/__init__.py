@@ -34,6 +34,7 @@ import logging
 logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
 logging.getLogger('').setLevel(logging.CRITICAL)
 
+from .aaa import ServerAuthenticatedSessionManagerTests
 from .aaa import ServerAuthenticationTests
 from .database import ServerDatabaseTests
 from .rest_api import ServerRESTAPITests

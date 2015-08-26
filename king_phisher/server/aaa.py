@@ -73,6 +73,9 @@ class AuthenticatedSession(object):
 		self.created = time.time()
 		self.last_seen = self.created
 
+	def __repr__(self):
+		return "<{0} user={1} >".format(self.__class__.__name__, self.user)
+
 class AuthenticatedSessionManager(object):
 	"""A container for managing authenticated sessions."""
 	def __init__(self, timeout='30m'):
@@ -80,9 +83,17 @@ class AuthenticatedSessionManager(object):
 		:param timeout: The length of time in seconds for which sessions are valid.
 		:type timeout: int, str
 		"""
-		self.session_timeout = utilities.parse_timespan(timeout)
+		if isinstance(timeout, str):
+			timeout = utilities.parse_timespan(timeout)
+		self.session_timeout = timeout
 		self._sessions = {}
 		self._lock = threading.Lock()
+
+	def __len__(self):
+		return len(self._sessions)
+
+	def __repr__(self):
+		return "<{0} sessions={1} session_timeout={2} >".format(self.__class__.__name__, len(self._sessions), self.session_timeout)
 
 	def clean(self):
 		"""Remove sessions which have expired."""

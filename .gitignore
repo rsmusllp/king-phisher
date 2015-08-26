@@ -31,3 +31,6 @@ mprofile_*.dat
 
 # ignore Python 3 requirements because it's not officially supported yet
 requirements.3.txt
+
+# ignore style files for now
+data/client/king_phisher/*.svg
