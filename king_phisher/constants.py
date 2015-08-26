@@ -67,7 +67,7 @@ class ConnectionErrorReason(ConstantGroup):
 	"""Constants which describe possible errors for the client connection process."""
 	ERROR_CONNECTION = intern('connection error')
 	ERROR_INCOMPATIBLE_VERSIONS = intern('incompatible versions')
-	ERROR_INVALID_PARAMETERS = intern('invalid parameters')
+	ERROR_INVALID_CREDENTIALS = intern('invalid credentials')
 	ERROR_INVALID_OTP = intern('invalid otp')
 	ERROR_PORT_FORWARD = intern('port forward error')
 	SUCCESS = intern('success')

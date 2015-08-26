@@ -253,8 +253,13 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		if reason == ConnectionErrorReason.ERROR_INVALID_OTP:
 			self.login_dialog.gobjects['label_server_one_time_password'].show()
 			entry = self.login_dialog.gobjects['entry_server_one_time_password']
-			entry.show()
+			if entry.get_property('visible'):
+				gui_utilities.show_dialog_error('Login Failed', self, 'A valid one time password (OTP) token is required.')
+			else:
+				entry.show()
 			entry.grab_focus()
+		elif reason == ConnectionErrorReason.ERROR_INVALID_CREDENTIALS:
+			gui_utilities.show_dialog_error('Login Failed', self, 'The provided credentials are incorrect.')
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""

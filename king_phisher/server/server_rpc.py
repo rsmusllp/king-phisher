@@ -486,7 +486,7 @@ class KingPhisherRequestHandlerRPC(object):
 		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
 			logger.warning("failed login request from {0} for user {1}, (invalid source address)".format(self.client_address[0], username))
 			raise ValueError('invalid source address for login')
-		fail_default = (False, ConnectionErrorReason.ERROR_INVALID_PARAMETERS, None)
+		fail_default = (False, ConnectionErrorReason.ERROR_INVALID_CREDENTIALS, None)
 		fail_otp = (False, ConnectionErrorReason.ERROR_INVALID_OTP, None)
 
 		if not username and password:

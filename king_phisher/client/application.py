@@ -438,8 +438,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 		login_result, login_reason = rpc.login(username, password, otp)
 		if not login_result:
 			self.logger.warning('failed to authenticate to the remote king phisher service, reason: ' + login_reason)
-			if login_reason != ConnectionErrorReason.ERROR_INVALID_OTP:
-				gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded that the credentials are invalid.')
 			self.server_disconnect()
 			return False, login_reason
 

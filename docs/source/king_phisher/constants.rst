@@ -14,8 +14,8 @@ Classes
 .. autoclass:: king_phisher.constants.ConnectionErrorReason
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_CONNECTION
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INCOMPATIBLE_VERSIONS
+.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INVALID_CREDENTIALS
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INVALID_OTP
-.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INVALID_PARAMETERS
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_PORT_FORWARD
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.SUCCESS
 
