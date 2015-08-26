@@ -55,9 +55,14 @@ class ColoredLogFormatter(logging.Formatter):
 	colorizes the names of log levels.
 	"""
 	def format(self, record):
+		orig_levelname = None
 		if record.levelno in LEVEL_COLORS:
+			orig_levelname = record.levelname
 			record.levelname = termcolor.colored("{0:<8}".format(record.levelname), *LEVEL_COLORS[record.levelno], attrs=['bold'])
-		return super(ColoredLogFormatter, self).format(record)
+		value = super(ColoredLogFormatter, self).format(record)
+		if orig_levelname is not None:
+			record.levelname = orig_levelname
+		return value
 
 	@staticmethod
 	def formatException(exc_info):

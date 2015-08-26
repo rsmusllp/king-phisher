@@ -517,4 +517,7 @@ class KingPhisherRequestHandlerRPC(object):
 		return True, ConnectionErrorReason.SUCCESS, self.server.session_manager.put(username)
 
 	def rpc_logout(self):
+		username = self.rpc_session.user
 		self.server.session_manager.remove(self.rpc_session_id)
+		logger = logging.getLogger('KingPhisher.Server.Authentication')
+		logger.info("successful logout request from {0} for user {1}".format(self.client_address[0], username))
