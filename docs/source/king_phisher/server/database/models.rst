@@ -24,3 +24,10 @@ Functions
 .. autofunction:: king_phisher.server.database.models.get_tables_with_column_id
 
 .. autofunction:: king_phisher.server.database.models.register_table
+
+Classes
+-------
+
+.. autoclass:: king_phisher.server.database.models.BaseRowCls
+   :show-inheritance:
+   :members:

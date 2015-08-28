@@ -183,6 +183,7 @@ class KingPhisherRequestHandlerRPC(object):
 		if session.query(db_models.Campaign).filter_by(name=name).count():
 			raise ValueError('the specified campaign name already exists')
 		campaign = db_models.Campaign(name=name, description=description, user_id=self.rpc_session.user)
+		campaign.assert_session_has_permissions('c', self.rpc_session)
 		session.add(campaign)
 		session.commit()
 		return campaign.id
@@ -213,6 +214,7 @@ class KingPhisherRequestHandlerRPC(object):
 		query = query.filter_by(campaign_id=campaign_id, user_id=username)
 		if query.count() == 0:
 			subscription = db_models.AlertSubscription(campaign_id=campaign_id, user_id=username)
+			subscription.assert_session_has_permissions('c', self.rpc_session)
 			session.add(subscription)
 			session.commit()
 
@@ -228,6 +230,7 @@ class KingPhisherRequestHandlerRPC(object):
 		query = query.filter_by(campaign_id=campaign_id, user_id=username)
 		subscription = query.first()
 		if subscription:
+			subscription.assert_session_has_permissions('d', self.rpc_session)
 			session.delete(subscription)
 			session.commit()
 
@@ -247,6 +250,7 @@ class KingPhisherRequestHandlerRPC(object):
 		query = query.filter_by(campaign_id=campaign_id, hostname=hostname, page=page)
 		if query.count() == 0:
 			landing_page = db_models.LandingPage(campaign_id=campaign_id, hostname=hostname, page=page)
+			landing_page.assert_session_has_permissions('c', self.rpc_session)
 			session.add(landing_page)
 			session.commit()
 
@@ -269,6 +273,7 @@ class KingPhisherRequestHandlerRPC(object):
 			department = session.query(db_models.CompanyDepartment).filter_by(name=department_name).first()
 			if department is None:
 				department = db_models.CompanyDepartment(name=department_name)
+				department.assert_session_has_permissions('c', self.rpc_session)
 				session.add(department)
 				session.commit()
 		message = db_models.Message()
@@ -279,6 +284,7 @@ class KingPhisherRequestHandlerRPC(object):
 		message.last_name = last_name
 		if department is not None:
 			message.company_department_id = department.id
+		message.assert_session_has_permissions('c', self.rpc_session)
 		session.add(message)
 		session.commit()
 
@@ -328,8 +334,11 @@ class KingPhisherRequestHandlerRPC(object):
 		query = session.query(table)
 		query = query.filter_by(**query_filter)
 		total_rows = query.count()
-		for row in query[offset:offset + VIEW_ROW_COUNT]:
-			rows.append([getattr(row, c) for c in columns])
+		for row in query[offset:]:
+			if len(rows) == VIEW_ROW_COUNT:
+				break
+			if row.session_has_permissions('r', self.rpc_session):
+				rows.append([getattr(row, c) for c in columns])
 		if not len(rows):
 			return None
 		return {'columns': columns, 'rows': rows, 'total_rows': total_rows, 'page_size': VIEW_ROW_COUNT}
@@ -344,7 +353,9 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		table = database_table_objects.get(table_name)
 		assert table
-		session.delete(db_manager.get_row_by_id(session, table, row_id))
+		row = db_manager.get_row_by_id(session, table, row_id)
+		row.assert_session_has_permissions('d', self.rpc_session)
+		session.delete(row)
 		session.commit()
 
 	@database_access
@@ -365,6 +376,8 @@ class KingPhisherRequestHandlerRPC(object):
 		for row_id in row_ids:
 			row = db_manager.get_row_by_id(session, table, row_id)
 			if not row:
+				continue
+			if not row.session_has_permissions('d', self.rpc_session):
 				continue
 			session.delete(row)
 			deleted_rows.append(row_id)
@@ -387,6 +400,7 @@ class KingPhisherRequestHandlerRPC(object):
 		columns = database_tables[table_name]
 		row = db_manager.get_row_by_id(session, table, row_id)
 		if row:
+			row.assert_session_has_permissions('r', self.rpc_session)
 			row = dict(zip(columns, (getattr(row, c) for c in columns)))
 		return row
 
@@ -413,6 +427,7 @@ class KingPhisherRequestHandlerRPC(object):
 		row = table()
 		for key, value in zip(keys, values):
 			setattr(row, key, value)
+		row.assert_session_has_permissions('c', self.rpc_session)
 		session.add(row)
 		session.commit()
 		return row.id
@@ -436,11 +451,10 @@ class KingPhisherRequestHandlerRPC(object):
 		table = database_table_objects.get(table_name)
 		assert table
 		row = db_manager.get_row_by_id(session, table, row_id)
-		if not row:
-			session.close()
-			assert row
+		assert row
 		for key, value in zip(keys, values):
 			setattr(row, key, value)
+		row.assert_session_has_permissions('u', self.rpc_session)
 		session.commit()
 
 	def rpc_geoip_lookup(self, ip, lang=None):

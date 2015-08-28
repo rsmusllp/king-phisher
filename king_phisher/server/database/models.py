@@ -31,6 +31,10 @@
 #
 
 import datetime
+import operator
+
+from king_phisher import errors
+from king_phisher.utilities import switch
 
 import sqlalchemy
 import sqlalchemy.ext.declarative
@@ -77,7 +81,12 @@ def register_table(table):
 	database_table_objects[table.__tablename__] = table
 	return table
 
-class Base(object):
+class BaseRowCls(object):
+	"""
+	The base class from which other database table objects inherit from.
+	Provides a standard ``__repr__`` method and default permission checks which
+	are to be overridden as desired by subclasses.
+	"""
 	__repr_attributes__ = ()
 	def __repr__(self):
 		description = "<{0} id={1} ".format(self.__class__.__name__, repr(self.id))
@@ -85,7 +94,54 @@ class Base(object):
 			description += "{0}={1} ".format(repr_attr, repr(getattr(self, repr_attr)))
 		description += '>'
 		return description
-Base = sqlalchemy.ext.declarative.declarative_base(cls=Base)
+
+	def assert_session_has_permissions(self, *args, **kwargs):
+		"""
+		A convenience function which wraps :py:meth:`~.session_has_permissions`
+		and raisies a :py:exc:`~king_phisher.errors.KingPhisherPermissionError`
+		if the session does not have the specified permissions.
+		"""
+		if self.session_has_permissions(*args, **kwargs):
+			return
+		raise errors.KingPhisherPermissionError()
+
+	def session_has_permissions(self, access, session):
+		"""
+		Check that the authenticated session has the permissions specified in
+		*access*. The permissions in *access* are abbreviated with the first
+		letter of create, read, update, and delete.
+
+		:param str access: The desired permissions.
+		:param session: The authenticated session to check access for.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
+		access = access.lower()
+		for case in switch(access, comp=operator.contains, swapped=True):
+			if case('c') and not self.session_has_create_access(session):
+				break
+			if case('r') and not self.session_has_read_access(session):
+				break
+			if case('u') and not self.session_has_update_access(session):
+				break
+			if case('d') and not self.session_has_delete_access(session):
+				break
+		else:
+			return True
+		return False
+
+	def session_has_create_access(self, session):
+		return True
+
+	def session_has_delete_access(self, session):
+		return True
+
+	def session_has_read_access(self, session):
+		return True
+
+	def session_has_update_access(self, session):
+		return True
+Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
 
 class TagMixIn(object):
 	__repr_attributes__ = ('name',)
@@ -249,6 +305,17 @@ class User(Base):
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')
+	def session_has_create_access(self, session):
+		return False
+
+	def session_has_delete_access(self, session):
+		return False
+
+	def session_has_read_access(self, session):
+		return session.user == self.id
+
+	def session_has_update_access(self, session):
+		return session.user == self.id
 
 @register_table
 class Visit(Base):
