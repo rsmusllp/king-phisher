@@ -15,9 +15,11 @@ Exceptions
    :members:
    :special-members: __init__
 
-
 .. autoexception:: king_phisher.errors.KingPhisherDatabaseError
    :show-inheritance:
 
 .. autoexception:: king_phisher.errors.KingPhisherInputValidationError
+   :show-inheritance:
+
+.. autoexception:: king_phisher.errors.KingPhisherPermissionError
    :show-inheritance:

@@ -33,6 +33,7 @@
 import datetime
 import ipaddress
 import logging
+import operator
 import os
 import random
 import re
@@ -323,3 +324,33 @@ def start_process(proc_args, wait=True):
 	if not wait:
 		return proc_h
 	return proc_h.wait() == 0
+
+def switch(value, comp=operator.eq, swapped=False):
+	"""
+	A pure Python implementation of a switch case statement. *comp* will be used
+	as a comparison function and passed two arguments of *value* and the
+	provided case respectively.
+
+	Switch case example usage:
+
+	.. code-block:: python
+
+	  for case in switch(2):
+	      if case(1):
+	          print('case 1 matched!')
+	          break
+	      if case(2):
+	          print('case 2 matched!')
+	          break
+	  else:
+	      print('no cases were matched')
+
+	:param value: The value to compare in each of the case statements.
+	:param comp: The function to use for comparison in the case statements.
+	:param swapped: Whether or not to swap the arguments to the *comp* function.
+	:return: A function to be called for each case statement.
+	"""
+	if swapped:
+		yield lambda case: comp(case, value)
+	else:
+		yield lambda case: comp(value, case)

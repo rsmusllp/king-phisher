@@ -62,3 +62,10 @@ class KingPhisherInputValidationError(KingPhisherError):
 	to be properly validated.
 	"""
 	pass
+
+class KingPhisherPermissionError(KingPhisherError):
+	"""
+	An exception that is raised by King Phisher when some form of a request can
+	not be satisfied due to the configured level of access.
+	"""
+	pass

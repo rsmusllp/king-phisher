@@ -29,6 +29,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.start_process
 
+.. autofunction:: king_phisher.utilities.switch
+
 Classes
 -------
 
