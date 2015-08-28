@@ -159,6 +159,15 @@ class AlertSubscription(Base):
 	type = sqlalchemy.Column(sqlalchemy.Enum('email', 'sms', name='alert_subscription_type'), default='sms', server_default='sms', nullable=False)
 	mute_timestamp = sqlalchemy.Column(sqlalchemy.DateTime)
 
+	def session_has_create_access(self, session):
+		return session.user == self.user_id
+
+	def session_has_delete_access(self, session):
+		return session.user == self.user_id
+
+	def session_has_update_access(self, session):
+		return session.user == self.user_id
+
 @register_table
 class Campaign(Base):
 	__repr_attributes__ = ('name',)
@@ -305,6 +314,7 @@ class User(Base):
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')
+
 	def session_has_create_access(self, session):
 		return False
 
