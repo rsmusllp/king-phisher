@@ -757,18 +757,18 @@ class TreeViewManager(object):
 			self.column_views[column_title] = columns[store_id]
 		return columns
 
-	def set_column_color(self, ground, store_id, column_titles=None):
+	def set_column_color(self, background=None, foreground=None, column_titles=None):
 		"""
 		Set a column in the model to be used as either the background or
 		foreground color for a cell.
 
-		:param str ground: Either background or foreground.
-		:param int store_id: The column id of the model to use as the color.
+		:param int background: The column id of the model to use as the background color.
+		:param int foreground: The column id of the model to use as the foreground color.
 		:param column_titles: The columns to set the color for, if None is specified all columns will be set.
 		:type column_titles: str, tuple
 		"""
-		if not ground in ('background', 'foreground'):
-			raise ValueError('ground must be either background or foreground')
+		if background is None and foreground is None:
+			raise RuntimeError('either background of foreground must be set')
 		if column_titles is None:
 			column_titles = self.column_titles.keys()
 		elif isinstance(column_titles, str):
@@ -776,11 +776,11 @@ class TreeViewManager(object):
 		for column_title in column_titles:
 			column = self.column_views[column_title]
 			cell = column.get_cells()[0]
-			cell.set_property(ground + '-set', True)
-			if ground == 'background':
-				column.set_attributes(cell, text=self.column_titles[column_title], background=store_id)
-			elif ground == 'foreground':
-				column.set_attributes(cell, text=self.column_titles[column_title], foreground=store_id)
+			if background is not None:
+				cell.set_property('background-set', True)
+			if foreground is not None:
+				cell.set_property('foreground-set', True)
+			column.set_attributes(cell, text=self.column_titles[column_title], background=background, foreground=foreground)
 
 	def signal_button_pressed(self, treeview, event, popup_menu):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
