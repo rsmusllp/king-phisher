@@ -32,12 +32,12 @@
 
 import datetime
 
-from king_phisher import color
 from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
 from king_phisher.client.assistants import CampaignAssistant
 from king_phisher.client import gui_utilities
 
+from gi.repository import Gdk
 from gi.repository import Gtk
 
 __all__ = ['CampaignSelectionDialog']
@@ -98,10 +98,16 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		treeview = self.gobjects['treeview_campaigns']
 		store = treeview.get_model()
 		if store is None:
-			store = Gtk.ListStore(str, str, str, str, str, str, str, str, str, str)
+			store = Gtk.ListStore(str, str, str, str, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
 			treeview.set_model(store)
 		else:
 			store.clear()
+		style_context = Gtk.StyleContext.new()
+		bg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_bg', default=ColorHexCode.WHITE)
+		fg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_fg', default=ColorHexCode.BLACK)
+		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
+		hlfg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlfg', default=ColorHexCode.BLACK)
+		now = datetime.datetime.now()
 		for campaign in self.application.rpc.remote_table('campaigns'):
 			company = campaign.company
 			if company:
@@ -112,12 +118,11 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			if campaign_type:
 				campaign_type = campaign_type.name
 			expiration_ts = campaign.expiration
-			bg_color = ColorHexCode.WHITE
-			fg_color = ColorHexCode.BLACK
+			is_expired = False
 			if expiration_ts is not None:
 				expiration_ts = utilities.datetime_utc_to_local(campaign.expiration)
-				if expiration_ts < datetime.datetime.now():
-					bg_color = ColorHexCode.LIGHT_YELLOW
+				if expiration_ts < now:
+					is_expired = True
 				expiration_ts = utilities.format_datetime(expiration_ts)
 			store.append((
 				str(campaign.id),
@@ -127,8 +132,8 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 				campaign.user_id,
 				created_ts,
 				expiration_ts,
-				bg_color,
-				fg_color,
+				(hlbg_color if is_expired else bg_color),
+				(hlfg_color if is_expired else fg_color),
 				(campaign.description if campaign.description else None)
 			))
 		self.gobjects['label_campaign_info'].set_text("Showing {0:,} Campaign{1}".format(len(store), ('' if len(store) == 1 else 's')))
@@ -156,7 +161,9 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		width, height = drawingarea.get_size_request()
 		context.rectangle(0, 0, width, height)
 		context.stroke_preserve()
-		context.set_source_rgb(*color.convert_hex_to_tuple(ColorHexCode.LIGHT_YELLOW))
+		style_context = Gtk.StyleContext.new()
+		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
+		context.set_source_rgb(hlbg_color.red, hlbg_color.green, hlbg_color.blue)
 		context.fill()
 
 	def signal_treeview_row_activated(self, treeview, treeview_column, treepath):

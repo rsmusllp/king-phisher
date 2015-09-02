@@ -211,22 +211,30 @@ def gtk_menu_position(event, *args):
 	coords = event.get_root_coords()
 	return (coords[0], coords[1], True)
 
-def gtk_style_context_get_color(sc, color_name):
+def gtk_style_context_get_color(sc, color_name, default=None):
 	"""
 	Look up a color by it's name in the :py:class:`Gtk.StyleContext` specified
-	in *sc*, and return it as an RGB tuple if the color is defined. If the color
-	is not found, None is returned.
+	in *sc*, and return it as an :py:class:`Gdk.RGBA` instance if the color is
+	defined. If the color is not found, *default* will be returned.
 
 	:param sc: The style context to use.
 	:type sc: :py:class:`Gtk.StyleContext`
 	:param str color_name: The name of the color to lookup.
-	:return: The color as an RGB tuple.
-	:rtype: tuple
+	:param default: The default color to return if the specified color was not found.
+	:type default: str, :py:class:`Gdk.RGBA`
+	:return: The color as an RGBA instance.
+	:rtype: :py:class:`Gdk.RGBA`
 	"""
 	found, color_rgba = sc.lookup_color(color_name)
-	if not found:
-		return None
-	return color_rgba.red, color_rgba.green, color_rgba.blue
+	if found:
+		return color_rgba
+	if isinstance(default, str):
+		color_rgba = Gdk.RGBA()
+		color_rgba.parse(default)
+		return color_rgba
+	elif isinstance(default, Gdk.RGBA):
+		return default
+	return
 
 def gtk_sync():
 	"""Wait while all pending GTK events are processed."""
@@ -760,7 +768,7 @@ class TreeViewManager(object):
 	def set_column_color(self, background=None, foreground=None, column_titles=None):
 		"""
 		Set a column in the model to be used as either the background or
-		foreground color for a cell.
+		foreground RGBA color for a cell.
 
 		:param int background: The column id of the model to use as the background color.
 		:param int foreground: The column id of the model to use as the foreground color.
@@ -776,11 +784,14 @@ class TreeViewManager(object):
 		for column_title in column_titles:
 			column = self.column_views[column_title]
 			cell = column.get_cells()[0]
+			props = {'text': self.column_titles[column_title]}
 			if background is not None:
-				cell.set_property('background-set', True)
+				props['background-rgba'] = background
+				props['background-set'] = True
 			if foreground is not None:
-				cell.set_property('foreground-set', True)
-			column.set_attributes(cell, text=self.column_titles[column_title], background=background, foreground=foreground)
+				props['foreground-rgba'] = foreground
+				props['foreground-set'] = True
+			column.set_attributes(cell, **props)
 
 	def signal_button_pressed(self, treeview, event, popup_menu):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
