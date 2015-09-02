@@ -1,0 +1,216 @@
+/*
+ * king-phisher-client.css
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * * Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above
+ *   copyright notice, this list of conditions and the following disclaimer
+ *   in the documentation and/or other materials provided with the
+ *   distribution.
+ * * Neither the name of the  nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Authors:
+ *   - Emily Gundry
+ *   - Spencer McIntyre
+ */
+
+@define-color theme_color_0 #00203a;
+@define-color theme_color_1 #5d84a8;
+
+/* treeview normal */
+@define-color theme_color_tv_bg @theme_color_0;
+@define-color theme_color_tv_fg white;
+/* treeview highlight */
+@define-color theme_color_tv_hlbg #00BF8C;
+@define-color theme_color_tv_hlfg white;
+/* treeview hover */
+@define-color theme_color_tv_hobg @theme_color_1;
+@define-color theme_color_tv_hofg black;
+
+* {
+	border: none;
+	box-shadow: none;
+	icon-shadow: none;
+	text-shadow: none;
+}
+
+GtkAboutDialog GtkTextView,
+GtkAboutDialog GtkViewport {
+	background-color: @theme_color_0;
+	color: white;
+}
+
+GtkAssistant .sidebar {
+	background-image: linear-gradient(to bottom,
+		shade(@theme_color_1, 1),
+		shade(@theme_color_0, 1.25));
+}
+
+GtkAssistant .sidebar .highlight {
+	background-image: linear-gradient(to bottom,
+		shade(@theme_color_0, 1.25),
+		shade(@theme_color_0, 1.50));
+	color: white;
+	font: bold;
+}
+
+GtkButton {
+	background-image: linear-gradient(to bottom,
+		shade(@theme_color_0, 1.25),
+		shade(@theme_color_0, 1.50));
+	background-size: 100% 100%;
+	color: white;
+}
+
+GtkButton:active,
+GtkButton:hover,
+GtkButton:selected {
+	background-image: linear-gradient(to bottom,
+		shade(alpha(@theme_color_1, 0.7), 0.75),
+		shade(alpha(@theme_color_1, 0.7), 1.00));
+	background-size: 100% 100%;
+	color: @theme_color_0;
+}
+
+GtkButton:insensitive {
+	background-color: alpha(@theme_color_1, 0.7);
+	background-image: none;
+}
+
+GtkButtonBox {
+	padding:10px;
+}
+
+GtkCalendar .header {
+	background-color: @theme_color_1;
+	background-image: none;
+	color: white;
+}
+
+GtkComboBox {
+	color: white;
+}
+
+GtkMenuBar {
+	background-color: mix(@theme_color_0, @theme_color_1, 0.4);
+	color: white;
+}
+
+GtkNotebook {
+	background-color: shade(@theme_color_0, 1.2);
+	color: white;
+}
+
+.notebook .header {
+	border-width: 0px;
+}
+
+.notebook tab:active {
+	background-image: linear-gradient(to bottom,
+		shade(@theme_color_1, 1),
+		shade(@theme_color_0, 1.25));
+	border-radius: 4px 4px 2px 2px;
+}
+
+GtkTreeView {
+	background-color: @theme_color_tv_bg;
+	color: @theme_color_tv_fg;
+}
+
+GtkTreeView row:hover,
+GtkTreeView row:selected {
+	background-color: @theme_color_tv_hobg;
+	color: @theme_color_tv_hofg;
+}
+
+GtkWindow {
+	background-image: url("./background.svg");
+	background-size: 100% 100%;
+}
+
+GtkWindow:active,
+GtkWindow:hover {
+	color: white;
+}
+
+GtkMenuBar > GtkMenuItem > GtkLabel {
+	color: white;
+}
+
+GtkMenuItem:hover {
+	background-color: @theme_color_1;
+	background-image: none;
+}
+
+GtkMenuItem > GtkLabel {
+	color: black;
+}
+
+GtkMenuItem .accelerator {
+	color: alpha(black, 0.4);
+}
+
+GtkLabel {
+	background: none;
+	color: white;
+}
+
+GtkEntry,
+GtkSpinButton {
+	background-color: alpha(white, 0.8);
+	background-image: none;
+	color: @theme_color_0;
+}
+
+GtkToolButton,
+GtkToolbar {
+	background-color: @theme_color_1;
+	background-image: none;
+}
+
+GtkRadioButton {
+	background-image: none;
+}
+
+.titlebar {
+	background-color: mix(@theme_color_0, @theme_color_1, 0.4);
+	background-image: none;
+	color: white;
+}
+
+.tooltip {
+	background-color: alpha(@theme_color_0, 0.6);
+	background-image: none;
+	border-radius: 5px 5px 5px 5px;
+}
+
+/***********************************************************
+ * Extra classes
+ **********************************************************/
+.background-add {
+	background-image: url("./background.svg");
+	background-size: 100% 100%;
+	color: white;
+}
+
+.background-remove {
+	background-image: none;
+}

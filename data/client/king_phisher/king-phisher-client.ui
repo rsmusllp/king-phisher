@@ -81,6 +81,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Jeff McCutchan
 Brandan Geise</property>
     <property name="documenters">Spencer McIntyre</property>
+    <property name="artists">Emily Gundry</property>
     <property name="logo_icon_name">image-missing</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="aboutdialog-vbox1">

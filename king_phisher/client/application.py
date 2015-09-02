@@ -255,7 +255,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			settings.set_property('gtk-icon-theme-name', GTK3_DEFAULT_THEME)
 
 		# load a custom css file if one is available
-		css_file = find.find_data_file('king-phisher-client.css')
+		css_file = self.theme_file
 		if css_file:
 			self.style_provider = self.load_style_css(css_file)
 		else:
@@ -291,7 +291,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self.style_provider
 			)
 			self.style_provider = None
-		css_file = find.find_data_file('king-phisher-client.css')
+		css_file = self.theme_file
 		if css_file:
 			self.style_provider = self.load_style_css(css_file)
 
@@ -322,6 +322,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Gtk.Application.do_shutdown(self)
 		sys.excepthook = sys.__excepthook__
 		self.save_config()
+
+	@property
+	def theme_file(self):
+		return find.find_data_file(os.path.join('style', 'theme.css'))
 
 	def load_config(self, load_defaults=False):
 		"""
