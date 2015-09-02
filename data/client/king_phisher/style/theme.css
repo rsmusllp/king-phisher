@@ -32,14 +32,16 @@
  *   - Spencer McIntyre
  */
 
+/* two primary colors for mixing and one for highlighting */
 @define-color theme_color_0 #00203a;
 @define-color theme_color_1 #5d84a8;
+@define-color theme_color_2 #00bf8c;
 
 /* treeview normal */
 @define-color theme_color_tv_bg @theme_color_0;
 @define-color theme_color_tv_fg white;
 /* treeview highlight */
-@define-color theme_color_tv_hlbg #00BF8C;
+@define-color theme_color_tv_hlbg @theme_color_2;
 @define-color theme_color_tv_hlfg white;
 /* treeview hover */
 @define-color theme_color_tv_hobg @theme_color_1;
@@ -74,8 +76,8 @@ GtkAssistant .sidebar .highlight {
 
 GtkButton {
 	background-image: linear-gradient(to bottom,
-		shade(@theme_color_0, 1.25),
-		shade(@theme_color_0, 1.50));
+		mix(@theme_color_0, @theme_color_1, 0.75),
+		@theme_color_0);
 	background-size: 100% 100%;
 	color: white;
 }
@@ -84,19 +86,19 @@ GtkButton:active,
 GtkButton:hover,
 GtkButton:selected {
 	background-image: linear-gradient(to bottom,
-		shade(alpha(@theme_color_1, 0.7), 0.75),
-		shade(alpha(@theme_color_1, 0.7), 1.00));
+		shade(alpha(@theme_color_1, 0.7), 1),
+		shade(alpha(@theme_color_1, 0.7), 1.25));
 	background-size: 100% 100%;
 	color: @theme_color_0;
 }
 
 GtkButton:insensitive {
-	background-color: alpha(@theme_color_1, 0.7);
+	background-color: alpha(mix(@theme_color_1, black, 0.5), 0.7);
 	background-image: none;
 }
 
 GtkButtonBox {
-	padding:10px;
+	padding: 10px;
 }
 
 GtkCalendar .header {
@@ -116,6 +118,11 @@ GtkMenuBar {
 
 GtkNotebook {
 	background-color: shade(@theme_color_0, 1.2);
+	color: white;
+}
+
+GtkProgressBar {
+	background-color: @theme_color_2;
 	color: white;
 }
 
