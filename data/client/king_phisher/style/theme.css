@@ -111,6 +111,10 @@ GtkComboBox {
 	color: white;
 }
 
+GtkFileChooser .search-bar {
+	background-color: @theme_color_0;
+}
+
 GtkMenuBar {
 	background-color: mix(@theme_color_0, @theme_color_1, 0.4);
 	color: white;

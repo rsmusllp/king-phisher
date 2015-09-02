@@ -13,6 +13,7 @@ Version 1.0.0
 *In Progress*
 
 * Moved templates to a dedicated separate repository
+* Added a custom theme for the client
 
 Version 0.x.x
 -------------
