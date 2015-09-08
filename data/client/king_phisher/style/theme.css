@@ -120,6 +120,33 @@ GtkMenuBar {
 	color: white;
 }
 
+GtkMenuBar > GtkMenuItem {
+	background-color: mix(@theme_color_0, @theme_color_1, 0.4);
+	background-image: none;
+}
+
+GtkMenuBar > GtkMenuItem > GtkLabel {
+	color: white;
+}
+
+GtkMenuItem {
+	background-color: white;
+	background-image: none;
+}
+
+GtkMenuItem > GtkLabel {
+	color: black;
+}
+
+GtkMenuItem .accelerator {
+	color: alpha(black, 0.4);
+}
+
+GtkMenuItem:hover {
+	background-color: @theme_color_1;
+	background-image: none;
+}
+
 GtkNotebook {
 	background-color: shade(@theme_color_0, 1.2);
 	color: white;
@@ -160,23 +187,6 @@ GtkWindow {
 GtkWindow:active,
 GtkWindow:hover {
 	color: white;
-}
-
-GtkMenuBar > GtkMenuItem > GtkLabel {
-	color: white;
-}
-
-GtkMenuItem:hover {
-	background-color: @theme_color_1;
-	background-image: none;
-}
-
-GtkMenuItem > GtkLabel {
-	color: black;
-}
-
-GtkMenuItem .accelerator {
-	color: alpha(black, 0.4);
 }
 
 GtkLabel {
