@@ -102,7 +102,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			treeview.set_model(store)
 		else:
 			store.clear()
-		style_context = Gtk.StyleContext.new()
+		style_context = self.dialog.get_style_context()
 		bg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_bg', default=ColorHexCode.WHITE)
 		fg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_fg', default=ColorHexCode.BLACK)
 		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
@@ -161,7 +161,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		width, height = drawingarea.get_size_request()
 		context.rectangle(0, 0, width, height)
 		context.stroke_preserve()
-		style_context = Gtk.StyleContext.new()
+		style_context = self.dialog.get_style_context()
 		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
 		context.set_source_rgb(hlbg_color.red, hlbg_color.green, hlbg_color.blue)
 		context.fill()
