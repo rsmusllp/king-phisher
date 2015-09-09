@@ -23,6 +23,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.open_uri
 
+.. autofunction:: king_phisher.utilities.parse_datetime
+
 .. autofunction:: king_phisher.utilities.random_string
 
 .. autofunction:: king_phisher.utilities.random_string_lower_numeric

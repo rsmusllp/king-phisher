@@ -50,6 +50,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	gobject_ids = (
 		'button_new_campaign',
 		'button_select',
+		'checkbutton_show_expired',
 		'drawingarea_color_key',
 		'label_campaign_info',
 		'treeview_campaigns'
@@ -68,7 +69,22 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self._creation_assistant = None
 		self.load_campaigns()
 		# default sort is by campaign creation date, descending
-		treeview.get_model().set_sort_column_id(5, Gtk.SortType.DESCENDING)
+		model = treeview.get_model()
+		model.set_sort_column_id(5, Gtk.SortType.DESCENDING)
+		filter = model.filter_new()
+		filter.set_visible_func(self._filter_expired)
+		self.expired_filter = filter
+		treeview.set_model(self.expired_filter)
+
+	def _filter_expired(self, model, tree_iter, _):
+		if self.gobjects['checkbutton_show_expired'].get_active():
+			return True
+		expiration_ts = model[tree_iter][6]
+		if not expiration_ts:
+			return True
+		if utilities.parse_datetime(expiration_ts) > datetime.datetime.now():
+			return True
+		return False
 
 	def _highlight_campaign(self, campaign_name):
 		treeview = self.gobjects['treeview_campaigns']
@@ -156,6 +172,9 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		assistant.assistant.connect('destroy', self.signal_assistant_destroy, assistant)
 		assistant.interact()
 		self._creation_assistant = assistant
+
+	def signal_checkbutton_toggled(self, _):
+		self.expired_filter.refilter()
 
 	def signal_drawingarea_draw(self, drawingarea, context):
 		width, height = drawingarea.get_size_request()

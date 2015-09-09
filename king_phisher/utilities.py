@@ -50,6 +50,7 @@ from dateutil import tz
 from smoke_zephyr.utilities import which
 
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
+TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 class FreezableDict(dict):
 	"""
@@ -227,7 +228,7 @@ def format_datetime(dt):
 	"""
 	if not isinstance(dt, datetime.datetime):
 		return ''
-	return dt.strftime('%Y-%m-%d %H:%M:%S')
+	return dt.strftime(TIMESTAMP_FORMAT)
 
 def is_valid_email_address(email_address):
 	"""
@@ -278,6 +279,20 @@ def open_uri(uri):
 		raise RuntimeError('could not find suitable application to open uri')
 	proc_args.append(uri)
 	return start_process(proc_args)
+
+def parse_datetime(ts):
+	"""
+	Parse a time stamp into a :py:class:`datetime.datetime` instance. The time
+	stamp must be in a compatible format, as would have been returned from the
+	:py:func:`.format_datetime` function.
+
+	:param str ts: The timestamp to parse.
+	:return: The parsed timestamp.
+	:rtype: :py:class:`datetime.datetime`
+	"""
+	if not isinstance(ts, str):
+		raise TypeError("must be str not {0}".format(type(ts).__name__))
+	return datetime.datetime.strptime(ts, TIMESTAMP_FORMAT)
 
 def random_string(size):
 	"""
