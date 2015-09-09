@@ -107,6 +107,12 @@ GtkCalendar .header {
 	color: white;
 }
 
+GtkCheckButton {
+	background-color: alpha(white, 0);
+	background-image: none;
+	border-radius: 5px;
+}
+
 GtkComboBox {
 	color: white;
 }
@@ -260,7 +266,7 @@ GtkRadioButton {
 }
 
 .tooltip {
-	background-color: alpha(@theme_color_0, 0.6);
+	background-color: alpha(@theme_color_0, 0.8);
 	background-image: none;
 	border-radius: 5px 5px 5px 5px;
 }
