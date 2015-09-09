@@ -45,7 +45,7 @@
 @define-color theme_color_tv_hlfg white;
 /* treeview hover */
 @define-color theme_color_tv_hobg @theme_color_1;
-@define-color theme_color_tv_hofg black;
+@define-color theme_color_tv_hofg white;
 
 * {
 	border: none;
@@ -146,6 +146,11 @@ GtkMenuItem .accelerator {
 GtkMenuItem:hover {
 	background-color: @theme_color_1;
 	background-image: none;
+	color: white;
+}
+
+GtkMenuItem:hover > GtkLabel {
+	color: white;
 }
 
 GtkNotebook {
