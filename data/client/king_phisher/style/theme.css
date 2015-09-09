@@ -132,6 +132,7 @@ GtkMenuBar > GtkMenuItem > GtkLabel {
 GtkMenuItem {
 	background-color: white;
 	background-image: none;
+	color: black;
 }
 
 GtkMenuItem > GtkLabel {
@@ -155,6 +156,42 @@ GtkNotebook {
 GtkProgressBar {
 	background-color: @theme_color_2;
 	color: white;
+}
+
+GtkSwitch {
+	-GtkSwitch-slider-height: 27px;
+	-GtkSwitch-slider-width: 45px;
+	font-size: smaller;
+	font-weight: bold;
+	outline-offset: -4px;
+}
+
+GtkSwitch.trough {
+	border-radius: 3px;
+	color: black;
+	background-color: lightgray;
+	background-image: none;
+}
+
+GtkSwitch.trough:active {
+	background-color: @theme_color_2;
+	background-image: none;
+	color: white;
+}
+
+GtkSwitch.trough:insensitive {
+	color: #8e9192;
+	background-color: #f4f4f4;
+}
+
+GtkSwitch.trough:backdrop:insensitive {
+	color: #c7c7c7;
+	background-color: #f4f4f4;
+}
+
+GtkSwitch.slider {
+	border-radius: 3px;
+	background-image: linear-gradient(to bottom, #fafafa, #ededed 40%, #e0e0e0);
 }
 
 .notebook .header {
