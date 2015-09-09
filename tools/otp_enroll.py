@@ -78,6 +78,9 @@ def main():
 			user.otp_secret = None
 			break
 		if case('set'):
+			if user.otp_secret:
+				color.print_error("the specified user already has an otp secret set")
+				return
 			if arguments.otp_secret:
 				new_otp = arguments.otp_secret
 			else:
