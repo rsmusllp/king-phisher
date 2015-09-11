@@ -81,10 +81,13 @@ client.company\_name       | The target's company name
 client.email\_address      | The target's email address
 client.first\_name         | The target's first name
 client.last\_name          | The target's last name
-client.message_id          | The unique tracking identifier (this is the same as uid)
+client.message\_id         | The unique tracking identifier (this is the same as uid)
+sender.email               | The email address in the "Source Email (MIME)" field
+sender.friendly\_alias     | The value of the "Friendly Alias" field
+sender.reply\_to           | The value of the "Reply To" field
 url.tracking\_dot          | URL of an image used for message tracking
 url.webserver              | Phishing server URL with the uid parameter
-url.webserver_raw          | Phishing server URL without any parameters
+url.webserver\_raw         | Phishing server URL without any parameters
 tracking\_dot\_image\_tag  | The tracking image in a preformatted ```<img />``` tag
 uid                        | The unique tracking identifier (this is the same as client.message_id)
 

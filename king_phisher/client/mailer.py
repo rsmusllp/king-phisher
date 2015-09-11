@@ -97,15 +97,18 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 
 	template = template_environment.from_string(template)
 	template_vars = {}
-	template_client_vars = {}
-
-	template_client_vars['first_name'] = first_name
-	template_client_vars['last_name'] = last_name
-	template_client_vars['email_address'] = target_email
-	template_client_vars['company_name'] = config.get('mailer.company_name')
-	template_client_vars['message_id'] = uid
-
-	template_vars['client'] = template_client_vars
+	template_vars['client'] = dict(
+		first_name=first_name,
+		last_name=last_name,
+		email_address=target_email,
+		company_name=config.get('mailer.company_name'),
+		message_id=uid
+	)
+	template_vars['sender'] = dict(
+		email=config.get('mailer.source_email'),
+		friendly_alias=config.get('mailer.source_email_alias'),
+		reply_to=config.get('mailer.reply_to_email')
+	)
 	template_vars['uid'] = uid
 
 	webserver_url = config.get('mailer.webserver_url', '')
