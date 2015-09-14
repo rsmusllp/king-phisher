@@ -44,6 +44,15 @@ from king_phisher.server.database import models
 import pyotp
 import yaml
 
+PARSER_EPILOG = """
+If --otp is set then it must be a valid base32 encoded secret otherwise a random
+one will be used. Also note that the user that is selected to be managed must
+already exist within the database, i.e. they should have logged in at least once
+before.
+"""
+PARSER_EPILOG = PARSER_EPILOG.replace('\n', ' ')
+PARSER_EPILOG = PARSER_EPILOG.strip()
+
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher TOTP Enrollment Utility', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
@@ -53,7 +62,7 @@ def main():
 	parser.add_argument('--otp', dest='otp_secret', help='a specific otp secret')
 	parser.add_argument('user', help='the user to mange')
 	parser.add_argument('action', choices=('remove', 'set', 'show'), help='the action to preform')
-	parser.epilog = 'If --otp is set then it must be a valid base32 encoded secret otherwise a random one will be used.'
+	parser.epilog = PARSER_EPILOG
 	arguments = parser.parse_args()
 
 	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
