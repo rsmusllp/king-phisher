@@ -216,6 +216,12 @@ GtkSwitch.slider {
 	border-radius: 4px 4px 2px 2px;
 }
 
+GtkTextView {
+	background-color: @theme_color_0;
+	border-radius: 4px 4px 4px 4px;
+	color: white;
+}
+
 GtkTreeView {
 	background-color: @theme_color_tv_bg;
 	color: @theme_color_tv_fg;

@@ -15,5 +15,5 @@
   "smtp_ssl_enable": false,
   "spf_check_level": 1,
   "text_font": "monospace 11",
-  "text_source_theme": "kate"
+  "text_source_theme": "cobalt"
 }
