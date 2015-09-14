@@ -73,7 +73,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		# create and set the filter for expired campaigns
 		self._tv_model_filter = self._tv_model.filter_new()
 		self._tv_model_filter.set_visible_func(self._filter_expired)
-		treeview.set_model(self._tv_model_filter)
+		treeview.set_model(Gtk.TreeModelSort(model=self._tv_model_filter))
 		self.load_campaigns()
 
 	def _filter_expired(self, model, tree_iter, _):

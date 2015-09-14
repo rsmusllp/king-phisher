@@ -126,7 +126,6 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 	def _sender_precheck_settings(self):
 		required_settings = {
 			'mailer.webserver_url': 'Web Server URL',
-			'mailer.company_name': 'Company Name',
 			'mailer.subject': 'Subject',
 			'mailer.html_file': 'Message HTML File',
 			'mailer.target_file': 'Target CSV File'
