@@ -65,16 +65,16 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.treeview_manager.set_column_color(background=7, foreground=8)
 		treeview.set_tooltip_column(9)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
-
 		self._creation_assistant = None
+
+		self._tv_model = Gtk.ListStore(str, str, str, str, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
+		# default sort is descending by campaign creation date
+		self._tv_model.set_sort_column_id(5, Gtk.SortType.DESCENDING)
+		# create and set the filter for expired campaigns
+		self._tv_model_filter = self._tv_model.filter_new()
+		self._tv_model_filter.set_visible_func(self._filter_expired)
+		treeview.set_model(self._tv_model_filter)
 		self.load_campaigns()
-		# default sort is by campaign creation date, descending
-		model = treeview.get_model()
-		model.set_sort_column_id(5, Gtk.SortType.DESCENDING)
-		filter = model.filter_new()
-		filter.set_visible_func(self._filter_expired)
-		self.expired_filter = filter
-		treeview.set_model(self.expired_filter)
 
 	def _filter_expired(self, model, tree_iter, _):
 		if self.gobjects['checkbutton_show_expired'].get_active():
@@ -111,13 +111,8 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 
 	def load_campaigns(self):
 		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
-		treeview = self.gobjects['treeview_campaigns']
-		store = treeview.get_model()
-		if store is None:
-			store = Gtk.ListStore(str, str, str, str, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
-			treeview.set_model(store)
-		else:
-			store.clear()
+		store = self._tv_model
+		store.clear()
 		style_context = self.dialog.get_style_context()
 		bg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_bg', default=ColorHexCode.WHITE)
 		fg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_fg', default=ColorHexCode.BLACK)
@@ -174,7 +169,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self._creation_assistant = assistant
 
 	def signal_checkbutton_toggled(self, _):
-		self.expired_filter.refilter()
+		self._tv_model_filter.refilter()
 
 	def signal_drawingarea_draw(self, drawingarea, context):
 		width, height = drawingarea.get_size_request()
