@@ -37,6 +37,7 @@ import re
 from king_phisher.constants import SPFResult
 
 import dns.exception
+import dns.rdtypes.ANY.TXT
 import dns.resolver
 
 MACRO_REGEX = re.compile(r'%\{([slodipvh])(\d*)([r]?)(.?)\}')
@@ -178,6 +179,7 @@ class SenderPolicyFramework(object):
 			if not top_level:
 				raise
 			answers = []
+		answers = list(answer for answer in answers if isinstance(answer, dns.rdtypes.ANY.TXT.TXT))
 		if len(answers) == 0:
 			return
 
