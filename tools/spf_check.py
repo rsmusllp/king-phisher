@@ -68,8 +68,9 @@ def main():
 		color.print_error('check_host failed with error: permerror')
 		color.print_error('error reason: ' + error.message)
 		return
-	except spf.SPFTempError:
+	except spf.SPFTempError as error:
 		color.print_error('check_host failed with error: temperror')
+		color.print_error('error reason: ' + error.message)
 		return
 	if not result:
 		color.print_status('no spf policy was found for the specified domain')

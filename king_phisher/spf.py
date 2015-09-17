@@ -248,7 +248,7 @@ class SenderPolicyFramework(object):
 		try:
 			answers = dns.resolver.query(qname, qtype)
 		except dns.exception.DNSException:
-			raise SPFTempError('dns resolution error')
+			raise SPFTempError("dns resolution error ({0} {1})".format(qname, qtype))
 		return answers
 
 	def _evaluate_mechanism(self, ip, domain, sender, mechanism, rvalue):
