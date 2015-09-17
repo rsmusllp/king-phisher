@@ -165,6 +165,13 @@ GtkNotebook {
 }
 
 GtkProgressBar {
+	background-image: none;
+	background-color: white;
+	color: white;
+}
+
+GtkProgressBar .progressbar {
+	background-image: none;
 	background-color: @theme_color_2;
 	color: white;
 }
