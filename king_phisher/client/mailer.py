@@ -333,6 +333,9 @@ class MailSenderThread(threading.Thread):
 		self.paused.clear()
 		self._prepare_env()
 
+		emails_total = "{0:,}".format(emails_total)
+		sending_line = "Sending email {{0: >{0},}} of {1} with UID: {{1}} to {{2}}".format(len(emails_total), emails_total)
+		emails_total = int(emails_total.replace(',', ''))
 		self._mime_attachments = self._get_mime_attachments()
 		self.logger.debug("loaded {0:,} MIME attachments".format(len(self._mime_attachments)))
 
@@ -356,7 +359,7 @@ class MailSenderThread(threading.Thread):
 
 			uid = make_uid()
 			emails_done += 1
-			self.tab_notify_status("Sending email {0:,} of {1:,} to {2} with UID: {3}".format(emails_done, emails_total, target['email_address'], uid))
+			self.tab_notify_status(sending_line.format(emails_done, uid, target['email_address']))
 			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
 			if not self._try_send_email(target['email_address'], msg):
 				break
