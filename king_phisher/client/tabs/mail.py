@@ -32,6 +32,7 @@
 
 import codecs
 import datetime
+import hashlib
 import os
 import sys
 import urllib
@@ -115,6 +116,22 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.application.connect('exit', self.signal_kpc_exit)
 		self.application.connect('exit-confirm', self.signal_kpc_exit_confirm)
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
+
+	def _sender_precheck_attachment(self):
+		attachment = self.config.get('mailer.attachment_file')
+		if attachment:
+			md5 = hashlib.new('md5')
+			sha1 = hashlib.new('sha1')
+			with open(attachment, 'rb') as file_h:
+				data = True
+				while data:
+					data = file_h.read(1024)
+					md5.update(data)
+					sha1.update(data)
+			self.text_insert("File '{0}' will be attached to sent messages.\n".format(os.path.basename(attachment)))
+			self.text_insert("  MD5:  {0}\n".format(md5.hexdigest()))
+			self.text_insert("  SHA1: {0}\n".format(sha1.hexdigest()))
+		return True
 
 	def _sender_precheck_campaign(self):
 		campaign = self.application.rpc.remote_table_row('campaigns', self.config['campaign_id'])
@@ -229,6 +246,9 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			return
 		if not self._sender_precheck_spf():
 			return
+		if not self._sender_precheck_attachment():
+			return
+		self.text_insert("Sending messages started at: {:%A %B %d, %Y %H:%M:%S}\n".format(datetime.datetime.now()))
 
 		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:

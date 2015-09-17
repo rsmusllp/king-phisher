@@ -32,6 +32,7 @@
 
 import binascii
 import select
+import socket
 import sys
 import threading
 
@@ -133,7 +134,7 @@ class SSHTCPForwarder(threading.Thread):
 			del kwargs['raise_error']
 		try:
 			self.client.connect(self.server[0], self.server[1], username=self.username, allow_agent=False, timeout=12.0, *args, **kwargs)
-		except paramiko.SSHException as error:
+		except (paramiko.SSHException, socket.timeout) as error:
 			if raise_error:
 				raise error
 			return False
