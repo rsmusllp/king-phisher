@@ -117,6 +117,18 @@ GtkComboBox {
 	color: white;
 }
 
+GtkEntry {
+	background-color: alpha(white, 0.8);
+	background-image: none;
+	color: @theme_color_0;
+}
+
+GtkEntry:insensitive {
+	background-color: alpha(gray, 0.8);
+	background-image: none;
+	color: @theme_color_0;
+}
+
 GtkFileChooser .search-bar {
 	background-color: @theme_color_0;
 }
@@ -255,7 +267,6 @@ GtkLabel {
 	color: white;
 }
 
-GtkEntry,
 GtkSpinButton {
 	background-color: alpha(white, 0.8);
 	background-image: none;
