@@ -68,6 +68,15 @@ Variables which are not set by default are flags which are toggled when defined.
 For example to skip installing client components the following command could be
 used: ```KING_PHISHER_SKIP_CLIENT=x tools/install.sh```
 
+### Recommended Minimum Requirements
+It is recommended that King Phisher be run on a system which exceeds the host
+operating systems minimum requirements. At this time a minimum of 2048 MB of RAM
+and at least a CPU with 2 cores running at 1.5 GHz is sufficient. Furthermore
+the hard disk should have additional space on top of the host OS recommendations
+for the installation of required packages. The recommended server for King
+Phisher is the latest Ubuntu Server LTS release. Additionally for the client it
+is recommended that the display support a minimum resolution of 1024x800.
+
 ## Other Linux Versions
 Install each of the required packages with
 ```pip install -r requirements.txt```. If any fail to install they are most
