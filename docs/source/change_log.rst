@@ -14,6 +14,7 @@ Version 1.0.0
 
 * Moved templates to a dedicated separate repository
 * Added a custom theme for the client
+* Added support for two factor authentication with TOTP
 
 Version 0.x.x
 -------------
