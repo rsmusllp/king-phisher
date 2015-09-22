@@ -69,9 +69,19 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		'SMTPSendRate',
 		'SPFCheckLevels'
 	)
+	def __init__(self, *args, **kwargs):
+		super(ConfigurationDialog, self).__init__(*args, **kwargs)
+		self.gobjects['entry_smtp_server'].set_sensitive(not self.gobjects['switch_smtp_ssh_enable'].get_active())
+
 	def signal_switch_smtp_ssh(self, switch, _):
 		active = switch.get_property('active')
+		entry = self.gobjects['entry_smtp_server']
 		self.gtk_builder_get('frame_smtp_ssh').set_sensitive(active)
+		if active:
+			entry.set_sensitive(False)
+			entry.set_text('localhost:25')
+		else:
+			entry.set_sensitive(True)
 
 	def signal_toggle_alert_subscribe(self, cbutton):
 		active = cbutton.get_property('active')
