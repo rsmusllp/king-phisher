@@ -66,9 +66,10 @@ import paramiko
 from smoke_zephyr.utilities import parse_server
 from smoke_zephyr.utilities import which
 
-CONFIG_FILE_PATH = '~/.king_phisher.json'
+CONFIG_FILE_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'config.json')
 """The default search location for the client configuration file."""
 GTK3_DEFAULT_THEME = 'Adwaita'
+"""The default GTK3 Theme for style information."""
 
 if isinstance(Gtk.Application, utilities.Mock):
 	_Gtk_Application = type('Gtk.Application', (object,), {})
@@ -107,8 +108,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.debug("matplotlib version: {0}".format(graphs.matplotlib.__version__))
 		self.set_property('application-id', 'org.king-phisher.client')
 		self.set_property('register-session', True)
-		self.config_file = (config_file or CONFIG_FILE_PATH)
+		self.config_file = CONFIG_FILE_PATH
 		"""The file containing the King Phisher client configuration."""
+		if not os.path.isfile(self.config_file):
+			self._create_config()
 		self.config = None
 		"""The primary King Phisher client configuration."""
 		self.main_window = None
@@ -176,6 +179,20 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return local_port
 		self.server_disconnect()
 		return
+
+	def _create_config(self):
+		config_dir = os.path.dirname(self.config_file)
+		if not os.path.isdir(config_dir):
+			self.logger.debug('creating the user configuration directory')
+			os.makedirs(config_dir)
+		# move the pre 1.0.0 config file if it exists
+		old_path = os.path.expanduser('~/.king_phisher.json')
+		if os.path.isfile(old_path) and os.access(old_path, os.R_OK):
+			self.logger.debug('moving the old config file to the new location')
+			os.rename(old_path, self.config_file)
+		else:
+			client_template = find.find_data_file('client_config.json')
+			shutil.copy(client_template, self.config_file)
 
 	def campaign_configure(self):
 		assistant = assistants.CampaignAssistant(self, campaign_id=self.config['campaign_id'])
@@ -335,10 +352,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		:param bool load_defaults: Load missing options from the template configuration file.
 		"""
 		self.logger.info('loading the config from disk')
-		config_file = os.path.expanduser(self.config_file)
 		client_template = find.find_data_file('client_config.json')
-		if not (os.path.isfile(config_file) and os.stat(config_file).st_size):
-			shutil.copy(client_template, config_file)
+		config_file = os.path.expanduser(self.config_file)
 		with open(config_file, 'r') as tmp_file:
 			self.config = json.load(tmp_file)
 		if load_defaults:
