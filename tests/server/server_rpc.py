@@ -34,6 +34,7 @@ import types
 import unittest
 
 from king_phisher import version
+from king_phisher.server import server_rpc
 from king_phisher.server.database import models as db_models
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
@@ -47,7 +48,10 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.assertTrue('server.address.port' in server_address)
 		self.assertEqual(server_address['server.address.host'], self.config.get('server.address.host'))
 		self.assertEqual(server_address['server.address.port'], self.config.get('server.address.port'))
-		self.assertIsNone(self.rpc('config/get', random_string(10)))
+
+	def test_rpc_config_get_permissions(self):
+		self.assertTrue(self.config.has_option('server.database'))
+		self.assertRPCPermissionDenied('config/get', 'server.database')
 
 	def test_rpc_campaign_delete(self):
 		campaign_name = random_string(10)
@@ -67,10 +71,15 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.assertEqual(campaign.name, campaign_name)
 
 	def test_rpc_config_set(self):
-		config_key = random_string(10)
+		config_key = server_rpc.CONFIG_WRITEABLE[0]
 		config_value = random_string(10)
 		self.rpc('config/set', {config_key: config_value})
 		self.assertEqual(self.rpc('config/get', config_key), config_value)
+
+	def test_rpc_config_set_permissions(self):
+		config_key = random_string(10)
+		config_value = random_string(10)
+		self.assertRPCPermissionDenied('config/set', {config_key: config_value})
 
 	def test_rpc_is_unauthorized(self):
 		http_response = self.http_request('/ping', method='RPC')

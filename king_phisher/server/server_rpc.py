@@ -36,6 +36,7 @@ import ipaddress
 import logging
 import threading
 
+from king_phisher import errors
 from king_phisher import geoip
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
@@ -44,6 +45,18 @@ from king_phisher.server.database import models as db_models
 
 import pyotp
 
+CONFIG_READABLE = (
+	'beef.hook_url',
+	'server.address.host',
+	'server.address.port',
+	'server.require_id',
+	'server.secret_id',
+	'server.tracking_image',
+	'server.web_root'
+)
+"""Configuration options that can be accessed by the client."""
+CONFIG_WRITEABLE = ('beef.hook_url',)
+"""Configuration options that can be changed by the client at run time."""
 VIEW_ROW_COUNT = 50
 """The default number of rows to return when one of the /view methods are called."""
 
@@ -151,10 +164,14 @@ class KingPhisherRequestHandlerRPC(object):
 			option_names = option_name
 			option_values = {}
 			for option_name in option_names:
+				if not option_name in CONFIG_READABLE:
+					raise errors.KingPhisherPermissionError('permission denied to read config option: ' + option_name)
 				if self.config.has_option(option_name):
 					option_values[option_name] = self.config.get(option_name)
 			return option_values
-		elif self.config.has_option(option_name):
+		if not option_name in CONFIG_READABLE:
+			raise errors.KingPhisherPermissionError('permission denied to read config option: ' + option_name)
+		if self.config.has_option(option_name):
 			return self.config.get(option_name)
 		return
 
@@ -166,6 +183,8 @@ class KingPhisherRequestHandlerRPC(object):
 		:param dict options: A dictionary of option names and values
 		"""
 		for option_name, option_value in options.items():
+			if not option_name in CONFIG_WRITEABLE:
+				raise errors.KingPhisherPermissionError('permission denied to write config option: ' + option_name)
 			self.config.set(option_name, option_value)
 		return
 

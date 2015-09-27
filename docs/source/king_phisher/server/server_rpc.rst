@@ -7,6 +7,12 @@
 Data
 ----
 
+.. autodata:: king_phisher.server.server_rpc.CONFIG_READABLE
+   :annotation:
+
+.. autodata:: king_phisher.server.server_rpc.CONFIG_WRITEABLE
+   :annotation:
+
 .. autodata:: king_phisher.server.server_rpc.VIEW_ROW_COUNT
 
 Functions

@@ -40,7 +40,8 @@ import urllib
 from king_phisher import find
 from king_phisher.client import client_rpc
 from king_phisher.server import rest_api
-from king_phisher.server.server import *
+from king_phisher.server import server
+from king_phisher.third_party import AdvancedHTTPServer
 
 import smoke_zephyr.configuration
 import smoke_zephyr.utilities
@@ -113,7 +114,7 @@ def skip_on_travis(test_method):
 		return test_method(self, *args, **kwargs)
 	return decorated
 
-class KingPhisherRequestHandlerTest(KingPhisherRequestHandler):
+class KingPhisherRequestHandlerTest(server.KingPhisherRequestHandler):
 	def install_handlers(self):
 		super(KingPhisherRequestHandlerTest, self).install_handlers()
 		self.rpc_handler_map['^/login$'] = self.rpc_test_login
@@ -145,9 +146,9 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 		config.set('server.rest_api.enabled', True)
 		config.set('server.rest_api.token', rest_api.generate_token())
 		self.config = config
-		self.server = build_king_phisher_server(config, HandlerClass=KingPhisherRequestHandlerTest)
+		self.server = server.build_king_phisher_server(config, HandlerClass=KingPhisherRequestHandlerTest)
 		config.set('server.address.port', self.server.http_server.server_port)
-		self.assertIsInstance(self.server, KingPhisherServer)
+		self.assertIsInstance(self.server, server.KingPhisherServer)
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
 		self.server_thread.daemon = True
 		self.server_thread.start()
@@ -168,6 +169,22 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 		self.assertIsInstance(http_response, http.client.HTTPResponse)
 		error_message = "HTTP Response received status {0} when {1} was expected".format(http_response.status, status)
 		self.assertEqual(http_response.status, status, msg=error_message)
+
+	def assertRPCPermissionDenied(self, method, *args, **kwargs):
+		"""
+		Assert that the specified RPC method fails with a
+		:py:exc:`~king_phisher.errors.KingPhisherPermissionError` exception.
+
+		:param method: The RPC method that is to be tested
+		"""
+		try:
+			self.rpc(method, *args, **kwargs)
+		except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
+			name = error.remote_exception.get('name')
+			if name.endswith('.KingPhisherPermissionError'):
+				return
+			self.fail("the rpc method '{0}' failed".format(method))
+		self.fail("the rpc method '{0}' granted permissions".format(method))
 
 	def http_request(self, resource, method='GET', include_id=True, body=None, headers=None):
 		"""

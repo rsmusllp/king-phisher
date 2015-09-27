@@ -136,25 +136,17 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 
 
 class ServerDatabaseRPCTests(testing.KingPhisherServerTestCase):
-	def assertPermissionDenied(self, db_method, table, *args, **kwargs):
-		db_method = 'db/table/' + db_method
-		try:
-			self.rpc(db_method, table, *args, **kwargs)
-		except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
-			name = error.remote_exception.get('name')
-			if name.endswith('.KingPhisherPermissionError'):
-				return
-			self.fail("the rpc method '{0}' failed on table {1}".format(db_method, table))
-		self.fail("the rpc method '{0}' granted permissions on table {1}".format(db_method, table))
+	def assertRPCPermissionDenied(self, db_method, *args, **kwargs):
+		super(ServerDatabaseRPCTests, self).assertRPCPermissionDenied('db/table/' + db_method, *args, **kwargs)
 
 	def test_meta_data_is_private(self):
 		# ensure that meta_data is kept private and that private tables can't be accessed via rpc
 		self.assertTrue(db_models.MetaData.is_private)
 		self.assertIsNone(self.rpc('db/table/view', 'meta_data'))
-		self.assertPermissionDenied('get', 'meta_data', 'schema_version')
-		self.assertPermissionDenied('set', 'meta_data', 'schema_version', ('value', 'value_type'), ('test', 'str'))
-		self.assertPermissionDenied('insert', 'meta_data', ('id', 'value', 'value_type'), ('test', 'test', 'str'))
-		self.assertPermissionDenied('delete', 'meta_data', 'schema_version')
+		self.assertRPCPermissionDenied('get', 'meta_data', 'schema_version')
+		self.assertRPCPermissionDenied('set', 'meta_data', 'schema_version', ('value', 'value_type'), ('test', 'str'))
+		self.assertRPCPermissionDenied('insert', 'meta_data', ('id', 'value', 'value_type'), ('test', 'test', 'str'))
+		self.assertRPCPermissionDenied('delete', 'meta_data', 'schema_version')
 
 if __name__ == '__main__':
 	unittest.main()
