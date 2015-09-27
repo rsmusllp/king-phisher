@@ -36,7 +36,6 @@ import sys
 import threading
 import time
 import urllib
-import unittest
 
 from king_phisher import find
 from king_phisher.client import client_rpc
@@ -130,7 +129,7 @@ class KingPhisherTestCase(smoke_zephyr.utilities.TestCase):
 	"""
 	pass
 
-class KingPhisherServerTestCase(unittest.TestCase):
+class KingPhisherServerTestCase(KingPhisherTestCase):
 	"""
 	This class can be inherited to automatically set up a King Phisher server
 	instance configured in a way to be suitable for testing purposes.
