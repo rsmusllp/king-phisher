@@ -146,10 +146,6 @@ class Message(RemoteRow):
 	__xref_attr__ = 'message'
 	__slots__ = ('id', 'campaign_id', 'target_email', 'first_name', 'last_name', 'opened', 'opener_ip', 'opener_user_agent', 'sent', 'trained', 'company_department_id')
 
-class MetaData(RemoteRow):
-	__table__ = 'meta_data'
-	__slots__ = ('id', 'value_type', 'value')
-
 class User(RemoteRow):
 	__table__ = 'users'
 	__xref_attr__ = 'user'

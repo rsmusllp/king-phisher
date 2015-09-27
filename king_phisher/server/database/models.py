@@ -87,7 +87,10 @@ class BaseRowCls(object):
 	Provides a standard ``__repr__`` method and default permission checks which
 	are to be overridden as desired by subclasses.
 	"""
+	is_private = False
+	"""Whether the table is only allowed to be accessed by the server or not."""
 	__repr_attributes__ = ()
+	"""Attributes which should be included in the __repr__ method."""
 	def __repr__(self):
 		description = "<{0} id={1} ".format(self.__class__.__name__, repr(self.id))
 		for repr_attr in self.__repr_attributes__:
@@ -98,7 +101,7 @@ class BaseRowCls(object):
 	def assert_session_has_permissions(self, *args, **kwargs):
 		"""
 		A convenience function which wraps :py:meth:`~.session_has_permissions`
-		and raisies a :py:exc:`~king_phisher.errors.KingPhisherPermissionError`
+		and raises a :py:exc:`~king_phisher.errors.KingPhisherPermissionError`
 		if the session does not have the specified permissions.
 		"""
 		if self.session_has_permissions(*args, **kwargs):
@@ -116,6 +119,8 @@ class BaseRowCls(object):
 		:return: Whether the session has the desired permissions.
 		:rtype: bool
 		"""
+		if self.is_private:
+			return False
 		access = access.lower()
 		for case in switch(access, comp=operator.contains, swapped=True):
 			if case('c') and not self.session_has_create_access(session):
@@ -297,6 +302,7 @@ class Message(Base):
 
 @register_table
 class MetaData(Base):
+	is_private = True
 	__repr_attributes__ = ('value_type', 'value')
 	__tablename__ = 'meta_data'
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)

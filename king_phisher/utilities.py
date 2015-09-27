@@ -125,6 +125,9 @@ class Mock(object):
 	def __init__(self, *args, **kwargs):
 		pass
 
+	def __add__(self, other):
+		return other
+
 	def __call__(self, *args, **kwargs):
 		return Mock()
 
