@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import base64
 import grp
 import hashlib
 import json
@@ -41,11 +42,12 @@ import string
 import threading
 import time
 
+from king_phisher import its
 from king_phisher.third_party import pam
 
 from smoke_zephyr import utilities
 
-__all__ = ['AuthenticatedSessionManager', 'ForkedAuthenticator']
+__all__ = ('AuthenticatedSessionManager', 'ForkedAuthenticator')
 
 make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for x in range(random.randint(5, 8)))
 make_hash = lambda pw: hashlib.sha512(pw.encode('utf-8')).digest()
@@ -121,7 +123,9 @@ class AuthenticatedSessionManager(object):
 		:rtype: str
 		"""
 		session = AuthenticatedSession(user)
-		session_id = utilities.random_string_alphanumeric(64)
+		session_id = base64.b64encode(os.urandom(50))
+		if its.py_v3:
+			session_id = session_id.decode('utf-8')
 		with self._lock:
 			self.clean()
 			# limit users to one valid session
