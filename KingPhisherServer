@@ -53,20 +53,23 @@ from smoke_zephyr.configuration import Configuration
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
-	'alembic>=0.6.7',
-	'boltons>=0.6.4',
+	'alembic>=0.8.1',
+	'boltons>=15.0',
 	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),
-	'geoip2>=2.1.0',
-	'Jinja2>=2.7.3',
+	'geoip2>=2.2.0',
+	'Jinja2>=2.8',
 	'markupsafe>=0.23',
-	'msgpack-python>=0.4.5',
-	'psycopg2>=2.6',
+	'msgpack-python>=0.4.6',
+	'psycopg2>=2.6.1',
+	'pyotp==2.0.0',
+	'python-dateutil>=2.4.2',
 	'PyYAML>=3.11',
 	'requests>=2.7.0',
-	'SQLAlchemy>=1.0.2'
+	'SQLAlchemy>=1.0.8',
+	'termcolor>=1.1.0'
 ]
 if its.py_v2:
-	__requirements__.append('py2-ipaddress>=3.4')
+	__requirements__.append('py2-ipaddress==3.4.1')
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
