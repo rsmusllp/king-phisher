@@ -35,7 +35,6 @@ import unittest
 from king_phisher import testing
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
-from king_phisher.third_party import AdvancedHTTPServer
 from king_phisher.utilities import random_string
 
 get_tables_with_column_id = db_models.get_tables_with_column_id
@@ -78,6 +77,7 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 	def test_get_tables_id(self):
 		tables = set([
 			'alert_subscriptions',
+			'authenticated_sessions',
 			'campaign_types',
 			'campaigns',
 			'company_departments',

@@ -42,7 +42,7 @@ import sqlalchemy.orm
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 """The schema version of the database, used for compatibility checks."""
 
 database_tables = {}
@@ -87,10 +87,10 @@ class BaseRowCls(object):
 	Provides a standard ``__repr__`` method and default permission checks which
 	are to be overridden as desired by subclasses.
 	"""
-	is_private = False
-	"""Whether the table is only allowed to be accessed by the server or not."""
 	__repr_attributes__ = ()
 	"""Attributes which should be included in the __repr__ method."""
+	is_private = False
+	"""Whether the table is only allowed to be accessed by the server or not."""
 	def __repr__(self):
 		description = "<{0} id={1} ".format(self.__class__.__name__, repr(self.id))
 		for repr_attr in self.__repr_attributes__:
@@ -172,6 +172,16 @@ class AlertSubscription(Base):
 
 	def session_has_update_access(self, session):
 		return session.user == self.user_id
+
+@register_table
+class AuthenticatedSession(Base):
+	__repr_attributes__ = ('user_id',)
+	__tablename__ = 'authenticated_sessions'
+	is_private = True
+	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
+	created = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+	last_seen = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
 
 @register_table
 class Campaign(Base):
@@ -302,9 +312,9 @@ class Message(Base):
 
 @register_table
 class MetaData(Base):
-	is_private = True
 	__repr_attributes__ = ('value_type', 'value')
 	__tablename__ = 'meta_data'
+	is_private = True
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	value_type = sqlalchemy.Column(sqlalchemy.String, default='str')
 	value = sqlalchemy.Column(sqlalchemy.String)
