@@ -134,7 +134,6 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 		db_manager.set_meta_data(key, value)
 		self.assertEqual(db_manager.get_meta_data(key), value)
 
-
 class ServerDatabaseRPCTests(testing.KingPhisherServerTestCase):
 	def assertRPCPermissionDenied(self, db_method, *args, **kwargs):
 		super(ServerDatabaseRPCTests, self).assertRPCPermissionDenied('db/table/' + db_method, *args, **kwargs)

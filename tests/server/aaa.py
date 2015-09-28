@@ -46,12 +46,12 @@ class ServerAuthenticationTests(testing.KingPhisherTestCase):
 class ServerAuthenticatedSessionManagerTests(testing.KingPhisherTestCase):
 	def test_session_creation(self):
 		manager = aaa.AuthenticatedSessionManager()
-		self.assertEqual(len(manager), 0)
+		original_session_count = len(manager)
 		username = 'alice'
 		manager.put(username)
-		self.assertEqual(len(manager), 1)
+		self.assertEqual(len(manager), original_session_count + 1)
 		manager.put(username)
-		self.assertEqual(len(manager), 1)
+		self.assertEqual(len(manager), original_session_count + 1)
 
 	def test_session_expiration(self):
 		manager = aaa.AuthenticatedSessionManager(timeout=0.5)

@@ -43,6 +43,8 @@ import threading
 import time
 
 from king_phisher import its
+from king_phisher.server.database import manager as db_manager
+from king_phisher.server.database import models as db_models
 from king_phisher.third_party import pam
 
 from smoke_zephyr import utilities
@@ -78,6 +80,15 @@ class AuthenticatedSession(object):
 	def __repr__(self):
 		return "<{0} user={1} >".format(self.__class__.__name__, self.user)
 
+	@classmethod
+	def from_db_authenticated_session(cls, stored_session):
+		if not isinstance(stored_session, db_models.AuthenticatedSession):
+			raise TypeError('from_db_authenticated_session() db_session argument must be a king_phisher.server.database.models.AuthenticatedSession instance')
+		session = cls(stored_session.user_id)
+		session.created = stored_session.created
+		session.last_seen = stored_session.last_seen
+		return session
+
 class AuthenticatedSessionManager(object):
 	"""A container for managing authenticated sessions."""
 	def __init__(self, timeout='30m'):
@@ -85,11 +96,25 @@ class AuthenticatedSessionManager(object):
 		:param timeout: The length of time in seconds for which sessions are valid.
 		:type timeout: int, str
 		"""
+		self.logger = logging.getLogger('KingPhisher.Server.SessionManager')
 		if isinstance(timeout, str):
 			timeout = utilities.parse_timespan(timeout)
 		self.session_timeout = timeout
 		self._sessions = {}
 		self._lock = threading.Lock()
+
+		# get valid sessions from the database
+		expired = 0
+		session = db_manager.Session()
+		for stored_session in session.query(db_models.AuthenticatedSession):
+			if stored_session.last_seen < time.time() - self.session_timeout:
+				expired += 1
+				continue
+			auth_session = AuthenticatedSession.from_db_authenticated_session(stored_session)
+			self._sessions[stored_session.id] = auth_session
+		session.query(db_models.AuthenticatedSession).delete()
+		session.commit()
+		self.logger.info("restored {0:,} valid sessions and skipped {1:,} expired sessions from the database".format(len(self._sessions), expired))
 
 	def __len__(self):
 		return len(self._sessions)
@@ -122,23 +147,26 @@ class AuthenticatedSessionManager(object):
 		:return: The unique identifier for this session.
 		:rtype: str
 		"""
-		session = AuthenticatedSession(user)
-		session_id = base64.b64encode(os.urandom(50))
+		new_session = AuthenticatedSession(user)
+		new_session_id = base64.b64encode(os.urandom(50))
 		if its.py_v3:
-			session_id = session_id.decode('utf-8')
+			new_session_id = new_session_id.decode('utf-8')
+
 		with self._lock:
 			self.clean()
 			# limit users to one valid session
 			remove = []
-			for session_id, session in self._sessions.items():
-				if session.user == user:
-					remove.append(session_id)
-			for session_id in remove:
-				del self._sessions[session_id]
-			while session_id in self._sessions:
-				session_id = utilities.random_string_alphanumeric(64)
-			self._sessions[session_id] = session
-		return session_id
+			for old_session_id, old_session in self._sessions.items():
+				if old_session.user == user:
+					remove.append(old_session_id)
+			for old_session_id in remove:
+				del self._sessions[old_session_id]
+			if remove:
+				self.logger.info("invalidated {0:,} previously existing session for user {1}".format(len(remove), user))
+			while new_session_id in self._sessions:
+				new_session_id = base64.b64encode(os.urandom(50))
+			self._sessions[new_session_id] = new_session
+		return new_session_id
 
 	def get(self, session_id, update_timestamp=True):
 		"""
@@ -172,6 +200,26 @@ class AuthenticatedSessionManager(object):
 		"""
 		with self._lock:
 			del self._sessions[session_id]
+
+	def stop(self):
+		self.clean()
+		if not self._sessions:
+			self.logger.info('no sessions to store in the database')
+			return
+		session = db_manager.Session()
+		for session_id, auth_session in self._sessions.items():
+			session.add(db_models.AuthenticatedSession(
+				id=session_id,
+				created=auth_session.created,
+				last_seen=auth_session.last_seen,
+				user_id=auth_session.user
+			))
+		session.commit()
+		session.close()
+		if len(self._sessions) == 1:
+			self.logger.info('1 session was stored in the database')
+		else:
+			self.logger.info("{0:,} sessions were stored in the database".format(len(self._sessions)))
 
 class ForkedAuthenticator(object):
 	"""

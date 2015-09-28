@@ -53,18 +53,18 @@ _meta_data_type_map = {'int': int, 'str': str}
 
 def get_meta_data(key, session=None):
 	"""
-	Retreive the value from the database's metadata storage.
+	Retrieve the value from the database's metadata storage.
 
 	:param str key: The name of the value to retrieve.
 	:param session: The session to use to retrieve the value.
 	:return: The meta data value.
 	"""
-	close_session = session == None
+	close_session = session is None
 	session = (session or Session())
 	result = get_row_by_id(session, models.MetaData, key)
 	if close_session:
 		session.close()
-	if result == None:
+	if result is None:
 		return None
 	return _meta_data_type_map[result.value_type](result.value)
 
@@ -97,7 +97,7 @@ def set_meta_data(key, value, session=None):
 	value_type = type(value).__name__
 	if not value_type in _meta_data_type_map:
 		raise ValueError('incompatible data type:' + value_type)
-	close_session = session == None
+	close_session = session is None
 	session = (session or Session())
 	result = get_row_by_id(session, models.MetaData, key)
 	if result:

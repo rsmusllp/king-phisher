@@ -744,9 +744,9 @@ class KingPhisherServer(AdvancedHTTPServer):
 
 		self.http_server.config = config
 		self.http_server.throttle_semaphore = threading.Semaphore()
+		self.http_server.session_manager = aaa.AuthenticatedSessionManager()
 		self.http_server.forked_authenticator = aaa.ForkedAuthenticator(required_group=config.get_if_exists('server.authentication.group'))
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
-		self.http_server.session_manager = aaa.AuthenticatedSessionManager()
 		self.job_manager = job.JobManager()
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
@@ -774,6 +774,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 			return
 		self.logger.warning('processing shutdown request')
 		super(KingPhisherServer, self).shutdown(*args, **kwargs)
+		self.http_server.session_manager.stop()
 		self.http_server.forked_authenticator.stop()
 		self.logger.debug('stopped the forked authenticator process')
 		self.job_manager.stop()
