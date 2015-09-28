@@ -101,6 +101,30 @@ GtkButtonBox {
 	padding: 10px;
 }
 
+GtkCalendar {
+	background-color: white;
+	background-image: none;
+	color: @theme_color_0;
+}
+
+GtkCalendar:insensitive {
+	background-color: alpha(gray, 0.8);
+	background-image: none;
+	color: white;
+}
+
+GtkCalendar:insensitive:selected {
+	background-color: alpha(lightgray, 0.8);
+	background-image: none;
+	color: white;
+}
+
+GtkCalendar:selected {
+	background-color: @theme_color_2;
+	background-image: none;
+	color: white;
+}
+
 GtkCalendar .header {
 	background-color: @theme_color_1;
 	background-image: none;
@@ -126,7 +150,7 @@ GtkEntry {
 GtkEntry:insensitive {
 	background-color: alpha(gray, 0.8);
 	background-image: none;
-	color: @theme_color_0;
+	color: white;
 }
 
 GtkFileChooser .search-bar {
