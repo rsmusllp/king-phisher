@@ -1,7 +1,7 @@
-#!/usr/bin/python -B
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  KingPhisherSMTPD
+#  tools/debug_smtp_server.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -34,6 +34,9 @@
 import argparse
 import logging
 import os
+import sys
+
+sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from king_phisher import smtp_server
 from king_phisher import version
@@ -43,6 +46,7 @@ def main():
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
 	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
 	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in forground (do not fork)')
+	parser.add_argument('-a', '--address', dest='address', default='localhost', help='address to listen on')
 	parser.add_argument('-p', '--port', dest='port', type=int, default=2525, help='port to listen on')
 	arguments = parser.parse_args()
 
@@ -57,8 +61,11 @@ def main():
 	if (not arguments.foreground) and os.fork():
 		return
 
-	server = smtp_server.KingPhisherSMTPServer(('localhost', arguments.port), None, debugging=True)
-	server.serve_forever()
+	server = smtp_server.KingPhisherSMTPServer((arguments.address, arguments.port), None, debugging=True)
+	try:
+		server.serve_forever()
+	except KeyboardInterrupt:
+		pass
 
 if __name__ == '__main__':
 	main()
