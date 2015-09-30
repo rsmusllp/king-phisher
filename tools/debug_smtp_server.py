@@ -38,6 +38,7 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from king_phisher import color
 from king_phisher import smtp_server
 from king_phisher import version
 
@@ -46,7 +47,7 @@ def main():
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
 	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
 	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in forground (do not fork)')
-	parser.add_argument('-a', '--address', dest='address', default='localhost', help='address to listen on')
+	parser.add_argument('-a', '--address', dest='address', default='127.0.0.1', help='address to listen on')
 	parser.add_argument('-p', '--port', dest='port', type=int, default=2525, help='port to listen on')
 	arguments = parser.parse_args()
 
@@ -61,10 +62,13 @@ def main():
 	if (not arguments.foreground) and os.fork():
 		return
 
-	server = smtp_server.KingPhisherSMTPServer((arguments.address, arguments.port), None, debugging=True)
+	bind_address = (arguments.address, arguments.port)
+	server = smtp_server.KingPhisherSMTPServer(bind_address, None, debugging=True)
+	color.print_status("smtp server listening on {0}:{1}".format(bind_address[0], bind_address[1]))
 	try:
 		server.serve_forever()
 	except KeyboardInterrupt:
+		color.print_status('keyboard interrupt caught, now exiting')
 		pass
 
 if __name__ == '__main__':
