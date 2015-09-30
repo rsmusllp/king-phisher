@@ -56,6 +56,10 @@ def main():
 		color.print_error('the smtp server ip address specified is invalid')
 		return
 
+	if not '@' in target_email:
+		target_email = utilities.random_string_lower_numeric(8) + '@' + target_email
+		color.print_status('target email appears to be just a domain, changed to: ' + target_email)
+
 	if not utilities.is_valid_email_address(target_email):
 		color.print_error('the email address specified is invalid')
 		return
