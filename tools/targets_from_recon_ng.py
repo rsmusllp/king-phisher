@@ -34,6 +34,7 @@ import argparse
 import csv
 import os
 import random
+import re
 import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -41,7 +42,8 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from king_phisher import color
 from king_phisher import version
 
-PROG_DESCRIPTION = """King Phisher Recon-ng Converter.
+PROG_DESCRIPTION = """King Phisher Recon-ng CSV Converter
+
 This tool is used to convert the output from the recon-ng reporting/csv module
 to a CSV file for use with King Phisher.
 """
@@ -55,6 +57,17 @@ Format string examples:
     {first}.{last}
 """
 
+RECON_NG_CONTACTS_TABLE = (
+	'first_name',
+	'middle_name',
+	'last_name',
+	'email',
+	'title',
+	'region',
+	'country',
+	'module'
+)
+
 def main():
 	parser = argparse.ArgumentParser(
 		conflict_handler='resolve',
@@ -64,20 +77,29 @@ def main():
 	)
 	parser.add_argument('-f', '--format', dest='email_format', default='{first:.1}{last}', help='the email format string to use')
 	parser.add_argument('-n', '--number', dest='limit', type=int, help='only process the specified number of contacts')
-	parser.add_argument('--shuffle', action='store_true', default=False, help='shuffle the contacts to randomize their order')
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
+	parser.add_argument('--shuffle', action='store_true', default=False, help='shuffle the contacts to randomize their order')
+	parser.add_argument('--filter-region', action='store', default=r'.*', help='a regex to use to filter contacts by region')
+	parser.add_argument('domain', help='the domain to append to emails')
 	parser.add_argument('in_file', type=argparse.FileType('r'), help='the csv file of contacts from recon-ng')
 	parser.add_argument('out_file', type=argparse.FileType('w'), help='the target csv file to create for')
-	parser.add_argument('domain', help='the domain to append to emails')
 	arguments = parser.parse_args()
 
+	filtered = 0
 	targets = []
 	color.print_status('reading contacts from: ' + os.path.abspath(arguments.in_file.name))
-	for row in csv.reader(arguments.in_file):
-		targets.append((row[0], row[2]))
+	for row in csv.DictReader(arguments.in_file, fieldnames=RECON_NG_CONTACTS_TABLE):
+		if re.match(arguments.filter_region, row['region']) is None:
+			filtered += 1
+			continue
+		targets.append((row['first_name'], row['last_name']))
 	arguments.in_file.close()
 
-	color.print_status("read in {0:,} contacts from recon-ng csv output".format(len(targets)))
+	color.print_status("read in {0:,} contacts from recon-ng csv output".format(len(targets) + filtered))
+	if filtered:
+		color.print_status("  {0:,} contacts filtered".format(filtered))
+		color.print_status("  {0:,} contacts remain".format(len(targets)))
+
 	if arguments.shuffle:
 		random.shuffle(targets)
 		color.print_status('shuffled the list of contacts')
