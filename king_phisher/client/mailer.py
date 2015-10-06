@@ -447,6 +447,7 @@ class MailSenderThread(threading.Thread):
 		if sensitivity != 'Normal':
 			msg['Sensitivity'] = sensitivity
 		msg.preamble = 'This is a multi-part message in MIME format.'
+
 		msg_alt = MIMEMultipart('alternative')
 		msg.attach(msg_alt)
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:

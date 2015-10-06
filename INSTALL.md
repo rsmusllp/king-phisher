@@ -3,9 +3,11 @@ The King Phisher Server is only supported on Linux. The King Phisher
 Client is supported on both Windows and Linux. Windows executables are
 available from the [releases page](https://github.com/securestate/king-phisher/releases).
 
-An installation script is available to automate the process on supported versions
-of Linux. Instructions on how it can be used are
-[Linux Install Steps](#linux-install-steps) section.
+An installation script is available to automate the process on supported
+versions of Linux. Instructions on how it can be used are
+[Linux Install Steps](#linux-install-steps) section. It is highly recommended
+that users ensure that the system clock and timezone are set accurately on both
+the client and server.
 
 ## Overview
 King Phisher uses a client server architecture. The ```KingPhisherServer```
