@@ -136,7 +136,7 @@ class MessageTemplateEnvironment(BaseTemplateEnvironment):
 		if mode == self.MODE_ANALYZE:
 			self.attachment_images = {}
 
-	def _inline_image_handler(self, image_path):
+	def _inline_image_handler(self, image_path, style=None):
 		image_path = os.path.abspath(image_path)
 		if self._mode == self.MODE_PREVIEW:
 			if os.path.sep == '\\':
@@ -144,12 +144,18 @@ class MessageTemplateEnvironment(BaseTemplateEnvironment):
 			if not image_path.startswith('/'):
 				image_path = '/' + image_path
 			image_path = 'file://' + image_path
-			return "<img src=\"{0}\">".format(html.escape(image_path, quote=True))
-		if image_path in self.attachment_images:
-			attachment_name = self.attachment_images[image_path]
 		else:
-			attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
-			while attachment_name in self.attachment_images.values():
+			if image_path in self.attachment_images:
+				attachment_name = self.attachment_images[image_path]
+			else:
 				attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
-			self.attachment_images[image_path] = attachment_name
-		return "<img src=\"cid:{0}\">".format(html.escape(attachment_name, quote=True))
+				while attachment_name in self.attachment_images.values():
+					attachment_name = 'img_' + utilities.random_string_lower_numeric(8) + os.path.splitext(image_path)[-1]
+				self.attachment_images[image_path] = attachment_name
+			image_path = 'cid:' + attachment_name
+		image_path = html.escape(image_path, quote=True)
+		img_tag = "<img src=\"{0}\"".format(image_path)
+		if style is not None:
+			img_tag += " style=\"{0}\"".format(html.escape(str(style), quote=True))
+		img_tag += '>'
+		return img_tag
