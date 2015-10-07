@@ -520,9 +520,12 @@ class AdvancedHTTPServerRPCClient(object):
 
 		method = os.path.join(self.uri_base, method)
 		self.logger.debug('calling RPC method: ' + method[1:])
-		with self.lock:
-			self.client.request('RPC', method, options, headers)
-			resp = self.client.getresponse()
+		try:
+			with self.lock:
+				self.client.request('RPC', method, options, headers)
+				resp = self.client.getresponse()
+		except http.client.ImproperConnectionState:
+			raise AdvancedHTTPServerRPCError('improper connection state', None)
 		if resp.status != 200:
 			raise AdvancedHTTPServerRPCError(resp.reason, resp.status)
 
@@ -540,7 +543,7 @@ class AdvancedHTTPServerRPCClient(object):
 		if not ('exception_occurred' in resp_data and 'result' in resp_data):
 			raise AdvancedHTTPServerRPCError('missing response information', resp.status)
 		if resp_data['exception_occurred']:
-			raise AdvancedHTTPServerRPCError('remote method incured an exception', resp.status, remote_exception=resp_data['exception'])
+			raise AdvancedHTTPServerRPCError('remote method incurred an exception', resp.status, remote_exception=resp_data['exception'])
 		return resp_data['result']
 
 class AdvancedHTTPServerRPCClientCached(AdvancedHTTPServerRPCClient):

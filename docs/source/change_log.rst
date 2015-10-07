@@ -15,6 +15,7 @@ Version 1.0.0
 * Moved templates to a dedicated separate repository
 * Added a custom theme for the client
 * Added support for two factor authentication with TOTP
+* Support for specifying an img style attribute for inline images in messages
 
 Version 0.x.x
 -------------

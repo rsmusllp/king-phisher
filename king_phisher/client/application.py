@@ -467,7 +467,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def server_disconnect(self):
 		"""Clean up the SSH TCP connections and disconnect from the server."""
 		if self.rpc is not None:
-			self.rpc('logout')
+			try:
+				self.rpc('logout')
+			except AdvancedHTTPServerRPCError as error:
+				self.logger.warning('failed to logout, rpc error: ' + error.message)
 			self.rpc = None
 		if self._ssh_forwarder:
 			self._ssh_forwarder.stop()
