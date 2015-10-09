@@ -151,6 +151,7 @@ GtkEntry:insensitive {
 	background-color: alpha(gray, 0.8);
 	background-image: none;
 	color: white;
+	
 }
 
 GtkFileChooser .search-bar {
@@ -318,6 +319,19 @@ GtkRadioButton {
 	background-image: none;
 	border-radius: 5px 5px 5px 5px;
 }
+
+GtkFrame {
+	background: none;
+}
+
+GtkGrid {
+	background: none;
+}
+
+GtkEntry: {
+	color: white;
+}
+
 
 /***********************************************************
  * Extra classes
