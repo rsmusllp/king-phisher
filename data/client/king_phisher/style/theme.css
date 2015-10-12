@@ -30,6 +30,9 @@
  * Authors:
  *   - Emily Gundry
  *   - Spencer McIntyre
+ *
+ * For reference the source to the default GTK theme Adwaita can be found here:
+ * https://git.gnome.org/browse/gtk+/tree/gtk/theme/Adwaita
  */
 
 /* two primary colors for mixing and one for highlighting */
@@ -79,7 +82,7 @@ GtkButton {
 		mix(@theme_color_0, @theme_color_1, 0.75),
 		@theme_color_0);
 	background-size: 100% 100%;
-	color: white;
+	border-radius: 3px;
 }
 
 GtkButton:active,
@@ -144,7 +147,9 @@ GtkComboBox {
 GtkEntry {
 	background-color: alpha(white, 0.8);
 	background-image: none;
+	border-radius: 3px;
 	color: @theme_color_0;
+	padding: 5px 5px 6px;
 }
 
 GtkEntry:insensitive {
@@ -155,6 +160,14 @@ GtkEntry:insensitive {
 
 GtkFileChooser .search-bar {
 	background-color: @theme_color_0;
+}
+
+GtkFrame {
+	background: none;
+}
+
+GtkGrid {
+	background: none;
 }
 
 GtkMenuBar {
@@ -316,15 +329,7 @@ GtkRadioButton {
 .tooltip {
 	background-color: alpha(@theme_color_0, 0.8);
 	background-image: none;
-	border-radius: 5px 5px 5px 5px;
-}
-
-GtkFrame {
-	background:none;
-}
-
-GtkGrid {
-	background:none;
+	border-radius: 5px;
 }
 
 /***********************************************************
