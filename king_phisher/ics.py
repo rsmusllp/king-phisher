@@ -49,9 +49,9 @@ DAY_ABBREVIATIONS = ('SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA')
 SECONDS_IN_ONE_DAY = (24 * 60 * 60)
 SECONDS_IN_ONE_HOUR = (60 * 60)
 
-POSIX_VAR_OFFSET = r'[A-Z]{3,5}(?P<offset>([\+\-])?[0-9:]{1,5})([A-Z]{3,5}(?P<offset_dst>([\+\-])?([0-9:]{1,5})?))?'
-POSIX_VAR_DST0 = POSIX_VAR_OFFSET + r',(?P<start>M\d{1,2}\.[1-5]\.[0-6](/([\+\-])?[0-9:]{1,5})?),(?P<end>M\d{1,2}\.[1-5]\.[0-6](/([\+\-])?[0-9:]{1,5})?)'
-POSIX_VAR_DST_RRULE = 'M(?P<month>\d{1,2}).(?P<week>[1-5]).(?P<day>[0-6])(/\d{1,2})?'
+POSIX_VAR_OFFSET = re.compile(r'<?[A-Z]{3,5}(?P<offset>([\+\-])?[0-9:]{1,5})(<|([A-Z]{3,5})(?P<offset_dst>([\+\-])?([0-9:]{1,5})?))?', flags=re.IGNORECASE)
+POSIX_VAR = re.compile(POSIX_VAR_OFFSET.pattern + r',(?P<start>M\d{1,2}\.[1-5]\.[0-6](/([\+\-])?[0-9:]{1,5})?),(?P<end>M\d{1,2}\.[1-5]\.[0-6](/([\+\-])?[0-9:]{1,5})?)', flags=re.IGNORECASE)
+POSIX_VAR_DST_RRULE = re.compile('M(?P<month>\d{1,2}).(?P<week>[1-5]).(?P<day>[0-6])(/\d{1,2})?', flags=re.IGNORECASE)
 
 zoneinfo_path = os.path.join(os.path.dirname(pytz.tzfile.__file__), 'zoneinfo')
 """The path to the directory which holds the IANA timezone data files."""
@@ -130,37 +130,39 @@ def get_tz_posix_env_var(tz_name):
 
 def parse_tz_posix_env_var(posix_env_var):
 	"""
-	Get the details regarding a timezone by parsing the POSIX
-	style TZ environment variable.
+	Get the details regarding a timezone by parsing the POSIX style TZ
+	environment variable.
 
 	:param str posix_env_var: The POSIX style TZ environment variable.
 	:return: The parsed TZ environment variable.
 	:rtype: :py:class:`.TimezoneOffsetDetails`
 	"""
-	match = re.match(POSIX_VAR_OFFSET, posix_env_var)
-	if not match:
+	match = POSIX_VAR_OFFSET.match(posix_env_var)
+	if match is None:
 		return
 	match = match.groupdict()
 	offset = get_timedelta_for_offset(match['offset'])
-	if match['offset_dst']:
+	if match['offset_dst'] is None:
+		offset_dst = None
+	elif len(match['offset_dst']):
 		offset_dst = get_timedelta_for_offset(match['offset_dst'])
 	else:
 		# default to an hour difference if it's not specified
 		offset_dst = offset - datetime.timedelta(0, SECONDS_IN_ONE_HOUR)
 	dst_start = None
 	dst_end = None
-	match = re.match(POSIX_VAR_DST0, posix_env_var)
+	match = POSIX_VAR.match(posix_env_var)
 	if match:
 		match = match.groupdict()
 		dst_start = match['start']
 		dst_end = match['end']
 
-		match = re.match(POSIX_VAR_DST_RRULE, dst_start)
+		match = POSIX_VAR_DST_RRULE.match(dst_start)
 		details = match.groupdict()
 		byday = details['week'] + DAY_ABBREVIATIONS[int(details['day'])]
 		dst_start = icalendar.vRecur({'BYMONTH': details['month'], 'FREQ': 'YEARLY', 'INTERVAL': 1, 'BYDAY': byday})
 
-		match = re.match(POSIX_VAR_DST_RRULE, dst_end)
+		match = POSIX_VAR_DST_RRULE.match(dst_end)
 		details = match.groupdict()
 		byday = details['week'] + DAY_ABBREVIATIONS[int(details['day'])]
 		dst_end = icalendar.vRecur({'BYMONTH': details['month'], 'FREQ': 'YEARLY', 'INTERVAL': 1, 'BYDAY': byday})
