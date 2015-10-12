@@ -233,6 +233,7 @@ GtkMenuItem:hover > GtkLabel {
 GtkNotebook {
   background-color: shade(@theme_color_0, 1.2);
   color: white;
+  padding: 0px;
 }
 
 GtkProgressBar {
@@ -287,6 +288,10 @@ GtkSwitch.slider {
   border-width: 0px;
 }
 
+.notebook tab {
+  padding: 4px 10px 3px 10px;
+}
+
 .notebook tab:active {
   background-image: linear-gradient(to bottom,
     shade(@theme_color_1, 1),
@@ -324,6 +329,8 @@ GtkWindow:hover {
 GtkLabel {
   background: none;
   color: white;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 GtkSpinButton {
