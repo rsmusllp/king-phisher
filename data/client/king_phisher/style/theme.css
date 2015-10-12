@@ -1,5 +1,6 @@
-/*
- * king-phisher-client.css
+/* vim: tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab
+ *
+ * theme.css
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -51,296 +52,298 @@
 @define-color theme_color_tv_hofg white;
 
 * {
-	border: none;
-	box-shadow: none;
-	icon-shadow: none;
-	text-shadow: none;
+  border: none;
+  box-shadow: none;
+  icon-shadow: none;
+  text-shadow: none;
 }
 
 GtkAboutDialog GtkTextView,
 GtkAboutDialog GtkViewport {
-	background-color: @theme_color_0;
-	color: white;
+  background-color: @theme_color_0;
+  color: white;
 }
 
 GtkAssistant .sidebar {
-	background-image: linear-gradient(to bottom,
-		shade(@theme_color_1, 1),
-		shade(@theme_color_0, 1.25));
+  background-image: linear-gradient(to bottom,
+    shade(@theme_color_1, 1),
+    shade(@theme_color_0, 1.25));
 }
 
 GtkAssistant .sidebar .highlight {
-	background-image: linear-gradient(to bottom,
-		shade(@theme_color_0, 1.25),
-		shade(@theme_color_0, 1.50));
-	color: white;
-	font: bold;
+  background-image: linear-gradient(to bottom,
+    shade(@theme_color_0, 1.25),
+    shade(@theme_color_0, 1.50));
+  color: white;
+  font: bold;
 }
 
 GtkButton {
-	background-image: linear-gradient(to bottom,
-		mix(@theme_color_0, @theme_color_1, 0.75),
-		@theme_color_0);
-	background-size: 100% 100%;
-	border-radius: 3px;
+  background-image: linear-gradient(to bottom,
+    mix(@theme_color_0, @theme_color_1, 0.75),
+    @theme_color_0);
+  background-size: 100% 100%;
+  border-radius: 3px;
+  border: 1px solid;
+  color: mix(@theme_color_0, @theme_color_1, 0.25);
 }
 
 GtkButton:active,
 GtkButton:hover,
 GtkButton:selected {
-	background-image: linear-gradient(to bottom,
-		shade(alpha(@theme_color_1, 0.7), 1),
-		shade(alpha(@theme_color_1, 0.7), 1.25));
-	background-size: 100% 100%;
-	color: @theme_color_0;
+  background-image: linear-gradient(to bottom,
+    shade(alpha(@theme_color_1, 0.7), 1),
+    shade(alpha(@theme_color_1, 0.7), 1.25));
+  background-size: 100% 100%;
+  color: @theme_color_0;
 }
 
 GtkButton:insensitive {
-	background-color: alpha(mix(@theme_color_1, black, 0.5), 0.7);
-	background-image: none;
+  background-color: alpha(mix(@theme_color_1, black, 0.5), 0.7);
+  background-image: none;
 }
 
 GtkButtonBox {
-	padding: 10px;
+  padding: 10px;
 }
 
 GtkCalendar {
-	background-color: white;
-	background-image: none;
-	color: @theme_color_0;
+  background-color: white;
+  background-image: none;
+  color: @theme_color_0;
 }
 
 GtkCalendar:insensitive {
-	background-color: alpha(gray, 0.8);
-	background-image: none;
-	color: white;
+  background-color: alpha(gray, 0.8);
+  background-image: none;
+  color: white;
 }
 
 GtkCalendar:insensitive:selected {
-	background-color: alpha(lightgray, 0.8);
-	background-image: none;
-	color: white;
+  background-color: alpha(lightgray, 0.8);
+  background-image: none;
+  color: white;
 }
 
 GtkCalendar:selected {
-	background-color: @theme_color_2;
-	background-image: none;
-	color: white;
+  background-color: @theme_color_2;
+  background-image: none;
+  color: white;
 }
 
 GtkCalendar .header {
-	background-color: @theme_color_1;
-	background-image: none;
-	color: white;
+  background-color: @theme_color_1;
+  background-image: none;
+  color: white;
 }
 
 GtkCheckButton {
-	background-color: alpha(white, 0);
-	background-image: none;
-	border-radius: 5px;
+  background-color: alpha(white, 0);
+  background-image: none;
+  border-radius: 5px;
 }
 
 GtkComboBox {
-	color: white;
+  color: white;
 }
 
 GtkEntry {
-	background-color: alpha(white, 0.8);
-	background-image: none;
-	border-radius: 3px;
-	color: @theme_color_0;
-	padding: 5px 5px 6px;
+  background-color: alpha(white, 0.8);
+  background-image: none;
+  border-radius: 3px;
+  color: @theme_color_0;
+  padding: 5px 5px 6px;
 }
 
 GtkEntry:insensitive {
-	background-color: alpha(gray, 0.8);
-	background-image: none;
-	color: white;
+  background-color: alpha(gray, 0.8);
+  background-image: none;
+  color: white;
 }
 
 GtkFileChooser .search-bar {
-	background-color: @theme_color_0;
+  background-color: @theme_color_0;
 }
 
 GtkFrame {
-	background: none;
+  background: none;
 }
 
 GtkGrid {
-	background: none;
+  background: none;
 }
 
 GtkMenuBar {
-	background-color: mix(@theme_color_0, @theme_color_1, 0.4);
-	color: white;
+  background-color: mix(@theme_color_0, @theme_color_1, 0.4);
+  color: white;
 }
 
 GtkMenuBar > GtkMenuItem {
-	background-color: mix(@theme_color_0, @theme_color_1, 0.4);
-	background-image: none;
+  background-color: mix(@theme_color_0, @theme_color_1, 0.4);
+  background-image: none;
 }
 
 GtkMenuBar > GtkMenuItem > GtkLabel {
-	color: white;
+  color: white;
 }
 
 GtkMenuItem {
-	background-color: white;
-	background-image: none;
-	color: black;
+  background-color: white;
+  background-image: none;
+  color: black;
 }
 
 GtkMenuItem > GtkLabel {
-	color: black;
+  color: black;
 }
 
 GtkMenuItem .accelerator {
-	color: alpha(black, 0.4);
+  color: alpha(black, 0.4);
 }
 
 GtkMenuItem:hover {
-	background-color: @theme_color_1;
-	background-image: none;
-	color: white;
+  background-color: @theme_color_1;
+  background-image: none;
+  color: white;
 }
 
 GtkMenuItem:hover > GtkLabel {
-	color: white;
+  color: white;
 }
 
 GtkNotebook {
-	background-color: shade(@theme_color_0, 1.2);
-	color: white;
+  background-color: shade(@theme_color_0, 1.2);
+  color: white;
 }
 
 GtkProgressBar {
-	background-image: none;
-	background-color: white;
-	color: white;
+  background-image: none;
+  background-color: white;
+  color: white;
 }
 
 GtkProgressBar .progressbar {
-	background-image: none;
-	background-color: @theme_color_2;
-	color: white;
+  background-image: none;
+  background-color: @theme_color_2;
+  color: white;
 }
 
 GtkSwitch {
-	-GtkSwitch-slider-height: 27px;
-	-GtkSwitch-slider-width: 45px;
-	font-size: smaller;
-	font-weight: bold;
-	outline-offset: -4px;
+  -GtkSwitch-slider-height: 27px;
+  -GtkSwitch-slider-width: 45px;
+  font-size: smaller;
+  font-weight: bold;
+  outline-offset: -4px;
 }
 
 GtkSwitch.trough {
-	border-radius: 3px;
-	color: black;
-	background-color: lightgray;
-	background-image: none;
+  border-radius: 3px;
+  color: black;
+  background-color: lightgray;
+  background-image: none;
 }
 
 GtkSwitch.trough:active {
-	background-color: @theme_color_2;
-	background-image: none;
-	color: white;
+  background-color: @theme_color_2;
+  background-image: none;
+  color: white;
 }
 
 GtkSwitch.trough:insensitive {
-	color: #8e9192;
-	background-color: #f4f4f4;
+  color: #8e9192;
+  background-color: #f4f4f4;
 }
 
 GtkSwitch.trough:backdrop:insensitive {
-	color: #c7c7c7;
-	background-color: #f4f4f4;
+  color: #c7c7c7;
+  background-color: #f4f4f4;
 }
 
 GtkSwitch.slider {
-	border-radius: 3px;
-	background-image: linear-gradient(to bottom, #fafafa, #ededed 40%, #e0e0e0);
+  border-radius: 3px;
+  background-image: linear-gradient(to bottom, #fafafa, #ededed 40%, #e0e0e0);
 }
 
 .notebook .header {
-	border-width: 0px;
+  border-width: 0px;
 }
 
 .notebook tab:active {
-	background-image: linear-gradient(to bottom,
-		shade(@theme_color_1, 1),
-		shade(@theme_color_0, 1.25));
-	border-radius: 4px 4px 2px 2px;
+  background-image: linear-gradient(to bottom,
+    shade(@theme_color_1, 1),
+    shade(@theme_color_0, 1.25));
+  border-radius: 4px 4px 2px 2px;
 }
 
 GtkTextView {
-	background-color: @theme_color_0;
-	border-radius: 4px 4px 4px 4px;
-	color: white;
+  background-color: @theme_color_0;
+  border-radius: 4px 4px 4px 4px;
+  color: white;
 }
 
 GtkTreeView {
-	background-color: @theme_color_tv_bg;
-	color: @theme_color_tv_fg;
+  background-color: @theme_color_tv_bg;
+  color: @theme_color_tv_fg;
 }
 
 GtkTreeView row:hover,
 GtkTreeView row:selected {
-	background-color: @theme_color_tv_hobg;
-	color: @theme_color_tv_hofg;
+  background-color: @theme_color_tv_hobg;
+  color: @theme_color_tv_hofg;
 }
 
 GtkWindow {
-	background-image: url("./background.svg");
-	background-size: 100% 100%;
+  background-image: url("./background.svg");
+  background-size: 100% 100%;
 }
 
 GtkWindow:active,
 GtkWindow:hover {
-	color: white;
+  color: white;
 }
 
 GtkLabel {
-	background: none;
-	color: white;
+  background: none;
+  color: white;
 }
 
 GtkSpinButton {
-	background-color: alpha(white, 0.8);
-	background-image: none;
-	color: @theme_color_0;
+  background-color: alpha(white, 0.8);
+  background-image: none;
+  color: @theme_color_0;
 }
 
 GtkToolButton,
 GtkToolbar {
-	background-color: @theme_color_1;
-	background-image: none;
+  background-color: @theme_color_1;
+  background-image: none;
 }
 
 GtkRadioButton {
-	background-image: none;
+  background-image: none;
 }
 
 .titlebar {
-	background-color: mix(@theme_color_0, @theme_color_1, 0.4);
-	background-image: none;
-	color: white;
+  background-color: mix(@theme_color_0, @theme_color_1, 0.4);
+  background-image: none;
+  color: white;
 }
 
 .tooltip {
-	background-color: alpha(@theme_color_0, 0.8);
-	background-image: none;
-	border-radius: 5px;
+  background-color: alpha(@theme_color_0, 0.8);
+  background-image: none;
+  border-radius: 5px;
 }
 
 /***********************************************************
  * Extra classes
  **********************************************************/
 .background-add {
-	background-image: url("./background.svg");
-	background-size: 100% 100%;
-	color: white;
+  background-image: url("./background.svg");
+  background-size: 100% 100%;
+  color: white;
 }
 
 .background-remove {
-	background-image: none;
+  background-image: none;
 }
