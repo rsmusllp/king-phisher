@@ -206,12 +206,15 @@ class Calendar(icalendar.Calendar):
 	An icalendar formatted event for converting to an ICS file and then sending
 	in an email.
 	"""
-	def __init__(self, organizer_email, start, organizer_cn=None, duration='1h', location=None):
+	def __init__(self, organizer_email, start, summary, organizer_cn=None, description=None, duration='1h', location=None):
 		"""
 		:param str organizer_email: The email of the event organizer.
 		:param start: The start time for the event.
 		:type start: :py:class:`datetime.datetime`
+		:param str summary: A short summary of the event.
 		:param str organizer_cn: The name of the event organizer.
+		:param str description: A more complete description of the event than
+			what is provided by the *summary* parameter.
 		:param duration: The events scheduled duration.
 		:type duration: int, str
 		:param str location: The location for the event.
@@ -239,9 +242,9 @@ class Calendar(icalendar.Calendar):
 		organizer.params['cn'] = icalendar.vText(organizer_cn or organizer_email)
 		event['organizer'] = organizer
 
-		event.add('description', 'This is the event description.')
+		event.add('description', description or summary)
 		event.add('uid', str(uuid.uuid4()))
-		event.add('summary', 'This is the event summary.')
+		event.add('summary', summary)
 		event.add('dtstart', start)
 		event.add('dtend', start + duration)
 		event.add('class', 'PUBLIC')
