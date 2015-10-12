@@ -45,6 +45,7 @@ import tzlocal
 import smoke_zephyr.utilities
 
 DAY_ABBREVIATIONS = ('SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA')
+"""The abbreviations of day names for use in :py:class:`icalendar.vRecur` instances."""
 SECONDS_IN_ONE_DAY = (24 * 60 * 60)
 SECONDS_IN_ONE_HOUR = (60 * 60)
 
@@ -53,6 +54,7 @@ POSIX_VAR_DST0 = POSIX_VAR_OFFSET + r',(?P<start>M\d{1,2}\.[1-5]\.[0-6](/([\+\-]
 POSIX_VAR_DST_RRULE = 'M(?P<month>\d{1,2}).(?P<week>[1-5]).(?P<day>[0-6])(/\d{1,2})?'
 
 zoneinfo_path = os.path.join(os.path.dirname(pytz.tzfile.__file__), 'zoneinfo')
+"""The path to the directory which holds the IANA timezone data files."""
 
 TimezoneOffsetDetails = collections.namedtuple(
 	'TimezoneOffsetDetails',
@@ -67,9 +69,10 @@ TimezoneOffsetDetails = collections.namedtuple(
 def get_timedelta_for_offset(offset):
 	"""
 	Take a POSIX environment variable style offset from UTC and convert it into
-	a :py:class:`datetime.timedelta` instance.
+	a :py:class:`datetime.timedelta` instance suitable for use with the
+	:py:mod:`icalendar`.
 
-	:param str offset: The offset from UTC such as '-5:00'
+	:param str offset: The offset from UTC such as "-5:00"
 	:return: The parsed offset.
 	:rtype: :py:class:`datetime.timedelta`
 	"""
@@ -91,6 +94,16 @@ def get_timedelta_for_offset(offset):
 	return delta
 
 def get_tz_posix_env_var(tz_name):
+	"""
+	Get the timezone information in the POSIX TZ environment variable format
+	from the IANA timezone data files included in the :py:mod:`pytz` package.
+
+	:param str tz_name: The name of the timezone to get the environment variable
+		for such as "America/New_York".
+	:return: The TZ environment variable string, if it is specified in the
+		timezone data file.
+	:rtype: str
+	"""
 	buffer_size = 2048
 	assert os.path.isdir(zoneinfo_path)
 	file_path = os.path.join(zoneinfo_path, *tz_name.split('/'))
@@ -115,10 +128,15 @@ def get_tz_posix_env_var(tz_name):
 		env_var = env_var.decode('utf-8')
 	return env_var
 
-def get_tz_offset_details(tz_name):
-	posix_env_var = get_tz_posix_env_var(tz_name)
-	if not posix_env_var:
-		return
+def parse_tz_posix_env_var(posix_env_var):
+	"""
+	Get the details regarding a timezone by parsing the POSIX
+	style TZ environment variable.
+
+	:param str posix_env_var: The POSIX style TZ environment variable.
+	:return: The parsed TZ environment variable.
+	:rtype: :py:class:`.TimezoneOffsetDetails`
+	"""
 	match = re.match(POSIX_VAR_OFFSET, posix_env_var)
 	if not match:
 		return
@@ -153,13 +171,21 @@ def get_tz_offset_details(tz_name):
 	return details
 
 class Timezone(icalendar.Timezone):
-	def __init__(self, zonename=None):
+	"""
+	An icalendar formatted timezone with all properties populated for the
+	specified zone.
+	"""
+	def __init__(self, tz_name=None):
+		"""
+		:param str tz_name: The timezone to represent, if not specified it
+			defaults to the local timezone.
+		"""
 		super(Timezone, self).__init__()
-		if zonename is None:
-			zonename = tzlocal.get_localzone().zone
-		self.add('tzid', zonename)
+		if tz_name is None:
+			tz_name = tzlocal.get_localzone().zone
+		self.add('tzid', tz_name)
 
-		tz_details = get_tz_offset_details(zonename)
+		tz_details = parse_tz_posix_env_var(get_tz_posix_env_var(tz_name))
 		timezone_standard = icalendar.TimezoneStandard()
 		timezone_standard.add('dtstart', datetime.datetime(1601, 1, 1, 2, 0, tzinfo=dateutil.tz.tzutc()))
 		timezone_standard.add('tzoffsetfrom', tz_details.offset + datetime.timedelta(0, SECONDS_IN_ONE_HOUR))
@@ -176,7 +202,20 @@ class Timezone(icalendar.Timezone):
 		self.add_component(timezone_standard)
 
 class Calendar(icalendar.Calendar):
+	"""
+	An icalendar formatted event for converting to an ICS file and then sending
+	in an email.
+	"""
 	def __init__(self, organizer_email, start, organizer_cn=None, duration='1h', location=None):
+		"""
+		:param str organizer_email: The email of the event organizer.
+		:param start: The start time for the event.
+		:type start: :py:class:`datetime.datetime`
+		:param str organizer_cn: The name of the event organizer.
+		:param duration: The events scheduled duration.
+		:type duration: int, str
+		:param str location: The location for the event.
+		"""
 		super(Calendar, self).__init__()
 		if start.tzinfo is None:
 			start = start.replace(tzinfo=dateutil.tz.tzlocal())
@@ -224,6 +263,15 @@ class Calendar(icalendar.Calendar):
 		return self.to_ical()
 
 	def add_attendee(self, email, cn=None, rsvp=True):
+		"""
+		Add an attendee to the event. If the event is being sent via an email,
+		the recipient should be added as an attendee.
+
+		:param str email: The attendee's email address.
+		:param str cn: The attendee's common name.
+		:param bool rsvp: Whether or not to request an RSVP response from the
+			attendee.
+		"""
 		attendee = icalendar.vCalAddress('MAILTO:' + email)
 		attendee.params['ROLE'] = icalendar.vText('REQ-PARTICIPANT')
 		attendee.params['PARTSTAT'] = icalendar.vText('NEEDS-ACTION')
