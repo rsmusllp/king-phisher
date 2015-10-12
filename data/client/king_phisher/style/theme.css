@@ -85,6 +85,7 @@ GtkButton {
   background-size: 100% 100%;
   border-radius: 3px;
   border: 1px solid;
+  border-color: @theme_color_0;
   color: mix(@theme_color_0, @theme_color_1, 0.25);
 }
 
@@ -137,13 +138,31 @@ GtkCalendar .header {
   color: white;
 }
 
-GtkCheckButton {
-  background-color: alpha(white, 0);
+GtkCheckButton.text-button {
   background-image: none;
-  border-radius: 5px;
+  border-radius: 3px;
+  border: 1px solid;
+  border-color: @theme_color_1;
+  color: mix(@theme_color_0, @theme_color_1, 0.25);
+  padding: 1px 2px 4px;
+}
+
+GtkCheckButton.text-button:hover {
+  background-color: alpha(@theme_color_0, 0.8);
+  color: @theme_color_1;
 }
 
 GtkComboBox {
+  color: white;
+}
+
+GtkComboBox .separator {
+  -GtkWidget-wide-separators: true;
+  -GtkWidget-horizontal-separator: 0;
+  -GtkWidget-vertical-separator: 0;
+}
+
+GtkComboBox > GtkButton {
   color: white;
 }
 
