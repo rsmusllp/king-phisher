@@ -4484,11 +4484,19 @@ Brandan Geise</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
-              <object class="GtkTreeView" id="TagEditorDialog.treeview_campaign_types">
+              <object class="GtkScrolledWindow" id="TagEditorDialog.scrolledwindow_campaign_types">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection9"/>
+                <property name="vscrollbar_policy">always</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkTreeView" id="TagEditorDialog.treeview_campaign_types">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection" id="treeview-selection"/>
+                    </child>
+                  </object>
                 </child>
               </object>
             </child>
@@ -4503,11 +4511,19 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkTreeView" id="TagEditorDialog.treeview_company_departments">
+              <object class="GtkScrolledWindow" id="TagEditorDialog.scrolledwindow_company_departments">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection10"/>
+                <property name="vscrollbar_policy">always</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkTreeView" id="TagEditorDialog.treeview_company_departments">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection" id="treeview-selection9"/>
+                    </child>
+                  </object>
                 </child>
               </object>
               <packing>
@@ -4526,11 +4542,19 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkTreeView" id="TagEditorDialog.treeview_industries">
+              <object class="GtkScrolledWindow" id="TagEditorDialog.scrolledwindow_industries">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection11"/>
+                <property name="vscrollbar_policy">always</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkTreeView" id="TagEditorDialog.treeview_industries">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection" id="treeview-selection10"/>
+                    </child>
+                  </object>
                 </child>
               </object>
               <packing>
