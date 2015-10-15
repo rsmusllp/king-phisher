@@ -10,7 +10,7 @@ Version 1.x.x
 Version 1.0.0
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.0.0` on October 15th, 2015
 
 * Moved templates to a dedicated separate repository
 * Added a custom theme for the client
