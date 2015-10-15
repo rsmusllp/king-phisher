@@ -32,6 +32,7 @@
 
 import datetime
 
+from king_phisher import its
 from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
 from king_phisher.client.assistants import CampaignAssistant
@@ -39,6 +40,11 @@ from king_phisher.client import gui_utilities
 
 from gi.repository import Gdk
 from gi.repository import Gtk
+
+if its.py_v2:
+	import cgi as html
+else:
+	import html
 
 __all__ = ['CampaignSelectionDialog']
 
@@ -145,7 +151,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 				expiration_ts,
 				(hlbg_color if is_expired else bg_color),
 				(hlfg_color if is_expired else fg_color),
-				(campaign.description if campaign.description else None)
+				(html.escape(campaign.description, quote=True) if campaign.description else None)
 			))
 		self.gobjects['label_campaign_info'].set_text("Showing {0:,} Campaign{1}".format(len(store), ('' if len(store) == 1 else 's')))
 
