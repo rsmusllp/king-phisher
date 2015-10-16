@@ -490,6 +490,24 @@ class GladeGObject(object):
 	def parent(self):
 		return self.application.get_active_window()
 
+	def get_active_radiobuttons(self, button_names):
+		"""
+		Check each of the radio buttons specified in *button_names* and return
+		which ever one if any is active. If the names are prefixed with the
+		build type of 'radiobutton_' it will be removed and it will not be
+		present in the resulting string.
+
+		:param list button_names: The names of the buttons to check.
+		:return: The name of the active button if any.
+		:rtype: str
+		"""
+		for button in button_names:
+			if button.startswith('radiobutton_'):
+				button = button[12:]
+			if self.gtk_builder_get('radiobutton_' + button).get_active():
+				return button
+		return
+
 	def gtk_builder_get(self, gobject_id):
 		"""
 		Find the child GObject with name *gobject_id* from the GTK builder.

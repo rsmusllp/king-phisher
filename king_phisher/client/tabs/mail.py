@@ -702,6 +702,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	for sending messages as part of a campaign.
 	"""
 	gobject_ids = (
+		'button_target_file_select',
 		'entry_webserver_url',
 		'entry_company_name',
 		'entry_source_email',
@@ -711,6 +712,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		'entry_reply_to_email',
 		'entry_html_file',
 		'entry_target_file',
+		'entry_target_name',
+		'entry_target_email_address',
 		'entry_attachment_file',
 		'combobox_importance',
 		'combobox_sensitivity'
@@ -728,6 +731,15 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.application.connect('campaign-changed', self.signal_kpc_campaign_load)
 		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
 		self.application.connect('exit', self.signal_kpc_exit)
+		self.target_type = self.config['mailer.target_type']
+
+	def objects_load_from_config(self):
+		super(MailSenderConfigurationTab, self).objects_load_from_config()
+		self.target_type = self.config['mailer.target_type']
+
+	def objects_save_to_config(self):
+		super(MailSenderConfigurationTab, self).objects_save_to_config()
+		self.config['mailer.target_type'] = self.target_type
 
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
@@ -786,6 +798,28 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	def signal_kpc_exit(self, kpc):
 		self.objects_save_to_config()
+
+	def signal_radiobutton_toggled_target_type(self, radiobutton):
+		if not radiobutton.get_active():
+			return
+		target_type = self.target_type
+		self.gobjects['button_target_file_select'].set_sensitive(target_type == 'file')
+		self.gobjects['entry_target_file'].set_sensitive(target_type == 'file')
+		self.gobjects['entry_target_name'].set_sensitive(target_type == 'single')
+		self.gobjects['entry_target_email_address'].set_sensitive(target_type == 'single')
+
+	@property
+	def target_type(self):
+		target_type = self.get_active_radiobuttons(('target_type_file', 'target_type_single'))
+		if target_type is None:
+			return
+		return target_type[12:]
+
+	@target_type.setter
+	def target_type(self, target_type):
+		button = self.gtk_builder_get('radiobutton_target_type_' + target_type)
+		button.set_active(True)
+		button.toggled()
 
 class MailSenderTab(object):
 	"""
