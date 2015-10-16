@@ -258,6 +258,9 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	sed -i -re "s|#\\s?data_path:.*$|data_path: $KING_PHISHER_DIR|" ./server_config.yml
 
 	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
+		if [ -f "/etc/init.d/postgresql" ]; then
+			/etc/init.d/postgresql start &> /dev/null
+		fi
 		echo "Configuring the PostgreSQL server"
 		PG_CONFIG_LOCATION=$(su postgres -c "psql -t -P format=unaligned -c 'show hba_file';")
 		echo "PostgreSQL configuration file found at $PG_CONFIG_LOCATION"
