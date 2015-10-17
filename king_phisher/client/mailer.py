@@ -309,20 +309,34 @@ class MailSenderThread(threading.Thread):
 
 	def count_emails(self):
 		"""
-		Count the emails contained in the target CSV file.
+		Count the number of targets that will be sent messages.
 
-		:return: The number of targets in the file.
+		:return: The number of targets that will be sent messages.
 		:rtype: int
 		"""
-		targets = 0
-		target_file_h = open(self.target_file, 'rU')
-		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address'])
-		for target in csv_reader:
-			if not utilities.is_valid_email_address(target['email_address']):
-				continue
-			targets += 1
-		target_file_h.close()
-		return targets
+		return sum(1 for _ in self.iterate_targets())
+
+	def iterate_targets(self):
+		target_type = self.config['mailer.target_type']
+		if target_type == 'single':
+			target_name = self.config['mailer.target_name'].split(' ')
+			while len(target_name) < 2:
+				target_name.append('')
+			target = {
+				'first_name': target_name[0],
+				'last_name': target_name[1],
+				'email_address': self.config['mailer.target_email_address'],
+				'department': None
+			}
+			yield target
+		elif target_type == 'file':
+			target_file_h = open(self.target_file, 'rU')
+			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
+			for target in csv_reader:
+				yield target
+			target_file_h.close()
+		else:
+			self.logger.error("the configured target type '{0}' is unsupported".format(target_type))
 
 	def run(self):
 		emails_done = 0
@@ -339,9 +353,7 @@ class MailSenderThread(threading.Thread):
 		self._mime_attachments = self._get_mime_attachments()
 		self.logger.debug("loaded {0:,} MIME attachments".format(len(self._mime_attachments)))
 
-		target_file_h = open(self.target_file, 'rU')
-		csv_reader = csv.DictReader(target_file_h, ['first_name', 'last_name', 'email_address', 'department'])
-		for target in csv_reader:
+		for target in self.iterate_targets():
 			if not utilities.is_valid_email_address(target['email_address']):
 				if target['email_address']:
 					self.logger.warning('skipping invalid email address: ' + target['email_address'])
@@ -383,7 +395,6 @@ class MailSenderThread(threading.Thread):
 						break
 					sleep_time -= sleep_chunk
 
-		target_file_h.close()
 		self._mime_attachments = None
 
 		self.tab_notify_status("Finished sending emails, successfully sent {0:,} emails".format(emails_done))
@@ -474,6 +485,7 @@ class MailSenderThread(threading.Thread):
 			encoders.encode_base64(attachfile)
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
 			attachments.append(attachfile)
+
 		for attachment_file, attachment_name in template_environment.attachment_images.items():
 			attachfile = MIMEImage(open(attachment_file, 'rb').read())
 			attachfile.add_header('Content-ID', "<{0}>".format(attachment_name))
