@@ -41,6 +41,7 @@ from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
+from king_phisher.client import widget_managers
 
 from boltons import iterutils
 from gi.repository import GdkPixbuf
@@ -111,7 +112,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		self.treeview_manager = gui_utilities.TreeViewManager(
+		self.treeview_manager = widget_managers.TreeViewManager(
 			treeview,
 			selection_mode=Gtk.SelectionMode.MULTIPLE,
 			cb_delete=self._prompt_to_delete_row,

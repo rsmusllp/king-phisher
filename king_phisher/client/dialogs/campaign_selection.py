@@ -37,6 +37,7 @@ from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
 from king_phisher.client.assistants import CampaignAssistant
 from king_phisher.client import gui_utilities
+from king_phisher.client import widget_managers
 
 from gi.repository import Gdk
 from gi.repository import Gtk
@@ -66,7 +67,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
-		self.treeview_manager = gui_utilities.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
+		self.treeview_manager = widget_managers.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
 		self.treeview_manager.set_column_titles(('Campaign Name', 'Company', 'Type', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
 		self.treeview_manager.set_column_color(background=7, foreground=8)
 		treeview.set_tooltip_column(9)
