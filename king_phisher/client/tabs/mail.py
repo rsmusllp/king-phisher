@@ -144,9 +144,17 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		required_settings = {
 			'mailer.webserver_url': 'Web Server URL',
 			'mailer.subject': 'Subject',
-			'mailer.html_file': 'Message HTML File',
-			'mailer.target_file': 'Target CSV File'
+			'mailer.html_file': 'Message HTML File'
 		}
+		target_type = self.config.get('mailer.target_type')
+		if target_type == 'file':
+			required_settings['mailer.target_file'] = 'Target CSV File'
+		elif target_type == 'single':
+			required_settings['mailer.target_email_address'] = 'Target Email Address'
+			required_settings['mailer.target_name'] = 'Target Name'
+		else:
+			gui_utilities.show_dialog_warning('Invalid Target Type', self.parent, 'Please specify a target file or name and email address.')
+			return False
 		for setting, setting_name in required_settings.items():
 			if not self.config.get(setting):
 				gui_utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
