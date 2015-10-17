@@ -74,8 +74,3 @@ Classes
    :members:
    :special-members: __init__
    :undoc-members:
-
-.. autoclass:: king_phisher.client.gui_utilities.TreeViewManager
-   :show-inheritance:
-   :members:
-   :special-members: __init__
