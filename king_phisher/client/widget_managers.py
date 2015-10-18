@@ -40,10 +40,20 @@ from gi.repository import Gtk
 
 class RadioButtonGroupManager(object):
 	"""
+	Manage a group of :py:class:`Gtk.RadioButton` objects together to allow the
+	active one to be easily set and identified. The buttons are retrieved from a
+	:py:class:`.GladeGObject` instance and must be correctly named
+	in the :py:attr:`.GladeGObject.gobject_ids` attribute as
+	'radiobutton_group_name_button_name'.
 	"""
 	def __init__(self, glade_gobject, button_group_name):
 		"""
+		:param glade_gobject: The gobject which has the radio buttons set.
+		:type glade_gobject: :py:class:`.GladeGObject`
+		:param str button_group_name: The name of the group of buttons.
 		"""
+		if not isinstance(glade_gobject, gui_utilities.GladeGObject):
+			raise TypeError("{0}() argument 1 must be GladeGObject, not {1}".format(self.__class__.__name__, type(version).__name__))
 		self.group_name = button_group_name
 		name_prefix = 'radiobutton_' + self.group_name + '_'
 		self.buttons = utilities.FreezableDict()
@@ -64,6 +74,11 @@ class RadioButtonGroupManager(object):
 
 	def get_active(self):
 		"""
+		Return the name of the active button if one in the group is active. If
+		no button in the group is active, None is returned.
+
+		:return: The name of the active button.
+		:rtype: str
 		"""
 		for name, button in self.buttons.items():
 			if button.get_active():
@@ -72,6 +87,9 @@ class RadioButtonGroupManager(object):
 
 	def set_active(self, button):
 		"""
+		Set a button in the group as active.
+
+		:param str button: The name of the button to set as active.
 		"""
 		button = self.buttons[button]
 		button.set_active(True)
