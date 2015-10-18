@@ -32,10 +32,50 @@
 import collections
 import functools
 
+from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
 from gi.repository import Gdk
 from gi.repository import Gtk
+
+class RadioButtonGroupManager(object):
+	"""
+	"""
+	def __init__(self, glade_gobject, button_group_name):
+		"""
+		"""
+		self.group_name = button_group_name
+		name_prefix = 'radiobutton_' + self.group_name + '_'
+		self.buttons = utilities.FreezableDict()
+		for gobj_name in glade_gobject.gobject_ids:
+			if not gobj_name.startswith(name_prefix):
+				continue
+			button_name = gobj_name[len(name_prefix):]
+			self.buttons[button_name] = glade_gobject.gobjects[gobj_name]
+		if not len(self.buttons):
+			raise ValueError('found no radiobuttons of group: ' + self.group_name)
+		self.buttons.freeze()
+
+	def __repr__(self):
+		return "<{0} group={1!r} active={2!r} >".format(self.__class__.__name__, self.group_name, self.get_active())
+
+	def __str__(self):
+		return self.get_active() or ''
+
+	def get_active(self):
+		"""
+		"""
+		for name, button in self.buttons.items():
+			if button.get_active():
+				return name
+		return
+
+	def set_active(self, button):
+		"""
+		"""
+		button = self.buttons[button]
+		button.set_active(True)
+		button.toggled()
 
 class TreeViewManager(object):
 	"""

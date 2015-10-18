@@ -43,6 +43,7 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
+from king_phisher.client import widget_managers
 from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
@@ -711,6 +712,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	"""
 	gobject_ids = (
 		'button_target_file_select',
+		'combobox_importance',
+		'combobox_sensitivity',
 		'entry_webserver_url',
 		'entry_company_name',
 		'entry_source_email',
@@ -723,8 +726,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		'entry_target_name',
 		'entry_target_email_address',
 		'entry_attachment_file',
-		'combobox_importance',
-		'combobox_sensitivity'
+		'radiobutton_target_type_file',
+		'radiobutton_target_type_single'
 	)
 	config_prefix = 'mailer.'
 	top_gobject = 'box'
@@ -739,15 +742,18 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.application.connect('campaign-changed', self.signal_kpc_campaign_load)
 		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
 		self.application.connect('exit', self.signal_kpc_exit)
-		self.target_type = self.config['mailer.target_type']
+		self.target_type = widget_managers.RadioButtonGroupManager(self, 'target_type')
+		self.target_type.set_active(self.config['mailer.target_type'])
 
 	def objects_load_from_config(self):
 		super(MailSenderConfigurationTab, self).objects_load_from_config()
-		self.target_type = self.config['mailer.target_type']
+		if hasattr(self, 'target_type'):
+			# this is called in the super class's __init__ method so this might not exist yet
+			self.target_type.set_active(self.config['mailer.target_type'])
 
 	def objects_save_to_config(self):
 		super(MailSenderConfigurationTab, self).objects_save_to_config()
-		self.config['mailer.target_type'] = self.target_type
+		self.config['mailer.target_type'] = self.target_type.get_active()
 
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
@@ -810,24 +816,11 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	def signal_radiobutton_toggled_target_type(self, radiobutton):
 		if not radiobutton.get_active():
 			return
-		target_type = self.target_type
+		target_type = self.target_type.get_active()
 		self.gobjects['button_target_file_select'].set_sensitive(target_type == 'file')
 		self.gobjects['entry_target_file'].set_sensitive(target_type == 'file')
 		self.gobjects['entry_target_name'].set_sensitive(target_type == 'single')
 		self.gobjects['entry_target_email_address'].set_sensitive(target_type == 'single')
-
-	@property
-	def target_type(self):
-		target_type = self.get_active_radiobuttons(('target_type_file', 'target_type_single'))
-		if target_type is None:
-			return
-		return target_type[12:]
-
-	@target_type.setter
-	def target_type(self, target_type):
-		button = self.gtk_builder_get('radiobutton_target_type_' + target_type)
-		button.set_active(True)
-		button.toggled()
 
 class MailSenderTab(object):
 	"""
