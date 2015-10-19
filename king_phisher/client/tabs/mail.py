@@ -726,12 +726,19 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		'entry_target_name',
 		'entry_target_email_address',
 		'entry_attachment_file',
+		'expander_calendar_invite_settings',
+		'expander_email_settings',
+		'radiobutton_message_type_calendar_invite',
+		'radiobutton_message_type_email',
 		'radiobutton_target_type_file',
 		'radiobutton_target_type_single'
 	)
 	config_prefix = 'mailer.'
 	top_gobject = 'box'
 	top_level_dependencies = (
+		'ClockHourAdjustment',
+		'ClockMinuteAdjustment',
+		'TimeDuration',
 		'MsgImportance',
 		'MsgSensitivity'
 	)
@@ -742,17 +749,23 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.application.connect('campaign-changed', self.signal_kpc_campaign_load)
 		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
 		self.application.connect('exit', self.signal_kpc_exit)
+
+		self.message_type = widget_managers.RadioButtonGroupManager(self, 'message_type')
+		self.message_type.set_active(self.config['mailer.message_type'])
 		self.target_type = widget_managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
 
 	def objects_load_from_config(self):
 		super(MailSenderConfigurationTab, self).objects_load_from_config()
+		# these are called in the super class's __init__ method so they may not exist yet
+		if hasattr(self, 'message_type'):
+			self.message_type.set_active(self.config['mailer.message_type'])
 		if hasattr(self, 'target_type'):
-			# this is called in the super class's __init__ method so this might not exist yet
 			self.target_type.set_active(self.config['mailer.target_type'])
 
 	def objects_save_to_config(self):
 		super(MailSenderConfigurationTab, self).objects_save_to_config()
+		self.config['mailer.message_type'] = self.message_type.get_active()
 		self.config['mailer.target_type'] = self.target_type.get_active()
 
 	def signal_button_clicked_verify(self, button):
@@ -812,6 +825,13 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	def signal_kpc_exit(self, kpc):
 		self.objects_save_to_config()
+
+	def signal_radiobutton_toggled_message_type(self, radiobutton):
+		if not radiobutton.get_active():
+			return
+		message_type = self.message_type.get_active()
+		self.gobjects['expander_calendar_invite_settings'].set_expanded(message_type == 'calendar_invite')
+		self.gobjects['expander_email_settings'].set_expanded(message_type == 'email')
 
 	def signal_radiobutton_toggled_target_type(self, radiobutton):
 		if not radiobutton.get_active():
