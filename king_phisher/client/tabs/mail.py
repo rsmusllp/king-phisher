@@ -800,6 +800,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
 		return
 
+	def signal_checkbutton_toggled_calendar_invite_all_day(self, button):
+		self.gobjects['spinbutton_calendar_invite_duration'].set_sensitive(not button.get_active())
+
 	def signal_entry_activate_open_file(self, entry):
 		dialog = gui_utilities.FileChooser('Choose File', self.parent)
 		if entry == self.gobjects.get('entry_html_file'):
