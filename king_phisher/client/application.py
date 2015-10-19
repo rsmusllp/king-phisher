@@ -32,7 +32,6 @@
 
 import copy
 import ipaddress
-import json
 import logging
 import os
 import random
@@ -44,6 +43,7 @@ import time
 import uuid
 
 from king_phisher import find
+from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import assistants
@@ -355,10 +355,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		client_template = find.find_data_file('client_config.json')
 		config_file = os.path.expanduser(self.config_file)
 		with open(config_file, 'r') as tmp_file:
-			self.config = json.load(tmp_file)
+			self.config = json_ex.load(tmp_file)
 		if load_defaults:
 			with open(client_template, 'r') as tmp_file:
-				client_template = json.load(tmp_file)
+				client_template = json_ex.load(tmp_file)
 			for key, value in client_template.items():
 				if not key in self.config:
 					self.config[key] = value
@@ -393,7 +393,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			if 'password' in key or key == 'server_config':
 				del config[key]
 		with open(os.path.expanduser(self.config_file), 'w') as config_file_h:
-			json.dump(config, config_file_h, sort_keys=True, indent=2, separators=(',', ': '))
+			json_ex.dump(config, config_file_h)
 
 	def server_connect(self, username, password, otp=None):
 		# pylint: disable=too-many-locals

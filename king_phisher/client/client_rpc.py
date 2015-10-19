@@ -31,13 +31,13 @@
 #
 
 import code
-import json
 import logging
 import os
 import sys
 
 from king_phisher import find
 from king_phisher import geoip
+from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher.third_party import AdvancedHTTPServer
 
@@ -275,7 +275,7 @@ def vte_child_routine(config):
 
 	:param str config: A JSON encoded client configuration.
 	"""
-	config = json.loads(config)
+	config = json_ex.loads(config)
 	try:
 		import readline
 		import rlcompleter  # pylint: disable=unused-variable

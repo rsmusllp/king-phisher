@@ -16,6 +16,7 @@ The King Phisher Package
    king_phisher/errors.rst
    king_phisher/find.rst
    king_phisher/geoip.rst
+   king_phisher/json_ex.rst
    king_phisher/sms.rst
    king_phisher/smtp_server.rst
    king_phisher/spf.rst

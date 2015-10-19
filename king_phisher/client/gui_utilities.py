@@ -182,8 +182,8 @@ def gtk_calendar_set_pydate(calendar, pydate):
 	calendar.select_day(pydate.day)
 
 GOBJECT_PROPERTY_MAP['calendar'] = (
-	lambda c, v: gtk_calendar_set_pydate(c, datetime.datetime.strptime(v, CALENDAR_DATE_FORMAT)),
-	lambda c: gtk_calendar_get_pydate(c).strftime(CALENDAR_DATE_FORMAT)
+	gtk_calendar_set_pydate,
+	gtk_calendar_get_pydate
 )
 
 def gtk_list_store_search(list_store, value, column=0):
