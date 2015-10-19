@@ -51,7 +51,9 @@ from gi.repository import GtkSource
 
 GObject.type_register(GtkSource.View)
 
+CALENDAR_DATE_FORMAT = '%b %d %Y'
 GOBJECT_PROPERTY_MAP = {
+	'calendar': None,  # delayed definition
 	'checkbutton': 'active',
 	'combobox': (
 		lambda c, v: c.set_active_iter(gtk_list_store_search(c.get_model(), v)),
@@ -178,6 +180,11 @@ def gtk_calendar_set_pydate(calendar, pydate):
 	"""
 	calendar.select_month(pydate.month - 1, pydate.year)
 	calendar.select_day(pydate.day)
+
+GOBJECT_PROPERTY_MAP['calendar'] = (
+	lambda c, v: gtk_calendar_set_pydate(c, datetime.datetime.strptime(v, CALENDAR_DATE_FORMAT)),
+	lambda c: gtk_calendar_get_pydate(c).strftime(CALENDAR_DATE_FORMAT)
+)
 
 def gtk_list_store_search(list_store, value, column=0):
 	"""

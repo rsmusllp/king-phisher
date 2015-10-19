@@ -712,6 +712,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	"""
 	gobject_ids = (
 		'button_target_file_select',
+		'calendar_calendar_invite_date',
+		'checkbutton_calendar_invite_all_day',
 		'combobox_importance',
 		'combobox_sensitivity',
 		'entry_webserver_url',
@@ -731,7 +733,10 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		'radiobutton_message_type_calendar_invite',
 		'radiobutton_message_type_email',
 		'radiobutton_target_type_file',
-		'radiobutton_target_type_single'
+		'radiobutton_target_type_single',
+		'spinbutton_calendar_invite_duration',
+		'spinbutton_calendar_invite_start_hour',
+		'spinbutton_calendar_invite_start_minute'
 	)
 	config_prefix = 'mailer.'
 	top_gobject = 'box'
