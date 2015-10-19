@@ -2200,6 +2200,7 @@ Brandan Geise</property>
                 <property name="can_focus">True</property>
                 <property name="valign">start</property>
                 <property name="spacing">5</property>
+                <signal name="activate" handler="signal_expander_activate_message_type" swapped="no"/>
                 <child>
                   <object class="GtkGrid" id="grid11">
                     <property name="visible">True</property>
@@ -2420,6 +2421,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="spacing">5</property>
+                <signal name="activate" handler="signal_expander_activate_message_type" swapped="no"/>
                 <child>
                   <object class="GtkGrid" id="grid12">
                     <property name="visible">True</property>

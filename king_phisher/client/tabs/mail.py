@@ -813,6 +813,21 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		entry.set_text('')
 		return True
 
+	def signal_expander_activate_message_type(self, expander):
+		if expander.get_expanded():
+			# ignore attempts to un-expand
+			expander.set_expanded(False)
+			return
+		if expander == self.gobjects['expander_calendar_invite_settings']:
+			message_type = 'calendar_invite'
+			expander == self.gobjects['expander_email_settings'].set_expanded(False)
+		elif expander == self.gobjects['expander_email_settings']:
+			message_type = 'email'
+			self.gobjects['expander_calendar_invite_settings'].set_expanded(False)
+		button = self.message_type.buttons[message_type]
+		with gui_utilities.gobject_signal_blocked(button, 'toggled'):
+			self.message_type.set_active(message_type)
+
 	def signal_kpc_campaign_load(self, _, campaign_id):
 		if not campaign_id == self.config.get('campaign_id'):
 			return
