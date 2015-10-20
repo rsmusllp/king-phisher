@@ -156,6 +156,10 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		else:
 			gui_utilities.show_dialog_warning('Invalid Target Type', self.parent, 'Please specify a target file or name and email address.')
 			return False
+		message_type = self.config.get('mailer.message_type')
+		if not message_type in ('email', 'calendar_invite'):
+			gui_utilities.show_dialog_warning('Invalid Message Type', self.parent, 'Please select a valid message type.')
+			return False
 		for setting, setting_name in required_settings.items():
 			if not self.config.get(setting):
 				gui_utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
@@ -258,6 +262,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		if not self._sender_precheck_attachment():
 			return
 		self.text_insert("Sending messages started at: {:%A %B %d, %Y %H:%M:%S}\n".format(datetime.datetime.now()))
+		self.text_insert("Message mode is: {0}\n".format(self.config['mailer.message_type'].replace('_', ' ').title()))
 
 		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:
@@ -717,6 +722,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		'combobox_importance',
 		'combobox_sensitivity',
 		'entry_webserver_url',
+		'entry_calendar_invite_location',
+		'entry_calendar_invite_summary',
 		'entry_company_name',
 		'entry_source_email',
 		'entry_source_email_smtp',

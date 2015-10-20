@@ -508,7 +508,13 @@ class MailSenderThread(threading.Thread):
 			duration = ics.DurationAllDay()
 		else:
 			duration = int(self.config['mailer.calendar_invite_duration']) * 60
-		ical = ics.Calendar(self.config['mailer.source_email'], start_time, self.config['mailer.subject'], duration=duration)
+		ical = ics.Calendar(
+			self.config['mailer.source_email'],
+			start_time,
+			self.config.get('mailer.calendar_invite_summary'),
+			duration=duration,
+			location=self.config.get('mailer.calendar_invite_location')
+		)
 		ical.add_attendee(target.email_address)
 
 		part = mime.base.MIMEBase('text', 'calendar', charset='utf-8', method='REQUEST')

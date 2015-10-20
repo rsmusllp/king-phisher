@@ -51,12 +51,12 @@ import geojson
 from smoke_zephyr.utilities import escape_single_quote
 from smoke_zephyr.utilities import unescape_single_quote
 
-__all__ = [
+__all__ = (
 	'campaign_to_xml',
 	'convert_value',
 	'message_data_to_kpm',
 	'treeview_liststore_to_csv'
-]
+)
 
 KPM_ARCHIVE_FILES = {
 	'attachment_file': 'message_attachment.bin',

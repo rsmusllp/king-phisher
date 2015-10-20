@@ -4872,6 +4872,7 @@ Brandan Geise</property>
                   <object class="GtkGrid" id="grid12">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
                     <property name="row_spacing">3</property>
                     <property name="column_spacing">5</property>
                     <child>
@@ -4905,24 +4906,11 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkCheckButton" id="MailSenderConfigurationTab.checkbutton_calendar_invite_all_day">
-                        <property name="label" translatable="yes">All Day Event</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="xalign">0</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="signal_checkbutton_toggled_calendar_invite_all_day" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">3</property>
-                      </packing>
-                    </child>
-                    <child>
                       <object class="GtkSpinButton" id="MailSenderConfigurationTab.spinbutton_calendar_invite_duration">
+                        <property name="width_request">250</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="halign">start</property>
                         <property name="input_purpose">phone</property>
                         <property name="adjustment">TimeDuration</property>
                         <property name="numeric">True</property>
@@ -4938,6 +4926,7 @@ Brandan Geise</property>
                         <property name="width_request">250</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="halign">start</property>
                         <property name="spacing">5</property>
                         <child>
                           <object class="GtkSpinButton" id="MailSenderConfigurationTab.spinbutton_calendar_invite_start_hour">
@@ -5009,19 +4998,6 @@ Brandan Geise</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkAlignment" id="alignment5">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <child>
-                          <placeholder/>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">3</property>
-                      </packing>
-                    </child>
-                    <child>
                       <object class="GtkLabel" id="label54">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -5031,6 +5007,78 @@ Brandan Geise</property>
                         <property name="left_attach">0</property>
                         <property name="top_attach">2</property>
                       </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label59">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Location</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label60">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Summary</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_calendar_invite_location">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">3</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_calendar_invite_summary">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">4</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="MailSenderConfigurationTab.checkbutton_calendar_invite_all_day">
+                        <property name="label" translatable="yes">All Day Event</property>
+                        <property name="width_request">250</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="halign">start</property>
+                        <property name="hexpand">True</property>
+                        <property name="xalign">0</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="signal_checkbutton_toggled_calendar_invite_all_day" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
                     </child>
                   </object>
                 </child>
