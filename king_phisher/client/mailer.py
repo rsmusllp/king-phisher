@@ -30,10 +30,19 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+# disable this warning for the email.mime.* stuff that hast to be imported
+# pylint: disable=unused-import
+
 import codecs
 import collections
 import csv
 import datetime
+import email.encoders as encoders
+import email.mime as mime
+import email.mime.base
+import email.mime.image
+import email.mime.multipart
+import email.mime.text
 import logging
 import mimetypes
 import ipaddress
@@ -55,21 +64,11 @@ from gi.repository import GLib
 from smoke_zephyr.utilities import parse_server
 
 if sys.version_info[0] < 3:
-	from email import Encoders as encoders
 	import urllib
 	import urlparse
 	urllib.parse = urlparse
-	from email.MIMEBase import MIMEBase
-	from email.MIMEImage import MIMEImage
-	from email.MIMEMultipart import MIMEMultipart
-	from email.MIMEText import MIMEText
 else:
-	from email import encoders
 	import urllib.parse
-	from email.mime.base import MIMEBase
-	from email.mime.image import MIMEImage
-	from email.mime.multipart import MIMEMultipart
-	from email.mime.text import MIMEText
 
 __all__ = ['format_message', 'guess_smtp_server_address', 'MailSenderThread']
 
@@ -173,6 +172,29 @@ MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'ima
 """A named tuple for holding both image and file attachments for a message."""
 MessageTarget = collections.namedtuple('MessageTarget', ('first_name', 'last_name', 'email_address', 'department'))
 """A named tuple for holding information regarding a messages intended recipient."""
+
+class TopMIMEMultipart(mime.multipart.MIMEMultipart):
+	"""
+	A :py:class:`.mime.multipart.MIMEMultipart` subclass for representing the top / outer most
+	part of a MIME multipart message.
+	"""
+	def __init__(self, mime_type, config, target):
+		"""
+		:param str mime_type: The type of this part such as related or alternative.
+		:param dict config: The client configuration.
+		:param target: The target information for the messages intended recipient.
+		:type target: :py:class:`.MessageTarget`
+		"""
+		mime.multipart.MIMEMultipart.__init__(self, mime_type)
+		self['Subject'] = config['mailer.subject']
+		if config.get('mailer.reply_to_email'):
+			self.add_header('reply-to', config['mailer.reply_to_email'])
+		if config.get('mailer.source_email_alias'):
+			self['From'] = "\"{0}\" <{1}>".format(config['mailer.source_email_alias'], config['mailer.source_email'])
+		else:
+			self['From'] = config['mailer.source_email']
+		self['To'] = target.email_address
+		self.preamble = 'This is a multi-part message in MIME format.'
 
 class MailSenderThread(threading.Thread):
 	"""
@@ -454,27 +476,17 @@ class MailSenderThread(threading.Thread):
 		:param attachments: The attachments to add to the created message.
 		:type attachments: :py:class:`Attachments`
 		:return: The new MIME message.
-		:rtype: :py:class:`email.MIMEMultipart.MIMEMultipart`
+		:rtype: :py:class:`email.mime.multipart.MIMEMultipart`
 		"""
-		# build the outer most mime multipart stanza
-		msg = MIMEMultipart('mixed')
-		msg['Subject'] = self.config['mailer.subject']
-		if self.config.get('mailer.reply_to_email'):
-			msg.add_header('reply-to', self.config['mailer.reply_to_email'])
-		if self.config.get('mailer.source_email_alias'):
-			msg['From'] = "\"{0}\" <{1}>".format(self.config['mailer.source_email_alias'], self.config['mailer.source_email'])
-		else:
-			msg['From'] = self.config['mailer.source_email']
-		msg['To'] = target.email_address
-		top_msg = msg
+		top_msg = TopMIMEMultipart('mixed', self.config, target)
 
-		related_msg = MIMEMultipart('related')
+		related_msg = mime.multipart.MIMEMultipart('related')
 		top_msg.attach(related_msg)
 
-		alt_msg = MIMEMultipart('alternative')
+		alt_msg = mime.multipart.MIMEMultipart('alternative')
 		related_msg.attach(alt_msg)
 
-		part = MIMEBase('text', 'plain', charset='utf-8')
+		part = mime.base.MIMEBase('text', 'plain', charset='utf-8')
 		part.set_payload('This calendar invite requires an HTML enabled viewer.\r\n\r\n')
 		encoders.encode_base64(part)
 		alt_msg.attach(part)
@@ -482,7 +494,7 @@ class MailSenderThread(threading.Thread):
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
 		formatted_msg = format_message(msg_template, self.config, first_name=target.first_name, last_name=target.last_name, uid=uid, target_email=target.email_address)
-		part = MIMEText(formatted_msg, 'html', 'utf-8')
+		part = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
 		alt_msg.attach(part)
 
 		start_time = datetime.datetime.combine(
@@ -496,7 +508,7 @@ class MailSenderThread(threading.Thread):
 		ical = ics.Calendar(self.config['mailer.source_email'], start_time, self.config['mailer.subject'], duration=duration)
 		ical.add_attendee(target.email_address)
 
-		part = MIMEBase('text', 'calendar', charset='utf-8', method='REQUEST')
+		part = mime.base.MIMEBase('text', 'calendar', charset='utf-8', method='REQUEST')
 		part.set_payload(str(ical))
 		encoders.encode_base64(part)
 		alt_msg.attach(part)
@@ -518,31 +530,22 @@ class MailSenderThread(threading.Thread):
 		:param attachments: The attachments to add to the created message.
 		:type attachments: :py:class:`MessageAttachments`
 		:return: The new MIME message.
-		:rtype: :py:class:`email.MIMEMultipart.MIMEMultipart`
+		:rtype: :py:class:`email.mime.multipart.MIMEMultipart`
 		"""
-		msg = MIMEMultipart('related')
-		msg['Subject'] = self.config['mailer.subject']
-		if self.config.get('mailer.reply_to_email'):
-			msg.add_header('reply-to', self.config['mailer.reply_to_email'])
-		if self.config.get('mailer.source_email_alias'):
-			msg['From'] = "\"{0}\" <{1}>".format(self.config['mailer.source_email_alias'], self.config['mailer.source_email'])
-		else:
-			msg['From'] = self.config['mailer.source_email']
-		msg['To'] = target.email_address
+		msg = TopMIMEMultipart('related', self.config, target)
 		importance = self.config.get('mailer.importance', 'Normal')
 		if importance != 'Normal':
 			msg['Importance'] = importance
 		sensitivity = self.config.get('mailer.sensitivity', 'Normal')
 		if sensitivity != 'Normal':
 			msg['Sensitivity'] = sensitivity
-		msg.preamble = 'This is a multi-part message in MIME format.'
 
-		msg_alt = MIMEMultipart('alternative')
+		msg_alt = mime.multipart.MIMEMultipart('alternative')
 		msg.attach(msg_alt)
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
 		formatted_msg = format_message(msg_template, self.config, first_name=target.first_name, last_name=target.last_name, uid=uid, target_email=target.email_address)
-		msg_body = MIMEText(formatted_msg, 'html', 'utf-8')
+		msg_body = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
 		msg_alt.attach(msg_body)
 
 		# process attachments
@@ -563,7 +566,7 @@ class MailSenderThread(threading.Thread):
 		files = []
 		if self.config.get('mailer.attachment_file'):
 			attachment = self.config['mailer.attachment_file']
-			attachfile = MIMEBase(*mimetypes.guess_type(attachment))
+			attachfile = mime.base.MIMEBase(*mimetypes.guess_type(attachment))
 			attachfile.set_payload(open(attachment, 'rb').read())
 			encoders.encode_base64(attachfile)
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
@@ -571,7 +574,7 @@ class MailSenderThread(threading.Thread):
 
 		images = []
 		for attachment_file, attachment_name in template_environment.attachment_images.items():
-			attachfile = MIMEImage(open(attachment_file, 'rb').read())
+			attachfile = mime.image.MIMEImage(open(attachment_file, 'rb').read())
 			attachfile.add_header('Content-ID', "<{0}>".format(attachment_name))
 			attachfile.add_header('Content-Disposition', "inline; filename=\"{0}\"".format(attachment_name))
 			images.append(attachfile)
@@ -608,7 +611,7 @@ class MailSenderThread(threading.Thread):
 
 		:param str target_email: The email address to send the message to.
 		:param msg: The formatted message to be sent.
-		:type msg: :py:class:`email.MIMEMultipart.MIMEMultipart`
+		:type msg: :py:class:`.mime.multipart.MIMEMultipart`
 		"""
 		source_email = self.config['mailer.source_email_smtp']
 		self.smtp_connection.sendmail(source_email, target_email, msg.as_string())

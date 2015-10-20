@@ -4643,6 +4643,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="valign">start</property>
+                <property name="expanded">True</property>
                 <property name="spacing">5</property>
                 <signal name="activate" handler="signal_expander_activate_message_type" swapped="no"/>
                 <child>
@@ -4864,6 +4865,7 @@ Brandan Geise</property>
               <object class="GtkExpander" id="MailSenderConfigurationTab.expander_calendar_invite_settings">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="expanded">True</property>
                 <property name="spacing">5</property>
                 <signal name="activate" handler="signal_expander_activate_message_type" swapped="no"/>
                 <child>

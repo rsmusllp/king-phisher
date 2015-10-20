@@ -24,3 +24,8 @@ Classes
 
 .. autoclass:: king_phisher.client.mailer.MessageTarget
    :members:
+
+.. autoclass:: king_phisher.client.mailer.TopMIMEMultipart
+   :show-inheritance:
+   :members:
+   :special-members: __init__
