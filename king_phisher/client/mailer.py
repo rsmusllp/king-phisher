@@ -169,7 +169,10 @@ def guess_smtp_server_address(host, forward_host=None):
 		return guess_smtp_server_address(forward_host)
 	return
 
-Attachments = collections.namedtuple('Attachments', ('files', 'images'))
+MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
+"""A named tuple for holding both image and file attachments for a message."""
+MessageTarget = collections.namedtuple('MessageTarget', ('first_name', 'last_name', 'email_address', 'department'))
+"""A named tuple for holding information regarding a messages intended recipient."""
 
 class MailSenderThread(threading.Thread):
 	"""
@@ -327,17 +330,28 @@ class MailSenderThread(threading.Thread):
 			target_name = self.config['mailer.target_name'].split(' ')
 			while len(target_name) < 2:
 				target_name.append('')
-			target = {
-				'first_name': target_name[0],
-				'last_name': target_name[1],
-				'email_address': self.config['mailer.target_email_address'],
-				'department': None
-			}
+			target = MessageTarget(
+				first_name=target_name[0],
+				last_name=target_name[1],
+				email_address=self.config['mailer.target_email_address'],
+				department=None
+			)
 			yield target
 		elif target_type == 'file':
 			target_file_h = open(self.target_file, 'rU')
 			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
-			for target in csv_reader:
+			for raw_target in csv_reader:
+				department = raw_target['department']
+				if department is not None:
+					department = department.strip()
+					if department == '':
+						department = None
+				target = MessageTarget(
+					first_name=raw_target['first_name'],
+					last_name=raw_target['last_name'],
+					email_address=raw_target['email_address'],
+					department=department
+				)
 				yield target
 			target_file_h.close()
 		else:
@@ -359,9 +373,9 @@ class MailSenderThread(threading.Thread):
 		self.logger.debug("loaded {0:,} MIME attachments".format(sum((len(attachments.files), len(attachments.images)))))
 
 		for target in self.iterate_targets():
-			if not utilities.is_valid_email_address(target['email_address']):
-				if target['email_address']:
-					self.logger.warning('skipping invalid email address: ' + target['email_address'])
+			if not utilities.is_valid_email_address(target.email_address):
+				if target.email_address:
+					self.logger.warning('skipping invalid email address: ' + target.email_address)
 				else:
 					self.logger.warning('skipping blank email address')
 				continue
@@ -376,19 +390,14 @@ class MailSenderThread(threading.Thread):
 
 			uid = make_uid()
 			emails_done += 1
-			self.tab_notify_status(sending_line.format(emails_done, uid, target['email_address']))
-			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target['first_name'], target['last_name'], target['email_address'], uid, attachments)
-			if not self._try_send_message(target['email_address'], msg):
+			self.tab_notify_status(sending_line.format(emails_done, uid, target.email_address))
+			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, uid, attachments)
+			if not self._try_send_message(target.email_address, msg):
 				break
 
 			self.tab_notify_sent(emails_done, emails_total)
 			campaign_id = self.config['campaign_id']
-			department = target['department']
-			if department is not None:
-				department = department.strip()
-				if department == '':
-					department = None
-			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], target['first_name'], target['last_name'], department)
+			self.rpc('campaign/message/new', campaign_id, uid, target.email_address, target.first_name, target.last_name, target.department)
 
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)
@@ -435,13 +444,12 @@ class MailSenderThread(threading.Thread):
 			self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		return True
 
-	def create_calendar_invite(self, first_name, last_name, target_email, uid, attachments):
+	def create_calendar_invite(self, target, uid, attachments):
 		"""
 		Create a MIME calendar invite to be sent from a set of parameters.
 
-		:param str first_name: The first name of the message's recipient.
-		:param str last_name: The last name of the message's recipient.
-		:param str target_email: The message's destination email address.
+		:param target: The information for the messages intended recipient.
+		:type target: :py:class:`.MessageTarget`
 		:param str uid: The message's unique identifier.
 		:param attachments: The attachments to add to the created message.
 		:type attachments: :py:class:`Attachments`
@@ -457,7 +465,7 @@ class MailSenderThread(threading.Thread):
 			msg['From'] = "\"{0}\" <{1}>".format(self.config['mailer.source_email_alias'], self.config['mailer.source_email'])
 		else:
 			msg['From'] = self.config['mailer.source_email']
-		msg['To'] = target_email
+		msg['To'] = target.email_address
 		top_msg = msg
 
 		related_msg = MIMEMultipart('related')
@@ -473,7 +481,7 @@ class MailSenderThread(threading.Thread):
 
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
-		formatted_msg = format_message(msg_template, self.config, first_name=first_name, last_name=last_name, uid=uid, target_email=target_email)
+		formatted_msg = format_message(msg_template, self.config, first_name=target.first_name, last_name=target.last_name, uid=uid, target_email=target.email_address)
 		part = MIMEText(formatted_msg, 'html', 'utf-8')
 		alt_msg.attach(part)
 
@@ -486,7 +494,7 @@ class MailSenderThread(threading.Thread):
 		)
 		duration = int(self.config['mailer.calendar_invite_duration']) * 60
 		ical = ics.Calendar(self.config['mailer.source_email'], start_time, self.config['mailer.subject'], duration=duration)
-		ical.add_attendee(target_email)
+		ical.add_attendee(target.email_address)
 
 		part = MIMEBase('text', 'calendar', charset='utf-8', method='REQUEST')
 		part.set_payload(str(ical))
@@ -500,16 +508,15 @@ class MailSenderThread(threading.Thread):
 			top_msg.attach(attach)
 		return top_msg
 
-	def create_email(self, first_name, last_name, target_email, uid, attachments):
+	def create_email(self, target, uid, attachments):
 		"""
 		Create a MIME email to be sent from a set of parameters.
 
-		:param str first_name: The first name of the message's recipient.
-		:param str last_name: The last name of the message's recipient.
-		:param str target_email: The message's destination email address.
+		:param target: The information for the messages intended recipient.
+		:type target: :py:class:`.MessageTarget`
 		:param str uid: The message's unique identifier.
 		:param attachments: The attachments to add to the created message.
-		:type attachments: :py:class:`Attachments`
+		:type attachments: :py:class:`MessageAttachments`
 		:return: The new MIME message.
 		:rtype: :py:class:`email.MIMEMultipart.MIMEMultipart`
 		"""
@@ -521,7 +528,7 @@ class MailSenderThread(threading.Thread):
 			msg['From'] = "\"{0}\" <{1}>".format(self.config['mailer.source_email_alias'], self.config['mailer.source_email'])
 		else:
 			msg['From'] = self.config['mailer.source_email']
-		msg['To'] = target_email
+		msg['To'] = target.email_address
 		importance = self.config.get('mailer.importance', 'Normal')
 		if importance != 'Normal':
 			msg['Importance'] = importance
@@ -534,7 +541,7 @@ class MailSenderThread(threading.Thread):
 		msg.attach(msg_alt)
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
-		formatted_msg = format_message(msg_template, self.config, first_name=first_name, last_name=last_name, uid=uid, target_email=target_email)
+		formatted_msg = format_message(msg_template, self.config, first_name=target.first_name, last_name=target.last_name, uid=uid, target_email=target.email_address)
 		msg_body = MIMEText(formatted_msg, 'html', 'utf-8')
 		msg_alt.attach(msg_body)
 
@@ -547,11 +554,11 @@ class MailSenderThread(threading.Thread):
 
 	def get_mime_attachments(self):
 		"""
-		Return a :py:class:`.Attachments` object containing both the images and
+		Return a :py:class:`.MessageAttachments` object containing both the images and
 		raw files to be included in sent messages.
 
 		:return: A namedtuple of both files and images in their MIME containers.
-		:rtype: :py:class:`.Attachments`
+		:rtype: :py:class:`.MessageAttachments`
 		"""
 		files = []
 		if self.config.get('mailer.attachment_file'):
@@ -568,7 +575,7 @@ class MailSenderThread(threading.Thread):
 			attachfile.add_header('Content-ID', "<{0}>".format(attachment_name))
 			attachfile.add_header('Content-Disposition', "inline; filename=\"{0}\"".format(attachment_name))
 			images.append(attachfile)
-		return Attachments(tuple(files), tuple(images))
+		return MessageAttachments(tuple(files), tuple(images))
 
 	def _prepare_env(self):
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:

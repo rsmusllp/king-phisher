@@ -18,3 +18,9 @@ Classes
    :show-inheritance:
    :members:
    :special-members: __init__
+
+.. autoclass:: king_phisher.client.mailer.MessageAttachments
+   :members:
+
+.. autoclass:: king_phisher.client.mailer.MessageTarget
+   :members:

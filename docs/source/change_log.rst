@@ -7,6 +7,14 @@ Phisher.
 Version 1.x.x
 -------------
 
+Version 1.1.0
+^^^^^^^^^^^^^
+
+*In Progress*
+
+* Added an option to send a message to a single target
+* Support for sending calendar invite messages
+
 Version 1.0.0
 ^^^^^^^^^^^^^
 
