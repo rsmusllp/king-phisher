@@ -808,7 +808,10 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		return
 
 	def signal_checkbutton_toggled_calendar_invite_all_day(self, button):
-		self.gobjects['spinbutton_calendar_invite_duration'].set_sensitive(not button.get_active())
+		all_day = button.get_active()
+		self.gobjects['spinbutton_calendar_invite_duration'].set_sensitive(not all_day)
+		self.gobjects['spinbutton_calendar_invite_start_hour'].set_sensitive(not all_day)
+		self.gobjects['spinbutton_calendar_invite_start_minute'].set_sensitive(not all_day)
 
 	def signal_entry_activate_open_file(self, entry):
 		dialog = gui_utilities.FileChooser('Choose File', self.parent)

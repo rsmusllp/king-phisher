@@ -497,17 +497,21 @@ class MailSenderThread(threading.Thread):
 		part = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
 		alt_msg.attach(part)
 
-		start_time = datetime.datetime.combine(
-			self.config['mailer.calendar_invite_date'],
-			datetime.time(
-				int(self.config['mailer.calendar_invite_start_hour']),
-				int(self.config['mailer.calendar_invite_start_minute'])
-			)
-		)
 		if self.config['mailer.calendar_invite_all_day']:
 			duration = ics.DurationAllDay()
+			start_time = datetime.datetime.combine(
+				self.config['mailer.calendar_invite_date'],
+				datetime.time(0, 0)
+			)
 		else:
 			duration = int(self.config['mailer.calendar_invite_duration']) * 60
+			start_time = datetime.datetime.combine(
+				self.config['mailer.calendar_invite_date'],
+				datetime.time(
+					int(self.config['mailer.calendar_invite_start_hour']),
+					int(self.config['mailer.calendar_invite_start_minute'])
+				)
+			)
 		ical = ics.Calendar(
 			self.config['mailer.source_email'],
 			start_time,

@@ -231,6 +231,8 @@ class Calendar(icalendar.Calendar):
 		:type duration: int, str
 		:param str location: The location for the event.
 		"""
+		if not isinstance(start, datetime.datetime):
+			raise TypeError('start must be a datetime.datetime instance')
 		super(Calendar, self).__init__()
 		if start.tzinfo is None:
 			start = start.replace(tzinfo=dateutil.tz.tzlocal())

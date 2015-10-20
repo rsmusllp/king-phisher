@@ -4565,6 +4565,7 @@ Brandan Geise</property>
                           <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_name">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">The first and last name of the desired target.</property>
                             <property name="placeholder_text" translatable="yes">Alice Liddle</property>
                           </object>
                           <packing>
@@ -4577,6 +4578,7 @@ Brandan Geise</property>
                           <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_email_address">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">The targets email address.</property>
                             <property name="placeholder_text" translatable="yes">aliddle@king-phisher.com</property>
                           </object>
                           <packing>
@@ -4880,6 +4882,7 @@ Brandan Geise</property>
                         <property name="width_request">250</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The date that the invite's event should start on.</property>
                         <property name="halign">start</property>
                         <property name="valign">start</property>
                         <property name="year">2015</property>
@@ -4910,6 +4913,7 @@ Brandan Geise</property>
                         <property name="width_request">250</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The number of minutes that the event should be scheduled to last.</property>
                         <property name="halign">start</property>
                         <property name="input_purpose">phone</property>
                         <property name="adjustment">TimeDuration</property>
@@ -4932,7 +4936,7 @@ Brandan Geise</property>
                           <object class="GtkSpinButton" id="MailSenderConfigurationTab.spinbutton_calendar_invite_start_hour">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="tooltip_text" translatable="yes">The hour for the campaign expiration time on a 24-hour clock.</property>
+                            <property name="tooltip_text" translatable="yes">The hour for the event's start time on a 24-hour clock.</property>
                             <property name="max_length">2</property>
                             <property name="text" translatable="yes">0</property>
                             <property name="input_purpose">number</property>
@@ -4965,7 +4969,7 @@ Brandan Geise</property>
                           <object class="GtkSpinButton" id="MailSenderConfigurationTab.spinbutton_calendar_invite_start_minute">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="tooltip_text" translatable="yes">The minute for the campaign expiration time.</property>
+                            <property name="tooltip_text" translatable="yes">The minute for the event's start time.</property>
                             <property name="max_length">2</property>
                             <property name="text" translatable="yes">0</property>
                             <property name="input_purpose">number</property>
@@ -5036,7 +5040,9 @@ Brandan Geise</property>
                       <object class="GtkEntry" id="MailSenderConfigurationTab.entry_calendar_invite_location">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">An optional location for the event to take place.</property>
                         <property name="hexpand">True</property>
+                        <property name="placeholder_text" translatable="yes">Conference Room A</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -5048,6 +5054,7 @@ Brandan Geise</property>
                       <object class="GtkEntry" id="MailSenderConfigurationTab.entry_calendar_invite_summary">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">An optional short summary to describe the event.</property>
                         <property name="hexpand">True</property>
                       </object>
                       <packing>
@@ -5063,6 +5070,7 @@ Brandan Geise</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Whether or not the event should be scheduled to last the entire day.</property>
                         <property name="halign">start</property>
                         <property name="hexpand">True</property>
                         <property name="xalign">0</property>
