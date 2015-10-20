@@ -30,6 +30,11 @@ Classes
    :show-inheritance:
    :special-members: __init__
 
+.. autoclass:: king_phisher.ics.DurationAllDay
+   :members:
+   :show-inheritance:
+   :special-members: __init__
+
 .. autoclass:: king_phisher.ics.Timezone
    :members:
    :show-inheritance:

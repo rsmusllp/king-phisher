@@ -37,6 +37,7 @@ import re
 import uuid
 
 from king_phisher import its
+from king_phisher.utilities import switch
 
 import dateutil.tz
 import icalendar
@@ -172,6 +173,15 @@ def parse_tz_posix_env_var(posix_env_var):
 	details = TimezoneOffsetDetails(offset, offset_dst, dst_start, dst_end)
 	return details
 
+class DurationAllDay(object):
+	"""
+	A representation of a duration that can be used for an event to indicate
+	that it takes place all day.
+	"""
+	__slots__ = ('days')
+	def __init__(self, days=1):
+		self.days = max(days, 0)
+
 class Timezone(icalendar.Timezone):
 	"""
 	An icalendar formatted timezone with all properties populated for the
@@ -226,10 +236,20 @@ class Calendar(icalendar.Calendar):
 			start = start.replace(tzinfo=dateutil.tz.tzlocal())
 		start = start.astimezone(dateutil.tz.tzutc())
 
-		if isinstance(duration, str):
-			duration = smoke_zephyr.utilities.parse_timespan(duration)
-		if not isinstance(duration, datetime.timedelta):
-			duration = datetime.timedelta(seconds=duration)
+		for case in switch(duration, comp=isinstance):
+			if case(str):
+				duration = smoke_zephyr.utilities.parse_timespan(duration)
+				duration = datetime.timedelta(seconds=duration)
+				break
+			if case(int):
+				duration = datetime.timedelta(seconds=duration)
+				break
+			if case(datetime.timedelta):
+				break
+			if case(DurationAllDay):
+				break
+		else:
+			raise TypeError('unknown duration type')
 
 		self.add('method', 'REQUEST')
 		self.add('prodid', 'Microsoft Exchange Server 2010')
@@ -247,8 +267,12 @@ class Calendar(icalendar.Calendar):
 		event.add('description', description or summary)
 		event.add('uid', str(uuid.uuid4()))
 		event.add('summary', summary)
-		event.add('dtstart', start)
-		event.add('dtend', start + duration)
+		if isinstance(duration, DurationAllDay):
+			event.add('dtstart', start.date())
+			event.add('dtend', (start + datetime.timedelta(days=duration.days)).date())
+		else:
+			event.add('dtstart', start)
+			event.add('dtend', start + duration)
 		event.add('class', 'PUBLIC')
 		event.add('priority', 5)
 		event.add('dtstamp', datetime.datetime.now(dateutil.tz.tzutc()))
