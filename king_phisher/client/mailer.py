@@ -113,6 +113,16 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	)
 	template_vars['uid'] = uid
 
+	message_type = config.get('mailer.message_type', 'email')
+	template_vars['message_type'] = message_type
+	if message_type == 'calendar_invite':
+		template_vars['calendar_invite'] = dict(
+			all_day=config.get('mailer.calendar_invite_all_day'),
+			location=config.get('mailer.calendar_invite_location'),
+			start=get_invite_start_from_config(config),
+			summary=config.get('mailer.calendar_invite_summary')
+		)
+
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urllib.parse.urlparse(webserver_url)
 	tracking_image = config['server_config']['server.tracking_image']
@@ -129,6 +139,22 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	template_vars['url'] = template_vars_url
 	template_vars.update(template_environment.standard_variables)
 	return template.render(template_vars)
+
+def get_invite_start_from_config(config):
+	if config['mailer.calendar_invite_all_day']:
+		start_time = datetime.datetime.combine(
+			config['mailer.calendar_invite_date'],
+			datetime.time(0, 0)
+		)
+	else:
+		start_time = datetime.datetime.combine(
+			config['mailer.calendar_invite_date'],
+			datetime.time(
+				int(config['mailer.calendar_invite_start_hour']),
+				int(config['mailer.calendar_invite_start_minute'])
+			)
+		)
+	return start_time
 
 def guess_smtp_server_address(host, forward_host=None):
 	"""
@@ -497,21 +523,11 @@ class MailSenderThread(threading.Thread):
 		part = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
 		alt_msg.attach(part)
 
+		start_time = get_invite_start_from_config(self.config)
 		if self.config['mailer.calendar_invite_all_day']:
 			duration = ics.DurationAllDay()
-			start_time = datetime.datetime.combine(
-				self.config['mailer.calendar_invite_date'],
-				datetime.time(0, 0)
-			)
 		else:
 			duration = int(self.config['mailer.calendar_invite_duration']) * 60
-			start_time = datetime.datetime.combine(
-				self.config['mailer.calendar_invite_date'],
-				datetime.time(
-					int(self.config['mailer.calendar_invite_start_hour']),
-					int(self.config['mailer.calendar_invite_start_minute'])
-				)
-			)
 		ical = ics.Calendar(
 			self.config['mailer.source_email'],
 			start_time,
