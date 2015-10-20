@@ -37,6 +37,7 @@ import os
 import sys
 import urllib
 
+from king_phisher import its
 from king_phisher import spf
 from king_phisher import utilities
 from king_phisher.client import dialogs
@@ -942,6 +943,8 @@ class MailSenderTab(object):
 				text = edit_tab.textbuffer.get_text(edit_tab.textbuffer.get_start_iter(), edit_tab.textbuffer.get_end_iter(), False)
 				if not text:
 					break
+				if its.py_v2:
+					text = text.decode('utf-8')
 				html_file = self.config.get('mailer.html_file')
 				if html_file:
 					with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
