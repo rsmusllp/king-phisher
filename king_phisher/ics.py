@@ -66,11 +66,12 @@ TimezoneOffsetDetails = collections.namedtuple(
 		'dst_end'
 	)
 )
+"""A named tuple describing the details of a timezone's UTC offset and DST occurrence."""
 
 def get_timedelta_for_offset(offset):
 	"""
 	Take a POSIX environment variable style offset from UTC and convert it into
-	a :py:class:`datetime.timedelta` instance suitable for use with the
+	a :py:class:`~datetime.timedelta` instance suitable for use with the
 	:py:mod:`icalendar`.
 
 	:param str offset: The offset from UTC such as "-5:00"
@@ -94,6 +95,7 @@ def get_timedelta_for_offset(offset):
 		delta = datetime.timedelta(-1, SECONDS_IN_ONE_DAY - seconds)
 	return delta
 
+@smoke_zephyr.utilities.Cache(float('inf'))
 def get_tz_posix_env_var(tz_name):
 	"""
 	Get the timezone information in the POSIX TZ environment variable format
@@ -129,6 +131,7 @@ def get_tz_posix_env_var(tz_name):
 		env_var = env_var.decode('utf-8')
 	return env_var
 
+@smoke_zephyr.utilities.Cache(float('inf'))
 def parse_tz_posix_env_var(posix_env_var):
 	"""
 	Get the details regarding a timezone by parsing the POSIX style TZ
@@ -228,7 +231,7 @@ class Calendar(icalendar.Calendar):
 		:param str description: A more complete description of the event than
 			what is provided by the *summary* parameter.
 		:param duration: The events scheduled duration.
-		:type duration: int, str
+		:type duration: int, str, :py:class:`~datetime.timedelta`, :py:class:`.DurationAllDay`
 		:param str location: The location for the event.
 		"""
 		if not isinstance(start, datetime.datetime):

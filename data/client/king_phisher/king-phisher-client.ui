@@ -5094,6 +5094,7 @@ Brandan Geise</property>
                   <object class="GtkLabel" id="label27">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Settings specific to sending calendar invite messages.</property>
                     <property name="label" translatable="yes">Calendar Invite Settings</property>
                   </object>
                 </child>

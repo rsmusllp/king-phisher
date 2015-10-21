@@ -39,3 +39,8 @@ Classes
    :members:
    :show-inheritance:
    :special-members: __init__
+
+.. autoclass:: king_phisher.ics.TimezoneOffsetDetails
+   :members:
+   :show-inheritance:
+   :special-members: __init__

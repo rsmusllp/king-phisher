@@ -51,7 +51,6 @@ from gi.repository import GtkSource
 
 GObject.type_register(GtkSource.View)
 
-CALENDAR_DATE_FORMAT = '%b %d %Y'
 GOBJECT_PROPERTY_MAP = {
 	'calendar': None,  # delayed definition
 	'checkbutton': 'active',

@@ -30,7 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# disable this warning for the email.mime.* stuff that hast to be imported
+# disable this warning for the email.mime.* modules that have to be imported
 # pylint: disable=unused-import
 
 import codecs
