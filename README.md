@@ -35,6 +35,7 @@ the [LICENSE](https://github.com/securestate/king-phisher/blob/master/LICENSE) f
 Special Thanks (QA / Beta Testing):
 
  - Jake Garlie - jagar
+ - Jeremy Schoeneman - Shad0wman
  - Ken Smith - p4tchw0rk
  - Brianna Whittaker
 

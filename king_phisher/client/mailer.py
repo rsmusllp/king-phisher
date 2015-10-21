@@ -459,7 +459,7 @@ class MailSenderThread(threading.Thread):
 
 		self._mime_attachments = None
 
-		self.tab_notify_status("Finished sending emails, successfully sent {0:,} emails".format(emails_done))
+		self.tab_notify_status("Finished sending, successfully sent {0:,} messages.".format(emails_done))
 		self.server_smtp_disconnect()
 		if self._ssh_forwarder:
 			self._ssh_forwarder.stop()

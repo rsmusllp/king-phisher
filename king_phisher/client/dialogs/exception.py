@@ -33,6 +33,7 @@
 import platform
 import sys
 import traceback
+import tzlocal
 
 from king_phisher import its
 from king_phisher import utilities
@@ -53,6 +54,7 @@ King Phisher Version: {king_phisher_version}
 Platform Version: {platform_version}
 Python Version: {python_version}
 Gtk Version: {gtk_version}
+Timezone: {timezone}
 
 {stack_trace}
 """
@@ -107,7 +109,8 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 			platform_version=pversion,
 			python_version="{0}.{1}.{2}".format(*sys.version_info),
 			gtk_version="{0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()),
-			stack_trace=''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+			stack_trace=''.join(traceback.format_exception(exc_type, exc_value, exc_traceback)),
+			timezone=tzlocal.get_localzone().zone
 		)
 		details = details.strip() + '\n'
 
