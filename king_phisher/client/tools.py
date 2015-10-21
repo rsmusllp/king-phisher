@@ -30,11 +30,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import json
 import logging
 import os
 import signal
 
+from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import client_rpc
@@ -138,7 +138,7 @@ class KingPhisherClientRPCTerminal(object):
 
 		python_command = [
 			"import {0}".format(client_rpc.__name__),
-			"{0}.vte_child_routine('{1}')".format(client_rpc.__name__, json.dumps(config))
+			"{0}.vte_child_routine('{1}')".format(client_rpc.__name__, json_ex.dumps(config, pretty=False))
 		]
 		python_command = '; '.join(python_command)
 

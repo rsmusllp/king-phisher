@@ -289,7 +289,7 @@ GtkSwitch.slider {
 }
 
 .notebook tab {
-  padding: 4px 10px 3px 10px;
+  padding: 4px 10px 5px 10px;
 }
 
 .notebook tab:active {
@@ -301,7 +301,7 @@ GtkSwitch.slider {
 
 GtkTextView {
   background-color: @theme_color_0;
-  border-radius: 4px 4px 4px 4px;
+  border-radius: 4px;
   color: white;
 }
 

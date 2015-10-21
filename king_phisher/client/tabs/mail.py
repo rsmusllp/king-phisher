@@ -37,6 +37,7 @@ import os
 import sys
 import urllib
 
+from king_phisher import its
 from king_phisher import spf
 from king_phisher import utilities
 from king_phisher.client import dialogs
@@ -156,6 +157,10 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		else:
 			gui_utilities.show_dialog_warning('Invalid Target Type', self.parent, 'Please specify a target file or name and email address.')
 			return False
+		message_type = self.config.get('mailer.message_type')
+		if not message_type in ('email', 'calendar_invite'):
+			gui_utilities.show_dialog_warning('Invalid Message Type', self.parent, 'Please select a valid message type.')
+			return False
 		for setting, setting_name in required_settings.items():
 			if not self.config.get(setting):
 				gui_utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
@@ -258,6 +263,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		if not self._sender_precheck_attachment():
 			return
 		self.text_insert("Sending messages started at: {:%A %B %d, %Y %H:%M:%S}\n".format(datetime.datetime.now()))
+		self.text_insert("Message mode is: {0}\n".format(self.config['mailer.message_type'].replace('_', ' ').title()))
 
 		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:
@@ -712,9 +718,13 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	"""
 	gobject_ids = (
 		'button_target_file_select',
+		'calendar_calendar_invite_date',
+		'checkbutton_calendar_invite_all_day',
 		'combobox_importance',
 		'combobox_sensitivity',
 		'entry_webserver_url',
+		'entry_calendar_invite_location',
+		'entry_calendar_invite_summary',
 		'entry_company_name',
 		'entry_source_email',
 		'entry_source_email_smtp',
@@ -726,12 +736,22 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		'entry_target_name',
 		'entry_target_email_address',
 		'entry_attachment_file',
+		'expander_calendar_invite_settings',
+		'expander_email_settings',
+		'radiobutton_message_type_calendar_invite',
+		'radiobutton_message_type_email',
 		'radiobutton_target_type_file',
-		'radiobutton_target_type_single'
+		'radiobutton_target_type_single',
+		'spinbutton_calendar_invite_duration',
+		'spinbutton_calendar_invite_start_hour',
+		'spinbutton_calendar_invite_start_minute'
 	)
 	config_prefix = 'mailer.'
 	top_gobject = 'box'
 	top_level_dependencies = (
+		'ClockHourAdjustment',
+		'ClockMinuteAdjustment',
+		'TimeDuration',
 		'MsgImportance',
 		'MsgSensitivity'
 	)
@@ -742,17 +762,23 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.application.connect('campaign-changed', self.signal_kpc_campaign_load)
 		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
 		self.application.connect('exit', self.signal_kpc_exit)
+
+		self.message_type = widget_managers.RadioButtonGroupManager(self, 'message_type')
+		self.message_type.set_active(self.config['mailer.message_type'])
 		self.target_type = widget_managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
 
 	def objects_load_from_config(self):
 		super(MailSenderConfigurationTab, self).objects_load_from_config()
+		# these are called in the super class's __init__ method so they may not exist yet
+		if hasattr(self, 'message_type'):
+			self.message_type.set_active(self.config['mailer.message_type'])
 		if hasattr(self, 'target_type'):
-			# this is called in the super class's __init__ method so this might not exist yet
 			self.target_type.set_active(self.config['mailer.target_type'])
 
 	def objects_save_to_config(self):
 		super(MailSenderConfigurationTab, self).objects_save_to_config()
+		self.config['mailer.message_type'] = self.message_type.get_active()
 		self.config['mailer.target_type'] = self.target_type.get_active()
 
 	def signal_button_clicked_verify(self, button):
@@ -782,6 +808,12 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
 		return
 
+	def signal_checkbutton_toggled_calendar_invite_all_day(self, button):
+		all_day = button.get_active()
+		self.gobjects['spinbutton_calendar_invite_duration'].set_sensitive(not all_day)
+		self.gobjects['spinbutton_calendar_invite_start_hour'].set_sensitive(not all_day)
+		self.gobjects['spinbutton_calendar_invite_start_minute'].set_sensitive(not all_day)
+
 	def signal_entry_activate_open_file(self, entry):
 		dialog = gui_utilities.FileChooser('Choose File', self.parent)
 		if entry == self.gobjects.get('entry_html_file'):
@@ -800,6 +832,21 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		entry.set_text('')
 		return True
 
+	def signal_expander_activate_message_type(self, expander):
+		if expander.get_expanded():
+			# ignore attempts to un-expand
+			expander.set_expanded(False)
+			return
+		if expander == self.gobjects['expander_calendar_invite_settings']:
+			message_type = 'calendar_invite'
+			expander == self.gobjects['expander_email_settings'].set_expanded(False)
+		elif expander == self.gobjects['expander_email_settings']:
+			message_type = 'email'
+			self.gobjects['expander_calendar_invite_settings'].set_expanded(False)
+		button = self.message_type.buttons[message_type]
+		with gui_utilities.gobject_signal_blocked(button, 'toggled'):
+			self.message_type.set_active(message_type)
+
 	def signal_kpc_campaign_load(self, _, campaign_id):
 		if not campaign_id == self.config.get('campaign_id'):
 			return
@@ -812,6 +859,13 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	def signal_kpc_exit(self, kpc):
 		self.objects_save_to_config()
+
+	def signal_radiobutton_toggled_message_type(self, radiobutton):
+		if not radiobutton.get_active():
+			return
+		message_type = self.message_type.get_active()
+		self.gobjects['expander_calendar_invite_settings'].set_expanded(message_type == 'calendar_invite')
+		self.gobjects['expander_email_settings'].set_expanded(message_type == 'email')
 
 	def signal_radiobutton_toggled_target_type(self, radiobutton):
 		if not radiobutton.get_active():
@@ -889,6 +943,8 @@ class MailSenderTab(object):
 				text = edit_tab.textbuffer.get_text(edit_tab.textbuffer.get_start_iter(), edit_tab.textbuffer.get_end_iter(), False)
 				if not text:
 					break
+				if its.py_v2:
+					text = text.decode('utf-8')
 				html_file = self.config.get('mailer.html_file')
 				if html_file:
 					with codecs.open(html_file, 'r', encoding='utf-8') as file_h:

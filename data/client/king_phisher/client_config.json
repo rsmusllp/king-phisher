@@ -3,6 +3,7 @@
   "dashboard.top_left": "Overview",
   "dashboard.top_right": "VisitorInfo",
   "mailer.max_messages_per_connection": 5,
+  "mailer.message_type": "email",
   "mailer.target_type": "file",
   "rpc.serializer": null,
   "server": "localhost:22",

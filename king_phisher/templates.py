@@ -72,6 +72,7 @@ class BaseTemplateEnvironment(jinja2.Environment):
 
 		# time filters
 		self.filters['strftime'] = self._filter_strftime
+		self.filters['timedelta'] = self._filter_timedelta
 		self.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
 		self.filters['next_week'] = lambda dt: dt + datetime.timedelta(weeks=1)
 		self.filters['next_month'] = lambda dt: dt + datetime.timedelta(days=30)
@@ -109,6 +110,14 @@ class BaseTemplateEnvironment(jinja2.Environment):
 			result = dt.strftime(fmt)
 		except ValueError:
 			self.logger.error("invalid time format '{0}'".format(fmt))
+			result = ''
+		return result
+
+	def _filter_timedelta(self, dt, *args, **kwargs):
+		try:
+			result = dt + datetime.timedelta(*args, **kwargs)
+		except ValueError:
+			self.logger.error('invalid timedelta specification')
 			result = ''
 		return result
 

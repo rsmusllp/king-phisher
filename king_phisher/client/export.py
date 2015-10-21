@@ -36,7 +36,6 @@ import csv
 import datetime
 import io
 import ipaddress
-import json
 import logging
 import os
 import re
@@ -44,6 +43,7 @@ import shutil
 import tarfile
 import xml.etree.ElementTree as ET
 
+from king_phisher import json_ex
 from king_phisher.errors import KingPhisherInputValidationError
 
 from boltons import iterutils
@@ -51,12 +51,12 @@ import geojson
 from smoke_zephyr.utilities import escape_single_quote
 from smoke_zephyr.utilities import unescape_single_quote
 
-__all__ = [
+__all__ = (
 	'campaign_to_xml',
 	'convert_value',
 	'message_data_to_kpm',
 	'treeview_liststore_to_csv'
-]
+)
 
 KPM_ARCHIVE_FILES = {
 	'attachment_file': 'message_attachment.bin',
@@ -189,7 +189,7 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 		points.append(geojson.Feature(geometry=location, properties={'count': ip_counter[ip], 'ip-address': ip}))
 	feature_collection = geojson.FeatureCollection(points)
 	with open(geojson_file, 'w') as file_h:
-		json.dump(feature_collection, file_h, indent=2, separators=(',', ': '))
+		json_ex.dump(feature_collection, file_h)
 
 def message_data_from_kpm(target_file, dest_dir):
 	"""
@@ -214,7 +214,7 @@ def message_data_from_kpm(target_file, dest_dir):
 		logger.warning('the kpm archive is missing the message_config.json file')
 		raise KingPhisherInputValidationError('data is missing from the message archive')
 	message_config = tar_get_file('message_config.json').read()
-	message_config = json.loads(message_config)
+	message_config = json_ex.loads(message_config)
 
 	if attachment_member_names:
 		attachment_dir = os.path.join(dest_dir, 'attachments')
@@ -303,7 +303,7 @@ def message_data_to_kpm(message_config, target_file):
 			del message_config['html_file']
 
 	msg_strio = io.BytesIO()
-	msg_strio.write(json.dumps(message_config, sort_keys=True, indent=4))
+	msg_strio.write(json_ex.dumps(message_config))
 	tarinfo_h = tarfile.TarInfo(name='message_config.json')
 	tarinfo_h.mtime = mtime
 	tarinfo_h.size = msg_strio.tell()

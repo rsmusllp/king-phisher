@@ -139,7 +139,7 @@ def lookup(ip, lang='en'):
 	result['time_zone'] = city.location.time_zone
 	return result
 
-Coordinates = collections.namedtuple('Coordinates', ['latitude', 'longitude'])
+Coordinates = collections.namedtuple('Coordinates', ('latitude', 'longitude'))
 """A named tuple for representing GPS coordinates."""
 
 class GeoLocation(object):

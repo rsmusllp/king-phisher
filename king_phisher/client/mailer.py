@@ -30,8 +30,19 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+# disable this warning for the email.mime.* modules that have to be imported
+# pylint: disable=unused-import
+
 import codecs
+import collections
 import csv
+import datetime
+import email.encoders as encoders
+import email.mime as mime
+import email.mime.base
+import email.mime.image
+import email.mime.multipart
+import email.mime.text
 import logging
 import mimetypes
 import ipaddress
@@ -43,6 +54,7 @@ import sys
 import threading
 import time
 
+from king_phisher import ics
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
@@ -52,21 +64,11 @@ from gi.repository import GLib
 from smoke_zephyr.utilities import parse_server
 
 if sys.version_info[0] < 3:
-	from email import Encoders as encoders
 	import urllib
 	import urlparse
 	urllib.parse = urlparse
-	from email.MIMEBase import MIMEBase
-	from email.MIMEImage import MIMEImage
-	from email.MIMEMultipart import MIMEMultipart
-	from email.MIMEText import MIMEText
 else:
-	from email import encoders
 	import urllib.parse
-	from email.mime.base import MIMEBase
-	from email.mime.image import MIMEImage
-	from email.mime.multipart import MIMEMultipart
-	from email.mime.text import MIMEText
 
 __all__ = ['format_message', 'guess_smtp_server_address', 'MailSenderThread']
 
@@ -111,6 +113,16 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	)
 	template_vars['uid'] = uid
 
+	message_type = config.get('mailer.message_type', 'email')
+	template_vars['message_type'] = message_type
+	if message_type == 'calendar_invite':
+		template_vars['calendar_invite'] = dict(
+			all_day=config.get('mailer.calendar_invite_all_day'),
+			location=config.get('mailer.calendar_invite_location'),
+			start=get_invite_start_from_config(config),
+			summary=config.get('mailer.calendar_invite_summary')
+		)
+
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urllib.parse.urlparse(webserver_url)
 	tracking_image = config['server_config']['server.tracking_image']
@@ -127,6 +139,22 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	template_vars['url'] = template_vars_url
 	template_vars.update(template_environment.standard_variables)
 	return template.render(template_vars)
+
+def get_invite_start_from_config(config):
+	if config['mailer.calendar_invite_all_day']:
+		start_time = datetime.datetime.combine(
+			config['mailer.calendar_invite_date'],
+			datetime.time(0, 0)
+		)
+	else:
+		start_time = datetime.datetime.combine(
+			config['mailer.calendar_invite_date'],
+			datetime.time(
+				int(config['mailer.calendar_invite_start_hour']),
+				int(config['mailer.calendar_invite_start_minute'])
+			)
+		)
+	return start_time
 
 def guess_smtp_server_address(host, forward_host=None):
 	"""
@@ -165,6 +193,34 @@ def guess_smtp_server_address(host, forward_host=None):
 	if forward_host:
 		return guess_smtp_server_address(forward_host)
 	return
+
+MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
+"""A named tuple for holding both image and file attachments for a message."""
+MessageTarget = collections.namedtuple('MessageTarget', ('first_name', 'last_name', 'email_address', 'department'))
+"""A named tuple for holding information regarding a messages intended recipient."""
+
+class TopMIMEMultipart(mime.multipart.MIMEMultipart):
+	"""
+	A :py:class:`.mime.multipart.MIMEMultipart` subclass for representing the top / outer most
+	part of a MIME multipart message.
+	"""
+	def __init__(self, mime_type, config, target):
+		"""
+		:param str mime_type: The type of this part such as related or alternative.
+		:param dict config: The client configuration.
+		:param target: The target information for the messages intended recipient.
+		:type target: :py:class:`.MessageTarget`
+		"""
+		mime.multipart.MIMEMultipart.__init__(self, mime_type)
+		self['Subject'] = config['mailer.subject']
+		if config.get('mailer.reply_to_email'):
+			self.add_header('reply-to', config['mailer.reply_to_email'])
+		if config.get('mailer.source_email_alias'):
+			self['From'] = "\"{0}\" <{1}>".format(config['mailer.source_email_alias'], config['mailer.source_email'])
+		else:
+			self['From'] = config['mailer.source_email']
+		self['To'] = target.email_address
+		self.preamble = 'This is a multi-part message in MIME format.'
 
 class MailSenderThread(threading.Thread):
 	"""
@@ -307,7 +363,7 @@ class MailSenderThread(threading.Thread):
 				return False
 		return True
 
-	def count_emails(self):
+	def count_messages(self):
 		"""
 		Count the number of targets that will be sent messages.
 
@@ -322,17 +378,28 @@ class MailSenderThread(threading.Thread):
 			target_name = self.config['mailer.target_name'].split(' ')
 			while len(target_name) < 2:
 				target_name.append('')
-			target = {
-				'first_name': target_name[0],
-				'last_name': target_name[1],
-				'email_address': self.config['mailer.target_email_address'],
-				'department': None
-			}
+			target = MessageTarget(
+				first_name=target_name[0],
+				last_name=target_name[1],
+				email_address=self.config['mailer.target_email_address'],
+				department=None
+			)
 			yield target
 		elif target_type == 'file':
 			target_file_h = open(self.target_file, 'rU')
 			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
-			for target in csv_reader:
+			for raw_target in csv_reader:
+				department = raw_target['department']
+				if department is not None:
+					department = department.strip()
+					if department == '':
+						department = None
+				target = MessageTarget(
+					first_name=raw_target['first_name'],
+					last_name=raw_target['last_name'],
+					email_address=raw_target['email_address'],
+					department=department
+				)
 				yield target
 			target_file_h.close()
 		else:
@@ -340,7 +407,7 @@ class MailSenderThread(threading.Thread):
 
 	def run(self):
 		emails_done = 0
-		emails_total = self.count_emails()
+		emails_total = self.count_messages()
 		max_messages_per_connection = self.config.get('mailer.max_messages_per_connection', 5)
 		self.running.set()
 		self.should_exit.clear()
@@ -350,13 +417,13 @@ class MailSenderThread(threading.Thread):
 		emails_total = "{0:,}".format(emails_total)
 		sending_line = "Sending email {{0: >{0},}} of {1} with UID: {{1}} to {{2}}".format(len(emails_total), emails_total)
 		emails_total = int(emails_total.replace(',', ''))
-		self._mime_attachments = self._get_mime_attachments()
-		self.logger.debug("loaded {0:,} MIME attachments".format(len(self._mime_attachments)))
+		attachments = self.get_mime_attachments()
+		self.logger.debug("loaded {0:,} MIME attachments".format(sum((len(attachments.files), len(attachments.images)))))
 
 		for target in self.iterate_targets():
-			if not utilities.is_valid_email_address(target['email_address']):
-				if target['email_address']:
-					self.logger.warning('skipping invalid email address: ' + target['email_address'])
+			if not utilities.is_valid_email_address(target.email_address):
+				if target.email_address:
+					self.logger.warning('skipping invalid email address: ' + target.email_address)
 				else:
 					self.logger.warning('skipping blank email address')
 				continue
@@ -371,19 +438,14 @@ class MailSenderThread(threading.Thread):
 
 			uid = make_uid()
 			emails_done += 1
-			self.tab_notify_status(sending_line.format(emails_done, uid, target['email_address']))
-			msg = self.create_email(target['first_name'], target['last_name'], target['email_address'], uid)
-			if not self._try_send_email(target['email_address'], msg):
+			self.tab_notify_status(sending_line.format(emails_done, uid, target.email_address))
+			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, uid, attachments)
+			if not self._try_send_message(target.email_address, msg):
 				break
 
 			self.tab_notify_sent(emails_done, emails_total)
 			campaign_id = self.config['campaign_id']
-			department = target['department']
-			if department is not None:
-				department = department.strip()
-				if department == '':
-					department = None
-			self.rpc('campaign/message/new', campaign_id, uid, target['email_address'], target['first_name'], target['last_name'], department)
+			self.rpc('campaign/message/new', campaign_id, uid, target.email_address, target.first_name, target.last_name, target.department)
 
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)
@@ -430,68 +492,122 @@ class MailSenderThread(threading.Thread):
 			self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		return True
 
-	def create_email(self, first_name, last_name, target_email, uid):
+	def create_calendar_invite(self, target, uid, attachments):
+		"""
+		Create a MIME calendar invite to be sent from a set of parameters.
+
+		:param target: The information for the messages intended recipient.
+		:type target: :py:class:`.MessageTarget`
+		:param str uid: The message's unique identifier.
+		:param attachments: The attachments to add to the created message.
+		:type attachments: :py:class:`Attachments`
+		:return: The new MIME message.
+		:rtype: :py:class:`email.mime.multipart.MIMEMultipart`
+		"""
+		top_msg = TopMIMEMultipart('mixed', self.config, target)
+
+		related_msg = mime.multipart.MIMEMultipart('related')
+		top_msg.attach(related_msg)
+
+		alt_msg = mime.multipart.MIMEMultipart('alternative')
+		related_msg.attach(alt_msg)
+
+		part = mime.base.MIMEBase('text', 'plain', charset='utf-8')
+		part.set_payload('This calendar invite requires an HTML enabled viewer.\r\n\r\n')
+		encoders.encode_base64(part)
+		alt_msg.attach(part)
+
+		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
+			msg_template = file_h.read()
+		formatted_msg = format_message(msg_template, self.config, first_name=target.first_name, last_name=target.last_name, uid=uid, target_email=target.email_address)
+		part = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
+		alt_msg.attach(part)
+
+		start_time = get_invite_start_from_config(self.config)
+		if self.config['mailer.calendar_invite_all_day']:
+			duration = ics.DurationAllDay()
+		else:
+			duration = int(self.config['mailer.calendar_invite_duration']) * 60
+		ical = ics.Calendar(
+			self.config['mailer.source_email'],
+			start_time,
+			self.config.get('mailer.calendar_invite_summary'),
+			duration=duration,
+			location=self.config.get('mailer.calendar_invite_location')
+		)
+		ical.add_attendee(target.email_address)
+
+		part = mime.base.MIMEBase('text', 'calendar', charset='utf-8', method='REQUEST')
+		part.set_payload(str(ical))
+		encoders.encode_base64(part)
+		alt_msg.attach(part)
+
+		for attach in attachments.images:
+			related_msg.attach(attach)
+
+		for attach in attachments.files:
+			top_msg.attach(attach)
+		return top_msg
+
+	def create_email(self, target, uid, attachments):
 		"""
 		Create a MIME email to be sent from a set of parameters.
 
-		:param str first_name: The first name of the message's recipient.
-		:param str last_name: The last name of the message's recipient.
-		:param str target_email: The message's destination email address.
+		:param target: The information for the messages intended recipient.
+		:type target: :py:class:`.MessageTarget`
 		:param str uid: The message's unique identifier.
+		:param attachments: The attachments to add to the created message.
+		:type attachments: :py:class:`MessageAttachments`
 		:return: The new MIME message.
-		:rtype: :py:class:`email.MIMEMultipart.MIMEMultipart`
+		:rtype: :py:class:`email.mime.multipart.MIMEMultipart`
 		"""
-		msg = MIMEMultipart()
-		msg.replace_header('Content-Type', 'multipart/related')
-		msg['Subject'] = self.config['mailer.subject']
-		if self.config.get('mailer.reply_to_email'):
-			msg.add_header('reply-to', self.config['mailer.reply_to_email'])
-		if self.config.get('mailer.source_email_alias'):
-			msg['From'] = "\"{0}\" <{1}>".format(self.config['mailer.source_email_alias'], self.config['mailer.source_email'])
-		else:
-			msg['From'] = self.config['mailer.source_email']
-		msg['To'] = target_email
+		msg = TopMIMEMultipart('related', self.config, target)
 		importance = self.config.get('mailer.importance', 'Normal')
 		if importance != 'Normal':
 			msg['Importance'] = importance
 		sensitivity = self.config.get('mailer.sensitivity', 'Normal')
 		if sensitivity != 'Normal':
 			msg['Sensitivity'] = sensitivity
-		msg.preamble = 'This is a multi-part message in MIME format.'
 
-		msg_alt = MIMEMultipart('alternative')
+		msg_alt = mime.multipart.MIMEMultipart('alternative')
 		msg.attach(msg_alt)
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
-		formatted_msg = format_message(msg_template, self.config, first_name=first_name, last_name=last_name, uid=uid, target_email=target_email)
-		msg_body = MIMEText(formatted_msg, 'html', 'utf-8')
+		formatted_msg = format_message(msg_template, self.config, first_name=target.first_name, last_name=target.last_name, uid=uid, target_email=target.email_address)
+		msg_body = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
 		msg_alt.attach(msg_body)
 
 		# process attachments
-		if isinstance(self._mime_attachments, (list, tuple)):
-			attachfiles = self._mime_attachments
-		else:
-			attachfiles = self._get_mime_attachments()
-		for attachfile in attachfiles:
-			msg.attach(attachfile)
+		for attach in attachments.files:
+			msg.attach(attach)
+		for attach in attachments.images:
+			msg.attach(attach)
 		return msg
 
-	def _get_mime_attachments(self):
-		attachments = []
+	def get_mime_attachments(self):
+		"""
+		Return a :py:class:`.MessageAttachments` object containing both the images and
+		raw files to be included in sent messages.
+
+		:return: A namedtuple of both files and images in their MIME containers.
+		:rtype: :py:class:`.MessageAttachments`
+		"""
+		files = []
 		if self.config.get('mailer.attachment_file'):
 			attachment = self.config['mailer.attachment_file']
-			attachfile = MIMEBase(*mimetypes.guess_type(attachment))
+			attachfile = mime.base.MIMEBase(*mimetypes.guess_type(attachment))
 			attachfile.set_payload(open(attachment, 'rb').read())
 			encoders.encode_base64(attachfile)
 			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
-			attachments.append(attachfile)
+			files.append(attachfile)
 
+		images = []
 		for attachment_file, attachment_name in template_environment.attachment_images.items():
-			attachfile = MIMEImage(open(attachment_file, 'rb').read())
+			attachfile = mime.image.MIMEImage(open(attachment_file, 'rb').read())
 			attachfile.add_header('Content-ID', "<{0}>".format(attachment_name))
 			attachfile.add_header('Content-Disposition', "inline; filename=\"{0}\"".format(attachment_name))
-			attachments.append(attachfile)
-		return attachments
+			images.append(attachfile)
+		return MessageAttachments(tuple(files), tuple(images))
 
 	def _prepare_env(self):
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
@@ -500,12 +616,12 @@ class MailSenderThread(threading.Thread):
 		format_message(msg_template, self.config, uid=make_uid())
 		template_environment.set_mode(template_environment.MODE_SEND)
 
-	def _try_send_email(self, *args, **kwargs):
+	def _try_send_message(self, *args, **kwargs):
 		message_sent = False
 		while not message_sent:
 			for _ in range(0, 3):
 				try:
-					self.send_email(*args, **kwargs)
+					self.send_message(*args, **kwargs)
 					message_sent = True
 					break
 				except smtplib.SMTPException:
@@ -518,13 +634,13 @@ class MailSenderThread(threading.Thread):
 				self.server_smtp_reconnect()
 		return True
 
-	def send_email(self, target_email, msg):
+	def send_message(self, target_email, msg):
 		"""
 		Send an email using the connected SMTP server.
 
 		:param str target_email: The email address to send the message to.
 		:param msg: The formatted message to be sent.
-		:type msg: :py:class:`email.MIMEMultipart.MIMEMultipart`
+		:type msg: :py:class:`.mime.multipart.MIMEMultipart`
 		"""
 		source_email = self.config['mailer.source_email_smtp']
 		self.smtp_connection.sendmail(source_email, target_email, msg.as_string())
