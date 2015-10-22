@@ -37,6 +37,7 @@ import os
 import random
 import shlex
 import shutil
+import ssl
 import socket
 import sys
 import time
@@ -421,11 +422,14 @@ class KingPhisherClientApplication(_Gtk_Application):
 		try:
 			server_version_info = rpc('version')
 			assert server_version_info is not None
-		except AdvancedHTTPServerRPCError as err:
-			self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
-			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded with HTTP status: ' + str(err.status))
+		except AdvancedHTTPServerRPCError as error:
+			self.logger.warning('failed to connect to the remote rpc service with http status: ' + str(error.status))
+			gui_utilities.show_dialog_error(title_rpc_error, active_window, "The server responded with HTTP status: {0}.".format(str(error.status)))
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, active_window)
+		except ssl.CertificateError as error:
+			self.logger.warning('failed to connect to the remote rpc service with a https certificate error: ' + error.message)
+			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server presented an invalid SSL certificate.')
 		except Exception:
 			self.logger.warning('failed to connect to the remote rpc service', exc_info=True)
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'Ensure that the King Phisher Server is currently running.')
