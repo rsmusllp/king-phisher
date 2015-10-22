@@ -86,7 +86,13 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	ssl_keyfile = None
 	if config.has_option('server.ssl_cert'):
 		ssl_certfile = config.get('server.ssl_cert')
+		if not os.access(ssl_certfile, os.R_OK):
+			logger.critical("setting server.ssl_cert file '{0}' not found".format(ssl_certfile))
+			raise errors.KingPhisherError('invalid ssl configuration, missing file')
 		ssl_keyfile = config.get_if_exists('server.ssl_key')
+		if not os.access(ssl_keyfile, os.R_OK):
+			logger.critical("setting server.ssl_key file '{0}' not found".format(ssl_keyfile))
+			raise errors.KingPhisherError('invalid ssl configuration, missing file')
 	try:
 		server = ServerClass(config, HandlerClass, address=address, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
