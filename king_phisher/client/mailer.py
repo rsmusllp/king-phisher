@@ -379,8 +379,8 @@ class MailSenderThread(threading.Thread):
 			while len(target_name) < 2:
 				target_name.append('')
 			target = MessageTarget(
-				first_name=target_name[0],
-				last_name=target_name[1],
+				first_name=target_name[0].strip(),
+				last_name=target_name[1].strip(),
 				email_address=self.config['mailer.target_email_address'],
 				department=None
 			)
@@ -395,9 +395,9 @@ class MailSenderThread(threading.Thread):
 					if department == '':
 						department = None
 				target = MessageTarget(
-					first_name=raw_target['first_name'],
-					last_name=raw_target['last_name'],
-					email_address=raw_target['email_address'],
+					first_name=raw_target['first_name'].strip(),
+					last_name=raw_target['last_name'].strip(),
+					email_address=raw_target['email_address'].strip(),
 					department=department
 				)
 				yield target
