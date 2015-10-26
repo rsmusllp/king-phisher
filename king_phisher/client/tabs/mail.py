@@ -38,6 +38,7 @@ import sys
 import urllib
 
 from king_phisher import its
+from king_phisher import scrubber
 from king_phisher import spf
 from king_phisher import utilities
 from king_phisher.client import dialogs
@@ -121,18 +122,24 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 
 	def _sender_precheck_attachment(self):
 		attachment = self.config.get('mailer.attachment_file')
-		if attachment:
-			md5 = hashlib.new('md5')
-			sha1 = hashlib.new('sha1')
-			with open(attachment, 'rb') as file_h:
-				data = True
-				while data:
-					data = file_h.read(1024)
-					md5.update(data)
-					sha1.update(data)
-			self.text_insert("File '{0}' will be attached to sent messages.\n".format(os.path.basename(attachment)))
-			self.text_insert("  MD5:  {0}\n".format(md5.hexdigest()))
-			self.text_insert("  SHA1: {0}\n".format(sha1.hexdigest()))
+		if not attachment:
+			return True
+		self.text_insert("File '{0}' will be attached to sent messages.\n".format(os.path.basename(attachment)))
+		_, extension = os.path.splitext(attachment)
+		extension = extension[1:]
+		if extension in ('docm', 'docx', 'pptm', 'pptx', 'xlsm', 'xlsx'):
+			scrubber.remove_office_metadata(attachment)
+			self.text_insert("Attachment file detected as MS Office 2007+, metadata has been removed.\n")
+		md5 = hashlib.new('md5')
+		sha1 = hashlib.new('sha1')
+		with open(attachment, 'rb') as file_h:
+			data = True
+			while data:
+				data = file_h.read(1024)
+				md5.update(data)
+				sha1.update(data)
+		self.text_insert("  MD5:  {0}\n".format(md5.hexdigest()))
+		self.text_insert("  SHA1: {0}\n".format(sha1.hexdigest()))
 		return True
 
 	def _sender_precheck_campaign(self):
