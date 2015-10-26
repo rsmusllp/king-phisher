@@ -3268,36 +3268,36 @@ Brandan Geise</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-help</property>
   </object>
-  <object class="GtkApplicationWindow" id="RPCTerminalWindow">
+  <object class="GtkApplicationWindow" id="RPCTerminalAppWindow">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher RPC</property>
     <property name="destroy_with_parent">True</property>
     <child>
-      <object class="GtkBox" id="RPCTerminalWindow.box_main">
+      <object class="GtkBox" id="RPCTerminalAppWindow.box_main">
         <property name="width_request">-1</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkMenuBar" id="RPCTerminalWindow.menubar">
+          <object class="GtkMenuBar" id="RPCTerminalAppWindow.menubar">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkMenuItem" id="RPCTerminalWindow.menuitem_edit">
+              <object class="GtkMenuItem" id="RPCTerminalAppWindow.menuitem_edit">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Edit</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="RPCTerminalWindow.menu_edit">
+                  <object class="GtkMenu" id="RPCTerminalAppWindow.menu_edit">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_edit_copy">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_edit_copy">
                         <property name="label">gtk-copy</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="accel_path">&lt;RPCTerminalWindow&gt;/Edit/Copy</property>
+                        <property name="accel_path">&lt;RPCTerminalAppWindow&gt;/Edit/Copy</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="signal_menuitem_edit_copy" swapped="no"/>
@@ -3305,11 +3305,11 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_edit_paste">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_edit_paste">
                         <property name="label">gtk-paste</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="accel_path">&lt;RPCTerminalWindow&gt;/Edit/Paste</property>
+                        <property name="accel_path">&lt;RPCTerminalAppWindow&gt;/Edit/Paste</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="signal_menuitem_edit_paste" swapped="no"/>
@@ -3321,17 +3321,17 @@ Brandan Geise</property>
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="RPCTerminalWindow.menuitem_help">
+              <object class="GtkMenuItem" id="RPCTerminalAppWindow.menuitem_help">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Help</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="RPCTerminalWindow.menu_help">
+                  <object class="GtkMenu" id="RPCTerminalAppWindow.menu_help">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_about">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_help_about">
                         <property name="label">gtk-about</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -3341,7 +3341,7 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_api_docs">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_help_api_docs">
                         <property name="label" translatable="yes">API Docs</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -3351,7 +3351,7 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_wiki">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_help_wiki">
                         <property name="label" translatable="yes">Help</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>

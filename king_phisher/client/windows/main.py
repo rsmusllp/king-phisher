@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/windows.py
+#  king_phisher/client/windows/main.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -38,7 +38,7 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
-from king_phisher.client import tools
+from king_phisher.client.windows import rpc_terminal
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.constants import ConnectionErrorReason
@@ -52,6 +52,8 @@ if isinstance(Gtk.ApplicationWindow, utilities.Mock):
 	_Gtk_ApplicationWindow.__module__ = ''
 else:
 	_Gtk_ApplicationWindow = Gtk.ApplicationWindow
+
+__all__ = ('MainAppWindow',)
 
 class MainMenuBar(gui_utilities.GladeGObject):
 	"""
@@ -68,7 +70,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		'StockStopImage'
 	)
 	def __init__(self, application, window):
-		assert isinstance(window, MainApplicationWindow)
+		assert isinstance(window, MainAppWindow)
 		super(MainMenuBar, self).__init__(application)
 		self.window = window
 		self._add_accelerators()
@@ -130,7 +132,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		self.application.quit(optional=True)
 
 	def do_tools_rpc_terminal(self, _):
-		tools.KingPhisherClientRPCTerminal(self.application)
+		rpc_terminal.RPCTerminal(self.application)
 
 	def do_tools_clone_page(self, _):
 		dialogs.ClonePageDialog(self.application).interact()
@@ -147,7 +149,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def do_help_wiki(self, _):
 		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
 
-class MainApplicationWindow(_Gtk_ApplicationWindow):
+class MainAppWindow(_Gtk_ApplicationWindow):
 	"""
 	This is the top level King Phisher client window. This is also the parent
 	window for most GTK objects.
@@ -159,7 +161,7 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
 		assert isinstance(application, Gtk.Application)
-		super(MainApplicationWindow, self).__init__(application=application)
+		super(MainAppWindow, self).__init__(application=application)
 		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')
 		self.config = config

@@ -52,8 +52,8 @@ from king_phisher.client import client_rpc
 from king_phisher.client import dialogs
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
-from king_phisher.client import tools
-from king_phisher.client import windows
+from king_phisher.client.windows import main
+from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
@@ -103,8 +103,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
 		self.logger.debug("gi.repository GObject version: {0}".format('.'.join(map(str, GObject.pygobject_version))))
 		self.logger.debug("gi.repository Gtk version: {0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()))
-		if tools.has_vte:
-			self.logger.debug("gi.repository VTE version: {0}".format(tools.Vte._version))
+		if rpc_terminal.has_vte:
+			self.logger.debug("gi.repository VTE version: {0}".format(rpc_terminal.Vte._version))
 		if graphs.has_matplotlib:
 			self.logger.debug("matplotlib version: {0}".format(graphs.matplotlib.__version__))
 		self.set_property('application-id', 'org.king-phisher.client')
@@ -116,7 +116,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.config = None
 		"""The primary King Phisher client configuration."""
 		self.main_window = None
-		"""The primary top-level :py:class:`~.MainApplicationWindow` instance."""
+		"""The primary top-level :py:class:`~.MainAppWindow` instance."""
 		self.rpc = None
 		"""The :py:class:`~.KingPhisherRPCClient` instance for the application."""
 		self._ssh_forwarder = None
@@ -280,7 +280,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.debug('no custom css file was found')
 
 		# create and show the main window
-		self.main_window = windows.MainApplicationWindow(self.config, self)
+		self.main_window = main.MainAppWindow(self.config, self)
 		self.main_window.set_position(Gtk.WindowPosition.CENTER)
 		self.main_window.show()
 
