@@ -228,6 +228,10 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.last_load_time = time.time()
 
 	def signal_button_clicked_export(self, button):
+		self.export_table_to_csv()
+
+	def export_table_to_csv(self):
+		"""Export the data represented by the view to a CSV file."""
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
 			return

@@ -31,6 +31,7 @@
 #
 
 import logging
+import weakref
 
 from king_phisher import find
 from king_phisher import utilities
@@ -72,7 +73,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def __init__(self, application, window):
 		assert isinstance(window, MainAppWindow)
 		super(MainMenuBar, self).__init__(application)
-		self.window = window
+		self.window = weakref.proxy(window)
 		self._add_accelerators()
 		graphs_menu_item = self.gtk_builder_get('menuitem_tools_create_graph')
 		if graphs.has_matplotlib:
@@ -121,6 +122,21 @@ class MainMenuBar(gui_utilities.GladeGObject):
 
 	def do_export_message_data(self, _):
 		self.window.export_message_data()
+
+	def do_export_csv_credentials(self, _):
+		campaign_tab = self.window.tabs['campaign']
+		credentials_tab = campaign_tab.tabs['credentials']
+		credentials_tab.export_table_to_csv()
+
+	def do_export_csv_messages(self, _):
+		campaign_tab = self.window.tabs['campaign']
+		messages_tab = campaign_tab.tabs['messages']
+		messages_tab.export_table_to_csv()
+
+	def do_export_csv_visits(self, _):
+		campaign_tab = self.window.tabs['campaign']
+		visits_tab = campaign_tab.tabs['visits']
+		visits_tab.export_table_to_csv()
 
 	def do_import_message_data(self, _):
 		self.window.import_message_data()

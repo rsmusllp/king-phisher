@@ -3766,6 +3766,48 @@ Brandan Geise</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Export campaign data to a CSV file.</property>
+                        <property name="label" translatable="yes">CSV</property>
+                        <property name="use_underline">True</property>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="menu1">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv_credentials">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Credentials</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_csv_credentials" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv_messages">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Messages</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_csv_messages" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv_visits">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Visits</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_csv_visits" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xml">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
