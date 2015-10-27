@@ -5,6 +5,7 @@
   "mailer.max_messages_per_connection": 5,
   "mailer.message_type": "email",
   "mailer.target_type": "file",
+  "remove_attachment_metadata": true,
   "rpc.serializer": null,
   "server": "localhost:22",
   "server_remote_port": 80,

@@ -127,7 +127,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.text_insert("File '{0}' will be attached to sent messages.\n".format(os.path.basename(attachment)))
 		_, extension = os.path.splitext(attachment)
 		extension = extension[1:]
-		if extension in ('docm', 'docx', 'pptm', 'pptx', 'xlsm', 'xlsx'):
+		if self.config['remove_attachment_metadata'] and extension in ('docm', 'docx', 'pptm', 'pptx', 'xlsm', 'xlsx'):
 			scrubber.remove_office_metadata(attachment)
 			self.text_insert("Attachment file detected as MS Office 2007+, metadata has been removed.\n")
 		md5 = hashlib.new('md5')
