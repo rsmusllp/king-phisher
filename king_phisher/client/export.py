@@ -50,11 +50,14 @@ from boltons import iterutils
 import geojson
 from smoke_zephyr.utilities import escape_single_quote
 from smoke_zephyr.utilities import unescape_single_quote
+import xlsxwriter
 
 __all__ = (
 	'campaign_to_xml',
 	'convert_value',
+	'liststore_export',
 	'liststore_to_csv',
+	'liststore_to_xlsx_worksheet',
 	'message_data_to_kpm'
 )
 
@@ -310,11 +313,49 @@ def message_data_to_kpm(message_config, target_file):
 	tar_h.close()
 	return
 
+def liststore_export(store, columns, cb_write, *cb_write_args):
+	"""
+	A function to facilitate writing values from a list store to an arbitrary
+	callback for exporting to different formats. The callback will be called
+	with the row number, the column values and the additional arguments
+	specified in *\*cb_write_args*.
+
+	.. code-block:: python
+
+	  cb_write(row, column_values, *cb_write_args).
+
+	:param store: The store to export the information from.
+	:type store: :py:class:`Gtk.ListStore`
+	:param dict columns: A dictionary mapping store column ids to the value names.
+	:param function cb_write: The callback function to be called for each row of data.
+	:param cb_write_args: Additional arguments to pass to *cb_write*.
+	:return: The number of rows that were written.
+	:rtype: int
+	"""
+	if isinstance(columns, collections.OrderedDict):
+		column_names = (columns[c] for c in columns.keys())
+		store_columns = columns.keys()
+	else:
+		column_names = (columns[c] for c in sorted(columns.keys()))
+		store_columns = sorted(columns.keys())
+	cb_write(0, column_names, *cb_write_args)
+
+	store_iter = store.get_iter_first()
+	rows_written = 0
+	while store_iter:
+		cb_write(rows_written + 1, (store.get_value(store_iter, c) for c in store_columns), *cb_write_args)
+		rows_written += 1
+		store_iter = store.iter_next(store_iter)
+	return rows_written
+
+def _csv_write(row, columns, writer):
+	writer.writerow(tuple(columns))
+
 def liststore_to_csv(store, target_file, columns):
 	"""
 	Write the contents of a :py:class:`Gtk.ListStore` to a csv file.
 
-	:param store: The store to dump the information from.
+	:param store: The store to export the information from.
 	:type store: :py:class:`Gtk.ListStore`
 	:param str target_file: The destination file for the CSV data.
 	:param dict columns: A dictionary mapping store column ids to the value names.
@@ -323,19 +364,26 @@ def liststore_to_csv(store, target_file, columns):
 	"""
 	target_file_h = open(target_file, 'wb')
 	writer = csv.writer(target_file_h, quoting=csv.QUOTE_ALL)
-	if isinstance(columns, collections.OrderedDict):
-		column_names = (columns[c] for c in columns.keys())
-		store_columns = columns.keys()
-	else:
-		column_names = (columns[c] for c in sorted(columns.keys()))
-		store_columns = sorted(columns.keys())
-	writer.writerow(tuple(column_names))
-
-	store_iter = store.get_iter_first()
-	rows_written = 0
-	while store_iter:
-		writer.writerow(tuple(store.get_value(store_iter, c) for c in store_columns))
-		rows_written += 1
-		store_iter = store.iter_next(store_iter)
+	rows = liststore_export(store, columns, _csv_write, writer)
 	target_file_h.close()
-	return rows_written
+	return rows
+
+def _xlsx_write(row, columns, worksheet):
+	for column, text in enumerate(columns):
+		worksheet.write(row, column, text)
+
+def liststore_to_xlsx_worksheet(store, worksheet, columns):
+	"""
+	Write the contents of a :py:class:`Gtk.ListStore` to an XLSX workseet.
+
+	:param store: The store to export the information from.
+	:type store: :py:class:`Gtk.ListStore`
+	:param worksheet: The destination sheet for the store's data.
+	:type worksheet: :py:class:`xlsxwriter.worksheet.Worksheet`
+	:param dict columns: A dictionary mapping store column ids to the value names.
+	:return: The number of rows that were written.
+	:rtype: int
+	"""
+	if not isinstance(worksheet, xlsxwriter.worksheet.Worksheet):
+		raise TypeError("liststore_to_xlsx_worksheet() arguments 2 must be Worksheet, not {0}".format(type(worksheet).__name__))
+	return liststore_export(store, columns, _xlsx_write, worksheet)
