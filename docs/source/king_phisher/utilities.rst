@@ -9,6 +9,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.argp_add_args
 
+.. autofunction:: king_phisher.utilities.assert_arg_type
+
 .. autofunction:: king_phisher.utilities.configure_stream_logger
 
 .. autofunction:: king_phisher.utilities.datetime_local_to_utc

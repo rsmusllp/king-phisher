@@ -168,7 +168,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if isinstance(cell_data, datetime.datetime):
 			cell_data = utilities.datetime_utc_to_local(cell_data)
 			return utilities.format_datetime(cell_data)
-		elif cell_data == None:
+		elif cell_data is None:
 			return ''
 		return str(cell_data)
 
@@ -255,6 +255,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			return
 		store = self.gobjects['treeview_campaign'].get_model()
 		columns = dict(enumerate(('UID',) + self.view_columns))
+		worksheet.set_column(0, len(columns), 30)
 		export.liststore_to_xlsx_worksheet(store, worksheet, columns)
 		self.loader_thread_lock.release()
 

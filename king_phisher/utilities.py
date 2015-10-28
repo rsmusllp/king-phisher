@@ -32,6 +32,7 @@
 
 import collections
 import datetime
+import inspect
 import ipaddress
 import logging
 import operator
@@ -162,6 +163,33 @@ def argp_add_args(parser, default_root=''):
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
 	parser.add_argument('-L', '--log', dest='loglvl', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='WARNING', help='set the logging level')
 	parser.add_argument('--logger', default=default_root, help='specify the root logger')
+
+def assert_arg_type(arg, arg_type, arg_pos=1, func_name=None):
+	"""
+	Check that an argument is an instance of the specified type and if not raise
+	a :py:exc:`TypeError` exception with a meaningful message. If *func_name* is
+	not specified, it will be determined by examining the stack.
+
+	:param arg: The argument to check.
+	:param arg_type: The type or sequence of types that *arg* can be.
+	:type arg_type: list, tuple, type
+	:param int arg_pos: The position of the argument in the function.
+	:param str func_name: The name of the function the argument is for.
+	"""
+	if isinstance(arg, arg_type):
+		return
+	if func_name is None:
+		parent_frame = inspect.stack()[1][0]
+		func_name = parent_frame.f_code.co_name
+	if isinstance(arg_type, (list, tuple)):
+		if len(arg_type) == 1:
+			arg_type = arg_type[0].__name__
+		else:
+			arg_type = tuple(at.__name__ for at in arg_type)
+			arg_type = ', '.join(arg_type[:-1]) + ' or ' + arg_type[-1]
+	else:
+		arg_type = arg_type.__name__
+	raise TypeError("{0}() argument {1} must be {2}, not {3}".format(func_name, arg_pos, arg_type, type(arg).__name__))
 
 def configure_stream_logger(level, logger):
 	"""
@@ -294,8 +322,7 @@ def parse_datetime(ts):
 	:return: The parsed timestamp.
 	:rtype: :py:class:`datetime.datetime`
 	"""
-	if not isinstance(ts, str):
-		raise TypeError("must be str not {0}".format(type(ts).__name__))
+	assert_arg_type(ts, str)
 	return datetime.datetime.strptime(ts, TIMESTAMP_FORMAT)
 
 def random_string(size):

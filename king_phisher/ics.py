@@ -37,7 +37,7 @@ import re
 import uuid
 
 from king_phisher import its
-from king_phisher.utilities import switch
+from king_phisher import utilities
 
 import dateutil.tz
 import icalendar
@@ -234,14 +234,13 @@ class Calendar(icalendar.Calendar):
 		:type duration: int, str, :py:class:`~datetime.timedelta`, :py:class:`.DurationAllDay`
 		:param str location: The location for the event.
 		"""
-		if not isinstance(start, datetime.datetime):
-			raise TypeError('start must be a datetime.datetime instance')
+		utilities.assert_arg_type(start, datetime.datetime, 2)
 		super(Calendar, self).__init__()
 		if start.tzinfo is None:
 			start = start.replace(tzinfo=dateutil.tz.tzlocal())
 		start = start.astimezone(dateutil.tz.tzutc())
 
-		for case in switch(duration, comp=isinstance):
+		for case in utilities.switch(duration, comp=isinstance):
 			if case(str):
 				duration = smoke_zephyr.utilities.parse_timespan(duration)
 				duration = datetime.timedelta(seconds=duration)

@@ -44,6 +44,7 @@ import tarfile
 import xml.etree.ElementTree as ET
 
 from king_phisher import json_ex
+from king_phisher import utilities
 from king_phisher.errors import KingPhisherInputValidationError
 
 from boltons import iterutils
@@ -384,6 +385,5 @@ def liststore_to_xlsx_worksheet(store, worksheet, columns):
 	:return: The number of rows that were written.
 	:rtype: int
 	"""
-	if not isinstance(worksheet, xlsxwriter.worksheet.Worksheet):
-		raise TypeError("liststore_to_xlsx_worksheet() arguments 2 must be Worksheet, not {0}".format(type(worksheet).__name__))
+	utilities.assert_arg_type(worksheet, xlsxwriter.worksheet.Worksheet, 2)
 	return liststore_export(store, columns, _xlsx_write, worksheet)

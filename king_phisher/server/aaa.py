@@ -43,11 +43,12 @@ import threading
 import time
 
 from king_phisher import its
+from king_phisher import utilities
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 from king_phisher.third_party import pam
 
-from smoke_zephyr import utilities
+import smoke_zephyr.utilities
 
 __all__ = ('AuthenticatedSessionManager', 'ForkedAuthenticator')
 
@@ -82,8 +83,7 @@ class AuthenticatedSession(object):
 
 	@classmethod
 	def from_db_authenticated_session(cls, stored_session):
-		if not isinstance(stored_session, db_models.AuthenticatedSession):
-			raise TypeError('from_db_authenticated_session() db_session argument must be a king_phisher.server.database.models.AuthenticatedSession instance')
+		utilities.assert_arg_type(stored_session, db_models.AuthenticatedSession)
 		session = cls(stored_session.user_id)
 		session.created = stored_session.created
 		session.last_seen = stored_session.last_seen
@@ -98,7 +98,7 @@ class AuthenticatedSessionManager(object):
 		"""
 		self.logger = logging.getLogger('KingPhisher.Server.SessionManager')
 		if isinstance(timeout, str):
-			timeout = utilities.parse_timespan(timeout)
+			timeout = smoke_zephyr.utilities.parse_timespan(timeout)
 		self.session_timeout = timeout
 		self._sessions = {}
 		self._lock = threading.Lock()

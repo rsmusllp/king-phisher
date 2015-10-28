@@ -52,8 +52,7 @@ class RadioButtonGroupManager(object):
 		:type glade_gobject: :py:class:`.GladeGObject`
 		:param str button_group_name: The name of the group of buttons.
 		"""
-		if not isinstance(glade_gobject, gui_utilities.GladeGObject):
-			raise TypeError("{0}() argument 1 must be GladeGObject, not {1}".format(self.__class__.__name__, type(version).__name__))
+		utilities.assert_arg_type(glade_gobject, gui_utilities.GladeGObject)
 		self.group_name = button_group_name
 		name_prefix = 'radiobutton_' + self.group_name + '_'
 		self.buttons = utilities.FreezableDict()
