@@ -54,8 +54,8 @@ from smoke_zephyr.utilities import unescape_single_quote
 __all__ = (
 	'campaign_to_xml',
 	'convert_value',
-	'message_data_to_kpm',
-	'treeview_liststore_to_csv'
+	'liststore_to_csv',
+	'message_data_to_kpm'
 )
 
 KPM_ARCHIVE_FILES = {
@@ -107,8 +107,7 @@ def message_template_from_kpm(template, files):
 
 def convert_value(table_name, key, value):
 	"""
-	Perform any conversions necessary to neatly display the data in XML
-	format.
+	Perform any conversions necessary to neatly display the data in XML format.
 
 	:param str table_name: The table name that the key and value pair are from.
 	:param str key: The data key.
@@ -118,14 +117,13 @@ def convert_value(table_name, key, value):
 	"""
 	if isinstance(value, datetime.datetime):
 		value = value.isoformat()
-	if value != None:
+	if value is not None:
 		value = str(value)
 	return value
 
 def campaign_to_xml(rpc, campaign_id, xml_file):
 	"""
-	Load all information for a particular campaign and dump it to an XML
-	file.
+	Load all information for a particular campaign and dump it to an XML file.
 
 	:param rpc: The connected RPC instance to load the information with.
 	:type rpc: :py:class:`.KingPhisherRPCClient`
@@ -312,29 +310,31 @@ def message_data_to_kpm(message_config, target_file):
 	tar_h.close()
 	return
 
-def treeview_liststore_to_csv(treeview, target_file):
+def liststore_to_csv(store, target_file, columns):
 	"""
-	Convert a treeview object to a CSV file. The CSV column names are loaded
-	from the treeview.
+	Write the contents of a :py:class:`Gtk.ListStore` to a csv file.
 
-	:param treeview: The treeview to load the information from.
-	:type treeview: :py:class:`Gtk.TreeView`
+	:param store: The store to dump the information from.
+	:type store: :py:class:`Gtk.ListStore`
 	:param str target_file: The destination file for the CSV data.
+	:param dict columns: A dictionary mapping store column ids to the value names.
 	:return: The number of rows that were written.
 	:rtype: int
 	"""
 	target_file_h = open(target_file, 'wb')
 	writer = csv.writer(target_file_h, quoting=csv.QUOTE_ALL)
-	column_names = [column.get_property('title') for column in treeview.get_columns()]
-	column_names.insert(0, 'UID')
-	column_count = len(column_names)
-	writer.writerow(column_names)
-	store = treeview.get_model()
+	if isinstance(columns, collections.OrderedDict):
+		column_names = (columns[c] for c in columns.keys())
+		store_columns = columns.keys()
+	else:
+		column_names = (columns[c] for c in sorted(columns.keys()))
+		store_columns = sorted(columns.keys())
+	writer.writerow(tuple(column_names))
+
 	store_iter = store.get_iter_first()
 	rows_written = 0
 	while store_iter:
-		values = [store.get_value(store_iter, x) for x in range(column_count)]
-		writer.writerow(values)
+		writer.writerow(tuple(store.get_value(store_iter, c) for c in store_columns))
 		rows_written += 1
 		store_iter = store.iter_next(store_iter)
 	target_file_h.close()

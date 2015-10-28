@@ -232,7 +232,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 
 	def export_table_to_csv(self):
 		"""Export the data represented by the view to a CSV file."""
-		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
+		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
 			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
 			return
 		dialog = gui_utilities.FileChooser('Export Data', self.parent)
@@ -240,9 +240,13 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()
 		if not response:
+			self.loader_thread_lock.release()
 			return
 		destination_file = response['target_path']
-		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
+		store = self.gobjects['treeview_campaign'].get_model()
+		columns = dict(enumerate(('UID',) + self.view_columns))
+		export.liststore_to_csv(store, destination_file, columns)
+		self.loader_thread_lock.release()
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""

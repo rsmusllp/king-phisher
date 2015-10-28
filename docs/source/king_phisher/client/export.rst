@@ -15,4 +15,4 @@ Functions
 
 .. autofunction:: king_phisher.client.export.message_data_to_kpm
 
-.. autofunction:: king_phisher.client.export.treeview_liststore_to_csv
+.. autofunction:: king_phisher.client.export.liststore_to_csv
