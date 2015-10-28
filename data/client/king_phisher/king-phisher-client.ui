@@ -3831,6 +3831,15 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child>
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xlsx">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Campaign Excel</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_export_campaign_xlsx" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xml">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>

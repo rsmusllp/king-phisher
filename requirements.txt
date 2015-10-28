@@ -23,3 +23,4 @@ smoke-zephyr>=1.0.1
 SQLAlchemy>=1.0.8
 termcolor>=1.1.0
 tzlocal>=1.2
+XlsxWriter>=0.7.7

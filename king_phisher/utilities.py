@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import datetime
 import ipaddress
 import logging
@@ -52,7 +53,7 @@ from smoke_zephyr.utilities import which
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
 TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-class FreezableDict(dict):
+class FreezableDict(collections.OrderedDict):
 	"""
 	A dictionary that can be frozen to prevent further editing. Useful for
 	debugging. If any function tries to edit a frozen dictionary, a

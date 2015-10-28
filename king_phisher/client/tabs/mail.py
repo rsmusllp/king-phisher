@@ -911,7 +911,7 @@ class MailSenderTab(object):
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
-		self.tabs = {}
+		self.tabs = utilities.FreezableDict()
 		"""A dict object holding the sub tabs managed by this object."""
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
@@ -932,6 +932,7 @@ class MailSenderTab(object):
 		self.tabs['send_messages'] = send_messages_tab
 		self.notebook.append_page(send_messages_tab.box, send_messages_tab.label)
 
+		self.tabs.freeze()
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()

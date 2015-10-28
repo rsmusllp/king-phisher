@@ -41,12 +41,14 @@ from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client.windows import rpc_terminal
 from king_phisher.client.tabs.campaign import CampaignViewTab
+from king_phisher.client.tabs.campaign import CampaignViewGenericTableTab
 from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.constants import ConnectionErrorReason
 
 from gi.repository import Gdk
 from gi.repository import GdkPixbuf
 from gi.repository import Gtk
+import xlsxwriter
 
 if isinstance(Gtk.ApplicationWindow, utilities.Mock):
 	_Gtk_ApplicationWindow = type('Gtk.ApplicationWindow', (object,), {})
@@ -113,6 +115,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 
 	def do_edit_tags(self, _):
 		dialogs.TagEditorDialog(self.application).interact()
+
+	def do_export_campaign_xlsx(self, _):
+		self.window.export_campaign_xlsx()
 
 	def do_export_campaign_xml(self, _):
 		self.window.export_campaign_xml()
@@ -278,6 +283,23 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 			entry.grab_focus()
 		elif reason == ConnectionErrorReason.ERROR_INVALID_CREDENTIALS:
 			gui_utilities.show_dialog_error('Login Failed', self, 'The provided credentials are incorrect.')
+
+	def export_campaign_xlsx(self):
+		"""Export the current campaign to an Excel compatible XLSX workbook."""
+		dialog = gui_utilities.FileChooser('Export Campaign To Excel', self)
+		file_name = self.config['campaign_name'] + '.xlsx'
+		response = dialog.run_quick_save(file_name)
+		dialog.destroy()
+		if not response:
+			return
+		destination_file = response['target_path']
+		campaign_tab = self.tabs['campaign']
+		workbook = xlsxwriter.Workbook(destination_file)
+		for tab_name, tab in campaign_tab.tabs.items():
+			if not isinstance(tab, CampaignViewGenericTableTab):
+				continue
+			tab.export_table_to_xlsx_worksheet(workbook.add_worksheet(tab_name))
+		workbook.close()
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""

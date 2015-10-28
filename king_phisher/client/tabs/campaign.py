@@ -248,6 +248,16 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		export.liststore_to_csv(store, destination_file, columns)
 		self.loader_thread_lock.release()
 
+	def export_table_to_xlsx_worksheet(self, worksheet):
+		"""Export the data represented by the view to a XLSX worksheet."""
+		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
+			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
+			return
+		store = self.gobjects['treeview_campaign'].get_model()
+		columns = dict(enumerate(('UID',) + self.view_columns))
+		export.liststore_to_xlsx_worksheet(store, worksheet, columns)
+		self.loader_thread_lock.release()
+
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""
 	remote_table_name = 'deaddrop_connections'
@@ -507,7 +517,7 @@ class CampaignViewTab(object):
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
-		self.tabs = {}
+		self.tabs = utilities.FreezableDict()
 		"""A dict object holding the sub tabs managed by this object."""
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
@@ -537,6 +547,7 @@ class CampaignViewTab(object):
 			self.tabs['deaddrop_connections'] = deaddrop_connections_tab
 			self.notebook.append_page(deaddrop_connections_tab.box, deaddrop_connections_tab.label)
 
+		self.tabs.freeze()
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()
