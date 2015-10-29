@@ -40,6 +40,7 @@
 @define-color theme_color_0 #00203a;
 @define-color theme_color_1 #5d84a8;
 @define-color theme_color_2 #00bf8c;
+@define-color theme_color_bg shade(@theme_color_0, 1.2);
 
 /* treeview normal */
 @define-color theme_color_tv_bg @theme_color_0;
@@ -60,7 +61,7 @@
 
 GtkAboutDialog GtkTextView,
 GtkAboutDialog GtkViewport {
-  background-color: @theme_color_0;
+  background-color: @theme_color_bg;
   color: white;
 }
 
@@ -181,11 +182,12 @@ GtkEntry:insensitive {
 }
 
 GtkFileChooser .search-bar {
-  background-color: @theme_color_0;
+  background-color: @theme_color_bg;
 }
 
 GtkFrame {
   background: none;
+  border: 2px solid shade(@theme_color_0, 1.75);
 }
 
 GtkGrid {
@@ -231,7 +233,7 @@ GtkMenuItem:hover > GtkLabel {
 }
 
 GtkNotebook {
-  background-color: shade(@theme_color_0, 1.2);
+  background-color: @theme_color_bg;
   color: white;
   padding: 0px;
 }
@@ -300,7 +302,7 @@ GtkSwitch.slider {
 }
 
 GtkTextView {
-  background-color: @theme_color_0;
+  background-color: @theme_color_bg;
   border-radius: 4px;
   color: white;
 }
