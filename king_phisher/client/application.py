@@ -34,13 +34,11 @@ import copy
 import ipaddress
 import logging
 import os
-import random
 import shlex
 import shutil
 import ssl
 import socket
 import sys
-import time
 import uuid
 
 from king_phisher import find
@@ -161,13 +159,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		active_window = self.get_active_window()
 		title_ssh_error = 'Failed To Connect To The SSH Service'
 		server_remote_port = self.config['server_remote_port']
-		local_port = random.randint(2000, 6000)
 
 		try:
-			self._ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
+			self._ssh_forwarder = SSHTCPForwarder(server, username, password, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
 			self._ssh_forwarder.start()
-			time.sleep(0.5)
-			self.logger.info('started ssh port forwarding')
 		except paramiko.AuthenticationException:
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The server responded that the credentials are invalid.')
@@ -177,7 +172,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, "An {0}.{1} error occurred.".format(error.__class__.__module__, error.__class__.__name__))
 		else:
-			return local_port
+			self.logger.info("started ssh port forwarding to the remote king phisher server ({0})".format(str(self._ssh_forwarder)))
+			return self._ssh_forwarder.local_port
 		self.server_disconnect()
 		return
 
@@ -405,7 +401,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		server = parse_server(self.config['server'], 22)
 		if server[0] == 'localhost' or (utilities.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
 			local_port = self.config['server_remote_port']
-			self.logger.info("connecting to local king-phisher instance")
+			self.logger.info("connecting to local king phisher instance")
 		else:
 			local_port = self._create_ssh_forwarder(server, username, password)
 		if not local_port:

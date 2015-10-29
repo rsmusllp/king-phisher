@@ -58,9 +58,11 @@ from king_phisher import ics
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
+from king_phisher.constants import ConnectionErrorReason
 from king_phisher.ssh_forward import SSHTCPForwarder
 
 from gi.repository import GLib
+import paramiko
 from smoke_zephyr.utilities import parse_server
 
 if sys.version_info[0] < 3:
@@ -70,7 +72,7 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse
 
-__all__ = ['format_message', 'guess_smtp_server_address', 'MailSenderThread']
+__all__ = ('format_message', 'guess_smtp_server_address', 'MailSenderThread')
 
 make_uid = lambda: utilities.random_string(16)
 template_environment = templates.MessageTemplateEnvironment()
@@ -294,23 +296,24 @@ class MailSenderThread(threading.Thread):
 		forwarding with :py:class:`.SSHTCPForwarder` for tunneling SMTP
 		traffic.
 
-		:return: The connection status.
-		:rtype: bool
+		:return: The connection status as one of the :py:class:`.ConnectionErrorReason` constants.
 		"""
 		server = parse_server(self.config['ssh_server'], 22)
 		username = self.config['ssh_username']
 		password = self.config['ssh_password']
 		remote_server = parse_server(self.config['smtp_server'], 25)
-		local_port = random.randint(2000, 6000)
 		try:
-			self._ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, remote_server, preferred_private_key=self.config.get('ssh_preferred_key'))
+			self._ssh_forwarder = SSHTCPForwarder(server, username, password, remote_server, preferred_private_key=self.config.get('ssh_preferred_key'))
 			self._ssh_forwarder.start()
-			time.sleep(0.5)
+		except paramiko.AuthenticationException:
+			self.logger.warning('failed to authenticate to the remote ssh server')
+			return ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED
 		except Exception:
-			self.logger.warning('failed to connect to remote ssh server', exc_info=True)
-			return False
-		self.smtp_server = ('localhost', local_port)
-		return True
+			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
+			return ConnectionErrorReason.ERROR_UNKNOWN
+		self.logger.info("started ssh port forwarding to the remote smtp server ({0})".format(str(self._ssh_forwarder)))
+		self.smtp_server = ('localhost', self._ssh_forwarder.local_port)
+		return ConnectionErrorReason.SUCCESS
 
 	def server_smtp_connect(self):
 		"""

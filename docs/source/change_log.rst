@@ -15,6 +15,7 @@ Version 1.1.0
 * Added an option to send a message to a single target
 * Support for sending calendar invite messages
 * Added PostgreSQL setup to the installer
+* Support for exporting to Excel
 
 Version 1.0.0
 ^^^^^^^^^^^^^

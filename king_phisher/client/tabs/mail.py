@@ -46,6 +46,7 @@ from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
 from king_phisher.client import widget_managers
+from king_phisher.constants import ConnectionErrorReason
 from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
@@ -299,10 +300,15 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 				if response != Gtk.ResponseType.APPLY:
 					self.sender_start_failure(text='canceled.\n')
 					return
-				if self.sender_thread.server_ssh_connect():
+				ssh_status = self.sender_thread.server_ssh_connect()
+				if ssh_status == ConnectionErrorReason.SUCCESS:
 					self.text_insert('done.\n')
 					break
-				self.sender_start_failure(('Connection Failed', 'Failed to connect to the SSH server.'), 'failed.\n', retry=True)
+				if ssh_status == ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED:
+					error_description = ('Authentication Failed', 'Failed to authenticate to the SSH server.')
+				else:
+					error_description = ('Connection Failed', 'Failed to connect to the SSH server.')
+				self.sender_start_failure(error_description, 'failed.\n', retry=True)
 		self.text_insert('Connecting to SMTP server... ')
 		if not self.sender_thread.server_smtp_connect():
 			self.sender_start_failure(('Connection Failed', 'Failed to connect to the SMTP server.'), 'failed.\n')

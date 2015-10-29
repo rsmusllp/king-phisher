@@ -65,11 +65,13 @@ class ConstantGroup:
 
 class ConnectionErrorReason(ConstantGroup):
 	"""Constants which describe possible errors for the client connection process."""
+	ERROR_AUTHENTICATION_FAILED = intern('authentication failed')
 	ERROR_CONNECTION = intern('connection error')
 	ERROR_INCOMPATIBLE_VERSIONS = intern('incompatible versions')
 	ERROR_INVALID_CREDENTIALS = intern('invalid credentials')
 	ERROR_INVALID_OTP = intern('invalid otp')
 	ERROR_PORT_FORWARD = intern('port forward error')
+	ERROR_UNKNOWN = intern('unknown error')
 	SUCCESS = intern('success')
 
 class ColorHexCode(ConstantGroup):
