@@ -31,7 +31,6 @@
 #
 
 import binascii
-import random
 import select
 import socket
 import sys
@@ -92,7 +91,7 @@ class SSHTCPForwarder(threading.Thread):
 	a :py:class:`threading.Thread` object and needs to be started after
 	it is initialized.
 	"""
-	def __init__(self, server, username, password, remote_server, local_port=None, preferred_private_key=None):
+	def __init__(self, server, username, password, remote_server, local_port=0, preferred_private_key=None):
 		"""
 		:param tuple server: The server to connect to.
 		:param str username: The username to authenticate with.
@@ -103,9 +102,6 @@ class SSHTCPForwarder(threading.Thread):
 		"""
 		super(SSHTCPForwarder, self).__init__()
 		self.server = (server[0], int(server[1]))
-		if local_port is None:
-			local_port = random.randint(2000, 6000)
-		self.local_port = int(local_port)
 		self.remote_server = (remote_server[0], int(remote_server[1]))
 		client = paramiko.SSHClient()
 		client.load_system_host_keys()
@@ -131,13 +127,17 @@ class SSHTCPForwarder(threading.Thread):
 		if not self.__connected:
 			self.__try_connect(password=password, look_for_keys=True, raise_error=True)
 
+		transport = self.client.get_transport()
+		self._forward_server = ForwardServer(self.remote_server, transport, ('127.0.0.1', local_port), ForwardHandler)
+
 	def __repr__(self):
 		return "<{0} {1} >".format(str(self))
 
 	def __str__(self):
-		remote_server = "{0}:{1}".format(self.remote_server[0], self.remote_server[1])
-		server = "{0}:{1}".format(self.server[0], self.server[1])
-		return "{0} -> {1} via {2}".format(self.local_port, remote_server, server)
+		local_server = "{0}:{1}".format(*self.local_server)
+		remote_server = "{0}:{1}".format(*self.remote_server)
+		server = "{0}:{1}".format(*self.server)
+		return "{0} -> {1} via {2}".format(local_server, remote_server, server)
 
 	def __try_connect(self, *args, **kwargs):
 		raise_error = False
@@ -153,9 +153,11 @@ class SSHTCPForwarder(threading.Thread):
 		self.__connected = True
 		return True
 
+	@property
+	def local_server(self):
+		return self._forward_server.server_address
+
 	def run(self):
-		transport = self.client.get_transport()
-		self._forward_server = ForwardServer(self.remote_server, transport, ('', self.local_port), ForwardHandler)
 		self._forward_server.serve_forever()
 
 	def start(self):

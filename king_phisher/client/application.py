@@ -173,7 +173,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, "An {0}.{1} error occurred.".format(error.__class__.__module__, error.__class__.__name__))
 		else:
 			self.logger.info("started ssh port forwarding to the remote king phisher server ({0})".format(str(self._ssh_forwarder)))
-			return self._ssh_forwarder.local_port
+			return self._ssh_forwarder.local_server
 		self.server_disconnect()
 		return
 
@@ -400,14 +400,14 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		server = parse_server(self.config['server'], 22)
 		if server[0] == 'localhost' or (utilities.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
-			local_port = self.config['server_remote_port']
+			local_server = ('localhost', self.config['server_remote_port'])
 			self.logger.info("connecting to local king phisher instance")
 		else:
-			local_port = self._create_ssh_forwarder(server, username, password)
-		if not local_port:
+			local_server = self._create_ssh_forwarder(server, username, password)
+		if not local_server:
 			return False, ConnectionErrorReason.ERROR_PORT_FORWARD
 
-		rpc = client_rpc.KingPhisherRPCClient(('localhost', local_port), use_ssl=self.config.get('server_use_ssl'))
+		rpc = client_rpc.KingPhisherRPCClient(local_server, use_ssl=self.config.get('server_use_ssl'))
 		if self.config.get('rpc.serializer'):
 			try:
 				rpc.set_serializer(self.config['rpc.serializer'])

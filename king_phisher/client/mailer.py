@@ -312,7 +312,7 @@ class MailSenderThread(threading.Thread):
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
 			return ConnectionErrorReason.ERROR_UNKNOWN
 		self.logger.info("started ssh port forwarding to the remote smtp server ({0})".format(str(self._ssh_forwarder)))
-		self.smtp_server = ('localhost', self._ssh_forwarder.local_port)
+		self.smtp_server = self._ssh_forwarder.local_server
 		return ConnectionErrorReason.SUCCESS
 
 	def server_smtp_connect(self):
