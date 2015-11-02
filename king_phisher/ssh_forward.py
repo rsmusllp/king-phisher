@@ -137,7 +137,7 @@ class SSHTCPForwarder(threading.Thread):
 		local_server = "{0}:{1}".format(*self.local_server)
 		remote_server = "{0}:{1}".format(*self.remote_server)
 		server = "{0}:{1}".format(*self.server)
-		return "{0} -> {1} via {2}".format(local_server, remote_server, server)
+		return "{0} to {1} via {2}".format(local_server, remote_server, server)
 
 	def __try_connect(self, *args, **kwargs):
 		raise_error = False
