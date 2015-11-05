@@ -85,6 +85,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	:GObject Signals: :ref:`gobject-signals-application-label`
 	"""
+	# pylint: disable=too-many-public-methods
 	__gsignals__ = {
 		'campaign-changed': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
@@ -440,7 +441,13 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if isinstance(server_rpc_api_version, int):
 			# compatibility with pre-0.2.0 version
 			server_rpc_api_version = (server_rpc_api_version, 0)
-		self.logger.info("successfully connected to the king phisher server (version: {0} rpc api version: {1}.{2})".format(server_version_info['version'], server_rpc_api_version[0], server_rpc_api_version[1]))
+		self.logger.info(
+			"successfully connected to the king phisher server (version: {0} rpc api version: {1}.{2})".format(
+				server_version_info['version'],
+				server_rpc_api_version[0],
+				server_rpc_api_version[1]
+			)
+		)
 
 		error_text = None
 		if server_rpc_api_version[0] < version.rpc_api_version.major or (server_rpc_api_version[0] == version.rpc_api_version.major and server_rpc_api_version[1] < version.rpc_api_version.minor):
@@ -560,10 +567,11 @@ class KingPhisherClientApplication(_Gtk_Application):
 		a confirmation dialog before performing the operation. If the
 		remote service is stopped, the client will quit.
 		"""
-		if not gui_utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self.get_active_window(), 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
+		active_window = self.get_active_window()
+		if not gui_utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', active_window, 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
 			return
 		self.rpc('shutdown')
 		self.logger.info('the remote king phisher service has been stopped')
-		gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'The remote service has been stopped.')
+		gui_utilities.show_dialog_error('Now Exiting', active_window, 'The remote service has been stopped.')
 		self.quit()
 		return
