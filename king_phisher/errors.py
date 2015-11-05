@@ -46,6 +46,7 @@ class KingPhisherAbortRequestError(KingPhisherError):
 		"""
 		:param bool response_sent: Whether or not a response has already been sent to the client.
 		"""
+		super(KingPhisherAbortRequestError, self).__init__()
 		self.response_sent = response_sent
 
 class KingPhisherDatabaseError(KingPhisherError):

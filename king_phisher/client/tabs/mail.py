@@ -852,7 +852,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			return
 		if expander == self.gobjects['expander_calendar_invite_settings']:
 			message_type = 'calendar_invite'
-			expander == self.gobjects['expander_email_settings'].set_expanded(False)
+			self.gobjects['expander_email_settings'].set_expanded(False)
 		elif expander == self.gobjects['expander_email_settings']:
 			message_type = 'email'
 			self.gobjects['expander_calendar_invite_settings'].set_expanded(False)

@@ -93,6 +93,7 @@ def init_database(database_file):
 	:return: The initialized GeoLite2 database object.
 	:rtype: :py:class:`geoip2.database.Reader`
 	"""
+	# pylint: disable=global-statement
 	global _geoip_db
 	if not os.path.isfile(database_file):
 		logger.warning('the specified geoip database does not exist, downloading a new copy')

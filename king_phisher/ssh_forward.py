@@ -131,7 +131,7 @@ class SSHTCPForwarder(threading.Thread):
 		self._forward_server = ForwardServer(self.remote_server, transport, ('127.0.0.1', local_port), ForwardHandler)
 
 	def __repr__(self):
-		return "<{0} {1} >".format(str(self))
+		return "<{0} ({1}) >".format(self.__class__.__name__, str(self))
 
 	def __str__(self):
 		local_server = "{0}:{1}".format(*self.local_server)

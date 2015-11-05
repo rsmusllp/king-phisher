@@ -107,7 +107,7 @@ def glib_idle_add_wait(function, *args):
 	results = []
 	@functools.wraps(function)
 	def wrapper():
-		results.append(function(*args)) # pylint: disable=star-args
+		results.append(function(*args))
 		gsource_completed.set()
 		return False
 	GLib.idle_add(wrapper)

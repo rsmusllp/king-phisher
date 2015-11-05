@@ -6,8 +6,8 @@ unsafe-load-any-extension=no
 
 [MESSAGES CONTROL]
 confidence=UNDEFINED
-disable=all
-enable=C0325,C0326,R0914,W0110,W0611,W0612,W0613,W0702
+disable=C0301,C0330,E0203,F0401,R0201,R0801,R0902,R0903,R0904,R0911,R0912,R0913,R0915,W0201,W0212,W0221,W0232,W0401,W0614,W0622,W0703,W1202,W1401
+enable=all
 
 [REPORTS].
 output-format=colorized
@@ -42,6 +42,7 @@ module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
 module-name-hint=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
 method-rgx=(([a-z_][a-z0-9_]{2,40})|(assert[a-zA-Z0-9]{2,40})|(do_[a-zA-Z0-9_]{2,40}))$
 method-name-hint=(([a-z_][a-z0-9_]{2,40})|(assert[a-zA-Z0-9]{2,40})|(do_[a-zA-Z0-9_]{2,40}))$
+max-line-length=200
 
 [FORMAT]
 ignore-long-lines=^\s*(# )?<?https?://\S+>?$

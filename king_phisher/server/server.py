@@ -387,7 +387,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			address = cookie_value
 		return address
 
-	def respond_file(self, file_path, attachment=False, query={}):
+	def respond_file(self, file_path, attachment=False, query=None):
+		if query is None:
+			query = {}
 		self._respond_file_check_id()
 		file_path = os.path.abspath(file_path)
 		mime_type = self.guess_mime_type(file_path)
