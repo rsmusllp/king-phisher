@@ -42,7 +42,7 @@ from king_phisher import utilities
 from king_phisher.third_party import AdvancedHTTPServer
 
 try:
-	import msgpack # pylint: disable=unused-import
+	import msgpack  # pylint: disable=unused-import
 	has_msgpack = True
 	"""Whether the :py:mod:`msgpack` module is available or not."""
 except ImportError:
@@ -295,9 +295,9 @@ def vte_child_routine(config):
 		rpc.headers[str(name)] = str(value)
 
 	banner = "Python {0} on {1}".format(sys.version, sys.platform)
-	print(banner)  # pylint: disable=C0325
-	information = "Campaign Name: '{0}'  ID: {1}".format(config['campaign_name'], config['campaign_id'])
-	print(information)  # pylint: disable=C0325
+	print(banner)  # pylint: disable=superfluous-parens
+	information = "Campaign Name: '{0}' ID: {1}".format(config['campaign_name'], config['campaign_id'])
+	print(information)  # pylint: disable=superfluous-parens
 	console_vars = {
 		'CAMPAIGN_NAME': config['campaign_name'],
 		'CAMPAIGN_ID': config['campaign_id'],

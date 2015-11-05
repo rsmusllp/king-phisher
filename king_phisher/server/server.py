@@ -279,7 +279,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if self.command != 'RPC':
 			return True
 		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
-			False
+			return False
 
 		if self.path in ('/version', '/login'):
 			return True

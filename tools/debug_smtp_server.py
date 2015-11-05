@@ -29,7 +29,7 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=C0325
+# pylint: disable=superfluous-parens
 
 import argparse
 import logging
@@ -69,7 +69,6 @@ def main():
 		server.serve_forever()
 	except KeyboardInterrupt:
 		color.print_status('keyboard interrupt caught, now exiting')
-		pass
 
 if __name__ == '__main__':
 	main()

@@ -372,7 +372,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		style_provider.connect('parsing-error', self.signal_css_provider_parsing_error)
 		try:
 			style_provider.load_from_file(css_file)
-		except GLib.Error:
+		except GLib.Error:  # pylint: disable=catching-non-exception
 			self.logger.error('there was an error parsing the css file, it will not be applied as a style provider')
 			return None
 		Gtk.StyleContext.add_provider_for_screen(
@@ -431,10 +431,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'Ensure that the King Phisher Server is currently running.')
 		else:
 			connection_failed = False
-		finally:
-			if connection_failed:
-				self.server_disconnect()
-				return False, ConnectionErrorReason.ERROR_CONNECTION
+
+		if connection_failed:
+			self.server_disconnect()
+			return False, ConnectionErrorReason.ERROR_CONNECTION
 
 		server_rpc_api_version = server_version_info.get('rpc_api_version', -1)
 		if isinstance(server_rpc_api_version, int):

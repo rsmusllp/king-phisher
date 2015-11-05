@@ -142,9 +142,9 @@ def main():
 	results = parser.parse_args()
 
 	if send_sms(results.message, results.phone_number, results.carrier):
-		print('[+] Successfully Sent!') # pylint: disable=C0325
+		print('[+] Successfully Sent!')  # pylint: disable=superfluous-parens
 	else:
-		print('[-] Failed To Send') # pylint: disable=C0325
+		print('[-] Failed To Send')  # pylint: disable=superfluous-parens
 	return 0
 
 if __name__ == '__main__':

@@ -119,7 +119,6 @@ def lookup(ip, lang='en'):
 		:py:data:`.DB_RESULT_FIELDS`.
 	:rtype: dict
 	"""
-	global _geoip_db
 	if not _geoip_db:
 		raise RuntimeError('the geoip database has not been initialized yet')
 	lang = (lang or 'en')
