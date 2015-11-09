@@ -23,3 +23,6 @@ Exceptions
 
 .. autoexception:: king_phisher.errors.KingPhisherPermissionError
    :show-inheritance:
+
+.. autoexception:: king_phisher.errors.KingPhisherTimeoutError
+   :show-inheritance:

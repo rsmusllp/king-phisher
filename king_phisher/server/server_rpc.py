@@ -531,6 +531,7 @@ class KingPhisherRequestHandlerRPC(object):
 
 		user = db_manager.get_row_by_id(session, db_models.User, username)
 		if not user:
+			logger.info('creating new user object with id: ' + username)
 			user = db_models.User(id=username)
 			session.add(user)
 			session.commit()

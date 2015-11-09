@@ -38,10 +38,12 @@ import logging
 import os
 import pwd
 import random
+import select
 import string
 import threading
 import time
 
+from king_phisher import errors
 from king_phisher import its
 from king_phisher import utilities
 from king_phisher.server.database import manager as db_manager
@@ -52,7 +54,7 @@ import smoke_zephyr.utilities
 
 __all__ = ('AuthenticatedSessionManager', 'ForkedAuthenticator')
 
-make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for x in range(random.randint(5, 8)))
+make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(random.randint(5, 8)))
 make_hash = lambda pw: hashlib.sha512(pw.encode('utf-8')).digest()
 
 def get_groups_for_user(username):
@@ -273,13 +275,18 @@ class ForkedAuthenticator(object):
 		"""
 		self.wfile.write(json.dumps(request) + '\n')
 
-	def recv(self):
+	def recv(self, timeout=None):
 		"""
 		Receive a request and decode it.
 
+		:param int timeout: The amount of time in seconds to wait for a response to be received.
 		:return: The decoded request.
 		:rtype: dict
 		"""
+		if timeout is not None:
+			ready, _, _ = select.select([self.rfile], [], [], timeout)
+			if not ready:
+				raise errors.KingPhisherTimeoutError('a response was not received within the timeout')
 		try:
 			request = self.rfile.readline()[:-1]
 			return json.loads(request)
@@ -324,10 +331,9 @@ class ForkedAuthenticator(object):
 
 	def authenticate(self, username, password):
 		"""
-		Check if a username and password are valid. If they are, the
-		password will be salted, hashed with SHA-512 and stored so the
-		next call with the same values will not require sending a
-		request to the forked child.
+		Check if a username and password are valid. If they are, the password
+		will be salted, hashed with SHA-512 and stored so the next call with the
+		same values will not require sending a request to the forked child.
 
 		:param str username: The username to check.
 		:param str password: The password to check.
@@ -336,17 +342,21 @@ class ForkedAuthenticator(object):
 		"""
 		pw_hash = make_hash(self.cache_salt + password)
 		cached_hash, timeout = self.cache.get(username, (None, 0))
-		if timeout < time.time():
-			request = {}
-			request['action'] = 'authenticate'
-			request['username'] = username
-			request['password'] = password
-			self.send(request)
-			result = self.recv()
-			if result['result']:
-				self.cache[username] = (pw_hash, time.time() + self.cache_timeout)
-			return result['result']
-		return cached_hash == pw_hash
+		if timeout >= time.time():
+			return cached_hash == pw_hash
+		request = {}
+		request['action'] = 'authenticate'
+		request['username'] = username
+		request['password'] = password
+		self.send(request)
+		try:
+			result = self.recv(timeout=20)
+		except errors.KingPhisherTimeoutError as error:
+			self.logger.error(error.message)
+			return False
+		if result['result']:
+			self.cache[username] = (pw_hash, time.time() + self.cache_timeout)
+		return result['result']
 
 	def stop(self):
 		"""

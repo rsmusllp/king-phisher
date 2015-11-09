@@ -70,3 +70,10 @@ class KingPhisherPermissionError(KingPhisherError):
 	not be satisfied due to the configured level of access.
 	"""
 	pass
+
+class KingPhisherTimeoutError(KingPhisherError):
+	"""
+	An exception that is raised by King Phisher when some form of a request
+	fails to complete within a specified time period.
+	"""
+	pass
