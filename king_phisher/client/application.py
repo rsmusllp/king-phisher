@@ -466,6 +466,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('failed to authenticate to the remote king phisher service, reason: ' + login_reason)
 			self.server_disconnect()
 			return False, login_reason
+		rpc.username = username
+		self.logger.debug('successfully authenticated to the remote king phisher service')
 
 		self.rpc = rpc
 		self.emit('server-connected')

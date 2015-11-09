@@ -224,24 +224,24 @@ class CampaignGraph(object):
 			handles.append(patches.Patch(color=row[0], label=row[1]))
 		self.axes[0].legend(handles=handles, fontsize=fontsize, loc='lower right')
 
-	def graph_bar(self, bars, color=None, xticklabels=None, ylabel=None):
+	def graph_bar(self, bars, bar_color=None, xticklabels=None, ylabel=None):
 		"""
 		Create a standard bar graph with better defaults for the standard use
 		cases.
 
 		:param list bars: The values of the bars to graph.
-		:param color: The color of the bars on the graph.
-		:type color: list, str
+		:param bar_color: The color of the bars on the graph.
+		:type bar_color: list, str
 		:param list xticklabels: The labels to use on the x-axis.
 		:param str ylabel: The label to give to the y-axis.
 		:return: The bars created using :py:mod:`matplotlib`
 		:rtype: `matplotlib.container.BarContainer`
 		"""
-		color = color or MPL_COLOR_NULL
+		bar_color = bar_color or MPL_COLOR_NULL
 		width = 0.25
 		ax = self.axes[0]
 		self._graph_bar_set_yparams(max(bars) if bars else 0)
-		bars = ax.bar(range(len(bars)), bars, width, color=color)
+		bars = ax.bar(range(len(bars)), bars, width, color=bar_color)
 		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
 		if xticklabels:
 			ax.set_xticklabels(xticklabels, rotation=30)
@@ -369,7 +369,7 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		bars = []
 		for os_name in os_names:
 			bars.append(operating_systems[os_name])
-		self.graph_bar(bars, color=[MPL_OS_COLORS[osn] for osn in os_names], xticklabels=os_names, ylabel='Total Visits')
+		self.graph_bar(bars, bar_color=[MPL_OS_COLORS[osn] for osn in os_names], xticklabels=os_names, ylabel='Total Visits')
 		return
 
 @export_graph_provider

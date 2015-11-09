@@ -41,6 +41,13 @@ if getattr(sys, 'frozen', False):
 	# set the basemap data directory for frozen builds
 	os.environ['BASEMAPDATA'] = os.path.join(os.path.dirname(sys.executable), 'mpl-basemap-data')
 
+import gi
+gi.require_version('Gdk', '3.0')
+gi.require_version('Gtk', '3.0')
+gi.require_version('GtkSource', '3.0')
+gi.require_version('WebKit2', '4.0')
+gi.require_version('Vte', '2.90')
+
 from king_phisher import color
 from king_phisher import find
 from king_phisher import its
