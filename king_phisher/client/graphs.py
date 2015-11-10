@@ -298,7 +298,8 @@ class CampaignGraph(object):
 			self.graph_title,
 			color=self.style_context_get_color('theme_color_graph_fg', default=ColorHexCode.BLACK),
 			size=14,
-			weight='bold'
+			weight='bold',
+			y=0.97
 		)
 		self.canvas.draw()
 		return info_cache
@@ -350,7 +351,7 @@ class CampaignBarGraph(CampaignGraph):
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
 
-	def graph_bar(self, bars, yticklabels, max_bars=None, xlabel=None, ):
+	def graph_bar(self, bars, max_bars, yticklabels, xlabel=None, ):
 		"""
 		Create a horizontal bar graph with better defaults for the standard use
 		cases.
@@ -413,8 +414,8 @@ class CampaignGraphOverview(CampaignBarGraph):
 		if len(creds):
 			bars.append(len(creds))
 			bars.append(len(unique(creds, key=lambda cred: cred.message_id)))
-		yticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)]
-		self.graph_bar(bars, yticklabels)
+		yticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')
+		self.graph_bar(bars, len(yticklabels), yticklabels[:len(bars)])
 		return
 
 @export_graph_provider
@@ -434,7 +435,7 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 		os_names = operating_systems.keys()
 		os_names.sort()
 		bars = [operating_systems[os_name] for os_name in os_names]
-		self.graph_bar(bars, os_names, max_bars=len(OSFamily))
+		self.graph_bar(bars, len(OSFamily), os_names)
 		return
 
 @export_graph_provider
