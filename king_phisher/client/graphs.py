@@ -34,6 +34,7 @@ import collections
 import ipaddress
 import string
 
+from king_phisher import color
 from king_phisher import its
 from king_phisher import ua_parser
 from king_phisher.client import gui_utilities
@@ -191,18 +192,12 @@ class CampaignGraph(object):
 			tick.tick2On = False
 
 	@staticmethod
-	def _ax_set_spine_color(ax, color):
+	def _ax_set_spine_color(ax, spine_color):
 		for pos in ('top', 'right', 'bottom', 'left'):
-			ax.spines[pos].set_color(color)
+			ax.spines[pos].set_color(spine_color)
 
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
-
-	def _graph_null_pie(self, title):
-		ax = self.axes[0]
-		ax.pie((100,), labels=(title,), colors=(MPL_COLOR_NULL,), autopct='%1.0f%%', shadow=True, startangle=90)
-		ax.axis('equal')
-		return
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
 		handles = []
@@ -265,8 +260,8 @@ class CampaignGraph(object):
 			self.navigation_toolbar.hide()
 
 	def style_context_get_color(self, *args, **kwargs):
-		color = gui_utilities.gtk_style_context_get_color(self.style_context, *args, **kwargs)
-		return (color.red, color.green, color.blue)
+		sc_color = gui_utilities.gtk_style_context_get_color(self.style_context, *args, **kwargs)
+		return (sc_color.red, sc_color.green, sc_color.blue)
 
 	def load_graph(self):
 		"""Load the graph information via :py:meth:`.refresh`."""
@@ -351,7 +346,7 @@ class CampaignBarGraph(CampaignGraph):
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
 
-	def graph_bar(self, bars, max_bars, yticklabels, xlabel=None, ):
+	def graph_bar(self, bars, max_bars, yticklabels, xlabel=None):
 		"""
 		Create a horizontal bar graph with better defaults for the standard use
 		cases.
@@ -396,6 +391,50 @@ class CampaignLineGraph(CampaignGraph):
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
 
+class CampaignPieGraph(CampaignGraph):
+	def __init__(self, *args, **kwargs):
+		super(CampaignPieGraph, self).__init__(*args, **kwargs)
+
+	def _load_graph(self, info_cache):
+		raise NotImplementedError()
+
+	def _graph_null_pie(self, title):
+		ax = self.axes[0]
+		ax.pie(
+			(100,),
+			autopct='%1.0f%%',
+			colors=(self.style_context_get_color('theme_color_graph_pie_low', ColorHexCode.GRAY),),
+			labels=(title,),
+			shadow=True,
+			startangle=90
+		)
+		ax.axis('equal')
+		return
+
+	def graph_pie(self, parts, autopct=None, labels=None, legend_labels=None):
+		colors = color.get_scale(
+			self.style_context_get_color('theme_color_graph_pie_high', ColorHexCode.BLACK),
+			self.style_context_get_color('theme_color_graph_pie_low', ColorHexCode.GRAY),
+			len(parts)
+		)
+		ax = self.axes[0]
+		pie = ax.pie(
+			parts,
+			autopct=autopct,
+			colors=colors,
+			explode=[0.1] + ([0] * (len(parts) - 1)),
+			labels=labels or tuple("{0:.1f}%".format(p) for p in parts),
+			labeldistance=1.15,
+			shadow=True,
+			startangle=45,
+			textprops={'color': self.style_context_get_color('theme_color_graph_fg', ColorHexCode.BLACK)},
+			wedgeprops={'linewidth': 0}
+		)
+		ax.axis('equal')
+		if legend_labels is not None:
+			self.add_legend_patch(zip(colors, legend_labels), fontsize='x-small')
+		return pie
+
 @export_graph_provider
 class CampaignGraphOverview(CampaignBarGraph):
 	"""Display a graph which represents an overview of the campaign."""
@@ -439,7 +478,7 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 		return
 
 @export_graph_provider
-class CampaignGraphVisitorInfoPie(CampaignGraph):
+class CampaignGraphVisitorInfoPie(CampaignPieGraph):
 	"""Display a graph which compares the different operating systems seen from visitors."""
 	graph_title = 'Campaign Visitor OS Information'
 	name_human = 'Pie - Visitor OS Information'
@@ -455,11 +494,7 @@ class CampaignGraphVisitorInfoPie(CampaignGraph):
 			ua = ua_parser.parse_user_agent(visit.visitor_details)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 		(os_names, count) = zip(*operating_systems.items())
-		colors = [MPL_OS_COLORS[osn] for osn in os_names]
-
-		ax = self.axes[0]
-		ax.pie(count, labels=os_names, labeldistance=1.05, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
-		ax.axis('equal')
+		self.graph_pie(count, labels=tuple("{0:,}".format(os) for os in count), legend_labels=os_names)
 		return
 
 @export_graph_provider
@@ -511,7 +546,7 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 		return
 
 @export_graph_provider
-class CampaignGraphMessageResults(CampaignGraph):
+class CampaignGraphMessageResults(CampaignPieGraph):
 	"""Display the percentage of messages which resulted in a visit."""
 	graph_title = 'Campaign Message Results'
 	name_human = 'Pie - Message Results'
@@ -531,22 +566,13 @@ class CampaignGraphMessageResults(CampaignGraph):
 		sizes.append((float(messages_count - visits_count) / float(messages_count)) * 100)
 		sizes.append((float(visits_count - credentials_count) / float(messages_count)) * 100)
 		sizes.append((float(credentials_count) / float(messages_count)) * 100)
-		colors = ['yellowgreen', 'gold', 'indianred']
-		explode = [0.1, 0, 0]
 		if not credentials_count:
 			labels.pop()
 			sizes.pop()
-			colors.pop()
-			explode.pop()
 		if not visits_count:
 			labels.pop()
 			sizes.pop()
-			colors.pop()
-			explode.pop()
-		ax = self.axes[0]
-		ax.pie(sizes, explode=explode, labels=tuple("{0:.1f}%".format(s) for s in sizes), labeldistance=1.15, colors=colors, shadow=True, startangle=45)
-		ax.axis('equal')
-		self.add_legend_patch(zip(colors, labels), fontsize='x-small')
+		self.graph_pie(sizes, legend_labels=labels)
 		return
 
 class CampaignGraphVisitsMap(CampaignGraph):
@@ -622,7 +648,7 @@ class CampaignGraphVisitsMapWorld(CampaignGraphVisitsMap):
 	basemap_args = dict(projection='kav7', lon_0=0)
 
 @export_graph_provider
-class CampaignGraphPasswordComplexityPie(CampaignGraph):
+class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 	"""Display a graph which displays the number of passwords which meet standard complexity requirements."""
 	graph_title = 'Campaign Password Complexity'
 	name_human = 'Pie - Password Complexity'
@@ -635,9 +661,7 @@ class CampaignGraphPasswordComplexityPie(CampaignGraph):
 		ctr = collections.Counter()
 		ctr.update(self._check_complexity(password) for password in passwords)
 
-		ax = self.axes[0]
-		ax.pie((ctr[True], ctr[False]), explode=(0.1, 0), labels=('Complex', 'Not Complex'), labeldistance=1.05, colors=('yellowgreen', 'indianred'), autopct='%1.1f%%', shadow=True, startangle=45)
-		ax.axis('equal')
+		self.graph_pie((ctr[True], ctr[False]), autopct='%1.1f%%', legend_labels=('Complex', 'Not Complex'))
 		return
 
 	def _check_complexity(self, password):

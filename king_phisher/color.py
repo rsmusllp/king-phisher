@@ -121,6 +121,30 @@ def convert_tuple_to_hex(rgb, raw=False):
 		rgb = (int(round(float(x) * 255.0)) for x in rgb)
 	return "#{0:02x}{1:02x}{2:02x}".format(*rgb)
 
+def get_scale(color_low, color_high, count):
+	"""
+	Create a scale of colors gradually moving from the low color to the high
+	color.
+
+	:param tuple color_low: The color to start the scale with.
+	:param tuple color_high: The color to end the scale with.
+	:param count: The total number of resulting colors.
+	:return: An array of colors starting with the low and gradually transitioning to the high.
+	:rtype: tuple
+	"""
+	if count < 1:
+		return ()
+	if count == 1:
+		return (color_low,)
+	if count == 2:
+		return (color_low, color_high)
+	colors = [color_low]
+	for modifier in range(1, count - 1):
+		modifier = float(modifier) / float(count - 1)
+		colors.append(tuple(min(color_high[i], color_low[i]) + (abs(color_high[i] - color_low[i]) * modifier) for i in range(0, 3)))
+	colors.append(color_high)
+	return tuple(colors)
+
 def print_error(message):
 	"""
 	Print an error message to the console.
