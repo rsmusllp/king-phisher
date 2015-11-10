@@ -31,7 +31,6 @@
 #
 
 import collections
-import datetime
 import ipaddress
 import string
 
@@ -155,14 +154,6 @@ class CampaignGraph(object):
 		self.config = application.config
 		"""A reference to the King Phisher client configuration."""
 		self.figure, _ = pyplot.subplots()
-		pyplot.tick_params(
-			axis='both',
-			top='off',
-			right='off',
-			bottom='off',
-			left='off',
-			labelbottom='off'
-		)
 		self.figure.set_facecolor(self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE))
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
@@ -192,6 +183,17 @@ class CampaignGraph(object):
 	@property
 	def rpc(self):
 		return self.application.rpc
+
+	@staticmethod
+	def _ax_hide_ticks(ax):
+		for tick in ax.yaxis.get_major_ticks():
+			tick.tick1On = False
+			tick.tick2On = False
+
+	@staticmethod
+	def _ax_set_spine_color(ax, color):
+		for pos in ('top', 'right', 'bottom', 'left'):
+			ax.spines[pos].set_color(color)
 
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
@@ -304,7 +306,16 @@ class CampaignGraph(object):
 class CampaignBarGraph(CampaignGraph):
 	def __init__(self, *args, **kwargs):
 		super(CampaignBarGraph, self).__init__(*args, **kwargs)
+		self.figure.subplots_adjust(top=0.85, right=0.9, bottom=0.05, left=0.225)
 		ax = self.axes[0]
+		ax.tick_params(
+			axis='both',
+			top='off',
+			right='off',
+			bottom='off',
+			left='off',
+			labelbottom='off'
+		)
 		ax.invert_yaxis()
 		self.axes.append(ax.twinx())
 
@@ -325,7 +336,7 @@ class CampaignBarGraph(CampaignGraph):
 			linewidth=0
 		)
 		# draw the background / unfilled bar
-		largest_bar = max(bars)
+		largest_bar = (max(bars) if len(bars) else 0)
 		ax.barh(
 			range(len(bars)),
 			[largest_bar - bar for bar in bars],
@@ -352,6 +363,8 @@ class CampaignBarGraph(CampaignGraph):
 		:rtype: `matplotlib.container.BarContainer`
 		"""
 		height = 0.25
+		color_bg = self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE)
+		color_fg = self.style_context_get_color('theme_color_graph_fg', default=ColorHexCode.BLACK)
 		ax1, ax2 = self.axes  # primary axis
 		bar_container = self._barh(ax1, bars, height, max_bars)
 
@@ -359,29 +372,28 @@ class CampaignBarGraph(CampaignGraph):
 
 		ax1.set_ybound(0, max(len(bars), max_bars))
 		ax1.set_yticks(yticks)
-		ax1.set_yticklabels(yticklabels, color=self.style_context_get_color('theme_color_graph_fg', ColorHexCode.WHITE), size=10)
+		ax1.set_yticklabels(yticklabels, color=color_fg, size=10)
 
 		ax2.set_yticks(yticks)
-		ax2.set_yticklabels(["{0:,}".format(bar) for bar in bars], color=self.style_context_get_color('theme_color_graph_fg', ColorHexCode.WHITE), size=12)
+		ax2.set_yticklabels(["{0:,}".format(bar) for bar in bars], color=color_fg, size=12)
 		ax2.set_ylim(ax1.get_ylim())
 
 		# remove the y-axis tick marks
-		for tick in ax1.yaxis.get_major_ticks():
-			tick.tick1On = False
-			tick.tick2On = False
-		for tick in ax2.yaxis.get_major_ticks():
-			tick.tick1On = False
-			tick.tick2On = False
-
-		color_bg = self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE)
-		for pos in ('top', 'right', 'bottom', 'left'):
-			ax1.spines[pos].set_color(color_bg)
-			ax2.spines[pos].set_color(color_bg)
+		self._ax_hide_ticks(ax1)
+		self._ax_hide_ticks(ax2)
+		self._ax_set_spine_color(ax1, color_bg)
+		self._ax_set_spine_color(ax2, color_bg)
 
 		if xlabel:
-			ax1.set_xlabel(xlabel, color=self.style_context_get_color('theme_color_graph_fg', ColorHexCode.WHITE), size=12)
-		self.figure.subplots_adjust(top=0.85, right=0.9, bottom=0.05, left=0.225)
+			ax1.set_xlabel(xlabel, color=color_fg, size=12)
 		return bar_container
+
+class CampaignLineGraph(CampaignGraph):
+	def __init__(self, *args, **kwargs):
+		super(CampaignLineGraph, self).__init__(*args, **kwargs)
+
+	def _load_graph(self, info_cache):
+		raise NotImplementedError()
 
 @export_graph_provider
 class CampaignGraphOverview(CampaignBarGraph):
@@ -450,33 +462,51 @@ class CampaignGraphVisitorInfoPie(CampaignGraph):
 		return
 
 @export_graph_provider
-class CampaignGraphVisitsTimeline(CampaignGraph):
+class CampaignGraphVisitsTimeline(CampaignLineGraph):
 	"""Display a graph which represents the visits of a campaign over time."""
 	graph_title = 'Campaign Visits Timeline'
 	name_human = 'Line - Visits Timeline'
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
+		# define the necessary colors
+		color_bg = self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE)
+		color_fg = self.style_context_get_color('theme_color_graph_fg', default=ColorHexCode.BLACK)
+		color_line_bg = self.style_context_get_color('theme_color_graph_line_bg', default=ColorHexCode.WHITE)
+		color_line_fg = self.style_context_get_color('theme_color_graph_line_fg', default=ColorHexCode.BLACK)
 		visits = info_cache['visits']
 		first_visits = [visit.first_visit for visit in visits]
 
 		ax = self.axes[0]
-		ax.set_ylabel('Number of Visits')
+		ax.tick_params(
+			axis='both',
+			which='both',
+			colors=color_fg,
+			top='off',
+			bottom='off'
+		)
+		ax.set_axis_bgcolor(color_line_bg)
+		ax.set_ylabel('Number of Visits', color=self.style_context_get_color('theme_color_graph_fg', ColorHexCode.WHITE), size=10)
+		self._ax_hide_ticks(ax)
+		self._ax_set_spine_color(ax, color_bg)
 		if not len(first_visits):
 			ax.set_yticks((0,))
 			ax.set_xticks((0,))
 			return
 
-		ax.xaxis.set_major_locator(dates.AutoDateLocator())
-		ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
 		first_visits.sort()
-		first_visit_span = first_visits[-1] - first_visits[0]
-		ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
+		ax.plot_date(
+			first_visits,
+			range(1, len(first_visits) + 1),
+			'-',
+			color=color_line_fg,
+			linewidth=6
+		)
 		self.figure.autofmt_xdate()
-		if first_visit_span < datetime.timedelta(7):
-			ax.xaxis.set_minor_locator(dates.DayLocator())
-			if first_visit_span < datetime.timedelta(3) and len(first_visits) > 1:
-				ax.xaxis.set_minor_locator(dates.HourLocator())
-		ax.grid(True)
+		self.figure.subplots_adjust(top=0.85, right=0.95, bottom=0.25, left=0.1)
+
+		locator = dates.AutoDateLocator()
+		ax.xaxis.set_major_locator(locator)
+		ax.xaxis.set_major_formatter(dates.AutoDateFormatter(locator))
 		return
 
 @export_graph_provider
