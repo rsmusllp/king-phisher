@@ -295,8 +295,8 @@ class ForkedAuthenticator(object):
 
 	def child_routine(self):
 		"""
-		The main routine that is executed by the child after the object
-		forks. This loop does not exit unless a stop request is made.
+		The main routine that is executed by the child after the object forks.
+		This loop does not exit unless a stop request is made.
 		"""
 		service = 'login'
 		if os.path.isfile('/etc/pam.d/sshd'):

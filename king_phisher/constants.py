@@ -37,7 +37,11 @@ if sys.version_info[0] == 3:
 
 __all__ = ['OSArch', 'OSFamily', 'SPFResult']
 
-class ConstantGroup:
+class ConstantGroupMeta(type):
+	def __len__(cls):
+		return len(list(cls.names()))
+
+class ConstantGroup(ConstantGroupMeta('_ConstantGroup', (object,), {})):
 	"""A class for grouping related constants together."""
 	@classmethod
 	def names(cls):
