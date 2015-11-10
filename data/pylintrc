@@ -21,7 +21,7 @@ logging-modules=logging
 [BASIC]
 bad-functions=input
 good-names=i,j,k,ex,Run,_
-bad-names=foo,bar,baz,toto,tutu,tata
+bad-names=foo,baz,toto,tutu,tata
 function-rgx=[a-z_][a-z0-9_]{2,30}$
 function-name-hint=[a-z_][a-z0-9_]{2,30}$
 variable-rgx=[a-z_][a-z0-9_]{2,30}$

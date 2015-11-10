@@ -356,7 +356,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 					image.show()
 					self.gobjects['scrolledwindow_' + dash_port].add(image)
 				continue
-			graph_inst = cls(self.application, details)
+			graph_inst = cls(self.application, details, getattr(self, self.top_gobject).get_style_context())
 			self.gobjects['scrolledwindow_' + dash_port].add_with_viewport(graph_inst.canvas)
 			self.gobjects['box_' + dash_port].pack_end(graph_inst.navigation_toolbar, False, False, 0)
 			self.graphs.append(graph_inst)

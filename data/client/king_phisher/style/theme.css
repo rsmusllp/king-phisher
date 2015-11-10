@@ -51,6 +51,11 @@
 /* treeview hover */
 @define-color theme_color_tv_hobg @theme_color_1;
 @define-color theme_color_tv_hofg white;
+/* graph colors */
+@define-color theme_color_graph_bg #254866;
+@define-color theme_color_graph_fg #ffffff;
+@define-color theme_color_graph_bar_bg #3c5b77;
+@define-color theme_color_graph_bar_fg #c0dcff;
 
 * {
   border: none;

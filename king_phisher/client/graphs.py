@@ -38,6 +38,7 @@ import string
 from king_phisher import its
 from king_phisher import ua_parser
 from king_phisher.client import gui_utilities
+from king_phisher.constants import ColorHexCode
 from king_phisher.constants import OSFamily
 
 from gi.repository import Gtk
@@ -57,7 +58,7 @@ except ImportError:
 	has_matplotlib = False
 	"""Whether the :py:mod:`matplotlib` module is available."""
 else:
-	if not its.frozen and check_requirements(['matplotlib>=1.4.1']):
+	if not its.frozen and check_requirements(['matplotlib>=1.4.3']):
 		has_matplotlib = False
 	else:
 		has_matplotlib = True
@@ -90,7 +91,7 @@ MPL_OS_COLORS.update({
 	OSFamily.WINDOWS_PHONE: 'darkgoldenrod'
 })
 
-__all__ = ['export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph']
+__all__ = ('export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph')
 
 def export_graph_provider(cls):
 	"""
@@ -145,14 +146,24 @@ class CampaignGraph(object):
 	table_subscriptions = []
 	"""A list of tables from which information is needed to produce the graph."""
 	is_available = True
-	def __init__(self, application, size_request=None):
+	def __init__(self, application, size_request=None, style_context=None):
 		"""
 		:param tuple size_request: The size to set for the canvas.
 		"""
 		self.application = application
+		self.style_context = style_context
 		self.config = application.config
 		"""A reference to the King Phisher client configuration."""
 		self.figure, _ = pyplot.subplots()
+		pyplot.tick_params(
+			axis='both',
+			top='off',
+			right='off',
+			bottom='off',
+			left='off',
+			labelbottom='off'
+		)
+		self.figure.set_facecolor(self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE))
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
 		self.manager = None
@@ -185,23 +196,6 @@ class CampaignGraph(object):
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
 
-	def _graph_bar_set_yparams(self, top_lim):
-		min_value = top_lim + (top_lim * 0.075)
-		if min_value <= 25:
-			scale = 5
-		else:
-			scale = scale = 10 ** (len(str(int(min_value))) - 1)
-		inc_scale = scale
-		while scale <= min_value:
-			scale += inc_scale
-		top_lim = scale
-
-		ax = self.axes[0]
-		yticks = set((round(top_lim * 0.5), top_lim))
-		ax.set_yticks(tuple(yticks))
-		ax.set_ylim(top=top_lim)
-		return
-
 	def _graph_null_pie(self, title):
 		ax = self.axes[0]
 		ax.pie((100,), labels=(title,), colors=(MPL_COLOR_NULL,), autopct='%1.0f%%', shadow=True, startangle=90)
@@ -223,35 +217,6 @@ class CampaignGraph(object):
 		for row in legend_rows:
 			handles.append(patches.Patch(color=row[0], label=row[1]))
 		self.axes[0].legend(handles=handles, fontsize=fontsize, loc='lower right')
-
-	def graph_bar(self, bars, bar_color=None, xticklabels=None, ylabel=None):
-		"""
-		Create a standard bar graph with better defaults for the standard use
-		cases.
-
-		:param list bars: The values of the bars to graph.
-		:param bar_color: The color of the bars on the graph.
-		:type bar_color: list, str
-		:param list xticklabels: The labels to use on the x-axis.
-		:param str ylabel: The label to give to the y-axis.
-		:return: The bars created using :py:mod:`matplotlib`
-		:rtype: `matplotlib.container.BarContainer`
-		"""
-		bar_color = bar_color or MPL_COLOR_NULL
-		width = 0.25
-		ax = self.axes[0]
-		self._graph_bar_set_yparams(max(bars) if bars else 0)
-		bars = ax.bar(range(len(bars)), bars, width, color=bar_color)
-		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
-		if xticklabels:
-			ax.set_xticklabels(xticklabels, rotation=30)
-			for col in bars:
-				height = col.get_height()
-				ax.text(col.get_x() + col.get_width() / 2.0, height, "{0:,}".format(height), ha='center', va='bottom')
-		if ylabel:
-			ax.set_ylabel(ylabel)
-		self.figure.subplots_adjust(bottom=0.25)
-		return bars
 
 	def make_window(self):
 		"""
@@ -297,6 +262,10 @@ class CampaignGraph(object):
 		else:
 			self.navigation_toolbar.hide()
 
+	def style_context_get_color(self, *args, **kwargs):
+		color = gui_utilities.gtk_style_context_get_color(self.style_context, *args, **kwargs)
+		return (color.red, color.green, color.blue)
+
 	def load_graph(self):
 		"""Load the graph information via :py:meth:`.refresh`."""
 		self.refresh()
@@ -323,12 +292,99 @@ class CampaignGraph(object):
 		for ax in self.axes:
 			ax.clear()
 		self._load_graph(info_cache)
-		self.axes[0].set_title(self.graph_title, y=1.03)
+		self.figure.suptitle(
+			self.graph_title,
+			color=self.style_context_get_color('theme_color_graph_fg', default=ColorHexCode.BLACK),
+			size=14,
+			weight='bold'
+		)
 		self.canvas.draw()
 		return info_cache
 
+class CampaignBarGraph(CampaignGraph):
+	def __init__(self, *args, **kwargs):
+		super(CampaignBarGraph, self).__init__(*args, **kwargs)
+		ax = self.axes[0]
+		ax.invert_yaxis()
+		self.axes.append(ax.twinx())
+
+	def _barh(self, ax, bars, height, max_bars=None):
+		# define the necessary colors
+		color_bg = self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE)
+		color_bar_bg = self.style_context_get_color('theme_color_graph_bar_bg', ColorHexCode.GRAY)
+		color_bar_fg = self.style_context_get_color('theme_color_graph_bar_fg', ColorHexCode.BLACK)
+
+		ax.set_axis_bgcolor(color_bg)
+
+		# draw the foreground / filled bar
+		bar_container = ax.barh(
+			range(len(bars)),
+			bars,
+			height=height,
+			color=color_bar_fg,
+			linewidth=0
+		)
+		# draw the background / unfilled bar
+		largest_bar = max(bars)
+		ax.barh(
+			range(len(bars)),
+			[largest_bar - bar for bar in bars],
+			left=bars,
+			height=height,
+			color=color_bar_bg,
+			linewidth=0
+		)
+		return bar_container
+
+	def _load_graph(self, info_cache):
+		raise NotImplementedError()
+
+	def graph_bar(self, bars, yticklabels, max_bars=None, xlabel=None, ):
+		"""
+		Create a horizontal bar graph with better defaults for the standard use
+		cases.
+
+		:param list bars: The values of the bars to graph.
+		:param list yticklabels: The labels to use on the x-axis.
+		:param int max_bars: The number to treat as the logical maximum number of plotted bars.
+		:param str xlabel: The label to give to the y-axis.
+		:return: The bars created using :py:mod:`matplotlib`
+		:rtype: `matplotlib.container.BarContainer`
+		"""
+		height = 0.25
+		ax1, ax2 = self.axes  # primary axis
+		bar_container = self._barh(ax1, bars, height, max_bars)
+
+		yticks = [float(y) + (height / 2) for y in range(len(bars))]
+
+		ax1.set_ybound(0, max(len(bars), max_bars))
+		ax1.set_yticks(yticks)
+		ax1.set_yticklabels(yticklabels, color=self.style_context_get_color('theme_color_graph_fg', ColorHexCode.WHITE), size=10)
+
+		ax2.set_yticks(yticks)
+		ax2.set_yticklabels(["{0:,}".format(bar) for bar in bars], color=self.style_context_get_color('theme_color_graph_fg', ColorHexCode.WHITE), size=12)
+		ax2.set_ylim(ax1.get_ylim())
+
+		# remove the y-axis tick marks
+		for tick in ax1.yaxis.get_major_ticks():
+			tick.tick1On = False
+			tick.tick2On = False
+		for tick in ax2.yaxis.get_major_ticks():
+			tick.tick1On = False
+			tick.tick2On = False
+
+		color_bg = self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE)
+		for pos in ('top', 'right', 'bottom', 'left'):
+			ax1.spines[pos].set_color(color_bg)
+			ax2.spines[pos].set_color(color_bg)
+
+		if xlabel:
+			ax1.set_xlabel(xlabel, color=self.style_context_get_color('theme_color_graph_fg', ColorHexCode.WHITE), size=12)
+		self.figure.subplots_adjust(top=0.85, right=0.9, bottom=0.05, left=0.225)
+		return bar_container
+
 @export_graph_provider
-class CampaignGraphOverview(CampaignGraph):
+class CampaignGraphOverview(CampaignBarGraph):
 	"""Display a graph which represents an overview of the campaign."""
 	graph_title = 'Campaign Overview'
 	name_human = 'Bar - Campaign Overview'
@@ -345,12 +401,12 @@ class CampaignGraphOverview(CampaignGraph):
 		if len(creds):
 			bars.append(len(creds))
 			bars.append(len(unique(creds, key=lambda cred: cred.message_id)))
-		xticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)]
-		bars = self.graph_bar(bars, xticklabels=xticklabels, ylabel='Grand Total')
+		yticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)]
+		self.graph_bar(bars, yticklabels)
 		return
 
 @export_graph_provider
-class CampaignGraphVisitorInfo(CampaignGraph):
+class CampaignGraphVisitorInfo(CampaignBarGraph):
 	"""Display a graph which shows the different operating systems seen from visitors."""
 	graph_title = 'Campaign Visitor OS Information'
 	name_human = 'Bar - Visitor OS Information'
@@ -362,14 +418,11 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		for visit in visits:
 			ua = ua_parser.parse_user_agent(visit.visitor_details)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
-		os_names = list(operating_systems.keys())
-		os_names.sort(key=lambda name: operating_systems[name])
-		os_names.reverse()
 
-		bars = []
-		for os_name in os_names:
-			bars.append(operating_systems[os_name])
-		self.graph_bar(bars, bar_color=[MPL_OS_COLORS[osn] for osn in os_names], xticklabels=os_names, ylabel='Total Visits')
+		os_names = operating_systems.keys()
+		os_names.sort()
+		bars = [operating_systems[os_name] for os_name in os_names]
+		self.graph_bar(bars, os_names, max_bars=len(OSFamily))
 		return
 
 @export_graph_provider
