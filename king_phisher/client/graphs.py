@@ -142,7 +142,7 @@ class CampaignGraph(object):
 		self.config = application.config
 		"""A reference to the King Phisher client configuration."""
 		self.figure, _ = pyplot.subplots()
-		self.figure.set_facecolor(self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE))
+		self.figure.set_facecolor(self.get_color('bg', ColorHexCode.WHITE))
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
 		self.manager = None
@@ -202,6 +202,22 @@ class CampaignGraph(object):
 			handles.append(patches.Patch(color=row[0], label=row[1]))
 		self.axes[0].legend(handles=handles, fontsize=fontsize, loc='lower right')
 
+	def get_color(self, color_name, default):
+		"""
+		Get a color by its style name such as 'fg' for foreground. If the
+		specified color does not exist, default will be returned. The underlying
+		logic for this function is provided by
+		:py:func:`~.gui_utilities.gtk_style_context_get_color`.
+
+		:param str color_name: The style name of the color.
+		:param default: The default color to return if the specified one was not found.
+		:return: The desired color if it was found.
+		:rtype: tuple
+		"""
+		color_name = 'theme_color_graph_' + color_name
+		sc_color = gui_utilities.gtk_style_context_get_color(self.style_context, color_name, default)
+		return (sc_color.red, sc_color.green, sc_color.blue)
+
 	def make_window(self):
 		"""
 		Create a window from the figure manager.
@@ -246,10 +262,6 @@ class CampaignGraph(object):
 		else:
 			self.navigation_toolbar.hide()
 
-	def style_context_get_color(self, *args, **kwargs):
-		sc_color = gui_utilities.gtk_style_context_get_color(self.style_context, *args, **kwargs)
-		return (sc_color.red, sc_color.green, sc_color.blue)
-
 	def load_graph(self):
 		"""Load the graph information via :py:meth:`.refresh`."""
 		self.refresh()
@@ -278,7 +290,7 @@ class CampaignGraph(object):
 		self._load_graph(info_cache)
 		self.figure.suptitle(
 			self.graph_title,
-			color=self.style_context_get_color('theme_color_graph_fg', default=ColorHexCode.BLACK),
+			color=self.get_color('fg', ColorHexCode.BLACK),
 			size=14,
 			weight='bold',
 			y=0.97
@@ -304,9 +316,9 @@ class CampaignBarGraph(CampaignGraph):
 
 	def _barh(self, ax, bars, height, max_bars=None):
 		# define the necessary colors
-		color_bg = self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE)
-		color_bar_bg = self.style_context_get_color('theme_color_graph_bar_bg', ColorHexCode.GRAY)
-		color_bar_fg = self.style_context_get_color('theme_color_graph_bar_fg', ColorHexCode.BLACK)
+		color_bg = self.get_color('bg', ColorHexCode.WHITE)
+		color_bar_bg = self.get_color('bar_bg', ColorHexCode.GRAY)
+		color_bar_fg = self.get_color('bar_fg', ColorHexCode.BLACK)
 
 		ax.set_axis_bgcolor(color_bg)
 
@@ -346,8 +358,8 @@ class CampaignBarGraph(CampaignGraph):
 		:rtype: `matplotlib.container.BarContainer`
 		"""
 		height = 0.25
-		color_bg = self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE)
-		color_fg = self.style_context_get_color('theme_color_graph_fg', default=ColorHexCode.BLACK)
+		color_bg = self.get_color('bg', ColorHexCode.WHITE)
+		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		ax1, ax2 = self.axes  # primary axis
 		bar_container = self._barh(ax1, bars, height, max_bars)
 
@@ -390,7 +402,7 @@ class CampaignPieGraph(CampaignGraph):
 		ax.pie(
 			(100,),
 			autopct='%1.0f%%',
-			colors=(self.style_context_get_color('theme_color_graph_pie_low', ColorHexCode.GRAY),),
+			colors=(self.get_color('pie_low', ColorHexCode.GRAY),),
 			labels=(title,),
 			shadow=True,
 			startangle=90
@@ -400,8 +412,8 @@ class CampaignPieGraph(CampaignGraph):
 
 	def graph_pie(self, parts, autopct=None, labels=None, legend_labels=None):
 		colors = color.get_scale(
-			self.style_context_get_color('theme_color_graph_pie_high', ColorHexCode.BLACK),
-			self.style_context_get_color('theme_color_graph_pie_low', ColorHexCode.GRAY),
+			self.get_color('pie_high', ColorHexCode.BLACK),
+			self.get_color('pie_low', ColorHexCode.GRAY),
 			len(parts)
 		)
 		ax = self.axes[0]
@@ -414,7 +426,7 @@ class CampaignPieGraph(CampaignGraph):
 			labeldistance=1.15,
 			shadow=True,
 			startangle=45,
-			textprops={'color': self.style_context_get_color('theme_color_graph_fg', ColorHexCode.BLACK)},
+			textprops={'color': self.get_color('fg', ColorHexCode.BLACK)},
 			wedgeprops={'linewidth': 0}
 		)
 		ax.axis('equal')
@@ -492,10 +504,10 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		# define the necessary colors
-		color_bg = self.style_context_get_color('theme_color_graph_bg', default=ColorHexCode.WHITE)
-		color_fg = self.style_context_get_color('theme_color_graph_fg', default=ColorHexCode.BLACK)
-		color_line_bg = self.style_context_get_color('theme_color_graph_line_bg', default=ColorHexCode.WHITE)
-		color_line_fg = self.style_context_get_color('theme_color_graph_line_fg', default=ColorHexCode.BLACK)
+		color_bg = self.get_color('bg', ColorHexCode.WHITE)
+		color_fg = self.get_color('fg', ColorHexCode.BLACK)
+		color_line_bg = self.get_color('line_bg', ColorHexCode.WHITE)
+		color_line_fg = self.get_color('line_fg', ColorHexCode.BLACK)
 		visits = info_cache['visits']
 		first_visits = [visit.first_visit for visit in visits]
 
@@ -508,7 +520,7 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 			bottom='off'
 		)
 		ax.set_axis_bgcolor(color_line_bg)
-		ax.set_ylabel('Number of Visits', color=self.style_context_get_color('theme_color_graph_fg', ColorHexCode.WHITE), size=10)
+		ax.set_ylabel('Number of Visits', color=self.get_color('fg', ColorHexCode.WHITE), size=10)
 		self._ax_hide_ticks(ax)
 		self._ax_set_spine_color(ax, color_bg)
 		if not len(first_visits):
@@ -575,9 +587,9 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		cred_ips = set(cred.message_id for cred in info_cache['credentials'])
 		cred_ips = set([visit.visitor_ip for visit in visits if visit.message_id in cred_ips])
 
-		color_fg = self.style_context_get_color('theme_color_graph_fg', default=ColorHexCode.BLACK)
-		color_land = self.style_context_get_color('theme_color_graph_map_land', default=ColorHexCode.GRAY)
-		color_water = self.style_context_get_color('theme_color_graph_map_water', default=ColorHexCode.WHITE)
+		color_fg = self.get_color('fg', ColorHexCode.BLACK)
+		color_land = self.get_color('map_land', ColorHexCode.GRAY)
+		color_water = self.get_color('map_water', ColorHexCode.WHITE)
 
 		ax = self.axes[0]
 		bm = mpl_toolkits.basemap.Basemap(resolution='c', ax=ax, **self.basemap_args)

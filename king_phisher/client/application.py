@@ -496,7 +496,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		:param str graph_name: The name of the graph to make a window of.
 		"""
 		cls = graphs.get_graph(graph_name)
-		graph_inst = cls(self)
+		graph_inst = cls(self, style_context=self.style_context)
 		graph_inst.load_graph()
 		window = graph_inst.make_window()
 		window.show()
@@ -577,3 +577,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		gui_utilities.show_dialog_error('Now Exiting', active_window, 'The remote service has been stopped.')
 		self.quit()
 		return
+
+	@property
+	def style_context(self):
+		window = self.get_active_window() or self.main_window
+		if window is None:
+			return None
+		return window.get_style_context()
