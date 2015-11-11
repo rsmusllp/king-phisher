@@ -58,6 +58,8 @@
 @define-color theme_color_graph_bar_fg #c0dcff;
 @define-color theme_color_graph_line_bg #92a4b3;
 @define-color theme_color_graph_line_fg #002645;
+@define-color theme_color_graph_map_land #3c5b77;
+@define-color theme_color_graph_map_water #c0dcff;
 @define-color theme_color_graph_pie_high #c0dcff;
 @define-color theme_color_graph_pie_low #3c5b77;
 

@@ -76,9 +76,7 @@ else:
 
 EXPORTED_GRAPHS = {}
 
-MPL_COLOR_LAND = 'gray'
 MPL_COLOR_NULL = 'darkcyan'
-MPL_COLOR_WATER = 'paleturquoise'
 
 __all__ = ('export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph')
 
@@ -577,16 +575,29 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		cred_ips = set(cred.message_id for cred in info_cache['credentials'])
 		cred_ips = set([visit.visitor_ip for visit in visits if visit.message_id in cred_ips])
 
+		color_fg = self.style_context_get_color('theme_color_graph_fg', default=ColorHexCode.BLACK)
+		color_land = self.style_context_get_color('theme_color_graph_map_land', default=ColorHexCode.GRAY)
+		color_water = self.style_context_get_color('theme_color_graph_map_water', default=ColorHexCode.WHITE)
+
 		ax = self.axes[0]
 		bm = mpl_toolkits.basemap.Basemap(resolution='c', ax=ax, **self.basemap_args)
 		if self.draw_states:
 			bm.drawstates()
 		bm.drawcoastlines()
 		bm.drawcountries()
-		bm.fillcontinents(color=MPL_COLOR_LAND, lake_color=MPL_COLOR_WATER)
-		bm.drawparallels((-60, -30, 0, 30, 60), labels=(1, 1, 0, 0))
-		bm.drawmeridians((0, 90, 180, 270), labels=(0, 0, 0, 1))
-		bm.drawmapboundary(fill_color=MPL_COLOR_WATER)
+		bm.fillcontinents(color=color_land, lake_color=color_water)
+		parallels = bm.drawparallels(
+			(-60, -30, 0, 30, 60),
+			labels=(1, 1, 0, 0)
+		)
+		self._map_set_line_color(parallels, color_fg)
+
+		meridians = bm.drawmeridians(
+			(0, 90, 180, 270),
+			labels=(0, 0, 0, 1)
+		)
+		self._map_set_line_color(meridians, color_fg)
+		bm.drawmapboundary(fill_color=color_water)
 
 		if not visits:
 			return
@@ -622,6 +633,13 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			markersize = markersize * base_markersize
 			bm.plot(pts[0], pts[1], 'o', markerfacecolor=(self.mpl_color_with_creds if visitor_ip in cred_ips else self.mpl_color_without_creds), markersize=markersize)
 		return
+
+	def _map_set_line_color(self, map_lines, line_color):
+		for lines, texts in map_lines.values():
+			for line in lines:
+				line.set_color(line_color)
+			for text in texts:
+				text.set_color(line_color)
 
 @export_graph_provider
 class CampaignGraphVisitsMapUSA(CampaignGraphVisitsMap):
