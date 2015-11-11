@@ -52,7 +52,7 @@ SECONDS_IN_ONE_HOUR = (60 * 60)
 
 POSIX_VAR_OFFSET = re.compile(r'<?[A-Z]{3,5}(?P<offset>([\+\-])?[0-9:]{1,5})(<|([A-Z]{3,5})(?P<offset_dst>([\+\-])?([0-9:]{1,5})?))?', flags=re.IGNORECASE)
 POSIX_VAR = re.compile(POSIX_VAR_OFFSET.pattern + r',(?P<start>M\d{1,2}\.[1-5]\.[0-6](/([\+\-])?[0-9:]{1,5})?),(?P<end>M\d{1,2}\.[1-5]\.[0-6](/([\+\-])?[0-9:]{1,5})?)', flags=re.IGNORECASE)
-POSIX_VAR_DST_RRULE = re.compile('M(?P<month>\d{1,2}).(?P<week>[1-5]).(?P<day>[0-6])(/\d{1,2})?', flags=re.IGNORECASE)
+POSIX_VAR_DST_RRULE = re.compile(r'M(?P<month>\d{1,2}).(?P<week>[1-5]).(?P<day>[0-6])(/\d{1,2})?', flags=re.IGNORECASE)
 
 zoneinfo_path = os.path.join(os.path.dirname(pytz.tzfile.__file__), 'zoneinfo')
 """The path to the directory which holds the IANA timezone data files."""

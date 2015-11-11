@@ -402,7 +402,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		for graph in self.graphs:
 			if self.is_destroyed.is_set():
 				break
-			info_cache = gui_utilities.glib_idle_add_wait(lambda: graph.refresh(info_cache, self.is_destroyed))
+			info_cache.update(gui_utilities.glib_idle_add_wait(lambda g=graph: g.refresh(info_cache, self.is_destroyed)))
 		self.last_load_time = time.time()
 
 class CampaignViewVisitsTab(CampaignViewGenericTableTab):

@@ -123,7 +123,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.config = self.server.config
 		regex_prefix = '^'
 		if self.config.get('server.vhost_directories'):
-			regex_prefix += '[\w\.\-]+\/'
+			regex_prefix += r'[\w\.\-]+\/'
 			for path, handler in self.handler_map.items():
 				if path.startswith(rest_api.REST_API_BASE):
 					del self.handler_map[path]

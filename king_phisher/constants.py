@@ -32,8 +32,12 @@
 
 import sys
 
-if sys.version_info[0] == 3:
-	intern = sys.intern
+from king_phisher import its
+
+if its.py_v3:
+	_intern = sys.intern
+else:
+	_intern = intern
 
 __all__ = ['OSArch', 'OSFamily', 'SPFResult']
 
@@ -69,41 +73,41 @@ class ConstantGroup(ConstantGroupMeta('_ConstantGroup', (object,), {})):
 
 class ConnectionErrorReason(ConstantGroup):
 	"""Constants which describe possible errors for the client connection process."""
-	ERROR_AUTHENTICATION_FAILED = intern('authentication failed')
-	ERROR_CONNECTION = intern('connection error')
-	ERROR_INCOMPATIBLE_VERSIONS = intern('incompatible versions')
-	ERROR_INVALID_CREDENTIALS = intern('invalid credentials')
-	ERROR_INVALID_OTP = intern('invalid otp')
-	ERROR_PORT_FORWARD = intern('port forward error')
-	ERROR_UNKNOWN = intern('unknown error')
-	SUCCESS = intern('success')
+	ERROR_AUTHENTICATION_FAILED = _intern('authentication failed')
+	ERROR_CONNECTION = _intern('connection error')
+	ERROR_INCOMPATIBLE_VERSIONS = _intern('incompatible versions')
+	ERROR_INVALID_CREDENTIALS = _intern('invalid credentials')
+	ERROR_INVALID_OTP = _intern('invalid otp')
+	ERROR_PORT_FORWARD = _intern('port forward error')
+	ERROR_UNKNOWN = _intern('unknown error')
+	SUCCESS = _intern('success')
 
 class ColorHexCode(ConstantGroup):
 	"""Constants for the hex code representations of different colors."""
-	BLACK = intern('#000000')
-	GRAY = intern('#888888')
-	LIGHT_YELLOW = intern('#ffffb2')
-	WHITE = intern('#ffffff')
+	BLACK = _intern('#000000')
+	GRAY = _intern('#888888')
+	LIGHT_YELLOW = _intern('#ffffb2')
+	WHITE = _intern('#ffffff')
 
 class OSArch(ConstantGroup):
 	"""Constants for different operating system architectures."""
-	PPC = intern('PPC')
-	X86 = intern('x86')
-	X86_64 = intern('x86-64')
+	PPC = _intern('PPC')
+	X86 = _intern('x86')
+	X86_64 = _intern('x86-64')
 
 class OSFamily(ConstantGroup):
 	"""Constants for families of different operating systems."""
-	ANDROID = intern('Android')
-	BLACKBERRY = intern('BlackBerry')
-	IOS = intern('iOS')
-	LINUX = intern('Linux')
-	OSX = intern('OS X')
-	WINDOWS = intern('Windows NT')
-	WINDOWS_PHONE = intern('Windows Phone')
+	ANDROID = _intern('Android')
+	BLACKBERRY = _intern('BlackBerry')
+	IOS = _intern('iOS')
+	LINUX = _intern('Linux')
+	OSX = _intern('OS X')
+	WINDOWS = _intern('Windows NT')
+	WINDOWS_PHONE = _intern('Windows Phone')
 
 class SPFResult(ConstantGroup):
 	"""Constants for the different result identifiers returned from SPF checks."""
-	PASS = intern('pass')
-	NEUTRAL = intern('neutral')
-	FAIL = intern('fail')
-	SOFT_FAIL = intern('softfail')
+	PASS = _intern('pass')
+	NEUTRAL = _intern('neutral')
+	FAIL = _intern('fail')
+	SOFT_FAIL = _intern('softfail')

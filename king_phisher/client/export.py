@@ -319,7 +319,7 @@ def liststore_export(store, columns, cb_write, *cb_write_args):
 	A function to facilitate writing values from a list store to an arbitrary
 	callback for exporting to different formats. The callback will be called
 	with the row number, the column values and the additional arguments
-	specified in *\*cb_write_args*.
+	specified in *\\*cb_write_args*.
 
 	.. code-block:: python
 
