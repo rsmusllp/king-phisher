@@ -11,9 +11,6 @@ Data
 
 .. autodata:: king_phisher.client.graphs.has_matplotlib_basemap
 
-.. autodata:: king_phisher.client.graphs.MPL_OS_COLORS
-   :annotation:
-
 Functions
 ---------
 

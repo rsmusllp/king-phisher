@@ -79,17 +79,6 @@ EXPORTED_GRAPHS = {}
 MPL_COLOR_LAND = 'gray'
 MPL_COLOR_NULL = 'darkcyan'
 MPL_COLOR_WATER = 'paleturquoise'
-MPL_OS_COLORS = collections.defaultdict(lambda: MPL_COLOR_NULL)
-"""Matplotlib colors for the different operating systems defined in the :py:class:`~king_phisher.constants.OSFamily` class."""
-MPL_OS_COLORS.update({
-	OSFamily.ANDROID: 'olive',
-	OSFamily.BLACKBERRY: 'gray',
-	OSFamily.IOS: 'violet',
-	OSFamily.LINUX: 'palegreen',
-	OSFamily.OSX: 'darkviolet',
-	OSFamily.WINDOWS: 'gold',
-	OSFamily.WINDOWS_PHONE: 'darkgoldenrod'
-})
 
 __all__ = ('export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph')
 
@@ -352,8 +341,8 @@ class CampaignBarGraph(CampaignGraph):
 		cases.
 
 		:param list bars: The values of the bars to graph.
-		:param list yticklabels: The labels to use on the x-axis.
 		:param int max_bars: The number to treat as the logical maximum number of plotted bars.
+		:param list yticklabels: The labels to use on the x-axis.
 		:param str xlabel: The label to give to the y-axis.
 		:return: The bars created using :py:mod:`matplotlib`
 		:rtype: `matplotlib.container.BarContainer`
