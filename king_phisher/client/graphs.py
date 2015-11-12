@@ -41,6 +41,7 @@ from king_phisher.client import gui_utilities
 from king_phisher.constants import ColorHexCode
 from king_phisher.constants import OSFamily
 
+from boltons import iterutils
 from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
 from smoke_zephyr.utilities import unique
@@ -644,18 +645,29 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		self.add_legend_patch(((self.color_with_creds, 'With Credentials'), (self.color_without_creds, 'Without Credentials')))
 		return
 
+	def _resolve_geolocations(self, all_ips):
+		geo_locations = {}
+		public_ips = []
+		for visitor_ip in all_ips:
+			ip = ipaddress.ip_address(visitor_ip)
+			if ip.is_private or ip.is_loopback:
+				continue
+			public_ips.append(visitor_ip)
+		public_ips.sort()
+		for ip_chunk in iterutils.chunked(public_ips, 100):
+			geo_locations.update(self.rpc.geoip_lookup_multi(ip_chunk))
+		return geo_locations
+
 	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
 		o_high = float(max(ctr.values()))
 		o_low = float(min(ctr.values()))
-		for visitor_ip, occurrences in ctr.items():
-			visitor_ip = ipaddress.ip_address(visitor_ip)
-			if visitor_ip.is_loopback or visitor_ip.is_private:
-				continue
-			geo_location = self.rpc.geoip_lookup(visitor_ip)
-			if not geo_location:
-				continue
+		color_with_creds = self.color_with_creds
+		color_without_creds = self.color_without_creds
+		geo_locations = self._resolve_geolocations(ctr.keys())
+		for visitor_ip, geo_location in geo_locations.items():
 			if not (geo_location.coordinates.longitude and geo_location.coordinates.latitude):
 				continue
+			occurrences = ctr[visitor_ip]
 			pts = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
 			if o_high == o_low:
 				markersize = 2.0
@@ -667,7 +679,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 				pts[1],
 				'o',
 				markeredgewidth=0,
-				markerfacecolor=(self.color_with_creds if visitor_ip in cred_ips else self.color_without_creds),
+				markerfacecolor=(color_with_creds if visitor_ip in cred_ips else color_without_creds),
 				markersize=markersize
 			)
 		return

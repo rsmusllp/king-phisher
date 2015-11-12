@@ -215,6 +215,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		for row in self.rpc.remote_table(self.remote_table_name, query_filter={'campaign_id': self.config['campaign_id']}):
 			if self.is_destroyed.is_set():
 				break
+			if self.rpc is None:
+				break
 			row_data = self.format_row_data(row)
 			if row_data is None:
 				self.rpc('db/table/delete', self.remote_table_name, row.id)
