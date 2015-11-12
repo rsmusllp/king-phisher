@@ -32,6 +32,7 @@
 
 import platform
 import sys
+import threading
 import traceback
 import tzlocal
 
@@ -42,8 +43,9 @@ from king_phisher.client import gui_utilities
 from king_phisher.third_party import AdvancedHTTPServer
 
 from gi.repository import Gtk
+from gi.repository import Pango
 
-__all__ = ['ExceptionDialog']
+__all__ = ('ExceptionDialog',)
 
 EXCEPTION_DETAILS_TEMPLATE = """
 Error Type: {error_type}
@@ -56,6 +58,10 @@ Python Version: {python_version}
 Gtk Version: {gtk_version}
 Timezone: {timezone}
 
+Thread Information:
+{thread_info}
+
+Stack Trace:
 {stack_trace}
 """
 
@@ -77,6 +83,7 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 		super(ExceptionDialog, self).__init__(application)
 		self.error_description = self.gtk_builder_get('label_error_description')
 		self.error_details = self.gtk_builder_get('textview_error_details')
+		self.error_details.modify_font(Pango.FontDescription('monospace 9'))
 		self.exc_info = exc_info or sys.exc_info()
 		self.error_uid = error_uid
 		linkbutton = self.gobjects['linkbutton_github_issues']
@@ -100,6 +107,9 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 			rpc_error_details = "Name: {0}".format(exc_value.remote_exception['name'])
 			if exc_value.remote_exception.get('message'):
 				rpc_error_details += " Message: '{0}'".format(exc_value.remote_exception['message'])
+		current_tid = threading.current_thread().ident
+		thread_info = ("{0: >4}{1} (alive={2} daemon={3})".format(('=> ' if thread.ident == current_tid else ''), thread.name, thread.is_alive(), thread.daemon) for thread in threading.enumerate())
+		thread_info = '\n'.join(thread_info)
 		details = EXCEPTION_DETAILS_TEMPLATE.format(
 			error_details=repr(exc_value),
 			error_type=exc_name,
@@ -110,6 +120,7 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 			python_version="{0}.{1}.{2}".format(*sys.version_info),
 			gtk_version="{0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()),
 			stack_trace=''.join(traceback.format_exception(exc_type, exc_value, exc_traceback)),
+			thread_info=thread_info,
 			timezone=tzlocal.get_localzone().zone
 		)
 		details = details.strip() + '\n'
