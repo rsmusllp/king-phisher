@@ -141,7 +141,7 @@ def get_scale(color_low, color_high, count, ascending=True):
 		if count < 1:
 			scale = []
 		elif count == 1:
-			scale = [color_low]
+			scale = [color_low if ascending else color_high]
 		elif count == 2:
 			scale = [color_low, color_high]
 		else:

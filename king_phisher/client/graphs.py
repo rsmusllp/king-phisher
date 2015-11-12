@@ -167,6 +167,7 @@ class CampaignGraph(object):
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
 		self.navigation_toolbar.hide()
+		self._legend = None
 
 	@property
 	def rpc(self):
@@ -187,6 +188,9 @@ class CampaignGraph(object):
 		raise NotImplementedError()
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
+		if self._legend is not None:
+			self._legend.remove()
+			self._legend = None
 		if fontsize is None:
 			scale = self.markersize_scale
 			if scale < 5:
@@ -209,6 +213,7 @@ class CampaignGraph(object):
 			loc='lower right'
 		)
 		legend_bbox.legendPatch.set_linewidth(0)
+		self._legend = legend_bbox
 
 	def get_color(self, color_name, default):
 		"""
@@ -295,6 +300,9 @@ class CampaignGraph(object):
 				info_cache[table] = tuple(self.rpc.remote_table(table, query_filter={'campaign_id': self.config['campaign_id']}))
 		for ax in self.axes:
 			ax.clear()
+		if self._legend is not None:
+			self._legend.remove()
+			self._legend = None
 		self._load_graph(info_cache)
 		self.figure.suptitle(
 			self.graph_title,
@@ -654,7 +662,14 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			else:
 				markersize = 1.0 + (float(occurrences) - o_low) / (o_high - o_low)
 			markersize = markersize * base_markersize
-			bm.plot(pts[0], pts[1], 'o', markerfacecolor=(self.color_with_creds if visitor_ip in cred_ips else self.color_without_creds), markersize=markersize)
+			bm.plot(
+				pts[0],
+				pts[1],
+				'o',
+				markeredgewidth=0,
+				markerfacecolor=(self.color_with_creds if visitor_ip in cred_ips else self.color_without_creds),
+				markersize=markersize
+			)
 		return
 
 	def _map_set_line_color(self, map_lines, line_color):
