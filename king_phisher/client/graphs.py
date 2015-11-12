@@ -187,8 +187,7 @@ class CampaignGraph(object):
 		raise NotImplementedError()
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
-		handles = []
-		if not fontsize:
+		if fontsize is None:
 			scale = self.markersize_scale
 			if scale < 5:
 				fontsize = 'xx-small'
@@ -198,9 +197,18 @@ class CampaignGraph(object):
 				fontsize = 'small'
 			else:
 				fontsize = 'medium'
-		for row in legend_rows:
-			handles.append(patches.Patch(color=row[0], label=row[1]))
-		self.axes[0].legend(handles=handles, fontsize=fontsize, loc='lower right')
+		legend_bbox = self.figure.legend(
+			tuple(patches.Patch(color=patch_color) for patch_color, _ in legend_rows),
+			tuple(label for _, label in legend_rows),
+			borderaxespad=1.25,
+			fontsize=fontsize,
+			frameon=True,
+			handlelength=1.5,
+			handletextpad=0.75,
+			labelspacing=0.3,
+			loc='lower right'
+		)
+		legend_bbox.legendPatch.set_linewidth(0)
 
 	def get_color(self, color_name, default):
 		"""
@@ -238,7 +246,7 @@ class CampaignGraph(object):
 	@property
 	def markersize_scale(self):
 		bbox = self.axes[0].get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())
-		return max(bbox.width, bbox.width) * self.figure.dpi * 0.01
+		return bbox.width * self.figure.dpi * 0.01
 
 	def mpl_signal_canvas_button_pressed(self, event):
 		if event.button != 3:
@@ -357,7 +365,7 @@ class CampaignBarGraph(CampaignGraph):
 		:return: The bars created using :py:mod:`matplotlib`
 		:rtype: `matplotlib.container.BarContainer`
 		"""
-		height = 0.25
+		height = 0.275
 		color_bg = self.get_color('bg', ColorHexCode.WHITE)
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		ax1, ax2 = self.axes  # primary axis
@@ -393,6 +401,7 @@ class CampaignLineGraph(CampaignGraph):
 class CampaignPieGraph(CampaignGraph):
 	def __init__(self, *args, **kwargs):
 		super(CampaignPieGraph, self).__init__(*args, **kwargs)
+		self.figure.subplots_adjust(top=0.85, right=0.75, bottom=0.05, left=0.05)
 
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
@@ -412,9 +421,10 @@ class CampaignPieGraph(CampaignGraph):
 
 	def graph_pie(self, parts, autopct=None, labels=None, legend_labels=None):
 		colors = color.get_scale(
-			self.get_color('pie_high', ColorHexCode.BLACK),
-			self.get_color('pie_low', ColorHexCode.GRAY),
-			len(parts)
+			self.get_color('pie_low', ColorHexCode.BLACK),
+			self.get_color('pie_high', ColorHexCode.GRAY),
+			len(parts),
+			ascending=False
 		)
 		ax = self.axes[0]
 		pie = ax.pie(
@@ -492,7 +502,7 @@ class CampaignGraphVisitorInfoPie(CampaignPieGraph):
 		for visit in visits:
 			ua = ua_parser.parse_user_agent(visit.visitor_details)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
-		(os_names, count) = zip(*operating_systems.items())
+		(os_names, count) = tuple(zip(*reversed(sorted(operating_systems.items(), key=lambda item: item[1]))))
 		self.graph_pie(count, labels=tuple("{0:,}".format(os) for os in count), legend_labels=os_names)
 		return
 
@@ -579,8 +589,6 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	graph_title = 'Campaign Visit Locations'
 	table_subscriptions = ('credentials', 'visits')
 	is_available = has_matplotlib_basemap
-	mpl_color_with_creds = 'indianred'
-	mpl_color_without_creds = 'gold'
 	draw_states = False
 	def _load_graph(self, info_cache):
 		visits = unique(info_cache['visits'], key=lambda visit: visit.message_id)
@@ -609,7 +617,10 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			labels=(0, 0, 0, 1)
 		)
 		self._map_set_line_color(meridians, color_fg)
-		bm.drawmapboundary(fill_color=color_water)
+		bm.drawmapboundary(
+			fill_color=color_water,
+			linewidth=0
+		)
 
 		if not visits:
 			return
@@ -622,7 +633,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		base_markersize = min(base_markersize, 9)
 		self._plot_visitor_map_points(bm, ctr, base_markersize, cred_ips)
 
-		self.add_legend_patch(((self.mpl_color_with_creds, 'With Credentials'), (self.mpl_color_without_creds, 'Without Credentials')))
+		self.add_legend_patch(((self.color_with_creds, 'With Credentials'), (self.color_without_creds, 'Without Credentials')))
 		return
 
 	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
@@ -643,7 +654,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			else:
 				markersize = 1.0 + (float(occurrences) - o_low) / (o_high - o_low)
 			markersize = markersize * base_markersize
-			bm.plot(pts[0], pts[1], 'o', markerfacecolor=(self.mpl_color_with_creds if visitor_ip in cred_ips else self.mpl_color_without_creds), markersize=markersize)
+			bm.plot(pts[0], pts[1], 'o', markerfacecolor=(self.color_with_creds if visitor_ip in cred_ips else self.color_without_creds), markersize=markersize)
 		return
 
 	def _map_set_line_color(self, map_lines, line_color):
@@ -652,6 +663,14 @@ class CampaignGraphVisitsMap(CampaignGraph):
 				line.set_color(line_color)
 			for text in texts:
 				text.set_color(line_color)
+
+	@property
+	def color_with_creds(self):
+		return self.get_color('map_marker1', ColorHexCode.RED)
+
+	@property
+	def color_without_creds(self):
+		return self.get_color('map_marker2', ColorHexCode.YELLOW)
 
 @export_graph_provider
 class CampaignGraphVisitsMapUSA(CampaignGraphVisitsMap):

@@ -85,9 +85,14 @@ class ConnectionErrorReason(ConstantGroup):
 class ColorHexCode(ConstantGroup):
 	"""Constants for the hex code representations of different colors."""
 	BLACK = _intern('#000000')
-	GRAY = _intern('#888888')
+	BLUE = _intern('#0000ff')
+	GRAY = _intern('#808080')
+	GREEN = _intern('#00ff00')
 	LIGHT_YELLOW = _intern('#ffffb2')
+	ORANGE = _intern('#ffa500')
+	RED = _intern('#ff0000')
 	WHITE = _intern('#ffffff')
+	YELLOW = _intern('#ffff00')
 
 class OSArch(ConstantGroup):
 	"""Constants for different operating system architectures."""
