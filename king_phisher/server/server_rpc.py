@@ -365,7 +365,8 @@ class KingPhisherRequestHandlerRPC(object):
 	@database_access
 	def rpc_database_delete_row_by_id(self, session, table_name, row_id):
 		"""
-		Delete a row from a table with the specified value in the id column.
+		Delete the row from the table with the specified value in the id column.
+		If the row does not exist, no error is raised.
 
 		:param str table_name: The name of the database table to delete a row from.
 		:param row_id: The id value.
@@ -373,6 +374,8 @@ class KingPhisherRequestHandlerRPC(object):
 		table = database_table_objects.get(table_name)
 		assert table
 		row = db_manager.get_row_by_id(session, table, row_id)
+		if row is None:
+			return
 		row.assert_session_has_permissions('d', self.rpc_session)
 		session.delete(row)
 		session.commit()
