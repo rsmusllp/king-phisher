@@ -375,6 +375,8 @@ class KingPhisherRequestHandlerRPC(object):
 		assert table
 		row = db_manager.get_row_by_id(session, table, row_id)
 		if row is None:
+			logger = logging.getLogger('KingPhisher.Server.API.RPC')
+			logger.debug("received delete request for non existing row with id {0} from table {1}".format(row_id, table_name))
 			return
 		row.assert_session_has_permissions('d', self.rpc_session)
 		session.delete(row)
