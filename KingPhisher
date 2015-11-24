@@ -98,9 +98,7 @@ def main():
 		return 0
 
 	# check and configure the environment
-	if its.frozen:
-		data_path = os.path.dirname(sys.executable)
-	else:
+	if not its.frozen:
 		missing_requirements = check_requirements(__requirements__)
 		if missing_requirements:
 			color.print_error('the following package requirements are missing or incompatible:')
@@ -108,21 +106,11 @@ def main():
 				color.print_error('  - ' + missing_req)
 			color.print_error('please install the missing requirements with pip')
 			return 0
-		data_path = os.path.dirname(__file__)
-		data_path = os.path.join(data_path, 'data', 'client')
 
 	if sys.platform.startswith('linux') and not os.getuid():
 		logger.warning('it is not necessary to run the king phisher client as root')
 
-	data_path = os.path.abspath(data_path)
-	if os.path.isdir(data_path):
-		find.data_path_append(data_path)
-
-	data_path = os.getcwd()
-	data_path = os.path.join(data_path, 'data', 'client')
-	data_path = os.path.abspath(data_path)
-	if os.path.isdir(data_path):
-		find.data_path_append(data_path)
+	find.data_path_init('client')
 
 	if not gui_utilities.which_glade():
 		color.print_error('unable to locate the glade ui data file')

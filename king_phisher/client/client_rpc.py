@@ -283,8 +283,10 @@ def vte_child_routine(config):
 		pass
 	else:
 		readline.parse_and_bind('tab: complete')
-	plugins_directory = find.find_data_directory('rpc_plugins')
-	if plugins_directory:
+	for plugins_directory in ('rpc_plugins', 'rpc-plugins'):
+		plugins_directory = find.find_data_directory(plugins_directory)
+		if not plugins_directory:
+			continue
 		sys.path.append(plugins_directory)
 
 	headers = config['rpc_data'].pop('headers')

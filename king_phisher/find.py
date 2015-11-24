@@ -31,6 +31,9 @@
 #
 
 import os
+import sys
+
+from king_phisher import its
 
 DATA_DIRECTORY_NAME = 'king_phisher'
 """The name of the directory containing the King Phisher data."""
@@ -50,6 +53,32 @@ def data_path_append(path):
 	"""
 	if not path in os.environ[ENV_VAR].split(os.pathsep):
 		os.environ[ENV_VAR] = os.pathsep.join((os.environ[ENV_VAR], path))
+
+def data_path_init(directory):
+	"""
+	Add a directory to the data search path for either client or server data
+	files.
+
+	:param str directory: The directory to add, either 'client' or 'server'.
+	"""
+	if its.frozen:
+		data_path = os.path.dirname(sys.executable)
+	else:
+		data_path = os.path.dirname(__file__)
+	found = False
+	data_path = os.path.join(data_path, '..', 'data', directory)
+	data_path = os.path.abspath(data_path)
+	if os.path.isdir(data_path):
+		found = True
+		data_path_append(data_path)
+
+	data_path = os.path.join(os.getcwd(), 'data', directory)
+	data_path = os.path.abspath(data_path)
+	if os.path.isdir(data_path):
+		found = True
+		data_path_append(data_path)
+	if not found:
+		raise RuntimeError('failed to initialize the specified data directory')
 
 def find_data_file(data_file, access_mode=os.R_OK):
 	"""
