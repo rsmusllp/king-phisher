@@ -331,7 +331,7 @@ class MailSenderThread(threading.Thread):
 		except socket.error:
 			self.logger.warning('received a socket.error while connecting to the SMTP server')
 		except smtplib.SMTPException:
-			self.logger.warning('received an SMTPException while connecting to the SMTP server')
+			self.logger.warning('received an SMTPException while connecting to the SMTP server', exc_info=True)
 		else:
 			return True
 		return False

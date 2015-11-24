@@ -317,7 +317,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def do_server_connected(self):
 		self.load_server_config()
 		campaign_id = self.config.get('campaign_id')
-		if campaign_id is None:
+		if not campaign_id:
 			if not self.show_campaign_selection():
 				self.logger.debug('no campaign selected, disconnecting and exiting')
 				self.emit('exit')
