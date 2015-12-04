@@ -124,6 +124,14 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		"""
 		return self.gobjects['entry_campaign_name'].get_text()
 
+	@property
+	def is_editing_campaign(self):
+		return self.campaign_id is not None
+
+	@property
+	def is_new_campaign(self):
+		return self.campaign_id is None
+
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
 		description_font_desc = Pango.FontDescription()
@@ -279,7 +287,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				)
 			)
 			expiration = utilities.datetime_local_to_utc(expiration)
-			if expiration <= datetime.datetime.now():
+			if self.is_new_campaign and expiration <= datetime.datetime.now():
 				gui_utilities.show_dialog_error('Invalid Campaign Expiration', self.parent, 'The expiration date is set in the past.')
 				set_current_page('Expiration')
 				return True
