@@ -103,6 +103,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -1448,6 +1449,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -3101,45 +3103,6 @@ Brandan Geise</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">5</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="CampaignSelectionDialog.dialog-action_area4">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="CampaignSelectionDialog.button_cancel">
-                <property name="label" translatable="yes">Cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="CampaignSelectionDialog.button_select">
-                <property name="label" translatable="yes">Select</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
         <child>
           <object class="GtkBox" id="box22">
             <property name="visible">True</property>
@@ -3219,25 +3182,65 @@ Brandan Geise</property>
             <property name="position">1</property>
           </packing>
         </child>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="CampaignSelectionDialog.dialog-action_area4">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="CampaignSelectionDialog.button_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="CampaignSelectionDialog.button_select">
+                <property name="label" translatable="yes">Select</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
         <child>
           <object class="GtkBox" id="CampaignSelectionDialog.box1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="spacing">10</property>
             <child>
-              <object class="GtkCheckButton" id="CampaignSelectionDialog.checkbutton_show_expired">
-                <property name="label" translatable="yes">Show Expired Campaigns</property>
+              <object class="GtkMenuButton" id="CampaignSelectionDialog.menubutton_filter">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="xalign">0</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="signal_checkbutton_toggled" swapped="no"/>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">filter campaign options</property>
+                <property name="direction">right</property>
+                <child>
+                  <placeholder/>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -3572,6 +3575,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -4091,6 +4095,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -4250,6 +4255,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>

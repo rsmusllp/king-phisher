@@ -57,13 +57,14 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	gobject_ids = (
 		'button_new_campaign',
 		'button_select',
-		'checkbutton_show_expired',
 		'drawingarea_color_key',
 		'label_campaign_info',
-		'treeview_campaigns'
+		'treeview_campaigns',
+		'menubutton_filter'
 	)
+
 	top_gobject = 'dialog'
-	top_level_dependencies = ('StockAddImage',)
+	top_level_dependencies = ('StockAddImage')
 	def __init__(self, *args, **kwargs):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
@@ -79,18 +80,70 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self._tv_model.set_sort_column_id(5, Gtk.SortType.DESCENDING)
 		# create and set the filter for expired campaigns
 		self._tv_model_filter = self._tv_model.filter_new()
-		self._tv_model_filter.set_visible_func(self._filter_expired)
+		self._tv_model_filter.set_visible_func(self._filter_campaigns)
 		treeview.set_model(Gtk.TreeModelSort(model=self._tv_model_filter))
+
+		#setup menus for filtering campaigns and load campaigns
+		self.get_popup_filter_menu()
 		self.load_campaigns()
 
-	def _filter_expired(self, model, tree_iter, _):
-		if self.gobjects['checkbutton_show_expired'].get_active():
-			return True
+	def get_popup_filter_menu(self):
+		# create filter menu and menuitems
+		filter_menu = Gtk.Menu()
+		menu_item_expired = Gtk.CheckMenuItem('Expired campaigns')
+		menu_item_user = Gtk.CheckMenuItem('Your campaigns')
+		menu_item_other = Gtk.CheckMenuItem('Other campaigns')
+		self.filter_menu_items = {
+			'expired_campaigns': menu_item_expired,
+			'your_campaigns': menu_item_user,
+			'other_campaigns': menu_item_other
+		}
+		# set up the menuitems and add it to the menubutton
+		for menus in self.filter_menu_items:
+			filter_menu.append(self.filter_menu_items[menus])
+			self.filter_menu_items[menus].connect('toggled', self.signal_checkbutton_toggled)
+			self.filter_menu_items[menus].show()
+
+		try:
+			self.filter_menu_items['expired_campaigns'].set_active(self.config['menu_item_expired'])
+			self.filter_menu_items['your_campaigns'].set_active(self.config['menu_item_user'])
+			self.filter_menu_items['other_campaigns'].set_active(self.config['menu_item_other'])
+		except RuntimeError:
+			self.logger.debug("Error setting filter from config; setting defaults.")
+		else:
+			self.filter_menu_items['your_campaigns'].set_active(True)
+
+		self.gobjects['menubutton_filter'].set_popup(filter_menu)
+		filter_menu.connect('destroy', self._save_filter)
+
+	def _save_filter(self, _):
+		self.config['menu_item_expired'] = self.filter_menu_items['expired_campaigns'].get_active()
+		self.config['menu_item_user'] = self.filter_menu_items['your_campaigns'].get_active()
+		self.config['menu_item_other'] = self.filter_menu_items['other_campaigns'].get_active()
+
+	def _filter_campaigns(self, model, tree_iter, _):
 		expiration_ts = model[tree_iter][6]
+		campaign_owner = model[tree_iter][4]
+		if self.filter_menu_items['expired_campaigns'].get_active():
+			if self.filter_menu_items['your_campaigns'].get_active() and self.config['server_username'] == campaign_owner:
+				return True
+			if self.filter_menu_items['other_campaigns'].get_active() and self.config['server_username'] != campaign_owner:
+				return True
+
 		if not expiration_ts:
-			return True
+			if self.filter_menu_items['your_campaigns'].get_active() and self.config['server_username'] == campaign_owner:
+				return True
+			if self.filter_menu_items['other_campaigns'].get_active() and self.config['server_username'] != campaign_owner:
+				return True
+
+		if expiration_ts is None:
+			return False
+
 		if utilities.parse_datetime(expiration_ts) > datetime.datetime.now():
-			return True
+			if self.filter_menu_items['your_campaigns'].get_active() and self.config['server_username'] == campaign_owner:
+				return True
+			if self.filter_menu_items['other_campaigns'].get_active() and self.config['server_username'] != campaign_owner:
+				return True
 		return False
 
 	def _highlight_campaign(self, campaign_name):
@@ -154,7 +207,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 				(hlfg_color if is_expired else fg_color),
 				(html.escape(campaign.description, quote=True) if campaign.description else None)
 			))
-		self.gobjects['label_campaign_info'].set_text("Showing {0:,} Campaign{1}".format(len(store), ('' if len(store) == 1 else 's')))
+		self.gobjects['label_campaign_info'].set_text("{0:,} campaign{1} found in the database".format(len(store), ('' if len(store) == 1 else 's')))
 
 	def signal_assistant_destroy(self, _, campaign_creation_assistant):
 		self._creation_assistant = None
