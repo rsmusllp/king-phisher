@@ -403,6 +403,9 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			raise errors.KingPhisherAbortRequestError()
 		except jinja2.exceptions.TemplateError:
 			raise errors.KingPhisherAbortRequestError()
+		except UnicodeDecodeError as error:
+			self.server.logger.error("unicode error {0} in template file: {1}:{2}-{3}".format(error.reason, file_path, error.start, error.end))
+			raise errors.KingPhisherAbortRequestError()
 
 		template_data = ''
 		headers = []
