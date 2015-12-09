@@ -3113,7 +3113,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="label" translatable="yes">Showing 0 Campaigns</property>
+                <property name="label" translatable="yes">Showing 0 of 0 campaigns found in the database.</property>
                 <attributes>
                   <attribute name="scale" value="1.25"/>
                 </attributes>
@@ -3231,7 +3231,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">filter campaign options</property>
+                <property name="tooltip_text" translatable="yes">Filtering options for found campaigns.</property>
                 <property name="direction">right</property>
                 <child>
                   <placeholder/>
