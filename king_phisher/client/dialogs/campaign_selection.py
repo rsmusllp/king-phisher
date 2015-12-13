@@ -107,6 +107,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.filter_menu_items['your_campaigns'].set_active(self.config['filter.campaign.user'])
 		self.filter_menu_items['other_campaigns'].set_active(self.config['filter.campaign.other_users'])
 		self.gobjects['menubutton_filter'].set_popup(filter_menu)
+		self.gobjects['menubutton_filter'].set_label('Filter Options')
 		filter_menu.connect('destroy', self._save_filter)
 
 	def _save_filter(self, _):
@@ -118,16 +119,16 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		expiration_ts = model[tree_iter][6]
 		campaign_owner = model[tree_iter][4]
 		username = self.config['server_username']
-		if self.filter_menu_items['your_campaigns'].get_active() == False:
+		if not self.filter_menu_items['your_campaigns'].get_active():
 			if username == campaign_owner:
 				return False
-		if self.filter_menu_items['other_campaigns'].get_active() == False:
+		if not self.filter_menu_items['other_campaigns'].get_active():
 			if username != campaign_owner:
 				return False
 		if expiration_ts is None:
 			return True
 		if utilities.parse_datetime(expiration_ts) < datetime.datetime.now():
-			if self.filter_menu_items['expired_campaigns'].get_active() == False:
+			if not self.filter_menu_items['expired_campaigns'].get_active():
 				return False
 		return True
 
@@ -192,11 +193,11 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 				(hlfg_color if is_expired else fg_color),
 				(html.escape(campaign.description, quote=True) if campaign.description else None)
 			))
-		self.gobjects['label_campaign_info'].set_text("Showing {0} of {1:,} campaign{2} found in the database.".format(
-																													len(self._tv_model_filter),
-																													len(self._tv_model),
-																													('' if len(self._tv_model) == 1 else 's')
-																													))
+		self.gobjects['label_campaign_info'].set_text("Showing {0} of {1:,} Campaign{2}".format(
+			len(self._tv_model_filter),
+			len(self._tv_model),
+			('' if len(self._tv_model) == 1 else 's')
+		))
 
 	def signal_assistant_destroy(self, _, campaign_creation_assistant):
 		self._creation_assistant = None
@@ -219,11 +220,11 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 
 	def signal_checkbutton_toggled(self, _):
 		self._tv_model_filter.refilter()
-		self.gobjects['label_campaign_info'].set_text("Showing {0} of {1:,} campaign{2} found in the database.".format(
-																													len(self._tv_model_filter),
-																													len(self._tv_model),
-																													('' if len(self._tv_model) == 1 else 's')
-																													))
+		self.gobjects['label_campaign_info'].set_text("Showing {0} of {1:,} Campaign{2}".format(
+			len(self._tv_model_filter),
+			len(self._tv_model),
+			('' if len(self._tv_model) == 1 else 's')
+		))
 
 	def signal_drawingarea_draw(self, drawingarea, context):
 		width, height = drawingarea.get_size_request()
