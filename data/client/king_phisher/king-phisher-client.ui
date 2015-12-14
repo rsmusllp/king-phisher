@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 
+<!-- Generated with glade 3.19.0 
 
 Copyright (c) 2013-2015, SecureState LLC
 All rights reserved.
@@ -631,6 +631,7 @@ Brandan Geise</property>
         <property name="page_type">intro</property>
         <property name="title" translatable="yes">Intro</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
@@ -760,6 +761,7 @@ Brandan Geise</property>
       <packing>
         <property name="title" translatable="yes">Basic Settings</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
@@ -835,6 +837,7 @@ Brandan Geise</property>
       <packing>
         <property name="title" translatable="yes">Advanced Settings</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
@@ -1144,6 +1147,7 @@ Brandan Geise</property>
       <packing>
         <property name="title" translatable="yes">Company</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
@@ -1329,6 +1333,7 @@ Brandan Geise</property>
       <packing>
         <property name="title" translatable="yes">Expiration</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
@@ -1400,12 +1405,16 @@ Brandan Geise</property>
         <property name="page_type">confirm</property>
         <property name="title" translatable="yes">Confirm</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child internal-child="action_area">
       <object class="GtkBox" id="CampaignAssistant.action_area">
         <property name="can_focus">False</property>
       </object>
+      <packing>
+        <property name="has_padding">False</property>
+      </packing>
     </child>
   </object>
   <object class="GtkDialog" id="ExceptionDialog">
@@ -3103,6 +3112,45 @@ Brandan Geise</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">5</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="CampaignSelectionDialog.dialog-action_area4">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="CampaignSelectionDialog.button_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="CampaignSelectionDialog.button_select">
+                <property name="label" translatable="yes">Select</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
         <child>
           <object class="GtkBox" id="box22">
             <property name="visible">True</property>
@@ -3179,45 +3227,6 @@ Brandan Geise</property>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="CampaignSelectionDialog.dialog-action_area4">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="CampaignSelectionDialog.button_cancel">
-                <property name="label" translatable="yes">Cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="CampaignSelectionDialog.button_select">
-                <property name="label" translatable="yes">Select</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
             <property name="position">1</property>
           </packing>
         </child>
@@ -5235,6 +5244,27 @@ Brandan Geise</property>
                         <property name="left_attach">2</property>
                         <property name="top_attach">2</property>
                       </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="MailSenderConfigurationTab.checkbutton_calendar_request_rsvp">
+                        <property name="label" translatable="yes">Request RSVP</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Whether to request an RSVP response to the invite. If enabled, responses will be sent to the "Source Email (MIME)" address.</property>
+                        <property name="xalign">0</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">5</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
                     </child>
                     <child>
                       <placeholder/>

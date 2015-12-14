@@ -538,7 +538,7 @@ class MailSenderThread(threading.Thread):
 			duration=duration,
 			location=self.config.get('mailer.calendar_invite_location')
 		)
-		ical.add_attendee(target.email_address)
+		ical.add_attendee(target.email_address, rsvp=self.config.get('mailer.calendar_request_rsvp', False))
 
 		part = mime.base.MIMEBase('text', 'calendar', charset='utf-8', method='REQUEST')
 		part.set_payload(str(ical))

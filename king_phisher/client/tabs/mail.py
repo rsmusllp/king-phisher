@@ -733,6 +733,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		'button_target_file_select',
 		'calendar_calendar_invite_date',
 		'checkbutton_calendar_invite_all_day',
+		'checkbutton_calendar_request_rsvp',
 		'combobox_importance',
 		'combobox_sensitivity',
 		'entry_webserver_url',
