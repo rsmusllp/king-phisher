@@ -16,6 +16,8 @@ Version 1.1.0
 * Support for sending calendar invite messages
 * Added PostgreSQL setup to the installer
 * Support for exporting to Excel
+* Added a Jupyter notebook for interactive data analysis
+* Added additional campaign filtering options
 
 Version 1.0.0
 ^^^^^^^^^^^^^

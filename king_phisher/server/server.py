@@ -89,10 +89,11 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 		if not os.access(ssl_certfile, os.R_OK):
 			logger.critical("setting server.ssl_cert file '{0}' not found".format(ssl_certfile))
 			raise errors.KingPhisherError('invalid ssl configuration, missing file')
-		ssl_keyfile = config.get_if_exists('server.ssl_key')
-		if not os.access(ssl_keyfile, os.R_OK):
-			logger.critical("setting server.ssl_key file '{0}' not found".format(ssl_keyfile))
-			raise errors.KingPhisherError('invalid ssl configuration, missing file')
+		if config.has_option('server.ssl_key'):
+			ssl_keyfile = config.get('server.ssl_key')
+			if not os.access(ssl_keyfile, os.R_OK):
+				logger.critical("setting server.ssl_key file '{0}' not found".format(ssl_keyfile))
+				raise errors.KingPhisherError('invalid ssl configuration, missing file')
 	try:
 		server = ServerClass(config, HandlerClass, address=address, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
@@ -388,8 +389,6 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		return address
 
 	def respond_file(self, file_path, attachment=False, query=None):
-		if query is None:
-			query = {}
 		self._respond_file_check_id()
 		file_path = os.path.abspath(file_path)
 		mime_type = self.guess_mime_type(file_path)
