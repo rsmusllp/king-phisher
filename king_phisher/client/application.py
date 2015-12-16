@@ -56,6 +56,7 @@ from king_phisher.constants import ConnectionErrorReason
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from boltons import typeutils
 from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
@@ -69,6 +70,7 @@ CONFIG_FILE_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'con
 """The default search location for the client configuration file."""
 GTK3_DEFAULT_THEME = 'Adwaita'
 """The default GTK3 Theme for style information."""
+THEME_DISABLED = typeutils.make_sentinel('THEME_DISABLED')
 
 if isinstance(Gtk.Application, utilities.Mock):
 	_Gtk_Application = type('Gtk.Application', (object,), {})
@@ -95,8 +97,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'rpc-cache-clear': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
-	def __init__(self, config_file=None):
+	def __init__(self, config_file=None, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
+		self.use_style = use_style
 		self.logger = logging.getLogger('KingPhisher.Client.Application')
 		# log version information for debugging purposes
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
@@ -273,8 +276,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		css_file = self.theme_file
 		if css_file:
 			self.style_provider = self.load_style_css(css_file)
+		elif css_file is THEME_DISABLED:
+			self.logger.debug('no css file will be loaded (styling has been disabled)')
 		else:
-			self.logger.debug('no custom css file was found')
+			self.logger.debug('no css file will be loaded (file not found)')
 
 		# create and show the main window
 		self.main_window = main.MainAppWindow(self.config, self)
@@ -340,6 +345,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	@property
 	def theme_file(self):
+		if not self.use_style:
+			return THEME_DISABLED
 		return find.find_data_file(os.path.join('style', 'theme.css'))
 
 	def load_config(self, load_defaults=False):
