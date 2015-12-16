@@ -325,6 +325,10 @@ GtkTreeView {
   color: @theme_color_tv_fg;
 }
 
+GtkTreeView .entry {
+  padding: 0px;
+}
+  
 GtkTreeView row:hover,
 GtkTreeView row:selected {
   background-color: @theme_color_tv_hobg;
