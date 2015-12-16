@@ -139,7 +139,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 		for combobox in ('campaign_type', 'company_existing', 'company_industry'):
 			combobox = self.gobjects['combobox_' + combobox]
-			combobox.set_model(Gtk.ListStore(int, str, str))
+			model = Gtk.ListStore(int, str, str)
+			model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+			combobox.set_model(model)
 			renderer = Gtk.CellRendererText()
 			renderer.set_property('ellipsize', Pango.EllipsizeMode.END)
 			renderer.set_property('font-desc', description_font_desc)
@@ -159,6 +161,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		model.clear()
 		for row in self.application.rpc.remote_table('companies'):
 			model.append((row.id, row.name, row.description))
+
 		combobox = self.gobjects['combobox_company_industry']
 		model = combobox.get_model()
 		model.clear()
