@@ -566,6 +566,9 @@ Brandan Geise</property>
       <object class="GtkBox" id="CampaignAssistant.page1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -638,6 +641,9 @@ Brandan Geise</property>
       <object class="GtkBox" id="CampaignAssistant.page2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -768,6 +774,9 @@ Brandan Geise</property>
       <object class="GtkBox" id="CampaignAssistant.page3">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -844,6 +853,9 @@ Brandan Geise</property>
       <object class="GtkBox" id="CampaignAssistant.page4">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -1154,6 +1166,9 @@ Brandan Geise</property>
       <object class="GtkBox" id="CampaignAssistant.page5">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -1214,7 +1229,10 @@ Brandan Geise</property>
               <object class="GtkAlignment" id="alignment2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="left_padding">12</property>
+                <property name="top_padding">5</property>
+                <property name="bottom_padding">5</property>
+                <property name="left_padding">10</property>
+                <property name="right_padding">5</property>
                 <child>
                   <object class="GtkBox" id="box13">
                     <property name="visible">True</property>
@@ -1340,6 +1358,9 @@ Brandan Geise</property>
       <object class="GtkBox" id="CampaignAssistant.page6">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
