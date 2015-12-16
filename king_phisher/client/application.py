@@ -68,9 +68,12 @@ from smoke_zephyr.utilities import which
 
 CONFIG_FILE_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'config.json')
 """The default search location for the client configuration file."""
+
+DISABLED = typeutils.make_sentinel('DISABLED')
+"""A sentinel value to indicate that a feature is disabled."""
+
 GTK3_DEFAULT_THEME = 'Adwaita'
 """The default GTK3 Theme for style information."""
-THEME_DISABLED = typeutils.make_sentinel('THEME_DISABLED')
 
 if isinstance(Gtk.Application, utilities.Mock):
 	_Gtk_Application = type('Gtk.Application', (object,), {})
@@ -99,7 +102,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 	}
 	def __init__(self, config_file=None, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
-		self.use_style = use_style
+		if use_style:
+			self._theme_file = 'theme.css'
+		else:
+			self._theme_file = DISABLED
 		self.logger = logging.getLogger('KingPhisher.Client.Application')
 		# log version information for debugging purposes
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
@@ -272,14 +278,14 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.debug('resetting the gtk-icon-theme-name property to it\'s default value')
 			settings.set_property('gtk-icon-theme-name', GTK3_DEFAULT_THEME)
 
-		# load a custom css file if one is available
-		css_file = self.theme_file
-		if css_file:
-			self.style_provider = self.load_style_css(css_file)
-		elif css_file is THEME_DISABLED:
-			self.logger.debug('no css file will be loaded (styling has been disabled)')
+		# load a custom css theme file if one is available
+		theme_file = self.theme_file
+		if theme_file:
+			self.style_provider = self.load_style_css(theme_file)
+		elif theme_file is DISABLED:
+			self.logger.debug('no css theme file will be loaded (styling has been disabled)')
 		else:
-			self.logger.debug('no css file will be loaded (file not found)')
+			self.logger.debug('no css theme file will be loaded (file not found)')
 
 		# create and show the main window
 		self.main_window = main.MainAppWindow(self.config, self)
@@ -311,9 +317,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self.style_provider
 			)
 			self.style_provider = None
-		css_file = self.theme_file
-		if css_file:
-			self.style_provider = self.load_style_css(css_file)
+		theme_file = self.theme_file
+		if theme_file:
+			self.style_provider = self.load_style_css(theme_file)
 
 	def do_rpc_cache_clear(self):
 		if self.rpc:
@@ -345,9 +351,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	@property
 	def theme_file(self):
-		if not self.use_style:
-			return THEME_DISABLED
-		return find.find_data_file(os.path.join('style', 'theme.css'))
+		if not self._theme_file:
+			return DISABLED
+		return find.find_data_file(os.path.join('style', self._theme_file))
 
 	def load_config(self, load_defaults=False):
 		"""

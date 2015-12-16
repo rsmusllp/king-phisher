@@ -9,6 +9,8 @@ Data
 
 .. autodata:: king_phisher.client.application.CONFIG_FILE_PATH
 
+.. autodata:: king_phisher.client.application.DISABLED
+
 .. autodata:: king_phisher.client.application.GTK3_DEFAULT_THEME
 
 Classes
