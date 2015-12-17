@@ -65,7 +65,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-grep -E "Fedora release 2[1-2]" /etc/redhat-release &> /dev/null
+grep -E "Fedora release 2[2-3]" /etc/redhat-release &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Fedora"
 fi
@@ -91,7 +91,7 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo "  - BackBox"
 	echo "  - CentOS"
 	echo "  - Debian"
-	echo "  - Fedora"
+	echo "  - Fedora Release 22-23"
 	echo "  - Kali"
 	echo "  - Ubuntu"
 	echo ""
@@ -115,9 +115,10 @@ fi
 
 # install git if necessary
 if [ ! "$(command -v git)" ]; then
-	if [ "$LINUX_VERSION" == "CentOS" ] || \
-	   [ "$LINUX_VERSION" == "Fedora" ]; then
+	if [ "$LINUX_VERSION" == "CentOS" ]; then
 		yum install -y -q git
+	elif [ "$LINUX_VERSION" == "Fedora" ]; then
+		dnf install -y -q git
 	else
 		apt-get install -y -qq git
 	fi
@@ -167,11 +168,14 @@ if [ "$LINUX_VERSION" == "CentOS" ]; then
 		yum install -y postgresql-server
 	fi
 elif [ "$LINUX_VERSION" == "Fedora" ]; then
-	yum install -y freetype-devel gcc gcc-c++ gtk3-devel \
+	dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
 		libpng-devel postgresql-devel python-devel python-pip
 	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
-		yum install -y postgresql-server
-	fi
+		dnf install -y postgresql-server
+	# Fedora 23 is missing an rpm lib required, check to see if it has been installed.
+	fi [ ! -d "$/usr/lib/rpm/redhat/redhat-hardened-cc1" ]; then
+		dnf install -y rpm-build
+	if
 elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	 [ "$LINUX_VERSION" == "Debian"  ] || \
 	 [ "$LINUX_VERSION" == "Kali"    ] || \
