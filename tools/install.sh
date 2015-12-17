@@ -91,7 +91,7 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo "  - BackBox"
 	echo "  - CentOS"
 	echo "  - Debian"
-	echo "  - Fedora Release 22-23"
+	echo "  - Fedora"
 	echo "  - Kali"
 	echo "  - Ubuntu"
 	echo ""
