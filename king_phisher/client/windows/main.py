@@ -192,14 +192,16 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		vbox.set_property('orientation', Gtk.Orientation.VERTICAL)
 		vbox.show()
 		self.add(vbox)
+
 		default_icon_file = find.find_data_file('king-phisher-icon.svg')
 		if default_icon_file:
 			icon_pixbuf = GdkPixbuf.Pixbuf.new_from_file(default_icon_file)
 			self.set_default_icon(icon_pixbuf)
 		self.accel_group = Gtk.AccelGroup()
 		self.add_accel_group(self.accel_group)
-		self.menubar = MainMenuBar(application, self)
-		vbox.pack_start(self.menubar.menubar, False, False, 0)
+
+		self.menu_bar = MainMenuBar(application, self)
+		vbox.pack_start(self.menu_bar.menubar, False, False, 0)
 
 		# create notebook and tabs
 		self.notebook = Gtk.Notebook()
@@ -225,6 +227,7 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		self.set_size_request(800, 600)
 		self.connect('delete-event', self.signal_delete_event)
 		self.notebook.show()
+
 		self.show()
 		self.rpc = None  # needs to be initialized last
 		"""The :py:class:`.KingPhisherRPCClient` instance."""

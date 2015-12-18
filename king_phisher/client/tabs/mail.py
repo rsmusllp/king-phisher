@@ -918,6 +918,10 @@ class MailSenderTab(object):
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
+		self.status_bar = Gtk.Statusbar()
+		self.status_bar.show()
+		self.box.pack_end(self.status_bar, False, False, 0)
+
 		self.tabs = utilities.FreezableDict()
 		"""A dict object holding the sub tabs managed by this object."""
 		current_page = self.notebook.get_current_page()
@@ -943,6 +947,13 @@ class MailSenderTab(object):
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()
+
+		self.application.connect('campaign-set', self.signal_kp_campaign_set)
+
+	def signal_kp_campaign_set(self, _, campaign_id):
+		context_id = self.status_bar.get_context_id('campaign name')
+		self.status_bar.pop(context_id)
+		self.status_bar.push(context_id, self.config['campaign_name'])
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		previous_page = notebook.get_nth_page(self.last_page_id)
