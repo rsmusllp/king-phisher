@@ -52,10 +52,36 @@ class TemplatesTests(testing.KingPhisherTestCase):
 	def test_strings_are_not_escaped(self):
 		env = BaseTemplateEnvironment()
 		test_string = '<html>{{ link }}</html>'
-		link = '<a href="http://kingphisher.com/">Click Me</a>'
+		link = '<a href="http://king-phisher.com/">Click Me</a>'
 		template = env.from_string(test_string)
 		result = template.render(link=link)
 		self.assertTrue(link in result)
+
+	def test_decoding_filters(self):
+		env = BaseTemplateEnvironment()
+		tests = {
+			'base16': '6B696E672D70686973686572',
+			'base32': 'NNUW4ZZNOBUGS43IMVZA====',
+			'base64': 'a2luZy1waGlzaGVy',
+			'rot13': 'xvat-cuvfure'
+		}
+		for encoding, value in tests.items():
+			test_string = '{{ value | decode(encoding) }}'
+			template = env.from_string(test_string)
+			self.assertEqual(template.render(encoding=encoding, value=value), 'king-phisher')
+
+	def test_encoding_filters(self):
+		env = BaseTemplateEnvironment()
+		tests = {
+			'base16': '6B696E672D70686973686572',
+			'base32': 'NNUW4ZZNOBUGS43IMVZA====',
+			'base64': 'a2luZy1waGlzaGVy',
+			'rot13': 'xvat-cuvfure'
+		}
+		for encoding, value in tests.items():
+			test_string = '{{ value | encode(encoding) }}'
+			template = env.from_string(test_string)
+			self.assertEqual(template.render(encoding=encoding, value='king-phisher'), value)
 
 if __name__ == '__main__':
 	unittest.main()
