@@ -33,6 +33,7 @@
 import base64
 import codecs
 import datetime
+import hashlib
 import logging
 import os
 import random
@@ -73,6 +74,7 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		self.filters['possessive'] = lambda word: word + ('\'' if word.endswith('s') else '\'s')
 		self.filters['encode'] = self._filter_encode
 		self.filters['decode'] = self._filter_decode
+		self.filters['hash'] = self._filter_hash
 
 		# time filters
 		self.filters['strftime'] = self._filter_strftime
@@ -113,7 +115,6 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		if its.py_v3 and isinstance(data, bytes):
 			data = data.decode('utf-8')
 		encoding = encoding.lower()
-		encoding = encoding.replace('-', '')
 
 		if encoding == 'base16' or encoding == 'hex':
 			data = base64.b16decode(data)
@@ -121,7 +122,7 @@ class BaseTemplateEnvironment(jinja2.Environment):
 			data = base64.b32decode(data)
 		elif encoding == 'base64':
 			data = base64.b64decode(data)
-		elif encoding == 'rot13':
+		elif encoding == 'rot-13' or encoding == 'rot13':
 			data = codecs.getdecoder('rot-13')(data)[0]
 		else:
 			raise ValueError('Unknown encoding type: ' + encoding)
@@ -133,7 +134,6 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		if its.py_v3 and isinstance(data, str):
 			data = data.encode('utf-8')
 		encoding = encoding.lower()
-		encoding = encoding.replace('-', '')
 
 		if encoding == 'base16' or encoding == 'hex':
 			data = base64.b16encode(data)
@@ -141,13 +141,22 @@ class BaseTemplateEnvironment(jinja2.Environment):
 			data = base64.b32encode(data)
 		elif encoding == 'base64':
 			data = base64.b64encode(data)
-		elif encoding == 'rot13':
+		elif encoding == 'rot-13' or encoding == 'rot13':
 			data = codecs.getencoder('rot-13')(data.decode('utf-8'))[0]
 		else:
 			raise ValueError('Unknown encoding type: ' + encoding)
 		if its.py_v3 and isinstance(data, bytes):
 			data = data.decode('utf-8')
 		return data
+
+	def _filter_hash(self, data, hash_type):
+		if its.py_v3 and isinstance(data, str):
+			data = data.encode('utf-8')
+		hash_type = hash_type.lower()
+		hash_type = hash_type.replace('-', '')
+
+		hash_obj = hashlib.new(hash_type, data)
+		return hash_obj.digest()
 
 	def _filter_strftime(self, dt, fmt):
 		try:
