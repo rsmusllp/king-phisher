@@ -4,6 +4,9 @@
 .. module:: json_ex
    :synopsis:
 
+This module provides a standardized interface for serializing objects into the
+JSON format.
+
 Functions
 ---------
 

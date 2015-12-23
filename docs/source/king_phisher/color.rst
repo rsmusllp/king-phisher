@@ -4,6 +4,9 @@
 .. module:: color
    :synopsis:
 
+This module provides functions for converting and using colors for arbitrary
+purposes including terminal output.
+
 Functions
 ---------
 

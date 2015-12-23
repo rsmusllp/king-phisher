@@ -4,6 +4,9 @@
 .. module:: spf
    :synopsis:
 
+This module provides functionality for checking published Sender Policy
+Framework (SPF) records. SPF is defined in :rfc:`7208`.
+
 Data
 ----
 

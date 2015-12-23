@@ -4,6 +4,9 @@
 .. module:: constants
    :synopsis:
 
+This module keeps collections of related constants organized for use in other
+modules.
+
 Classes
 -------
 

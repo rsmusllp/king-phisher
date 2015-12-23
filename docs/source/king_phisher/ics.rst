@@ -4,6 +4,9 @@
 .. module:: ics
    :synopsis:
 
+This module provides functionality for creating :rfc:`5545` compliant iCalendar
+invite files.
+
 Data
 ----
 

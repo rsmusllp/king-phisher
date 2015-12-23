@@ -4,6 +4,8 @@
 .. module:: errors
    :synopsis:
 
+This module provides the custom exceptions that are used throughout the package.
+
 Exceptions
 ----------
 

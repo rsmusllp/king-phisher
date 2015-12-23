@@ -122,10 +122,8 @@ def validate_record(ip, domain, sender=None):
 class SenderPolicyFramework(object):
 	"""
 	Analyze the Sender Policy Framework configuration for a domain to determine
-	if an IP address is authorized to send messages on it's behalf. Sender
-	Policy Framework is defined in
-	`RFC 7208 <http://tools.ietf.org/html/rfc7208>`_. The exp modifier defined
-	in section 6.2 of the RFC is not supported.
+	if an IP address is authorized to send messages on it's behalf. The exp
+	modifier defined in section 6.2 of the RFC is not supported.
 	"""
 	def __init__(self, ip, domain, sender=None, spf_records=None):
 		"""
