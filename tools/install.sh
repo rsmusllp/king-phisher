@@ -172,10 +172,11 @@ elif [ "$LINUX_VERSION" == "Fedora" ]; then
 		libpng-devel postgresql-devel python-devel python-pip
 	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
 		dnf install -y postgresql-server
+	fi
 	# Fedora 23 is missing an rpm lib required, check to see if it has been installed.
-	fi [ ! -d "$/usr/lib/rpm/redhat/redhat-hardened-cc1" ]; then
+	if [ ! -d "$/usr/lib/rpm/redhat/redhat-hardened-cc1" ]; then
 		dnf install -y rpm-build
-	if
+	fi
 elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	 [ "$LINUX_VERSION" == "Debian"  ] || \
 	 [ "$LINUX_VERSION" == "Kali"    ] || \
