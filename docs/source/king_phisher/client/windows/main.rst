@@ -4,6 +4,8 @@
 .. module:: client.windows.main
    :synopsis:
 
+This module provides the main window used by the client application.
+
 Classes
 -------
 

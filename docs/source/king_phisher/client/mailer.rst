@@ -4,6 +4,9 @@
 .. module:: client.mailer
    :synopsis:
 
+This module provides the functionality used to create and sending messages from
+the client application.
+
 Functions
 ---------
 

@@ -4,6 +4,9 @@
 .. module:: templates
    :synopsis:
 
+This module provides base classes for the Jinja environments used throughout the
+application.
+
 Classes
 -------
 

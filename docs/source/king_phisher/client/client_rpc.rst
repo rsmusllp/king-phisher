@@ -4,6 +4,9 @@
 .. module:: client.client_rpc
    :synopsis:
 
+This module facilitates communication with the server application over the RPC
+interface.
+
 Data
 ----
 

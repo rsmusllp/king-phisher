@@ -4,6 +4,9 @@
 .. module:: client.export
    :synopsis:
 
+This module provides functionality for exporting information from the client
+application into a variety of formats.
+
 Functions
 ---------
 

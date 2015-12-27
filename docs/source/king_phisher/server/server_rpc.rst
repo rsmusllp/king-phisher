@@ -4,6 +4,9 @@
 .. module:: server.server_rpc
    :synopsis:
 
+This module provides the RPC server functionality that is used by the client
+to communicate with the server application.
+
 Data
 ----
 

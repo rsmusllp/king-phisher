@@ -4,6 +4,9 @@
 .. module:: client.gui_utilities
    :synopsis:
 
+This module provides various utility functions specific to the graphical nature
+of the client application.
+
 Data
 ----
 

@@ -4,6 +4,9 @@
 .. module:: server.aaa
    :synopsis:
 
+This module provides the functionality authentication authorization and access
+to the server application.
+
 Functions
 ---------
 

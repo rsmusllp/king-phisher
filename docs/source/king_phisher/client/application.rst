@@ -4,6 +4,9 @@
 .. module:: client.application
    :synopsis:
 
+This module provides the top level GTK application object representing the
+client application.
+
 Data
 ----
 

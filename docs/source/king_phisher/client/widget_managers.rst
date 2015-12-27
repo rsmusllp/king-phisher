@@ -4,6 +4,8 @@
 .. module:: client.widget_managers
    :synopsis:
 
+This module contains classes used for high level management of some GTK widgets.
+
 Classes
 -------
 

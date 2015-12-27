@@ -4,6 +4,9 @@
 .. module:: utilities
    :synopsis:
 
+This module collects various useful utility functions that are used throughout
+the application.
+
 Functions
 ---------
 

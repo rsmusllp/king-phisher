@@ -4,6 +4,9 @@
 .. module:: client.graphs
    :synopsis:
 
+This module provides the functionality to support the client application's
+graphing capabilities.
+
 Data
 ----
 

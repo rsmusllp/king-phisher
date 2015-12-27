@@ -4,6 +4,9 @@
 .. module:: tabs.mail
    :synopsis:
 
+This module provides the contents of the tab used to create and send messages
+as part of a campaign.
+
 Functions
 ---------
 

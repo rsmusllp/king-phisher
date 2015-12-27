@@ -4,6 +4,9 @@
 .. module:: database.manager
    :synopsis:
 
+This module provides the functionality to manage the server application's
+database connection.
+
 Functions
 ---------
 

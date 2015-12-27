@@ -4,6 +4,9 @@
 .. module:: sms
    :synopsis:
 
+This module provides functionality for sending free SMS messages by emailing a
+carriers SMS gateway.
+
 Data
 ----
 

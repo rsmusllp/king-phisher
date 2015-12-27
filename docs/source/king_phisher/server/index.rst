@@ -1,6 +1,9 @@
 :mod:`server`
 =============
 
+This package contains all packages and modules specific to the server
+application.
+
 .. toctree::
    :maxdepth: 2
    :titlesonly:
