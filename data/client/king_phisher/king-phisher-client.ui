@@ -1830,7 +1830,7 @@ Brandan Geise</property>
   <object class="GtkDialog" id="LoginDialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher</property>
-    <property name="default_width">300</property>
+    <property name="default_width">325</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <signal name="button-press-event" handler="signal_button_pressed" swapped="no"/>
@@ -1891,9 +1891,9 @@ Brandan Geise</property>
             <property name="margin_right">5</property>
             <property name="row_spacing">5</property>
             <property name="row_homogeneous">True</property>
-            <property name="column_homogeneous">True</property>
             <child>
               <object class="GtkLabel" id="LoginDialog.label11">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
@@ -1905,6 +1905,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="LoginDialog.label12">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Username</property>
@@ -1916,6 +1917,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="LoginDialog.label13">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Password</property>
@@ -1930,6 +1932,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The King Phisher SSH server.</property>
+                <property name="hexpand">True</property>
                 <property name="placeholder_text" translatable="yes">ssh server:port</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
@@ -1943,6 +1946,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The username to authenticate to SSH with.</property>
+                <property name="hexpand">True</property>
                 <property name="placeholder_text" translatable="yes">ssh username</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
@@ -1957,6 +1961,7 @@ Brandan Geise</property>
                 <property name="can_focus">True</property>
                 <property name="has_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The password to authenticate to SSH with.</property>
+                <property name="hexpand">True</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">●</property>
                 <property name="placeholder_text" translatable="yes">ssh password</property>
@@ -1969,6 +1974,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="label10">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">HTTP Port</property>
@@ -1980,6 +1986,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="label11">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">HTTP SSL</property>
@@ -1994,6 +2001,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The port on which the King Phisher server is listening.</property>
+                <property name="hexpand">True</property>
                 <property name="max_length">5</property>
                 <property name="input_purpose">number</property>
                 <property name="adjustment">PortAdjustment</property>
@@ -2012,6 +2020,7 @@ Brandan Geise</property>
                 <property name="tooltip_text" translatable="yes">Whether the King Phisher server is listening with SSL or not.</property>
                 <property name="halign">start</property>
                 <property name="valign">center</property>
+                <property name="hexpand">True</property>
                 <signal name="notify::active" handler="signal_switch_ssl" swapped="no"/>
               </object>
               <packing>
@@ -2021,6 +2030,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="LoginDialog.label_server_one_time_password">
+                <property name="width_request">120</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">OTP</property>
               </object>
@@ -2033,6 +2043,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="LoginDialog.entry_server_one_time_password">
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The one time password for this account.</property>
+                <property name="hexpand">True</property>
                 <property name="max_length">6</property>
                 <property name="placeholder_text" translatable="yes">one time password</property>
                 <property name="input_purpose">digits</property>
@@ -2195,13 +2206,15 @@ Brandan Geise</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="row_spacing">3</property>
+                    <property name="column_spacing">3</property>
                     <property name="row_homogeneous">True</property>
-                    <property name="column_homogeneous">True</property>
                     <child>
                       <object class="GtkLabel" id="label2">
+                        <property name="width_request">132</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Server</property>
+                        <property name="ellipsize">start</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
@@ -2210,6 +2223,7 @@ Brandan Geise</property>
                     </child>
                     <child>
                       <object class="GtkLabel" id="label3">
+                        <property name="width_request">132</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Username</property>
@@ -2224,6 +2238,7 @@ Brandan Geise</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The King Phisher SSH server.</property>
+                        <property name="hexpand">True</property>
                         <property name="editable">False</property>
                         <property name="placeholder_text" translatable="yes">server:port</property>
                       </object>
@@ -2237,6 +2252,7 @@ Brandan Geise</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The username to authenticate to SSH with.</property>
+                        <property name="hexpand">True</property>
                         <property name="editable">False</property>
                         <property name="placeholder_text" translatable="yes">username</property>
                       </object>
@@ -2270,9 +2286,9 @@ Brandan Geise</property>
                             <property name="margin_right">3</property>
                             <property name="row_spacing">3</property>
                             <property name="row_homogeneous">True</property>
-                            <property name="column_homogeneous">True</property>
                             <child>
                               <object class="GtkLabel" id="label4">
+                                <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Phone Number</property>
@@ -2284,6 +2300,7 @@ Brandan Geise</property>
                             </child>
                             <child>
                               <object class="GtkLabel" id="label5">
+                                <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Carrier</property>
@@ -2298,6 +2315,7 @@ Brandan Geise</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">The phone number to send SMS alerts to.</property>
+                                <property name="hexpand">True</property>
                                 <property name="max_length">14</property>
                                 <property name="placeholder_text" translatable="yes">(###) ###-####</property>
                               </object>
@@ -2311,6 +2329,7 @@ Brandan Geise</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="valign">center</property>
+                                <property name="hexpand">True</property>
                                 <property name="model">SMSCarriers</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext1"/>
@@ -2360,10 +2379,11 @@ Brandan Geise</property>
                             <property name="can_focus">False</property>
                             <property name="margin_right">3</property>
                             <property name="margin_bottom">3</property>
-                            <property name="column_spacing">5</property>
+                            <property name="column_spacing">3</property>
                             <property name="row_homogeneous">True</property>
                             <child>
                               <object class="GtkLabel" id="label9">
+                                <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Hook URL</property>
@@ -3025,9 +3045,9 @@ Brandan Geise</property>
             <property name="margin_right">5</property>
             <property name="row_spacing">5</property>
             <property name="row_homogeneous">True</property>
-            <property name="column_homogeneous">True</property>
             <child>
               <object class="GtkLabel" id="SSHLoginDialog.label11">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
@@ -3039,6 +3059,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="SSHLoginDialog.label12">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Username</property>
@@ -3050,6 +3071,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="SSHLoginDialog.label13">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Password</property>
@@ -3063,6 +3085,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
                 <property name="primary_icon_tooltip_text" translatable="yes">The SSH server.</property>
                 <property name="placeholder_text" translatable="yes">server:port</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
@@ -3076,6 +3099,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
                 <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
                 <property name="placeholder_text" translatable="yes">username</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
@@ -3090,6 +3114,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="has_focus">True</property>
+                <property name="hexpand">True</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">●</property>
                 <property name="primary_icon_tooltip_text" translatable="yes">The server SSH password to authenticate with.</property>
