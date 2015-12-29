@@ -129,6 +129,10 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		This method can be used to shut down the server. This function will
 		return, however no subsequent requests will be processed.
+
+		.. warning::
+			This action will stop the server process and there is no
+			confirmation before it takes place.
 		"""
 		shutdown_thread = threading.Thread(target=self.server.shutdown)
 		shutdown_thread.start()

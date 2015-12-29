@@ -147,6 +147,7 @@ class BaseRowCls(object):
 	def session_has_update_access(self, session):
 		return True
 Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
+metadata = Base.metadata
 
 class TagMixIn(object):
 	__repr_attributes__ = ('name',)

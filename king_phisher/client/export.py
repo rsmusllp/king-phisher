@@ -305,7 +305,7 @@ def message_data_to_kpm(message_config, target_file):
 			del message_config['html_file']
 
 	msg_strio = io.BytesIO()
-	msg_strio.write(json_ex.dumps(message_config))
+	msg_strio.write(json_ex.dumps(message_config).encode('utf-8'))
 	tarinfo_h = tarfile.TarInfo(name='message_config.json')
 	tarinfo_h.mtime = mtime
 	tarinfo_h.size = msg_strio.tell()
