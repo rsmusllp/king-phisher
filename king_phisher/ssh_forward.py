@@ -31,6 +31,7 @@
 #
 
 import binascii
+import hashlib
 import select
 import socket
 import sys
@@ -118,9 +119,16 @@ class SSHTCPForwarder(threading.Thread):
 
 		if not self.__connected and preferred_private_key:
 			preferred_private_key = preferred_private_key.strip()
-			preferred_private_key = preferred_private_key.replace(':', '')
-			preferred_private_key = preferred_private_key.lower()
-			preferred_private_key = tuple(key for key in ssh_keys if binascii.b2a_hex(key.get_fingerprint()).lower() == preferred_private_key)
+			if preferred_private_key.startswith('SHA256:') or preferred_private_key.startswith('sha256:'):
+				# OpenSSH 6.8 started to use sha256 & base64 for keys
+				algorithm = 'sha256'
+				preferred_private_key = preferred_private_key[7:]
+				preferred_private_key = binascii.a2b_base64(preferred_private_key + '=')
+			else:
+				algorithm = 'md5'
+				preferred_private_key = preferred_private_key.replace(':', '')
+				preferred_private_key = binascii.a2b_hex(preferred_private_key)
+			preferred_private_key = tuple(key for key in ssh_keys if hashlib.new(algorithm, key.blob).digest() == preferred_private_key)
 			if len(preferred_private_key) == 1:
 				self.__try_connect(look_for_keys=False, pkey=preferred_private_key[0])
 
