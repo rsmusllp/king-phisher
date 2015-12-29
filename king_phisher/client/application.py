@@ -182,7 +182,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, "An {0}.{1} error occurred.".format(error.__class__.__module__, error.__class__.__name__))
 		else:
-			self.logger.info("started ssh port forwarding to the remote king phisher server ({0})".format(str(self._ssh_forwarder)))
 			return self._ssh_forwarder.local_server
 		self.server_disconnect()
 		return
@@ -497,7 +496,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if self._ssh_forwarder:
 			self._ssh_forwarder.stop()
 			self._ssh_forwarder = None
-			self.logger.info('stopped ssh port forwarding')
 		return
 
 	def show_campaign_graph(self, graph_name):

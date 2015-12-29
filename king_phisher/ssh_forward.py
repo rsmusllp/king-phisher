@@ -32,6 +32,7 @@
 
 import binascii
 import hashlib
+import logging
 import select
 import socket
 import sys
@@ -102,6 +103,7 @@ class SSHTCPForwarder(threading.Thread):
 		:param str preferred_private_key: An RSA key to prefer for authentication.
 		"""
 		super(SSHTCPForwarder, self).__init__()
+		self.logger = logging.getLogger('KingPhisher.' + self.__class__.__name__)
 		self.server = (server[0], int(server[1]))
 		self.remote_server = (remote_server[0], int(remote_server[1]))
 		client = paramiko.SSHClient()
@@ -130,6 +132,7 @@ class SSHTCPForwarder(threading.Thread):
 				preferred_private_key = binascii.a2b_hex(preferred_private_key)
 			preferred_private_key = tuple(key for key in ssh_keys if hashlib.new(algorithm, key.blob).digest() == preferred_private_key)
 			if len(preferred_private_key) == 1:
+				self.logger.debug('attempting ssh authentication with user specified key')
 				self.__try_connect(look_for_keys=False, pkey=preferred_private_key[0])
 
 		if not self.__connected:
@@ -171,9 +174,11 @@ class SSHTCPForwarder(threading.Thread):
 	def start(self):
 		super(SSHTCPForwarder, self).start()
 		time.sleep(0.5)
+		self.logger.info("started ssh port forwarding to the remote server ({0})".format(str(self)))
 
 	def stop(self):
 		if isinstance(self._forward_server, ForwardServer):
 			self._forward_server.shutdown()
 			self.join()
 		self.client.close()
+		self.logger.info("stopped ssh port forwarding to the remote server ({0})".format(str(self)))
