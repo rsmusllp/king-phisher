@@ -33,6 +33,7 @@
 import code
 import logging
 import os
+import ssl
 import sys
 
 from king_phisher import find
@@ -174,6 +175,21 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 
 	def __repr__(self):
 		return "<{0} '{1}@{2}:{3}{4}'>".format(self.__class__.__name__, self.username, self.host, self.port, self.uri_base)
+
+	def reconnect(self):
+		"""Reconnect to the remote server."""
+		self.lock.acquire()
+		if self.use_ssl:
+			if (sys.version_info[0] == 2 and sys.version_info >= (2, 7, 9)) or sys.version_info >= (3, 4, 3):
+				context = ssl.create_default_context()
+				context.check_hostname = False
+				context.verify_mode = ssl.CERT_NONE
+				self.client = AdvancedHTTPServer.http.client.HTTPSConnection(self.host, self.port, context=context)
+			else:
+				self.client = AdvancedHTTPServer.http.client.HTTPSConnection(self.host, self.port)
+		else:
+			self.client = AdvancedHTTPServer.http.client.HTTPConnection(self.host, self.port)
+		self.lock.release()
 
 	def remote_table(self, table, query_filter=None):
 		"""
