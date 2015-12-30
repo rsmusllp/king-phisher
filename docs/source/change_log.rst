@@ -10,7 +10,7 @@ Version 1.x.x
 Version 1.1.0
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.1.0` on December 30th, 2015
 
 * Added an option to send a message to a single target
 * Support for sending calendar invite messages
