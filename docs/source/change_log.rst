@@ -18,6 +18,7 @@ Version 1.1.0
 * Support for exporting to Excel
 * Added a Jupyter notebook for interactive data analysis
 * Added additional campaign filtering options
+* Support for removal of metadata from Microsoft Office 2007+ documents
 
 Version 1.0.0
 ^^^^^^^^^^^^^
