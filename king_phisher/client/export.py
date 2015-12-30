@@ -36,7 +36,6 @@ import csv
 import datetime
 import io
 import ipaddress
-import json
 import logging
 import os
 import re
@@ -44,19 +43,24 @@ import shutil
 import tarfile
 import xml.etree.ElementTree as ET
 
+from king_phisher import json_ex
+from king_phisher import utilities
 from king_phisher.errors import KingPhisherInputValidationError
 
 from boltons import iterutils
 import geojson
 from smoke_zephyr.utilities import escape_single_quote
 from smoke_zephyr.utilities import unescape_single_quote
+import xlsxwriter
 
-__all__ = [
+__all__ = (
 	'campaign_to_xml',
 	'convert_value',
-	'message_data_to_kpm',
-	'treeview_liststore_to_csv'
-]
+	'liststore_export',
+	'liststore_to_csv',
+	'liststore_to_xlsx_worksheet',
+	'message_data_to_kpm'
+)
 
 KPM_ARCHIVE_FILES = {
 	'attachment_file': 'message_attachment.bin',
@@ -107,8 +111,7 @@ def message_template_from_kpm(template, files):
 
 def convert_value(table_name, key, value):
 	"""
-	Perform any conversions necessary to neatly display the data in XML
-	format.
+	Perform any conversions necessary to neatly display the data in XML format.
 
 	:param str table_name: The table name that the key and value pair are from.
 	:param str key: The data key.
@@ -118,14 +121,13 @@ def convert_value(table_name, key, value):
 	"""
 	if isinstance(value, datetime.datetime):
 		value = value.isoformat()
-	if value != None:
+	if value is not None:
 		value = str(value)
 	return value
 
 def campaign_to_xml(rpc, campaign_id, xml_file):
 	"""
-	Load all information for a particular campaign and dump it to an XML
-	file.
+	Load all information for a particular campaign and dump it to an XML file.
 
 	:param rpc: The connected RPC instance to load the information with.
 	:type rpc: :py:class:`.KingPhisherRPCClient`
@@ -145,7 +147,7 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 		ET.SubElement(campaign, key).text = convert_value('campaigns', key, value)
 
 	# Tables with a campaign_id field
-	for table_name in ['landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']:
+	for table_name in ('landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections'):
 		table_element = ET.SubElement(campaign, table_name)
 		for table_row in rpc.remote_table(table_name, query_filter={'campaign_id': campaign_id}):
 			table_row_element = ET.SubElement(table_element, table_name[:-1])
@@ -189,7 +191,7 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 		points.append(geojson.Feature(geometry=location, properties={'count': ip_counter[ip], 'ip-address': ip}))
 	feature_collection = geojson.FeatureCollection(points)
 	with open(geojson_file, 'w') as file_h:
-		json.dump(feature_collection, file_h, indent=2, separators=(',', ': '))
+		json_ex.dump(feature_collection, file_h)
 
 def message_data_from_kpm(target_file, dest_dir):
 	"""
@@ -214,7 +216,7 @@ def message_data_from_kpm(target_file, dest_dir):
 		logger.warning('the kpm archive is missing the message_config.json file')
 		raise KingPhisherInputValidationError('data is missing from the message archive')
 	message_config = tar_get_file('message_config.json').read()
-	message_config = json.loads(message_config)
+	message_config = json_ex.loads(message_config)
 
 	if attachment_member_names:
 		attachment_dir = os.path.join(dest_dir, 'attachments')
@@ -303,7 +305,7 @@ def message_data_to_kpm(message_config, target_file):
 			del message_config['html_file']
 
 	msg_strio = io.BytesIO()
-	msg_strio.write(json.dumps(message_config, sort_keys=True, indent=4))
+	msg_strio.write(json_ex.dumps(message_config).encode('utf-8'))
 	tarinfo_h = tarfile.TarInfo(name='message_config.json')
 	tarinfo_h.mtime = mtime
 	tarinfo_h.size = msg_strio.tell()
@@ -312,30 +314,76 @@ def message_data_to_kpm(message_config, target_file):
 	tar_h.close()
 	return
 
-def treeview_liststore_to_csv(treeview, target_file):
+def liststore_export(store, columns, cb_write, *cb_write_args):
 	"""
-	Convert a treeview object to a CSV file. The CSV column names are loaded
-	from the treeview.
+	A function to facilitate writing values from a list store to an arbitrary
+	callback for exporting to different formats. The callback will be called
+	with the row number, the column values and the additional arguments
+	specified in *\\*cb_write_args*.
 
-	:param treeview: The treeview to load the information from.
-	:type treeview: :py:class:`Gtk.TreeView`
+	.. code-block:: python
+
+	  cb_write(row, column_values, *cb_write_args).
+
+	:param store: The store to export the information from.
+	:type store: :py:class:`Gtk.ListStore`
+	:param dict columns: A dictionary mapping store column ids to the value names.
+	:param function cb_write: The callback function to be called for each row of data.
+	:param cb_write_args: Additional arguments to pass to *cb_write*.
+	:return: The number of rows that were written.
+	:rtype: int
+	"""
+	if isinstance(columns, collections.OrderedDict):
+		column_names = (columns[c] for c in columns.keys())
+		store_columns = columns.keys()
+	else:
+		column_names = (columns[c] for c in sorted(columns.keys()))
+		store_columns = sorted(columns.keys())
+	cb_write(0, column_names, *cb_write_args)
+
+	store_iter = store.get_iter_first()
+	rows_written = 0
+	while store_iter:
+		cb_write(rows_written + 1, (store.get_value(store_iter, c) for c in store_columns), *cb_write_args)
+		rows_written += 1
+		store_iter = store.iter_next(store_iter)
+	return rows_written
+
+def _csv_write(row, columns, writer):
+	writer.writerow(tuple(columns))
+
+def liststore_to_csv(store, target_file, columns):
+	"""
+	Write the contents of a :py:class:`Gtk.ListStore` to a csv file.
+
+	:param store: The store to export the information from.
+	:type store: :py:class:`Gtk.ListStore`
 	:param str target_file: The destination file for the CSV data.
+	:param dict columns: A dictionary mapping store column ids to the value names.
 	:return: The number of rows that were written.
 	:rtype: int
 	"""
 	target_file_h = open(target_file, 'wb')
 	writer = csv.writer(target_file_h, quoting=csv.QUOTE_ALL)
-	column_names = [column.get_property('title') for column in treeview.get_columns()]
-	column_names.insert(0, 'UID')
-	column_count = len(column_names)
-	writer.writerow(column_names)
-	store = treeview.get_model()
-	store_iter = store.get_iter_first()
-	rows_written = 0
-	while store_iter:
-		values = [store.get_value(store_iter, x) for x in range(column_count)]
-		writer.writerow(values)
-		rows_written += 1
-		store_iter = store.iter_next(store_iter)
+	rows = liststore_export(store, columns, _csv_write, writer)
 	target_file_h.close()
-	return rows_written
+	return rows
+
+def _xlsx_write(row, columns, worksheet):
+	for column, text in enumerate(columns):
+		worksheet.write(row, column, text)
+
+def liststore_to_xlsx_worksheet(store, worksheet, columns):
+	"""
+	Write the contents of a :py:class:`Gtk.ListStore` to an XLSX workseet.
+
+	:param store: The store to export the information from.
+	:type store: :py:class:`Gtk.ListStore`
+	:param worksheet: The destination sheet for the store's data.
+	:type worksheet: :py:class:`xlsxwriter.worksheet.Worksheet`
+	:param dict columns: A dictionary mapping store column ids to the value names.
+	:return: The number of rows that were written.
+	:rtype: int
+	"""
+	utilities.assert_arg_type(worksheet, xlsxwriter.worksheet.Worksheet, 2)
+	return liststore_export(store, columns, _xlsx_write, worksheet)

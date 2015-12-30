@@ -4,6 +4,9 @@
 .. module:: client.gui_utilities
    :synopsis:
 
+This module provides various utility functions specific to the graphical nature
+of the client application.
+
 Data
 ----
 
@@ -74,8 +77,3 @@ Classes
    :members:
    :special-members: __init__
    :undoc-members:
-
-.. autoclass:: king_phisher.client.gui_utilities.TreeViewManager
-   :show-inheritance:
-   :members:
-   :special-members: __init__

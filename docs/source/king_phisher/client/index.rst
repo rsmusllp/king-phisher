@@ -1,6 +1,9 @@
 :mod:`client`
 =============
 
+This package contains all packages and modules specific to the client
+application.
+
 .. toctree::
    :maxdepth: 2
    :titlesonly:
@@ -11,12 +14,13 @@
 
    tabs/index.rst
 
+   windows/index.rst
+
    application.rst
    export.rst
    graphs.rst
    gui_utilities.rst
    mailer.rst
    client_rpc.rst
-   tools.rst
    web_cloner.rst
-   windows.rst
+   widget_managers.rst

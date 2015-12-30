@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import contextlib
 import logging
 import os
 
@@ -48,8 +49,24 @@ import sqlalchemy.orm
 import sqlalchemy.pool
 
 Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
-logger = logging.getLogger('KingPhisher.Server.database')
+logger = logging.getLogger('KingPhisher.Server.Database')
 _meta_data_type_map = {'int': int, 'str': str}
+
+def delete_all():
+	"""
+	Delete all data from all tables in the connected database. The database
+	schema will remain unaffected.
+
+	.. warning::
+		This action can not be reversed and there is no confirmation before it
+		takes place.
+	"""
+	engine = Session.connection().engine
+	with contextlib.closing(engine.connect()) as connection:
+		transaction = connection.begin()
+		for table in reversed(models.metadata.sorted_tables):
+			connection.execute(table.delete())
+		transaction.commit()
 
 def get_meta_data(key, session=None):
 	"""

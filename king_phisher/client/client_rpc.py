@@ -31,18 +31,19 @@
 #
 
 import code
-import json
 import logging
 import os
+import ssl
 import sys
 
 from king_phisher import find
 from king_phisher import geoip
+from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher.third_party import AdvancedHTTPServer
 
 try:
-	import msgpack # pylint: disable=unused-import
+	import msgpack  # pylint: disable=unused-import
 	has_msgpack = True
 	"""Whether the :py:mod:`msgpack` module is available or not."""
 except ImportError:
@@ -175,6 +176,21 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 	def __repr__(self):
 		return "<{0} '{1}@{2}:{3}{4}'>".format(self.__class__.__name__, self.username, self.host, self.port, self.uri_base)
 
+	def reconnect(self):
+		"""Reconnect to the remote server."""
+		self.lock.acquire()
+		if self.use_ssl:
+			if (sys.version_info[0] == 2 and sys.version_info >= (2, 7, 9)) or sys.version_info >= (3, 4, 3):
+				context = ssl.create_default_context()
+				context.check_hostname = False
+				context.verify_mode = ssl.CERT_NONE
+				self.client = AdvancedHTTPServer.http.client.HTTPSConnection(self.host, self.port, context=context)
+			else:
+				self.client = AdvancedHTTPServer.http.client.HTTPSConnection(self.host, self.port)
+		else:
+			self.client = AdvancedHTTPServer.http.client.HTTPConnection(self.host, self.port)
+		self.lock.release()
+
 	def remote_table(self, table, query_filter=None):
 		"""
 		Iterate over a remote database table hosted on the server. Rows are
@@ -275,7 +291,7 @@ def vte_child_routine(config):
 
 	:param str config: A JSON encoded client configuration.
 	"""
-	config = json.loads(config)
+	config = json_ex.loads(config)
 	try:
 		import readline
 		import rlcompleter  # pylint: disable=unused-variable
@@ -283,8 +299,10 @@ def vte_child_routine(config):
 		pass
 	else:
 		readline.parse_and_bind('tab: complete')
-	plugins_directory = find.find_data_directory('rpc_plugins')
-	if plugins_directory:
+	for plugins_directory in ('rpc_plugins', 'rpc-plugins'):
+		plugins_directory = find.find_data_directory(plugins_directory)
+		if not plugins_directory:
+			continue
 		sys.path.append(plugins_directory)
 
 	headers = config['rpc_data'].pop('headers')
@@ -295,9 +313,9 @@ def vte_child_routine(config):
 		rpc.headers[str(name)] = str(value)
 
 	banner = "Python {0} on {1}".format(sys.version, sys.platform)
-	print(banner)  # pylint: disable=C0325
-	information = "Campaign Name: '{0}'  ID: {1}".format(config['campaign_name'], config['campaign_id'])
-	print(information)  # pylint: disable=C0325
+	print(banner)  # pylint: disable=superfluous-parens
+	information = "Campaign Name: '{0}' ID: {1}".format(config['campaign_name'], config['campaign_id'])
+	print(information)  # pylint: disable=superfluous-parens
 	console_vars = {
 		'CAMPAIGN_NAME': config['campaign_name'],
 		'CAMPAIGN_ID': config['campaign_id'],

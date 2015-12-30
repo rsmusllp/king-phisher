@@ -4,6 +4,9 @@
 .. module:: tabs.campaign
    :synopsis:
 
+This module provides the contents of the tab representing the campaign
+information in client's graphical interface.
+
 Classes
 -------
 

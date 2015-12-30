@@ -37,12 +37,16 @@ import os
 import sys
 import urllib
 
+from king_phisher import its
+from king_phisher import scrubber
 from king_phisher import spf
 from king_phisher import utilities
 from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
+from king_phisher.client import widget_managers
+from king_phisher.constants import ConnectionErrorReason
 from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
 
@@ -119,18 +123,24 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 
 	def _sender_precheck_attachment(self):
 		attachment = self.config.get('mailer.attachment_file')
-		if attachment:
-			md5 = hashlib.new('md5')
-			sha1 = hashlib.new('sha1')
-			with open(attachment, 'rb') as file_h:
-				data = True
-				while data:
-					data = file_h.read(1024)
-					md5.update(data)
-					sha1.update(data)
-			self.text_insert("File '{0}' will be attached to sent messages.\n".format(os.path.basename(attachment)))
-			self.text_insert("  MD5:  {0}\n".format(md5.hexdigest()))
-			self.text_insert("  SHA1: {0}\n".format(sha1.hexdigest()))
+		if not attachment:
+			return True
+		self.text_insert("File '{0}' will be attached to sent messages.\n".format(os.path.basename(attachment)))
+		_, extension = os.path.splitext(attachment)
+		extension = extension[1:]
+		if self.config['remove_attachment_metadata'] and extension in ('docm', 'docx', 'pptm', 'pptx', 'xlsm', 'xlsx'):
+			scrubber.remove_office_metadata(attachment)
+			self.text_insert("Attachment file detected as MS Office 2007+, metadata has been removed.\n")
+		md5 = hashlib.new('md5')
+		sha1 = hashlib.new('sha1')
+		with open(attachment, 'rb') as file_h:
+			data = True
+			while data:
+				data = file_h.read(1024)
+				md5.update(data)
+				sha1.update(data)
+		self.text_insert("  MD5:  {0}\n".format(md5.hexdigest()))
+		self.text_insert("  SHA1: {0}\n".format(sha1.hexdigest()))
 		return True
 
 	def _sender_precheck_campaign(self):
@@ -144,9 +154,21 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		required_settings = {
 			'mailer.webserver_url': 'Web Server URL',
 			'mailer.subject': 'Subject',
-			'mailer.html_file': 'Message HTML File',
-			'mailer.target_file': 'Target CSV File'
+			'mailer.html_file': 'Message HTML File'
 		}
+		target_type = self.config.get('mailer.target_type')
+		if target_type == 'file':
+			required_settings['mailer.target_file'] = 'Target CSV File'
+		elif target_type == 'single':
+			required_settings['mailer.target_email_address'] = 'Target Email Address'
+			required_settings['mailer.target_name'] = 'Target Name'
+		else:
+			gui_utilities.show_dialog_warning('Invalid Target Type', self.parent, 'Please specify a target file or name and email address.')
+			return False
+		message_type = self.config.get('mailer.message_type')
+		if not message_type in ('email', 'calendar_invite'):
+			gui_utilities.show_dialog_warning('Invalid Message Type', self.parent, 'Please select a valid message type.')
+			return False
 		for setting, setting_name in required_settings.items():
 			if not self.config.get(setting):
 				gui_utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
@@ -249,6 +271,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		if not self._sender_precheck_attachment():
 			return
 		self.text_insert("Sending messages started at: {:%A %B %d, %Y %H:%M:%S}\n".format(datetime.datetime.now()))
+		self.text_insert("Message mode is: {0}\n".format(self.config['mailer.message_type'].replace('_', ' ').title()))
 
 		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:
@@ -277,10 +300,15 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 				if response != Gtk.ResponseType.APPLY:
 					self.sender_start_failure(text='canceled.\n')
 					return
-				if self.sender_thread.server_ssh_connect():
+				ssh_status = self.sender_thread.server_ssh_connect()
+				if ssh_status == ConnectionErrorReason.SUCCESS:
 					self.text_insert('done.\n')
 					break
-				self.sender_start_failure(('Connection Failed', 'Failed to connect to the SSH server.'), 'failed.\n', retry=True)
+				if ssh_status == ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED:
+					error_description = ('Authentication Failed', 'Failed to authenticate to the SSH server.')
+				else:
+					error_description = ('Connection Failed', 'Failed to connect to the SSH server.')
+				self.sender_start_failure(error_description, 'failed.\n', retry=True)
 		self.text_insert('Connecting to SMTP server... ')
 		if not self.sender_thread.server_smtp_connect():
 			self.sender_start_failure(('Connection Failed', 'Failed to connect to the SMTP server.'), 'failed.\n')
@@ -702,7 +730,15 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	for sending messages as part of a campaign.
 	"""
 	gobject_ids = (
+		'button_target_file_select',
+		'calendar_calendar_invite_date',
+		'checkbutton_calendar_invite_all_day',
+		'checkbutton_calendar_request_rsvp',
+		'combobox_importance',
+		'combobox_sensitivity',
 		'entry_webserver_url',
+		'entry_calendar_invite_location',
+		'entry_calendar_invite_summary',
 		'entry_company_name',
 		'entry_source_email',
 		'entry_source_email_smtp',
@@ -711,13 +747,25 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		'entry_reply_to_email',
 		'entry_html_file',
 		'entry_target_file',
+		'entry_target_name',
+		'entry_target_email_address',
 		'entry_attachment_file',
-		'combobox_importance',
-		'combobox_sensitivity'
+		'expander_calendar_invite_settings',
+		'expander_email_settings',
+		'radiobutton_message_type_calendar_invite',
+		'radiobutton_message_type_email',
+		'radiobutton_target_type_file',
+		'radiobutton_target_type_single',
+		'spinbutton_calendar_invite_duration',
+		'spinbutton_calendar_invite_start_hour',
+		'spinbutton_calendar_invite_start_minute'
 	)
 	config_prefix = 'mailer.'
 	top_gobject = 'box'
 	top_level_dependencies = (
+		'ClockHourAdjustment',
+		'ClockMinuteAdjustment',
+		'TimeDuration',
 		'MsgImportance',
 		'MsgSensitivity'
 	)
@@ -728,6 +776,24 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.application.connect('campaign-changed', self.signal_kpc_campaign_load)
 		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
 		self.application.connect('exit', self.signal_kpc_exit)
+
+		self.message_type = widget_managers.RadioButtonGroupManager(self, 'message_type')
+		self.message_type.set_active(self.config['mailer.message_type'])
+		self.target_type = widget_managers.RadioButtonGroupManager(self, 'target_type')
+		self.target_type.set_active(self.config['mailer.target_type'])
+
+	def objects_load_from_config(self):
+		super(MailSenderConfigurationTab, self).objects_load_from_config()
+		# these are called in the super class's __init__ method so they may not exist yet
+		if hasattr(self, 'message_type'):
+			self.message_type.set_active(self.config['mailer.message_type'])
+		if hasattr(self, 'target_type'):
+			self.target_type.set_active(self.config['mailer.target_type'])
+
+	def objects_save_to_config(self):
+		super(MailSenderConfigurationTab, self).objects_save_to_config()
+		self.config['mailer.message_type'] = self.message_type.get_active()
+		self.config['mailer.target_type'] = self.target_type.get_active()
 
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
@@ -756,6 +822,12 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
 		return
 
+	def signal_checkbutton_toggled_calendar_invite_all_day(self, button):
+		all_day = button.get_active()
+		self.gobjects['spinbutton_calendar_invite_duration'].set_sensitive(not all_day)
+		self.gobjects['spinbutton_calendar_invite_start_hour'].set_sensitive(not all_day)
+		self.gobjects['spinbutton_calendar_invite_start_minute'].set_sensitive(not all_day)
+
 	def signal_entry_activate_open_file(self, entry):
 		dialog = gui_utilities.FileChooser('Choose File', self.parent)
 		if entry == self.gobjects.get('entry_html_file'):
@@ -774,6 +846,21 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		entry.set_text('')
 		return True
 
+	def signal_expander_activate_message_type(self, expander):
+		if expander.get_expanded():
+			# ignore attempts to un-expand
+			expander.set_expanded(False)
+			return
+		if expander == self.gobjects['expander_calendar_invite_settings']:
+			message_type = 'calendar_invite'
+			self.gobjects['expander_email_settings'].set_expanded(False)
+		elif expander == self.gobjects['expander_email_settings']:
+			message_type = 'email'
+			self.gobjects['expander_calendar_invite_settings'].set_expanded(False)
+		button = self.message_type.buttons[message_type]
+		with gui_utilities.gobject_signal_blocked(button, 'toggled'):
+			self.message_type.set_active(message_type)
+
 	def signal_kpc_campaign_load(self, _, campaign_id):
 		if not campaign_id == self.config.get('campaign_id'):
 			return
@@ -786,6 +873,22 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	def signal_kpc_exit(self, kpc):
 		self.objects_save_to_config()
+
+	def signal_radiobutton_toggled_message_type(self, radiobutton):
+		if not radiobutton.get_active():
+			return
+		message_type = self.message_type.get_active()
+		self.gobjects['expander_calendar_invite_settings'].set_expanded(message_type == 'calendar_invite')
+		self.gobjects['expander_email_settings'].set_expanded(message_type == 'email')
+
+	def signal_radiobutton_toggled_target_type(self, radiobutton):
+		if not radiobutton.get_active():
+			return
+		target_type = self.target_type.get_active()
+		self.gobjects['button_target_file_select'].set_sensitive(target_type == 'file')
+		self.gobjects['entry_target_file'].set_sensitive(target_type == 'file')
+		self.gobjects['entry_target_name'].set_sensitive(target_type == 'single')
+		self.gobjects['entry_target_email_address'].set_sensitive(target_type == 'single')
 
 class MailSenderTab(object):
 	"""
@@ -815,7 +918,11 @@ class MailSenderTab(object):
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
-		self.tabs = {}
+		self.status_bar = Gtk.Statusbar()
+		self.status_bar.show()
+		self.box.pack_end(self.status_bar, False, False, 0)
+
+		self.tabs = utilities.FreezableDict()
 		"""A dict object holding the sub tabs managed by this object."""
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
@@ -836,9 +943,17 @@ class MailSenderTab(object):
 		self.tabs['send_messages'] = send_messages_tab
 		self.notebook.append_page(send_messages_tab.box, send_messages_tab.label)
 
+		self.tabs.freeze()
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()
+
+		self.application.connect('campaign-set', self.signal_kp_campaign_set)
+
+	def signal_kp_campaign_set(self, _, campaign_id):
+		context_id = self.status_bar.get_context_id('campaign name')
+		self.status_bar.pop(context_id)
+		self.status_bar.push(context_id, self.config['campaign_name'])
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		previous_page = notebook.get_nth_page(self.last_page_id)
@@ -854,6 +969,8 @@ class MailSenderTab(object):
 				text = edit_tab.textbuffer.get_text(edit_tab.textbuffer.get_start_iter(), edit_tab.textbuffer.get_end_iter(), False)
 				if not text:
 					break
+				if its.py_v2:
+					text = text.decode('utf-8')
 				html_file = self.config.get('mailer.html_file')
 				if html_file:
 					with codecs.open(html_file, 'r', encoding='utf-8') as file_h:

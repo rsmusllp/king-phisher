@@ -33,6 +33,7 @@
 import functools
 
 from king_phisher.client import gui_utilities
+from king_phisher.client import widget_managers
 from king_phisher.third_party import AdvancedHTTPServer
 
 from gi.repository import Gtk
@@ -64,7 +65,7 @@ class TagEditorDialog(gui_utilities.GladeGObject):
 			treeview = self.gobjects['treeview_' + tag_table]
 			model = Gtk.ListStore(int, str, str)
 			treeview.set_model(model)
-			tvm = gui_utilities.TreeViewManager(
+			tvm = widget_managers.TreeViewManager(
 				treeview,
 				cb_delete=functools.partial(self.delete_tag, tag_table),
 				cb_refresh=functools.partial(self.load_tags, tag_table)

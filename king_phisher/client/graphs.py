@@ -31,15 +31,17 @@
 #
 
 import collections
-import datetime
 import ipaddress
 import string
 
+from king_phisher import color
 from king_phisher import its
 from king_phisher import ua_parser
 from king_phisher.client import gui_utilities
+from king_phisher.constants import ColorHexCode
 from king_phisher.constants import OSFamily
 
+from boltons import iterutils
 from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
 from smoke_zephyr.utilities import unique
@@ -57,7 +59,7 @@ except ImportError:
 	has_matplotlib = False
 	"""Whether the :py:mod:`matplotlib` module is available."""
 else:
-	if not its.frozen and check_requirements(['matplotlib>=1.4.1']):
+	if not its.frozen and check_requirements(['matplotlib>=1.4.3']):
 		has_matplotlib = False
 	else:
 		has_matplotlib = True
@@ -75,22 +77,9 @@ else:
 
 EXPORTED_GRAPHS = {}
 
-MPL_COLOR_LAND = 'gray'
 MPL_COLOR_NULL = 'darkcyan'
-MPL_COLOR_WATER = 'paleturquoise'
-MPL_OS_COLORS = collections.defaultdict(lambda: MPL_COLOR_NULL)
-"""Matplotlib colors for the different operating systems defined in the :py:class:`~king_phisher.constants.OSFamily` class."""
-MPL_OS_COLORS.update({
-	OSFamily.ANDROID: 'olive',
-	OSFamily.BLACKBERRY: 'gray',
-	OSFamily.IOS: 'violet',
-	OSFamily.LINUX: 'palegreen',
-	OSFamily.OSX: 'darkviolet',
-	OSFamily.WINDOWS: 'gold',
-	OSFamily.WINDOWS_PHONE: 'darkgoldenrod'
-})
 
-__all__ = ['export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph']
+__all__ = ('export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph')
 
 def export_graph_provider(cls):
 	"""
@@ -145,14 +134,16 @@ class CampaignGraph(object):
 	table_subscriptions = []
 	"""A list of tables from which information is needed to produce the graph."""
 	is_available = True
-	def __init__(self, application, size_request=None):
+	def __init__(self, application, size_request=None, style_context=None):
 		"""
 		:param tuple size_request: The size to set for the canvas.
 		"""
 		self.application = application
+		self.style_context = style_context
 		self.config = application.config
 		"""A reference to the King Phisher client configuration."""
 		self.figure, _ = pyplot.subplots()
+		self.figure.set_facecolor(self.get_color('bg', ColorHexCode.WHITE))
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
 		self.manager = None
@@ -177,40 +168,31 @@ class CampaignGraph(object):
 		self.popup_menu.append(menu_item)
 		self.popup_menu.show_all()
 		self.navigation_toolbar.hide()
+		self._legend = None
 
 	@property
 	def rpc(self):
 		return self.application.rpc
 
+	@staticmethod
+	def _ax_hide_ticks(ax):
+		for tick in ax.yaxis.get_major_ticks():
+			tick.tick1On = False
+			tick.tick2On = False
+
+	@staticmethod
+	def _ax_set_spine_color(ax, spine_color):
+		for pos in ('top', 'right', 'bottom', 'left'):
+			ax.spines[pos].set_color(spine_color)
+
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
 
-	def _graph_bar_set_yparams(self, top_lim):
-		min_value = top_lim + (top_lim * 0.075)
-		if min_value <= 25:
-			scale = 5
-		else:
-			scale = scale = 10 ** (len(str(int(min_value))) - 1)
-		inc_scale = scale
-		while scale <= min_value:
-			scale += inc_scale
-		top_lim = scale
-
-		ax = self.axes[0]
-		yticks = set((round(top_lim * 0.5), top_lim))
-		ax.set_yticks(tuple(yticks))
-		ax.set_ylim(top=top_lim)
-		return
-
-	def _graph_null_pie(self, title):
-		ax = self.axes[0]
-		ax.pie((100,), labels=(title,), colors=(MPL_COLOR_NULL,), autopct='%1.0f%%', shadow=True, startangle=90)
-		ax.axis('equal')
-		return
-
 	def add_legend_patch(self, legend_rows, fontsize=None):
-		handles = []
-		if not fontsize:
+		if self._legend is not None:
+			self._legend.remove()
+			self._legend = None
+		if fontsize is None:
 			scale = self.markersize_scale
 			if scale < 5:
 				fontsize = 'xx-small'
@@ -220,38 +202,35 @@ class CampaignGraph(object):
 				fontsize = 'small'
 			else:
 				fontsize = 'medium'
-		for row in legend_rows:
-			handles.append(patches.Patch(color=row[0], label=row[1]))
-		self.axes[0].legend(handles=handles, fontsize=fontsize, loc='lower right')
+		legend_bbox = self.figure.legend(
+			tuple(patches.Patch(color=patch_color) for patch_color, _ in legend_rows),
+			tuple(label for _, label in legend_rows),
+			borderaxespad=1.25,
+			fontsize=fontsize,
+			frameon=True,
+			handlelength=1.5,
+			handletextpad=0.75,
+			labelspacing=0.3,
+			loc='lower right'
+		)
+		legend_bbox.legendPatch.set_linewidth(0)
+		self._legend = legend_bbox
 
-	def graph_bar(self, bars, color=None, xticklabels=None, ylabel=None):
+	def get_color(self, color_name, default):
 		"""
-		Create a standard bar graph with better defaults for the standard use
-		cases.
+		Get a color by its style name such as 'fg' for foreground. If the
+		specified color does not exist, default will be returned. The underlying
+		logic for this function is provided by
+		:py:func:`~.gui_utilities.gtk_style_context_get_color`.
 
-		:param list bars: The values of the bars to graph.
-		:param color: The color of the bars on the graph.
-		:type color: list, str
-		:param list xticklabels: The labels to use on the x-axis.
-		:param str ylabel: The label to give to the y-axis.
-		:return: The bars created using :py:mod:`matplotlib`
-		:rtype: `matplotlib.container.BarContainer`
+		:param str color_name: The style name of the color.
+		:param default: The default color to return if the specified one was not found.
+		:return: The desired color if it was found.
+		:rtype: tuple
 		"""
-		color = color or MPL_COLOR_NULL
-		width = 0.25
-		ax = self.axes[0]
-		self._graph_bar_set_yparams(max(bars) if bars else 0)
-		bars = ax.bar(range(len(bars)), bars, width, color=color)
-		ax.set_xticks([float(x) + (width / 2) for x in range(len(bars))])
-		if xticklabels:
-			ax.set_xticklabels(xticklabels, rotation=30)
-			for col in bars:
-				height = col.get_height()
-				ax.text(col.get_x() + col.get_width() / 2.0, height, "{0:,}".format(height), ha='center', va='bottom')
-		if ylabel:
-			ax.set_ylabel(ylabel)
-		self.figure.subplots_adjust(bottom=0.25)
-		return bars
+		color_name = 'theme_color_graph_' + color_name
+		sc_color = gui_utilities.gtk_style_context_get_color(self.style_context, color_name, default)
+		return (sc_color.red, sc_color.green, sc_color.blue)
 
 	def make_window(self):
 		"""
@@ -273,7 +252,7 @@ class CampaignGraph(object):
 	@property
 	def markersize_scale(self):
 		bbox = self.axes[0].get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())
-		return max(bbox.width, bbox.width) * self.figure.dpi * 0.01
+		return bbox.width * self.figure.dpi * 0.01
 
 	def mpl_signal_canvas_button_pressed(self, event):
 		if event.button != 3:
@@ -322,13 +301,160 @@ class CampaignGraph(object):
 				info_cache[table] = tuple(self.rpc.remote_table(table, query_filter={'campaign_id': self.config['campaign_id']}))
 		for ax in self.axes:
 			ax.clear()
+		if self._legend is not None:
+			self._legend.remove()
+			self._legend = None
 		self._load_graph(info_cache)
-		self.axes[0].set_title(self.graph_title, y=1.03)
+		self.figure.suptitle(
+			self.graph_title,
+			color=self.get_color('fg', ColorHexCode.BLACK),
+			size=14,
+			weight='bold',
+			y=0.97
+		)
 		self.canvas.draw()
 		return info_cache
 
+class CampaignBarGraph(CampaignGraph):
+	def __init__(self, *args, **kwargs):
+		super(CampaignBarGraph, self).__init__(*args, **kwargs)
+		self.figure.subplots_adjust(top=0.85, right=0.9, bottom=0.05, left=0.225)
+		ax = self.axes[0]
+		ax.tick_params(
+			axis='both',
+			top='off',
+			right='off',
+			bottom='off',
+			left='off',
+			labelbottom='off'
+		)
+		ax.invert_yaxis()
+		self.axes.append(ax.twinx())
+
+	def _barh(self, ax, bars, height, max_bars=None):
+		# define the necessary colors
+		color_bg = self.get_color('bg', ColorHexCode.WHITE)
+		color_bar_bg = self.get_color('bar_bg', ColorHexCode.GRAY)
+		color_bar_fg = self.get_color('bar_fg', ColorHexCode.BLACK)
+
+		ax.set_axis_bgcolor(color_bg)
+
+		# draw the foreground / filled bar
+		bar_container = ax.barh(
+			range(len(bars)),
+			bars,
+			height=height,
+			color=color_bar_fg,
+			linewidth=0
+		)
+		# draw the background / unfilled bar
+		largest_bar = (max(bars) if len(bars) else 0)
+		ax.barh(
+			range(len(bars)),
+			[largest_bar - bar for bar in bars],
+			left=bars,
+			height=height,
+			color=color_bar_bg,
+			linewidth=0
+		)
+		return bar_container
+
+	def _load_graph(self, info_cache):
+		raise NotImplementedError()
+
+	def graph_bar(self, bars, max_bars, yticklabels, xlabel=None):
+		"""
+		Create a horizontal bar graph with better defaults for the standard use
+		cases.
+
+		:param list bars: The values of the bars to graph.
+		:param int max_bars: The number to treat as the logical maximum number of plotted bars.
+		:param list yticklabels: The labels to use on the x-axis.
+		:param str xlabel: The label to give to the y-axis.
+		:return: The bars created using :py:mod:`matplotlib`
+		:rtype: `matplotlib.container.BarContainer`
+		"""
+		height = 0.275
+		color_bg = self.get_color('bg', ColorHexCode.WHITE)
+		color_fg = self.get_color('fg', ColorHexCode.BLACK)
+		ax1, ax2 = self.axes  # primary axis
+		bar_container = self._barh(ax1, bars, height, max_bars)
+
+		yticks = [float(y) + (height / 2) for y in range(len(bars))]
+
+		ax1.set_ybound(0, max(len(bars), max_bars))
+		ax1.set_yticks(yticks)
+		ax1.set_yticklabels(yticklabels, color=color_fg, size=10)
+
+		ax2.set_yticks(yticks)
+		ax2.set_yticklabels(["{0:,}".format(bar) for bar in bars], color=color_fg, size=12)
+		ax2.set_ylim(ax1.get_ylim())
+
+		# remove the y-axis tick marks
+		self._ax_hide_ticks(ax1)
+		self._ax_hide_ticks(ax2)
+		self._ax_set_spine_color(ax1, color_bg)
+		self._ax_set_spine_color(ax2, color_bg)
+
+		if xlabel:
+			ax1.set_xlabel(xlabel, color=color_fg, size=12)
+		return bar_container
+
+class CampaignLineGraph(CampaignGraph):
+	def __init__(self, *args, **kwargs):
+		super(CampaignLineGraph, self).__init__(*args, **kwargs)
+
+	def _load_graph(self, info_cache):
+		raise NotImplementedError()
+
+class CampaignPieGraph(CampaignGraph):
+	def __init__(self, *args, **kwargs):
+		super(CampaignPieGraph, self).__init__(*args, **kwargs)
+		self.figure.subplots_adjust(top=0.85, right=0.75, bottom=0.05, left=0.05)
+
+	def _load_graph(self, info_cache):
+		raise NotImplementedError()
+
+	def _graph_null_pie(self, title):
+		ax = self.axes[0]
+		ax.pie(
+			(100,),
+			autopct='%1.0f%%',
+			colors=(self.get_color('pie_low', ColorHexCode.GRAY),),
+			labels=(title,),
+			shadow=True,
+			startangle=90
+		)
+		ax.axis('equal')
+		return
+
+	def graph_pie(self, parts, autopct=None, labels=None, legend_labels=None):
+		colors = color.get_scale(
+			self.get_color('pie_low', ColorHexCode.BLACK),
+			self.get_color('pie_high', ColorHexCode.GRAY),
+			len(parts),
+			ascending=False
+		)
+		ax = self.axes[0]
+		pie = ax.pie(
+			parts,
+			autopct=autopct,
+			colors=colors,
+			explode=[0.1] + ([0] * (len(parts) - 1)),
+			labels=labels or tuple("{0:.1f}%".format(p) for p in parts),
+			labeldistance=1.15,
+			shadow=True,
+			startangle=45,
+			textprops={'color': self.get_color('fg', ColorHexCode.BLACK)},
+			wedgeprops={'linewidth': 0}
+		)
+		ax.axis('equal')
+		if legend_labels is not None:
+			self.add_legend_patch(zip(colors, legend_labels), fontsize='x-small')
+		return pie
+
 @export_graph_provider
-class CampaignGraphOverview(CampaignGraph):
+class CampaignGraphOverview(CampaignBarGraph):
 	"""Display a graph which represents an overview of the campaign."""
 	graph_title = 'Campaign Overview'
 	name_human = 'Bar - Campaign Overview'
@@ -345,12 +471,12 @@ class CampaignGraphOverview(CampaignGraph):
 		if len(creds):
 			bars.append(len(creds))
 			bars.append(len(unique(creds, key=lambda cred: cred.message_id)))
-		xticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')[:len(bars)]
-		bars = self.graph_bar(bars, xticklabels=xticklabels, ylabel='Grand Total')
+		yticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')
+		self.graph_bar(bars, len(yticklabels), yticklabels[:len(bars)])
 		return
 
 @export_graph_provider
-class CampaignGraphVisitorInfo(CampaignGraph):
+class CampaignGraphVisitorInfo(CampaignBarGraph):
 	"""Display a graph which shows the different operating systems seen from visitors."""
 	graph_title = 'Campaign Visitor OS Information'
 	name_human = 'Bar - Visitor OS Information'
@@ -362,18 +488,15 @@ class CampaignGraphVisitorInfo(CampaignGraph):
 		for visit in visits:
 			ua = ua_parser.parse_user_agent(visit.visitor_details)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
-		os_names = list(operating_systems.keys())
-		os_names.sort(key=lambda name: operating_systems[name])
-		os_names.reverse()
 
-		bars = []
-		for os_name in os_names:
-			bars.append(operating_systems[os_name])
-		self.graph_bar(bars, color=[MPL_OS_COLORS[osn] for osn in os_names], xticklabels=os_names, ylabel='Total Visits')
+		os_names = operating_systems.keys()
+		os_names.sort()
+		bars = [operating_systems[os_name] for os_name in os_names]
+		self.graph_bar(bars, len(OSFamily), os_names)
 		return
 
 @export_graph_provider
-class CampaignGraphVisitorInfoPie(CampaignGraph):
+class CampaignGraphVisitorInfoPie(CampaignPieGraph):
 	"""Display a graph which compares the different operating systems seen from visitors."""
 	graph_title = 'Campaign Visitor OS Information'
 	name_human = 'Pie - Visitor OS Information'
@@ -388,46 +511,60 @@ class CampaignGraphVisitorInfoPie(CampaignGraph):
 		for visit in visits:
 			ua = ua_parser.parse_user_agent(visit.visitor_details)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
-		(os_names, count) = zip(*operating_systems.items())
-		colors = [MPL_OS_COLORS[osn] for osn in os_names]
-
-		ax = self.axes[0]
-		ax.pie(count, labels=os_names, labeldistance=1.05, colors=colors, autopct='%1.1f%%', shadow=True, startangle=45)
-		ax.axis('equal')
+		(os_names, count) = tuple(zip(*reversed(sorted(operating_systems.items(), key=lambda item: item[1]))))
+		self.graph_pie(count, labels=tuple("{0:,}".format(os) for os in count), legend_labels=os_names)
 		return
 
 @export_graph_provider
-class CampaignGraphVisitsTimeline(CampaignGraph):
+class CampaignGraphVisitsTimeline(CampaignLineGraph):
 	"""Display a graph which represents the visits of a campaign over time."""
 	graph_title = 'Campaign Visits Timeline'
 	name_human = 'Line - Visits Timeline'
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
+		# define the necessary colors
+		color_bg = self.get_color('bg', ColorHexCode.WHITE)
+		color_fg = self.get_color('fg', ColorHexCode.BLACK)
+		color_line_bg = self.get_color('line_bg', ColorHexCode.WHITE)
+		color_line_fg = self.get_color('line_fg', ColorHexCode.BLACK)
 		visits = info_cache['visits']
 		first_visits = [visit.first_visit for visit in visits]
 
 		ax = self.axes[0]
-		ax.set_ylabel('Number of Visits')
+		ax.tick_params(
+			axis='both',
+			which='both',
+			colors=color_fg,
+			top='off',
+			bottom='off'
+		)
+		ax.set_axis_bgcolor(color_line_bg)
+		ax.set_ylabel('Number of Visits', color=self.get_color('fg', ColorHexCode.WHITE), size=10)
+		self._ax_hide_ticks(ax)
+		self._ax_set_spine_color(ax, color_bg)
 		if not len(first_visits):
 			ax.set_yticks((0,))
 			ax.set_xticks((0,))
 			return
 
-		ax.xaxis.set_major_locator(dates.AutoDateLocator())
-		ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
 		first_visits.sort()
-		first_visit_span = first_visits[-1] - first_visits[0]
-		ax.plot_date(first_visits, range(1, len(first_visits) + 1), '-')
+		ax.plot_date(
+			first_visits,
+			range(1, len(first_visits) + 1),
+			'-',
+			color=color_line_fg,
+			linewidth=6
+		)
 		self.figure.autofmt_xdate()
-		if first_visit_span < datetime.timedelta(7):
-			ax.xaxis.set_minor_locator(dates.DayLocator())
-			if first_visit_span < datetime.timedelta(3) and len(first_visits) > 1:
-				ax.xaxis.set_minor_locator(dates.HourLocator())
-		ax.grid(True)
+		self.figure.subplots_adjust(top=0.85, right=0.95, bottom=0.25, left=0.1)
+
+		locator = dates.AutoDateLocator()
+		ax.xaxis.set_major_locator(locator)
+		ax.xaxis.set_major_formatter(dates.AutoDateFormatter(locator))
 		return
 
 @export_graph_provider
-class CampaignGraphMessageResults(CampaignGraph):
+class CampaignGraphMessageResults(CampaignPieGraph):
 	"""Display the percentage of messages which resulted in a visit."""
 	graph_title = 'Campaign Message Results'
 	name_human = 'Pie - Message Results'
@@ -447,22 +584,13 @@ class CampaignGraphMessageResults(CampaignGraph):
 		sizes.append((float(messages_count - visits_count) / float(messages_count)) * 100)
 		sizes.append((float(visits_count - credentials_count) / float(messages_count)) * 100)
 		sizes.append((float(credentials_count) / float(messages_count)) * 100)
-		colors = ['yellowgreen', 'gold', 'indianred']
-		explode = [0.1, 0, 0]
 		if not credentials_count:
 			labels.pop()
 			sizes.pop()
-			colors.pop()
-			explode.pop()
 		if not visits_count:
 			labels.pop()
 			sizes.pop()
-			colors.pop()
-			explode.pop()
-		ax = self.axes[0]
-		ax.pie(sizes, explode=explode, labels=tuple("{0:.1f}%".format(s) for s in sizes), labeldistance=1.15, colors=colors, shadow=True, startangle=45)
-		ax.axis('equal')
-		self.add_legend_patch(zip(colors, labels), fontsize='x-small')
+		self.graph_pie(sizes, legend_labels=labels)
 		return
 
 class CampaignGraphVisitsMap(CampaignGraph):
@@ -470,13 +598,15 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	graph_title = 'Campaign Visit Locations'
 	table_subscriptions = ('credentials', 'visits')
 	is_available = has_matplotlib_basemap
-	mpl_color_with_creds = 'indianred'
-	mpl_color_without_creds = 'gold'
 	draw_states = False
 	def _load_graph(self, info_cache):
 		visits = unique(info_cache['visits'], key=lambda visit: visit.message_id)
 		cred_ips = set(cred.message_id for cred in info_cache['credentials'])
 		cred_ips = set([visit.visitor_ip for visit in visits if visit.message_id in cred_ips])
+
+		color_fg = self.get_color('fg', ColorHexCode.BLACK)
+		color_land = self.get_color('map_land', ColorHexCode.GRAY)
+		color_water = self.get_color('map_water', ColorHexCode.WHITE)
 
 		ax = self.axes[0]
 		bm = mpl_toolkits.basemap.Basemap(resolution='c', ax=ax, **self.basemap_args)
@@ -484,10 +614,22 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			bm.drawstates()
 		bm.drawcoastlines()
 		bm.drawcountries()
-		bm.fillcontinents(color=MPL_COLOR_LAND, lake_color=MPL_COLOR_WATER)
-		bm.drawparallels((-60, -30, 0, 30, 60), labels=(1, 1, 0, 0))
-		bm.drawmeridians((0, 90, 180, 270), labels=(0, 0, 0, 1))
-		bm.drawmapboundary(fill_color=MPL_COLOR_WATER)
+		bm.fillcontinents(color=color_land, lake_color=color_water)
+		parallels = bm.drawparallels(
+			(-60, -30, 0, 30, 60),
+			labels=(1, 1, 0, 0)
+		)
+		self._map_set_line_color(parallels, color_fg)
+
+		meridians = bm.drawmeridians(
+			(0, 90, 180, 270),
+			labels=(0, 0, 0, 1)
+		)
+		self._map_set_line_color(meridians, color_fg)
+		bm.drawmapboundary(
+			fill_color=color_water,
+			linewidth=0
+		)
 
 		if not visits:
 			return
@@ -500,29 +642,62 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		base_markersize = min(base_markersize, 9)
 		self._plot_visitor_map_points(bm, ctr, base_markersize, cred_ips)
 
-		self.add_legend_patch(((self.mpl_color_with_creds, 'With Credentials'), (self.mpl_color_without_creds, 'Without Credentials')))
+		self.add_legend_patch(((self.color_with_creds, 'With Credentials'), (self.color_without_creds, 'Without Credentials')))
 		return
+
+	def _resolve_geolocations(self, all_ips):
+		geo_locations = {}
+		public_ips = []
+		for visitor_ip in all_ips:
+			ip = ipaddress.ip_address(visitor_ip)
+			if ip.is_private or ip.is_loopback:
+				continue
+			public_ips.append(visitor_ip)
+		public_ips.sort()
+		for ip_chunk in iterutils.chunked(public_ips, 100):
+			geo_locations.update(self.rpc.geoip_lookup_multi(ip_chunk))
+		return geo_locations
 
 	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
 		o_high = float(max(ctr.values()))
 		o_low = float(min(ctr.values()))
-		for visitor_ip, occurrences in ctr.items():
-			visitor_ip = ipaddress.ip_address(visitor_ip)
-			if visitor_ip.is_loopback or visitor_ip.is_private:
-				continue
-			geo_location = self.rpc.geoip_lookup(visitor_ip)
-			if not geo_location:
-				continue
+		color_with_creds = self.color_with_creds
+		color_without_creds = self.color_without_creds
+		geo_locations = self._resolve_geolocations(ctr.keys())
+		for visitor_ip, geo_location in geo_locations.items():
 			if not (geo_location.coordinates.longitude and geo_location.coordinates.latitude):
 				continue
+			occurrences = ctr[visitor_ip]
 			pts = bm(geo_location.coordinates.longitude, geo_location.coordinates.latitude)
 			if o_high == o_low:
 				markersize = 2.0
 			else:
 				markersize = 1.0 + (float(occurrences) - o_low) / (o_high - o_low)
 			markersize = markersize * base_markersize
-			bm.plot(pts[0], pts[1], 'o', markerfacecolor=(self.mpl_color_with_creds if visitor_ip in cred_ips else self.mpl_color_without_creds), markersize=markersize)
+			bm.plot(
+				pts[0],
+				pts[1],
+				'o',
+				markeredgewidth=0,
+				markerfacecolor=(color_with_creds if visitor_ip in cred_ips else color_without_creds),
+				markersize=markersize
+			)
 		return
+
+	def _map_set_line_color(self, map_lines, line_color):
+		for lines, texts in map_lines.values():
+			for line in lines:
+				line.set_color(line_color)
+			for text in texts:
+				text.set_color(line_color)
+
+	@property
+	def color_with_creds(self):
+		return self.get_color('map_marker1', ColorHexCode.RED)
+
+	@property
+	def color_without_creds(self):
+		return self.get_color('map_marker2', ColorHexCode.YELLOW)
 
 @export_graph_provider
 class CampaignGraphVisitsMapUSA(CampaignGraphVisitsMap):
@@ -538,7 +713,7 @@ class CampaignGraphVisitsMapWorld(CampaignGraphVisitsMap):
 	basemap_args = dict(projection='kav7', lon_0=0)
 
 @export_graph_provider
-class CampaignGraphPasswordComplexityPie(CampaignGraph):
+class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 	"""Display a graph which displays the number of passwords which meet standard complexity requirements."""
 	graph_title = 'Campaign Password Complexity'
 	name_human = 'Pie - Password Complexity'
@@ -551,9 +726,7 @@ class CampaignGraphPasswordComplexityPie(CampaignGraph):
 		ctr = collections.Counter()
 		ctr.update(self._check_complexity(password) for password in passwords)
 
-		ax = self.axes[0]
-		ax.pie((ctr[True], ctr[False]), explode=(0.1, 0), labels=('Complex', 'Not Complex'), labeldistance=1.05, colors=('yellowgreen', 'indianred'), autopct='%1.1f%%', shadow=True, startangle=45)
-		ax.axis('equal')
+		self.graph_pie((ctr[True], ctr[False]), autopct='%1.1f%%', legend_labels=('Complex', 'Not Complex'))
 		return
 
 	def _check_complexity(self, password):

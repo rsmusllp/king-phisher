@@ -129,6 +129,10 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		This method can be used to shut down the server. This function will
 		return, however no subsequent requests will be processed.
+
+		.. warning::
+			This action will stop the server process and there is no
+			confirmation before it takes place.
 		"""
 		shutdown_thread = threading.Thread(target=self.server.shutdown)
 		shutdown_thread.start()
@@ -365,7 +369,8 @@ class KingPhisherRequestHandlerRPC(object):
 	@database_access
 	def rpc_database_delete_row_by_id(self, session, table_name, row_id):
 		"""
-		Delete a row from a table with the specified value in the id column.
+		Delete the row from the table with the specified value in the id column.
+		If the row does not exist, no error is raised.
 
 		:param str table_name: The name of the database table to delete a row from.
 		:param row_id: The id value.
@@ -373,6 +378,10 @@ class KingPhisherRequestHandlerRPC(object):
 		table = database_table_objects.get(table_name)
 		assert table
 		row = db_manager.get_row_by_id(session, table, row_id)
+		if row is None:
+			logger = logging.getLogger('KingPhisher.Server.API.RPC')
+			logger.debug("received delete request for non existing row with id {0} from table {1}".format(row_id, table_name))
+			return
 		row.assert_session_has_permissions('d', self.rpc_session)
 		session.delete(row)
 		session.commit()
@@ -531,6 +540,7 @@ class KingPhisherRequestHandlerRPC(object):
 
 		user = db_manager.get_row_by_id(session, db_models.User, username)
 		if not user:
+			logger.info('creating new user object with id: ' + username)
 			user = db_models.User(id=username)
 			session.add(user)
 			session.commit()

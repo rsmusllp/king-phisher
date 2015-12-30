@@ -4,6 +4,8 @@
 .. module:: client.web_cloner
    :synopsis:
 
+This module contains the functionality used by the client to clone web pages.
+
 Classes
 -------
 

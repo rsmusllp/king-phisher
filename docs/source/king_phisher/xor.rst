@@ -4,6 +4,8 @@
 .. module:: xor
    :synopsis:
 
+This module provides basic support for XOR encoding and decoding operations.
+
 Functions
 ---------
 

@@ -29,7 +29,7 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=C0325
+# pylint: disable=superfluous-parens
 
 import logging
 import os
@@ -120,6 +120,39 @@ def convert_tuple_to_hex(rgb, raw=False):
 	else:
 		rgb = (int(round(float(x) * 255.0)) for x in rgb)
 	return "#{0:02x}{1:02x}{2:02x}".format(*rgb)
+
+def get_scale(color_low, color_high, count, ascending=True):
+	"""
+	Create a scale of colors gradually moving from the low color to the high
+	color.
+
+	:param tuple color_low: The darker color to start the scale with.
+	:param tuple color_high: The lighter color to end the scale with.
+	:param count: The total number of resulting colors.
+	:param bool ascending: Whether the colors should be ascending from lighter to darker or the reverse.
+	:return: An array of colors starting with the low and gradually transitioning to the high.
+	:rtype: tuple
+	"""
+	if sum(color_low) > sum(color_high):
+		# the colors are reversed so fix it and continue
+		color_low, color_high = (color_high, color_low)
+		ascending = not ascending
+	for _ in range(1):
+		if count < 1:
+			scale = []
+		elif count == 1:
+			scale = [color_low if ascending else color_high]
+		elif count == 2:
+			scale = [color_low, color_high]
+		else:
+			scale = [color_low]
+			for modifier in range(1, count - 1):
+				modifier = float(modifier) / float(count - 1)
+				scale.append(tuple(min(color_high[i], color_low[i]) + (abs(color_high[i] - color_low[i]) * modifier) for i in range(0, 3)))
+			scale.append(color_high)
+	if not ascending:
+		scale.reverse()
+	return tuple(scale)
 
 def print_error(message):
 	"""

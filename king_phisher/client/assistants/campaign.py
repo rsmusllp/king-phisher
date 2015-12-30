@@ -124,6 +124,14 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		"""
 		return self.gobjects['entry_campaign_name'].get_text()
 
+	@property
+	def is_editing_campaign(self):
+		return self.campaign_id is not None
+
+	@property
+	def is_new_campaign(self):
+		return self.campaign_id is None
+
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
 		description_font_desc = Pango.FontDescription()
@@ -131,7 +139,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 		for combobox in ('campaign_type', 'company_existing', 'company_industry'):
 			combobox = self.gobjects['combobox_' + combobox]
-			combobox.set_model(Gtk.ListStore(int, str, str))
+			model = Gtk.ListStore(int, str, str)
+			model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+			combobox.set_model(model)
 			renderer = Gtk.CellRendererText()
 			renderer.set_property('ellipsize', Pango.EllipsizeMode.END)
 			renderer.set_property('font-desc', description_font_desc)
@@ -151,6 +161,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		model.clear()
 		for row in self.application.rpc.remote_table('companies'):
 			model.append((row.id, row.name, row.description))
+
 		combobox = self.gobjects['combobox_company_industry']
 		model = combobox.get_model()
 		model.clear()
@@ -279,7 +290,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				)
 			)
 			expiration = utilities.datetime_local_to_utc(expiration)
-			if expiration <= datetime.datetime.now():
+			if self.is_new_campaign and expiration <= datetime.datetime.now():
 				gui_utilities.show_dialog_error('Invalid Campaign Expiration', self.parent, 'The expiration date is set in the past.')
 				set_current_page('Expiration')
 				return True

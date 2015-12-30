@@ -1,26 +1,30 @@
 # this is a pip requirements file specifically for the ReadTheDocs environment
 # because it can not install certain packages such as matplotlib
-alembic>=0.8.1
-boltons>=15.0.0
+alembic>=0.8.2
+boltons>=15.1.0
 dnspython>=1.12.0
 geoip2>=2.2.0
-geojson>=1.3.0
+geojson>=1.3.1
+icalendar>=3.9.1
 Jinja2>=2.8
 markupsafe>=0.23
 msgpack-python>=0.4.6
-paramiko>=1.15.2
+paramiko>=1.15.3
 py2-ipaddress==3.4.1
-pyotp==2.0.0
+pyotp>=2.0.1
 python-dateutil>=2.4.2
+pytz>=2015.6
 PyYAML>=3.11
-requests>=2.7.0
+requests>=2.8.1
 six>=1.9.0
-smoke-zephyr==1.0.1
+smoke-zephyr>=1.0.1
 SQLAlchemy>=1.0.8
 termcolor>=1.1.0
+tzlocal>=1.2
+XlsxWriter>=0.7.7
 
 # additional sphinx-specific requirements
 docutils>=0.12
 sphinx>=1.3.0
 sphinxcontrib-domaintools>=0.1
-sphinxcontrib-httpdomain>=1.3.0
+sphinxcontrib-httpdomain>=1.4.0

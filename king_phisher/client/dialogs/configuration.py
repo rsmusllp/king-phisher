@@ -61,6 +61,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		'entry_ssh_server',
 		'entry_ssh_username',
 		# Client Tab
+		'checkbutton_remove_attachment_metadata',
 		'combobox_spf_check_level'
 	)
 	top_gobject = 'dialog'

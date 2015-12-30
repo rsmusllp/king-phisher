@@ -4,6 +4,9 @@
 .. module:: ua_parser
    :synopsis:
 
+This module provides functionality for parsing browser user agents to extract
+information from them.
+
 Functions
 ---------
 

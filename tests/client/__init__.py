@@ -41,5 +41,5 @@ from .export import ClientExportTests
 from .graphs import ClientGraphsTests
 from .gtk_builder import ClientGtkBuilderLint
 from .gui_utilities import ClientGUIUtilityTests
-from .gui_utilities import ClientGUIUtilityTreeviewTests
+from .widget_managers import ClientTreeViewManagerTests
 from .mailer import ClientMailerTests

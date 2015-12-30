@@ -30,7 +30,10 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import base64
+import codecs
 import datetime
+import hashlib
 import logging
 import os
 import random
@@ -69,9 +72,13 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		self.filters['pluralize'] = boltons.strutils.pluralize
 		self.filters['singularize'] = boltons.strutils.singularize
 		self.filters['possessive'] = lambda word: word + ('\'' if word.endswith('s') else '\'s')
+		self.filters['encode'] = self._filter_encode
+		self.filters['decode'] = self._filter_decode
+		self.filters['hash'] = self._filter_hash
 
 		# time filters
 		self.filters['strftime'] = self._filter_strftime
+		self.filters['timedelta'] = self._filter_timedelta
 		self.filters['tomorrow'] = lambda dt: dt + datetime.timedelta(days=1)
 		self.filters['next_week'] = lambda dt: dt + datetime.timedelta(weeks=1)
 		self.filters['next_month'] = lambda dt: dt + datetime.timedelta(days=30)
@@ -104,11 +111,66 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		}
 		return std_vars
 
+	def _filter_decode(self, data, encoding):
+		if its.py_v3 and isinstance(data, bytes):
+			data = data.decode('utf-8')
+		encoding = encoding.lower()
+
+		if encoding == 'base16' or encoding == 'hex':
+			data = base64.b16decode(data)
+		elif encoding == 'base32':
+			data = base64.b32decode(data)
+		elif encoding == 'base64':
+			data = base64.b64decode(data)
+		elif encoding == 'rot-13' or encoding == 'rot13':
+			data = codecs.getdecoder('rot-13')(data)[0]
+		else:
+			raise ValueError('Unknown encoding type: ' + encoding)
+		if its.py_v3 and isinstance(data, bytes):
+			data = data.decode('utf-8')
+		return data
+
+	def _filter_encode(self, data, encoding):
+		if its.py_v3 and isinstance(data, str):
+			data = data.encode('utf-8')
+		encoding = encoding.lower()
+
+		if encoding == 'base16' or encoding == 'hex':
+			data = base64.b16encode(data)
+		elif encoding == 'base32':
+			data = base64.b32encode(data)
+		elif encoding == 'base64':
+			data = base64.b64encode(data)
+		elif encoding == 'rot-13' or encoding == 'rot13':
+			data = codecs.getencoder('rot-13')(data.decode('utf-8'))[0]
+		else:
+			raise ValueError('Unknown encoding type: ' + encoding)
+		if its.py_v3 and isinstance(data, bytes):
+			data = data.decode('utf-8')
+		return data
+
+	def _filter_hash(self, data, hash_type):
+		if its.py_v3 and isinstance(data, str):
+			data = data.encode('utf-8')
+		hash_type = hash_type.lower()
+		hash_type = hash_type.replace('-', '')
+
+		hash_obj = hashlib.new(hash_type, data)
+		return hash_obj.digest()
+
 	def _filter_strftime(self, dt, fmt):
 		try:
 			result = dt.strftime(fmt)
 		except ValueError:
 			self.logger.error("invalid time format '{0}'".format(fmt))
+			result = ''
+		return result
+
+	def _filter_timedelta(self, dt, *args, **kwargs):
+		try:
+			result = dt + datetime.timedelta(*args, **kwargs)
+		except ValueError:
+			self.logger.error('invalid timedelta specification')
 			result = ''
 		return result
 

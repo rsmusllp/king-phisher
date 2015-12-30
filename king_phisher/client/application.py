@@ -32,18 +32,17 @@
 
 import copy
 import ipaddress
-import json
 import logging
 import os
-import random
 import shlex
 import shutil
+import ssl
 import socket
 import sys
-import time
 import uuid
 
 from king_phisher import find
+from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import assistants
@@ -51,12 +50,13 @@ from king_phisher.client import client_rpc
 from king_phisher.client import dialogs
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
-from king_phisher.client import tools
-from king_phisher.client import windows
+from king_phisher.client.windows import main
+from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.ssh_forward import SSHTCPForwarder
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from boltons import typeutils
 from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
@@ -68,6 +68,10 @@ from smoke_zephyr.utilities import which
 
 CONFIG_FILE_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'config.json')
 """The default search location for the client configuration file."""
+
+DISABLED = typeutils.make_sentinel('DISABLED')
+"""A sentinel value to indicate that a feature is disabled."""
+
 GTK3_DEFAULT_THEME = 'Adwaita'
 """The default GTK3 Theme for style information."""
 
@@ -86,6 +90,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	:GObject Signals: :ref:`gobject-signals-application-label`
 	"""
+	# pylint: disable=too-many-public-methods
 	__gsignals__ = {
 		'campaign-changed': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
@@ -95,15 +100,19 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'rpc-cache-clear': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
-	def __init__(self, config_file=None):
+	def __init__(self, config_file=None, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
+		if use_style:
+			self._theme_file = 'theme.css'
+		else:
+			self._theme_file = DISABLED
 		self.logger = logging.getLogger('KingPhisher.Client.Application')
 		# log version information for debugging purposes
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
 		self.logger.debug("gi.repository GObject version: {0}".format('.'.join(map(str, GObject.pygobject_version))))
 		self.logger.debug("gi.repository Gtk version: {0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()))
-		if tools.has_vte:
-			self.logger.debug("gi.repository VTE version: {0}".format(tools.Vte._version))
+		if rpc_terminal.has_vte:
+			self.logger.debug("gi.repository VTE version: {0}".format(rpc_terminal.Vte._version))
 		if graphs.has_matplotlib:
 			self.logger.debug("matplotlib version: {0}".format(graphs.matplotlib.__version__))
 		self.set_property('application-id', 'org.king-phisher.client')
@@ -115,7 +124,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.config = None
 		"""The primary King Phisher client configuration."""
 		self.main_window = None
-		"""The primary top-level :py:class:`~.MainApplicationWindow` instance."""
+		"""The primary top-level :py:class:`~.MainAppWindow` instance."""
 		self.rpc = None
 		"""The :py:class:`~.KingPhisherRPCClient` instance for the application."""
 		self._ssh_forwarder = None
@@ -160,13 +169,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		active_window = self.get_active_window()
 		title_ssh_error = 'Failed To Connect To The SSH Service'
 		server_remote_port = self.config['server_remote_port']
-		local_port = random.randint(2000, 6000)
 
 		try:
-			self._ssh_forwarder = SSHTCPForwarder(server, username, password, local_port, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
+			self._ssh_forwarder = SSHTCPForwarder(server, username, password, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
 			self._ssh_forwarder.start()
-			time.sleep(0.5)
-			self.logger.info('started ssh port forwarding')
 		except paramiko.AuthenticationException:
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The server responded that the credentials are invalid.')
@@ -176,7 +182,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, "An {0}.{1} error occurred.".format(error.__class__.__module__, error.__class__.__name__))
 		else:
-			return local_port
+			return self._ssh_forwarder.local_server
 		self.server_disconnect()
 		return
 
@@ -271,15 +277,17 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.debug('resetting the gtk-icon-theme-name property to it\'s default value')
 			settings.set_property('gtk-icon-theme-name', GTK3_DEFAULT_THEME)
 
-		# load a custom css file if one is available
-		css_file = self.theme_file
-		if css_file:
-			self.style_provider = self.load_style_css(css_file)
+		# load a custom css theme file if one is available
+		theme_file = self.theme_file
+		if theme_file:
+			self.style_provider = self.load_style_css(theme_file)
+		elif theme_file is DISABLED:
+			self.logger.debug('no css theme file will be loaded (styling has been disabled)')
 		else:
-			self.logger.debug('no custom css file was found')
+			self.logger.debug('no css theme file will be loaded (file not found)')
 
 		# create and show the main window
-		self.main_window = windows.MainApplicationWindow(self.config, self)
+		self.main_window = main.MainAppWindow(self.config, self)
 		self.main_window.set_position(Gtk.WindowPosition.CENTER)
 		self.main_window.show()
 
@@ -308,9 +316,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self.style_provider
 			)
 			self.style_provider = None
-		css_file = self.theme_file
-		if css_file:
-			self.style_provider = self.load_style_css(css_file)
+		theme_file = self.theme_file
+		if theme_file:
+			self.style_provider = self.load_style_css(theme_file)
 
 	def do_rpc_cache_clear(self):
 		if self.rpc:
@@ -319,7 +327,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def do_server_connected(self):
 		self.load_server_config()
 		campaign_id = self.config.get('campaign_id')
-		if campaign_id is None:
+		if not campaign_id:
 			if not self.show_campaign_selection():
 				self.logger.debug('no campaign selected, disconnecting and exiting')
 				self.emit('exit')
@@ -342,7 +350,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	@property
 	def theme_file(self):
-		return find.find_data_file(os.path.join('style', 'theme.css'))
+		if not self._theme_file:
+			return DISABLED
+		return find.find_data_file(os.path.join('style', self._theme_file))
 
 	def load_config(self, load_defaults=False):
 		"""
@@ -355,10 +365,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		client_template = find.find_data_file('client_config.json')
 		config_file = os.path.expanduser(self.config_file)
 		with open(config_file, 'r') as tmp_file:
-			self.config = json.load(tmp_file)
+			self.config = json_ex.load(tmp_file)
 		if load_defaults:
 			with open(client_template, 'r') as tmp_file:
-				client_template = json.load(tmp_file)
+				client_template = json_ex.load(tmp_file)
 			for key, value in client_template.items():
 				if not key in self.config:
 					self.config[key] = value
@@ -375,7 +385,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		style_provider.connect('parsing-error', self.signal_css_provider_parsing_error)
 		try:
 			style_provider.load_from_file(css_file)
-		except GLib.Error:
+		except GLib.Error:  # pylint: disable=catching-non-exception
 			self.logger.error('there was an error parsing the css file, it will not be applied as a style provider')
 			return None
 		Gtk.StyleContext.add_provider_for_screen(
@@ -393,7 +403,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			if 'password' in key or key == 'server_config':
 				del config[key]
 		with open(os.path.expanduser(self.config_file), 'w') as config_file_h:
-			json.dump(config, config_file_h, sort_keys=True, indent=2, separators=(',', ': '))
+			json_ex.dump(config, config_file_h)
 
 	def server_connect(self, username, password, otp=None):
 		# pylint: disable=too-many-locals
@@ -403,14 +413,14 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		server = parse_server(self.config['server'], 22)
 		if server[0] == 'localhost' or (utilities.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
-			local_port = self.config['server_remote_port']
-			self.logger.info("connecting to local king-phisher instance")
+			local_server = ('localhost', self.config['server_remote_port'])
+			self.logger.info("connecting to local king phisher instance")
 		else:
-			local_port = self._create_ssh_forwarder(server, username, password)
-		if not local_port:
+			local_server = self._create_ssh_forwarder(server, username, password)
+		if not local_server:
 			return False, ConnectionErrorReason.ERROR_PORT_FORWARD
 
-		rpc = client_rpc.KingPhisherRPCClient(('localhost', local_port), use_ssl=self.config.get('server_use_ssl'))
+		rpc = client_rpc.KingPhisherRPCClient(local_server, use_ssl=self.config.get('server_use_ssl'))
 		if self.config.get('rpc.serializer'):
 			try:
 				rpc.set_serializer(self.config['rpc.serializer'])
@@ -421,26 +431,35 @@ class KingPhisherClientApplication(_Gtk_Application):
 		try:
 			server_version_info = rpc('version')
 			assert server_version_info is not None
-		except AdvancedHTTPServerRPCError as err:
-			self.logger.warning('failed to connect to the remote rpc server with http status: ' + str(err.status))
-			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server responded with HTTP status: ' + str(err.status))
+		except AdvancedHTTPServerRPCError as error:
+			self.logger.warning('failed to connect to the remote rpc service with http status: ' + str(error.status))
+			gui_utilities.show_dialog_error(title_rpc_error, active_window, "The server responded with HTTP status: {0}.".format(str(error.status)))
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, active_window)
+		except ssl.CertificateError as error:
+			self.logger.warning('failed to connect to the remote rpc service with a https certificate error: ' + error.message)
+			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server presented an invalid SSL certificate.')
 		except Exception:
 			self.logger.warning('failed to connect to the remote rpc service', exc_info=True)
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'Ensure that the King Phisher Server is currently running.')
 		else:
 			connection_failed = False
-		finally:
-			if connection_failed:
-				self.server_disconnect()
-				return False, ConnectionErrorReason.ERROR_CONNECTION
+
+		if connection_failed:
+			self.server_disconnect()
+			return False, ConnectionErrorReason.ERROR_CONNECTION
 
 		server_rpc_api_version = server_version_info.get('rpc_api_version', -1)
 		if isinstance(server_rpc_api_version, int):
 			# compatibility with pre-0.2.0 version
 			server_rpc_api_version = (server_rpc_api_version, 0)
-		self.logger.info("successfully connected to the king phisher server (version: {0} rpc api version: {1}.{2})".format(server_version_info['version'], server_rpc_api_version[0], server_rpc_api_version[1]))
+		self.logger.info(
+			"successfully connected to the king phisher server (version: {0} rpc api version: {1}.{2})".format(
+				server_version_info['version'],
+				server_rpc_api_version[0],
+				server_rpc_api_version[1]
+			)
+		)
 
 		error_text = None
 		if server_rpc_api_version[0] < version.rpc_api_version.major or (server_rpc_api_version[0] == version.rpc_api_version.major and server_rpc_api_version[1] < version.rpc_api_version.minor):
@@ -459,6 +478,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('failed to authenticate to the remote king phisher service, reason: ' + login_reason)
 			self.server_disconnect()
 			return False, login_reason
+		rpc.username = username
+		self.logger.debug('successfully authenticated to the remote king phisher service')
 
 		self.rpc = rpc
 		self.emit('server-connected')
@@ -475,7 +496,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if self._ssh_forwarder:
 			self._ssh_forwarder.stop()
 			self._ssh_forwarder = None
-			self.logger.info('stopped ssh port forwarding')
 		return
 
 	def show_campaign_graph(self, graph_name):
@@ -487,7 +507,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		:param str graph_name: The name of the graph to make a window of.
 		"""
 		cls = graphs.get_graph(graph_name)
-		graph_inst = cls(self)
+		graph_inst = cls(self, style_context=self.style_context)
 		graph_inst.load_graph()
 		window = graph_inst.make_window()
 		window.show()
@@ -560,10 +580,18 @@ class KingPhisherClientApplication(_Gtk_Application):
 		a confirmation dialog before performing the operation. If the
 		remote service is stopped, the client will quit.
 		"""
-		if not gui_utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', self.get_active_window(), 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
+		active_window = self.get_active_window()
+		if not gui_utilities.show_dialog_yes_no('Stop The Remote King Phisher Service?', active_window, 'This will stop the remote King Phisher service and\nnew incoming requests will not be processed.'):
 			return
 		self.rpc('shutdown')
 		self.logger.info('the remote king phisher service has been stopped')
-		gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'The remote service has been stopped.')
+		gui_utilities.show_dialog_error('Now Exiting', active_window, 'The remote service has been stopped.')
 		self.quit()
 		return
+
+	@property
+	def style_context(self):
+		window = self.get_active_window() or self.main_window
+		if window is None:
+			return None
+		return window.get_style_context()

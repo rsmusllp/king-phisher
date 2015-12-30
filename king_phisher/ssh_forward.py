@@ -31,10 +31,13 @@
 #
 
 import binascii
+import hashlib
+import logging
 import select
 import socket
 import sys
 import threading
+import time
 
 import paramiko
 
@@ -43,7 +46,7 @@ if sys.version_info[0] < 3:
 else:
 	import socketserver
 
-__all__ = ['SSHTCPForwarder']
+__all__ = ('SSHTCPForwarder',)
 
 class ForwardServer(socketserver.ThreadingTCPServer):
 	daemon_threads = True
@@ -66,7 +69,7 @@ class ForwardHandler(socketserver.BaseRequestHandler):
 			chan = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
 		except paramiko.ChannelException:
 			chan = None
-		if chan == None:
+		if chan is None:
 			return
 		while True:
 			read_ready, _, _ = select.select([self.request, chan], [], [])
@@ -90,18 +93,18 @@ class SSHTCPForwarder(threading.Thread):
 	a :py:class:`threading.Thread` object and needs to be started after
 	it is initialized.
 	"""
-	def __init__(self, server, username, password, local_port, remote_server, preferred_private_key=None):
+	def __init__(self, server, username, password, remote_server, local_port=0, preferred_private_key=None):
 		"""
 		:param tuple server: The server to connect to.
 		:param str username: The username to authenticate with.
 		:param str password: The password to authenticate with.
-		:param int local_port: The local port to forward.
 		:param tuple remote_server: The remote server to connect to through the SSH server.
+		:param int local_port: The local port to forward, if not set a random one will be used.
 		:param str preferred_private_key: An RSA key to prefer for authentication.
 		"""
 		super(SSHTCPForwarder, self).__init__()
+		self.logger = logging.getLogger('KingPhisher.' + self.__class__.__name__)
 		self.server = (server[0], int(server[1]))
-		self.local_port = int(local_port)
 		self.remote_server = (remote_server[0], int(remote_server[1]))
 		client = paramiko.SSHClient()
 		client.load_system_host_keys()
@@ -118,14 +121,34 @@ class SSHTCPForwarder(threading.Thread):
 
 		if not self.__connected and preferred_private_key:
 			preferred_private_key = preferred_private_key.strip()
-			preferred_private_key = preferred_private_key.replace(':', '')
-			preferred_private_key = preferred_private_key.lower()
-			preferred_private_key = tuple(key for key in ssh_keys if binascii.b2a_hex(key.get_fingerprint()).lower() == preferred_private_key)
+			if preferred_private_key.startswith('SHA256:') or preferred_private_key.startswith('sha256:'):
+				# OpenSSH 6.8 started to use sha256 & base64 for keys
+				algorithm = 'sha256'
+				preferred_private_key = preferred_private_key[7:]
+				preferred_private_key = binascii.a2b_base64(preferred_private_key + '=')
+			else:
+				algorithm = 'md5'
+				preferred_private_key = preferred_private_key.replace(':', '')
+				preferred_private_key = binascii.a2b_hex(preferred_private_key)
+			preferred_private_key = tuple(key for key in ssh_keys if hashlib.new(algorithm, key.blob).digest() == preferred_private_key)
 			if len(preferred_private_key) == 1:
+				self.logger.debug('attempting ssh authentication with user specified key')
 				self.__try_connect(look_for_keys=False, pkey=preferred_private_key[0])
 
 		if not self.__connected:
 			self.__try_connect(password=password, look_for_keys=True, raise_error=True)
+
+		transport = self.client.get_transport()
+		self._forward_server = ForwardServer(self.remote_server, transport, ('127.0.0.1', local_port), ForwardHandler)
+
+	def __repr__(self):
+		return "<{0} ({1}) >".format(self.__class__.__name__, str(self))
+
+	def __str__(self):
+		local_server = "{0}:{1}".format(*self.local_server)
+		remote_server = "{0}:{1}".format(*self.remote_server)
+		server = "{0}:{1}".format(*self.server)
+		return "{0} to {1} via {2}".format(local_server, remote_server, server)
 
 	def __try_connect(self, *args, **kwargs):
 		raise_error = False
@@ -141,13 +164,21 @@ class SSHTCPForwarder(threading.Thread):
 		self.__connected = True
 		return True
 
+	@property
+	def local_server(self):
+		return self._forward_server.server_address
+
 	def run(self):
-		transport = self.client.get_transport()
-		self.server = ForwardServer(self.remote_server, transport, ('', self.local_port), ForwardHandler)
-		self.server.serve_forever()
+		self._forward_server.serve_forever()
+
+	def start(self):
+		super(SSHTCPForwarder, self).start()
+		time.sleep(0.5)
+		self.logger.info("started ssh port forwarding to the remote server ({0})".format(str(self)))
 
 	def stop(self):
-		if isinstance(self.server, ForwardServer):
-			self.server.shutdown()
+		if isinstance(self._forward_server, ForwardServer):
+			self._forward_server.shutdown()
 			self.join()
 		self.client.close()
+		self.logger.info("stopped ssh port forwarding to the remote server ({0})".format(str(self)))

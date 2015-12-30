@@ -30,7 +30,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
 import contextlib
 import datetime
 import functools
@@ -53,6 +52,7 @@ from gi.repository import GtkSource
 GObject.type_register(GtkSource.View)
 
 GOBJECT_PROPERTY_MAP = {
+	'calendar': None,  # delayed definition
 	'checkbutton': 'active',
 	'combobox': (
 		lambda c, v: c.set_active_iter(gtk_list_store_search(c.get_model(), v)),
@@ -107,7 +107,7 @@ def glib_idle_add_wait(function, *args):
 	results = []
 	@functools.wraps(function)
 	def wrapper():
-		results.append(function(*args)) # pylint: disable=star-args
+		results.append(function(*args))
 		gsource_completed.set()
 		return False
 	GLib.idle_add(wrapper)
@@ -179,6 +179,11 @@ def gtk_calendar_set_pydate(calendar, pydate):
 	"""
 	calendar.select_month(pydate.month - 1, pydate.year)
 	calendar.select_day(pydate.day)
+
+GOBJECT_PROPERTY_MAP['calendar'] = (
+	gtk_calendar_set_pydate,
+	gtk_calendar_get_pydate
+)
 
 def gtk_list_store_search(list_store, value, column=0):
 	"""
@@ -428,7 +433,7 @@ class GladeGObject(object):
 	data file.
 	"""
 	gobject_ids = ()
-	"""A tuple of children GObjects to load from the Glade data file."""
+	"""A tuple of unique children GTK Builder IDs to load from the Glade data file. These must be prefixed with their GTK type in all lowecase."""
 	top_level_dependencies = ()
 	"""Additional top level GObjects to load from the Glade data file."""
 	config_prefix = ''
@@ -657,165 +662,3 @@ class FileMonitor(object):
 	def cb_changed(self, gfile_monitor, gfile, gfile_other, gfile_monitor_event):
 		self.logger.debug("file monitor {0} received event: {1}".format(self.path, gfile_monitor_event.value_name))
 		self.on_changed(self.path, gfile_monitor_event)
-
-class TreeViewManager(object):
-	"""
-	A class that wraps :py:class:`Gtk.TreeView` objects that use `Gtk.ListStore`
-	models with additional functions for conveniently displaying text data.
-
-	If *cb_delete* is specified, the callback will be called with the treeview
-	instance, and the selection as the parameters.
-
-	If *cb_refresh* is specified, the callback will be called without any
-	parameters.
-	"""
-	def __init__(self, treeview, selection_mode=None, cb_delete=None, cb_refresh=None):
-		"""
-		:param treeview: The treeview to wrap and manage.
-		:type treeview: :py:class:`Gtk.TreeView`
-		:param selection_mode: The selection mode to set for the treeview.
-		:type selection_mode: :py:class:`Gtk.SelectionMode`
-		:param cb_delete: An optional callback that can be used to delete entries.
-		:type cb_delete: function
-		"""
-		self.treeview = treeview
-		"""The :py:class:`Gtk.TreeView` instance being managed."""
-		self.cb_delete = cb_delete
-		"""An optional callback for deleting entries from the treeview's model."""
-		self.cb_refresh = cb_refresh
-		"""An optional callback for refreshing the data in the treeview's model."""
-		self.column_titles = collections.OrderedDict()
-		"""An ordered dictionary of storage data columns keyed by their respective column titles."""
-		self.column_views = {}
-		"""A dictionary of column treeview's keyed by their column titles."""
-		self.treeview.connect('key-press-event', self.signal_key_pressed_copy)
-		if selection_mode is None:
-			selection_mode = Gtk.SelectionMode.SINGLE
-		treeview.get_selection().set_mode(selection_mode)
-
-	def _call_cb_delete(self):
-		if not self.cb_delete:
-			return
-		selection = self.treeview.get_selection()
-		if not selection.count_selected_rows():
-			return
-		self.cb_delete(self.treeview, selection)
-
-	def get_popup_menu(self, handle_button_press=True):
-		"""
-		Create a :py:class:`Gtk.Menu` with entries for copying and optionally
-		delete cell data from within the treeview. The delete option will only
-		be available if a delete callback was previously set.
-
-		:param bool handle_button_press: Whether or not to connect a handler for displaying the popup menu.
-		:return: The populated popup menu.
-		:rtype: :py:class:`Gtk.Menu`
-		"""
-		popup_copy_submenu = self.get_popup_copy_submenu()
-		popup_menu = Gtk.Menu.new()
-		menu_item = Gtk.MenuItem.new_with_label('Copy')
-		menu_item.set_submenu(popup_copy_submenu)
-		popup_menu.append(menu_item)
-		if self.cb_delete:
-			menu_item = Gtk.SeparatorMenuItem()
-			popup_menu.append(menu_item)
-			menu_item = Gtk.MenuItem.new_with_label('Delete')
-			menu_item.connect('activate', self.signal_activate_popup_menu_delete)
-			popup_menu.append(menu_item)
-		popup_menu.show_all()
-		if handle_button_press:
-			self.treeview.connect('button-press-event', self.signal_button_pressed, popup_menu)
-		return popup_menu
-
-	def get_popup_copy_submenu(self):
-		"""
-		Create a :py:class:`Gtk.Menu` with entries for copying cell data from
-		the treeview.
-
-		:return: The populated copy popup menu.
-		:rtype: :py:class:`Gtk.Menu`
-		"""
-		copy_menu = Gtk.Menu.new()
-		for column_title, store_id in self.column_titles.items():
-			menu_item = Gtk.MenuItem.new_with_label(column_title)
-			menu_item.connect('activate', self.signal_activate_popup_menu_copy, store_id)
-			copy_menu.append(menu_item)
-		if len(self.column_titles) > 1:
-			menu_item = Gtk.SeparatorMenuItem()
-			copy_menu.append(menu_item)
-			menu_item = Gtk.MenuItem.new_with_label('All')
-			menu_item.connect('activate', self.signal_activate_popup_menu_copy, self.column_titles.values())
-			copy_menu.append(menu_item)
-		return copy_menu
-
-	def set_column_titles(self, column_titles, column_offset=0, renderers=None):
-		"""
-		Populate the column names of a GTK TreeView and set their sort IDs. This
-		also populates the :py:attr:`.column_titles` attribute.
-
-		:param list column_titles: The titles of the columns.
-		:param int column_offset: The offset to start setting column names at.
-		:param list renderers: A list containing custom renderers to use for each column.
-		:return: A dict of all the :py:class:`Gtk.TreeViewColumn` objects keyed by their column id.
-		:rtype: dict
-		"""
-		self.column_titles.update((v, k) for (k, v) in enumerate(column_titles, column_offset))
-		columns = gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset, renderers=renderers)
-		for store_id, column_title in enumerate(column_titles, column_offset):
-			self.column_views[column_title] = columns[store_id]
-		return columns
-
-	def set_column_color(self, background=None, foreground=None, column_titles=None):
-		"""
-		Set a column in the model to be used as either the background or
-		foreground RGBA color for a cell.
-
-		:param int background: The column id of the model to use as the background color.
-		:param int foreground: The column id of the model to use as the foreground color.
-		:param column_titles: The columns to set the color for, if None is specified all columns will be set.
-		:type column_titles: str, tuple
-		"""
-		if background is None and foreground is None:
-			raise RuntimeError('either background of foreground must be set')
-		if column_titles is None:
-			column_titles = self.column_titles.keys()
-		elif isinstance(column_titles, str):
-			column_titles = (column_titles,)
-		for column_title in column_titles:
-			column = self.column_views[column_title]
-			cell = column.get_cells()[0]
-			props = {'text': self.column_titles[column_title]}
-			if background is not None:
-				props['background-rgba'] = background
-				props['background-set'] = True
-			if foreground is not None:
-				props['foreground-rgba'] = foreground
-				props['foreground-set'] = True
-			column.set_attributes(cell, **props)
-
-	def signal_button_pressed(self, treeview, event, popup_menu):
-		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
-			return
-		selection = treeview.get_selection()
-		if not selection.count_selected_rows():
-			return
-		popup_menu.popup(None, None, functools.partial(gtk_menu_position, event), None, event.button, event.time)
-		return True
-
-	def signal_key_pressed_copy(self, treeview, event):
-		if event.type != Gdk.EventType.KEY_PRESS:
-			return
-		keyval = event.get_keyval()[1]
-		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
-			if keyval == Gdk.KEY_c and self.column_titles:
-				gtk_treeview_selection_to_clipboard(treeview, self.column_titles.values()[0])
-		elif keyval == Gdk.KEY_F5 and self.cb_refresh:
-			self.cb_refresh()
-		elif keyval == Gdk.KEY_Delete:
-			self._call_cb_delete()
-
-	def signal_activate_popup_menu_copy(self, menuitem, column_ids):
-		gtk_treeview_selection_to_clipboard(self.treeview, column_ids)
-
-	def signal_activate_popup_menu_delete(self, menuitem):
-		self._call_cb_delete()

@@ -4,6 +4,9 @@
 .. module:: constants
    :synopsis:
 
+This module keeps collections of related constants organized for use in other
+modules.
+
 Classes
 -------
 
@@ -12,11 +15,13 @@ Classes
    :undoc-members:
 
 .. autoclass:: king_phisher.constants.ConnectionErrorReason
+.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_CONNECTION
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INCOMPATIBLE_VERSIONS
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INVALID_CREDENTIALS
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INVALID_OTP
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_PORT_FORWARD
+.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_UNKNOWN
 .. autoattribute:: king_phisher.constants.ConnectionErrorReason.SUCCESS
 
 .. autoclass:: king_phisher.constants.OSArch

@@ -4,6 +4,9 @@
 .. module:: server.server
    :synopsis:
 
+This module contains the functionality that provides the application's low-level
+HTTP server logic.
+
 Functions
 ---------
 

@@ -29,7 +29,7 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=R0914
+# pylint: disable=too-many-locals
 
 import argparse
 import logging
@@ -53,18 +53,18 @@ from smoke_zephyr.configuration import Configuration
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
-	'alembic>=0.8.1',
-	'boltons>=15.0',
+	'alembic>=0.8.2',
+	'boltons>=15.0.1',
 	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),
 	'geoip2>=2.2.0',
 	'Jinja2>=2.8',
 	'markupsafe>=0.23',
 	'msgpack-python>=0.4.6',
 	'psycopg2>=2.6.1',
-	'pyotp==2.0.0',
+	'pyotp>=2.0.1',
 	'python-dateutil>=2.4.2',
 	'PyYAML>=3.11',
-	'requests>=2.7.0',
+	'requests>=2.8.1',
 	'SQLAlchemy>=1.0.8',
 	'termcolor>=1.1.0'
 ]
@@ -111,16 +111,7 @@ def main():
 		return os.EX_CONFIG
 
 	# configure environment variables
-	data_path = os.path.dirname(__file__)
-	data_path = os.path.join(data_path, 'data', 'server')
-	data_path = os.path.abspath(data_path)
-	find.data_path_append(data_path)
-
-	data_path = os.getcwd()
-	data_path = os.path.join(data_path, 'data', 'server')
-	data_path = os.path.abspath(data_path)
-	find.data_path_append(data_path)
-
+	find.data_path_init('server')
 	if config.has_option('server.data_path'):
 		find.data_path_append(config.get('server.data_path'))
 

@@ -4,6 +4,9 @@
 .. module:: testing
    :synopsis:
 
+This module provides supporting functionality for the included application unit
+tests.
+
 Data
 ----
 

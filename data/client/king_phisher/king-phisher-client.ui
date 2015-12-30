@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 
+<!-- Generated with glade 3.19.0 
 
 Copyright (c) 2013-2015, SecureState LLC
 All rights reserved.
@@ -35,6 +35,7 @@ Brandan Geise
 <interface>
   <requires lib="gtk+" version="3.8"/>
   <requires lib="gtksourceview" version="3.0"/>
+  <!-- interface-css-provider-path style/theme.css -->
   <!-- interface-license-type bsd3c -->
   <!-- interface-name King Phisher -->
   <!-- interface-description Social Engineering Phishing Toolkit -->
@@ -102,6 +103,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -564,6 +566,9 @@ Brandan Geise</property>
       <object class="GtkBox" id="CampaignAssistant.page1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -629,12 +634,16 @@ Brandan Geise</property>
         <property name="page_type">intro</property>
         <property name="title" translatable="yes">Intro</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
       <object class="GtkBox" id="CampaignAssistant.page2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -758,12 +767,16 @@ Brandan Geise</property>
       <packing>
         <property name="title" translatable="yes">Basic Settings</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
       <object class="GtkBox" id="CampaignAssistant.page3">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -833,12 +846,16 @@ Brandan Geise</property>
       <packing>
         <property name="title" translatable="yes">Advanced Settings</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
       <object class="GtkBox" id="CampaignAssistant.page4">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -1142,12 +1159,16 @@ Brandan Geise</property>
       <packing>
         <property name="title" translatable="yes">Company</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
       <object class="GtkBox" id="CampaignAssistant.page5">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -1208,7 +1229,10 @@ Brandan Geise</property>
               <object class="GtkAlignment" id="alignment2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="left_padding">12</property>
+                <property name="top_padding">5</property>
+                <property name="bottom_padding">5</property>
+                <property name="left_padding">10</property>
+                <property name="right_padding">5</property>
                 <child>
                   <object class="GtkBox" id="box13">
                     <property name="visible">True</property>
@@ -1242,6 +1266,7 @@ Brandan Geise</property>
                             <property name="can_focus">True</property>
                             <property name="tooltip_text" translatable="yes">The minute for the campaign expiration time.</property>
                             <property name="max_length">2</property>
+                            <property name="input_purpose">number</property>
                             <property name="adjustment">ClockMinuteAdjustment</property>
                             <property name="numeric">True</property>
                           </object>
@@ -1286,6 +1311,7 @@ Brandan Geise</property>
                             <property name="can_focus">True</property>
                             <property name="tooltip_text" translatable="yes">The hour for the campaign expiration time on a 24-hour clock.</property>
                             <property name="max_length">2</property>
+                            <property name="input_purpose">number</property>
                             <property name="adjustment">ClockHourAdjustment</property>
                             <property name="numeric">True</property>
                           </object>
@@ -1325,12 +1351,16 @@ Brandan Geise</property>
       <packing>
         <property name="title" translatable="yes">Expiration</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
       <object class="GtkBox" id="CampaignAssistant.page6">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">10</property>
+        <property name="margin_top">5</property>
         <property name="orientation">vertical</property>
         <property name="spacing">10</property>
         <child>
@@ -1396,12 +1426,16 @@ Brandan Geise</property>
         <property name="page_type">confirm</property>
         <property name="title" translatable="yes">Confirm</property>
         <property name="complete">True</property>
+        <property name="has_padding">False</property>
       </packing>
     </child>
     <child internal-child="action_area">
       <object class="GtkBox" id="CampaignAssistant.action_area">
         <property name="can_focus">False</property>
       </object>
+      <packing>
+        <property name="has_padding">False</property>
+      </packing>
     </child>
   </object>
   <object class="GtkDialog" id="ExceptionDialog">
@@ -1445,6 +1479,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -1785,469 +1820,6 @@ Brandan Geise</property>
       </row>
     </data>
   </object>
-  <object class="GtkGrid" id="MailSenderConfigurationTab">
-    <property name="width_request">400</property>
-    <property name="height_request">300</property>
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="margin_left">5</property>
-    <property name="margin_right">5</property>
-    <property name="margin_top">5</property>
-    <property name="margin_bottom">5</property>
-    <property name="row_spacing">3</property>
-    <property name="column_spacing">5</property>
-    <property name="row_homogeneous">True</property>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label1">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Web Server URL*</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label2">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Company Name</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">1</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label3">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Source Email (MIME)</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">3</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label4">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Friendly Alias</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">4</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label5">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Subject*</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">5</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label6">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Reply To</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">6</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label7">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Message HTML File*</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">7</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label8">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Target CSV File*</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">8</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label9">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">File Attachment</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">9</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label12">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">* Required Options</property>
-        <attributes>
-          <attribute name="style" value="italic"/>
-        </attributes>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">12</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkBox" id="MailSenderConfigurationTab.box2">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="hexpand">True</property>
-        <property name="spacing">3</property>
-        <child>
-          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_webserver_url">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="tooltip_text" translatable="yes">The URL on the King Phisher server.</property>
-            <property name="hexpand">True</property>
-            <property name="placeholder_text" translatable="yes">http://king-phisher.com/</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="MailSenderConfigurationTab.button6">
-            <property name="label" translatable="yes">Verify URL</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="tooltip_text" translatable="yes">Send a test request to the URL for verification.</property>
-            <signal name="clicked" handler="signal_button_clicked_verify" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <style>
-          <class name="background-remove"/>
-        </style>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkBox" id="MailSenderConfigurationTab.box4">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="hexpand">True</property>
-        <property name="spacing">3</property>
-        <child>
-          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_html_file">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="tooltip_text" translatable="yes">The HTML message template file.</property>
-            <property name="hexpand">True</property>
-            <property name="editable">False</property>
-            <property name="primary_icon_stock">gtk-file</property>
-            <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
-            <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="MailSenderConfigurationTab.button1">
-            <property name="label" translatable="yes">Select File</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigurationTab.entry_html_file" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <style>
-          <class name="background-remove"/>
-        </style>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">7</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkBox" id="MailSenderConfigurationTab.box5">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="hexpand">True</property>
-        <property name="spacing">3</property>
-        <child>
-          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_file">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="tooltip_text" translatable="yes">Format: first name, last name, email address, (department (OPTIONAL))</property>
-            <property name="hexpand">True</property>
-            <property name="editable">False</property>
-            <property name="invisible_char">●</property>
-            <property name="primary_icon_stock">gtk-file</property>
-            <property name="primary_icon_activatable">False</property>
-            <property name="secondary_icon_activatable">False</property>
-            <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
-            <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="MailSenderConfigurationTab.button2">
-            <property name="label" translatable="yes">Select File</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="tooltip_text" translatable="yes">Format: first name, last name, email address, (department (OPTIONAL))</property>
-            <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigurationTab.entry_target_file" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <style>
-          <class name="background-remove"/>
-        </style>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">8</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkBox" id="MailSenderConfigurationTab.box6">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="hexpand">True</property>
-        <property name="spacing">3</property>
-        <child>
-          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_attachment_file">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="tooltip_text" translatable="yes">Attach an arbitrary file to sent messages.</property>
-            <property name="hexpand">True</property>
-            <property name="editable">False</property>
-            <property name="invisible_char">●</property>
-            <property name="primary_icon_stock">gtk-file</property>
-            <property name="primary_icon_activatable">False</property>
-            <property name="secondary_icon_activatable">False</property>
-            <property name="primary_icon_tooltip_text" translatable="yes">Attach a file to the messages.</property>
-            <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
-            <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkButton" id="MailSenderConfigurationTab.button3">
-            <property name="label" translatable="yes">Select File</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigurationTab.entry_attachment_file" swapped="no"/>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <style>
-          <class name="background-remove"/>
-        </style>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">9</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_company_name">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="tooltip_text" translatable="yes">The company name if a company is associated with the campaign.</property>
-        <property name="editable">False</property>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">1</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="tooltip_text" translatable="yes">The email address to use as the source in the MIME data of the message.</property>
-        <property name="placeholder_text" translatable="yes">sender@king-phisher.com</property>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">3</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email_alias">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">4</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_subject">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">5</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_reply_to_email">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">6</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label10">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Message Importance</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">10</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label11">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Message Sensitivity</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">11</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkComboBox" id="MailSenderConfigurationTab.combobox_importance">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="model">MsgImportance</property>
-        <property name="active">1</property>
-        <child>
-          <object class="GtkCellRendererText" id="cellrenderertext2"/>
-          <attributes>
-            <attribute name="text">0</attribute>
-          </attributes>
-        </child>
-        <style>
-          <class name="background-remove"/>
-        </style>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">10</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkComboBox" id="MailSenderConfigurationTab.combobox_sensitivity">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="model">MsgSensitivity</property>
-        <property name="active">0</property>
-        <child>
-          <object class="GtkCellRendererText" id="cellrenderertext3"/>
-          <attributes>
-            <attribute name="text">0</attribute>
-          </attributes>
-        </child>
-        <style>
-          <class name="background-remove"/>
-        </style>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">11</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email_smtp">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="tooltip_text" translatable="yes">The email address to use as the source in the SMTP connection.</property>
-        <property name="placeholder_text" translatable="yes">sender@king-phisher.com</property>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">2</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="MailSenderConfigurationTab.label13">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Source Email (SMTP)</property>
-      </object>
-      <packing>
-        <property name="left_attach">0</property>
-        <property name="top_attach">2</property>
-      </packing>
-    </child>
-    <child>
-      <placeholder/>
-    </child>
-    <style>
-      <class name="background-add"/>
-    </style>
-  </object>
   <object class="GtkAdjustment" id="PortAdjustment">
     <property name="lower">1</property>
     <property name="upper">65535</property>
@@ -2258,7 +1830,7 @@ Brandan Geise</property>
   <object class="GtkDialog" id="LoginDialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher</property>
-    <property name="default_width">300</property>
+    <property name="default_width">325</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <signal name="button-press-event" handler="signal_button_pressed" swapped="no"/>
@@ -2319,9 +1891,9 @@ Brandan Geise</property>
             <property name="margin_right">5</property>
             <property name="row_spacing">5</property>
             <property name="row_homogeneous">True</property>
-            <property name="column_homogeneous">True</property>
             <child>
               <object class="GtkLabel" id="LoginDialog.label11">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
@@ -2333,6 +1905,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="LoginDialog.label12">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Username</property>
@@ -2344,6 +1917,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="LoginDialog.label13">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Password</property>
@@ -2358,6 +1932,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The King Phisher SSH server.</property>
+                <property name="hexpand">True</property>
                 <property name="placeholder_text" translatable="yes">ssh server:port</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
@@ -2371,6 +1946,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The username to authenticate to SSH with.</property>
+                <property name="hexpand">True</property>
                 <property name="placeholder_text" translatable="yes">ssh username</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
               </object>
@@ -2385,6 +1961,7 @@ Brandan Geise</property>
                 <property name="can_focus">True</property>
                 <property name="has_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The password to authenticate to SSH with.</property>
+                <property name="hexpand">True</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">●</property>
                 <property name="placeholder_text" translatable="yes">ssh password</property>
@@ -2397,6 +1974,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="label10">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">HTTP Port</property>
@@ -2408,6 +1986,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="label11">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">HTTP SSL</property>
@@ -2422,7 +2001,9 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The port on which the King Phisher server is listening.</property>
+                <property name="hexpand">True</property>
                 <property name="max_length">5</property>
+                <property name="input_purpose">number</property>
                 <property name="adjustment">PortAdjustment</property>
                 <property name="numeric">True</property>
                 <property name="value">80</property>
@@ -2439,6 +2020,7 @@ Brandan Geise</property>
                 <property name="tooltip_text" translatable="yes">Whether the King Phisher server is listening with SSL or not.</property>
                 <property name="halign">start</property>
                 <property name="valign">center</property>
+                <property name="hexpand">True</property>
                 <signal name="notify::active" handler="signal_switch_ssl" swapped="no"/>
               </object>
               <packing>
@@ -2448,6 +2030,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="LoginDialog.label_server_one_time_password">
+                <property name="width_request">120</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">OTP</property>
               </object>
@@ -2460,6 +2043,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="LoginDialog.entry_server_one_time_password">
                 <property name="can_focus">True</property>
                 <property name="tooltip_text" translatable="yes">The one time password for this account.</property>
+                <property name="hexpand">True</property>
                 <property name="max_length">6</property>
                 <property name="placeholder_text" translatable="yes">one time password</property>
                 <property name="input_purpose">digits</property>
@@ -2549,8 +2133,8 @@ Brandan Geise</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">King Phisher Configuration</property>
-    <property name="default_width">500</property>
-    <property name="default_height">350</property>
+    <property name="default_width">550</property>
+    <property name="default_height">400</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
@@ -2611,6 +2195,7 @@ Brandan Geise</property>
               <object class="GtkBox" id="box2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="valign">start</property>
                 <property name="margin_left">5</property>
                 <property name="margin_right">5</property>
                 <property name="margin_top">5</property>
@@ -2621,13 +2206,15 @@ Brandan Geise</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="row_spacing">3</property>
+                    <property name="column_spacing">3</property>
                     <property name="row_homogeneous">True</property>
-                    <property name="column_homogeneous">True</property>
                     <child>
                       <object class="GtkLabel" id="label2">
+                        <property name="width_request">132</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Server</property>
+                        <property name="ellipsize">start</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
@@ -2636,6 +2223,7 @@ Brandan Geise</property>
                     </child>
                     <child>
                       <object class="GtkLabel" id="label3">
+                        <property name="width_request">132</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Username</property>
@@ -2650,6 +2238,7 @@ Brandan Geise</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The King Phisher SSH server.</property>
+                        <property name="hexpand">True</property>
                         <property name="editable">False</property>
                         <property name="placeholder_text" translatable="yes">server:port</property>
                       </object>
@@ -2663,6 +2252,7 @@ Brandan Geise</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The username to authenticate to SSH with.</property>
+                        <property name="hexpand">True</property>
                         <property name="editable">False</property>
                         <property name="placeholder_text" translatable="yes">username</property>
                       </object>
@@ -2687,6 +2277,7 @@ Brandan Geise</property>
                       <object class="GtkAlignment" id="ConfigurationDialog.alignment2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="top_padding">5</property>
                         <property name="left_padding">12</property>
                         <child>
                           <object class="GtkGrid" id="grid3">
@@ -2695,9 +2286,9 @@ Brandan Geise</property>
                             <property name="margin_right">3</property>
                             <property name="row_spacing">3</property>
                             <property name="row_homogeneous">True</property>
-                            <property name="column_homogeneous">True</property>
                             <child>
                               <object class="GtkLabel" id="label4">
+                                <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Phone Number</property>
@@ -2709,6 +2300,7 @@ Brandan Geise</property>
                             </child>
                             <child>
                               <object class="GtkLabel" id="label5">
+                                <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Carrier</property>
@@ -2723,6 +2315,7 @@ Brandan Geise</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">The phone number to send SMS alerts to.</property>
+                                <property name="hexpand">True</property>
                                 <property name="max_length">14</property>
                                 <property name="placeholder_text" translatable="yes">(###) ###-####</property>
                               </object>
@@ -2736,6 +2329,7 @@ Brandan Geise</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="valign">center</property>
+                                <property name="hexpand">True</property>
                                 <property name="model">SMSCarriers</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext1"/>
@@ -2777,6 +2371,7 @@ Brandan Geise</property>
                       <object class="GtkAlignment" id="ConfigurationDialog.alignment3">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="top_padding">5</property>
                         <property name="left_padding">12</property>
                         <child>
                           <object class="GtkGrid" id="grid5">
@@ -2784,10 +2379,11 @@ Brandan Geise</property>
                             <property name="can_focus">False</property>
                             <property name="margin_right">3</property>
                             <property name="margin_bottom">3</property>
-                            <property name="column_spacing">5</property>
+                            <property name="column_spacing">3</property>
                             <property name="row_homogeneous">True</property>
                             <child>
                               <object class="GtkLabel" id="label9">
+                                <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Hook URL</property>
@@ -2844,6 +2440,7 @@ Brandan Geise</property>
               <object class="GtkBox" id="box4">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="valign">start</property>
                 <property name="margin_left">5</property>
                 <property name="margin_right">5</property>
                 <property name="margin_top">5</property>
@@ -2971,6 +2568,7 @@ Brandan Geise</property>
                       <object class="GtkAlignment" id="ConfigurationDialog.alignment1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="top_padding">5</property>
                         <property name="left_padding">5</property>
                         <child>
                           <object class="GtkGrid" id="grid4">
@@ -3066,6 +2664,7 @@ Brandan Geise</property>
               <object class="GtkBox" id="box3">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="valign">start</property>
                 <property name="margin_left">5</property>
                 <property name="margin_right">5</property>
                 <property name="margin_top">5</property>
@@ -3125,6 +2724,7 @@ Brandan Geise</property>
               <object class="GtkBox" id="box1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="valign">start</property>
                 <property name="margin_left">5</property>
                 <property name="margin_right">5</property>
                 <property name="margin_top">5</property>
@@ -3200,7 +2800,6 @@ Brandan Geise</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="top_padding">5</property>
-                        <property name="bottom_padding">5</property>
                         <property name="left_padding">12</property>
                         <property name="right_padding">5</property>
                         <child>
@@ -3337,6 +2936,23 @@ Brandan Geise</property>
                     <property name="position">3</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkCheckButton" id="ConfigurationDialog.checkbutton_remove_attachment_metadata">
+                    <property name="label" translatable="yes">Remove Office 2007+ Attachment Metadata</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="tooltip_text" translatable="yes">Remove metadata in Office document attachments such as docx, pptx, and xlsx files.</property>
+                    <property name="halign">end</property>
+                    <property name="xalign">0</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">4</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="position">3</property>
@@ -3429,9 +3045,9 @@ Brandan Geise</property>
             <property name="margin_right">5</property>
             <property name="row_spacing">5</property>
             <property name="row_homogeneous">True</property>
-            <property name="column_homogeneous">True</property>
             <child>
               <object class="GtkLabel" id="SSHLoginDialog.label11">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server</property>
@@ -3443,6 +3059,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="SSHLoginDialog.label12">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Username</property>
@@ -3454,6 +3071,7 @@ Brandan Geise</property>
             </child>
             <child>
               <object class="GtkLabel" id="SSHLoginDialog.label13">
+                <property name="width_request">120</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Password</property>
@@ -3467,6 +3085,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_server">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
                 <property name="primary_icon_tooltip_text" translatable="yes">The SSH server.</property>
                 <property name="placeholder_text" translatable="yes">server:port</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
@@ -3480,6 +3099,7 @@ Brandan Geise</property>
               <object class="GtkEntry" id="SSHLoginDialog.entry_ssh_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
                 <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
                 <property name="placeholder_text" translatable="yes">username</property>
                 <signal name="activate" handler="signal_entry_activate" swapped="no"/>
@@ -3494,6 +3114,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="has_focus">True</property>
+                <property name="hexpand">True</property>
                 <property name="visibility">False</property>
                 <property name="invisible_char">●</property>
                 <property name="primary_icon_tooltip_text" translatable="yes">The server SSH password to authenticate with.</property>
@@ -3552,7 +3173,7 @@ Brandan Geise</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">0</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -3565,7 +3186,7 @@ Brandan Geise</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
           </object>
@@ -3586,7 +3207,7 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
-                <property name="label" translatable="yes">Showing 0 Campaigns</property>
+                <property name="label" translatable="yes">Showing 0 of 0 Campaigns</property>
                 <attributes>
                   <attribute name="scale" value="1.25"/>
                 </attributes>
@@ -3661,19 +3282,20 @@ Brandan Geise</property>
             <property name="can_focus">False</property>
             <property name="spacing">10</property>
             <child>
-              <object class="GtkCheckButton" id="CampaignSelectionDialog.checkbutton_show_expired">
-                <property name="label" translatable="yes">Show Expired Campaigns</property>
+              <object class="GtkMenuButton" id="CampaignSelectionDialog.menubutton_filter">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="xalign">0</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="signal_checkbutton_toggled" swapped="no"/>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">Filtering options for found campaigns.</property>
+                <property name="direction">right</property>
+                <child>
+                  <placeholder/>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -3727,36 +3349,36 @@ Brandan Geise</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-help</property>
   </object>
-  <object class="GtkApplicationWindow" id="RPCTerminalWindow">
+  <object class="GtkApplicationWindow" id="RPCTerminalAppWindow">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher RPC</property>
     <property name="destroy_with_parent">True</property>
     <child>
-      <object class="GtkBox" id="RPCTerminalWindow.box_main">
+      <object class="GtkBox" id="RPCTerminalAppWindow.box_main">
         <property name="width_request">-1</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkMenuBar" id="RPCTerminalWindow.menubar">
+          <object class="GtkMenuBar" id="RPCTerminalAppWindow.menubar">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkMenuItem" id="RPCTerminalWindow.menuitem_edit">
+              <object class="GtkMenuItem" id="RPCTerminalAppWindow.menuitem_edit">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Edit</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="RPCTerminalWindow.menu_edit">
+                  <object class="GtkMenu" id="RPCTerminalAppWindow.menu_edit">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_edit_copy">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_edit_copy">
                         <property name="label">gtk-copy</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="accel_path">&lt;RPCTerminalWindow&gt;/Edit/Copy</property>
+                        <property name="accel_path">&lt;RPCTerminalAppWindow&gt;/Edit/Copy</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="signal_menuitem_edit_copy" swapped="no"/>
@@ -3764,11 +3386,11 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_edit_paste">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_edit_paste">
                         <property name="label">gtk-paste</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="accel_path">&lt;RPCTerminalWindow&gt;/Edit/Paste</property>
+                        <property name="accel_path">&lt;RPCTerminalAppWindow&gt;/Edit/Paste</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="signal_menuitem_edit_paste" swapped="no"/>
@@ -3780,17 +3402,17 @@ Brandan Geise</property>
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="RPCTerminalWindow.menuitem_help">
+              <object class="GtkMenuItem" id="RPCTerminalAppWindow.menuitem_help">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Help</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="RPCTerminalWindow.menu_help">
+                  <object class="GtkMenu" id="RPCTerminalAppWindow.menu_help">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_about">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_help_about">
                         <property name="label">gtk-about</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -3800,7 +3422,7 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_api_docs">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_help_api_docs">
                         <property name="label" translatable="yes">API Docs</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -3810,7 +3432,7 @@ Brandan Geise</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="RPCTerminalWindow.imagemenuitem_help_wiki">
+                      <object class="GtkImageMenuItem" id="RPCTerminalAppWindow.imagemenuitem_help_wiki">
                         <property name="label" translatable="yes">Help</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -4008,6 +3630,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -4224,6 +3847,57 @@ Brandan Geise</property>
                   <object class="GtkMenu" id="MainMenuBar.menu_file_export">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Export campaign data to a CSV file.</property>
+                        <property name="label" translatable="yes">CSV</property>
+                        <property name="use_underline">True</property>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="menu1">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv_credentials">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Credentials</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_csv_credentials" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv_messages">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Messages</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_csv_messages" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv_visits">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Visits</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_csv_visits" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xlsx">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Campaign Excel</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_export_campaign_xlsx" swapped="no"/>
+                      </object>
+                    </child>
                     <child>
                       <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xml">
                         <property name="visible">True</property>
@@ -4476,6 +4150,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -4635,6 +4310,7 @@ Brandan Geise</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -4684,5 +4360,1000 @@ Brandan Geise</property>
       <action-widget response="-6">TextEntryDialog.button_cancel</action-widget>
       <action-widget response="-10">TextEntryDialog.button_apply</action-widget>
     </action-widgets>
+  </object>
+  <object class="GtkAdjustment" id="TimeDuration">
+    <property name="lower">1</property>
+    <property name="upper">1440</property>
+    <property name="step_increment">15</property>
+    <property name="page_increment">30</property>
+  </object>
+  <object class="GtkScrolledWindow" id="MailSenderConfigurationTab">
+    <property name="width_request">600</property>
+    <property name="height_request">450</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="shadow_type">in</property>
+    <child>
+      <object class="GtkViewport" id="MailSenderConfigurationTab.viewport">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkBox" id="MailSenderConfigurationTab.box">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkBox" id="box21">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkGrid" id="MailSenderConfigurationTab.grid">
+                    <property name="width_request">400</property>
+                    <property name="height_request">300</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
+                    <property name="margin_top">3</property>
+                    <property name="margin_bottom">3</property>
+                    <property name="row_spacing">3</property>
+                    <property name="column_spacing">5</property>
+                    <child>
+                      <object class="GtkBox" id="MailSenderConfigurationTab.box2">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
+                        <property name="spacing">3</property>
+                        <child>
+                          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_webserver_url">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">The URL of the landing page on the King Phisher server.</property>
+                            <property name="hexpand">True</property>
+                            <property name="placeholder_text" translatable="yes">http://king-phisher.com/</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="MailSenderConfigurationTab.button6">
+                            <property name="label" translatable="yes">Verify URL</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="tooltip_text" translatable="yes">Send a test request to the URL for verification.</property>
+                            <signal name="clicked" handler="signal_button_clicked_verify" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <style>
+                          <class name="background-remove"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox" id="MailSenderConfigurationTab.box4">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
+                        <property name="spacing">3</property>
+                        <child>
+                          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_html_file">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">The HTML message template file.</property>
+                            <property name="hexpand">True</property>
+                            <property name="editable">False</property>
+                            <property name="primary_icon_stock">gtk-file</property>
+                            <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
+                            <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="MailSenderConfigurationTab.button1">
+                            <property name="label" translatable="yes">Select File</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigurationTab.entry_html_file" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <style>
+                          <class name="background-remove"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">7</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox" id="MailSenderConfigurationTab.box6">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
+                        <property name="spacing">3</property>
+                        <child>
+                          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_attachment_file">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">An optional attachment file to send with messages.</property>
+                            <property name="hexpand">True</property>
+                            <property name="editable">False</property>
+                            <property name="invisible_char">●</property>
+                            <property name="primary_icon_stock">gtk-file</property>
+                            <property name="primary_icon_activatable">False</property>
+                            <property name="secondary_icon_activatable">False</property>
+                            <property name="primary_icon_tooltip_text" translatable="yes">Attach a file to the messages.</property>
+                            <property name="primary_icon_tooltip_markup" translatable="yes">Attach a file to the messages.</property>
+                            <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
+                            <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="MailSenderConfigurationTab.button3">
+                            <property name="label" translatable="yes">Select File</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigurationTab.entry_attachment_file" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <style>
+                          <class name="background-remove"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">8</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_company_name">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The company name if a company is associated with the campaign.</property>
+                        <property name="editable">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The email address to use as the source in the MIME data of the message.</property>
+                        <property name="placeholder_text" translatable="yes">sender@king-phisher.com</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email_alias">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">4</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_subject">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">5</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_reply_to_email">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">6</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email_smtp">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The email address to use as the source in the SMTP connection.</property>
+                        <property name="placeholder_text" translatable="yes">sender@king-phisher.com</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFrame" id="frame2">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label_xalign">0</property>
+                        <child>
+                          <object class="GtkAlignment" id="alignment6">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="bottom_padding">3</property>
+                            <property name="left_padding">12</property>
+                            <property name="right_padding">3</property>
+                            <child>
+                              <object class="GtkGrid" id="grid10">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="margin_bottom">3</property>
+                                <property name="row_spacing">3</property>
+                                <property name="column_spacing">5</property>
+                                <child>
+                                  <object class="GtkLabel" id="label28">
+                                    <property name="width_request">133</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="label" translatable="yes">CSV File</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkBox" id="box23">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="spacing">10</property>
+                                    <child>
+                                      <object class="GtkRadioButton" id="MailSenderConfigurationTab.radiobutton_target_type_file">
+                                        <property name="label" translatable="yes">CSV File</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="tooltip_text" translatable="yes">Send messages to all targets specified in a CSV file.</property>
+                                        <property name="xalign">0</property>
+                                        <property name="draw_indicator">True</property>
+                                        <property name="group">MailSenderConfigurationTab.radiobutton_target_type_single</property>
+                                        <signal name="toggled" handler="signal_radiobutton_toggled_target_type" swapped="no"/>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkRadioButton" id="MailSenderConfigurationTab.radiobutton_target_type_single">
+                                        <property name="label" translatable="yes">Single Target</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="tooltip_text" translatable="yes">Send a single message to a specific recipient.</property>
+                                        <property name="xalign">0</property>
+                                        <property name="active">True</property>
+                                        <property name="draw_indicator">True</property>
+                                        <signal name="toggled" handler="signal_radiobutton_toggled_target_type" swapped="no"/>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">0</property>
+                                    <property name="width">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="label1">
+                                    <property name="width_request">133</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="label" translatable="yes">Target Name</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="label38">
+                                    <property name="width_request">133</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="label" translatable="yes">Target Email</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_name">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="tooltip_text" translatable="yes">The first and last name of the desired target.</property>
+                                    <property name="placeholder_text" translatable="yes">Alice Liddle</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">2</property>
+                                    <property name="width">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_email_address">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="tooltip_text" translatable="yes">The targets email address.</property>
+                                    <property name="placeholder_text" translatable="yes">aliddle@king-phisher.com</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">3</property>
+                                    <property name="width">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="MailSenderConfigurationTab.button_target_file_select">
+                                    <property name="label" translatable="yes">Select File</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Format: first name, last name, email address, (department (OPTIONAL))</property>
+                                    <signal name="clicked" handler="signal_entry_activate_open_file" object="MailSenderConfigurationTab.entry_target_file" swapped="no"/>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">2</property>
+                                    <property name="top_attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_file">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="tooltip_text" translatable="yes">Format: first name, last name, email address, (department (OPTIONAL))</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="editable">False</property>
+                                    <property name="invisible_char">●</property>
+                                    <property name="primary_icon_stock">gtk-file</property>
+                                    <property name="primary_icon_activatable">False</property>
+                                    <property name="secondary_icon_activatable">False</property>
+                                    <property name="placeholder_text" translatable="yes">targets.csv</property>
+                                    <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
+                                    <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="label">
+                          <object class="GtkLabel" id="label52">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Target Information*</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">9</property>
+                        <property name="width">2</property>
+                        <property name="height">5</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox" id="box24">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">10</property>
+                        <child>
+                          <object class="GtkRadioButton" id="MailSenderConfigurationTab.radiobutton_message_type_email">
+                            <property name="label" translatable="yes">Email</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="xalign">0</property>
+                            <property name="active">True</property>
+                            <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="signal_radiobutton_toggled_message_type" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkRadioButton" id="MailSenderConfigurationTab.radiobutton_message_type_calendar_invite">
+                            <property name="label" translatable="yes">Calendar Invite</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="xalign">0</property>
+                            <property name="draw_indicator">True</property>
+                            <property name="group">MailSenderConfigurationTab.radiobutton_message_type_email</property>
+                            <signal name="toggled" handler="signal_radiobutton_toggled_message_type" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">14</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label1">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Web Server URL*</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label2">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Company Name</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label3">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Source Email (MIME)</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label4">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Friendly Alias</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label5">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Subject*</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label6">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Reply To</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">6</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label7">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Message HTML File*</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">7</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label9">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">File Attachment</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">8</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label13">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Source Email (SMTP)</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label55">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Message Type</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">14</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <style>
+                  <class name="background-add"/>
+                </style>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkExpander" id="MailSenderConfigurationTab.expander_email_settings">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="valign">start</property>
+                <property name="expanded">True</property>
+                <property name="spacing">5</property>
+                <signal name="activate" handler="signal_expander_activate_message_type" swapped="no"/>
+                <child>
+                  <object class="GtkGrid" id="grid11">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_bottom">3</property>
+                    <property name="row_spacing">3</property>
+                    <property name="column_spacing">5</property>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label10">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Message Importance</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label11">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Message Sensitivity</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="MailSenderConfigurationTab.combobox_importance">
+                        <property name="width_request">250</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">MsgImportance</property>
+                        <property name="active">1</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext2"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                        <style>
+                          <class name="background-remove"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="MailSenderConfigurationTab.combobox_sensitivity">
+                        <property name="width_request">250</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">MsgSensitivity</property>
+                        <property name="active">0</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext3"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                        <style>
+                          <class name="background-remove"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="label53">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Settings specific to sending email messages.</property>
+                    <property name="label" translatable="yes">Email Settings</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkExpander" id="MailSenderConfigurationTab.expander_calendar_invite_settings">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="expanded">True</property>
+                <property name="spacing">5</property>
+                <signal name="activate" handler="signal_expander_activate_message_type" swapped="no"/>
+                <child>
+                  <object class="GtkGrid" id="grid12">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
+                    <property name="row_spacing">3</property>
+                    <property name="column_spacing">5</property>
+                    <child>
+                      <object class="GtkCalendar" id="MailSenderConfigurationTab.calendar_calendar_invite_date">
+                        <property name="width_request">250</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The date that the invite's event should start on.</property>
+                        <property name="halign">start</property>
+                        <property name="valign">start</property>
+                        <property name="year">2015</property>
+                        <property name="month">9</property>
+                        <property name="day">19</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label56">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="valign">center</property>
+                        <property name="label" translatable="yes">Start Date</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSpinButton" id="MailSenderConfigurationTab.spinbutton_calendar_invite_duration">
+                        <property name="width_request">250</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The number of minutes that the event should be scheduled to last.</property>
+                        <property name="halign">start</property>
+                        <property name="text" translatable="yes">60</property>
+                        <property name="input_purpose">phone</property>
+                        <property name="adjustment">TimeDuration</property>
+                        <property name="numeric">True</property>
+                        <property name="value">60</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox" id="box20">
+                        <property name="width_request">250</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="spacing">5</property>
+                        <child>
+                          <object class="GtkSpinButton" id="MailSenderConfigurationTab.spinbutton_calendar_invite_start_hour">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">The hour for the event's start time on a 24-hour clock.</property>
+                            <property name="max_length">2</property>
+                            <property name="text" translatable="yes">12</property>
+                            <property name="input_purpose">number</property>
+                            <property name="adjustment">ClockHourAdjustment</property>
+                            <property name="numeric">True</property>
+                            <property name="value">12</property>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="label57">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">:</property>
+                            <attributes>
+                              <attribute name="scale" value="1.5"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSpinButton" id="MailSenderConfigurationTab.spinbutton_calendar_invite_start_minute">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">The minute for the event's start time.</property>
+                            <property name="max_length">2</property>
+                            <property name="text" translatable="yes">0</property>
+                            <property name="input_purpose">number</property>
+                            <property name="adjustment">ClockMinuteAdjustment</property>
+                            <property name="numeric">True</property>
+                            <property name="value">2.2351741811588166e-10</property>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label58">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Start Time</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label54">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Duration (minutes)</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label59">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Location</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label60">
+                        <property name="width_request">150</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Summary</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_calendar_invite_location">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">An optional location for the event to take place.</property>
+                        <property name="hexpand">True</property>
+                        <property name="placeholder_text" translatable="yes">Conference Room A</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">3</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_calendar_invite_summary">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">An optional short summary to describe the event.</property>
+                        <property name="hexpand">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">4</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="MailSenderConfigurationTab.checkbutton_calendar_invite_all_day">
+                        <property name="label" translatable="yes">All Day Event</property>
+                        <property name="width_request">250</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Whether or not the event should be scheduled to last the entire day.</property>
+                        <property name="halign">start</property>
+                        <property name="hexpand">True</property>
+                        <property name="xalign">0</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="signal_checkbutton_toggled_calendar_invite_all_day" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">2</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="MailSenderConfigurationTab.checkbutton_calendar_request_rsvp">
+                        <property name="label" translatable="yes">Request RSVP</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Whether to request an RSVP response to the invite. If enabled, responses will be sent to the "Source Email (MIME)" address.</property>
+                        <property name="xalign">0</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">5</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="label27">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Settings specific to sending calendar invite messages.</property>
+                    <property name="label" translatable="yes">Calendar Invite Settings</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="MailSenderConfigurationTab.label12">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="halign">start</property>
+                <property name="label" translatable="yes">* Required Options</property>
+                <attributes>
+                  <attribute name="style" value="italic"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
   </object>
 </interface>

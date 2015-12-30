@@ -41,6 +41,7 @@ from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
+from king_phisher.client import widget_managers
 
 from boltons import iterutils
 from gi.repository import GdkPixbuf
@@ -111,7 +112,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		self.treeview_manager = gui_utilities.TreeViewManager(
+		self.treeview_manager = widget_managers.TreeViewManager(
 			treeview,
 			selection_mode=Gtk.SelectionMode.MULTIPLE,
 			cb_delete=self._prompt_to_delete_row,
@@ -167,7 +168,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if isinstance(cell_data, datetime.datetime):
 			cell_data = utilities.datetime_utc_to_local(cell_data)
 			return utilities.format_datetime(cell_data)
-		elif cell_data == None:
+		elif cell_data is None:
 			return ''
 		return str(cell_data)
 
@@ -214,6 +215,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		for row in self.rpc.remote_table(self.remote_table_name, query_filter={'campaign_id': self.config['campaign_id']}):
 			if self.is_destroyed.is_set():
 				break
+			if self.rpc is None:
+				break
 			row_data = self.format_row_data(row)
 			if row_data is None:
 				self.rpc('db/table/delete', self.remote_table_name, row.id)
@@ -227,7 +230,11 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.last_load_time = time.time()
 
 	def signal_button_clicked_export(self, button):
-		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
+		self.export_table_to_csv()
+
+	def export_table_to_csv(self):
+		"""Export the data represented by the view to a CSV file."""
+		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
 			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
 			return
 		dialog = gui_utilities.FileChooser('Export Data', self.parent)
@@ -235,9 +242,24 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()
 		if not response:
+			self.loader_thread_lock.release()
 			return
 		destination_file = response['target_path']
-		export.treeview_liststore_to_csv(self.gobjects['treeview_campaign'], destination_file)
+		store = self.gobjects['treeview_campaign'].get_model()
+		columns = dict(enumerate(('UID',) + self.view_columns))
+		export.liststore_to_csv(store, destination_file, columns)
+		self.loader_thread_lock.release()
+
+	def export_table_to_xlsx_worksheet(self, worksheet):
+		"""Export the data represented by the view to a XLSX worksheet."""
+		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
+			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
+			return
+		store = self.gobjects['treeview_campaign'].get_model()
+		columns = dict(enumerate(('UID',) + self.view_columns))
+		worksheet.set_column(0, len(columns), 30)
+		export.liststore_to_xlsx_worksheet(store, worksheet, columns)
+		self.loader_thread_lock.release()
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""
@@ -336,7 +358,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 					image.show()
 					self.gobjects['scrolledwindow_' + dash_port].add(image)
 				continue
-			graph_inst = cls(self.application, details)
+			graph_inst = cls(self.application, details, getattr(self, self.top_gobject).get_style_context())
 			self.gobjects['scrolledwindow_' + dash_port].add_with_viewport(graph_inst.canvas)
 			self.gobjects['box_' + dash_port].pack_end(graph_inst.navigation_toolbar, False, False, 0)
 			self.graphs.append(graph_inst)
@@ -382,7 +404,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		for graph in self.graphs:
 			if self.is_destroyed.is_set():
 				break
-			info_cache = gui_utilities.glib_idle_add_wait(lambda: graph.refresh(info_cache, self.is_destroyed))
+			info_cache.update(gui_utilities.glib_idle_add_wait(lambda g=graph: g.refresh(info_cache, self.is_destroyed)))
 		self.last_load_time = time.time()
 
 class CampaignViewVisitsTab(CampaignViewGenericTableTab):
@@ -498,7 +520,7 @@ class CampaignViewTab(object):
 		self.notebook.set_scrollable(True)
 		self.box.pack_start(self.notebook, True, True, 0)
 
-		self.tabs = {}
+		self.tabs = utilities.FreezableDict()
 		"""A dict object holding the sub tabs managed by this object."""
 		current_page = self.notebook.get_current_page()
 		self.last_page_id = current_page
@@ -528,6 +550,7 @@ class CampaignViewTab(object):
 			self.tabs['deaddrop_connections'] = deaddrop_connections_tab
 			self.notebook.append_page(deaddrop_connections_tab.box, deaddrop_connections_tab.label)
 
+		self.tabs.freeze()
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()

@@ -4,6 +4,8 @@
 .. module:: errors
    :synopsis:
 
+This module provides the custom exceptions that are used throughout the package.
+
 Exceptions
 ----------
 
@@ -22,4 +24,7 @@ Exceptions
    :show-inheritance:
 
 .. autoexception:: king_phisher.errors.KingPhisherPermissionError
+   :show-inheritance:
+
+.. autoexception:: king_phisher.errors.KingPhisherTimeoutError
    :show-inheritance:

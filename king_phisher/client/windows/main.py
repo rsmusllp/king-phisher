@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/windows.py
+#  king_phisher/client/windows/main.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -31,6 +31,7 @@
 #
 
 import logging
+import weakref
 
 from king_phisher import find
 from king_phisher import utilities
@@ -38,20 +39,24 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
-from king_phisher.client import tools
+from king_phisher.client.windows import rpc_terminal
 from king_phisher.client.tabs.campaign import CampaignViewTab
+from king_phisher.client.tabs.campaign import CampaignViewGenericTableTab
 from king_phisher.client.tabs.mail import MailSenderTab
 from king_phisher.constants import ConnectionErrorReason
 
 from gi.repository import Gdk
 from gi.repository import GdkPixbuf
 from gi.repository import Gtk
+import xlsxwriter
 
 if isinstance(Gtk.ApplicationWindow, utilities.Mock):
 	_Gtk_ApplicationWindow = type('Gtk.ApplicationWindow', (object,), {})
 	_Gtk_ApplicationWindow.__module__ = ''
 else:
 	_Gtk_ApplicationWindow = Gtk.ApplicationWindow
+
+__all__ = ('MainAppWindow',)
 
 class MainMenuBar(gui_utilities.GladeGObject):
 	"""
@@ -68,9 +73,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		'StockStopImage'
 	)
 	def __init__(self, application, window):
-		assert isinstance(window, MainApplicationWindow)
+		assert isinstance(window, MainAppWindow)
 		super(MainMenuBar, self).__init__(application)
-		self.window = window
+		self.window = weakref.proxy(window)
 		self._add_accelerators()
 		graphs_menu_item = self.gtk_builder_get('menuitem_tools_create_graph')
 		if graphs.has_matplotlib:
@@ -111,6 +116,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def do_edit_tags(self, _):
 		dialogs.TagEditorDialog(self.application).interact()
 
+	def do_export_campaign_xlsx(self, _):
+		self.window.export_campaign_xlsx()
+
 	def do_export_campaign_xml(self, _):
 		self.window.export_campaign_xml()
 
@@ -119,6 +127,21 @@ class MainMenuBar(gui_utilities.GladeGObject):
 
 	def do_export_message_data(self, _):
 		self.window.export_message_data()
+
+	def do_export_csv_credentials(self, _):
+		campaign_tab = self.window.tabs['campaign']
+		credentials_tab = campaign_tab.tabs['credentials']
+		credentials_tab.export_table_to_csv()
+
+	def do_export_csv_messages(self, _):
+		campaign_tab = self.window.tabs['campaign']
+		messages_tab = campaign_tab.tabs['messages']
+		messages_tab.export_table_to_csv()
+
+	def do_export_csv_visits(self, _):
+		campaign_tab = self.window.tabs['campaign']
+		visits_tab = campaign_tab.tabs['visits']
+		visits_tab.export_table_to_csv()
 
 	def do_import_message_data(self, _):
 		self.window.import_message_data()
@@ -130,7 +153,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		self.application.quit(optional=True)
 
 	def do_tools_rpc_terminal(self, _):
-		tools.KingPhisherClientRPCTerminal(self.application)
+		rpc_terminal.RPCTerminal(self.application)
 
 	def do_tools_clone_page(self, _):
 		dialogs.ClonePageDialog(self.application).interact()
@@ -147,7 +170,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def do_help_wiki(self, _):
 		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
 
-class MainApplicationWindow(_Gtk_ApplicationWindow):
+class MainAppWindow(_Gtk_ApplicationWindow):
 	"""
 	This is the top level King Phisher client window. This is also the parent
 	window for most GTK objects.
@@ -159,7 +182,7 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
 		assert isinstance(application, Gtk.Application)
-		super(MainApplicationWindow, self).__init__(application=application)
+		super(MainAppWindow, self).__init__(application=application)
 		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')
 		self.config = config
@@ -169,14 +192,16 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		vbox.set_property('orientation', Gtk.Orientation.VERTICAL)
 		vbox.show()
 		self.add(vbox)
+
 		default_icon_file = find.find_data_file('king-phisher-icon.svg')
 		if default_icon_file:
 			icon_pixbuf = GdkPixbuf.Pixbuf.new_from_file(default_icon_file)
 			self.set_default_icon(icon_pixbuf)
 		self.accel_group = Gtk.AccelGroup()
 		self.add_accel_group(self.accel_group)
-		self.menubar = MainMenuBar(application, self)
-		vbox.pack_start(self.menubar.menubar, False, False, 0)
+
+		self.menu_bar = MainMenuBar(application, self)
+		vbox.pack_start(self.menu_bar.menubar, False, False, 0)
 
 		# create notebook and tabs
 		self.notebook = Gtk.Notebook()
@@ -202,6 +227,7 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 		self.set_size_request(800, 600)
 		self.connect('delete-event', self.signal_delete_event)
 		self.notebook.show()
+
 		self.show()
 		self.rpc = None  # needs to be initialized last
 		"""The :py:class:`.KingPhisherRPCClient` instance."""
@@ -260,6 +286,23 @@ class MainApplicationWindow(_Gtk_ApplicationWindow):
 			entry.grab_focus()
 		elif reason == ConnectionErrorReason.ERROR_INVALID_CREDENTIALS:
 			gui_utilities.show_dialog_error('Login Failed', self, 'The provided credentials are incorrect.')
+
+	def export_campaign_xlsx(self):
+		"""Export the current campaign to an Excel compatible XLSX workbook."""
+		dialog = gui_utilities.FileChooser('Export Campaign To Excel', self)
+		file_name = self.config['campaign_name'] + '.xlsx'
+		response = dialog.run_quick_save(file_name)
+		dialog.destroy()
+		if not response:
+			return
+		destination_file = response['target_path']
+		campaign_tab = self.tabs['campaign']
+		workbook = xlsxwriter.Workbook(destination_file)
+		for tab_name, tab in campaign_tab.tabs.items():
+			if not isinstance(tab, CampaignViewGenericTableTab):
+				continue
+			tab.export_table_to_xlsx_worksheet(workbook.add_worksheet(tab_name))
+		workbook.close()
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""

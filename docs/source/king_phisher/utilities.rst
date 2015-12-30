@@ -4,10 +4,15 @@
 .. module:: utilities
    :synopsis:
 
+This module collects various useful utility functions that are used throughout
+the application.
+
 Functions
 ---------
 
 .. autofunction:: king_phisher.utilities.argp_add_args
+
+.. autofunction:: king_phisher.utilities.assert_arg_type
 
 .. autofunction:: king_phisher.utilities.configure_stream_logger
 

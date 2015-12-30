@@ -6,8 +6,8 @@ unsafe-load-any-extension=no
 
 [MESSAGES CONTROL]
 confidence=UNDEFINED
-disable=all
-enable=C0325,C0326,R0914,W0110,W0611,W0612,W0613,W0702
+disable=C0302,C0330,E0203,E0611,F0401,R0201,R0801,R0902,R0911,R0912,R0913,R0915,W0201,W0212,W0221,W0232,W0401,W0614,W0703,W1202
+enable=all
 
 [REPORTS].
 output-format=colorized
@@ -21,7 +21,7 @@ logging-modules=logging
 [BASIC]
 bad-functions=input
 good-names=i,j,k,ex,Run,_
-bad-names=foo,bar,baz,toto,tutu,tata
+bad-names=foo,baz,toto,tutu,tata
 function-rgx=[a-z_][a-z0-9_]{2,30}$
 function-name-hint=[a-z_][a-z0-9_]{2,30}$
 variable-rgx=[a-z_][a-z0-9_]{2,30}$
@@ -42,6 +42,7 @@ module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
 module-name-hint=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
 method-rgx=(([a-z_][a-z0-9_]{2,40})|(assert[a-zA-Z0-9]{2,40})|(do_[a-zA-Z0-9_]{2,40}))$
 method-name-hint=(([a-z_][a-z0-9_]{2,40})|(assert[a-zA-Z0-9]{2,40})|(do_[a-zA-Z0-9_]{2,40}))$
+max-line-length=200
 
 [FORMAT]
 ignore-long-lines=^\s*(# )?<?https?://\S+>?$
@@ -77,8 +78,8 @@ max-branches=12
 max-statements=50
 max-parents=7
 max-attributes=7
-min-public-methods=2
-max-public-methods=20
+min-public-methods=0
+max-public-methods=25
 
 [CLASSES]
 ignore-iface-methods=isImplementedBy,deferred,extends,names,namesAndDescriptions,queryDescriptionFor,getBases,getDescriptionFor,getDoc,getName,getTaggedValue,getTaggedValueTags,isEqualOrExtendedBy,setTaggedValue,isImplementedByInstancesOf,adaptWith,is_implemented_by

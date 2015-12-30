@@ -36,13 +36,25 @@ import re
 from king_phisher.constants import OSArch
 from king_phisher.constants import OSFamily
 
-__all__ = ['UserAgent', 'parse_user_agent']
+__all__ = ('UserAgent', 'parse_user_agent')
 __version__ = '0.2'
 
-USER_AGENT_REGEX_ARCH_PPC = re.compile(r'\sPPC\s', flags=re.IGNORECASE)
-USER_AGENT_REGEX_ARCH_X86 = re.compile(r'(x|(i[3456]))86[^-_]', flags=re.IGNORECASE)
-USER_AGENT_REGEX_ARCH_X86_64 = re.compile(r'(amd|wow|x(86[-_])?)?64', flags=re.IGNORECASE)
-USER_AGENT_REGEX_OS = re.compile(r'(android|(bb|blackberry)(\d{4})?|(ipad|iphone)?; cpu (ipad |iphone )?os|linux|mac os x|windows nt|windows phone os)(( |/)([\d\._\-]+)(;|\)| ))?', flags=re.IGNORECASE)
+USER_AGENT_REGEX_ARCH_PPC = re.compile(
+	r'\sPPC\s',
+	flags=re.IGNORECASE
+)
+USER_AGENT_REGEX_ARCH_X86 = re.compile(
+	r'(x|(i[3456]))86[^-_]',
+	flags=re.IGNORECASE
+)
+USER_AGENT_REGEX_ARCH_X86_64 = re.compile(
+	r'(amd|wow|x(86[-_])?)?64',
+	flags=re.IGNORECASE
+)
+USER_AGENT_REGEX_OS = re.compile(
+	r'(android|(bb|blackberry)(\d{4})?|(ipad|iphone)?; cpu (ipad |iphone )?os|linux|mac os x|windows nt|windows phone os)(( |/)([\d\._\-]+)(;|\)| ))?',
+	flags=re.IGNORECASE
+)
 USER_AGENT_REGEX_VERSION = re.compile(r'Version/(([\d\._\-]+)(;|\)| ))')
 
 RE_POS_OS_NAME = 0

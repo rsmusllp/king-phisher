@@ -21,6 +21,22 @@
 #
 ###############################################################################
 
+function prompt_yes_or_no {
+	# prompt the user to answer a yes or no question, defaulting to yes if no
+	# response is entered
+	local __prompt_text=$1
+	local __result_var=$2
+	while true; do
+		read -p "$__prompt_text [Y/n] " _response
+		case $_response in
+			"" ) eval $__result_var="yes"; break;;
+			[Yy]* ) eval $__result_var="yes"; break;;
+			[Nn]* ) eval $__result_var="no";  break;;
+			* ) echo "Please answer yes or no.";;
+		esac
+	done
+}
+
 E_SOFTWARE=70
 E_NOTROOT=87
 FILE_NAME="$(dirname $(readlink -e $0) 2>/dev/null)/$(basename $0)"
@@ -29,6 +45,7 @@ if [ -z "$KING_PHISHER_DIR" ]; then
 	KING_PHISHER_DIR="/opt/king-phisher"
 fi
 KING_PHISHER_GROUP="kpadmins"
+KING_PHISHER_USE_POSTGRESQL="no"
 KING_PHISHER_WEB_ROOT="/var/www"
 LINUX_VERSION=""
 
@@ -48,7 +65,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-grep -E "Fedora release 2[1-2]" /etc/redhat-release &> /dev/null
+grep -E "Fedora release 2[2-3]" /etc/redhat-release &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Fedora"
 fi
@@ -89,13 +106,19 @@ if [ ! -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 fi
 if [ ! -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	echo "Skipping installing King Phisher Server components"
+else
+	prompt_yes_or_no "Install and use PostgreSQL? (Highly recommended and required for upgrading)" KING_PHISHER_USE_POSTGRESQL
+	if [ $KING_PHISHER_USE_POSTGRESQL == "yes" ]; then
+		echo "Will install and configure PostgreSQL for the server"
+	fi
 fi
 
 # install git if necessary
 if [ ! "$(command -v git)" ]; then
-	if [ "$LINUX_VERSION" == "CentOS" ] || \
-	   [ "$LINUX_VERSION" == "Fedora" ]; then
+	if [ "$LINUX_VERSION" == "CentOS" ]; then
 		yum install -y -q git
+	elif [ "$LINUX_VERSION" == "Fedora" ]; then
+		dnf install -y -q git
 	else
 		apt-get install -y -qq git
 	fi
@@ -119,6 +142,11 @@ else
 	fi
 fi
 cd $KING_PHISHER_DIR
+if [ -n "$KING_PHISHER_DEV" ] && [ -d ".git" ]; then
+	git fetch origin
+	git checkout -b dev origin/dev
+	echo "Switched to the dev branch"
+fi
 
 if [ "$LINUX_VERSION" == "Kali" ]; then
 	echo "Checking Kali 2 apt sources"
@@ -136,9 +164,19 @@ if [ "$LINUX_VERSION" == "CentOS" ]; then
 	yum install -y epel-release
 	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
 		postgresql-devel python-devel python-pip
+	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
+		yum install -y postgresql-server
+	fi
 elif [ "$LINUX_VERSION" == "Fedora" ]; then
-	yum install -y freetype-devel gcc gcc-c++ gtk3-devel \
+	dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
 		libpng-devel postgresql-devel python-devel python-pip
+	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
+		dnf install -y postgresql-server
+	fi
+	# Fedora 23 is missing an rpm lib required, check to see if it has been installed.
+	if [ ! -d "$/usr/lib/rpm/redhat/redhat-hardened-cc1" ]; then
+		dnf install -y rpm-build
+	fi
 elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	 [ "$LINUX_VERSION" == "Debian"  ] || \
 	 [ "$LINUX_VERSION" == "Kali"    ] || \
@@ -158,6 +196,9 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	fi
 	if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		apt-get install -y libpq-dev
+	fi
+	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
+		apt-get install -y postgresql
 	fi
 	if [ "$LINUX_VERSION" == "Kali" ]; then
 		easy_install -U distribute
@@ -220,6 +261,23 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 
 	cp data/server/king_phisher/server_config.yml .
 	sed -i -re "s|#\\s?data_path:.*$|data_path: $KING_PHISHER_DIR|" ./server_config.yml
+
+	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
+		if [ -f "/etc/init.d/postgresql" ]; then
+			/etc/init.d/postgresql start &> /dev/null
+		fi
+		echo "Configuring the PostgreSQL server"
+		PG_CONFIG_LOCATION=$(su postgres -c "psql -t -P format=unaligned -c 'show hba_file';")
+		echo "PostgreSQL configuration file found at $PG_CONFIG_LOCATION"
+		echo "# permit local connections from the king_phisher user for the king_phisher database" >> $PG_CONFIG_LOCATION
+		echo "host     king_phisher    king_phisher   127.0.0.1/32            md5" >> $PG_CONFIG_LOCATION
+		# generate a random 32 character long password for postgresql
+		PG_KP_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+		su postgres -c "psql -c \"CREATE USER king_phisher WITH PASSWORD '$PG_KP_PASSWORD';\"" &> /dev/null
+		su postgres -c "psql -c \"CREATE DATABASE king_phisher OWNER king_phisher;\"" &> /dev/null
+		sed -i -re "s|database: sqlite://|#database: sqlite://|" ./server_config.yml
+		sed -i -re "s|#\\s?database: postgresql://.*$|database: postgresql://king_phisher:$PG_KP_PASSWORD@localhost/king_phisher|" ./server_config.yml
+	fi
 
 	if [ -d "/lib/systemd/system" -a "$(command -v systemctl)" ]; then
 		echo "Installing the King Phisher systemd service file in /lib/systemd/system/"

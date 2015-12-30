@@ -121,8 +121,6 @@ def authenticate(username, password, service=b'login'):
 	retval = PAM_START(service, username, pointer(conv), pointer(handle))
 
 	if retval != 0:
-		# TODO: This is not an authentication error, something
-		# has gone wrong starting up PAM
 		return False
 
 	retval = PAM_AUTHENTICATE(handle, 0)
@@ -130,4 +128,4 @@ def authenticate(username, password, service=b'login'):
 
 if __name__ == "__main__":
 	import getpass
-	print(authenticate(getpass.getuser(), getpass.getpass())) # pylint: disable=C0325
+	print(authenticate(getpass.getuser(), getpass.getpass()))  # pylint: disable=superfluous-parens

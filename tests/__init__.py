@@ -42,6 +42,7 @@ from .color import ColorConversionTests
 from .configuration import ServerConfigurationTests
 from .geoip import GeoIPTests
 from .geoip import GeoIPRPCTests
+from .ics import ICSTests
 from .sms import SMSTests
 from .spf import SPFTests
 from .templates import TemplatesTests

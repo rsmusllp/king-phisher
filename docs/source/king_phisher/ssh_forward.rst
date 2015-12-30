@@ -4,6 +4,8 @@
 .. module:: ssh_forward
    :synopsis:
 
+This module provides functionality for forwarding network services over SSH.
+
 Classes
 -------
 

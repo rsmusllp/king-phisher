@@ -32,7 +32,7 @@
 
 import collections
 
-version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(1, 0, 0)
+version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(1, 1, 0)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
 
 version_label = ''

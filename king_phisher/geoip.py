@@ -93,6 +93,7 @@ def init_database(database_file):
 	:return: The initialized GeoLite2 database object.
 	:rtype: :py:class:`geoip2.database.Reader`
 	"""
+	# pylint: disable=global-statement
 	global _geoip_db
 	if not os.path.isfile(database_file):
 		logger.warning('the specified geoip database does not exist, downloading a new copy')
@@ -118,7 +119,6 @@ def lookup(ip, lang='en'):
 		:py:data:`.DB_RESULT_FIELDS`.
 	:rtype: dict
 	"""
-	global _geoip_db
 	if not _geoip_db:
 		raise RuntimeError('the geoip database has not been initialized yet')
 	lang = (lang or 'en')
@@ -139,7 +139,7 @@ def lookup(ip, lang='en'):
 	result['time_zone'] = city.location.time_zone
 	return result
 
-Coordinates = collections.namedtuple('Coordinates', ['latitude', 'longitude'])
+Coordinates = collections.namedtuple('Coordinates', ('latitude', 'longitude'))
 """A named tuple for representing GPS coordinates."""
 
 class GeoLocation(object):

@@ -43,7 +43,7 @@ __all__ = ['generate_token']
 
 REST_API_BASE = '_/api/'
 """The base URI path for REST API requests."""
-logger = logging.getLogger('KingPhisher.Server.RESTAPI')
+logger = logging.getLogger('KingPhisher.Server.API.REST')
 
 def generate_token():
 	"""

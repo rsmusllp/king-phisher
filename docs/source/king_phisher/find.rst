@@ -4,6 +4,10 @@
 .. module:: find
    :synopsis:
 
+This module provides a means by which data files distributed with the
+application can be found at run time by searching a configurable set of
+directories.
+
 Data
 ----
 

@@ -86,7 +86,14 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 	ssl_keyfile = None
 	if config.has_option('server.ssl_cert'):
 		ssl_certfile = config.get('server.ssl_cert')
-		ssl_keyfile = config.get_if_exists('server.ssl_key')
+		if not os.access(ssl_certfile, os.R_OK):
+			logger.critical("setting server.ssl_cert file '{0}' not found".format(ssl_certfile))
+			raise errors.KingPhisherError('invalid ssl configuration, missing file')
+		if config.has_option('server.ssl_key'):
+			ssl_keyfile = config.get('server.ssl_key')
+			if not os.access(ssl_keyfile, os.R_OK):
+				logger.critical("setting server.ssl_key file '{0}' not found".format(ssl_keyfile))
+				raise errors.KingPhisherError('invalid ssl configuration, missing file')
 	try:
 		server = ServerClass(config, HandlerClass, address=address, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
@@ -117,7 +124,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		self.config = self.server.config
 		regex_prefix = '^'
 		if self.config.get('server.vhost_directories'):
-			regex_prefix += '[\w\.\-]+\/'
+			regex_prefix += r'[\w\.\-]+\/'
 			for path, handler in self.handler_map.items():
 				if path.startswith(rest_api.REST_API_BASE):
 					del self.handler_map[path]
@@ -273,7 +280,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if self.command != 'RPC':
 			return True
 		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
-			False
+			return False
 
 		if self.path in ('/version', '/login'):
 			return True
@@ -381,7 +388,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			address = cookie_value
 		return address
 
-	def respond_file(self, file_path, attachment=False, query={}):
+	def respond_file(self, file_path, attachment=False, query=None):
 		self._respond_file_check_id()
 		file_path = os.path.abspath(file_path)
 		mime_type = self.guess_mime_type(file_path)

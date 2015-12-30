@@ -7,6 +7,19 @@ Phisher.
 Version 1.x.x
 -------------
 
+Version 1.1.0
+^^^^^^^^^^^^^
+
+Released :release:`1.1.0` on December 30th, 2015
+
+* Added an option to send a message to a single target
+* Support for sending calendar invite messages
+* Added PostgreSQL setup to the installer
+* Support for exporting to Excel
+* Added a Jupyter notebook for interactive data analysis
+* Added additional campaign filtering options
+* Support for removal of metadata from Microsoft Office 2007+ documents
+
 Version 1.0.0
 ^^^^^^^^^^^^^
 

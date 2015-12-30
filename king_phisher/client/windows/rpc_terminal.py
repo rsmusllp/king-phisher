@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/tools.py
+#  king_phisher/client/windows/rpc_terminal.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,11 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import json
 import logging
 import os
 import signal
 
+from king_phisher import find
+from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import client_rpc
@@ -53,7 +54,9 @@ except ImportError:
 else:
 	has_vte = True
 
-class RPCTerminalWindow(gui_utilities.GladeGObject):
+__all__ = ('RPCTerminal', 'RPCTerminalAppWindow')
+
+class RPCTerminalAppWindow(gui_utilities.GladeGObject):
 	gobject_ids = (
 		'box_main',
 		'menu_edit',
@@ -65,7 +68,7 @@ class RPCTerminalWindow(gui_utilities.GladeGObject):
 		'StockHelpImage'
 	)
 	def __init__(self, terminal, *args, **kwargs):
-		super(RPCTerminalWindow, self).__init__(*args, **kwargs)
+		super(RPCTerminalAppWindow, self).__init__(*args, **kwargs)
 		self.terminal = terminal
 		self.child_pid = None
 		self.gobjects['box_main'].pack_end(self.terminal, True, True, 0)
@@ -97,7 +100,7 @@ class RPCTerminalWindow(gui_utilities.GladeGObject):
 			self.logger.debug("sending sigkill to child process: {0}".format(self.child_pid))
 			os.kill(self.child_pid, signal.SIGKILL)
 
-class KingPhisherClientRPCTerminal(object):
+class RPCTerminal(object):
 	"""
 	A terminal using VTE that allows raw RPC methods to be called from
 	within the King Phisher client. This is primarily useful for
@@ -117,7 +120,7 @@ class KingPhisherClientRPCTerminal(object):
 		config = application.config
 
 		self.terminal = Vte.Terminal()
-		self.rpc_window = RPCTerminalWindow(self.terminal, self.application)
+		self.rpc_window = RPCTerminalAppWindow(self.terminal, self.application)
 
 		rpc = self.application.rpc
 		config = {
@@ -138,7 +141,7 @@ class KingPhisherClientRPCTerminal(object):
 
 		python_command = [
 			"import {0}".format(client_rpc.__name__),
-			"{0}.vte_child_routine('{1}')".format(client_rpc.__name__, json.dumps(config))
+			"{0}.vte_child_routine('{1}')".format(client_rpc.__name__, json_ex.dumps(config, pretty=False))
 		]
 		python_command = '; '.join(python_command)
 
@@ -156,7 +159,7 @@ class KingPhisherClientRPCTerminal(object):
 		child_pid, _, _, _ = GLib.spawn_async(
 			working_directory=os.getcwd(),
 			argv=[which('python'), '-c', python_command],
-			envp=['PYTHONPATH=' + module_path],
+			envp=['PYTHONPATH=' + module_path, find.ENV_VAR + '=' + os.environ[find.ENV_VAR]],
 			flags=(GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD),
 			child_setup=self._child_setup,
 			user_data=vte_pty

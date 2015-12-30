@@ -4,6 +4,9 @@
 .. module:: server.pages
    :synopsis:
 
+This module provides functionality for Jinja functions used to generate server
+page content.
+
 Functions
 ---------
 

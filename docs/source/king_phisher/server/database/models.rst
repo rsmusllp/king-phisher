@@ -4,6 +4,9 @@
 .. module:: database.models
    :synopsis:
 
+This module provides the models for the data stored in the database as well as
+functionality for defining and managing the models themselves.
+
 Data
 ----
 

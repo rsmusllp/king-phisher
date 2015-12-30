@@ -31,6 +31,9 @@
 #
 
 import os
+import sys
+
+from king_phisher import its
 
 DATA_DIRECTORY_NAME = 'king_phisher'
 """The name of the directory containing the King Phisher data."""
@@ -38,7 +41,7 @@ DATA_DIRECTORY_NAME = 'king_phisher'
 ENV_VAR = 'KING_PHISHER_DATA_PATH'
 """The name of the environment variable which contains the search path."""
 
-os.environ[ENV_VAR] = os.pathsep.join((os.getenv(ENV_VAR, ''), '/usr/share:/usr/local/share:.'))
+os.environ[ENV_VAR] = os.getenv(ENV_VAR, ('/usr/share:/usr/local/share' if its.on_linux else ''))
 
 def data_path_append(path):
 	"""
@@ -48,8 +51,34 @@ def data_path_append(path):
 
 	:param str path: The path to add for searching.
 	"""
-	if not path in os.environ[ENV_VAR].split(os.pathsep):
-		os.environ[ENV_VAR] = os.pathsep.join((os.environ[ENV_VAR], path))
+	path_var = os.environ[ENV_VAR].split(os.pathsep)
+	if not path in path_var:
+		path_var.append(path)
+		os.environ[ENV_VAR] = os.pathsep.join(path_var)
+
+def data_path_init(directory):
+	"""
+	Add a directory to the data search path for either client or server data
+	files.
+
+	:param str directory: The directory to add, either 'client' or 'server'.
+	"""
+	found = False
+	possible_data_paths = set()
+	if its.frozen:
+		possible_data_paths.add(os.path.dirname(sys.executable))
+	else:
+		data_path = os.path.dirname(__file__)
+		possible_data_paths.add(os.path.abspath(os.path.join(data_path, '..', 'data', directory)))
+		possible_data_paths.add(os.path.join(os.getcwd(), 'data', directory))
+
+	for data_path in possible_data_paths:
+		if not os.path.isdir(data_path):
+			continue
+		found = True
+		data_path_append(data_path)
+	if not found:
+		raise RuntimeError('failed to initialize the specified data directory')
 
 def find_data_file(data_file, access_mode=os.R_OK):
 	"""
