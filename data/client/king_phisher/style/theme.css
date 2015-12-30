@@ -194,7 +194,12 @@ GtkEntry:insensitive {
   color: white;
 }
 
-GtkFileChooser .search-bar {
+GtkFileChooser .sidebar {
+  background-color: @theme_color_bg;
+  color: white;
+}
+
+GtkFileChooser .view {
   background-color: @theme_color_bg;
 }
 
