@@ -11,6 +11,7 @@ The King Phisher Package
 
    king_phisher/third_party/index.rst
 
+   king_phisher/archive.rst
    king_phisher/color.rst
    king_phisher/constants.rst
    king_phisher/errors.rst
