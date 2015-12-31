@@ -35,6 +35,7 @@ import logging
 import os
 
 from . import models
+from king_phisher import archive
 from king_phisher import errors
 from king_phisher import find
 
@@ -45,6 +46,7 @@ import alembic.script
 import sqlalchemy
 import sqlalchemy.engine.url
 import sqlalchemy.exc
+import sqlalchemy.ext.serializer
 import sqlalchemy.orm
 import sqlalchemy.pool
 
@@ -52,7 +54,7 @@ Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 logger = logging.getLogger('KingPhisher.Server.Database')
 _meta_data_type_map = {'int': int, 'str': str}
 
-def delete_all():
+def clear_database():
 	"""
 	Delete all data from all tables in the connected database. The database
 	schema will remain unaffected.
@@ -67,6 +69,57 @@ def delete_all():
 		for table in reversed(models.metadata.sorted_tables):
 			connection.execute(table.delete())
 		transaction.commit()
+
+def export_database(target_file):
+	"""
+	Export the contents of the database using SQLAlchemy's serialization. This
+	creates an archive file containing all of the tables and their data. The
+	resulting export can be imported into another supported database so long
+	as the :py:data:`~king_phisher.server.database.models.SCHEMA_VERSION` is the
+	same.
+
+	:param str target_file: The file to write the export to.
+	"""
+	session = Session()
+	kpdb = archive.ArchiveFile(target_file, 'w')
+	kpdb.metadata['database-schema'] = models.SCHEMA_VERSION
+	for table in models.metadata.sorted_tables:
+		table_name = table.name
+		table = models.database_table_objects[table_name]
+		kpdb.add_data('tables/' + table_name, sqlalchemy.ext.serializer.dumps(session.query(table).all()))
+	kpdb.close()
+
+def import_database(target_file, clear=True):
+	"""
+	Import the contents of a serialized database from an archive previously
+	created with the :py:func:`.export_database` function. The current
+	:py:data:`~king_phisher.server.database.models.SCHEMA_VERSION` must be the
+	same as the exported archive.
+
+	.. warning::
+		This will by default delete the contents of the current database in
+		accordance with the *clear* parameter. If *clear* is not
+		specified and objects in the database and import share an ID, they will
+		be merged.
+
+	:param str target_file: The database archive file to import from.
+	:param bool clear: Whether or not to delete the contents of the
+		existing database before importing the new data.
+	"""
+	kpdb = archive.ArchiveFile(target_file, 'r')
+	schema_version = kpdb.metadata['database-schema']
+	if schema_version != models.SCHEMA_VERSION:
+		raise errors.KingPhisherDatabaseError("incompatible database schema versions ({0} vs {1})".format(schema_version, models.SCHEMA_VERSION))
+
+	if clear:
+		clear_database()
+	session = Session()
+	for table in models.metadata.sorted_tables:
+		table_data = kpdb.get_data('tables/' + table.name)
+		for row in sqlalchemy.ext.serializer.loads(table_data):
+			session.merge(row)
+	session.commit()
+	kpdb.close()
 
 def get_meta_data(key, session=None):
 	"""

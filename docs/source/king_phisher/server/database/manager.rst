@@ -10,7 +10,11 @@ database connection.
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.database.manager.delete_all
+.. autofunction:: king_phisher.server.database.manager.clear_database
+
+.. autofunction:: king_phisher.server.database.manager.export_database
+
+.. autofunction:: king_phisher.server.database.manager.import_database
 
 .. autofunction:: king_phisher.server.database.manager.normalize_connection_url
 

@@ -112,7 +112,7 @@ class ArchiveFile(object):
 
 	def close(self):
 		"""Close the handle to the archive."""
-		if self.mode == 'w':
+		if 'w' in self.mode:
 			self.add_data(self.metadata_file_name, json_ex.dumps(self.metadata))
 		self._tar_h.close()
 
