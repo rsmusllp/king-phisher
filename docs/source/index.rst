@@ -24,6 +24,7 @@ the `GitHub homepage`_.
    environment_vars.rst
    change_log.rst
    release_steps.rst
+   windows_build.rst
 
 Indices and tables
 ==================
