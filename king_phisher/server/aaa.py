@@ -355,6 +355,7 @@ class ForkedAuthenticator(object):
 			self.logger.error(error.message)
 			return False
 		if result['result']:
+			self.logger.info("user {0} has successfully authenticated".format(username))
 			self.cache[username] = (pw_hash, time.time() + self.cache_timeout)
 		return result['result']
 

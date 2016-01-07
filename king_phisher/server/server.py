@@ -103,6 +103,7 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 		raise errors.KingPhisherError("socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
+
 	if not config.get_if_exists('server.rest_api.token'):
 		config.set('server.rest_api.token', rest_api.generate_token())
 	if config.get('server.rest_api.enabled'):
