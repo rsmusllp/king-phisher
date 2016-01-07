@@ -21,22 +21,7 @@
 #
 ###############################################################################
 
-function prompt_yes_or_no {
-	# prompt the user to answer a yes or no question, defaulting to yes if no
-	# response is entered
-	local __prompt_text=$1
-	local __result_var=$2
-	while true; do
-		read -p "$__prompt_text [Y/n] " _response
-		case $_response in
-			"" ) eval $__result_var="yes"; break;;
-			[Yy]* ) eval $__result_var="yes"; break;;
-			[Nn]* ) eval $__result_var="no";  break;;
-			* ) echo "Please answer yes or no.";;
-		esac
-	done
-}
-
+E_USAGE=64
 E_SOFTWARE=70
 E_NOTROOT=87
 FILE_NAME="$(dirname $(readlink -e $0) 2>/dev/null)/$(basename $0)"
@@ -48,6 +33,71 @@ KING_PHISHER_GROUP="kpadmins"
 KING_PHISHER_USE_POSTGRESQL="no"
 KING_PHISHER_WEB_ROOT="/var/www"
 LINUX_VERSION=""
+
+yes_all=false
+
+function prompt_yes_or_no {
+	# prompt the user to answer a yes or no question, defaulting to yes if no
+	# response is entered
+	local __prompt_text=$1
+	local __result_var=$2
+	if [ "$yes_all" == "true" ]; then
+		eval $__result_var="yes";
+		return 0;
+	fi
+	while true; do
+		read -p "$__prompt_text [Y/n] " _response
+		case $_response in
+			"" ) eval $__result_var="yes"; break;;
+			[Yy]* ) eval $__result_var="yes"; break;;
+			[Nn]* ) eval $__result_var="no";  break;;
+			* ) echo "Please answer yes or no.";;
+		esac
+	done
+	return 0;
+}
+
+function show_help {
+	echo "Usage: $(basename $0) [-h] [-y]"
+	echo ""
+	echo "King Phisher Install Script"
+	echo ""
+	echo "optional arguments"
+	echo "  -h, --help            show this help message and exit"
+	echo "  -y, --yes             answer yes to all questions"
+	echo "  --skip-client         skip installing client components"
+	echo "  --skip-server         skip installing server components"
+	return 0;
+}
+
+while :; do
+	case $1 in
+		-h|-\?|--help)
+			show_help
+			exit
+			;;
+		-y|--yes)
+			yes_all=true
+			;;
+		--skip-client)
+			KING_PHISHER_SKIP_CLIENT="x"
+			;;
+		--skip-server)
+			KING_PHISHER_SKIP_SERVER="x"
+			;;
+		--)
+			shift
+			break
+			;;
+		-?*)
+			printf "Unknown option: %s\n" "$1" >&2
+			exit $E_USAGE
+			;;
+		*)
+			break
+	esac
+	shift
+done
 
 if [ "$(id -u)" != "0" ]; then
 	echo "This must be run as root"
