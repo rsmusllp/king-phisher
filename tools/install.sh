@@ -34,14 +34,18 @@ KING_PHISHER_USE_POSTGRESQL="no"
 KING_PHISHER_WEB_ROOT="/var/www"
 LINUX_VERSION=""
 
-yes_all=false
+answer_all_no=false
+answer_all_yes=false
 
 function prompt_yes_or_no {
 	# prompt the user to answer a yes or no question, defaulting to yes if no
 	# response is entered
 	local __prompt_text=$1
 	local __result_var=$2
-	if [ "$yes_all" == "true" ]; then
+	if [ "$answer_all_no" == "true" ]; then
+		$__result_var="no";
+		return 0;
+	elif [ "$answer_all_yes" == "true" ]; then
 		eval $__result_var="yes";
 		return 0;
 	fi
@@ -58,12 +62,13 @@ function prompt_yes_or_no {
 }
 
 function show_help {
-	echo "Usage: $(basename $0) [-h] [-y]"
+	echo "Usage: $(basename $0) [-h] [-n/-y]"
 	echo ""
 	echo "King Phisher Install Script"
 	echo ""
 	echo "optional arguments"
 	echo "  -h, --help            show this help message and exit"
+	echo "  -n, --no              answer no to all questions"
 	echo "  -y, --yes             answer yes to all questions"
 	echo "  --skip-client         skip installing client components"
 	echo "  --skip-server         skip installing server components"
@@ -76,8 +81,19 @@ while :; do
 			show_help
 			exit
 			;;
+		-n|--no)
+			if [ "$answer_all_yes" == "true" ]; then
+				echo "Can not use -n and -y together"
+				exit $E_USAGE
+			fi
+			answer_all_no=true
+			;;
 		-y|--yes)
-			yes_all=true
+			if [ "$answer_all_no" == "true" ]; then
+				echo "Can not use -n and -y together"
+				exit $E_USAGE
+			fi
+			answer_all_yes=true
 			;;
 		--skip-client)
 			KING_PHISHER_SKIP_CLIENT="x"
