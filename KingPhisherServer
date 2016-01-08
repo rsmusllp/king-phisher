@@ -53,8 +53,8 @@ from smoke_zephyr.configuration import Configuration
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
-	'alembic>=0.8.2',
-	'boltons>=15.0.1',
+	'alembic>=0.8.4',
+	'boltons>=15.1.1',
 	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),
 	'geoip2>=2.2.0',
 	'Jinja2>=2.8',
@@ -64,8 +64,8 @@ __requirements__ = [
 	'pyotp>=2.0.1',
 	'python-dateutil>=2.4.2',
 	'PyYAML>=3.11',
-	'requests>=2.8.1',
-	'SQLAlchemy>=1.0.8',
+	'requests>=2.9.1',
+	'SQLAlchemy>=1.0.11',
 	'termcolor>=1.1.0'
 ]
 if its.py_v2:
