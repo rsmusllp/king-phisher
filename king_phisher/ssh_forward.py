@@ -32,7 +32,9 @@
 
 import binascii
 import hashlib
+import io
 import logging
+import os
 import select
 import socket
 import sys
@@ -114,26 +116,18 @@ class SSHTCPForwarder(threading.Thread):
 		self.__connected = False
 
 		# an issue seems to exist in paramiko when multiple keys are present through the ssh-agent
-		ssh_agent = paramiko.Agent()
-		ssh_keys = ssh_agent.get_keys()
-		if len(ssh_keys) == 1:
-			self.__try_connect(look_for_keys=False, pkey=ssh_keys[0])
+		agent_keys = paramiko.Agent().get_keys()
 
 		if not self.__connected and preferred_private_key:
-			preferred_private_key = preferred_private_key.strip()
-			if preferred_private_key.startswith('SHA256:') or preferred_private_key.startswith('sha256:'):
-				# OpenSSH 6.8 started to use sha256 & base64 for keys
-				algorithm = 'sha256'
-				preferred_private_key = preferred_private_key[7:]
-				preferred_private_key = binascii.a2b_base64(preferred_private_key + '=')
-			else:
-				algorithm = 'md5'
-				preferred_private_key = preferred_private_key.replace(':', '')
-				preferred_private_key = binascii.a2b_hex(preferred_private_key)
-			preferred_private_key = tuple(key for key in ssh_keys if hashlib.new(algorithm, key.blob).digest() == preferred_private_key)
-			if len(preferred_private_key) == 1:
+			preferred_private_key = self.__resolve_private_key(preferred_private_key, agent_keys)
+			if preferred_private_key:
 				self.logger.debug('attempting ssh authentication with user specified key')
-				self.__try_connect(look_for_keys=False, pkey=preferred_private_key[0])
+				self.__try_connect(look_for_keys=False, pkey=preferred_private_key)
+			else:
+				self.logger.warning('failed to identify the user specified key for ssh authentication')
+
+		if not self.__connected and len(agent_keys) == 1:
+			self.__try_connect(look_for_keys=False, pkey=agent_keys[0])
 
 		if not self.__connected:
 			self.__try_connect(password=password, look_for_keys=True, raise_error=True)
@@ -149,6 +143,57 @@ class SSHTCPForwarder(threading.Thread):
 		remote_server = "{0}:{1}".format(*self.remote_server)
 		server = "{0}:{1}".format(*self.server)
 		return "{0} to {1} via {2}".format(local_server, remote_server, server)
+
+	def __resolve_private_key(self, private_key, agent_keys):
+		private_key = private_key.strip()
+		pkey_type = private_key.split(':')[0].lower()
+		if pkey_type in ('file', 'key'):
+			if pkey_type == 'file':
+				file_path = os.path.expandvars(private_key[5:])
+				if not os.access(file_path, os.R_OK):
+					self.logger.warning("the user specified ssh key '{0}' can not be opened".format(file_path))
+					return
+				file_h = open(file_path, 'r')
+				first_line = file_h.readline()
+				file_h.seek(0, os.SEEK_SET)
+			else:
+				key_str = private_key[4:]
+				file_h = io.StringIO(key_str)
+				first_line = key_str.split('\n', 1)[0]
+
+			if 'BEGIN DSA PRIVATE KEY' in first_line:
+				KeyKlass = paramiko.DSSKey
+			elif 'BEGIN RSA PRIVATE KEY' in first_line:
+				KeyKlass = paramiko.RSAKey
+			else:
+				self.logger.warning("the user specified ssh key '{0}' does not appear to be a valid dsa or rsa private key".format(file_path))
+				file_h.close()
+				return
+			try:
+				private_key = KeyKlass.from_private_key(file_h)
+			except paramiko.PasswordRequiredException:
+				self.logger.warning("the user specified ssh key '{0}' is encrypted and requires a password".format(file_path))
+				file_h.close()
+				return
+			file_h.close()
+			return private_key
+
+		#  if it's not one of the above, treat it like it's a fingerprint
+		if pkey_type in ('sha1', 'sha224', 'sha256', 'sha384', 'sha512'):
+			# OpenSSH 6.8 started to use sha256 & base64 for keys
+			algorithm = pkey_type
+			private_key = private_key[7:]
+			private_key = binascii.a2b_base64(private_key + '=')
+		else:
+			algorithm = 'md5'
+			private_key = private_key.replace(':', '')
+			private_key = binascii.a2b_hex(private_key)
+		private_key = tuple(key for key in agent_keys if hashlib.new(algorithm, key.blob).digest() == private_key)
+		if len(private_key) == 1:
+			private_key = private_key[0]
+		else:
+			private_key = None
+		return private_key
 
 	def __try_connect(self, *args, **kwargs):
 		raise_error = False
