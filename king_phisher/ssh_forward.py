@@ -179,7 +179,7 @@ class SSHTCPForwarder(threading.Thread):
 			return private_key
 
 		#  if it's not one of the above, treat it like it's a fingerprint
-		if pkey_type in ('sha1', 'sha224', 'sha256', 'sha384', 'sha512'):
+		if pkey_type == 'sha256':
 			# OpenSSH 6.8 started to use sha256 & base64 for keys
 			algorithm = pkey_type
 			private_key = private_key[7:]

@@ -230,13 +230,13 @@ if [ "$LINUX_VERSION" == "CentOS" ]; then
 	yum install -y epel-release
 	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
 		postgresql-devel python-devel python-pip
-	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
+	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		yum install -y postgresql-server
 	fi
 elif [ "$LINUX_VERSION" == "Fedora" ]; then
 	dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
 		libpng-devel postgresql-devel python-devel python-pip
-	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
+	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		dnf install -y postgresql-server
 	fi
 	# Fedora 23 is missing an rpm lib required, check to see if it has been installed.
@@ -251,7 +251,7 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 gir1.2-vte-2.90 \
 			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
-			libgtk-3-dev python-gi python-gi-cairo \
+			libgtk-3-dev libpq-dev python-gi python-gi-cairo \
 			python-gobject python-gobject-dev python-paramiko
 		apt-get install -y gir1.2-webkit2-3.0 &> /dev/null
 		if [ $? -eq 0 ]; then
@@ -260,10 +260,7 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 			echo "Failed to install gir1.2-webkit2-3.0 with apt-get"
 		fi
 	fi
-	if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
-		apt-get install -y libpq-dev
-	fi
-	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
+	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		apt-get install -y postgresql
 	fi
 	if [ "$LINUX_VERSION" == "Kali" ]; then
@@ -274,7 +271,8 @@ fi
 
 echo "Installing Python package dependencies from PyPi"
 # six needs to be installed before requirements.txt for matplotlib
-pip install "six>=1.7.0"
+pip install --upgrade pip
+pip install --upgrade six
 pip install -r requirements.txt
 if [ $? -ne 0 ]; then
 	echo "Failed to install python requirements with pip"
@@ -300,8 +298,8 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 			gtk-update-icon-cache --force /usr/share/icons/hicolor
 		fi
 	fi
-	# try to install basemap but it will fail with newer versions of pip because the package isn't verified
-	pip install "basemap==1.0.7" &> /dev/null
+	# try to install basemap directly from it's sourceforge tarball
+	pip install http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz &> /dev/null
 	if [ $? -eq 0 ]; then
 		echo "Successfully installed basemap with pip"
 	else
@@ -328,7 +326,7 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	cp data/server/king_phisher/server_config.yml .
 	sed -i -re "s|#\\s?data_path:.*$|data_path: $KING_PHISHER_DIR|" ./server_config.yml
 
-	if [ "$KING_PHISHER_USE_POSTGRESQL" ]; then
+	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		if [ -f "/etc/init.d/postgresql" ]; then
 			/etc/init.d/postgresql start &> /dev/null
 		fi
