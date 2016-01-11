@@ -173,6 +173,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		try:
 			self._ssh_forwarder = SSHTCPForwarder(server, username, password, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
 			self._ssh_forwarder.start()
+		except paramiko.PasswordRequiredException:
+			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The specified SSH key requires a password.')
 		except paramiko.AuthenticationException:
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The server responded that the credentials are invalid.')

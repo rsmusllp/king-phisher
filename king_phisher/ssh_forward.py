@@ -173,9 +173,9 @@ class SSHTCPForwarder(threading.Thread):
 				private_key = KeyKlass.from_private_key(file_h)
 			except paramiko.PasswordRequiredException:
 				self.logger.warning("the user specified ssh key '{0}' is encrypted and requires a password".format(file_path))
+				raise
+			finally:
 				file_h.close()
-				return
-			file_h.close()
 			return private_key
 
 		#  if it's not one of the above, treat it like it's a fingerprint
