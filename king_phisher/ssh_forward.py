@@ -36,7 +36,6 @@ import io
 import logging
 import os
 import select
-import socket
 import sys
 import threading
 import time
@@ -91,9 +90,13 @@ class ForwardHandler(socketserver.BaseRequestHandler):
 
 class SSHTCPForwarder(threading.Thread):
 	"""
-	Open an SSH connection and forward TCP traffic through it. This is
-	a :py:class:`threading.Thread` object and needs to be started after
-	it is initialized.
+	Open an SSH connection and forward TCP traffic through it. If no
+	*missing_host_key_policy* is specified, :py:class:`paramiko.AutoAddPolicy`
+	will be used to accept all host keys.
+
+	.. note::
+		This is a :py:class:`threading.Thread` object and needs to be started
+		after it is initialized.
 	"""
 	def __init__(self, server, username, password, remote_server, local_port=0, preferred_private_key=None, missing_host_key_policy=None):
 		"""
@@ -110,9 +113,11 @@ class SSHTCPForwarder(threading.Thread):
 		self.server = (server[0], int(server[1]))
 		self.remote_server = (remote_server[0], int(remote_server[1]))
 		client = paramiko.SSHClient()
-		client.load_system_host_keys()
 		if missing_host_key_policy is None:
 			missing_host_key_policy = paramiko.AutoAddPolicy()
+		elif isinstance(missing_host_key_policy, paramiko.RejectPolicy):
+			self.logger.info('reject policy in place, loading system host keys')
+			client.load_system_host_keys()
 		client.set_missing_host_key_policy(missing_host_key_policy)
 		self.client = client
 		self.username = username
@@ -199,13 +204,12 @@ class SSHTCPForwarder(threading.Thread):
 		return private_key
 
 	def __try_connect(self, *args, **kwargs):
-		raise_error = False
-		if 'raise_error' in kwargs:
-			raise_error = kwargs['raise_error']
-			del kwargs['raise_error']
+		raise_error = kwargs.pop('raise_error', False)
 		try:
 			self.client.connect(self.server[0], self.server[1], username=self.username, allow_agent=False, timeout=12.0, *args, **kwargs)
-		except (paramiko.SSHException, socket.timeout) as error:
+		except paramiko.PasswordRequiredException:
+			raise
+		except paramiko.AuthenticationException as error:
 			if raise_error:
 				raise error
 			return False

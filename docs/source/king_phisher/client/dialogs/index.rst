@@ -12,4 +12,5 @@
    entry.rst
    exception.rst
    login.rst
+   ssh_host_key.rst
    tag_editor.rst

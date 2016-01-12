@@ -7,6 +7,13 @@ Phisher.
 Version 1.x.x
 -------------
 
+Version 1.2.0
+^^^^^^^^^^^^^
+
+*In Progress*
+
+* SSH host key validation
+
 Version 1.1.0
 ^^^^^^^^^^^^^
 
