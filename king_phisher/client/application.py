@@ -48,6 +48,7 @@ from king_phisher import version
 from king_phisher.client import assistants
 from king_phisher.client import client_rpc
 from king_phisher.client import dialogs
+from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client.windows import main
@@ -171,7 +172,14 @@ class KingPhisherClientApplication(_Gtk_Application):
 		server_remote_port = self.config['server_remote_port']
 
 		try:
-			self._ssh_forwarder = SSHTCPForwarder(server, username, password, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
+			self._ssh_forwarder = SSHTCPForwarder(
+				server,
+				username,
+				password,
+				('127.0.0.1', server_remote_port),
+				preferred_private_key=self.config['ssh_preferred_key'],
+				missing_host_key_policy=ssh_host_key.HostKeyPolicy(self)
+			)
 			self._ssh_forwarder.start()
 		except paramiko.PasswordRequiredException:
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The specified SSH key requires a password.')

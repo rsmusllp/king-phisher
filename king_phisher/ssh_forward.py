@@ -95,7 +95,7 @@ class SSHTCPForwarder(threading.Thread):
 	a :py:class:`threading.Thread` object and needs to be started after
 	it is initialized.
 	"""
-	def __init__(self, server, username, password, remote_server, local_port=0, preferred_private_key=None):
+	def __init__(self, server, username, password, remote_server, local_port=0, preferred_private_key=None, missing_host_key_policy=None):
 		"""
 		:param tuple server: The server to connect to.
 		:param str username: The username to authenticate with.
@@ -103,6 +103,7 @@ class SSHTCPForwarder(threading.Thread):
 		:param tuple remote_server: The remote server to connect to through the SSH server.
 		:param int local_port: The local port to forward, if not set a random one will be used.
 		:param str preferred_private_key: An RSA key to prefer for authentication.
+		:param missing_host_key_policy: The policy to use for missing host keys.
 		"""
 		super(SSHTCPForwarder, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.' + self.__class__.__name__)
@@ -110,7 +111,9 @@ class SSHTCPForwarder(threading.Thread):
 		self.remote_server = (remote_server[0], int(remote_server[1]))
 		client = paramiko.SSHClient()
 		client.load_system_host_keys()
-		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+		if missing_host_key_policy is None:
+			missing_host_key_policy = paramiko.AutoAddPolicy()
+		client.set_missing_host_key_policy(missing_host_key_policy)
 		self.client = client
 		self.username = username
 		self.__connected = False
