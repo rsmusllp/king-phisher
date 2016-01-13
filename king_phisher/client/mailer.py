@@ -311,7 +311,7 @@ class MailSenderThread(threading.Thread):
 				username,
 				password,
 				remote_server,
-				preferred_private_key=self.config.get('ssh_preferred_key'),
+				private_key=self.config.get('ssh_preferred_key'),
 				missing_host_key_policy=ssh_host_key.MissingHostKeyPolicy(self.application)
 			)
 			self._ssh_forwarder.start()

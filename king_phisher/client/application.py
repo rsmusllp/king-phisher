@@ -178,7 +178,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 				username,
 				password,
 				('127.0.0.1', server_remote_port),
-				preferred_private_key=self.config['ssh_preferred_key'],
+				private_key=self.config.get('ssh_preferred_key'),
 				missing_host_key_policy=ssh_host_key.MissingHostKeyPolicy(self)
 			)
 			self._ssh_forwarder.start()
