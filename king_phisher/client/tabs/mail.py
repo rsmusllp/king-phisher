@@ -281,7 +281,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
-		self.sender_thread = mailer.MailSenderThread(self.config, self.config['mailer.target_file'], self.application.rpc, self)
+		self.sender_thread = mailer.MailSenderThread(self.application, self.config['mailer.target_file'], self.application.rpc, self)
 
 		# verify settings
 		missing_files = self.sender_thread.missing_files()

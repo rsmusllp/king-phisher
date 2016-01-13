@@ -47,17 +47,18 @@ import logging
 import mimetypes
 import ipaddress
 import os
-import random
 import smtplib
 import socket
 import sys
 import threading
 import time
 
+from king_phisher import errors
 from king_phisher import ics
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
+from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.ssh_forward import SSHTCPForwarder
 
@@ -233,9 +234,10 @@ class MailSenderThread(threading.Thread):
 	:py:class:`.MailSenderSendTab` instance, these two objects
 	are very interdependent.
 	"""
-	def __init__(self, config, target_file, rpc, tab=None):
+	def __init__(self, application, target_file, rpc, tab=None):
 		"""
-		:param dict config: The King Phisher client configuration.
+		:param application: The GTK application that the thread is associated with.
+		:type application: :py:class:`.KingPhisherClientApplication`
 		:param str target_file: The CSV formatted file to read message targets from.
 		:param tab: The GUI tab to report information to.
 		:type tab: :py:class:`.MailSenderSendTab`
@@ -245,7 +247,8 @@ class MailSenderThread(threading.Thread):
 		super(MailSenderThread, self).__init__()
 		self.daemon = True
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
-		self.config = config
+		self.application = application
+		self.config = self.application.config
 		self.target_file = target_file
 		"""The name of the target file in CSV format."""
 		self.tab = tab
@@ -303,17 +306,29 @@ class MailSenderThread(threading.Thread):
 		password = self.config['ssh_password']
 		remote_server = parse_server(self.config['smtp_server'], 25)
 		try:
-			self._ssh_forwarder = SSHTCPForwarder(server, username, password, remote_server, preferred_private_key=self.config.get('ssh_preferred_key'))
+			self._ssh_forwarder = SSHTCPForwarder(
+				server,
+				username,
+				password,
+				remote_server,
+				preferred_private_key=self.config.get('ssh_preferred_key'),
+				missing_host_key_policy=ssh_host_key.MissingHostKeyPolicy(self.application)
+			)
 			self._ssh_forwarder.start()
+		except errors.KingPhisherAbortError as error:
+			self.logger.info("ssh connection aborted ({0})".format(error.message))
 		except paramiko.AuthenticationException:
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			return ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED
+		except paramiko.SSHException as error:
+			self.logger.warning("failed with ssh exception '{0}'".format(error.message))
 		except Exception:
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
-			return ConnectionErrorReason.ERROR_UNKNOWN
-		self.logger.info("started ssh port forwarding to the remote smtp server ({0})".format(str(self._ssh_forwarder)))
-		self.smtp_server = self._ssh_forwarder.local_server
-		return ConnectionErrorReason.SUCCESS
+		else:
+			self.logger.info("started ssh port forwarding to the remote smtp server ({0})".format(str(self._ssh_forwarder)))
+			self.smtp_server = self._ssh_forwarder.local_server
+			return ConnectionErrorReason.SUCCESS
+		return ConnectionErrorReason.ERROR_UNKNOWN
 
 	def server_smtp_connect(self):
 		"""
