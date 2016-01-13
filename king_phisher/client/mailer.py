@@ -259,7 +259,7 @@ class MailSenderThread(threading.Thread):
 		"""A :py:class:`threading.Event` object indicating if emails are being sent."""
 		self.paused = threading.Event()
 		"""A :py:class:`threading.Event` object indicating if the email sending operation is or should be paused."""
-		self.should_exit = threading.Event()
+		self.should_stop = threading.Event()
 		self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		self._mime_attachments = None
 
@@ -413,7 +413,7 @@ class MailSenderThread(threading.Thread):
 		emails_total = self.count_messages()
 		max_messages_per_connection = self.config.get('mailer.max_messages_per_connection', 5)
 		self.running.set()
-		self.should_exit.clear()
+		self.should_stop.clear()
 		self.paused.clear()
 		self._prepare_env()
 
@@ -431,7 +431,7 @@ class MailSenderThread(threading.Thread):
 					self.logger.warning('skipping blank email address')
 				continue
 			iteration_time = time.time()
-			if self.should_exit.is_set():
+			if self.should_stop.is_set():
 				self.tab_notify_status('Sending emails cancelled')
 				break
 			if not self.process_pause():
@@ -456,7 +456,7 @@ class MailSenderThread(threading.Thread):
 				while sleep_time > 0:
 					sleep_chunk = min(sleep_time, 0.5)
 					time.sleep(sleep_chunk)
-					if self.should_exit.is_set():
+					if self.should_stop.is_set():
 						break
 					sleep_time -= sleep_chunk
 
@@ -488,7 +488,7 @@ class MailSenderThread(threading.Thread):
 			self.tab_notify_status('Paused sending emails, waiting to resume')
 			self.running.wait()
 			self.paused.clear()
-			if self.should_exit.is_set():
+			if self.should_stop.is_set():
 				self.tab_notify_status('Sending emails cancelled')
 				return False
 			self.tab_notify_status('Resuming sending emails')
@@ -671,7 +671,7 @@ class MailSenderThread(threading.Thread):
 		resumed from the same position. This function blocks until the
 		stop request has been processed and the thread exits.
 		"""
-		self.should_exit.set()
+		self.should_stop.set()
 		self.unpause()
 		if self.is_alive():
 			self.join()

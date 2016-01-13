@@ -40,30 +40,24 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from king_phisher import color
 from king_phisher import smtp_server
-from king_phisher import version
+from king_phisher import utilities
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher SMTP Debug Server', conflict_handler='resolve')
-	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', action='store', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='CRITICAL', help='set the logging level')
-	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in forground (do not fork)')
+	utilities.argp_add_args(parser)
+	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in foreground (do not fork)')
 	parser.add_argument('-a', '--address', dest='address', default='127.0.0.1', help='address to listen on')
 	parser.add_argument('-p', '--port', dest='port', type=int, default=2525, help='port to listen on')
 	arguments = parser.parse_args()
-
-	logging.getLogger('').setLevel(logging.DEBUG)
-	console_log_handler = logging.StreamHandler()
-	console_log_handler.setLevel(getattr(logging, arguments.loglvl))
-	console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
-	logging.getLogger('').addHandler(console_log_handler)
-	logging.captureWarnings(True)
 	del parser
+
+	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
 
 	if (not arguments.foreground) and os.fork():
 		return
 
 	bind_address = (arguments.address, arguments.port)
-	server = smtp_server.KingPhisherSMTPServer(bind_address, None, debugging=True)
+	server = smtp_server.BaseSMTPServer(bind_address)
 	color.print_status("smtp server listening on {0}:{1}".format(bind_address[0], bind_address[1]))
 	try:
 		server.serve_forever()
