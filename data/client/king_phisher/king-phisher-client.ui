@@ -4231,9 +4231,9 @@ Brandan Geise</property>
               <object class="GtkLabel" id="label62">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">This host key has not been previously accepted. Accepting this
-host key now will store it to ensure that it does not change for
-future connections.</property>
+                <property name="label" translatable="yes">This host and key have not been previously identified. If you trust this server,
+accept the host key to continue. Accepting this
+host key will store it for identification verification of future connections.</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -4412,10 +4412,9 @@ future connections.</property>
               <object class="GtkLabel" id="label65">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">&lt;b&gt;WARNING:&lt;/b&gt; The remote host identification has changed.
-It is possible that someone is intercepting your communications.
-It is also possible that the host key has changed. Please contact
-the system administrator.</property>
+                <property name="label" translatable="yes">&lt;b&gt;WARNING:&lt;/b&gt; The remote host identification has changed. Either
+the server's host key has changed or someone is intercepting
+your communications. Please contact the system administrator.</property>
                 <property name="use_markup">True</property>
               </object>
               <packing>
