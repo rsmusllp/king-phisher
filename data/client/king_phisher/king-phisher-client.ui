@@ -4412,10 +4412,10 @@ future connections.</property>
               <object class="GtkLabel" id="label65">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">&lt;b&gt;WARNING:&lt;/b&gt; This host key was previously stored and has
-changed. It is possible that someone is intercepting your
-communications. It is also possible that the host key has
-changed. Please contact your system administrator.</property>
+                <property name="label" translatable="yes">&lt;b&gt;WARNING:&lt;/b&gt; The remote host identification has changed.
+It is possible that someone is intercepting your communications.
+It is also possible that the host key has changed. Please contact
+the system administrator.</property>
                 <property name="use_markup">True</property>
               </object>
               <packing>

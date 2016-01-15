@@ -94,7 +94,8 @@ class SSHTCPForwarder(threading.Thread):
 	authentication can be specified as a string either by it's OpenSSH
 	fingerprint, as a file (prefixed with "file:"), or a raw key string
 	(prefixed with "key:"). If no *missing_host_key_policy* is specified,
-	:py:class:`paramiko.AutoAddPolicy` will be used to accept all host keys.
+	:py:class:`paramiko.client.AutoAddPolicy` will be used to accept all host
+	keys.
 
 	.. note::
 		This is a :py:class:`threading.Thread` object and needs to be started

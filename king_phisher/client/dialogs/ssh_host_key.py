@@ -72,7 +72,7 @@ class BaseHostKeyDialog(gui_utilities.GladeGObject):
 		:type application: :py:class:`.KingPhisherClientApplication`
 		:param str hostname: The hostname associated with the key.
 		:param key: The host's SSH key.
-		:type: paramiko.PKey
+		:type key: :py:class:`paramiko.pkey.PKey`
 		"""
 		super(BaseHostKeyDialog, self).__init__(application)
 		self.hostname = hostname
