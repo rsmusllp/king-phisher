@@ -41,6 +41,7 @@ import socket
 import sys
 import uuid
 
+from king_phisher import errors
 from king_phisher import find
 from king_phisher import json_ex
 from king_phisher import utilities
@@ -48,6 +49,7 @@ from king_phisher import version
 from king_phisher.client import assistants
 from king_phisher.client import client_rpc
 from king_phisher.client import dialogs
+from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client.windows import main
@@ -171,13 +173,24 @@ class KingPhisherClientApplication(_Gtk_Application):
 		server_remote_port = self.config['server_remote_port']
 
 		try:
-			self._ssh_forwarder = SSHTCPForwarder(server, username, password, ('127.0.0.1', server_remote_port), preferred_private_key=self.config['ssh_preferred_key'])
+			self._ssh_forwarder = SSHTCPForwarder(
+				server,
+				username,
+				password,
+				('127.0.0.1', server_remote_port),
+				private_key=self.config.get('ssh_preferred_key'),
+				missing_host_key_policy=ssh_host_key.MissingHostKeyPolicy(self)
+			)
 			self._ssh_forwarder.start()
+		except errors.KingPhisherAbortError as error:
+			self.logger.info("ssh connection aborted ({0})".format(error.message))
 		except paramiko.PasswordRequiredException:
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The specified SSH key requires a password.')
 		except paramiko.AuthenticationException:
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The server responded that the credentials are invalid.')
+		except paramiko.SSHException as error:
+			self.logger.warning("failed with ssh exception '{0}'".format(error.message))
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, active_window, title=title_ssh_error)
 		except Exception as error:

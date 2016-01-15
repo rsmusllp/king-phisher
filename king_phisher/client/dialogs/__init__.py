@@ -37,4 +37,5 @@ from .configuration import *
 from .entry import *
 from .exception import *
 from .login import *
+from .ssh_host_key import *
 from .tag_editor import *

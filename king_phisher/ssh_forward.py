@@ -36,7 +36,6 @@ import io
 import logging
 import os
 import select
-import socket
 import sys
 import threading
 import time
@@ -91,26 +90,38 @@ class ForwardHandler(socketserver.BaseRequestHandler):
 
 class SSHTCPForwarder(threading.Thread):
 	"""
-	Open an SSH connection and forward TCP traffic through it. This is
-	a :py:class:`threading.Thread` object and needs to be started after
-	it is initialized.
+	Open an SSH connection and forward TCP traffic through it. A private key for
+	authentication can be specified as a string either by it's OpenSSH
+	fingerprint, as a file (prefixed with "file:"), or a raw key string
+	(prefixed with "key:"). If no *missing_host_key_policy* is specified,
+	:py:class:`paramiko.client.AutoAddPolicy` will be used to accept all host
+	keys.
+
+	.. note::
+		This is a :py:class:`threading.Thread` object and needs to be started
+		after it is initialized.
 	"""
-	def __init__(self, server, username, password, remote_server, local_port=0, preferred_private_key=None):
+	def __init__(self, server, username, password, remote_server, local_port=0, private_key=None, missing_host_key_policy=None):
 		"""
 		:param tuple server: The server to connect to.
 		:param str username: The username to authenticate with.
 		:param str password: The password to authenticate with.
 		:param tuple remote_server: The remote server to connect to through the SSH server.
 		:param int local_port: The local port to forward, if not set a random one will be used.
-		:param str preferred_private_key: An RSA key to prefer for authentication.
+		:param str private_key: An RSA key to prefer for authentication.
+		:param missing_host_key_policy: The policy to use for missing host keys.
 		"""
 		super(SSHTCPForwarder, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.' + self.__class__.__name__)
 		self.server = (server[0], int(server[1]))
 		self.remote_server = (remote_server[0], int(remote_server[1]))
 		client = paramiko.SSHClient()
-		client.load_system_host_keys()
-		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+		if missing_host_key_policy is None:
+			missing_host_key_policy = paramiko.AutoAddPolicy()
+		elif isinstance(missing_host_key_policy, paramiko.RejectPolicy):
+			self.logger.info('reject policy in place, loading system host keys')
+			client.load_system_host_keys()
+		client.set_missing_host_key_policy(missing_host_key_policy)
 		self.client = client
 		self.username = username
 		self.__connected = False
@@ -118,11 +129,11 @@ class SSHTCPForwarder(threading.Thread):
 		# an issue seems to exist in paramiko when multiple keys are present through the ssh-agent
 		agent_keys = paramiko.Agent().get_keys()
 
-		if not self.__connected and preferred_private_key:
-			preferred_private_key = self.__resolve_private_key(preferred_private_key, agent_keys)
-			if preferred_private_key:
+		if not self.__connected and private_key:
+			private_key = self.__resolve_private_key(private_key, agent_keys)
+			if private_key:
 				self.logger.debug('attempting ssh authentication with user specified key')
-				self.__try_connect(look_for_keys=False, pkey=preferred_private_key)
+				self.__try_connect(look_for_keys=False, pkey=private_key)
 			else:
 				self.logger.warning('failed to identify the user specified key for ssh authentication')
 
@@ -196,13 +207,12 @@ class SSHTCPForwarder(threading.Thread):
 		return private_key
 
 	def __try_connect(self, *args, **kwargs):
-		raise_error = False
-		if 'raise_error' in kwargs:
-			raise_error = kwargs['raise_error']
-			del kwargs['raise_error']
+		raise_error = kwargs.pop('raise_error', False)
 		try:
 			self.client.connect(self.server[0], self.server[1], username=self.username, allow_agent=False, timeout=12.0, *args, **kwargs)
-		except (paramiko.SSHException, socket.timeout) as error:
+		except paramiko.PasswordRequiredException:
+			raise
+		except paramiko.AuthenticationException as error:
 			if raise_error:
 				raise error
 			return False

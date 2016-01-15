@@ -12,6 +12,10 @@ Exceptions
 .. autoexception:: king_phisher.errors.KingPhisherError
    :show-inheritance:
 
+.. autoexception:: king_phisher.errors.KingPhisherAbortError
+   :show-inheritance:
+   :members:
+
 .. autoexception:: king_phisher.errors.KingPhisherAbortRequestError
    :show-inheritance:
    :members:

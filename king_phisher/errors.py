@@ -37,7 +37,14 @@ class KingPhisherError(Exception):
 	"""
 	pass
 
-class KingPhisherAbortRequestError(KingPhisherError):
+class KingPhisherAbortError(KingPhisherError):
+	"""
+	An exception that can be raised to indicate that an arbitrary operation
+	needs to be aborted when no better method can be used.
+	"""
+	pass
+
+class KingPhisherAbortRequestError(KingPhisherAbortError):
 	"""
 	An exception that can be raised which when caught will cause the handler to
 	immediately stop processing the current request.

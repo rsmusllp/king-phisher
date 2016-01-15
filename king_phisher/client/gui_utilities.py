@@ -433,7 +433,7 @@ class GladeGObject(object):
 	data file.
 	"""
 	gobject_ids = ()
-	"""A tuple of unique children GTK Builder IDs to load from the Glade data file. These must be prefixed with their GTK type in all lowecase."""
+	"""A tuple of unique children GTK Builder IDs to load from the Glade data file. These must be prefixed with their GTK type in all lowercase."""
 	top_level_dependencies = ()
 	"""Additional top level GObjects to load from the Glade data file."""
 	config_prefix = ''
