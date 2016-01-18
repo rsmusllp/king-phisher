@@ -236,6 +236,9 @@ if [ "$LINUX_VERSION" == "CentOS" ]; then
 elif [ "$LINUX_VERSION" == "Fedora" ]; then
 	dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
 		libpng-devel postgresql-devel python-devel python-pip
+	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
+		dnf install -y geos geos-devel gtksourceview3 vte3
+	fi
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		dnf install -y postgresql-server
 	fi
