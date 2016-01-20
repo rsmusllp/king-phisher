@@ -34,6 +34,7 @@ import time
 import unittest
 
 from king_phisher import testing
+from king_phisher import utilities
 from king_phisher.server import aaa
 
 class ServerAuthenticationTests(testing.KingPhisherTestCase):
@@ -60,6 +61,17 @@ class ServerAuthenticatedSessionManagerTests(testing.KingPhisherTestCase):
 		time.sleep(1.5)
 		self.assertIsNone(manager.get(session_id))
 		self.assertEqual(len(manager), 0)
+
+class ServerCachedPasswordTests(testing.KingPhisherTestCase):
+	def test_comparisions(self):
+		password = utilities.random_string(10)
+		cached_password = aaa.CachedPassword.new_from_password(password)
+
+		self.assertEqual(cached_password, password)
+		self.assertEqual(cached_password, aaa.CachedPassword.new_from_password(password))
+
+		self.assertNotEqual(cached_password, '_', password)
+		self.assertNotEqual(cached_password, aaa.CachedPassword.new_from_password('_' + password))
 
 if __name__ == '__main__':
 	unittest.main()
