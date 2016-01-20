@@ -56,9 +56,16 @@ and configuring a database backend, please see the
 | Kali         | yes            | yes            |
 | Ubuntu       | yes            | yes            |
 
-### Install Script Environment Variables
-Certain environment variables can be set to change the default behaviour of
-the installation script.
+### Install Script Options
+The installation script supports a number of command line options. The latest of
+which can be viewed by running `tools/install.sh --help`. These options can be
+used to (for example) install King Phisher client or server components from
+another automation tool such as Ansible.
+
+#### Install Script Environment Variables
+Certain environment variables can also be set to change the default behaviour of
+the installation script. Command line options take priority over environment
+variables.
 
 | Variable Name               | Description                       | Default           |
 |:----------------------------|:----------------------------------|:-----------------:|

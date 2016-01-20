@@ -13,6 +13,7 @@ Version 1.2.0
 *In Progress*
 
 * SSH host key validation
+* Install script command line flags
 
 Version 1.1.0
 ^^^^^^^^^^^^^
