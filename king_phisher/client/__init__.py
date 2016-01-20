@@ -47,14 +47,15 @@ _gi_versions = [
 if its.on_linux:
 	_gi_versions.append(('Vte', ('2.90', '2.91')))
 
-for namespace, versions in _gi_versions:
-	if not isinstance(versions, (list, tuple)):
-		versions = (versions,)
-	versions = reversed(sorted(versions, key=float))
-	available_versions = repo.enumerate_versions(namespace)
-	for version in versions:
-		if version in available_versions:
-			gi.require_version(namespace, version)
-			break
-	else:
-		raise RuntimeError("Missing required version for gi namespace '{0}'".format(namespace))
+if not its.on_rtd:
+	for namespace, versions in _gi_versions:
+		if not isinstance(versions, (list, tuple)):
+			versions = (versions,)
+		versions = reversed(sorted(versions, key=float))
+		available_versions = repo.enumerate_versions(namespace)
+		for version in versions:
+			if version in available_versions:
+				gi.require_version(namespace, version)
+				break
+		else:
+			raise RuntimeError("Missing required version for gi namespace '{0}'".format(namespace))

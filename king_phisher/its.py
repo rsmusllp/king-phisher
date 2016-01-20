@@ -30,11 +30,13 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
 import sys
 
 frozen = getattr(sys, 'frozen', False)
 
 on_linux = sys.platform.startswith('linux')
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 on_windows = sys.platform.startswith('win')
 
 py_v2 = sys.version_info[0] == 2

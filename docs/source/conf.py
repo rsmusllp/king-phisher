@@ -31,10 +31,9 @@ del _prj_root, _pkg
 sys.modules['ipaddress'] = type('ipaddress', (), {})
 
 import king_phisher.client
+import king_phisher.its
 import king_phisher.version
 import king_phisher.utilities
-
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 # -- General configuration ------------------------------------------------
 needs_sphinx = '1.3'
@@ -137,7 +136,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-if not on_rtd:
+if not king_phisher.its.on_rtd:
 	html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
