@@ -39,7 +39,7 @@ from king_phisher import sms
 from king_phisher import utilities
 from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRegisterPath
 
-__all__ = ['generate_token']
+__all__ = ('generate_token',)
 
 REST_API_BASE = '_/api/'
 """The base URI path for REST API requests."""

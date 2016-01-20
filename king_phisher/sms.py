@@ -44,7 +44,7 @@ else:
 	from email.mime.text import MIMEText
 
 __version__ = '0.1'
-__all__ = ['lookup_carrier_gateway', 'send_sms']
+__all__ = ('lookup_carrier_gateway', 'send_sms')
 
 CARRIERS = {
 	'AT&T':          'txt.att.net',

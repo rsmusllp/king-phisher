@@ -37,7 +37,7 @@ from king_phisher.client import gui_utilities
 
 from gi.repository import GdkPixbuf
 
-__all__ = ['AboutDialog']
+__all__ = ('AboutDialog',)
 
 class AboutDialog(gui_utilities.GladeGObject):
 	"""

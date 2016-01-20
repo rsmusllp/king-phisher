@@ -51,7 +51,7 @@ if its.py_v2:
 else:
 	import html
 
-__all__ = ['BaseTemplateEnvironment', 'MessageTemplateEnvironment']
+__all__ = ('BaseTemplateEnvironment', 'MessageTemplateEnvironment')
 
 class BaseTemplateEnvironment(jinja2.Environment):
 	"""A configured Jinja2 environment with additional filters."""

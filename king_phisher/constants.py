@@ -39,7 +39,7 @@ if its.py_v3:
 else:
 	_intern = intern
 
-__all__ = ['OSArch', 'OSFamily', 'SPFResult']
+__all__ = ('OSArch', 'OSFamily', 'SPFResult')
 
 class ConstantGroupMeta(type):
 	def __len__(cls):

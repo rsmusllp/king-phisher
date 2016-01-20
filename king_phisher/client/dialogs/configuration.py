@@ -38,7 +38,7 @@ from king_phisher.client import gui_utilities
 from gi.repository import GObject
 from gi.repository import Gtk
 
-__all__ = ['ConfigurationDialog']
+__all__ = ('ConfigurationDialog',)
 
 class ConfigurationDialog(gui_utilities.GladeGObject):
 	"""

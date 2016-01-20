@@ -47,7 +47,7 @@ if its.py_v2:
 else:
 	import html
 
-__all__ = ['CampaignSelectionDialog']
+__all__ = ('CampaignSelectionDialog',)
 
 class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	"""

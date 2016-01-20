@@ -45,7 +45,7 @@ import geoip2.database
 import geoip2.errors
 import requests
 
-__all__ = ['init_database', 'lookup', 'GeoLocation']
+__all__ = ('init_database', 'lookup', 'GeoLocation')
 
 DB_DOWNLOAD_URL = 'http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz'
 """The URL from which the GeoLite2 City database can be downloaded from."""

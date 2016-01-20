@@ -40,7 +40,7 @@ from king_phisher.third_party import AdvancedHTTPServer
 from gi.repository import Gtk
 from gi.repository import Pango
 
-__all__ = ['CampaignAssistant']
+__all__ = ('CampaignAssistant',)
 
 class CampaignAssistant(gui_utilities.GladeGObject):
 	"""

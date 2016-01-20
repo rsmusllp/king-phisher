@@ -38,7 +38,7 @@ from king_phisher.client import widget_managers
 
 from gi.repository import Gtk
 
-__all__ = ['ClonePageDialog']
+__all__ = ('ClonePageDialog',)
 
 class ClonePageDialog(gui_utilities.GladeGObject):
 	"""

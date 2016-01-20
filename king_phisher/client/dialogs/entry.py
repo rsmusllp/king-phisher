@@ -34,7 +34,7 @@ from king_phisher.client import gui_utilities
 
 from gi.repository import Gtk
 
-__all__ = ['TextEntryDialog']
+__all__ = ('TextEntryDialog',)
 
 class TextEntryDialog(gui_utilities.GladeGObject):
 	"""

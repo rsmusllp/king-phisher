@@ -39,7 +39,7 @@ from king_phisher.third_party import AdvancedHTTPServer
 from gi.repository import Gtk
 from gi.repository import Pango
 
-__all__ = ['TagEditorDialog']
+__all__ = ('TagEditorDialog',)
 
 class TagEditorDialog(gui_utilities.GladeGObject):
 	"""

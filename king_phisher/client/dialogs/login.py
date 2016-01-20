@@ -38,7 +38,7 @@ from king_phisher.client.dialogs import about
 from gi.repository import Gdk
 from gi.repository import Gtk
 
-__all__ = ['LoginDialog', 'SSHLoginDialog']
+__all__ = ('LoginDialog', 'SSHLoginDialog')
 
 class BaseLoginDialog(gui_utilities.GladeGObject):
 	"""

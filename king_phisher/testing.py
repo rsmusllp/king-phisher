@@ -56,12 +56,12 @@ else:
 	import http.client
 	import urllib.parse
 
-__all__ = [
+__all__ = (
 	'TEST_MESSAGE_TEMPLATE',
 	'TEST_MESSAGE_TEMPLATE_INLINE_IMAGE',
 	'KingPhisherTestCase',
 	'KingPhisherServerTestCase'
-]
+)
 
 TEST_MESSAGE_TEMPLATE_INLINE_IMAGE = '/path/to/fake/image.png'
 """A string with the path to a file used as an inline image in the :py:data:`.TEST_MESSAGE_TEMPLATE`."""
