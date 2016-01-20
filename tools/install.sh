@@ -136,7 +136,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Fedora"
 fi
 
-grep -E "Debian GNU\/Linux [7-8] " /etc/issue &> /dev/null
+grep -E "Debian GNU\/Linux [8] " /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Debian"
 fi

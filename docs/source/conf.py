@@ -30,6 +30,7 @@ del _prj_root, _pkg
 
 sys.modules['ipaddress'] = type('ipaddress', (), {})
 
+import king_phisher.client
 import king_phisher.version
 import king_phisher.utilities
 

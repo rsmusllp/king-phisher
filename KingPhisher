@@ -41,19 +41,9 @@ if getattr(sys, 'frozen', False):
 	# set the basemap data directory for frozen builds
 	os.environ['BASEMAPDATA'] = os.path.join(os.path.dirname(sys.executable), 'mpl-basemap-data')
 
-from king_phisher import its
-
-import gi
-gi.require_version('Gdk', '3.0')
-gi.require_version('Gtk', '3.0')
-gi.require_version('GtkSource', '3.0')
-# temporary work around for Ubuntu 14.04 w/WebKit2 <4.0
-#gi.require_version('WebKit2', '3.0')
-if its.on_linux:
-	gi.require_version('Vte', '2.90')
-
 from king_phisher import color
 from king_phisher import find
+from king_phisher import its
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import application
@@ -97,8 +87,8 @@ def main():
 		color.print_error('no display was detected, this must be run with an interactive X session')
 		return 0
 
-	if Gtk.check_version(3, 8, 0):
-		color.print_error('the GTK+ version is too old (minimum required is 3.8)')
+	if Gtk.check_version(3, 10, 0):
+		color.print_error('the GTK+ version is too old (minimum required is 3.10)')
 		return 0
 
 	# check and configure the environment

@@ -161,4 +161,4 @@ class MissingHostKeyPolicy(paramiko.MissingHostKeyPolicy):
 
 		if host_keys_modified:
 			host_keys.save(known_hosts_file)
-			os.chmod(known_hosts_file, 0600)
+			os.chmod(known_hosts_file, 0o600)
