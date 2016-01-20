@@ -107,7 +107,6 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.filter_menu_items['your_campaigns'].set_active(self.config['filter.campaign.user'])
 		self.filter_menu_items['other_campaigns'].set_active(self.config['filter.campaign.other_users'])
 		self.gobjects['menubutton_filter'].set_popup(filter_menu)
-		self.gobjects['menubutton_filter'].set_label('Show Criteria')
 		filter_menu.connect('destroy', self._save_filter)
 
 	def _save_filter(self, _):

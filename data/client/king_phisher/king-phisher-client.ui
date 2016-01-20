@@ -254,10 +254,14 @@ Brandan Geise</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">Filtering options for found campaigns.</property>
+                <property name="tooltip_text" translatable="yes">Filtering options for displayed campaigns.</property>
                 <property name="direction">right</property>
                 <child>
-                  <placeholder/>
+                  <object class="GtkLabel" id="label67">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Display Criteria</property>
+                  </object>
                 </child>
               </object>
               <packing>
