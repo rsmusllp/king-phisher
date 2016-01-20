@@ -29,7 +29,7 @@ GIT_CLONE_URL="https://github.com/securestate/king-phisher.git"
 if [ -z "$KING_PHISHER_DIR" ]; then
 	KING_PHISHER_DIR="/opt/king-phisher"
 fi
-KING_PHISHER_GROUP="kpadmins"
+KING_PHISHER_GROUP="king-phisher"
 KING_PHISHER_USE_POSTGRESQL="no"
 KING_PHISHER_WEB_ROOT="/var/www"
 LINUX_VERSION=""

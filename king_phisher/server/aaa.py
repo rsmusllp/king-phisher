@@ -54,9 +54,6 @@ import smoke_zephyr.utilities
 
 __all__ = ('AuthenticatedSessionManager', 'ForkedAuthenticator')
 
-make_salt = lambda: ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(random.randint(5, 8)))
-make_hash = lambda pw: hashlib.sha512(pw.encode('utf-8')).digest()
-
 def get_groups_for_user(username):
 	"""
 	Get the groups that a user is a member of.
@@ -99,8 +96,7 @@ class AuthenticatedSessionManager(object):
 		:type timeout: int, str
 		"""
 		self.logger = logging.getLogger('KingPhisher.Server.SessionManager')
-		if isinstance(timeout, str):
-			timeout = smoke_zephyr.utilities.parse_timespan(timeout)
+		timeout = smoke_zephyr.utilities.parse_timespan(timeout)
 		self.session_timeout = timeout
 		self._sessions = {}
 		self._lock = threading.Lock()
@@ -223,6 +219,42 @@ class AuthenticatedSessionManager(object):
 		else:
 			self.logger.info("{0:,} sessions were stored in the database".format(len(self._sessions)))
 
+class CachedPassword(object):
+	"""
+	A cached in-memory password. Cleartext passwords are salted with data
+	generated at runtime and hashed before being stored for future comparisons.
+	"""
+	__slots__ = ('pw_hash', 'time')
+	salt = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(random.randint(6, 10)))
+	hash_algorithm = 'sha512'
+	iterations = 5000
+	def __init__(self, pw_hash):
+		"""
+		:param bytes pw_hash: The salted hash of the password to cache.
+		"""
+		self.pw_hash = pw_hash
+		self.time = time.time()
+
+	def __eq__(self, other):
+		if isinstance(other, str):
+			other = self.__class__.new_from_password(other)
+		if isinstance(other, self.__class__):
+			return self.pw_hash == other.pw_hash
+		return False
+
+	@classmethod
+	def new_from_password(cls, password):
+		"""
+		Create a new instance from a plaintext password.
+
+		:param str password: The password to cache in memory.
+		"""
+		password = (cls.salt + password).encode('utf-8')
+		pw_hash = hashlib.new(cls.hash_algorithm, password).digest()
+		for _ in range(cls.iterations - 1):
+			pw_hash = hashlib.new(cls.hash_algorithm, pw_hash).digest()
+		return cls(pw_hash)
+
 class ForkedAuthenticator(object):
 	"""
 	This provides authentication services to the King Phisher server
@@ -232,13 +264,14 @@ class ForkedAuthenticator(object):
 	The pipes use JSON to encoded the request data as a string before
 	sending it and using a newline character as the terminator.
 	"""
-	def __init__(self, cache_timeout=600, required_group=None):
+	def __init__(self, cache_timeout='10m', required_group=None):
 		"""
-		:param int cache_timeout: The life time of cached credentials in seconds.
+		:param cache_timeout: The life time of cached credentials in seconds.
+		:type cache_timeout: int, str
 		:param str required_group: A group that if specified, users must be a member of to be authenticated.
 		"""
 		self.logger = logging.getLogger('KingPhisher.Server.Authenticator')
-		self.cache_timeout = cache_timeout
+		self.cache_timeout = smoke_zephyr.utilities.parse_timespan(cache_timeout)
 		"""The timeout of the credential cache in seconds."""
 		self.required_group = required_group
 		if self.required_group and not self.required_group in [g.gr_name for g in grp.getgrall()]:
@@ -253,6 +286,7 @@ class ForkedAuthenticator(object):
 		else:
 			self.rfile = self.parent_rfile
 			self.wfile = self.parent_wfile
+		self._lock = threading.Lock()
 		self.rfile = os.fdopen(self.rfile, 'r', 1)
 		self.wfile = os.fdopen(self.wfile, 'w', 1)
 		if not self.child_pid:
@@ -261,8 +295,6 @@ class ForkedAuthenticator(object):
 			self.wfile.close()
 			logging.shutdown()
 			os._exit(os.EX_OK)
-		self.cache_salt = make_salt()
-		"""The salt to be prepended to passwords before hashing them for the cache."""
 		self.cache = {}
 		"""The credential cache dictionary. Keys are usernames and values are tuples of password hashes and ages."""
 		return
@@ -340,23 +372,26 @@ class ForkedAuthenticator(object):
 		:return: Whether the credentials are valid or not.
 		:rtype: bool
 		"""
-		pw_hash = make_hash(self.cache_salt + password)
-		cached_hash, timeout = self.cache.get(username, (None, 0))
-		if timeout >= time.time():
-			return cached_hash == pw_hash
-		request = {}
-		request['action'] = 'authenticate'
-		request['username'] = username
-		request['password'] = password
+		cached_password = self.cache.get(username)
+		if cached_password is not None and cached_password.time + self.cache_timeout >= time.time():
+			return cached_password == password
+		request = {
+			'action': 'authenticate',
+			'username': username,
+			'password': password
+		}
+		self._lock.acquire()
 		self.send(request)
 		try:
-			result = self.recv(timeout=20)
+			result = self.recv(timeout=30)
 		except errors.KingPhisherTimeoutError as error:
 			self.logger.error(error.message)
+			self._lock.release()
 			return False
 		if result['result']:
 			self.logger.info("user {0} has successfully authenticated".format(username))
-			self.cache[username] = (pw_hash, time.time() + self.cache_timeout)
+			self.cache[username] = CachedPassword.new_from_password(password)
+		self._lock.release()
 		return result['result']
 
 	def stop(self):
@@ -367,7 +402,8 @@ class ForkedAuthenticator(object):
 			return
 		request = {}
 		request['action'] = 'stop'
-		self.send(request)
-		os.waitpid(self.child_pid, 0)
+		with self._lock:
+			self.send(request)
+			os.waitpid(self.child_pid, 0)
 		self.rfile.close()
 		self.wfile.close()

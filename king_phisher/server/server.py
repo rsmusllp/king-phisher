@@ -755,8 +755,13 @@ class KingPhisherServer(AdvancedHTTPServer):
 
 		self.http_server.config = config
 		self.http_server.throttle_semaphore = threading.Semaphore()
-		self.http_server.session_manager = aaa.AuthenticatedSessionManager()
-		self.http_server.forked_authenticator = aaa.ForkedAuthenticator(required_group=config.get_if_exists('server.authentication.group'))
+		self.http_server.session_manager = aaa.AuthenticatedSessionManager(
+			timeout=config.get_if_exists('server.authentication.cache_timeout', '30m')
+		)
+		self.http_server.forked_authenticator = aaa.ForkedAuthenticator(
+			cache_timeout=config.get_if_exists('server.authentication.cache_timeout', '10m'),
+			required_group=config.get_if_exists('server.authentication.group')
+		)
 		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.job_manager = job.JobManager()
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""

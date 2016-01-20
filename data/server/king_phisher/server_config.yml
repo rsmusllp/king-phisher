@@ -13,10 +13,15 @@ server:
     host: 0.0.0.0
     port: 80
 
-  # Authentication related information
+  # Server RPC authentication related settings
   #authentication:
+    # How long to cache authentication information in the server process
+    #cache_timeout: 10m
     # Require authenticating users to be a member of the specified group
     #group: king-phisher
+    # How long an authenticated RPC session should be valid for after no
+    # requests have been received.
+    #session_timeout: 30m
 
   # A cookie to retrieve the client's IP from, useful when a proxy is in place
   #client_ip_cookie: X-Real-IP

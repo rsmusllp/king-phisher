@@ -27,6 +27,12 @@ Classes
    :special-members: __init__
    :undoc-members:
 
+.. autoclass:: king_phisher.server.aaa.CachedPassword
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
 .. autoclass:: king_phisher.server.aaa.ForkedAuthenticator
    :show-inheritance:
    :members:

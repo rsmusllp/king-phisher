@@ -54,10 +54,10 @@ class ServerAuthenticatedSessionManagerTests(testing.KingPhisherTestCase):
 		self.assertEqual(len(manager), original_session_count + 1)
 
 	def test_session_expiration(self):
-		manager = aaa.AuthenticatedSessionManager(timeout=0.5)
+		manager = aaa.AuthenticatedSessionManager(timeout=1)
 		session_id = manager.put('alice')
 		self.assertIsNotNone(manager.get(session_id))
-		time.sleep(0.75)
+		time.sleep(1.5)
 		self.assertIsNone(manager.get(session_id))
 		self.assertEqual(len(manager), 0)
 
