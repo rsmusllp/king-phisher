@@ -257,12 +257,14 @@ class CachedPassword(object):
 
 class ForkedAuthenticator(object):
 	"""
-	This provides authentication services to the King Phisher server
-	through PAM. It is initialized while the server is running as root
-	and forks into the background before the privileges are dropped. It
-	continues to run as root and forwards requests through a pipe to PAM.
-	The pipes use JSON to encoded the request data as a string before
-	sending it and using a newline character as the terminator.
+	This provides authentication services to the King Phisher server through
+	PAM. It is initialized while the server is running as root and forks into
+	the background before the privileges are dropped. The child continues to run
+	as root and forwards requests to PAM on behalf of the parent process which
+	is then free to drop privileges. The pipes use JSON to encode the request
+	data as a string before sending it and using a newline character as the
+	terminator. Requests from the parent process to the child process include a
+	sequence number which must be included in the response.
 	"""
 	def __init__(self, cache_timeout='10m', required_group=None):
 		"""
@@ -295,25 +297,35 @@ class ForkedAuthenticator(object):
 			self.wfile.close()
 			logging.shutdown()
 			os._exit(os.EX_OK)
+		# below this are attributes exclusive to the parent process
 		self.cache = {}
 		"""The credential cache dictionary. Keys are usernames and values are tuples of password hashes and ages."""
+		self.response_timeout = 30
+		self.sequence_number = 0
+		"""A sequence number to use to align requests with responses."""
 		return
 
 	def send(self, request):
 		"""
-		Encode and send a request through the pipe to the opposite end.
+		Encode and send a request through the pipe to the opposite end. This
+		also sets the 'sequence' member of the request and increments the stored
+		value.
 
 		:param dict request: A request.
 		"""
+		request['sequence'] = self.sequence_number
+		self.sequence_number += 1
+		if self.sequence_number > 0xffffffff:
+			self.sequence_number = 0
+		self._raw_send(request)
+
+	def _raw_send(self, request):
 		self.wfile.write(json.dumps(request) + '\n')
 
-	def recv(self, timeout=None):
+	def _raw_recv(self, timeout=None):
 		"""
-		Receive a request and decode it.
-
-		:param int timeout: The amount of time in seconds to wait for a response to be received.
-		:return: The decoded request.
-		:rtype: dict
+		Receive a request from the other process and decode it. This makes no
+		attempt to validate the 'sequence' member of the request.
 		"""
 		if timeout is not None:
 			ready, _, _ = select.select([self.rfile], [], [], timeout)
@@ -321,9 +333,27 @@ class ForkedAuthenticator(object):
 				raise errors.KingPhisherTimeoutError('a response was not received within the timeout')
 		try:
 			request = self.rfile.readline()[:-1]
-			return json.loads(request)
 		except KeyboardInterrupt:
 			return {}
+		return json.loads(request)
+
+	def _seq_recv(self):
+		"""
+		Receive a request from the other process and decode it. This also
+		ensures that 'sequence' member of the request is the expected value.
+		"""
+		timeout = self.response_timeout
+		expected_sequence = self.sequence_number - 1
+		while timeout > 0:
+			start_time = time.time()
+			request = self._raw_recv(timeout)
+			if request.get('sequence') == expected_sequence:
+				break
+			self.logger.warning("dropping request due to sequence number mismatch (received: {0} expected: {1})".format(request.get('sequence'), expected_sequence))
+			timeout -= time.time() - start_time
+		else:
+			raise errors.KingPhisherTimeoutError('a response was not received within the timeout')
+		return request
 
 	def child_routine(self):
 		"""
@@ -334,8 +364,12 @@ class ForkedAuthenticator(object):
 		if os.path.isfile('/etc/pam.d/sshd'):
 			service = 'sshd'
 		while True:
-			request = self.recv()
-			if not 'action' in request:
+			request = self._raw_recv(timeout=None)
+			if 'action' not in request:
+				self.logger.warning('authentication request received without a specified action')
+				continue
+			if 'sequence' not in request:
+				self.logger.warning('authentication request received without a sequence number')
 				continue
 			action = request['action']
 			if action == 'stop':
@@ -344,8 +378,11 @@ class ForkedAuthenticator(object):
 				continue
 			username = str(request['username'])
 			password = str(request['password'])
-			result = {}
-			result['result'] = pam.authenticate(username, password, service=service)
+			result = {
+				'result': pam.authenticate(username, password, service=service),
+				'sequence': request['sequence'],
+				'username': username
+			}
 			if result['result']:
 				if self.required_group:
 					result['result'] = False
@@ -359,7 +396,7 @@ class ForkedAuthenticator(object):
 						result['result'] = True
 			else:
 				self.logger.warning("authentication failed for user: {0} reason: bad username or password".format(username))
-			self.send(result)
+			self._raw_send(result)
 
 	def authenticate(self, username, password):
 		"""
@@ -377,18 +414,18 @@ class ForkedAuthenticator(object):
 			return cached_password == password
 		request = {
 			'action': 'authenticate',
-			'username': username,
-			'password': password
+			'password': password,
+			'username': username
 		}
 		self._lock.acquire()
 		self.send(request)
 		try:
-			result = self.recv(timeout=30)
+			result = self._seq_recv()
 		except errors.KingPhisherTimeoutError as error:
 			self.logger.error(error.message)
 			self._lock.release()
 			return False
-		if result['result']:
+		if result['result'] and result.get('username') == username:
 			self.logger.info("user {0} has successfully authenticated".format(username))
 			self.cache[username] = CachedPassword.new_from_password(password)
 		self._lock.release()
@@ -400,8 +437,7 @@ class ForkedAuthenticator(object):
 		"""
 		if not os.path.exists("/proc/{0}".format(self.child_pid)):
 			return
-		request = {}
-		request['action'] = 'stop'
+		request = {'action': 'stop'}
 		with self._lock:
 			self.send(request)
 			os.waitpid(self.child_pid, 0)

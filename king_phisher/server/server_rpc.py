@@ -531,11 +531,11 @@ class KingPhisherRequestHandlerRPC(object):
 		fail_default = (False, ConnectionErrorReason.ERROR_INVALID_CREDENTIALS, None)
 		fail_otp = (False, ConnectionErrorReason.ERROR_INVALID_OTP, None)
 
-		if not username and password:
-			logger.warning("failed login request from {0} for user {1}, (invalid username or password)".format(self.client_address[0], username))
+		if not (username and password):
+			logger.warning("failed login request from {0} for user {1}, (missing username or password)".format(self.client_address[0], username))
 			return fail_default
 		if not self.server.forked_authenticator.authenticate(username, password):
-			logger.warning("failed login request from {0} for user {1}, (invalid username or password)".format(self.client_address[0], username))
+			logger.warning("failed login request from {0} for user {1}, (authentication failed)".format(self.client_address[0], username))
 			return fail_default
 
 		user = db_manager.get_row_by_id(session, db_models.User, username)
