@@ -548,7 +548,7 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 			if not gtype in GOBJECT_PROPERTY_MAP or not config_name in self.config:
 				continue
 			value = self.config[config_name]
-			if value == None:
+			if value is None:
 				continue
 			if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
 				GOBJECT_PROPERTY_MAP[gtype][0](gobject, value)

@@ -88,7 +88,9 @@ class LoginDialog(LoginDialogBase):
 			'entry_server_username',
 			'entry_server_password',
 			'entry_server_one_time_password',
+			'label_main',
 			'label_server_one_time_password',
+			'revealer_server_one_time_password',
 			'spinbutton_server_remote_port',
 			'switch_server_use_ssl'
 		),

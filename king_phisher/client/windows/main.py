@@ -279,12 +279,12 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 			otp = None
 		_, reason = self.application.server_connect(username, password, otp)
 		if reason == ConnectionErrorReason.ERROR_INVALID_OTP:
-			self.login_dialog.gobjects['label_server_one_time_password'].show()
-			entry = self.login_dialog.gobjects['entry_server_one_time_password']
-			if entry.get_property('visible'):
+			revealer = self.login_dialog.gobjects['revealer_server_one_time_password']
+			if revealer.get_child_revealed():
 				gui_utilities.show_dialog_error('Login Failed', self, 'A valid one time password (OTP) token is required.')
 			else:
-				entry.show()
+				revealer.set_reveal_child(True)
+			entry = self.login_dialog.gobjects['entry_server_one_time_password']
 			entry.grab_focus()
 		elif reason == ConnectionErrorReason.ERROR_INVALID_CREDENTIALS:
 			gui_utilities.show_dialog_error('Login Failed', self, 'The provided credentials are incorrect.')

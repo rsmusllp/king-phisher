@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.19.0
+<!-- Generated with glade 3.19.0 
 
 Copyright (c) 2013-2015, SecureState LLC
 All rights reserved.
@@ -33,7 +33,7 @@ Brandan Geise
 
 -->
 <interface>
-  <requires lib="gtk+" version="3.8"/>
+  <requires lib="gtk+" version="3.10"/>
   <requires lib="gtksourceview" version="3.0"/>
   <!-- interface-css-provider-path style/theme.css -->
   <!-- interface-license-type bsd3c -->
@@ -112,182 +112,6 @@ Brandan Geise</property>
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkDialog" id="LoginDialogBase">
-    <property name="can_focus">False</property>
-    <property name="default_width">350</property>
-    <property name="default_height">225</property>
-    <property name="destroy_with_parent">True</property>
-    <property name="type_hint">dialog</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="LoginDialogBase.dialog-vbox5">
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">3</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="LoginDialogBase.dialog-action_area5">
-            <property name="can_focus">False</property>
-            <property name="margin_right">5</property>
-            <property name="margin_top">5</property>
-            <property name="margin_bottom">5</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="LoginDialogBase.button_cancel">
-                <property name="label">gtk-cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="LoginDialogBase.button_connect">
-                <property name="label">gtk-connect</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkGrid" id="LoginDialogBase.grid1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_left">5</property>
-            <property name="margin_right">5</property>
-            <property name="row_spacing">5</property>
-            <property name="row_homogeneous">True</property>
-            <child>
-              <object class="GtkLabel" id="LoginDialogBase.label11">
-                <property name="width_request">120</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Server</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="LoginDialogBase.label12">
-                <property name="width_request">120</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Username</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="LoginDialogBase.label13">
-                <property name="width_request">120</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Password</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="LoginDialogBase.entry_server">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">The server to connect to.</property>
-                <property name="hexpand">True</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">The SSH server.</property>
-                <property name="placeholder_text" translatable="yes">server:port</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="LoginDialogBase.entry_username">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">The username to authenticate with.</property>
-                <property name="hexpand">True</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
-                <property name="placeholder_text" translatable="yes">username</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="LoginDialogBase.entry_password">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="has_focus">True</property>
-                <property name="tooltip_text" translatable="yes">The password to authenticate with.</property>
-                <property name="hexpand">True</property>
-                <property name="visibility">False</property>
-                <property name="invisible_char">●</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH password to authenticate with.</property>
-                <property name="placeholder_text" translatable="yes">password</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="LoginDialogBase.label_main">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Login</property>
-                <attributes>
-                  <attribute name="weight" value="bold"/>
-                  <attribute name="scale" value="1.5"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="-6">LoginDialogBase.button_cancel</action-widget>
-      <action-widget response="-10">LoginDialogBase.button_connect</action-widget>
-    </action-widgets>
   </object>
   <object class="GtkDialog" id="CampaignSelectionDialog">
     <property name="width_request">650</property>
@@ -2002,6 +1826,182 @@ Brandan Geise</property>
       <action-widget response="-5">button1</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkDialog" id="LoginDialogBase">
+    <property name="can_focus">False</property>
+    <property name="default_width">350</property>
+    <property name="default_height">225</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="type_hint">dialog</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="LoginDialogBase.dialog-vbox5">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">3</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="LoginDialogBase.dialog-action_area5">
+            <property name="can_focus">False</property>
+            <property name="margin_right">5</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">5</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="LoginDialogBase.button_cancel">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="LoginDialogBase.button_connect">
+                <property name="label">gtk-connect</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="LoginDialogBase.grid1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="row_spacing">5</property>
+            <property name="row_homogeneous">True</property>
+            <child>
+              <object class="GtkLabel" id="LoginDialogBase.label11">
+                <property name="width_request">120</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Server</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="LoginDialogBase.label12">
+                <property name="width_request">120</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Username</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="LoginDialogBase.label13">
+                <property name="width_request">120</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Password</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="LoginDialogBase.entry_server">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The server to connect to.</property>
+                <property name="hexpand">True</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The SSH server.</property>
+                <property name="placeholder_text" translatable="yes">server:port</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="LoginDialogBase.entry_username">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The username to authenticate with.</property>
+                <property name="hexpand">True</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH username to authenticate with.</property>
+                <property name="placeholder_text" translatable="yes">username</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="LoginDialogBase.entry_password">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="has_focus">True</property>
+                <property name="tooltip_text" translatable="yes">The password to authenticate with.</property>
+                <property name="hexpand">True</property>
+                <property name="visibility">False</property>
+                <property name="invisible_char">●</property>
+                <property name="primary_icon_tooltip_text" translatable="yes">The server SSH password to authenticate with.</property>
+                <property name="placeholder_text" translatable="yes">password</property>
+                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="LoginDialogBase.label_main">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Login</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                  <attribute name="scale" value="1.5"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="-6">LoginDialogBase.button_cancel</action-widget>
+      <action-widget response="-10">LoginDialogBase.button_connect</action-widget>
+    </action-widgets>
+  </object>
   <object class="GtkBox" id="MailSenderEditTab">
     <property name="width_request">400</property>
     <property name="height_request">300</property>
@@ -2191,9 +2191,10 @@ Brandan Geise</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkDialog" id="LoginDialog">
+    <property name="width_request">350</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher</property>
-    <property name="default_width">350</property>
+    <property name="resizable">False</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <signal name="button-press-event" handler="signal_button_pressed" swapped="no"/>
@@ -2392,33 +2393,7 @@ Brandan Geise</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="LoginDialog.label_server_one_time_password">
-                <property name="width_request">120</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">OTP</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="LoginDialog.entry_server_one_time_password">
-                <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">The one time password for this account.</property>
-                <property name="hexpand">True</property>
-                <property name="max_length">6</property>
-                <property name="placeholder_text" translatable="yes">one time password</property>
-                <property name="input_purpose">digits</property>
-                <signal name="activate" handler="signal_entry_activate" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label69">
+              <object class="GtkLabel" id="LoginDialog.label_main">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Server Login</property>
@@ -2430,6 +2405,57 @@ Brandan Geise</property>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">0</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRevealer" id="LoginDialog.revealer_server_one_time_password">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="transition_type">crossfade</property>
+                <property name="transition_duration">750</property>
+                <child>
+                  <object class="GtkBox" id="box4">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkLabel" id="LoginDialog.label_server_one_time_password">
+                        <property name="width_request">120</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">OTP</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="LoginDialog.entry_server_one_time_password">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The one time password for this account.</property>
+                        <property name="hexpand">True</property>
+                        <property name="max_length">6</property>
+                        <property name="placeholder_text" translatable="yes">one time password</property>
+                        <property name="input_purpose">digits</property>
+                        <signal name="activate" handler="signal_entry_activate" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">4</property>
                 <property name="width">2</property>
               </packing>
             </child>
