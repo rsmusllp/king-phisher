@@ -297,22 +297,32 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			while True:
 				self.text_insert('Connecting to SSH... ')
 				login_dialog = dialogs.SSHLoginDialog(self.application)
-				login_dialog.objects_load_from_config()
 				response = login_dialog.interact()
 				if response != Gtk.ResponseType.APPLY:
 					self.sender_start_failure(text='canceled.\n')
 					return
-				ssh_status = self.sender_thread.server_ssh_connect()
-				if ssh_status == ConnectionErrorReason.SUCCESS:
+				connection_status = self.sender_thread.server_ssh_connect()
+				if connection_status == ConnectionErrorReason.SUCCESS:
 					self.text_insert('done.\n')
 					break
-				if ssh_status == ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED:
+				if connection_status == ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED:
 					error_description = ('Authentication Failed', 'Failed to authenticate to the SSH server.')
 				else:
 					error_description = ('Connection Failed', 'Failed to connect to the SSH server.')
 				self.sender_start_failure(error_description, 'failed.\n', retry=True)
+
 		self.text_insert('Connecting to SMTP server... ')
-		if not self.sender_thread.server_smtp_connect():
+		if self.config.get('smtp_username', ''):
+			login_dialog = dialogs.SMTPLoginDialog(self.application)
+			response = login_dialog.interact()
+			if response != Gtk.ResponseType.APPLY:
+				self.sender_start_failure(text='canceled.\n')
+				return
+		connection_status = self.sender_thread.server_smtp_connect()
+		if connection_status == ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED:
+			self.sender_start_failure(('Authentication Failed', 'Failed to authenticate to the SMTP server.'), 'failed.\n')
+			return
+		elif connection_status != ConnectionErrorReason.SUCCESS:
 			self.sender_start_failure(('Connection Failed', 'Failed to connect to the SMTP server.'), 'failed.\n')
 			return
 		self.text_insert('done.\n')

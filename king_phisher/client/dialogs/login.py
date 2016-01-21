@@ -38,14 +38,30 @@ from king_phisher.client.dialogs import about
 from gi.repository import Gdk
 from gi.repository import Gtk
 
-__all__ = ('LoginDialog', 'SSHLoginDialog')
+__all__ = ('LoginDialog', 'SMTPLoginDialog', 'SSHLoginDialog')
 
-class BaseLoginDialog(gui_utilities.GladeGObject):
+class LoginDialogBase(gui_utilities.GladeGObject):
 	"""
 	This object is basic login dialog object that can be inherited from and
 	customized.
 	"""
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'button_connect',
+			'entry_server',
+			'entry_username',
+			'entry_password',
+			'label_main'
+		),
+		name='LoginDialogBase'
+	)
+	label = None
 	top_gobject = 'dialog'
+	def __init__(self, *args, **kwargs):
+		super(LoginDialogBase, self).__init__(*args, **kwargs)
+		if self.label is not None:
+			self.gobjects['label_main'].set_text(self.label)
+
 	def interact(self):
 		self.dialog.show_all()
 		response = self.dialog.run()
@@ -57,7 +73,7 @@ class BaseLoginDialog(gui_utilities.GladeGObject):
 	def signal_entry_activate(self, entry):
 		self.gobjects['button_connect'].emit('clicked')
 
-class LoginDialog(BaseLoginDialog):
+class LoginDialog(LoginDialogBase):
 	"""
 	This object is the main King Phisher login dialog, it is used to
 	prompt for connection information for the King Phisher server.
@@ -98,19 +114,24 @@ class LoginDialog(BaseLoginDialog):
 		self.popup_menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
 		return True
 
-class SSHLoginDialog(BaseLoginDialog):
+class SMTPLoginDialog(LoginDialogBase):
 	"""
-	This object is the King Phisher SSH login dialog, it is used to
-	prompt for connection information to an SSH server.
+	This object is the King Phisher SMTP login dialog, it is used to prompt for
+	connection information to an SMTP server.
 
 	It allows the user to specify the host and port to connect to and
 	credentials for authentication.
 	"""
-	dependencies = gui_utilities.GladeDependencies(
-		children=(
-			'button_connect',
-			'entry_ssh_server',
-			'entry_ssh_username',
-			'entry_ssh_password'
-		)
-	)
+	config_prefix = 'smtp_'
+	label = 'SMTP Login'
+
+class SSHLoginDialog(LoginDialogBase):
+	"""
+	This object is the King Phisher SSH login dialog, it is used to prompt for
+	connection information to an SSH server.
+
+	It allows the user to specify the host and port to connect to and
+	credentials for authentication.
+	"""
+	config_prefix = 'ssh_'
+	label = 'SSH Login'

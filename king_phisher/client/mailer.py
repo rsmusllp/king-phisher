@@ -295,9 +295,8 @@ class MailSenderThread(threading.Thread):
 
 	def server_ssh_connect(self):
 		"""
-		Connect to the remote SMTP server over SSH and configure port
-		forwarding with :py:class:`.SSHTCPForwarder` for tunneling SMTP
-		traffic.
+		Connect to the remote SMTP server over SSH and configure port forwarding
+		with :py:class:`.SSHTCPForwarder` for tunneling SMTP traffic.
 
 		:return: The connection status as one of the :py:class:`.ConnectionErrorReason` constants.
 		"""
@@ -332,10 +331,9 @@ class MailSenderThread(threading.Thread):
 
 	def server_smtp_connect(self):
 		"""
-		Connect to the configured SMTP server.
+		Connect and optionally authenticate to the configured SMTP server.
 
-		:return: The connection status.
-		:rtype: bool
+		:return: The connection status as one of the :py:class:`.ConnectionErrorReason` constants.
 		"""
 		if self.config.get('smtp_ssl_enable', False):
 			SmtpClass = smtplib.SMTP_SSL
@@ -343,13 +341,24 @@ class MailSenderThread(threading.Thread):
 			SmtpClass = smtplib.SMTP
 		try:
 			self.smtp_connection = SmtpClass(*self.smtp_server, timeout=10)
+			self.smtp_connection.ehlo()
 		except socket.error:
 			self.logger.warning('received a socket.error while connecting to the SMTP server')
+			return ConnectionErrorReason.ERROR_CONNECTION
 		except smtplib.SMTPException:
 			self.logger.warning('received an SMTPException while connecting to the SMTP server', exc_info=True)
-		else:
-			return True
-		return False
+			return ConnectionErrorReason.ERROR_UNKNOWN
+
+		username = self.config.get('smtp_username', '')
+		if username:
+			password = self.config.get('smtp_password', '')
+			try:
+				self.smtp_connection.login(username, password)
+			except smtplib.SMTPException as error:
+				self.logger.warning('received an {0} while authenticating to the SMTP server'.format(error.__class__.__name__))
+				self.smtp_connection.quit()
+				return ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED
+		return ConnectionErrorReason.SUCCESS
 
 	def server_smtp_disconnect(self):
 		"""Clean up and close the connection to the remote SMTP server."""
@@ -375,7 +384,7 @@ class MailSenderThread(threading.Thread):
 			except smtplib.SMTPServerDisconnected:
 				pass
 			self.smtp_connection = None
-		while not self.server_smtp_connect():
+		while self.server_smtp_connect() != ConnectionErrorReason.SUCCESS:
 			self.tab_notify_status('Failed to reconnect to the SMTP server')
 			if not self.process_pause(True):
 				return False

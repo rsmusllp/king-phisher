@@ -55,6 +55,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			'combobox_sms_carrier',
 			# SMTP Server Tab
 			'entry_smtp_server',
+			'entry_smtp_username',
 			'spinbutton_smtp_max_send_rate',
 			'switch_smtp_ssl_enable',
 			'switch_smtp_ssh_enable',
