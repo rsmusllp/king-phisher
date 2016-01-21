@@ -424,18 +424,34 @@ class CellRendererTextBytes(_Gtk_CellRendererText):
 		Gtk.CellRendererText.do_render(self, *args, **kwargs)
 
 class GladeDependencies(object):
+	"""
+	A class for defining how objects should be loaded from a GTK Builder data
+	file for use with :py:class:`.GladeGObject`.
+	"""
 	__slots__ = ('children', 'top_level', 'name')
 	def __init__(self, children=None, top_level=None, name=None):
 		self.children = children
+		"""A tuple of string names listing the children widgets to load from the parent."""
 		self.top_level = top_level
+		"""A tuple of string names listing additional top level widgets to load such as images."""
 		self.name = name
+		"""The string of the name of the top level parent widget to load."""
+
+	def __repr__(self):
+		return "<{0} name='{1}' >".format(self.__class__.__name__, self.name)
 
 class GladeGObjectMeta(type):
-	_assigned_name = type('_assigned_name', (str,), {})
+	"""
+	A meta class that will update the :py:attr:`.GladeDependencies.name` value
+	in the :py:attr:`.GladeGObject.dependencies` attribute of instances if no
+	value is defined.
+	"""
+	assigned_name = type('assigned_name', (str,), {})
+	"""A type subclassed from str that is used to define names which have been automatically assigned by this class."""
 	def __init__(cls, *args, **kwargs):
 		dependencies = getattr(cls, 'dependencies', None)
-		if dependencies is not None and isinstance(dependencies.name, (None.__class__, cls._assigned_name)):
-			dependencies.name = cls._assigned_name(cls.__name__)
+		if dependencies is not None and isinstance(dependencies.name, (None.__class__, cls.assigned_name)):
+			dependencies.name = cls.assigned_name(cls.__name__)
 		super(GladeGObjectMeta, cls).__init__(*args, **kwargs)
 
 # stylized metaclass definition to be Python 2.7 and 3.x compatible
@@ -449,7 +465,7 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 	data file.
 	"""
 	dependencies = GladeDependencies()
-
+	"""A :py:class:`.GladeDependencies` instance which defines information for loading the widget from the GTK builder data."""
 	config_prefix = ''
 	"""A prefix to be used for keys when looking up value in the :py:attr:`~.GladeGObject.config`."""
 	top_gobject = 'gobject'
@@ -466,7 +482,7 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 		"""A reference to the King Phisher client configuration."""
 		self.application = application
 		"""The parent :py:class:`Gtk.Application` instance."""
-		self.logger = logging.getLogger('KingPhisher.Client.' + self.dependencies.name)
+		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 
 		builder = Gtk.Builder()
 		self.gtk_builder = builder

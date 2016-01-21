@@ -72,6 +72,17 @@ Classes
    :show-inheritance:
    :special-members: __init__
 
+.. autoclass:: king_phisher.client.gui_utilities.GladeDependencies
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: king_phisher.client.gui_utilities.GladeGObjectMeta
+   :show-inheritance:
+   :members:
+   :undoc-members:
+
 .. autoclass:: king_phisher.client.gui_utilities.GladeGObject
    :show-inheritance:
    :members:
