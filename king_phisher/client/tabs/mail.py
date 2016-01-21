@@ -92,16 +92,18 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 	This allows the :py:class:`.MailSenderThread` object to be managed
 	by the user through the GUI. These two classes are very interdependent
 	"""
-	gobject_ids = (
-		'button_mail_sender_start',
-		'button_mail_sender_stop',
-		'textview_mail_sender_progress',
-		'togglebutton_mail_sender_pause',
-		'progressbar_mail_sender',
-		'scrolledwindow_mail_sender_progress'
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'button_mail_sender_start',
+			'button_mail_sender_stop',
+			'textview_mail_sender_progress',
+			'togglebutton_mail_sender_pause',
+			'progressbar_mail_sender',
+			'scrolledwindow_mail_sender_progress'
+		),
+		top_level=('StockMediaPlayImage',)
 	)
 	top_gobject = 'box'
-	top_level_dependencies = ('StockMediaPlayImage',)
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Send')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
@@ -532,10 +534,12 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 	This is the tab which adds basic text edition for changing an email
 	template.
 	"""
-	gobject_ids = (
-		'toolbutton_save_as_html_file',
-		'toolbutton_save_html_file',
-		'view_html_file'
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'toolbutton_save_as_html_file',
+			'toolbutton_save_html_file',
+			'view_html_file'
+		)
 	)
 	top_gobject = 'box'
 	def __init__(self, *args, **kwargs):
@@ -729,46 +733,48 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	This is the tab which allows the user to configure and set parameters
 	for sending messages as part of a campaign.
 	"""
-	gobject_ids = (
-		'button_target_file_select',
-		'calendar_calendar_invite_date',
-		'checkbutton_calendar_invite_all_day',
-		'checkbutton_calendar_request_rsvp',
-		'combobox_importance',
-		'combobox_sensitivity',
-		'entry_webserver_url',
-		'entry_calendar_invite_location',
-		'entry_calendar_invite_summary',
-		'entry_company_name',
-		'entry_source_email',
-		'entry_source_email_smtp',
-		'entry_source_email_alias',
-		'entry_subject',
-		'entry_reply_to_email',
-		'entry_html_file',
-		'entry_target_file',
-		'entry_target_name',
-		'entry_target_email_address',
-		'entry_attachment_file',
-		'expander_calendar_invite_settings',
-		'expander_email_settings',
-		'radiobutton_message_type_calendar_invite',
-		'radiobutton_message_type_email',
-		'radiobutton_target_type_file',
-		'radiobutton_target_type_single',
-		'spinbutton_calendar_invite_duration',
-		'spinbutton_calendar_invite_start_hour',
-		'spinbutton_calendar_invite_start_minute'
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'button_target_file_select',
+			'calendar_calendar_invite_date',
+			'checkbutton_calendar_invite_all_day',
+			'checkbutton_calendar_request_rsvp',
+			'combobox_importance',
+			'combobox_sensitivity',
+			'entry_webserver_url',
+			'entry_calendar_invite_location',
+			'entry_calendar_invite_summary',
+			'entry_company_name',
+			'entry_source_email',
+			'entry_source_email_smtp',
+			'entry_source_email_alias',
+			'entry_subject',
+			'entry_reply_to_email',
+			'entry_html_file',
+			'entry_target_file',
+			'entry_target_name',
+			'entry_target_email_address',
+			'entry_attachment_file',
+			'expander_calendar_invite_settings',
+			'expander_email_settings',
+			'radiobutton_message_type_calendar_invite',
+			'radiobutton_message_type_email',
+			'radiobutton_target_type_file',
+			'radiobutton_target_type_single',
+			'spinbutton_calendar_invite_duration',
+			'spinbutton_calendar_invite_start_hour',
+			'spinbutton_calendar_invite_start_minute'
+		),
+		top_level=(
+			'ClockHourAdjustment',
+			'ClockMinuteAdjustment',
+			'TimeDuration',
+			'MsgImportance',
+			'MsgSensitivity'
+		)
 	)
 	config_prefix = 'mailer.'
 	top_gobject = 'box'
-	top_level_dependencies = (
-		'ClockHourAdjustment',
-		'ClockMinuteAdjustment',
-		'TimeDuration',
-		'MsgImportance',
-		'MsgSensitivity'
-	)
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Configuration')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""

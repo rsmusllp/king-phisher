@@ -423,7 +423,23 @@ class CellRendererTextBytes(_Gtk_CellRendererText):
 			self.set_property('text', boltons.strutils.bytes2human(int(original), 1))
 		Gtk.CellRendererText.do_render(self, *args, **kwargs)
 
-class GladeGObject(object):
+class GladeDependencies(object):
+	__slots__ = ('children', 'top_level', 'name')
+	def __init__(self, children=None, top_level=None, name=None):
+		self.children = children
+		self.top_level = top_level
+		self.name = name
+
+class GladeGObjectMeta(type):
+	_assigned_name = type('_assigned_name', (str,), {})
+	def __init__(cls, *args, **kwargs):
+		dependencies = getattr(cls, 'dependencies', None)
+		if dependencies is not None and isinstance(dependencies.name, (None.__class__, cls._assigned_name)):
+			dependencies.name = cls._assigned_name(cls.__name__)
+		super(GladeGObjectMeta, cls).__init__(*args, **kwargs)
+
+# stylized metaclass definition to be Python 2.7 and 3.x compatible
+class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 	"""
 	A base object to wrap GTK widgets loaded from Glade data files. This
 	provides a number of convenience methods for managing the main widget
@@ -432,10 +448,8 @@ class GladeGObject(object):
 	be identical to the name of the object they represent in the Glade
 	data file.
 	"""
-	gobject_ids = ()
-	"""A tuple of unique children GTK Builder IDs to load from the Glade data file. These must be prefixed with their GTK type in all lowercase."""
-	top_level_dependencies = ()
-	"""Additional top level GObjects to load from the Glade data file."""
+	dependencies = GladeDependencies()
+
 	config_prefix = ''
 	"""A prefix to be used for keys when looking up value in the :py:attr:`~.GladeGObject.config`."""
 	top_gobject = 'gobject'
@@ -452,18 +466,18 @@ class GladeGObject(object):
 		"""A reference to the King Phisher client configuration."""
 		self.application = application
 		"""The parent :py:class:`Gtk.Application` instance."""
-		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
+		self.logger = logging.getLogger('KingPhisher.Client.' + self.dependencies.name)
 
 		builder = Gtk.Builder()
 		self.gtk_builder = builder
 		"""A :py:class:`Gtk.Builder` instance used to load Glade data with."""
 
-		top_level_dependencies = [self.__class__.__name__]
-		if self.top_level_dependencies is not None:
-			top_level_dependencies.extend(self.top_level_dependencies)
+		top_level_dependencies = [self.dependencies.name]
+		if self.dependencies.top_level is not None:
+			top_level_dependencies.extend(self.dependencies.top_level)
 		builder.add_objects_from_file(which_glade(), top_level_dependencies)
 		builder.connect_signals(self)
-		gobject = builder.get_object(self.__class__.__name__)
+		gobject = builder.get_object(self.dependencies.name)
 		if isinstance(gobject, Gtk.Window):
 			gobject.set_transient_for(self.application.get_active_window())
 			if isinstance(gobject, Gtk.ApplicationWindow):
@@ -474,7 +488,7 @@ class GladeGObject(object):
 
 		self.gobjects = utilities.FreezableDict()
 		"""A :py:class:`~king_phisher.utilities.FreezableDict` which maps gobjects to their unique GTK Builder id."""
-		for gobject_id in self.gobject_ids:
+		for gobject_id in self.dependencies.children or []:
 			gobject = self.gtk_builder_get(gobject_id)
 			# the following five lines ensure that the types match up, this is to enforce clean development
 			gtype = gobject_id.split('_', 1)[0]
@@ -503,7 +517,7 @@ class GladeGObject(object):
 		:return: The GObject as found by the GTK builder.
 		:rtype: :py:class:`GObject.Object`
 		"""
-		gtkbuilder_id = "{0}.{1}".format(self.__class__.__name__, gobject_id)
+		gtkbuilder_id = "{0}.{1}".format(self.dependencies.name, gobject_id)
 		self.logger.debug('loading GTK builder object with id: ' + gtkbuilder_id)
 		return self.gtk_builder.get_object(gtkbuilder_id)
 

@@ -71,7 +71,9 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 	The dialog includes useful details for reporting and debugging the exception
 	which occurred.
 	"""
-	gobject_ids = ('linkbutton_github_issues',)
+	dependencies = gui_utilities.GladeDependencies(
+		children=('linkbutton_github_issues',)
+	)
 	top_gobject = 'dialog'
 	def __init__(self, application, exc_info=None, error_uid=None):
 		"""

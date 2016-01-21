@@ -45,18 +45,20 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 	Display a dialog for cloning a web page. The logic for the cloning operation
 	is provided by the :py:mod:`.web_cloner` module.
 	"""
-	gobject_ids = (
-		'button_cancel',
-		'entry_clone_directory',
-		'label_status',
-		'spinner_status',
-		'treeview_resources'
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'button_cancel',
+			'entry_clone_directory',
+			'label_status',
+			'spinner_status',
+			'treeview_resources'
+		),
+		top_level=(
+			'StockExecuteImage',
+			'StockStopImage'
+		)
 	)
 	top_gobject = 'dialog'
-	top_level_dependencies = (
-		'StockExecuteImage',
-		'StockStopImage'
-	)
 	def __init__(self, *args, **kwargs):
 		super(ClonePageDialog, self).__init__(*args, **kwargs)
 		self.resources = Gtk.ListStore(str, str, int)

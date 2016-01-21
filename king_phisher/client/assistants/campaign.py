@@ -48,37 +48,39 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	configuring an existing campaign. If no *campaign_id* is specified a new
 	campaign will be created.
 	"""
-	gobject_ids = (
-		'calendar_campaign_expiration',
-		'checkbutton_alert_subscribe',
-		'checkbutton_expire_campaign',
-		'checkbutton_reject_after_credentials',
-		'combobox_campaign_type',
-		'combobox_company_existing',
-		'combobox_company_industry',
-		'entry_campaign_name',
-		'entry_campaign_description',
-		'entry_company_new_name',
-		'entry_company_new_description',
-		'frame_campaign_expiration',
-		'frame_company_existing',
-		'frame_company_new',
-		'image_intro_title',
-		'label_confirm_body',
-		'label_confirm_title',
-		'label_intro_body',
-		'label_intro_title',
-		'radiobutton_company_existing',
-		'radiobutton_company_new',
-		'radiobutton_company_none',
-		'spinbutton_campaign_expiration_hour',
-		'spinbutton_campaign_expiration_minute'
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'calendar_campaign_expiration',
+			'checkbutton_alert_subscribe',
+			'checkbutton_expire_campaign',
+			'checkbutton_reject_after_credentials',
+			'combobox_campaign_type',
+			'combobox_company_existing',
+			'combobox_company_industry',
+			'entry_campaign_name',
+			'entry_campaign_description',
+			'entry_company_new_name',
+			'entry_company_new_description',
+			'frame_campaign_expiration',
+			'frame_company_existing',
+			'frame_company_new',
+			'image_intro_title',
+			'label_confirm_body',
+			'label_confirm_title',
+			'label_intro_body',
+			'label_intro_title',
+			'radiobutton_company_existing',
+			'radiobutton_company_new',
+			'radiobutton_company_none',
+			'spinbutton_campaign_expiration_hour',
+			'spinbutton_campaign_expiration_minute'
+		),
+		top_level=(
+			'ClockHourAdjustment',
+			'ClockMinuteAdjustment'
+		)
 	)
 	top_gobject = 'assistant'
-	top_level_dependencies = (
-		'ClockHourAdjustment',
-		'ClockMinuteAdjustment'
-	)
 	objects_persist = False
 	def __init__(self, application, campaign_id=None):
 		"""

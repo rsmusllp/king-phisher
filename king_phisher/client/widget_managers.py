@@ -43,7 +43,7 @@ class RadioButtonGroupManager(object):
 	Manage a group of :py:class:`Gtk.RadioButton` objects together to allow the
 	active one to be easily set and identified. The buttons are retrieved from a
 	:py:class:`.GladeGObject` instance and must be correctly named
-	in the :py:attr:`.GladeGObject.gobject_ids` attribute as
+	in the :py:attr:`.dependencies` attribute as
 	'radiobutton_group_name_button_name'.
 	"""
 	def __init__(self, glade_gobject, button_group_name):
@@ -56,7 +56,7 @@ class RadioButtonGroupManager(object):
 		self.group_name = button_group_name
 		name_prefix = 'radiobutton_' + self.group_name + '_'
 		self.buttons = utilities.FreezableDict()
-		for gobj_name in glade_gobject.gobject_ids:
+		for gobj_name in glade_gobject.dependencies.children:
 			if not gobj_name.startswith(name_prefix):
 				continue
 			button_name = gobj_name[len(name_prefix):]

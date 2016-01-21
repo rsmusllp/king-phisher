@@ -42,34 +42,36 @@ __all__ = ('ConfigurationDialog',)
 
 class ConfigurationDialog(gui_utilities.GladeGObject):
 	"""
-	Display the King Phisher client configuration dialog. Running this
-	dialog via the :py:meth:`.interact` method will cause some server settings
-	to be loaded.
+	Display the King Phisher client configuration dialog. Running this dialog
+	via the :py:meth:`.interact` method will cause some server settings to be
+	loaded.
 	"""
-	gobject_ids = (
-		# Server Tab
-		'entry_server',
-		'entry_server_username',
-		'entry_sms_phone_number',
-		'combobox_sms_carrier',
-		# SMTP Server Tab
-		'entry_smtp_server',
-		'spinbutton_smtp_max_send_rate',
-		'switch_smtp_ssl_enable',
-		'switch_smtp_ssh_enable',
-		'entry_sftp_client',
-		'entry_ssh_server',
-		'entry_ssh_username',
-		# Client Tab
-		'checkbutton_remove_attachment_metadata',
-		'combobox_spf_check_level'
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			# Server Tab
+			'entry_server',
+			'entry_server_username',
+			'entry_sms_phone_number',
+			'combobox_sms_carrier',
+			# SMTP Server Tab
+			'entry_smtp_server',
+			'spinbutton_smtp_max_send_rate',
+			'switch_smtp_ssl_enable',
+			'switch_smtp_ssh_enable',
+			'entry_sftp_client',
+			'entry_ssh_server',
+			'entry_ssh_username',
+			# Client Tab
+			'checkbutton_remove_attachment_metadata',
+			'combobox_spf_check_level'
+		),
+		top_level=(
+			'SMSCarriers',
+			'SMTPSendRate',
+			'SPFCheckLevels'
+		)
 	)
 	top_gobject = 'dialog'
-	top_level_dependencies = (
-		'SMSCarriers',
-		'SMTPSendRate',
-		'SPFCheckLevels'
-	)
 	def __init__(self, *args, **kwargs):
 		super(ConfigurationDialog, self).__init__(*args, **kwargs)
 		self.gobjects['entry_smtp_server'].set_sensitive(not self.gobjects['switch_smtp_ssh_enable'].get_active())

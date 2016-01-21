@@ -50,20 +50,22 @@ __all__ = ('HostKeyAcceptDialog', 'HostKeyWarnDialog')
 class BaseHostKeyDialog(gui_utilities.GladeGObject):
 	"""
 	A base class for dialogs which show information about SSH host keys. It is
-	assumed that the widgets defined in :py:attr:`.gobject_ids` are present
+	assumed that the widgets defined in :py:attr:`.dependencies` are present
 	including one button to accept the host key, and one to reject. The class's
 	default response can be set using :py:attr:`.default_response`.
 	"""
-	gobject_ids = (
-		'button_accept',
-		'button_reject',
-		'textview_key_details'
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'button_accept',
+			'button_reject',
+			'textview_key_details'
+		),
+		top_level=(
+			'StockApplyImage',
+			'StockStopImage'
+		)
 	)
 	top_gobject = 'dialog'
-	top_level_dependencies = (
-		'StockApplyImage',
-		'StockStopImage'
-	)
 	default_response = None
 	"""The response that should be selected as the default for the dialog."""
 	def __init__(self, application, hostname, key):

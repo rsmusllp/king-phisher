@@ -64,14 +64,16 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	optional menu items as well as handles all the menu item signals
 	appropriately.
 	"""
-	top_gobject = 'menubar'
-	top_level_dependencies = (
-		'StockDeleteImage',
-		'StockEditImage',
-		'StockHelpImage',
-		'StockPropertiesImage',
-		'StockStopImage'
+	dependencies = gui_utilities.GladeDependencies(
+		top_level=(
+			'StockDeleteImage',
+			'StockEditImage',
+			'StockHelpImage',
+			'StockPropertiesImage',
+			'StockStopImage'
+		)
 	)
+	top_gobject = 'menubar'
 	def __init__(self, application, window):
 		assert isinstance(window, MainAppWindow)
 		super(MainMenuBar, self).__init__(application)

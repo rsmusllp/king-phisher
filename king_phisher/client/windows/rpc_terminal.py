@@ -57,16 +57,18 @@ else:
 __all__ = ('RPCTerminal', 'RPCTerminalAppWindow')
 
 class RPCTerminalAppWindow(gui_utilities.GladeGObject):
-	gobject_ids = (
-		'box_main',
-		'menu_edit',
-		'menu_help'
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'box_main',
+			'menu_edit',
+			'menu_help'
+		),
+		top_level=(
+			'StockDialogQuestionImage',
+			'StockHelpImage'
+		)
 	)
 	top_gobject = 'window'
-	top_level_dependencies = (
-		'StockDialogQuestionImage',
-		'StockHelpImage'
-	)
 	def __init__(self, terminal, *args, **kwargs):
 		super(RPCTerminalAppWindow, self).__init__(*args, **kwargs)
 		self.terminal = terminal

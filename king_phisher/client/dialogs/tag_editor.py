@@ -47,12 +47,14 @@ class TagEditorDialog(gui_utilities.GladeGObject):
 	present on the remote server. This can be used to rename tags and modify
 	their descriptions.
 	"""
-	gobject_ids = (
-		'notebook',
-		'button_close',
-		'treeview_campaign_types',
-		'treeview_company_departments',
-		'treeview_industries'
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'notebook',
+			'button_close',
+			'treeview_campaign_types',
+			'treeview_company_departments',
+			'treeview_industries'
+		)
 	)
 	top_gobject = 'dialog'
 	objects_persist = False

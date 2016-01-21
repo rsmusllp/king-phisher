@@ -45,6 +45,7 @@ class ConstantGroupMeta(type):
 	def __len__(cls):
 		return len(list(cls.names()))
 
+# stylized metaclass definition to be Python 2.7 and 3.x compatible
 class ConstantGroup(ConstantGroupMeta('_ConstantGroup', (object,), {})):
 	"""A class for grouping related constants together."""
 	@classmethod
