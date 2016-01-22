@@ -90,23 +90,23 @@ class ForwardHandler(socketserver.BaseRequestHandler):
 
 class SSHTCPForwarder(threading.Thread):
 	"""
-	Open an SSH connection and forward TCP traffic through it. A private key for
-	authentication can be specified as a string either by it's OpenSSH
-	fingerprint, as a file (prefixed with "file:"), or a raw key string
+	Open an SSH connection and forward TCP traffic through it to a remote host.
+	A private key for authentication can be specified as a string either by it's
+	OpenSSH fingerprint, as a file (prefixed with "file:"), or a raw key string
 	(prefixed with "key:"). If no *missing_host_key_policy* is specified,
 	:py:class:`paramiko.client.AutoAddPolicy` will be used to accept all host
 	keys.
 
 	.. note::
 		This is a :py:class:`threading.Thread` object and needs to be started
-		after it is initialized.
+		with a call to :py:meth:`~threading.Thread.start` after it is initialized.
 	"""
 	def __init__(self, server, username, password, remote_server, local_port=0, private_key=None, missing_host_key_policy=None):
 		"""
-		:param tuple server: The server to connect to.
+		:param tuple server: The SSH server to connect to.
 		:param str username: The username to authenticate with.
 		:param str password: The password to authenticate with.
-		:param tuple remote_server: The remote server to connect to through the SSH server.
+		:param tuple remote_server: The remote server to connect to through the specified SSH server.
 		:param int local_port: The local port to forward, if not set a random one will be used.
 		:param str private_key: An RSA key to prefer for authentication.
 		:param missing_host_key_policy: The policy to use for missing host keys.
@@ -221,6 +221,10 @@ class SSHTCPForwarder(threading.Thread):
 
 	@property
 	def local_server(self):
+		"""
+		A tuple representing the local address of the listening service which is
+		forwarding traffic to the specified remote host.
+		"""
 		return self._forward_server.server_address
 
 	def run(self):

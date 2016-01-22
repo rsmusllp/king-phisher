@@ -73,7 +73,7 @@ class ConstantGroup(ConstantGroupMeta('_ConstantGroup', (object,), {})):
 			yield getattr(cls, name)
 
 class ConnectionErrorReason(ConstantGroup):
-	"""Constants which describe possible errors for the client connection process."""
+	"""Constants which describe possible errors for an arbitrary connection process."""
 	ERROR_AUTHENTICATION_FAILED = _intern('authentication failed')
 	ERROR_CONNECTION = _intern('connection error')
 	ERROR_INCOMPATIBLE_VERSIONS = _intern('incompatible versions')

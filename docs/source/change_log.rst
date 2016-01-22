@@ -14,6 +14,7 @@ Version 1.2.0
 
 * SSH host key validation
 * Install script command line flags
+* Support for authenticating to SMTP servers
 
 Version 1.1.0
 ^^^^^^^^^^^^^
