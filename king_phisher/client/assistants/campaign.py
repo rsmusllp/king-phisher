@@ -61,6 +61,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'entry_campaign_description',
 			'entry_company_new_name',
 			'entry_company_new_description',
+			'entry_company_url_main',
+			'entry_company_url_email',
+			'entry_company_url_remote_access',
 			'frame_campaign_expiration',
 			'frame_company_existing',
 			'frame_company_new',
@@ -211,6 +214,22 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['spinbutton_campaign_expiration_hour'].set_value(expiration.hour)
 			self.gobjects['spinbutton_campaign_expiration_minute'].set_value(expiration.minute)
 
+	def _get_entry(self, entry_name):
+		"""
+		Get the value of the specified entry then remove leading and trailing
+		white space and finally determine if the string is empty, in which case
+		return None.
+
+		:param str entry_name: The name of the entry to retrieve text from.
+		:return: Either the non-empty string or None.
+		:rtype: None, str
+		"""
+		text = self.gobjects['entry_' + entry_name].get_text()
+		text = text.strip()
+		if not text:
+			return None
+		return text
+
 	def _get_tag_from_combobox(self, combobox, db_table):
 		model = combobox.get_model()
 		model_iter = combobox.get_active_iter()
@@ -244,12 +263,19 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if len(remote_companies):
 			return remote_companies[0].id
 
-		description = self.gobjects['entry_company_new_description'].get_text()
-		description = description.strip()
-		if description == '':
-			description = None
-		industry_id = self._get_tag_from_combobox(self.gobjects['combobox_company_industry'], 'industries')
-		company_id = self.application.rpc('db/table/insert', 'companies', ('name', 'description', 'industry_id'), (name, description, industry_id))
+		company_id = self.application.rpc(
+			'db/table/insert',
+			'companies',
+			('name', 'description', 'industry_id', 'url_main', 'url_email', 'url_remote_access'),
+			(
+				name,
+				self._get_entry('company_new_description'),
+				self._get_tag_from_combobox(self.gobjects['combobox_company_industry'], 'industries'),
+				self._get_entry('company_url_main'),
+				self._get_entry('company_url_email'),
+				self._get_entry('company_url_remote_access')
+			)
+		)
 		self.gobjects['radiobutton_company_existing'].set_active(True)
 		return company_id
 
@@ -300,10 +326,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		properties = {}
 
 		# point of no return
-		campaign_description = self.gobjects['entry_campaign_description'].get_text()
-		campaign_description = campaign_description.strip()
-		if campaign_description == '':
-			campaign_description = None
+		campaign_description = self._get_entry('campaign_description')
 		if self.campaign_id:
 			properties['name'] = self.campaign_name
 			properties['description'] = campaign_description

@@ -250,12 +250,19 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		session = db_manager.Session()
 		if self.message_id == self.config.get('server.secret_id'):
 			client_vars['company_name'] = 'Wonderland Inc.'
+			client_vars['company'] = {'name': 'Wonderland Inc.'}
 			result = ('aliddle@wonderland.com', 'Alice', 'Liddle', 0)
 		elif self.message_id:
 			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
 			if message:
 				if message.campaign.company:
 					client_vars['company_name'] = message.campaign.company.name
+					client_vars['company'] = {
+						'name': message.campaign.company.name,
+						'url_email': message.campaign.company.url_email,
+						'url_main': message.campaign.company.url_main,
+						'url_remote_access': message.campaign.company.url_remote_access
+					}
 				result = (message.target_email, message.first_name, message.last_name, message.trained)
 		if not result:
 			session.close()

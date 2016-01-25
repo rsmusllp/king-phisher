@@ -1,12 +1,12 @@
 {#
-	This file can be placed in the web root to show what variables and
-	filters are available.
+  This file can be placed in the web root to show what variables and filters are
+  available.
 #}
-# Client Vars
+# Client Variables
 client.address:         {{ client.address }}
 {% if client.message_id is defined %}
 
-## Client Session Vars
+## Client Session Variables
 client.company_name:    {{ client.company_name }}
 client.email_address:   {{ client.email_address }}
 client.first_name:      {{ client.first_name }}
@@ -16,8 +16,16 @@ client.message_id:      {{ client.message_id }}
 client.visit_count:     {{ client.visit_count }}
 client.visit_id:        {{ client.visit_id }}
 {% endif %}
+{% if client.company is defined %}
 
-## Request Vars
+### Client Session Company Variables
+client.company.name:               {{ client.company.name }}
+client.company.url_email:          {{ client.company.url_email }}
+client.company.url_main:           {{ client.company.url_main }}
+client.company.url_remote_access:  {{ client.company.url_remote_access }}
+{% endif %}
+
+## Request Variables
 request.command         {{ request.command }}
 {% if request.cookies %}
 request.cookies:
@@ -37,17 +45,17 @@ request.parameters:     N/A
 {% endif %}
 
 ## Request User Agent Information
-request.user_agent:      {{ request.user_agent }}
+request.user_agent:     {{ request.user_agent }}
 {% set ua_info = parse_user_agent(request.user_agent) %}
 os_name:                {{ ua_info.os_name }}
 os_version:             {{ ua_info.os_version }}
 os_arch:                {{ ua_info.os_arch }}
 
-# Server Vars
+# Server Variables
 server.address:         {{ server.address }}
 server.hostname:        {{ server.hostname }}
 
-# Time Vars
+# Time Variables
 time.local:             {{ time.local }}
 time.utc:               {{ time.utc }}
 
