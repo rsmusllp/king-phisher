@@ -44,6 +44,13 @@ from king_phisher.server.database import models
 import pyotp
 import yaml
 
+try:
+	import qrcode
+except ImportError:
+	has_qrcode = False
+else:
+	has_qrcode = True
+
 PARSER_EPILOG = """
 If --otp is set then it must be a valid base32 encoded secret otherwise a random
 one will be used. Also note that the user that is selected to be managed must
@@ -60,6 +67,8 @@ def main():
 	config_group.add_argument('-c', '--config', dest='server_config', type=argparse.FileType('r'), help='the server configuration file')
 	config_group.add_argument('-u', '--url', dest='database_url', help='the database connection url')
 	parser.add_argument('--otp', dest='otp_secret', help='a specific otp secret')
+	if has_qrcode:
+		parser.add_argument('--qrcode', dest='qrcode_filename', help='generate a qrcode image file')
 	parser.add_argument('user', help='the user to mange')
 	parser.add_argument('action', choices=('remove', 'set', 'show'), help='the action to preform')
 	parser.epilog = PARSER_EPILOG
@@ -105,6 +114,10 @@ def main():
 		totp = pyotp.TOTP(user.otp_secret)
 		uri = totp.provisioning_uri(user.id + '@king-phisher') + '&issuer=King%20Phisher'
 		color.print_status("provisioning uri: {0}".format(uri))
+		if has_qrcode and arguments.qrcode_filename:
+			img = qrcode.make(uri)
+			img.save(arguments.qrcode_filename)
+			color.print_status("wrote qrcode image to: " + arguments.qrcode_filename)
 	else:
 		color.print_status("user: {0} otp: N/A".format(user.id))
 	session.commit()
