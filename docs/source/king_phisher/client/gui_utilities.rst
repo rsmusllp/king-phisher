@@ -88,3 +88,15 @@ Classes
    :members:
    :special-members: __init__
    :undoc-members:
+
+.. autoclass:: king_phisher.client.gui_utilities.GladeProxy
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: king_phisher.client.gui_utilities.GladeProxyDestination
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:

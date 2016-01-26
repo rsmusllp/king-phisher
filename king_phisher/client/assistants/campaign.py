@@ -34,6 +34,7 @@ import datetime
 
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
+from king_phisher.client import widget_proxies
 from king_phisher.constants import ColorHexCode
 from king_phisher.third_party import AdvancedHTTPServer
 
@@ -50,20 +51,20 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
+			widget_proxies.CompanyEditorGrid(
+				gui_utilities.GladeProxyDestination(
+					widget='alignment_company',
+					method='add'
+				)
+			),
 			'calendar_campaign_expiration',
 			'checkbutton_alert_subscribe',
 			'checkbutton_expire_campaign',
 			'checkbutton_reject_after_credentials',
 			'combobox_campaign_type',
 			'combobox_company_existing',
-			'combobox_company_industry',
 			'entry_campaign_name',
 			'entry_campaign_description',
-			'entry_company_new_name',
-			'entry_company_new_description',
-			'entry_company_url_main',
-			'entry_company_url_email',
-			'entry_company_url_remote_access',
 			'frame_campaign_expiration',
 			'frame_company_existing',
 			'frame_company_new',

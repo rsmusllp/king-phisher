@@ -431,8 +431,10 @@ class GladeDependencies(object):
 	"""
 	__slots__ = ('children', 'top_level', 'name')
 	def __init__(self, children=None, top_level=None, name=None):
+		children = children or ()
+		utilities.assert_arg_type(children, tuple, 1)
 		self.children = children
-		"""A tuple of string names listing the children widgets to load from the parent."""
+		"""A tuple of string names or :py:class:`.GladeProxy` instances listing the children widgets to load from the parent."""
 		self.top_level = top_level
 		"""A tuple of string names listing additional top level widgets to load such as images."""
 		self.name = name
@@ -440,6 +442,51 @@ class GladeDependencies(object):
 
 	def __repr__(self):
 		return "<{0} name='{1}' >".format(self.__class__.__name__, self.name)
+
+class GladeProxyDestination(object):
+	"""
+	A class that is used to define how a :py:class:`.GladeProxy` object shall
+	be loaded into a parent :py:class:`.GladeGObject` instance. This includes
+	the information such as what container widget in the parent the proxied
+	widget should be added to and what method should be used. The proxied widget
+	will be added to the parent by calling
+	:py:attr:`~.GladeProxyDestination.method` with the proxied widget as the
+	first argument.
+	"""
+	__slots__ = ('widget', 'method', 'args', 'kwargs')
+	def __init__(self, widget, method, args=None, kwargs=None):
+		utilities.assert_arg_type(widget, str, 1)
+		utilities.assert_arg_type(method, str, 2)
+		self.widget = widget
+		"""The name of the parent widget for this proxied child."""
+		self.method = method
+		"""The method of the parent widget that should be called to add the proxied child."""
+		self.args = args or ()
+		"""Arguments to append after the proxied child instance when calling :py:attr:`~.GladeProxyDestination.method`."""
+		self.kwargs = kwargs or {}
+		"""Key word arguments to append after the proxied child instance when calling :py:attr:`~.GladeProxyDestination.method`."""
+
+	def __repr__(self):
+		return "<{0} widget='{1}' method='{2}' >".format(self.__class__.__name__, self.widget, self.method)
+
+class GladeProxy(object):
+	"""
+	A class that can be used to load another top level widget from the GTK
+	builder data file in place of a child. This is useful for reusing small
+	widgets as children in larger ones.
+	"""
+	__slots__ = ('destination',)
+	name = None
+	"""The string of the name of the top level widget to load."""
+	children = ()
+	"""A tuple of string names or :py:class:`.GladeProxy` instances listing the children widgets to load from the top level."""
+	def __init__(self, destination):
+		utilities.assert_arg_type(destination, GladeProxyDestination, 1)
+		self.destination = destination
+		"""A :py:class:`.GladeProxyDestination` instance describing how this proxied widget should be added to the parent."""
+
+	def __repr__(self):
+		return "<{0} name='{1}' destination={2} >".format(self.__class__.__name__, self.name, repr(self.destination))
 
 class GladeGObjectMeta(type):
 	"""
@@ -462,11 +509,9 @@ class GladeGObjectMeta(type):
 class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 	"""
 	A base object to wrap GTK widgets loaded from Glade data files. This
-	provides a number of convenience methods for managing the main widget
-	and child widgets. This class is meant to be subclassed by classes
-	representing objects from the Glade data file. The class names must
-	be identical to the name of the object they represent in the Glade
-	data file.
+	provides a number of convenience methods for managing the main widget and
+	child widgets. This class is meant to be subclassed by classes representing
+	objects from the Glade data file.
 	"""
 	dependencies = GladeDependencies()
 	"""A :py:class:`.GladeDependencies` instance which defines information for loading the widget from the GTK builder data."""
@@ -492,7 +537,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 		self.gtk_builder = builder
 		"""A :py:class:`Gtk.Builder` instance used to load Glade data with."""
 
-		top_level_dependencies = [self.dependencies.name]
+		top_level_dependencies = [gobject.name for gobject in self.dependencies.children if isinstance(gobject, GladeProxy)]
+		top_level_dependencies.append(self.dependencies.name)
 		if self.dependencies.top_level is not None:
 			top_level_dependencies.extend(self.dependencies.top_level)
 		builder.add_objects_from_file(which_glade(), top_level_dependencies)
@@ -508,18 +554,39 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 
 		self.gobjects = utilities.FreezableDict()
 		"""A :py:class:`~king_phisher.utilities.FreezableDict` which maps gobjects to their unique GTK Builder id."""
-		for gobject_id in self.dependencies.children or []:
-			gobject = self.gtk_builder_get(gobject_id)
-			# the following five lines ensure that the types match up, this is to enforce clean development
-			gtype = gobject_id.split('_', 1)[0]
-			if gobject is None:
-				raise TypeError("gobject {0} could not be found in the glade file".format(gobject_id))
-			elif gobject.__class__.__name__.lower() != gtype:
-				raise TypeError("gobject {0} is of type {1} expected {2}".format(gobject_id, gobject.__class__.__name__, gtype))
-			self.gobjects[gobject_id] = gobject
+		self._load_child_dependencies(self.dependencies)
 		self.gobjects.freeze()
+		self._load_child_proxies()
+
 		if self.objects_persist:
 			self.objects_load_from_config()
+
+	def _load_child_dependencies(self, dependencies):
+		for child in dependencies.children:
+			if isinstance(child, GladeProxy):
+				self._load_child_dependencies(child)
+				child = child.destination.widget
+
+			gobject = self.gtk_builder_get(child, parent_name=dependencies.name)
+			# the following five lines ensure that the types match up, this is to enforce clean development
+			gtype = child.split('_', 1)[0]
+			if gobject is None:
+				raise TypeError("gobject {0} could not be found in the glade file".format(child))
+			elif gobject.__class__.__name__.lower() != gtype:
+				raise TypeError("gobject {0} is of type {1} expected {2}".format(child, gobject.__class__.__name__, gtype))
+			self.gobjects[child] = gobject
+
+	def _load_child_proxies(self):
+		for child in self.dependencies.children or []:
+			if not isinstance(child, GladeProxy):
+				continue
+			dest = child.destination
+			method = getattr(self.gobjects[dest.widget], dest.method)
+			if method is None:
+				raise ValueError("gobject {0} does not have method {1}".format(dest.widget, dest.method))
+			src_widget = self.gtk_builder.get_object(child.name)
+			self.logger.debug("setting proxied widget {0} via {1}.{2}".format(child.name, dest.widget, dest.method))
+			method(src_widget, *dest.args, **dest.kwargs)
 
 	def destroy(self):
 		"""Destroy the top-level GObject."""
@@ -529,15 +596,17 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 	def parent(self):
 		return self.application.get_active_window()
 
-	def gtk_builder_get(self, gobject_id):
+	def gtk_builder_get(self, gobject_id, parent_name=None):
 		"""
 		Find the child GObject with name *gobject_id* from the GTK builder.
 
 		:param str gobject_id: The object name to look for.
+		:param str parent_name: The name of the parent object in the builder data file.
 		:return: The GObject as found by the GTK builder.
 		:rtype: :py:class:`GObject.Object`
 		"""
-		gtkbuilder_id = "{0}.{1}".format(self.dependencies.name, gobject_id)
+		parent_name = parent_name or self.dependencies.name
+		gtkbuilder_id = "{0}.{1}".format(parent_name, gobject_id)
 		self.logger.debug('loading GTK builder object with id: ' + gtkbuilder_id)
 		return self.gtk_builder.get_object(gtkbuilder_id)
 
