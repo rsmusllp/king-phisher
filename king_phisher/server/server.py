@@ -293,7 +293,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		if self.path in ('/version', '/login'):
 			return True
 		self.rpc_session = self.server.session_manager.get(self.rpc_session_id)
-		if self.rpc_session is None:
+		if not isinstance(self.rpc_session, aaa.AuthenticatedSession):
 			return False
 		return True
 
@@ -769,7 +769,6 @@ class KingPhisherServer(AdvancedHTTPServer):
 			cache_timeout=config.get_if_exists('server.authentication.cache_timeout', '10m'),
 			required_group=config.get_if_exists('server.authentication.group')
 		)
-		self.logger.debug('forked an authenticating process with PID: ' + str(self.http_server.forked_authenticator.child_pid))
 		self.job_manager = job.JobManager()
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()

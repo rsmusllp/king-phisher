@@ -297,6 +297,7 @@ class ForkedAuthenticator(object):
 			self.wfile.close()
 			logging.shutdown()
 			os._exit(os.EX_OK)
+		self.logger.debug('forked an authenticating process with pid: ' + str(self.child_pid))
 		# below this are attributes exclusive to the parent process
 		self.cache = {}
 		"""The credential cache dictionary. Keys are usernames and values are tuples of password hashes and ages."""
@@ -378,8 +379,13 @@ class ForkedAuthenticator(object):
 				continue
 			username = str(request['username'])
 			password = str(request['password'])
+
+			start_time = time.time()
+			result = pam.authenticate(username, password, service=service)
+			self.logger.debug("pam.authenticate call returned {0} for user {1} after {2:.2f} seconds".format(result, username, time.time() - start_time))
+
 			result = {
-				'result': pam.authenticate(username, password, service=service),
+				'result': result,
 				'sequence': request['sequence'],
 				'username': username
 			}
@@ -410,8 +416,12 @@ class ForkedAuthenticator(object):
 		:rtype: bool
 		"""
 		cached_password = self.cache.get(username)
-		if cached_password is not None and cached_password.time + self.cache_timeout >= time.time():
-			return cached_password == password
+		if cached_password is not None:
+			if cached_password.time + self.cache_timeout >= time.time():
+				self.logger.debug("checking authentication for user {0} with hashed and cached password".format(username))
+				return cached_password == password
+			self.logger.debug('removing expired hashed and cached password for user ' + username)
+			del self.cache[username]
 		request = {
 			'action': 'authenticate',
 			'password': password,
