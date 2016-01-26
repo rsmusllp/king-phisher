@@ -31,6 +31,7 @@
 #
 
 import contextlib
+import copy
 import datetime
 import functools
 import logging
@@ -450,8 +451,11 @@ class GladeGObjectMeta(type):
 	"""A type subclassed from str that is used to define names which have been automatically assigned by this class."""
 	def __init__(cls, *args, **kwargs):
 		dependencies = getattr(cls, 'dependencies', None)
-		if dependencies is not None and isinstance(dependencies.name, (None.__class__, cls.assigned_name)):
-			dependencies.name = cls.assigned_name(cls.__name__)
+		if dependencies is not None:
+			dependencies = copy.deepcopy(dependencies)
+			setattr(cls, 'dependencies', dependencies)
+			if isinstance(dependencies.name, (None.__class__, cls.assigned_name)):
+				dependencies.name = cls.assigned_name(cls.__name__)
 		super(GladeGObjectMeta, cls).__init__(*args, **kwargs)
 
 # stylized metaclass definition to be Python 2.7 and 3.x compatible
