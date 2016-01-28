@@ -1589,7 +1589,7 @@ Brandan Geise</property>
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="box29">
+          <object class="GtkBox" id="CompanyEditorDialog.box_company">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="margin_left">5</property>
@@ -1601,7 +1601,6 @@ Brandan Geise</property>
             <child>
               <object class="GtkFrame" id="CompanyEditorDialog.frame_company_existing">
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label_xalign">0</property>
                 <child>
@@ -1630,13 +1629,14 @@ Brandan Geise</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBox" id="CampaignAssistant.combobox_company_existing1">
+                          <object class="GtkComboBox" id="CompanyEditorDialog.combobox_company_existing">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="tooltip_text" translatable="yes">The name of the existing company to associate this campaign with.</property>
                             <property name="has_entry">True</property>
                             <property name="entry_text_column">1</property>
                             <property name="id_column">0</property>
+                            <signal name="changed" handler="signal_combobox_company_changed" swapped="no"/>
                             <child internal-child="entry">
                               <object class="GtkEntry" id="combobox-entry6">
                                 <property name="can_focus">True</property>
@@ -1683,6 +1683,7 @@ Brandan Geise</property>
     </child>
     <action-widgets>
       <action-widget response="-6">CompanyEditorDialog.button_cancel</action-widget>
+      <action-widget response="-10">CompanyEditorDialog.button_apply</action-widget>
     </action-widgets>
   </object>
   <object class="GtkGrid" id="CompanyEditorGrid">
@@ -1724,7 +1725,7 @@ Brandan Geise</property>
       </packing>
     </child>
     <child>
-      <object class="GtkEntry" id="CompanyEditorGrid.entry_company_new_description">
+      <object class="GtkEntry" id="CompanyEditorGrid.entry_company_description">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="tooltip_text" translatable="yes">A description of the new company.</property>
@@ -1737,7 +1738,7 @@ Brandan Geise</property>
       </packing>
     </child>
     <child>
-      <object class="GtkEntry" id="CompanyEditorGrid.entry_company_new_name">
+      <object class="GtkEntry" id="CompanyEditorGrid.entry_company_name">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="tooltip_text" translatable="yes">The name of the new company to create.</property>
@@ -1759,7 +1760,7 @@ Brandan Geise</property>
         <property name="entry_text_column">1</property>
         <property name="id_column">0</property>
         <child internal-child="entry">
-          <object class="GtkEntry" id="combobox-entry11">
+          <object class="GtkEntry" id="CompanyEditorGrid.entry_company_industry">
             <property name="can_focus">True</property>
             <property name="max_length">20</property>
             <property name="placeholder_text" translatable="yes">industry name (OPTIONAL)</property>
@@ -4121,6 +4122,7 @@ Brandan Geise</property>
   <object class="GtkMenuBar" id="MainMenuBar">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="resize_mode">immediate</property>
     <child>
       <object class="GtkMenuItem" id="MainMenuBar.menuitem_file">
         <property name="visible">True</property>
@@ -4301,6 +4303,15 @@ Brandan Geise</property>
                 <property name="use_underline">True</property>
                 <property name="use_stock">True</property>
                 <signal name="activate" handler="do_edit_preferences" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_edit_companies">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Companies</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_edit_companies" swapped="no"/>
               </object>
             </child>
             <child>

@@ -596,6 +596,22 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 	def parent(self):
 		return self.application.get_active_window()
 
+	def get_entry_value(self, entry_name):
+		"""
+		Get the value of the specified entry then remove leading and trailing
+		white space and finally determine if the string is empty, in which case
+		return None.
+
+		:param str entry_name: The name of the entry to retrieve text from.
+		:return: Either the non-empty string or None.
+		:rtype: None, str
+		"""
+		text = self.gobjects['entry_' + entry_name].get_text()
+		text = text.strip()
+		if not text:
+			return None
+		return text
+
 	def gtk_builder_get(self, gobject_id, parent_name=None):
 		"""
 		Find the child GObject with name *gobject_id* from the GTK builder.

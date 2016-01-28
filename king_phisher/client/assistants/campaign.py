@@ -34,12 +34,8 @@ import datetime
 
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
-from king_phisher.client import widget_proxies
-from king_phisher.constants import ColorHexCode
+from king_phisher.client import widget_resources
 from king_phisher.third_party import AdvancedHTTPServer
-
-from gi.repository import Gtk
-from gi.repository import Pango
 
 __all__ = ('CampaignAssistant',)
 
@@ -51,7 +47,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
-			widget_proxies.CompanyEditorGrid(
+			widget_resources.CompanyEditorGrid(
 				gui_utilities.GladeProxyDestination(
 					widget='alignment_company',
 					method='add'
@@ -140,39 +136,15 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
-		description_font_desc = Pango.FontDescription()
-		description_font_desc.set_style(Pango.Style.ITALIC)
-
-		for combobox in ('campaign_type', 'company_existing', 'company_industry'):
-			combobox = self.gobjects['combobox_' + combobox]
-			model = Gtk.ListStore(int, str, str)
-			model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
-			combobox.set_model(model)
-			renderer = Gtk.CellRendererText()
-			renderer.set_property('ellipsize', Pango.EllipsizeMode.END)
-			renderer.set_property('font-desc', description_font_desc)
-			renderer.set_property('foreground', ColorHexCode.GRAY)
-			renderer.set_property('max-width-chars', 20)
-			combobox.pack_start(renderer, True)
-			combobox.add_attribute(renderer, 'text', 2)
-
-		combobox = self.gobjects['combobox_campaign_type']
-		model = combobox.get_model()
-		model.clear()
-		for row in self.application.rpc.remote_table('campaign_types'):
-			model.append((row.id, row.name, row.description))
-
-		combobox = self.gobjects['combobox_company_existing']
-		model = combobox.get_model()
-		model.clear()
-		for row in self.application.rpc.remote_table('companies'):
-			model.append((row.id, row.name, row.description))
-
-		combobox = self.gobjects['combobox_company_industry']
-		model = combobox.get_model()
-		model.clear()
-		for row in self.application.rpc.remote_table('industries'):
-			model.append((row.id, row.name, row.description))
+		renderer = widget_resources.renderer_text_desc
+		rpc = self.application.rpc
+		for tag_name, tag_table in (('campaign_type', 'campaign_types'), ('company_existing', 'companies'), ('company_industry', 'industries')):
+			combobox = self.gobjects['combobox_' + tag_name]
+			model = combobox.get_model()
+			if model is None:
+				combobox.pack_start(renderer, True)
+				combobox.add_attribute(renderer, 'text', 2)
+			combobox.set_model(rpc.get_tag_model(tag_table, model=model))
 
 	def _set_defaults(self):
 		"""
@@ -215,32 +187,17 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['spinbutton_campaign_expiration_hour'].set_value(expiration.hour)
 			self.gobjects['spinbutton_campaign_expiration_minute'].set_value(expiration.minute)
 
-	def _get_entry(self, entry_name):
-		"""
-		Get the value of the specified entry then remove leading and trailing
-		white space and finally determine if the string is empty, in which case
-		return None.
-
-		:param str entry_name: The name of the entry to retrieve text from.
-		:return: Either the non-empty string or None.
-		:rtype: None, str
-		"""
-		text = self.gobjects['entry_' + entry_name].get_text()
-		text = text.strip()
-		if not text:
-			return None
-		return text
-
 	def _get_tag_from_combobox(self, combobox, db_table):
 		model = combobox.get_model()
 		model_iter = combobox.get_active_iter()
+		if model_iter is not None:
+			return model.get_value(model_iter, 0)
+		campaign_type = combobox.get_child().get_text().strip()
+		if not campaign_type:
+			return
+		model_iter = gui_utilities.gtk_list_store_search(model, campaign_type, column=1)
 		if model_iter is None:
-			campaign_type = combobox.get_child().get_text()
-			if not campaign_type:
-				return
-			model_iter = gui_utilities.gtk_list_store_search(model, campaign_type, column=1)
-			if model_iter is None:
-				return self.application.rpc('db/table/insert', db_table, 'name', campaign_type)
+			return self.application.rpc('db/table/insert', db_table, 'name', campaign_type)
 		return model.get_value(model_iter, 0)
 
 	def _get_company_existing_id(self):
@@ -252,7 +209,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		return model.get_value(model_iter, 0)
 
 	def _get_company_new_id(self):
-		name = self.gobjects['entry_company_new_name'].get_text()
+		name = self.gobjects['entry_company_name'].get_text()
 		name = name.strip()
 		# check if this company name already exists in the model
 		model = self.gobjects['combobox_company_existing'].get_model()
@@ -270,11 +227,11 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			('name', 'description', 'industry_id', 'url_main', 'url_email', 'url_remote_access'),
 			(
 				name,
-				self._get_entry('company_new_description'),
+				self.get_entry_value('company_description'),
 				self._get_tag_from_combobox(self.gobjects['combobox_company_industry'], 'industries'),
-				self._get_entry('company_url_main'),
-				self._get_entry('company_url_email'),
-				self._get_entry('company_url_remote_access')
+				self.get_entry_value('company_url_main'),
+				self.get_entry_value('company_url_email'),
+				self.get_entry_value('company_url_remote_access')
 			)
 		)
 		self.gobjects['radiobutton_company_existing'].set_active(True)
@@ -327,7 +284,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		properties = {}
 
 		# point of no return
-		campaign_description = self._get_entry('campaign_description')
+		campaign_description = self.get_entry_value('campaign_description')
 		if self.campaign_id:
 			properties['name'] = self.campaign_name
 			properties['description'] = campaign_description
@@ -375,7 +332,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if page_title == 'Company':
 			combobox = self.gobjects['combobox_company_existing']
 			model = combobox.get_model()
-			company_name = self.gobjects['entry_company_new_name'].get_text()
+			company_name = self.get_entry_value('company_name')
 			if company_name:
 				model_iter = gui_utilities.gtk_list_store_search(model, company_name, column=1)
 				if model_iter is not None:

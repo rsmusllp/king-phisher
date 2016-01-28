@@ -58,5 +58,10 @@ class ClientRPCRemoteRowTests(testing.KingPhisherTestCase):
 				xref_attr = xref_attr[:-3]
 				self.assertIn(xref_attr, all_xrefs)
 
+	def test_table_row_classes_all_have_ids(self):
+		for remote_row in client_rpc.database_table_objects.values():
+			msg = "remote row {0}.__slots__ attribute does not have 'id' as it's first entry".format(remote_row.__class__.__name__)
+			self.assertEqual(remote_row.__slots__[1], 'id', msg=msg)
+
 if __name__ == '__main__':
 	unittest.main()

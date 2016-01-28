@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/widget_proxies.py
+#  king_phisher/client/widget_resources.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -31,13 +31,27 @@
 #
 
 from king_phisher.client import gui_utilities
+from king_phisher.constants import ColorHexCode
+
+from gi.repository import Gtk
+from gi.repository import Pango
+
+font_desc_italic = Pango.FontDescription()
+font_desc_italic.set_style(Pango.Style.ITALIC)
+
+renderer_text_desc = Gtk.CellRendererText()
+renderer_text_desc.set_property('ellipsize', Pango.EllipsizeMode.END)
+renderer_text_desc.set_property('font-desc', font_desc_italic)
+renderer_text_desc.set_property('foreground', ColorHexCode.GRAY)
+renderer_text_desc.set_property('max-width-chars', 20)
 
 class CompanyEditorGrid(gui_utilities.GladeProxy):
 	name = 'CompanyEditorGrid'
 	children = (
 		'combobox_company_industry',
-		'entry_company_new_name',
-		'entry_company_new_description',
+		'entry_company_industry',
+		'entry_company_name',
+		'entry_company_description',
 		'entry_company_url_main',
 		'entry_company_url_email',
 		'entry_company_url_remote_access'
