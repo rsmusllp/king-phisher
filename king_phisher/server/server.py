@@ -767,7 +767,8 @@ class KingPhisherServer(AdvancedHTTPServer):
 		)
 		self.http_server.forked_authenticator = aaa.ForkedAuthenticator(
 			cache_timeout=config.get_if_exists('server.authentication.cache_timeout', '10m'),
-			required_group=config.get_if_exists('server.authentication.group')
+			required_group=config.get_if_exists('server.authentication.group'),
+			pam_service=config.get_if_exists('server.authentication.pam_service', 'sshd')
 		)
 		self.job_manager = job.JobManager()
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
