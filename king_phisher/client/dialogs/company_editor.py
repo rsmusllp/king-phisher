@@ -110,6 +110,7 @@ class CompanyEditorDialog(gui_utilities.GladeGObject):
 		return model.get_value(model_iter, 0)
 
 	def _set_company_info(self, company_id):
+		campaign = self.application.rpc.remote_table_row('campaigns', self.config['campaign_id'])
 		company = self.application.rpc.remote_table_row('companies', company_id)
 		company.name = self.get_entry_value('company_name')
 		company.description = self.get_entry_value('company_description')
@@ -122,6 +123,8 @@ class CompanyEditorDialog(gui_utilities.GladeGObject):
 		model_iter = gui_utilities.gtk_list_store_search(model, company_id)
 		model[model_iter][1] = company.name
 		model[model_iter][2] = company.description
+		if campaign.company_id == company.id:
+			self.application.emit('campaign-changed', campaign.id)
 
 	def _should_set_company_info(self):
 		if self._last_company_id is None:

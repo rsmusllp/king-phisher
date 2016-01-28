@@ -1639,9 +1639,9 @@ Brandan Geise</property>
                             <signal name="changed" handler="signal_combobox_company_changed" swapped="no"/>
                             <child internal-child="entry">
                               <object class="GtkEntry" id="combobox-entry6">
-                                <property name="can_focus">True</property>
+                                <property name="can_focus">False</property>
                                 <property name="editable">False</property>
-                                <property name="placeholder_text" translatable="yes">company name (OPTIONAL)</property>
+                                <property name="placeholder_text" translatable="yes">company name</property>
                               </object>
                             </child>
                           </object>

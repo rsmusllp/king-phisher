@@ -93,7 +93,7 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 			row_id = getattr(self, item + '_id', None)
 			for table, table_cls in database_table_objects.items():
 				if table_cls.__xref_attr__ == item:
-					return self.__rpc__.remote_table_row(table, row_id, cache=True)
+					return self.__rpc__.remote_table_row(table, row_id)
 		raise AttributeError("object has no attribute '{0}'".format(item))
 
 	def _asdict(self):

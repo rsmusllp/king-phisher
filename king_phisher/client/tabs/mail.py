@@ -878,8 +878,6 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			self.message_type.set_active(message_type)
 
 	def signal_kpc_campaign_load(self, _, campaign_id):
-		if not campaign_id == self.config.get('campaign_id'):
-			return
 		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
 		if campaign.company_id is None:
 			self.config['mailer.company_name'] = None
