@@ -9,4 +9,3 @@
    :titlesonly:
 
    AdvancedHTTPServer.rst
-   pam.rst

@@ -48,8 +48,8 @@ from king_phisher import its
 from king_phisher import utilities
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
-from king_phisher.third_party import pam
 
+import pam
 import smoke_zephyr.utilities
 
 __all__ = ('AuthenticatedSessionManager', 'ForkedAuthenticator')
@@ -381,8 +381,10 @@ class ForkedAuthenticator(object):
 			password = str(request['password'])
 
 			start_time = time.time()
-			result = pam.authenticate(username, password, service=service)
-			self.logger.debug("pam.authenticate call returned {0} for user {1} after {2:.2f} seconds".format(result, username, time.time() - start_time))
+			pam_handle = pam.pam()
+			result = pam_handle.authenticate(username, password, service=service)
+			end_time = time.time() - start_time
+			self.logger.debug("pam.authenticate call returned code: {0} reason: '{1}' for user {2} after {3:.2f} seconds".format(pam_handle.code, pam_handle.reason, username, end_time))
 
 			result = {
 				'result': result,
