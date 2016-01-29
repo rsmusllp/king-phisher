@@ -45,7 +45,7 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
-from king_phisher.client import widget_managers
+from king_phisher.client.widget import managers
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
@@ -793,9 +793,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
 		self.application.connect('exit', self.signal_kpc_exit)
 
-		self.message_type = widget_managers.RadioButtonGroupManager(self, 'message_type')
+		self.message_type = managers.RadioButtonGroupManager(self, 'message_type')
 		self.message_type.set_active(self.config['mailer.message_type'])
-		self.target_type = widget_managers.RadioButtonGroupManager(self, 'target_type')
+		self.target_type = managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
 
 	def objects_load_from_config(self):

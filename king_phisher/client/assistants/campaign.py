@@ -34,7 +34,7 @@ import datetime
 
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
-from king_phisher.client import widget_resources
+from king_phisher.client.widget import resources
 from king_phisher.third_party import AdvancedHTTPServer
 
 __all__ = ('CampaignAssistant',)
@@ -47,7 +47,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
-			widget_resources.CompanyEditorGrid(
+			resources.CompanyEditorGrid(
 				gui_utilities.GladeProxyDestination(
 					widget='alignment_company',
 					method='add'
@@ -136,7 +136,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
-		renderer = widget_resources.renderer_text_desc
+		renderer = resources.renderer_text_desc
 		rpc = self.application.rpc
 		for tag_name, tag_table in (('campaign_type', 'campaign_types'), ('company_existing', 'companies'), ('company_industry', 'industries')):
 			combobox = self.gobjects['combobox_' + tag_name]

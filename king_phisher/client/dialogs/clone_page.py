@@ -34,7 +34,7 @@ import os
 
 from king_phisher.client import gui_utilities
 from king_phisher.client import web_cloner
-from king_phisher.client import widget_managers
+from king_phisher.client.widget import managers
 
 from gi.repository import Gtk
 
@@ -64,7 +64,7 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 		self.resources = Gtk.ListStore(str, str, int)
 		treeview = self.gobjects['treeview_resources']
 		treeview.set_model(self.resources)
-		self.treeview_manager = widget_managers.TreeViewManager(treeview)
+		self.treeview_manager = managers.TreeViewManager(treeview)
 		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'), renderers=(Gtk.CellRendererText(), Gtk.CellRendererText(), gui_utilities.CellRendererTextBytes()))
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
