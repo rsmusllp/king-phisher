@@ -296,6 +296,8 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		"""
 		if model is None:
 			model = Gtk.ListStore(*_tag_mixin_types)
+			# sort by the name column, ascending
+			model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 		else:
 			model.clear()
 		for row in self.remote_table(tag_table):
