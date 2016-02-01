@@ -40,8 +40,8 @@ from king_phisher import find
 from king_phisher import geoip
 from king_phisher import json_ex
 from king_phisher import utilities
-from king_phisher.third_party import AdvancedHTTPServer
 
+import AdvancedHTTPServer
 from gi.repository import Gtk
 
 try:

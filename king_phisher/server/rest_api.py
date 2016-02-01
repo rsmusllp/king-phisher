@@ -37,7 +37,8 @@ import logging
 from king_phisher import geoip
 from king_phisher import sms
 from king_phisher import utilities
-from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRegisterPath
+
+from AdvancedHTTPServer import AdvancedHTTPServerRegisterPath
 
 __all__ = ('generate_token',)
 

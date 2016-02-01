@@ -53,8 +53,8 @@ from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
-from king_phisher.third_party.AdvancedHTTPServer import *
 
+import AdvancedHTTPServer
 import jinja2
 from smoke_zephyr import job
 
@@ -110,7 +110,7 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 		logger.info('rest api initialized with token: ' + config.get('server.rest_api.token'))
 	return server
 
-class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, AdvancedHTTPServerRequestHandler):
+class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, AdvancedHTTPServer.AdvancedHTTPServerRequestHandler):
 	def __init__(self, *args, **kwargs):
 		# this is for attribute documentation
 		self.config = None
@@ -728,7 +728,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
 
-class KingPhisherServer(AdvancedHTTPServer):
+class KingPhisherServer(AdvancedHTTPServer.AdvancedHTTPServer):
 	"""
 	The main HTTP and RPC server for King Phisher.
 	"""

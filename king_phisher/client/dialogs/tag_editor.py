@@ -34,8 +34,8 @@ import functools
 
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
-from king_phisher.third_party import AdvancedHTTPServer
 
+import AdvancedHTTPServer
 from gi.repository import Gtk
 from gi.repository import Pango
 

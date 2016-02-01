@@ -56,8 +56,8 @@ from king_phisher.client.windows import main
 from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.ssh_forward import SSHTCPForwarder
-from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from AdvancedHTTPServer import AdvancedHTTPServerRPCError
 from boltons import typeutils
 from gi.repository import Gdk
 from gi.repository import Gio

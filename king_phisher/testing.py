@@ -41,8 +41,8 @@ from king_phisher import find
 from king_phisher.client import client_rpc
 from king_phisher.server import rest_api
 from king_phisher.server import server
-from king_phisher.third_party import AdvancedHTTPServer
 
+import AdvancedHTTPServer
 import smoke_zephyr.configuration
 import smoke_zephyr.utilities
 
