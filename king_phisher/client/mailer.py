@@ -415,16 +415,24 @@ class MailSenderThread(threading.Thread):
 		elif target_type == 'file':
 			target_file_h = open(self.target_file, 'rU')
 			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
-			for raw_target in csv_reader:
+			for line_no, raw_target in enumerate(csv_reader, 1):
 				department = raw_target['department']
 				if department is not None:
 					department = department.strip()
 					if department == '':
 						department = None
+				email_address = raw_target['email_address'] or ''
+				email_address = email_address.strip()
+				if not email_address:
+					self.logger.warning("skipping line {0} in target csv file due to missing email address".format(line_no))
+					continue
+				if not utilities.is_valid_email_address(email_address):
+					self.logger.warning("skipping line {0} in target csv file due to invalid email address: {1}".format(line_no, email_address))
+					continue
 				target = MessageTarget(
 					first_name=raw_target['first_name'].strip(),
 					last_name=raw_target['last_name'].strip(),
-					email_address=raw_target['email_address'].strip(),
+					email_address=email_address,
 					department=department
 				)
 				yield target
@@ -448,12 +456,6 @@ class MailSenderThread(threading.Thread):
 		self.logger.debug("loaded {0:,} MIME attachments".format(sum((len(attachments.files), len(attachments.images)))))
 
 		for target in self.iterate_targets():
-			if not utilities.is_valid_email_address(target.email_address):
-				if target.email_address:
-					self.logger.warning('skipping invalid email address: ' + target.email_address)
-				else:
-					self.logger.warning('skipping blank email address')
-				continue
 			iteration_time = time.time()
 			if self.should_stop.is_set():
 				self.tab_notify_status('Sending emails cancelled')
