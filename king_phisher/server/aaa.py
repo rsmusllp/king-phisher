@@ -364,6 +364,7 @@ class ForkedAuthenticator(object):
 		The main routine that is executed by the child after the object forks.
 		This loop does not exit unless a stop request is made.
 		"""
+		self.logger = logging.getLogger('KingPhisher.Server.Authenticator.Child')
 		while True:
 			request = self._raw_recv(timeout=None)
 			if 'action' not in request:
@@ -372,7 +373,8 @@ class ForkedAuthenticator(object):
 			if 'sequence' not in request:
 				self.logger.warning('authentication request received without a sequence number')
 				continue
-			action = request['action']
+			action = request.get('action', 'UNKNOWN')
+			self.logger.debug('pam control child received authentication request ' + action)
 			if action == 'stop':
 				break
 			elif action != 'authenticate':
@@ -384,7 +386,7 @@ class ForkedAuthenticator(object):
 			pam_handle = pam.pam()
 			result = pam_handle.authenticate(username, password, service=self.service)
 			end_time = time.time() - start_time
-			self.logger.debug("pam.authenticate call returned code: {0} reason: '{1}' for user {2} after {3:.2f} seconds".format(pam_handle.code, pam_handle.reason, username, end_time))
+			self.logger.debug("pam returned code: {0} reason: '{1}' for user {2} after {3:.2f} seconds".format(pam_handle.code, pam_handle.reason, username, end_time))
 
 			result = {
 				'result': result,
