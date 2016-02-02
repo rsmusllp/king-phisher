@@ -303,10 +303,11 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		destination_file = response['target_path']
 		campaign_tab = self.tabs['campaign']
 		workbook = xlsxwriter.Workbook(destination_file)
+		title_format = workbook.add_format({'bold': True, 'size': 14})
 		for tab_name, tab in campaign_tab.tabs.items():
 			if not isinstance(tab, CampaignViewGenericTableTab):
 				continue
-			tab.export_table_to_xlsx_worksheet(workbook.add_worksheet(tab_name))
+			tab.export_table_to_xlsx_worksheet(workbook.add_worksheet(tab_name), title_format)
 		workbook.close()
 
 	def export_campaign_xml(self):

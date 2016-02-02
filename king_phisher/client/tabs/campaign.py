@@ -252,15 +252,21 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		export.liststore_to_csv(store, destination_file, columns)
 		self.loader_thread_lock.release()
 
-	def export_table_to_xlsx_worksheet(self, worksheet):
-		"""Export the data represented by the view to a XLSX worksheet."""
+	def export_table_to_xlsx_worksheet(self, worksheet, title_format):
+		"""
+		Export the data represented by the view to an XLSX worksheet.
+
+		:param worksheet: The destination sheet for the store's data.
+		:type worksheet: :py:class:`xlsxwriter.worksheet.Worksheet`
+		:param title_format: The formatting to use for the title row.
+		:type title_format: :py:class:`xlsxwriter.format.Format`
+		"""
 		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
 			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
 			return
 		store = self.gobjects['treeview_campaign'].get_model()
 		columns = dict(enumerate(('UID',) + self.view_columns))
-		worksheet.set_column(0, len(columns), 30)
-		export.liststore_to_xlsx_worksheet(store, worksheet, columns)
+		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format)
 		self.loader_thread_lock.release()
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
