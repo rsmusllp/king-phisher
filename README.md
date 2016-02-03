@@ -27,48 +27,22 @@ file. After installing, for instructions on how to get started please see the
 
 ![alt text](https://raw.githubusercontent.com/securestate/king-phisher/screenshots/dashboard.png "Campaign Dashboard")
 
-## License
-King Phisher is released under the BSD 3-clause license, for more details see
-the [LICENSE](https://github.com/securestate/king-phisher/blob/master/LICENSE) file.
-
-## Credits
-Special Thanks (QA / Beta Testing):
-
- - Jake Garlie - jagar
- - Jeremy Schoeneman - Shad0wman
- - Ken Smith - p4tchw0rk
- - Brianna Whittaker
-
-King Phisher Development Team:
-
- - Brandan Geise - coldfusion ([@coldfusion39](https://twitter.com/coldfusion39))
- - Jeff McCutchan - jamcut ([@jamcut](https://twitter.com/jamcut))
- - Spencer McIntyre - zeroSteiner ([@zeroSteiner](https://twitter.com/zeroSteiner))
+## Feature Overview
+ * Run multiple phishing campaigns simultaneously
+ * Send email with embedded images for a more legitimate appearance
+ * Optional Two-Factor authentication
+ * Credential harvesting from landing pages
+ * SMS alerts regarding campaign status
+ * Web page cloning capabilities
+ * Integrated Sender Policy Framework (SPF) checks
+ * Geo location of phishing visitors
+ * Send email with calendar invitations
 
 ## Template Files
 Template files for both messages and server pages can be found in the separate
 King Phisher [Templates repository](https://github.com/securestate/king-phisher-templates).
 Any contributions regarding templates should also be submitted via a pull
 request to the templates repository.
-
-## Code Documentation
-King Phisher uses Sphinx for internal code documentation. This
-documentation can be generated from source with the command
-```sphinx-build -b html docs/source docs/html```. The latest documentation is
-kindly hosted on [ReadTheDocs](https://readthedocs.org/) at
-[king-phisher.readthedocs.org](https://king-phisher.readthedocs.org/en/latest/).
-
-## Client Configuration
-The client configuration file is encoded in JSON and most options are
-configurable through the GUI interface.
-
-The following options will be honored but are not configurable through
-the GUI:
-
-* gui.refresh_frequency (Default: 5 minutes)
-* mailer.max_messages_per_connection (Default: 5)
-* rpc.serializer (Default: Automatically determined)
-* ssh_preferred_key (Default: N/A)
 
 ### Message Template Variables
 The client message templates are formatted using the Jinja2 templating engine
@@ -94,3 +68,36 @@ uid                        | The unique tracking identifier (this is the same as
 
 The uid is the most important, and must be present in links that the messages
 contain.
+
+## Documentation
+Documentation for users of the application is provided on the project's
+[wiki page](https://github.com/securestate/king-phisher/wiki). This includes
+steps to help new users get started with their first campaigns. Additional
+technical documentation intended for developers is kept seperate as outlined
+in section below.
+
+### Code Documentation
+King Phisher uses Sphinx for internal technical documentation. This
+documentation can be generated from source with the command
+```sphinx-build -b html docs/source docs/html```. The latest documentation is
+kindly hosted on [ReadTheDocs](https://readthedocs.org/) at
+[king-phisher.readthedocs.org](https://king-phisher.readthedocs.org/en/latest/).
+
+## License
+King Phisher is released under the BSD 3-clause license, for more details see
+the [LICENSE](https://github.com/securestate/king-phisher/blob/master/LICENSE) file.
+
+## Credits
+Special Thanks (QA / Beta Testing):
+
+ - Erik Daguerre - wolfthefallen
+ - Jake Garlie - jagar
+ - Jeremy Schoeneman - Shad0wman
+ - Ken Smith - p4tchw0rk
+ - Brianna Whittaker
+
+King Phisher Development Team:
+
+ - Brandan Geise - coldfusion ([@coldfusion39](https://twitter.com/coldfusion39))
+ - Jeff McCutchan - jamcut ([@jamcut](https://twitter.com/jamcut))
+ - Spencer McIntyre - zeroSteiner ([@zeroSteiner](https://twitter.com/zeroSteiner))
