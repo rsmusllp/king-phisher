@@ -45,6 +45,7 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
+from king_phisher.client.widget import extras
 from king_phisher.client.widget import managers
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.constants import SPFResult
@@ -612,7 +613,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 				current_name = os.path.basename(html_file)
 			else:
 				current_name = 'message.html'
-			dialog = gui_utilities.FileChooser('Save HTML File', self.parent)
+			dialog = extras.FileChooserDialog('Save HTML File', self.parent)
 			response = dialog.run_quick_save(current_name=current_name)
 			dialog.destroy()
 			if not response:
@@ -626,7 +627,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		return True
 
 	def signal_toolbutton_open(self, button):
-		dialog = gui_utilities.FileChooser('Choose File', self.parent)
+		dialog = extras.FileChooserDialog('Choose File', self.parent)
 		dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -713,7 +714,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		return True
 
 	def signal_activate_popup_menu_insert_image(self, widget):
-		dialog = gui_utilities.FileChooser('Choose Image', self.parent)
+		dialog = extras.FileChooserDialog('Choose Image', self.parent)
 		dialog.quick_add_filter('Images', ['*.gif', '*.jpeg', '*.jpg', '*.png'])
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -845,7 +846,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.gobjects['spinbutton_calendar_invite_start_minute'].set_sensitive(not all_day)
 
 	def signal_entry_activate_open_file(self, entry):
-		dialog = gui_utilities.FileChooser('Choose File', self.parent)
+		dialog = extras.FileChooserDialog('Choose File', self.parent)
 		if entry == self.gobjects.get('entry_html_file'):
 			dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		elif entry == self.gobjects.get('entry_target_file'):
@@ -1016,7 +1017,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.FileChooser('Export Message Configuration', self.parent)
+		dialog = extras.FileChooserDialog('Export Message Configuration', self.parent)
 		response = dialog.run_quick_save('message.kpm')
 		dialog.destroy()
 		if not response:
@@ -1038,7 +1039,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.FileChooser('Import Message Configuration', self.parent)
+		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -1047,7 +1048,7 @@ class MailSenderTab(object):
 			return
 		target_file = response['target_path']
 
-		dialog = gui_utilities.FileChooser('Destination Directory', self.parent)
+		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
 		response = dialog.run_quick_select_directory()
 		dialog.destroy()
 		if not response:

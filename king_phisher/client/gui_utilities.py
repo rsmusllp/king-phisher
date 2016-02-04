@@ -42,7 +42,6 @@ import threading
 from king_phisher import find
 from king_phisher import utilities
 
-import boltons.strutils
 from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
@@ -74,15 +73,6 @@ of two functions is specified the set function will be provided two
 parameters, the object and the value and the get function will just be
 provided the object.
 """
-
-if isinstance(Gtk.Widget, utilities.Mock):
-	_Gtk_CellRendererText = type('Gtk.CellRendererText', (object,), {})
-	_Gtk_CellRendererText.__module__ = ''
-	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {})
-	_Gtk_FileChooserDialog.__module__ = ''
-else:
-	_Gtk_CellRendererText = Gtk.CellRendererText
-	_Gtk_FileChooserDialog = Gtk.FileChooserDialog
 
 def which_glade():
 	"""
@@ -416,14 +406,6 @@ def show_dialog_yes_no(*args, **kwargs):
 	kwargs['message_buttons'] = Gtk.ButtonsType.YES_NO
 	return show_dialog(Gtk.MessageType.QUESTION, *args, **kwargs) == Gtk.ResponseType.YES
 
-class CellRendererTextBytes(_Gtk_CellRendererText):
-	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
-	def do_render(self, *args, **kwargs):
-		original = self.get_property('text')
-		if original.isdigit():
-			self.set_property('text', boltons.strutils.bytes2human(int(original), 1))
-		Gtk.CellRendererText.do_render(self, *args, **kwargs)
-
 class GladeDependencies(object):
 	"""
 	A class for defining how objects should be loaded from a GTK Builder data
@@ -651,106 +633,6 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 			if not gtype in GOBJECT_PROPERTY_MAP:
 				continue
 			self.config[config_name] = gobject_get_value(gobject, gtype)
-
-class FileChooser(_Gtk_FileChooserDialog):
-	"""Display a file chooser dialog."""
-	def __init__(self, title, parent, **kwargs):
-		"""
-		:param str title: The title for the file chooser dialog.
-		:param parent: The parent window for the dialog.
-		:type parent: :py:class:`Gtk.Window`
-		"""
-		assert isinstance(parent, Gtk.Window)
-		super(FileChooser, self).__init__(title, parent, **kwargs)
-		self.parent = self.get_parent_window()
-
-	def quick_add_filter(self, name, patterns):
-		"""
-		Add a filter for displaying files, this is useful in conjunction
-		with :py:meth:`.run_quick_open`.
-
-		:param str name: The name of the filter.
-		:param patterns: The pattern(s) to match.
-		:type patterns: list, str
-		"""
-		if not isinstance(patterns, (list, tuple)):
-			patterns = (patterns,)
-		new_filter = Gtk.FileFilter()
-		new_filter.set_name(name)
-		for pattern in patterns:
-			new_filter.add_pattern(pattern)
-		self.add_filter(new_filter)
-
-	def run_quick_open(self):
-		"""
-		Display a dialog asking a user which file should be opened. The
-		value of target_path in the returned dictionary is an absolute path.
-
-		:return: A dictionary with target_uri and target_path keys representing the path choosen.
-		:rtype: dict
-		"""
-		self.set_action(Gtk.FileChooserAction.OPEN)
-		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
-		self.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
-		self.show_all()
-		response = self.run()
-		if response == Gtk.ResponseType.CANCEL:
-			return None
-		target_path = self.get_filename()
-		if not os.access(target_path, os.R_OK):
-			show_dialog_error('Can not read the selected file', self.parent)
-			return None
-		target_uri = self.get_uri()
-		return {'target_uri': target_uri, 'target_path': target_path}
-
-	def run_quick_save(self, current_name=None):
-		"""
-		Display a dialog which asks the user where a file should be saved. The
-		value of target_path in the returned dictionary is an absolute path.
-
-		:param set current_name: The name of the file to save.
-		:return: A dictionary with target_uri and target_path keys representing the path choosen.
-		:rtype: dict
-		"""
-		self.set_action(Gtk.FileChooserAction.SAVE)
-		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
-		self.add_button(Gtk.STOCK_SAVE, Gtk.ResponseType.ACCEPT)
-		self.set_do_overwrite_confirmation(True)
-		if current_name:
-			self.set_current_name(current_name)
-		self.show_all()
-		response = self.run()
-		if response == Gtk.ResponseType.CANCEL:
-			return None
-		target_path = self.get_filename()
-		if os.path.isfile(target_path):
-			if not os.access(target_path, os.W_OK):
-				show_dialog_error('Can not write to the selected file', self.parent)
-				return None
-		elif not os.access(os.path.dirname(target_path), os.W_OK):
-			show_dialog_error('Can not create the selected file', self.parent)
-			return None
-		target_uri = self.get_uri()
-		return {'target_uri': target_uri, 'target_path': target_path}
-
-	def run_quick_select_directory(self):
-		"""
-		Display a dialog which asks the user to select a directory to use. The
-		value of target_path in the returned dictionary is an absolute path.
-
-		:return: A dictionary with target_uri and target_path keys representing the path chosen.
-		:rtype: dict
-		"""
-		self.set_action(Gtk.FileChooserAction.SELECT_FOLDER)
-		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
-		self.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
-		self.show_all()
-		response = self.run()
-		if response == Gtk.ResponseType.CANCEL:
-			return None
-		target_uri = self.get_uri()
-		target_path = self.get_filename()
-		return {'target_uri': target_uri, 'target_path': target_path}
 
 class FileMonitor(object):
 	"""Monitor a file for changes."""

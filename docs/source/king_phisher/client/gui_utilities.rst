@@ -59,15 +59,6 @@ Functions
 Classes
 -------
 
-.. autoclass:: king_phisher.client.gui_utilities.CellRendererTextBytes
-   :show-inheritance:
-
-.. autoclass:: king_phisher.client.gui_utilities.FileChooser
-   :show-inheritance:
-   :members:
-   :special-members: __init__
-   :undoc-members:
-
 .. autoclass:: king_phisher.client.gui_utilities.FileMonitor
    :show-inheritance:
    :special-members: __init__

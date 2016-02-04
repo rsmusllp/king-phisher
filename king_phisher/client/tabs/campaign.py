@@ -41,6 +41,7 @@ from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
+from king_phisher.client.widget import extras
 from king_phisher.client.widget import managers
 
 from boltons import iterutils
@@ -239,7 +240,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
 			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
 			return
-		dialog = gui_utilities.FileChooser('Export Data', self.parent)
+		dialog = extras.FileChooserDialog('Export Data', self.parent)
 		file_name = self.config['campaign_name'] + '.csv'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()

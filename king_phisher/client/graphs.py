@@ -38,6 +38,7 @@ from king_phisher import color
 from king_phisher import its
 from king_phisher import ua_parser
 from king_phisher.client import gui_utilities
+from king_phisher.client.widget import extras
 from king_phisher.constants import ColorHexCode
 from king_phisher.constants import OSFamily
 
@@ -261,7 +262,7 @@ class CampaignGraph(object):
 		return True
 
 	def signal_activate_popup_menu_export(self, action):
-		dialog = gui_utilities.FileChooser('Export Graph', self.application.get_active_window())
+		dialog = extras.FileChooserDialog('Export Graph', self.application.get_active_window())
 		file_name = self.config['campaign_name'] + '.png'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()
