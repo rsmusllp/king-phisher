@@ -30,23 +30,30 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import codecs
+import logging
 import os
 
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
 import boltons.strutils
+from gi.repository import Gdk
+from gi.repository import GObject
 from gi.repository import Gtk
-
+from gi.repository import WebKit2
 
 if isinstance(Gtk.Widget, utilities.Mock):
 	_Gtk_CellRendererText = type('Gtk.CellRendererText', (object,), {})
 	_Gtk_CellRendererText.__module__ = ''
 	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {})
 	_Gtk_FileChooserDialog.__module__ = ''
+	_WebKit2_WebView = type('WebKit2.WebView', (object,), {})
+	_WebKit2_WebView.__module__ = ''
 else:
 	_Gtk_CellRendererText = Gtk.CellRendererText
 	_Gtk_FileChooserDialog = Gtk.FileChooserDialog
+	_WebKit2_WebView = WebKit2.WebView
 
 class CellRendererBytes(_Gtk_CellRendererText):
 	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
@@ -155,3 +162,54 @@ class FileChooserDialog(_Gtk_FileChooserDialog):
 		target_uri = self.get_uri()
 		target_path = self.get_filename()
 		return {'target_uri': target_uri, 'target_path': target_path}
+
+class WebKitHTMLView(_WebKit2_WebView):
+	"""
+	A WebView widget with additional convenience methods for rendering simple
+	HTML content from either files or strings. If a link is opened within the
+	document, the webview will emit the 'open-uri' signal instead of navigating
+	to it.
+	"""
+	__gsignals__ = {
+		'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, WebKit2.NavigationPolicyDecision))
+	}
+	def __init__(self):
+		super(WebKitHTMLView, self).__init__()
+		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
+		self.get_context().set_cache_model(WebKit2.CacheModel.DOCUMENT_VIEWER)
+		self.connect('button-press-event', self.signal_button_pressed)
+		self.connect('decide-policy', self.signal_decide_policy)
+
+	def do_open_remote_uri(self, uri, decision):
+		self.logger.debug('received request to open uri: ' + uri)
+
+	def load_html_data(self, html_data, html_file_uri=None):
+		"""
+		Load arbitrary HTML data into the WebKit engine to be rendered.
+
+		:param str html_data: The HTML data to load into WebKit.
+		:param str html_file_uri: The URI of the file where the HTML data came from.
+		"""
+		if isinstance(html_file_uri, str) and not html_file_uri.startswith('file://'):
+			html_file_uri = 'file://' + html_file_uri
+		self.load_html(html_data, html_file_uri)
+
+	def load_html_file(self, html_file):
+		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
+			html_data = file_h.read()
+		self.load_html_data(html_data, html_file)
+
+	def signal_button_pressed(self, _, event):
+		if event.button == Gdk.BUTTON_SECONDARY:
+			# disable right click altogether
+			return True
+
+	def signal_decide_policy(self, _, decision, decision_type):
+		if decision_type == WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+			uri_request = decision.get_request()
+			uri = uri_request.get_uri()
+			if uri.startswith('file:'):
+				decision.use()
+			else:
+				decision.ignore()
+				self.emit('open-remote-uri', uri, decision)

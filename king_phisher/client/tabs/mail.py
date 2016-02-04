@@ -67,13 +67,6 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse
 
-try:
-	from gi.repository import WebKit2 as WebKitX
-	has_webkit2 = True
-except ImportError:
-	from gi.repository import WebKit as WebKitX
-	has_webkit2 = False
-
 def test_webserver_url(target_url, secret_id):
 	"""
 	Test the target URL to ensure that it is valid and the server is responding.
@@ -460,10 +453,8 @@ class MailSenderPreviewTab(object):
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
-		self.webview = WebKitX.WebView()
-		"""The :py:class:`WebKit2.WebView` object used to render the message HTML."""
-		if has_webkit2:
-			self.webview.get_context().set_cache_model(WebKitX.CacheModel.DOCUMENT_VIEWER)
+		self.webview = extras.WebKitHTMLView()
+		"""The :py:class:`~.extras.WebKitHTMLView` object used to render the message HTML."""
 		self.webview.show()
 		scrolled_window = Gtk.ScrolledWindow()
 		scrolled_window.add(self.webview)
@@ -508,22 +499,8 @@ class MailSenderPreviewTab(object):
 			self.info_bar.show()
 		else:
 			html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
-			self.load_html_data(html_data, html_file_uri)
+			self.webview.load_html_data(html_data, html_file_uri)
 			self.info_bar.hide()
-
-	def load_html_data(self, html_data, html_file_uri=None):
-		"""
-		Load arbitrary HTML data into the WebKit engine to be rendered.
-
-		:param str html_data: The HTML data to load into WebKit.
-		:param str html_file_uri: The URI of the file where the HTML data came from.
-		"""
-		if isinstance(html_file_uri, str) and not html_file_uri.startswith('file://'):
-			html_file_uri = 'file://' + html_file_uri
-		if has_webkit2:
-			self.webview.load_html(html_data, html_file_uri)
-		else:
-			self.webview.load_html_string(html_data, (html_file_uri or os.devnull))
 
 	def show_tab(self):
 		"""Configure the webview to preview the the message HTML file."""
@@ -531,7 +508,7 @@ class MailSenderPreviewTab(object):
 			if self.file_monitor:
 				self.file_monitor.stop()
 				self.file_monitor = None
-			self.load_html_data('')
+			self.webview.load_html_data('')
 			return
 		self.load_html_file()
 		if self.file_monitor and self.file_monitor.path != self.config['mailer.html_file']:

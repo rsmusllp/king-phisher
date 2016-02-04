@@ -110,8 +110,8 @@ class LoginDialog(LoginDialogBase):
 		else:
 			self.gobjects['spinbutton_server_remote_port'].set_value(80)
 
-	def signal_button_pressed(self, widget, event):
-		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
+	def signal_button_pressed(self, _, event):
+		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY):
 			return
 		self.popup_menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
 		return True

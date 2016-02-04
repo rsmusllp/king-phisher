@@ -230,7 +230,7 @@ class TreeViewManager(object):
 			column.set_attributes(cell, **props)
 
 	def signal_button_pressed(self, treeview, event, popup_menu):
-		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3):
+		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY):
 			return
 		selection = treeview.get_selection()
 		if not selection.count_selected_rows():
