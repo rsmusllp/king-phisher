@@ -141,7 +141,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Debian"
 fi
 
-grep -E "Kali Linux 2\.[0-9]+" /etc/debian_version &> /dev/null
+grep 'Kali Linux 2\.[0-9]\|Kali Linux Rolling' /etc/debian_version &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Kali"
 fi
@@ -228,6 +228,9 @@ fi
 echo "Installing $LINUX_VERSION dependencies"
 if [ "$LINUX_VERSION" == "CentOS" ]; then
 	yum install -y epel-release
+	if
+		yum install -y centos-release-SCL
+		yum install python27
 	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
 		postgresql-devel python-devel python-pip
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
