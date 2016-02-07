@@ -781,7 +781,7 @@ class KingPhisherServer(AdvancedHTTPServer.AdvancedHTTPServer):
 		global_vars['embed_youtube_video'] = pages.embed_youtube_video
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
-		self.http_server.template_env = templates.BaseTemplateEnvironment(loader=loader, global_vars=global_vars)
+		self.http_server.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
 		self.__geoip_db = geoip.init_database(config.get('server.geoip.database'))
 
 		self.__is_shutdown = threading.Event()

@@ -42,7 +42,7 @@ class TemplatesTests(testing.KingPhisherTestCase):
 		test_key = 'a' + random_string(10)
 		test_value = random_string(20)
 		global_vars = {test_key: test_value}
-		env = BaseTemplateEnvironment(global_vars=global_vars)
+		env = TemplateEnvironmentBase(global_vars=global_vars)
 		test_string = '<html>{{ ' + test_key + ' }}</html>'
 		template = env.from_string(test_string)
 		result = template.render()
@@ -50,7 +50,7 @@ class TemplatesTests(testing.KingPhisherTestCase):
 		self.assertFalse(test_key in result)
 
 	def test_strings_are_not_escaped(self):
-		env = BaseTemplateEnvironment()
+		env = TemplateEnvironmentBase()
 		test_string = '<html>{{ link }}</html>'
 		link = '<a href="http://king-phisher.com/">Click Me</a>'
 		template = env.from_string(test_string)
@@ -58,7 +58,7 @@ class TemplatesTests(testing.KingPhisherTestCase):
 		self.assertTrue(link in result)
 
 	def test_decoding_filters(self):
-		env = BaseTemplateEnvironment()
+		env = TemplateEnvironmentBase()
 		tests = {
 			'base16': '6B696E672D70686973686572',
 			'base32': 'NNUW4ZZNOBUGS43IMVZA====',
@@ -71,7 +71,7 @@ class TemplatesTests(testing.KingPhisherTestCase):
 			self.assertEqual(template.render(encoding=encoding, value=value), 'king-phisher')
 
 	def test_encoding_filters(self):
-		env = BaseTemplateEnvironment()
+		env = TemplateEnvironmentBase()
 		tests = {
 			'base16': '6B696E672D70686973686572',
 			'base32': 'NNUW4ZZNOBUGS43IMVZA====',
