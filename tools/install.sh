@@ -228,9 +228,6 @@ fi
 echo "Installing $LINUX_VERSION dependencies"
 if [ "$LINUX_VERSION" == "CentOS" ]; then
 	yum install -y epel-release
-	if
-		yum install -y centos-release-SCL
-		yum install python27
 	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
 		postgresql-devel python-devel python-pip
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
