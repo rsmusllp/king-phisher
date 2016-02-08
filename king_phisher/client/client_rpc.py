@@ -86,6 +86,8 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 		else:
 			raise RuntimeError('all arguments must be specified in either args or kwargs')
 		for key, value in kwargs.items():
+			if isinstance(value, bytes):
+				value = value.decode('utf-8')
 			setattr(self, key, value)
 
 	def __getattr__(self, item):
