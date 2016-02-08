@@ -89,7 +89,7 @@ class ICSTests(testing.KingPhisherTestCase):
 		for path in smoke_zephyr.utilities.FileWalker(ics.zoneinfo_path, absolute_path=True, skip_dirs=True):
 			tz_name = os.path.relpath(path, ics.zoneinfo_path)
 			# blacklist of timezones to ignore
-			if tz_name in ('Factory',):
+			if tz_name.split(os.sep, 1)[-1] == 'Factory':
 				continue
 
 			with open(path, 'rb') as file_h:
