@@ -31,7 +31,6 @@
 #
 
 import copy
-import ipaddress
 import logging
 import os
 import shlex
@@ -43,6 +42,7 @@ import uuid
 
 from king_phisher import errors
 from king_phisher import find
+from king_phisher import ipaddress
 from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher import version
@@ -427,7 +427,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		active_window = self.get_active_window()
 
 		server = parse_server(self.config['server'], 22)
-		if server[0] == 'localhost' or (utilities.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
+		if server[0] == 'localhost' or (ipaddress.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
 			local_server = ('localhost', self.config['server_remote_port'])
 			self.logger.info("connecting to local king phisher instance")
 		else:

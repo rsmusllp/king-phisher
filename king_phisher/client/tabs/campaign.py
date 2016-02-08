@@ -31,12 +31,12 @@
 #
 
 import datetime
-import ipaddress
 import logging
 import threading
 import time
 
 from king_phisher import find
+from king_phisher import ipaddress
 from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import graphs

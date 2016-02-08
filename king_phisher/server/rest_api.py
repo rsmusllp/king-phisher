@@ -30,11 +30,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import ipaddress
 import json
 import logging
 
 from king_phisher import geoip
+from king_phisher import ipaddress
 from king_phisher import sms
 from king_phisher import utilities
 

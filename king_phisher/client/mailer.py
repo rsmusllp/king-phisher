@@ -45,7 +45,6 @@ import email.mime.multipart
 import email.mime.text
 import logging
 import mimetypes
-import ipaddress
 import os
 import smtplib
 import socket
@@ -55,6 +54,7 @@ import time
 
 from king_phisher import errors
 from king_phisher import ics
+from king_phisher import ipaddress
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
@@ -174,7 +174,7 @@ def guess_smtp_server_address(host, forward_host=None):
 	:rtype: None, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	"""
 	host = host.rsplit(':', 1)[0]
-	if utilities.is_valid_ip_address(host):
+	if ipaddress.is_valid_ip_address(host):
 		ip = ipaddress.ip_address(host)
 		if not ip.is_loopback:
 			return ip

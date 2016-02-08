@@ -30,11 +30,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import ipaddress
 import os
 import unittest
 
 from king_phisher import geoip
+from king_phisher import ipaddress
 from king_phisher.testing import KingPhisherTestCase
 from king_phisher.testing import KingPhisherServerTestCase
 
@@ -77,7 +77,7 @@ class GeoIPTests(KingPhisherTestCase):
 		for field in geoip.DB_RESULT_FIELDS:
 			self.assertEqual(getattr(loc, field), getattr(loc_raw, field))
 		self.assertIsInstance(loc.ip_address, ipaddress.IPv4Address)
-		self.assertEqual(loc.ip_address, ipaddress.IPv4Address(GEO_TEST_IP))
+		self.assertEqual(loc.ip_address, ipaddress.ip_address(GEO_TEST_IP))
 
 class GeoIPRPCTests(KingPhisherServerTestCase):
 	def test_geoip_lookup_rpc(self):
