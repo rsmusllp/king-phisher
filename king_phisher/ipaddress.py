@@ -37,14 +37,14 @@ import ipaddress
 
 from king_phisher import its
 
-def convert_address(callable):
+def convert_address(func):
 	if not its.py_v2:
-		return callable
-	@functools.wraps(callable)
+		return func
+	@functools.wraps(func)
 	def wrapper(address, *args, **kwargs):
 		if isinstance(address, str):
 			address = address.decode('utf-8')
-		return callable(address, *args, **kwargs)
+		return func(address, *args, **kwargs)
 	return wrapper
 
 ip_address = convert_address(ipaddress.ip_address)
