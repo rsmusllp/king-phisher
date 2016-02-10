@@ -18,6 +18,10 @@ Functions
 
 .. autofunction:: king_phisher.ipaddress.ip_interface
 
+.. autofunction:: king_phisher.ipaddress.is_loopback
+
+.. autofunction:: king_phisher.ipaddress.is_valid
+
 Classes
 -------
 

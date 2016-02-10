@@ -50,9 +50,9 @@ class IPAddressTests(testing.KingPhisherTestCase):
 			''
 		]
 		for address in valid_ips:
-			self.assertTrue(ipaddress.is_valid_ip_address(address))
+			self.assertTrue(ipaddress.is_valid(address))
 		for address in invalid_ips:
-			self.assertFalse(ipaddress.is_valid_ip_address(address))
+			self.assertFalse(ipaddress.is_valid(address))
 
 if __name__ == '__main__':
 	unittest.main()

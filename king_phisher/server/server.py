@@ -392,7 +392,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		else:
 			# treat cookie_value ad an IPv4 address
 			cookie_value = cookie_value.split(':', 1)[0]
-		if ipaddress.is_valid_ip_address(cookie_value):
+		if ipaddress.is_valid(cookie_value):
 			address = cookie_value
 		return address
 

@@ -58,8 +58,23 @@ IPv4Network = ipaddress.IPv4Network
 IPv6Address = ipaddress.IPv6Address
 IPv6Network = ipaddress.IPv6Network
 
+def is_loopback(address):
+	"""
+	Check if an address is a loopback address or a common name for the loopback
+	interface.
+
+	:param str address: The address to check.
+	:return: Whether or not the address is a loopback address.
+	:rtype: bool
+	"""
+	if address == 'localhost':
+		return True
+	elif is_valid(address) and ip_address(address).is_loopback:
+		return True
+	return False
+
 @convert_address
-def is_valid_ip_address(address):
+def is_valid(address):
 	"""
 	Check that the string specified appears to be either a valid IPv4 or IPv6
 	address.

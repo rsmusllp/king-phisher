@@ -427,7 +427,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		active_window = self.get_active_window()
 
 		server = parse_server(self.config['server'], 22)
-		if server[0] == 'localhost' or (ipaddress.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
+		if ipaddress.is_loopback(server[0]):
 			local_server = ('localhost', self.config['server_remote_port'])
 			self.logger.info("connecting to local king phisher instance")
 		else:

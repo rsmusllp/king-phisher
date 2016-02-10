@@ -174,7 +174,7 @@ def guess_smtp_server_address(host, forward_host=None):
 	:rtype: None, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	"""
 	host = host.rsplit(':', 1)[0]
-	if ipaddress.is_valid_ip_address(host):
+	if ipaddress.is_valid(host):
 		ip = ipaddress.ip_address(host)
 		if not ip.is_loopback:
 			return ip
