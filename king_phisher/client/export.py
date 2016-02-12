@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import codecs
 import collections
 import copy
 import csv
@@ -192,13 +193,14 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	with open(geojson_file, 'w') as file_h:
 		json_ex.dump(feature_collection, file_h)
 
-def message_data_from_kpm(target_file, dest_dir):
+def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 	"""
 	Retrieve the stored details describing a message from a previously exported
 	file.
 
 	:param str target_file: The file to load as a message archive.
 	:param str dest_dir: The directory to extract data and attachment files to.
+	:param str encoding: The encoding to use for strings.
 	:return: The restored details from the message config.
 	:rtype: dict
 	"""
@@ -214,6 +216,7 @@ def message_data_from_kpm(target_file, dest_dir):
 		logger.warning('the kpm archive is missing the message_config.json file')
 		raise KingPhisherInputValidationError('data is missing from the message archive')
 	message_config = kpm.get_data('message_config.json')
+	message_config = message_config.decode(encoding)
 	message_config = json_ex.loads(message_config)
 
 	if attachment_member_names:
@@ -251,7 +254,7 @@ def message_data_from_kpm(target_file, dest_dir):
 		arcfile_h = kpm.get_file('message_content.html')
 		file_path = os.path.join(dest_dir, message_config['html_file'])
 		with open(file_path, 'wb') as file_h:
-			file_h.write(message_template_from_kpm(arcfile_h.read(), attachments))
+			file_h.write(message_template_from_kpm(arcfile_h.read().decode(encoding), attachments).encode(encoding))
 		message_config['html_file'] = file_path
 	elif 'html_file' in message_config:
 		logger.warning('the kpm archive is missing the message_content.html file')
@@ -259,12 +262,13 @@ def message_data_from_kpm(target_file, dest_dir):
 	kpm.close()
 	return message_config
 
-def message_data_to_kpm(message_config, target_file):
+def message_data_to_kpm(message_config, target_file, encoding='utf-8'):
 	"""
 	Save details describing a message to the target file.
 
 	:param dict message_config: The message details from the client configuration.
 	:param str target_file: The file to write the data to.
+	:param str encoding: The encoding to use for strings.
 	"""
 	message_config = copy.copy(message_config)
 	kpm = archive.ArchiveFile(target_file, 'w')
@@ -280,7 +284,8 @@ def message_data_to_kpm(message_config, target_file):
 			del message_config[config_name]
 
 	if os.access(message_config.get('html_file', ''), os.R_OK):
-		template = open(message_config['html_file'], 'rb').read()
+		with codecs.open(message_config['html_file'], 'r', encoding=encoding) as file_h:
+			template = file_h.read()
 		message_config['html_file'] = os.path.basename(message_config['html_file'])
 		template, attachments = message_template_to_kpm(template)
 		logger.debug("identified {0} attachment file{1} to be archived".format(len(attachments), 's' if len(attachments) > 1 else ''))

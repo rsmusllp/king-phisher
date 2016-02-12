@@ -1038,7 +1038,7 @@ class MailSenderTab(object):
 			return
 
 		config_keys = set(key for key in self.config.keys() if key.startswith(config_prefix))
-		config_types = dict(zip(config_keys, map(type, config_keys)))
+		config_types = dict(zip(config_keys, [type(self.config[key]) for key in config_keys]))
 		for key, value in message_data.items():
 			key = config_prefix + key
 			if not key in config_keys:
@@ -1050,5 +1050,12 @@ class MailSenderTab(object):
 			if not config_type in (bool, dict, int, list, str, tuple):
 				continue
 			self.config[unset_key] = config_type()
+
+		# set missing defaults for backwards compatibility
+		if not self.config.get('mailer.message_type'):
+			self.config['mailer.message_type'] = 'email'
+		if not self.config.get('mailer.target_type'):
+			self.config['mailer.target_type'] = 'file'
+
 		config_tab.objects_load_from_config()
 		gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message.')
