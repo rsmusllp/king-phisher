@@ -59,18 +59,20 @@ class ArchiveFile(object):
 	it was created.
 	"""
 	metadata_file_name = 'metadata.json'
-	def __init__(self, file_name, mode):
+	def __init__(self, file_name, mode, encoding='utf-8'):
 		"""
 		:param str file_name: The path to the file to open as an archive.
 		:param str mode: The mode to open the file such as 'r' or 'w'.
+		:param str encoding: The encoding to use for strings.
 		"""
 		self._mode = mode + ':bz2'
+		self.encoding = encoding
 		self.file_name = file_name
 		epoch = datetime.datetime.utcfromtimestamp(0)
 		self.mtime = (datetime.datetime.utcnow() - epoch).total_seconds()
 		self._tar_h = tarfile.open(file_name, self._mode)
 		if 'r' in mode and self.has_file(self.metadata_file_name):
-			self.metadata = json_ex.load(self.get_file(self.metadata_file_name))
+			self.metadata = json_ex.loads(self.get_data(self.metadata_file_name).decode(self.encoding))
 		else:
 			self.metadata = {}
 		if 'w' in mode:
@@ -88,7 +90,7 @@ class ArchiveFile(object):
 		:type data: bytes, str
 		"""
 		if isinstance(data, str):
-			data = data.encode('utf-8')
+			data = data.encode(self.encoding)
 		pseudo_file = io.BytesIO()
 		pseudo_file.write(data)
 
