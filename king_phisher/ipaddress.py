@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  king_phisher/ipaddress.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,24 +30,61 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
-logging.captureWarnings(True)
+from __future__ import absolute_import
 
-from .client import *
-from .server import *
+import functools
+import ipaddress
 
-from .color import ColorConversionTests
-from .configuration import ServerConfigurationTests
-from .geoip import GeoIPTests
-from .geoip import GeoIPRPCTests
-from .ics import ICSTests
-from .ipaddress import IPAddressTests
-from .sms import SMSTests
-from .spf import SPFTests
-from .templates import TemplatesTests
-from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
-from .version import VersionTests
-from .xor import XORTests
+from king_phisher import its
+
+def convert_address(func):
+	if not its.py_v2:
+		return func
+	@functools.wraps(func)
+	def wrapper(address, *args, **kwargs):
+		if isinstance(address, str):
+			address = address.decode('utf-8')
+		return func(address, *args, **kwargs)
+	return wrapper
+
+ip_address = convert_address(ipaddress.ip_address)
+ip_network = convert_address(ipaddress.ip_network)
+ip_interface = convert_address(ipaddress.ip_interface)
+
+AddressValueError = ipaddress.AddressValueError
+
+IPv4Address = ipaddress.IPv4Address
+IPv4Network = ipaddress.IPv4Network
+IPv6Address = ipaddress.IPv6Address
+IPv6Network = ipaddress.IPv6Network
+
+def is_loopback(address):
+	"""
+	Check if an address is a loopback address or a common name for the loopback
+	interface.
+
+	:param str address: The address to check.
+	:return: Whether or not the address is a loopback address.
+	:rtype: bool
+	"""
+	if address == 'localhost':
+		return True
+	elif is_valid(address) and ip_address(address).is_loopback:
+		return True
+	return False
+
+@convert_address
+def is_valid(address):
+	"""
+	Check that the string specified appears to be either a valid IPv4 or IPv6
+	address.
+
+	:param str address: The IP address to validate.
+	:return: Whether the IP address appears to be valid or not.
+	:rtype: bool
+	"""
+	try:
+		ipaddress.ip_address(address)
+	except ValueError:
+		return False
+	return True

@@ -32,12 +32,12 @@
 
 import datetime
 import functools
-import ipaddress
 import logging
 import threading
 
 from king_phisher import errors
 from king_phisher import geoip
+from king_phisher import ipaddress
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.server.database import manager as db_manager

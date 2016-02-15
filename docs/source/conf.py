@@ -28,8 +28,6 @@ sys.path.insert(2, _pkg)
 
 del _prj_root, _pkg
 
-sys.modules['ipaddress'] = type('ipaddress', (), {})
-
 import king_phisher.client
 import king_phisher.its
 import king_phisher.version
@@ -296,7 +294,6 @@ texinfo_documents = [
 MOCK_MODULES = [
 	'gi',
 	'gi.repository',
-	'ipaddress',
 	'matplotlib',
 	'matplotlib.backends',
 	'matplotlib.backends.backend_gtk3',

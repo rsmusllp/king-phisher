@@ -35,7 +35,6 @@ import collections
 import copy
 import csv
 import datetime
-import ipaddress
 import logging
 import os
 import re
@@ -43,6 +42,7 @@ import shutil
 import xml.etree.ElementTree as ET
 
 from king_phisher import archive
+from king_phisher import ipaddress
 from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher.errors import KingPhisherInputValidationError

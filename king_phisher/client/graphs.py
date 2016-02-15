@@ -31,10 +31,10 @@
 #
 
 import collections
-import ipaddress
 import string
 
 from king_phisher import color
+from king_phisher import ipaddress
 from king_phisher import its
 from king_phisher import ua_parser
 from king_phisher.client import gui_utilities

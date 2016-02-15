@@ -63,24 +63,6 @@ class UtilitiesTests(testing.KingPhisherTestCase):
 		for address in invalid_emails:
 			self.assertFalse(utilities.is_valid_email_address(address))
 
-	def test_is_valid_ip_address(self):
-		valid_ips = [
-			'127.0.0.1',
-			'10.0.0.1',
-			'200.100.0.1',
-			'fe80::1',
-			'::1'
-		]
-		invalid_ips = [
-			'localhost',
-			'www.google.com',
-			''
-		]
-		for address in valid_ips:
-			self.assertTrue(utilities.is_valid_ip_address(address))
-		for address in invalid_ips:
-			self.assertFalse(utilities.is_valid_ip_address(address))
-
 	def test_mock_calls(self):
 		mock = utilities.Mock()
 		result = mock()

@@ -33,7 +33,6 @@
 import collections
 import datetime
 import inspect
-import ipaddress
 import logging
 import operator
 import os
@@ -273,21 +272,6 @@ def is_valid_email_address(email_address):
 	if email_address == None:
 		return False
 	return EMAIL_REGEX.match(email_address) != None
-
-def is_valid_ip_address(ip_address):
-	"""
-	Check that the string specified appears to be either a valid IPv4 or IPv6
-	address.
-
-	:param str ip_address: The IP address to validate.
-	:return: Whether the IP address appears to be valid or not.
-	:rtype: bool
-	"""
-	try:
-		ipaddress.ip_address(ip_address)
-	except ValueError:
-		return False
-	return True
 
 def open_uri(uri):
 	"""

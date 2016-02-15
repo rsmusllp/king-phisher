@@ -32,7 +32,6 @@
 
 import base64
 import binascii
-import ipaddress
 import json
 import logging
 import os
@@ -43,6 +42,7 @@ import threading
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
+from king_phisher import ipaddress
 from king_phisher import sms
 from king_phisher import templates
 from king_phisher import utilities
@@ -392,7 +392,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		else:
 			# treat cookie_value ad an IPv4 address
 			cookie_value = cookie_value.split(':', 1)[0]
-		if utilities.is_valid_ip_address(cookie_value):
+		if ipaddress.is_valid(cookie_value):
 			address = cookie_value
 		return address
 
