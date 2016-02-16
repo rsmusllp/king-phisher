@@ -751,7 +751,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			'radiobutton_target_type_single',
 			'spinbutton_calendar_invite_duration',
 			'spinbutton_calendar_invite_start_hour',
-			'spinbutton_calendar_invite_start_minute'
+			'spinbutton_calendar_invite_start_minute',
+			'viewport'
 		),
 		top_level=(
 			'ClockHourAdjustment',
@@ -854,6 +855,10 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		button = self.message_type.buttons[message_type]
 		with gui_utilities.gobject_signal_blocked(button, 'toggled'):
 			self.message_type.set_active(message_type)
+
+	def signal_expander_notify_expanded(self, expander, _):
+		if expander.get_expanded():
+			self.gobjects['viewport'].queue_draw()
 
 	def signal_kpc_campaign_load(self, _, campaign_id):
 		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
