@@ -2,7 +2,7 @@
 # part of their startup routine
 advancedhttpserver>=1.2.0
 alembic>=0.8.4
-boltons>=15.1.`
+boltons>=15.1.1
 dnspython3>=1.12.0
 geoip2>=2.2.0
 geojson>=1.3.1
