@@ -5682,9 +5682,6 @@ your communications. Please contact the system administrator.</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
-                <style>
-                  <class name="background-add"/>
-                </style>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -5700,6 +5697,7 @@ your communications. Please contact the system administrator.</property>
                 <property name="expanded">True</property>
                 <property name="spacing">5</property>
                 <signal name="activate" handler="signal_expander_activate_message_type" swapped="no"/>
+                <signal name="notify::expanded" handler="signal_expander_notify_expanded" swapped="no"/>
                 <child>
                   <object class="GtkGrid" id="grid11">
                     <property name="visible">True</property>
@@ -5799,6 +5797,7 @@ your communications. Please contact the system administrator.</property>
                 <property name="expanded">True</property>
                 <property name="spacing">5</property>
                 <signal name="activate" handler="signal_expander_activate_message_type" swapped="no"/>
+                <signal name="notify::expanded" handler="signal_expander_notify_expanded" swapped="no"/>
                 <child>
                   <object class="GtkGrid" id="grid12">
                     <property name="visible">True</property>
@@ -6074,6 +6073,9 @@ your communications. Please contact the system administrator.</property>
             </child>
           </object>
         </child>
+        <style>
+          <class name="background-add"/>
+        </style>
       </object>
     </child>
   </object>

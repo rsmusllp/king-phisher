@@ -614,6 +614,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 		from the corresponding value in the :py:attr:`~.GladeGObject.config`.
 		"""
 		for gobject_id, gobject in self.gobjects.items():
+			if not '_' in gobject_id:
+				continue
 			gtype, config_name = gobject_id.split('_', 1)
 			config_name = self.config_prefix + config_name
 			if not gtype in GOBJECT_PROPERTY_MAP or not config_name in self.config:
@@ -628,6 +630,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 
 	def objects_save_to_config(self):
 		for gobject_id, gobject in self.gobjects.items():
+			if not '_' in gobject_id:
+				continue
 			gtype, config_name = gobject_id.split('_', 1)
 			config_name = self.config_prefix + config_name
 			if not gtype in GOBJECT_PROPERTY_MAP:
