@@ -120,7 +120,7 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-grep -E "BackBox Linux 4\.[2-4]" /etc/issue &> /dev/null
+grep -E "BackBox Linux 4\.[2-5]" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="BackBox"
 fi
@@ -141,7 +141,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Debian"
 fi
 
-grep -E "Kali Linux 2\.[0-9]+" /etc/debian_version &> /dev/null
+grep 'Kali Linux 2\.[0-9]\|Kali Linux Rolling' /etc/debian_version &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Kali"
 fi
