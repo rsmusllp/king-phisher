@@ -324,7 +324,6 @@ class MailSenderThread(threading.Thread):
 		except Exception:
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
 		else:
-			self.logger.info("started ssh port forwarding to the remote smtp server ({0})".format(str(self._ssh_forwarder)))
 			self.smtp_server = self._ssh_forwarder.local_server
 			return ConnectionErrorReason.SUCCESS
 		return ConnectionErrorReason.ERROR_UNKNOWN
@@ -340,7 +339,7 @@ class MailSenderThread(threading.Thread):
 		else:
 			SmtpClass = smtplib.SMTP
 		try:
-			self.smtp_connection = SmtpClass(*self.smtp_server, timeout=10)
+			self.smtp_connection = SmtpClass(*self.smtp_server, timeout=15)
 			self.smtp_connection.ehlo()
 		except socket.error:
 			self.logger.warning('received a socket.error while connecting to the SMTP server')

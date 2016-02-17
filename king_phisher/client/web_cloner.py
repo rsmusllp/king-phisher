@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  webkit_scrape.py
-#
-#  Copyright 2015 Spencer McIntyre <zeroSteiner@gmail.com>
+#  king_phisher/client/web_cloner.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
