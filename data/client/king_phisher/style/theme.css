@@ -33,7 +33,12 @@
  *   - Spencer McIntyre
  *
  * For reference the source to the default GTK theme Adwaita can be found here:
- * https://git.gnome.org/browse/gtk+/tree/gtk/theme/Adwaita
+ * https://github.com/GNOME/gtk/tree/master/gtk/theme/Adwaita
+ *
+ * Complex widgets that are defined in gtk/ui (i.e. GtkFileChooserDialog) can
+ * have their subwidget components and style classes inspected by reading
+ * through their definitions in the .ui files located here:
+ * https://github.com/GNOME/gtk/tree/master/gtk/ui
  */
 
 /* two primary colors for mixing and one for highlighting */
@@ -76,20 +81,6 @@ GtkAboutDialog GtkTextView,
 GtkAboutDialog GtkViewport {
   background-color: @theme_color_bg;
   color: white;
-}
-
-GtkAssistant .sidebar {
-  background-image: linear-gradient(to bottom,
-    shade(@theme_color_1, 1),
-    shade(@theme_color_0, 1.25));
-}
-
-GtkAssistant .sidebar .highlight {
-  background-image: linear-gradient(to bottom,
-    shade(@theme_color_0, 1.25),
-    shade(@theme_color_0, 1.50));
-  color: white;
-  font: bold;
 }
 
 GtkButton {
@@ -194,7 +185,7 @@ GtkEntry:insensitive {
   color: white;
 }
 
-GtkFileChooser .sidebar {
+GtkFileChooser .search-bar {
   background-color: @theme_color_bg;
   color: white;
 }
@@ -210,6 +201,11 @@ GtkFrame {
 
 GtkGrid {
   background: none;
+}
+
+GtkListBox {
+  background-color: @theme_color_bg;
+  color: white;
 }
 
 GtkMenuBar {
@@ -304,24 +300,6 @@ GtkSwitch.slider {
   background-image: linear-gradient(to bottom, #fafafa, #ededed 40%, #e0e0e0);
 }
 
-.notebook .header {
-  border-width: 0px;
-}
-
-.notebook tab {
-  padding: 4px 10px 5px 10px;
-  background-color: transparent;
-  background-image: none;
-  border-color: transparent;
-}
-
-.notebook tab:active {
-  background-image: linear-gradient(to bottom,
-    shade(@theme_color_1, 1),
-    shade(@theme_color_0, 1.25));
-  border-radius: 4px 4px 2px 2px;
-}
-
 GtkTextView {
   background-color: @theme_color_bg;
   border-radius: 4px;
@@ -380,6 +358,42 @@ GtkWindow:hover {
   color: white;
 }
 
+/***********************************************************
+ * Standard classes
+ **********************************************************/
+
+.notebook .header {
+  border-width: 0px;
+}
+
+.notebook tab {
+  padding: 4px 10px 5px 10px;
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+}
+
+.notebook tab:active {
+  background-image: linear-gradient(to bottom,
+    shade(@theme_color_1, 1),
+    shade(@theme_color_0, 1.25));
+  border-radius: 4px 4px 2px 2px;
+}
+
+.sidebar {
+  background-image: linear-gradient(to bottom,
+    shade(@theme_color_1, 1.1),
+    shade(@theme_color_0, 1.3));
+}
+
+.sidebar .highlight {
+  background-image: linear-gradient(to bottom,
+    shade(@theme_color_0, 1.25),
+    shade(@theme_color_0, 1.50));
+  color: white;
+  font: bold;
+}
+
 .titlebar {
   background-color: mix(@theme_color_0, @theme_color_1, 0.4);
   background-image: none;
@@ -393,7 +407,7 @@ GtkWindow:hover {
 }
 
 /***********************************************************
- * Extra classes
+ * Custom classes
  **********************************************************/
 .background-add {
   background-image: url("./background.svg");
