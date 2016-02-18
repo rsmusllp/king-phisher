@@ -307,7 +307,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		properties['company_id'] = company_id
 		properties['expiration'] = expiration
 		properties['reject_after_credentials'] = self.gobjects['checkbutton_reject_after_credentials'].get_property('active')
-		self.application.rpc('db/table/set', 'campaigns', cid, properties.keys(), properties.values())
+		self.application.rpc('db/table/set', 'campaigns', cid, tuple(properties.keys()), tuple(properties.values()))
 
 		should_subscribe = self.gobjects['checkbutton_alert_subscribe'].get_property('active')
 		if should_subscribe != self.application.rpc('campaign/alerts/is_subscribed', cid):
