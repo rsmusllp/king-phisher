@@ -1,4 +1,5 @@
 ## Issue Description
+I get a stack trace when I...
 
 ## Reproduction Steps
 1. Start King Phisher
@@ -8,3 +9,4 @@
 ```
 Copy details from the logs or client dialog here.
 ```
+
