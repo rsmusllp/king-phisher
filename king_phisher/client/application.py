@@ -291,6 +291,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if settings.get_property('gtk-icon-theme-name') != GTK3_DEFAULT_THEME:
 			self.logger.debug('resetting the gtk-icon-theme-name property to it\'s default value')
 			settings.set_property('gtk-icon-theme-name', GTK3_DEFAULT_THEME)
+		settings.set_property('gtk-application-prefer-dark-theme', False)
 
 		# load a custom css theme file if one is available
 		theme_file = self.theme_file

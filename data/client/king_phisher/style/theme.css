@@ -252,6 +252,11 @@ GtkNotebook {
   padding: 0px;
 }
 
+GtkPopover {
+  background-color: mix(@theme_color_0, @theme_color_1, 0.4);
+  color: white;
+}
+
 GtkProgressBar {
   background-image: none;
   background-color: white;
