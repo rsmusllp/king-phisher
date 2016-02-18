@@ -389,6 +389,28 @@ class KingPhisherClientApplication(_Gtk_Application):
 				if not key in self.config:
 					self.config[key] = value
 
+	def merge_config(self, config_file):
+		"""
+		Merge the configuration information from the specified configuration
+		file. Only keys which exist in the currently loaded configuration are
+		copied over while non-existent keys are skipped. The contents of the new
+		configuration overwrites the existing.
+
+		:param str config_file: The path to the configuration file to merge.
+		"""
+		with open(config_file, 'r') as tmp_file:
+			config = json_ex.load(tmp_file)
+		if not isinstance(config, dict):
+			self.logger.error("can not merge configuration file: {0} (invalid format)".format(config_file))
+			return
+		self.logger.debug('merging configuration information from source file: ' + config_file)
+		for key, value in config.items():
+			if not key in self.config:
+				self.logger.warning("skipped merging non-existent configuration key {0}".format(key))
+				continue
+			self.config[key] = value
+		return
+
 	def load_server_config(self):
 		"""Load the necessary values from the server's configuration."""
 		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image', 'server.web_root'])

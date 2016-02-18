@@ -34,6 +34,7 @@ import functools
 
 from king_phisher.client import gui_utilities
 from king_phisher.client.dialogs import about
+from king_phisher.client.widget import extras
 
 from gi.repository import Gdk
 from gi.repository import Gtk
@@ -99,22 +100,37 @@ class LoginDialog(LoginDialogBase):
 	def __init__(self, *args, **kwargs):
 		super(LoginDialog, self).__init__(*args, **kwargs)
 		self.popup_menu = Gtk.Menu.new()
+
 		menu_item = Gtk.MenuItem.new_with_label('About')
 		menu_item.connect('activate', lambda x: about.AboutDialog(self.application).interact())
 		self.popup_menu.append(menu_item)
-		self.popup_menu.show_all()
 
-	def signal_switch_ssl(self, switch, _):
-		if switch.get_property('active'):
-			self.gobjects['spinbutton_server_remote_port'].set_value(443)
-		else:
-			self.gobjects['spinbutton_server_remote_port'].set_value(80)
+		menu_item = Gtk.MenuItem.new_with_label('Import Configuration')
+		menu_item.connect('activate', self.signal_menuitem_activate_config)
+		self.popup_menu.append(menu_item)
+
+		self.popup_menu.show_all()
 
 	def signal_button_pressed(self, _, event):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY):
 			return
 		self.popup_menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
 		return True
+
+	def signal_menuitem_activate_config(self, _):
+		dialog = extras.FileChooserDialog('Import Configuration File', self.dialog)
+		response = dialog.run_quick_open()
+		dialog.destroy()
+		if response is None:
+			return
+		self.application.merge_config(response['target_path'])
+		self.objects_load_from_config()
+
+	def signal_switch_ssl(self, switch, _):
+		if switch.get_property('active'):
+			self.gobjects['spinbutton_server_remote_port'].set_value(443)
+		else:
+			self.gobjects['spinbutton_server_remote_port'].set_value(80)
 
 class SMTPLoginDialog(LoginDialogBase):
 	"""
