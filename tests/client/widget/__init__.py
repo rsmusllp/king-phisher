@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/client/widget/__init__.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -33,21 +33,5 @@
 import logging
 logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
 logging.getLogger('').setLevel(logging.CRITICAL)
-logging.captureWarnings(True)
 
-from .client import *
-from .server import *
-
-from .color import ColorConversionTests
-from .configuration import ServerConfigurationTests
-from .geoip import GeoIPTests
-from .geoip import GeoIPRPCTests
-from .ics import ICSTests
-from .ipaddress import IPAddressTests
-from .sms import SMSTests
-from .spf import SPFTests
-from .templates import TemplatesTests
-from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
-from .version import VersionTests
-from .xor import XORTests
+from .managers import ClientTreeViewManagerTests

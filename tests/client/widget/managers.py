@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/client/gui_utilities.py
+#  tests/client/widget/managers.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -33,14 +33,14 @@
 import unittest
 
 from king_phisher import testing
-from king_phisher.client import widget_managers
+from king_phisher.client.widget import managers
 
 from gi.repository import Gtk
 
 class ClientTreeViewManagerTests(testing.KingPhisherTestCase):
 	def test_column_titles(self):
 		treeview = Gtk.TreeView()
-		treeview_manager = widget_managers.TreeViewManager(treeview)
+		treeview_manager = managers.TreeViewManager(treeview)
 		self.assertEqual(len(treeview_manager.column_titles), 0)
 		treeview_manager.set_column_titles(('col0', 'col1'))
 		self.assertEqual(len(treeview_manager.column_titles), 2)
@@ -49,7 +49,7 @@ class ClientTreeViewManagerTests(testing.KingPhisherTestCase):
 
 	def test_popup_copy_submenu(self):
 		treeview = Gtk.TreeView()
-		treeview_manager = widget_managers.TreeViewManager(treeview)
+		treeview_manager = managers.TreeViewManager(treeview)
 		treeview_manager.set_column_titles(('col0',))
 		menu = treeview_manager.get_popup_copy_submenu()
 		self.assertEqual(len(menu.get_children()), 1, msg='the copy submenu contains an invalid number or entries')
@@ -61,7 +61,7 @@ class ClientTreeViewManagerTests(testing.KingPhisherTestCase):
 
 	def test_popup_menu(self):
 		treeview = Gtk.TreeView()
-		treeview_manager = widget_managers.TreeViewManager(treeview)
+		treeview_manager = managers.TreeViewManager(treeview)
 		treeview_manager.set_column_titles(('col0', 'col1'))
 		menu = treeview_manager.get_popup_menu()
 		self.assertEqual(len(menu.get_children()), 1, msg='the popup menu contains more than one entry')
@@ -73,12 +73,12 @@ class ClientTreeViewManagerTests(testing.KingPhisherTestCase):
 
 	def test_selection_mode(self):
 		treeview = Gtk.TreeView()
-		_ = widget_managers.TreeViewManager(treeview)
+		_ = managers.TreeViewManager(treeview)
 		self.assertEqual(treeview.get_selection().get_mode(), Gtk.SelectionMode.SINGLE)
 		treeview.destroy()
 
 		treeview = Gtk.TreeView()
-		_ = widget_managers.TreeViewManager(treeview, selection_mode=Gtk.SelectionMode.NONE)
+		_ = managers.TreeViewManager(treeview, selection_mode=Gtk.SelectionMode.NONE)
 		self.assertEqual(treeview.get_selection().get_mode(), Gtk.SelectionMode.NONE)
 		treeview.destroy()
 

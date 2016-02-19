@@ -28,7 +28,4 @@ data/client/king_phisher/#king-phisher-client.ui#
 
 # ignore mprofile output
 mprofile_*.dat
-
-# ignore Python 3 requirements because it's not officially supported yet
-requirements.3.txt
  

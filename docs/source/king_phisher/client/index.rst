@@ -14,6 +14,8 @@ application.
 
    tabs/index.rst
 
+   widget/index.rst
+
    windows/index.rst
 
    application.rst
@@ -23,4 +25,3 @@ application.
    mailer.rst
    client_rpc.rst
    web_cloner.rst
-   widget_managers.rst

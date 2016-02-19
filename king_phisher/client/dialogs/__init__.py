@@ -33,6 +33,7 @@
 from .about import *
 from .campaign_selection import *
 from .clone_page import *
+from .company_editor import *
 from .configuration import *
 from .entry import *
 from .exception import *

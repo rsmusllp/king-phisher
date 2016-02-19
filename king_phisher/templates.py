@@ -51,9 +51,9 @@ if its.py_v2:
 else:
 	import html
 
-__all__ = ('BaseTemplateEnvironment', 'MessageTemplateEnvironment')
+__all__ = ('TemplateEnvironmentBase', 'MessageTemplateEnvironment')
 
-class BaseTemplateEnvironment(jinja2.Environment):
+class TemplateEnvironmentBase(jinja2.Environment):
 	"""A configured Jinja2 environment with additional filters."""
 	def __init__(self, loader=None, global_vars=None):
 		"""
@@ -64,7 +64,7 @@ class BaseTemplateEnvironment(jinja2.Environment):
 		self.logger = logging.getLogger('KingPhisher.TemplateEnvironment')
 		autoescape = lambda name: isinstance(name, str) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
 		extensions = ['jinja2.ext.autoescape', 'jinja2.ext.do']
-		super(BaseTemplateEnvironment, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
+		super(TemplateEnvironmentBase, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
 
 		# misc. string filters
 		self.filters['cardinalize'] = boltons.strutils.cardinalize
@@ -174,7 +174,7 @@ class BaseTemplateEnvironment(jinja2.Environment):
 			result = ''
 		return result
 
-class MessageTemplateEnvironment(BaseTemplateEnvironment):
+class MessageTemplateEnvironment(TemplateEnvironmentBase):
 	"""A configured Jinja2 environment for formatting messages."""
 	MODE_PREVIEW = 0
 	MODE_ANALYZE = 1

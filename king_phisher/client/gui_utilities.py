@@ -42,7 +42,6 @@ import threading
 from king_phisher import find
 from king_phisher import utilities
 
-import boltons.strutils
 from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
@@ -74,15 +73,6 @@ of two functions is specified the set function will be provided two
 parameters, the object and the value and the get function will just be
 provided the object.
 """
-
-if isinstance(Gtk.Widget, utilities.Mock):
-	_Gtk_CellRendererText = type('Gtk.CellRendererText', (object,), {})
-	_Gtk_CellRendererText.__module__ = ''
-	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {})
-	_Gtk_FileChooserDialog.__module__ = ''
-else:
-	_Gtk_CellRendererText = Gtk.CellRendererText
-	_Gtk_FileChooserDialog = Gtk.FileChooserDialog
 
 def which_glade():
 	"""
@@ -416,14 +406,6 @@ def show_dialog_yes_no(*args, **kwargs):
 	kwargs['message_buttons'] = Gtk.ButtonsType.YES_NO
 	return show_dialog(Gtk.MessageType.QUESTION, *args, **kwargs) == Gtk.ResponseType.YES
 
-class CellRendererTextBytes(_Gtk_CellRendererText):
-	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
-	def do_render(self, *args, **kwargs):
-		original = self.get_property('text')
-		if original.isdigit():
-			self.set_property('text', boltons.strutils.bytes2human(int(original), 1))
-		Gtk.CellRendererText.do_render(self, *args, **kwargs)
-
 class GladeDependencies(object):
 	"""
 	A class for defining how objects should be loaded from a GTK Builder data
@@ -431,8 +413,10 @@ class GladeDependencies(object):
 	"""
 	__slots__ = ('children', 'top_level', 'name')
 	def __init__(self, children=None, top_level=None, name=None):
+		children = children or ()
+		utilities.assert_arg_type(children, tuple, 1)
 		self.children = children
-		"""A tuple of string names listing the children widgets to load from the parent."""
+		"""A tuple of string names or :py:class:`.GladeProxy` instances listing the children widgets to load from the parent."""
 		self.top_level = top_level
 		"""A tuple of string names listing additional top level widgets to load such as images."""
 		self.name = name
@@ -440,6 +424,51 @@ class GladeDependencies(object):
 
 	def __repr__(self):
 		return "<{0} name='{1}' >".format(self.__class__.__name__, self.name)
+
+class GladeProxyDestination(object):
+	"""
+	A class that is used to define how a :py:class:`.GladeProxy` object shall
+	be loaded into a parent :py:class:`.GladeGObject` instance. This includes
+	the information such as what container widget in the parent the proxied
+	widget should be added to and what method should be used. The proxied widget
+	will be added to the parent by calling
+	:py:attr:`~.GladeProxyDestination.method` with the proxied widget as the
+	first argument.
+	"""
+	__slots__ = ('widget', 'method', 'args', 'kwargs')
+	def __init__(self, widget, method, args=None, kwargs=None):
+		utilities.assert_arg_type(widget, str, 1)
+		utilities.assert_arg_type(method, str, 2)
+		self.widget = widget
+		"""The name of the parent widget for this proxied child."""
+		self.method = method
+		"""The method of the parent widget that should be called to add the proxied child."""
+		self.args = args or ()
+		"""Arguments to append after the proxied child instance when calling :py:attr:`~.GladeProxyDestination.method`."""
+		self.kwargs = kwargs or {}
+		"""Key word arguments to append after the proxied child instance when calling :py:attr:`~.GladeProxyDestination.method`."""
+
+	def __repr__(self):
+		return "<{0} widget='{1}' method='{2}' >".format(self.__class__.__name__, self.widget, self.method)
+
+class GladeProxy(object):
+	"""
+	A class that can be used to load another top level widget from the GTK
+	builder data file in place of a child. This is useful for reusing small
+	widgets as children in larger ones.
+	"""
+	__slots__ = ('destination',)
+	name = None
+	"""The string of the name of the top level widget to load."""
+	children = ()
+	"""A tuple of string names or :py:class:`.GladeProxy` instances listing the children widgets to load from the top level."""
+	def __init__(self, destination):
+		utilities.assert_arg_type(destination, GladeProxyDestination, 1)
+		self.destination = destination
+		"""A :py:class:`.GladeProxyDestination` instance describing how this proxied widget should be added to the parent."""
+
+	def __repr__(self):
+		return "<{0} name='{1}' destination={2} >".format(self.__class__.__name__, self.name, repr(self.destination))
 
 class GladeGObjectMeta(type):
 	"""
@@ -462,11 +491,9 @@ class GladeGObjectMeta(type):
 class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 	"""
 	A base object to wrap GTK widgets loaded from Glade data files. This
-	provides a number of convenience methods for managing the main widget
-	and child widgets. This class is meant to be subclassed by classes
-	representing objects from the Glade data file. The class names must
-	be identical to the name of the object they represent in the Glade
-	data file.
+	provides a number of convenience methods for managing the main widget and
+	child widgets. This class is meant to be subclassed by classes representing
+	objects from the Glade data file.
 	"""
 	dependencies = GladeDependencies()
 	"""A :py:class:`.GladeDependencies` instance which defines information for loading the widget from the GTK builder data."""
@@ -492,7 +519,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 		self.gtk_builder = builder
 		"""A :py:class:`Gtk.Builder` instance used to load Glade data with."""
 
-		top_level_dependencies = [self.dependencies.name]
+		top_level_dependencies = [gobject.name for gobject in self.dependencies.children if isinstance(gobject, GladeProxy)]
+		top_level_dependencies.append(self.dependencies.name)
 		if self.dependencies.top_level is not None:
 			top_level_dependencies.extend(self.dependencies.top_level)
 		builder.add_objects_from_file(which_glade(), top_level_dependencies)
@@ -508,18 +536,39 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 
 		self.gobjects = utilities.FreezableDict()
 		"""A :py:class:`~king_phisher.utilities.FreezableDict` which maps gobjects to their unique GTK Builder id."""
-		for gobject_id in self.dependencies.children or []:
-			gobject = self.gtk_builder_get(gobject_id)
-			# the following five lines ensure that the types match up, this is to enforce clean development
-			gtype = gobject_id.split('_', 1)[0]
-			if gobject is None:
-				raise TypeError("gobject {0} could not be found in the glade file".format(gobject_id))
-			elif gobject.__class__.__name__.lower() != gtype:
-				raise TypeError("gobject {0} is of type {1} expected {2}".format(gobject_id, gobject.__class__.__name__, gtype))
-			self.gobjects[gobject_id] = gobject
+		self._load_child_dependencies(self.dependencies)
 		self.gobjects.freeze()
+		self._load_child_proxies()
+
 		if self.objects_persist:
 			self.objects_load_from_config()
+
+	def _load_child_dependencies(self, dependencies):
+		for child in dependencies.children:
+			if isinstance(child, GladeProxy):
+				self._load_child_dependencies(child)
+				child = child.destination.widget
+
+			gobject = self.gtk_builder_get(child, parent_name=dependencies.name)
+			# the following five lines ensure that the types match up, this is to enforce clean development
+			gtype = child.split('_', 1)[0]
+			if gobject is None:
+				raise TypeError("gobject {0} could not be found in the glade file".format(child))
+			elif gobject.__class__.__name__.lower() != gtype:
+				raise TypeError("gobject {0} is of type {1} expected {2}".format(child, gobject.__class__.__name__, gtype))
+			self.gobjects[child] = gobject
+
+	def _load_child_proxies(self):
+		for child in self.dependencies.children or []:
+			if not isinstance(child, GladeProxy):
+				continue
+			dest = child.destination
+			method = getattr(self.gobjects[dest.widget], dest.method)
+			if method is None:
+				raise ValueError("gobject {0} does not have method {1}".format(dest.widget, dest.method))
+			src_widget = self.gtk_builder.get_object(child.name)
+			self.logger.debug("setting proxied widget {0} via {1}.{2}".format(child.name, dest.widget, dest.method))
+			method(src_widget, *dest.args, **dest.kwargs)
 
 	def destroy(self):
 		"""Destroy the top-level GObject."""
@@ -529,15 +578,33 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 	def parent(self):
 		return self.application.get_active_window()
 
-	def gtk_builder_get(self, gobject_id):
+	def get_entry_value(self, entry_name):
+		"""
+		Get the value of the specified entry then remove leading and trailing
+		white space and finally determine if the string is empty, in which case
+		return None.
+
+		:param str entry_name: The name of the entry to retrieve text from.
+		:return: Either the non-empty string or None.
+		:rtype: None, str
+		"""
+		text = self.gobjects['entry_' + entry_name].get_text()
+		text = text.strip()
+		if not text:
+			return None
+		return text
+
+	def gtk_builder_get(self, gobject_id, parent_name=None):
 		"""
 		Find the child GObject with name *gobject_id* from the GTK builder.
 
 		:param str gobject_id: The object name to look for.
+		:param str parent_name: The name of the parent object in the builder data file.
 		:return: The GObject as found by the GTK builder.
 		:rtype: :py:class:`GObject.Object`
 		"""
-		gtkbuilder_id = "{0}.{1}".format(self.dependencies.name, gobject_id)
+		parent_name = parent_name or self.dependencies.name
+		gtkbuilder_id = "{0}.{1}".format(parent_name, gobject_id)
 		self.logger.debug('loading GTK builder object with id: ' + gtkbuilder_id)
 		return self.gtk_builder.get_object(gtkbuilder_id)
 
@@ -547,6 +614,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 		from the corresponding value in the :py:attr:`~.GladeGObject.config`.
 		"""
 		for gobject_id, gobject in self.gobjects.items():
+			if not '_' in gobject_id:
+				continue
 			gtype, config_name = gobject_id.split('_', 1)
 			config_name = self.config_prefix + config_name
 			if not gtype in GOBJECT_PROPERTY_MAP or not config_name in self.config:
@@ -561,111 +630,13 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 
 	def objects_save_to_config(self):
 		for gobject_id, gobject in self.gobjects.items():
+			if not '_' in gobject_id:
+				continue
 			gtype, config_name = gobject_id.split('_', 1)
 			config_name = self.config_prefix + config_name
 			if not gtype in GOBJECT_PROPERTY_MAP:
 				continue
 			self.config[config_name] = gobject_get_value(gobject, gtype)
-
-class FileChooser(_Gtk_FileChooserDialog):
-	"""Display a file chooser dialog."""
-	def __init__(self, title, parent, **kwargs):
-		"""
-		:param str title: The title for the file chooser dialog.
-		:param parent: The parent window for the dialog.
-		:type parent: :py:class:`Gtk.Window`
-		"""
-		assert isinstance(parent, Gtk.Window)
-		super(FileChooser, self).__init__(title, parent, **kwargs)
-		self.parent = self.get_parent_window()
-
-	def quick_add_filter(self, name, patterns):
-		"""
-		Add a filter for displaying files, this is useful in conjunction
-		with :py:meth:`.run_quick_open`.
-
-		:param str name: The name of the filter.
-		:param patterns: The pattern(s) to match.
-		:type patterns: list, str
-		"""
-		if not isinstance(patterns, (list, tuple)):
-			patterns = (patterns,)
-		new_filter = Gtk.FileFilter()
-		new_filter.set_name(name)
-		for pattern in patterns:
-			new_filter.add_pattern(pattern)
-		self.add_filter(new_filter)
-
-	def run_quick_open(self):
-		"""
-		Display a dialog asking a user which file should be opened. The
-		value of target_path in the returned dictionary is an absolute path.
-
-		:return: A dictionary with target_uri and target_path keys representing the path choosen.
-		:rtype: dict
-		"""
-		self.set_action(Gtk.FileChooserAction.OPEN)
-		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
-		self.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
-		self.show_all()
-		response = self.run()
-		if response == Gtk.ResponseType.CANCEL:
-			return None
-		target_path = self.get_filename()
-		if not os.access(target_path, os.R_OK):
-			show_dialog_error('Can not read the selected file', self.parent)
-			return None
-		target_uri = self.get_uri()
-		return {'target_uri': target_uri, 'target_path': target_path}
-
-	def run_quick_save(self, current_name=None):
-		"""
-		Display a dialog which asks the user where a file should be saved. The
-		value of target_path in the returned dictionary is an absolute path.
-
-		:param set current_name: The name of the file to save.
-		:return: A dictionary with target_uri and target_path keys representing the path choosen.
-		:rtype: dict
-		"""
-		self.set_action(Gtk.FileChooserAction.SAVE)
-		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
-		self.add_button(Gtk.STOCK_SAVE, Gtk.ResponseType.ACCEPT)
-		self.set_do_overwrite_confirmation(True)
-		if current_name:
-			self.set_current_name(current_name)
-		self.show_all()
-		response = self.run()
-		if response == Gtk.ResponseType.CANCEL:
-			return None
-		target_path = self.get_filename()
-		if os.path.isfile(target_path):
-			if not os.access(target_path, os.W_OK):
-				show_dialog_error('Can not write to the selected file', self.parent)
-				return None
-		elif not os.access(os.path.dirname(target_path), os.W_OK):
-			show_dialog_error('Can not create the selected file', self.parent)
-			return None
-		target_uri = self.get_uri()
-		return {'target_uri': target_uri, 'target_path': target_path}
-
-	def run_quick_select_directory(self):
-		"""
-		Display a dialog which asks the user to select a directory to use. The
-		value of target_path in the returned dictionary is an absolute path.
-
-		:return: A dictionary with target_uri and target_path keys representing the path chosen.
-		:rtype: dict
-		"""
-		self.set_action(Gtk.FileChooserAction.SELECT_FOLDER)
-		self.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
-		self.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
-		self.show_all()
-		response = self.run()
-		if response == Gtk.ResponseType.CANCEL:
-			return None
-		target_uri = self.get_uri()
-		target_path = self.get_filename()
-		return {'target_uri': target_uri, 'target_path': target_path}
 
 class FileMonitor(object):
 	"""Monitor a file for changes."""

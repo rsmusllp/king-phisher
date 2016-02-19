@@ -34,7 +34,8 @@ import os
 
 from king_phisher.client import gui_utilities
 from king_phisher.client import web_cloner
-from king_phisher.client import widget_managers
+from king_phisher.client.widget import extras
+from king_phisher.client.widget import managers
 
 from gi.repository import Gtk
 
@@ -64,8 +65,8 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 		self.resources = Gtk.ListStore(str, str, int)
 		treeview = self.gobjects['treeview_resources']
 		treeview.set_model(self.resources)
-		self.treeview_manager = widget_managers.TreeViewManager(treeview)
-		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'), renderers=(Gtk.CellRendererText(), Gtk.CellRendererText(), gui_utilities.CellRendererTextBytes()))
+		self.treeview_manager = managers.TreeViewManager(treeview)
+		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'), renderers=(Gtk.CellRendererText(), Gtk.CellRendererText(), extras.CellRendererBytes()))
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
 		self.button_cancel = self.gobjects['button_cancel']
@@ -128,7 +129,7 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 		self.dialog.destroy()
 
 	def signal_multi_set_directory(self, _):
-		dialog = gui_utilities.FileChooser('Destination Directory', self.dialog)
+		dialog = extras.FileChooserDialog('Destination Directory', self.dialog)
 		response = dialog.run_quick_select_directory()
 		dialog.destroy()
 		if response:

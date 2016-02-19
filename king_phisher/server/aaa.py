@@ -48,8 +48,8 @@ from king_phisher import its
 from king_phisher import utilities
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
-from king_phisher.third_party import pam
 
+import pam
 import smoke_zephyr.utilities
 
 __all__ = ('AuthenticatedSessionManager', 'ForkedAuthenticator')
@@ -266,16 +266,19 @@ class ForkedAuthenticator(object):
 	terminator. Requests from the parent process to the child process include a
 	sequence number which must be included in the response.
 	"""
-	def __init__(self, cache_timeout='10m', required_group=None):
+	def __init__(self, cache_timeout='10m', required_group=None, pam_service='sshd'):
 		"""
 		:param cache_timeout: The life time of cached credentials in seconds.
 		:type cache_timeout: int, str
 		:param str required_group: A group that if specified, users must be a member of to be authenticated.
+		:param str pam_service: The service to use for identification to pam when authenticating.
 		"""
 		self.logger = logging.getLogger('KingPhisher.Server.Authenticator')
 		self.cache_timeout = smoke_zephyr.utilities.parse_timespan(cache_timeout)
 		"""The timeout of the credential cache in seconds."""
 		self.required_group = required_group
+		self.service = pam_service
+		self.logger.debug("use pam service '{0}' for authentication".format(self.service))
 		if self.required_group and not self.required_group in [g.gr_name for g in grp.getgrall()]:
 			self.logger.error('the specified group for authentication was not found')
 		self.parent_rfile, self.child_wfile = os.pipe()
@@ -361,9 +364,7 @@ class ForkedAuthenticator(object):
 		The main routine that is executed by the child after the object forks.
 		This loop does not exit unless a stop request is made.
 		"""
-		service = 'login'
-		if os.path.isfile('/etc/pam.d/sshd'):
-			service = 'sshd'
+		self.logger = logging.getLogger('KingPhisher.Server.Authenticator.Child')
 		while True:
 			request = self._raw_recv(timeout=None)
 			if 'action' not in request:
@@ -372,7 +373,8 @@ class ForkedAuthenticator(object):
 			if 'sequence' not in request:
 				self.logger.warning('authentication request received without a sequence number')
 				continue
-			action = request['action']
+			action = request.get('action', 'UNKNOWN')
+			self.logger.debug('pam control child received authentication request ' + action)
 			if action == 'stop':
 				break
 			elif action != 'authenticate':
@@ -381,8 +383,10 @@ class ForkedAuthenticator(object):
 			password = str(request['password'])
 
 			start_time = time.time()
-			result = pam.authenticate(username, password, service=service)
-			self.logger.debug("pam.authenticate call returned {0} for user {1} after {2:.2f} seconds".format(result, username, time.time() - start_time))
+			pam_handle = pam.pam()
+			result = pam_handle.authenticate(username, password, service=self.service)
+			end_time = time.time() - start_time
+			self.logger.debug("pam returned code: {0} reason: '{1}' for user {2} after {3:.2f} seconds".format(pam_handle.code, pam_handle.reason, username, end_time))
 
 			result = {
 				'result': result,

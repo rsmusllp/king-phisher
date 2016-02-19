@@ -57,6 +57,14 @@ POSIX_VAR_DST_RRULE = re.compile(r'M(?P<month>\d{1,2}).(?P<week>[1-5]).(?P<day>[
 zoneinfo_path = os.path.join(os.path.dirname(pytz.tzfile.__file__), 'zoneinfo')
 """The path to the directory which holds the IANA timezone data files."""
 
+if not os.path.isdir(zoneinfo_path) and its.on_linux:
+	path = None
+	for path in ('/usr/share/zoneinfo', '/usr/local/share/zoneinfo'):
+		if os.path.isdir(path):
+			zoneinfo_path = path
+			break
+	del path
+
 TimezoneOffsetDetails = collections.namedtuple(
 	'TimezoneOffsetDetails',
 	(

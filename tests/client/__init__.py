@@ -34,6 +34,8 @@ import logging
 logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
 logging.getLogger('').setLevel(logging.CRITICAL)
 
+from .widget import *
+
 from .application import ClientApplicationTests
 from .client_rpc import ClientRPCRemoteRowTests
 from .dialogs import ClientDialogTests
@@ -41,5 +43,4 @@ from .export import ClientExportTests
 from .graphs import ClientGraphsTests
 from .gtk_builder import ClientGtkBuilderLint
 from .gui_utilities import ClientGUIUtilityTests
-from .widget_managers import ClientTreeViewManagerTests
 from .mailer import ClientMailerTests

@@ -31,17 +31,18 @@
 #
 
 import datetime
-import ipaddress
 import logging
 import threading
 import time
 
 from king_phisher import find
+from king_phisher import ipaddress
 from king_phisher import utilities
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
-from king_phisher.client import widget_managers
+from king_phisher.client.widget import extras
+from king_phisher.client.widget import managers
 
 from boltons import iterutils
 from gi.repository import GdkPixbuf
@@ -114,7 +115,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		self.treeview_manager = widget_managers.TreeViewManager(
+		self.treeview_manager = managers.TreeViewManager(
 			treeview,
 			selection_mode=Gtk.SelectionMode.MULTIPLE,
 			cb_delete=self._prompt_to_delete_row,
@@ -239,7 +240,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
 			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
 			return
-		dialog = gui_utilities.FileChooser('Export Data', self.parent)
+		dialog = extras.FileChooserDialog('Export Data', self.parent)
 		file_name = self.config['campaign_name'] + '.csv'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()
@@ -252,15 +253,21 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		export.liststore_to_csv(store, destination_file, columns)
 		self.loader_thread_lock.release()
 
-	def export_table_to_xlsx_worksheet(self, worksheet):
-		"""Export the data represented by the view to a XLSX worksheet."""
+	def export_table_to_xlsx_worksheet(self, worksheet, title_format):
+		"""
+		Export the data represented by the view to an XLSX worksheet.
+
+		:param worksheet: The destination sheet for the store's data.
+		:type worksheet: :py:class:`xlsxwriter.worksheet.Worksheet`
+		:param title_format: The formatting to use for the title row.
+		:type title_format: :py:class:`xlsxwriter.format.Format`
+		"""
 		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
 			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
 			return
 		store = self.gobjects['treeview_campaign'].get_model()
 		columns = dict(enumerate(('UID',) + self.view_columns))
-		worksheet.set_column(0, len(columns), 30)
-		export.liststore_to_xlsx_worksheet(store, worksheet, columns)
+		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format)
 		self.loader_thread_lock.release()
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):

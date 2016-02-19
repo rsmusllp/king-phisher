@@ -33,13 +33,14 @@
 import collections
 import datetime
 import gzip
-import ipaddress
 import logging
 import os
 import shutil
 import sys
 import tempfile
 import threading
+
+from king_phisher import ipaddress
 
 import geoip2.database
 import geoip2.errors

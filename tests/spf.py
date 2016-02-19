@@ -65,6 +65,7 @@ class SPFTests(testing.KingPhisherTestCase):
 		with self.assertRaises(spf.SPFPermError):
 			eval_mech('fake', None)
 
+	@testing.skip_if_offline
 	def test_spf_evaluate_mechanism_temperror(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'doesnotexist.king-phisher.com')
 		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip_address, s.domain, s.sender, m, r)

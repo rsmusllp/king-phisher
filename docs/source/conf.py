@@ -28,8 +28,6 @@ sys.path.insert(2, _pkg)
 
 del _prj_root, _pkg
 
-sys.modules['ipaddress'] = type('ipaddress', (), {})
-
 import king_phisher.client
 import king_phisher.its
 import king_phisher.version
@@ -86,7 +84,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'King Phisher'
-copyright = '2013-2015, SecureState LLC'
+copyright = '2013-2016, SecureState LLC'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -296,7 +294,6 @@ texinfo_documents = [
 MOCK_MODULES = [
 	'gi',
 	'gi.repository',
-	'ipaddress',
 	'matplotlib',
 	'matplotlib.backends',
 	'matplotlib.backends.backend_gtk3',

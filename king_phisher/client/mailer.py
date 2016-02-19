@@ -45,7 +45,6 @@ import email.mime.multipart
 import email.mime.text
 import logging
 import mimetypes
-import ipaddress
 import os
 import smtplib
 import socket
@@ -55,6 +54,7 @@ import time
 
 from king_phisher import errors
 from king_phisher import ics
+from king_phisher import ipaddress
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
@@ -174,7 +174,7 @@ def guess_smtp_server_address(host, forward_host=None):
 	:rtype: None, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	"""
 	host = host.rsplit(':', 1)[0]
-	if utilities.is_valid_ip_address(host):
+	if ipaddress.is_valid(host):
 		ip = ipaddress.ip_address(host)
 		if not ip.is_loopback:
 			return ip
@@ -324,7 +324,6 @@ class MailSenderThread(threading.Thread):
 		except Exception:
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
 		else:
-			self.logger.info("started ssh port forwarding to the remote smtp server ({0})".format(str(self._ssh_forwarder)))
 			self.smtp_server = self._ssh_forwarder.local_server
 			return ConnectionErrorReason.SUCCESS
 		return ConnectionErrorReason.ERROR_UNKNOWN
@@ -340,7 +339,7 @@ class MailSenderThread(threading.Thread):
 		else:
 			SmtpClass = smtplib.SMTP
 		try:
-			self.smtp_connection = SmtpClass(*self.smtp_server, timeout=10)
+			self.smtp_connection = SmtpClass(*self.smtp_server, timeout=15)
 			self.smtp_connection.ehlo()
 		except socket.error:
 			self.logger.warning('received a socket.error while connecting to the SMTP server')
@@ -415,16 +414,24 @@ class MailSenderThread(threading.Thread):
 		elif target_type == 'file':
 			target_file_h = open(self.target_file, 'rU')
 			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
-			for raw_target in csv_reader:
+			for line_no, raw_target in enumerate(csv_reader, 1):
 				department = raw_target['department']
 				if department is not None:
 					department = department.strip()
 					if department == '':
 						department = None
+				email_address = raw_target['email_address'] or ''
+				email_address = email_address.strip()
+				if not email_address:
+					self.logger.warning("skipping line {0} in target csv file due to missing email address".format(line_no))
+					continue
+				if not utilities.is_valid_email_address(email_address):
+					self.logger.warning("skipping line {0} in target csv file due to invalid email address: {1}".format(line_no, email_address))
+					continue
 				target = MessageTarget(
 					first_name=raw_target['first_name'].strip(),
 					last_name=raw_target['last_name'].strip(),
-					email_address=raw_target['email_address'].strip(),
+					email_address=email_address,
 					department=department
 				)
 				yield target
@@ -448,12 +455,6 @@ class MailSenderThread(threading.Thread):
 		self.logger.debug("loaded {0:,} MIME attachments".format(sum((len(attachments.files), len(attachments.images)))))
 
 		for target in self.iterate_targets():
-			if not utilities.is_valid_email_address(target.email_address):
-				if target.email_address:
-					self.logger.warning('skipping invalid email address: ' + target.email_address)
-				else:
-					self.logger.warning('skipping blank email address')
-				continue
 			iteration_time = time.time()
 			if self.should_stop.is_set():
 				self.tab_notify_status('Sending emails cancelled')

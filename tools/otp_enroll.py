@@ -53,9 +53,9 @@ else:
 
 PARSER_EPILOG = """
 If --otp is set then it must be a valid base32 encoded secret otherwise a random
-one will be used. Also note that the user that is selected to be managed must
-already exist within the database, i.e. they should have logged in at least once
-before.
+one will be used. Also note that unless the --force flag is specified, the user
+that is selected to be managed must already exist within the database, i.e. they
+should have logged in at least once before.
 """
 PARSER_EPILOG = PARSER_EPILOG.replace('\n', ' ')
 PARSER_EPILOG = PARSER_EPILOG.strip()
@@ -66,6 +66,7 @@ def main():
 	config_group = parser.add_mutually_exclusive_group(required=True)
 	config_group.add_argument('-c', '--config', dest='server_config', type=argparse.FileType('r'), help='the server configuration file')
 	config_group.add_argument('-u', '--url', dest='database_url', help='the database connection url')
+	parser.add_argument('--force', dest='force', action='store_true', default=False, help='create the user if necessary')
 	parser.add_argument('--otp', dest='otp_secret', help='a specific otp secret')
 	if has_qrcode:
 		parser.add_argument('--qrcode', dest='qrcode_filename', help='generate a qrcode image file')
@@ -88,8 +89,12 @@ def main():
 	session = manager.Session()
 	user = session.query(models.User).filter_by(id=arguments.user).first()
 	if not user:
-		color.print_error("invalid user id: {0}".format(arguments.user))
-		return
+		if not arguments.force:
+			color.print_error("invalid user id: {0}".format(arguments.user))
+			return
+		user = models.User(id=arguments.user)
+		session.add(user)
+		color.print_status('the specified user was created')
 
 	for case in utilities.switch(arguments.action):
 		if case('remove'):

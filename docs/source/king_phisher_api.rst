@@ -9,8 +9,6 @@ The King Phisher Package
 
    king_phisher/server/index.rst
 
-   king_phisher/third_party/index.rst
-
    king_phisher/archive.rst
    king_phisher/color.rst
    king_phisher/constants.rst
@@ -18,6 +16,7 @@ The King Phisher Package
    king_phisher/find.rst
    king_phisher/geoip.rst
    king_phisher/ics.rst
+   king_phisher/ipaddress.rst
    king_phisher/json_ex.rst
    king_phisher/scrubber.rst
    king_phisher/sms.rst

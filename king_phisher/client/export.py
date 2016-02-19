@@ -30,11 +30,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import codecs
 import collections
 import copy
 import csv
 import datetime
-import ipaddress
 import logging
 import os
 import re
@@ -42,6 +42,7 @@ import shutil
 import xml.etree.ElementTree as ET
 
 from king_phisher import archive
+from king_phisher import ipaddress
 from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher.errors import KingPhisherInputValidationError
@@ -192,13 +193,14 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	with open(geojson_file, 'w') as file_h:
 		json_ex.dump(feature_collection, file_h)
 
-def message_data_from_kpm(target_file, dest_dir):
+def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 	"""
 	Retrieve the stored details describing a message from a previously exported
 	file.
 
 	:param str target_file: The file to load as a message archive.
 	:param str dest_dir: The directory to extract data and attachment files to.
+	:param str encoding: The encoding to use for strings.
 	:return: The restored details from the message config.
 	:rtype: dict
 	"""
@@ -214,6 +216,7 @@ def message_data_from_kpm(target_file, dest_dir):
 		logger.warning('the kpm archive is missing the message_config.json file')
 		raise KingPhisherInputValidationError('data is missing from the message archive')
 	message_config = kpm.get_data('message_config.json')
+	message_config = message_config.decode(encoding)
 	message_config = json_ex.loads(message_config)
 
 	if attachment_member_names:
@@ -251,7 +254,7 @@ def message_data_from_kpm(target_file, dest_dir):
 		arcfile_h = kpm.get_file('message_content.html')
 		file_path = os.path.join(dest_dir, message_config['html_file'])
 		with open(file_path, 'wb') as file_h:
-			file_h.write(message_template_from_kpm(arcfile_h.read(), attachments))
+			file_h.write(message_template_from_kpm(arcfile_h.read().decode(encoding), attachments).encode(encoding))
 		message_config['html_file'] = file_path
 	elif 'html_file' in message_config:
 		logger.warning('the kpm archive is missing the message_content.html file')
@@ -259,12 +262,13 @@ def message_data_from_kpm(target_file, dest_dir):
 	kpm.close()
 	return message_config
 
-def message_data_to_kpm(message_config, target_file):
+def message_data_to_kpm(message_config, target_file, encoding='utf-8'):
 	"""
 	Save details describing a message to the target file.
 
 	:param dict message_config: The message details from the client configuration.
 	:param str target_file: The file to write the data to.
+	:param str encoding: The encoding to use for strings.
 	"""
 	message_config = copy.copy(message_config)
 	kpm = archive.ArchiveFile(target_file, 'w')
@@ -280,7 +284,8 @@ def message_data_to_kpm(message_config, target_file):
 			del message_config[config_name]
 
 	if os.access(message_config.get('html_file', ''), os.R_OK):
-		template = open(message_config['html_file'], 'rb').read()
+		with codecs.open(message_config['html_file'], 'r', encoding=encoding) as file_h:
+			template = file_h.read()
 		message_config['html_file'] = os.path.basename(message_config['html_file'])
 		template, attachments = message_template_to_kpm(template)
 		logger.debug("identified {0} attachment file{1} to be archived".format(len(attachments), 's' if len(attachments) > 1 else ''))
@@ -298,7 +303,16 @@ def message_data_to_kpm(message_config, target_file):
 	kpm.close()
 	return
 
-def liststore_export(store, columns, cb_write, *cb_write_args):
+def _split_columns(columns):
+	if isinstance(columns, collections.OrderedDict):
+		column_names = (columns[c] for c in columns.keys())
+		store_columns = columns.keys()
+	else:
+		column_names = (columns[c] for c in sorted(columns.keys()))
+		store_columns = sorted(columns.keys())
+	return column_names, store_columns
+
+def liststore_export(store, columns, cb_write, cb_write_args, write_columns=True):
 	"""
 	A function to facilitate writing values from a list store to an arbitrary
 	callback for exporting to different formats. The callback will be called
@@ -313,17 +327,14 @@ def liststore_export(store, columns, cb_write, *cb_write_args):
 	:type store: :py:class:`Gtk.ListStore`
 	:param dict columns: A dictionary mapping store column ids to the value names.
 	:param function cb_write: The callback function to be called for each row of data.
-	:param cb_write_args: Additional arguments to pass to *cb_write*.
+	:param tuple cb_write_args: Additional arguments to pass to *cb_write*.
+	:param bool write_columns: Write the column names to the export.
 	:return: The number of rows that were written.
 	:rtype: int
 	"""
-	if isinstance(columns, collections.OrderedDict):
-		column_names = (columns[c] for c in columns.keys())
-		store_columns = columns.keys()
-	else:
-		column_names = (columns[c] for c in sorted(columns.keys()))
-		store_columns = sorted(columns.keys())
-	cb_write(0, column_names, *cb_write_args)
+	column_names, store_columns = _split_columns(columns)
+	if write_columns:
+		cb_write(0, column_names, *cb_write_args)
 
 	store_iter = store.get_iter_first()
 	rows_written = 0
@@ -349,15 +360,15 @@ def liststore_to_csv(store, target_file, columns):
 	"""
 	target_file_h = open(target_file, 'wb')
 	writer = csv.writer(target_file_h, quoting=csv.QUOTE_ALL)
-	rows = liststore_export(store, columns, _csv_write, writer)
+	rows = liststore_export(store, columns, _csv_write, (writer,))
 	target_file_h.close()
 	return rows
 
-def _xlsx_write(row, columns, worksheet):
+def _xlsx_write(row, columns, worksheet, row_format=None):
 	for column, text in enumerate(columns):
-		worksheet.write(row, column, text)
+		worksheet.write(row, column, text, row_format)
 
-def liststore_to_xlsx_worksheet(store, worksheet, columns):
+def liststore_to_xlsx_worksheet(store, worksheet, columns, title_format):
 	"""
 	Write the contents of a :py:class:`Gtk.ListStore` to an XLSX workseet.
 
@@ -366,8 +377,17 @@ def liststore_to_xlsx_worksheet(store, worksheet, columns):
 	:param worksheet: The destination sheet for the store's data.
 	:type worksheet: :py:class:`xlsxwriter.worksheet.Worksheet`
 	:param dict columns: A dictionary mapping store column ids to the value names.
+	:param title_format: The formatting to use for the title row.
+	:type title_format: :py:class:`xlsxwriter.format.Format`
 	:return: The number of rows that were written.
 	:rtype: int
 	"""
 	utilities.assert_arg_type(worksheet, xlsxwriter.worksheet.Worksheet, 2)
-	return liststore_export(store, columns, _xlsx_write, worksheet)
+	utilities.assert_arg_type(columns, dict, 3)
+	utilities.assert_arg_type(title_format, xlsxwriter.format.Format, 4)
+
+	worksheet.set_column(0, len(columns), 30)
+	column_names, _ = _split_columns(columns)
+	_xlsx_write(0, column_names, worksheet, title_format)
+	worksheet.freeze_panes(1, 0)
+	return liststore_export(store, columns, _xlsx_write, (worksheet,), write_columns=False)

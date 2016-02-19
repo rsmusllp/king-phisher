@@ -1,7 +1,7 @@
-:mod:`client.widget_managers`
-====================================
+:mod:`widget.managers`
+======================
 
-.. module:: client.widget_managers
+.. module:: widget.managers
    :synopsis:
 
 This module contains classes used for high level management of some GTK widgets.
@@ -9,12 +9,12 @@ This module contains classes used for high level management of some GTK widgets.
 Classes
 -------
 
-.. autoclass:: king_phisher.client.widget_managers.RadioButtonGroupManager
+.. autoclass:: king_phisher.client.widget.managers.RadioButtonGroupManager
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.widget_managers.TreeViewManager
+.. autoclass:: king_phisher.client.widget.managers.TreeViewManager
    :show-inheritance:
    :members:
    :special-members: __init__

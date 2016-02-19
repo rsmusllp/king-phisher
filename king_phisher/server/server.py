@@ -32,7 +32,6 @@
 
 import base64
 import binascii
-import ipaddress
 import json
 import logging
 import os
@@ -43,6 +42,7 @@ import threading
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
+from king_phisher import ipaddress
 from king_phisher import sms
 from king_phisher import templates
 from king_phisher import utilities
@@ -53,8 +53,8 @@ from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
-from king_phisher.third_party.AdvancedHTTPServer import *
 
+import AdvancedHTTPServer
 import jinja2
 from smoke_zephyr import job
 
@@ -110,7 +110,7 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 		logger.info('rest api initialized with token: ' + config.get('server.rest_api.token'))
 	return server
 
-class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, AdvancedHTTPServerRequestHandler):
+class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, AdvancedHTTPServer.AdvancedHTTPServerRequestHandler):
 	def __init__(self, *args, **kwargs):
 		# this is for attribute documentation
 		self.config = None
@@ -392,7 +392,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		else:
 			# treat cookie_value ad an IPv4 address
 			cookie_value = cookie_value.split(':', 1)[0]
-		if utilities.is_valid_ip_address(cookie_value):
+		if ipaddress.is_valid(cookie_value):
 			address = cookie_value
 		return address
 
@@ -728,7 +728,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
 
-class KingPhisherServer(AdvancedHTTPServer):
+class KingPhisherServer(AdvancedHTTPServer.AdvancedHTTPServer):
 	"""
 	The main HTTP and RPC server for King Phisher.
 	"""
@@ -767,7 +767,8 @@ class KingPhisherServer(AdvancedHTTPServer):
 		)
 		self.http_server.forked_authenticator = aaa.ForkedAuthenticator(
 			cache_timeout=config.get_if_exists('server.authentication.cache_timeout', '10m'),
-			required_group=config.get_if_exists('server.authentication.group')
+			required_group=config.get_if_exists('server.authentication.group'),
+			pam_service=config.get_if_exists('server.authentication.pam_service', 'sshd')
 		)
 		self.job_manager = job.JobManager()
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
@@ -780,7 +781,7 @@ class KingPhisherServer(AdvancedHTTPServer):
 		global_vars['embed_youtube_video'] = pages.embed_youtube_video
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
-		self.http_server.template_env = templates.BaseTemplateEnvironment(loader=loader, global_vars=global_vars)
+		self.http_server.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
 		self.__geoip_db = geoip.init_database(config.get('server.geoip.database'))
 
 		self.__is_shutdown = threading.Event()

@@ -40,7 +40,9 @@ from king_phisher import find
 from king_phisher import geoip
 from king_phisher import json_ex
 from king_phisher import utilities
-from king_phisher.third_party import AdvancedHTTPServer
+
+import AdvancedHTTPServer
+from gi.repository import Gtk
 
 try:
 	import msgpack  # pylint: disable=unused-import
@@ -50,7 +52,8 @@ except ImportError:
 	has_msgpack = False
 
 database_table_objects = utilities.FreezableDict()
-_tag_mixin_fields = ('id', 'name', 'description')
+_tag_mixin_slots = ('id', 'name', 'description')
+_tag_mixin_types = (int, str, str)
 
 class RemoteRowMeta(type):
 	def __new__(mcs, name, bases, dct):
@@ -83,6 +86,8 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 		else:
 			raise RuntimeError('all arguments must be specified in either args or kwargs')
 		for key, value in kwargs.items():
+			if isinstance(value, bytes):
+				value = value.decode('utf-8')
 			setattr(self, key, value)
 
 	def __getattr__(self, item):
@@ -90,11 +95,15 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 			row_id = getattr(self, item + '_id', None)
 			for table, table_cls in database_table_objects.items():
 				if table_cls.__xref_attr__ == item:
-					return self.__rpc__.remote_table_row(table, row_id, cache=True)
+					return self.__rpc__.remote_table_row(table, row_id)
 		raise AttributeError("object has no attribute '{0}'".format(item))
 
 	def _asdict(self):
 		return dict(zip(self.__slots__[1:], (getattr(self, prop) for prop in self.__slots__[1:])))
+
+	def commit(self):
+		values = tuple(getattr(self, attr) for attr in self.__slots__[1:])
+		self.__rpc__('db/table/set', self.__table__, self.id, self.__slots__[1:], values)
 
 class AlertSubscription(RemoteRow):
 	__table__ = 'alert_subscriptions'
@@ -108,7 +117,7 @@ class Campaign(RemoteRow):
 class CampaignType(RemoteRow):
 	__table__ = 'campaign_types'
 	__xref_attr__ = 'campaign_type'
-	__slots__ = _tag_mixin_fields
+	__slots__ = _tag_mixin_slots
 
 class Company(RemoteRow):
 	__table__ = 'companies'
@@ -118,7 +127,7 @@ class Company(RemoteRow):
 class CompanyDepartment(RemoteRow):
 	__table__ = 'company_departments'
 	__xref_attr__ = 'company_department'
-	__slots__ = _tag_mixin_fields
+	__slots__ = _tag_mixin_slots
 
 class Credential(RemoteRow):
 	__table__ = 'credentials'
@@ -136,7 +145,7 @@ class DeaddropDeployment(RemoteRow):
 class Industry(RemoteRow):
 	__table__ = 'industries'
 	__xref_attr__ = 'industry'
-	__slots__ = _tag_mixin_fields
+	__slots__ = _tag_mixin_slots
 
 class LandingPage(RemoteRow):
 	__table__ = 'landing_pages'
@@ -272,6 +281,30 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 		for ip, data in results.items():
 			results[ip] = geoip.GeoLocation(ip, result=data)
 		return results
+
+	def get_tag_model(self, tag_table, model=None):
+		"""
+		Load tag information from a remote table into a
+		:py:class:`Gtk.ListStore` instance. Tables compatible with the tag
+		interface must have id, name and description fields. If no *model* is
+		provided a new one will be created, else the current model will be
+		cleared.
+
+		:param str tag_table: The name of the table to load tag information from.
+		:param model: The model to place the information into.
+		:type model: :py:class:`Gtk.ListStore`
+		:return: The model with the loaded data from the server.
+		:rtype: :py:class:`Gtk.ListStore`
+		"""
+		if model is None:
+			model = Gtk.ListStore(*_tag_mixin_types)
+			# sort by the name column, ascending
+			model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+		else:
+			model.clear()
+		for row in self.remote_table(tag_table):
+			model.append((row.id, row.name, row.description))
+		return model
 
 	def login(self, username, password, otp=None):
 		login_result, login_reason, login_session = self.call('login', username, password, otp)

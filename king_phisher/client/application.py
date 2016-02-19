@@ -31,7 +31,6 @@
 #
 
 import copy
-import ipaddress
 import logging
 import os
 import shlex
@@ -43,6 +42,7 @@ import uuid
 
 from king_phisher import errors
 from king_phisher import find
+from king_phisher import ipaddress
 from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher import version
@@ -56,8 +56,8 @@ from king_phisher.client.windows import main
 from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.ssh_forward import SSHTCPForwarder
-from king_phisher.third_party.AdvancedHTTPServer import AdvancedHTTPServerRPCError
 
+from AdvancedHTTPServer import AdvancedHTTPServerRPCError
 from boltons import typeutils
 from gi.repository import Gdk
 from gi.repository import Gio
@@ -291,6 +291,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if settings.get_property('gtk-icon-theme-name') != GTK3_DEFAULT_THEME:
 			self.logger.debug('resetting the gtk-icon-theme-name property to it\'s default value')
 			settings.set_property('gtk-icon-theme-name', GTK3_DEFAULT_THEME)
+		settings.set_property('gtk-application-prefer-dark-theme', False)
 
 		# load a custom css theme file if one is available
 		theme_file = self.theme_file
@@ -388,6 +389,28 @@ class KingPhisherClientApplication(_Gtk_Application):
 				if not key in self.config:
 					self.config[key] = value
 
+	def merge_config(self, config_file):
+		"""
+		Merge the configuration information from the specified configuration
+		file. Only keys which exist in the currently loaded configuration are
+		copied over while non-existent keys are skipped. The contents of the new
+		configuration overwrites the existing.
+
+		:param str config_file: The path to the configuration file to merge.
+		"""
+		with open(config_file, 'r') as tmp_file:
+			config = json_ex.load(tmp_file)
+		if not isinstance(config, dict):
+			self.logger.error("can not merge configuration file: {0} (invalid format)".format(config_file))
+			return
+		self.logger.debug('merging configuration information from source file: ' + config_file)
+		for key, value in config.items():
+			if not key in self.config:
+				self.logger.warning("skipped merging non-existent configuration key {0}".format(key))
+				continue
+			self.config[key] = value
+		return
+
 	def load_server_config(self):
 		"""Load the necessary values from the server's configuration."""
 		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image', 'server.web_root'])
@@ -427,7 +450,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		active_window = self.get_active_window()
 
 		server = parse_server(self.config['server'], 22)
-		if server[0] == 'localhost' or (utilities.is_valid_ip_address(server[0]) and ipaddress.ip_address(server[0]).is_loopback):
+		if ipaddress.is_loopback(server[0]):
 			local_server = ('localhost', self.config['server_remote_port'])
 			self.logger.info("connecting to local king phisher instance")
 		else:

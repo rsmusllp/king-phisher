@@ -93,8 +93,8 @@ class BaseHostKeyDialog(gui_utilities.GladeGObject):
 		if key_type.startswith('ssh-'):
 			key_type = key_type[4:]
 		key_type = key_type.split('-', 1)[0].upper()
-		details += "{0} key fingerprint is SHA256:{1}.\n".format(key_type, base64.b64encode(hashlib.new('sha256', self.key.asbytes()).digest()))
-		details += "{0} key fingerprint is MD5:{1}.\n".format(key_type, binascii.b2a_hex(hashlib.new('md5', self.key.asbytes()).digest()))
+		details += "{0} key fingerprint is SHA256:{1}.\n".format(key_type, base64.b64encode(hashlib.new('sha256', self.key.asbytes()).digest()).decode('utf-8'))
+		details += "{0} key fingerprint is MD5:{1}.\n".format(key_type, binascii.b2a_hex(hashlib.new('md5', self.key.asbytes()).digest()).decode('utf-8'))
 		return details
 
 	def interact(self):
@@ -138,7 +138,7 @@ class MissingHostKeyPolicy(paramiko.MissingHostKeyPolicy):
 		super(MissingHostKeyPolicy, self).__init__()
 
 	def missing_host_key(self, client, hostname, key):
-		host_key_fingerprint = 'sha256:' + base64.b64encode(hashlib.new('sha256', key.asbytes()).digest())
+		host_key_fingerprint = 'sha256:' + base64.b64encode(hashlib.new('sha256', key.asbytes()).digest()).decode('utf-8')
 		host_keys = paramiko.hostkeys.HostKeys()
 		host_keys_modified = False
 		known_hosts_file = self.application.config.get('ssh_known_hosts_file', os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'known_hosts'))

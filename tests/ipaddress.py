@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/utilities.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,24 +30,29 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
-logging.captureWarnings(True)
+import unittest
 
-from .client import *
-from .server import *
+from king_phisher import ipaddress
+from king_phisher import testing
 
-from .color import ColorConversionTests
-from .configuration import ServerConfigurationTests
-from .geoip import GeoIPTests
-from .geoip import GeoIPRPCTests
-from .ics import ICSTests
-from .ipaddress import IPAddressTests
-from .sms import SMSTests
-from .spf import SPFTests
-from .templates import TemplatesTests
-from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
-from .version import VersionTests
-from .xor import XORTests
+class IPAddressTests(testing.KingPhisherTestCase):
+	def test_is_valid_ip_address(self):
+		valid_ips = [
+			'127.0.0.1',
+			'10.0.0.1',
+			'200.100.0.1',
+			'fe80::1',
+			'::1'
+		]
+		invalid_ips = [
+			'localhost',
+			'www.google.com',
+			''
+		]
+		for address in valid_ips:
+			self.assertTrue(ipaddress.is_valid(address))
+		for address in invalid_ips:
+			self.assertFalse(ipaddress.is_valid(address))
+
+if __name__ == '__main__':
+	unittest.main()

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  webkit_scrape.py
-#
-#  Copyright 2015 Spencer McIntyre <zeroSteiner@gmail.com>
+#  king_phisher/client/web_cloner.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -32,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import codecs
 import collections
 import logging
 import os
@@ -56,7 +55,7 @@ try:
 except ImportError:
 	has_webkit2 = False
 
-class ClonedResourceDetails(collections.namedtuple('ClonedResourceDetails', ['resource', 'mime_type', 'size', 'file_name'])):
+class ClonedResourceDetails(collections.namedtuple('ClonedResourceDetails', ('resource', 'mime_type', 'size', 'file_name'))):
 	"""
 	A named tuple which contains details regard a resource that has been cloned.
 
@@ -162,9 +161,15 @@ class WebPageCloner(object):
 				os.mkdir(directory)
 
 		mime_type = None
+		charset = 'utf-8'
 		response = resource.get_response()
 		if response:
-			mime_type = response.get_mime_type()
+			mime_type = response.get_http_headers().get('content-type')
+			if ';' in mime_type:
+				mime_type, charset = mime_type.split(';', 1)
+				charset = charset.strip()
+				if charset.startswith('charset='):
+					charset = charset[8:].strip()
 
 		resource_path = urllib.parse.unquote(resource_url.path)
 		if resource_path.endswith('/'):
@@ -172,7 +177,14 @@ class WebPageCloner(object):
 		resource_path = resource_path.lstrip('/')
 		resource_path = os.path.join(self.dest_dir, resource_path)
 		if mime_type == 'text/html':
-			data = self.patch_html(data)
+			try:
+				codec = codecs.lookup(charset)
+			except LookupError as error:
+				self.logger.warning('failed to decode data from web response, ' + error.args[0])
+			else:
+				data = codec.decode(data)[0]
+				data = self.patch_html(data)
+				data = codec.encode(data)[0]
 		with open(resource_path, 'wb') as file_h:
 			file_h.write(data)
 

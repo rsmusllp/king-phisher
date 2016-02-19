@@ -39,6 +39,7 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
+from king_phisher.client.widget import extras
 from king_phisher.client.windows import rpc_terminal
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.campaign import CampaignViewGenericTableTab
@@ -114,6 +115,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 
 	def do_edit_stop_service(self, _):
 		self.application.stop_remote_service()
+
+	def do_edit_companies(self, _):
+		dialogs.CompanyEditorDialog(self.application).interact()
 
 	def do_edit_tags(self, _):
 		dialogs.TagEditorDialog(self.application).interact()
@@ -291,7 +295,7 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 
 	def export_campaign_xlsx(self):
 		"""Export the current campaign to an Excel compatible XLSX workbook."""
-		dialog = gui_utilities.FileChooser('Export Campaign To Excel', self)
+		dialog = extras.FileChooserDialog('Export Campaign To Excel', self)
 		file_name = self.config['campaign_name'] + '.xlsx'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()
@@ -300,15 +304,16 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		destination_file = response['target_path']
 		campaign_tab = self.tabs['campaign']
 		workbook = xlsxwriter.Workbook(destination_file)
+		title_format = workbook.add_format({'bold': True, 'size': 14})
 		for tab_name, tab in campaign_tab.tabs.items():
 			if not isinstance(tab, CampaignViewGenericTableTab):
 				continue
-			tab.export_table_to_xlsx_worksheet(workbook.add_worksheet(tab_name))
+			tab.export_table_to_xlsx_worksheet(workbook.add_worksheet(tab_name), title_format)
 		workbook.close()
 
 	def export_campaign_xml(self):
 		"""Export the current campaign to an XML data file."""
-		dialog = gui_utilities.FileChooser('Export Campaign XML Data', self)
+		dialog = extras.FileChooserDialog('Export Campaign XML Data', self)
 		file_name = self.config['campaign_name'] + '.xml'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()
@@ -324,7 +329,7 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		"""
 		Export the current campaign visit information to a GeoJSON data file.
 		"""
-		dialog = gui_utilities.FileChooser('Export Campaign Visit GeoJSON Data', self)
+		dialog = extras.FileChooserDialog('Export Campaign Visit GeoJSON Data', self)
 		file_name = self.config['campaign_name'] + '.geojson'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()

@@ -10,7 +10,7 @@ application.
 Classes
 -------
 
-.. autoclass:: king_phisher.templates.BaseTemplateEnvironment
+.. autoclass:: king_phisher.templates.TemplateEnvironmentBase
    :show-inheritance:
    :members:
    :special-members: __init__

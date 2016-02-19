@@ -30,10 +30,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import ipaddress
 import logging
 import re
 
+from king_phisher import ipaddress
+from king_phisher import its
 from king_phisher.constants import SPFResult
 
 import dns.exception
@@ -267,6 +268,8 @@ class SenderPolicyFramework(object):
 			return self._check_host(ip, rvalue, sender, top_level=False) == SPFResult.PASS
 		elif mechanism == 'ip4':
 			try:
+				if its.py_v2 and isinstance(rvalue, str):
+					rvalue = rvalue.decode('utf-8')
 				ip_network = ipaddress.IPv4Network(rvalue, strict=False)
 			except ipaddress.AddressValueError:
 				raise SPFPermError('failed to parse spf data')
@@ -274,6 +277,8 @@ class SenderPolicyFramework(object):
 				return True
 		elif mechanism == 'ip6':
 			try:
+				if its.py_v2 and isinstance(rvalue, str):
+					rvalue = rvalue.decode('utf-8')
 				ip_network = ipaddress.IPv6Network(rvalue, strict=False)
 			except ipaddress.AddressValueError:
 				raise SPFPermError('failed to parse spf data')

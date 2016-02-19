@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  king_phisher/client/widget/resources.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,24 +30,42 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
-logging.captureWarnings(True)
+from king_phisher.client import gui_utilities
+from king_phisher.constants import ColorHexCode
 
-from .client import *
-from .server import *
+from gi.repository import Gtk
+from gi.repository import Pango
 
-from .color import ColorConversionTests
-from .configuration import ServerConfigurationTests
-from .geoip import GeoIPTests
-from .geoip import GeoIPRPCTests
-from .ics import ICSTests
-from .ipaddress import IPAddressTests
-from .sms import SMSTests
-from .spf import SPFTests
-from .templates import TemplatesTests
-from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
-from .version import VersionTests
-from .xor import XORTests
+font_desc_italic = Pango.FontDescription()
+"""
+A :py:class:`Pango.FontDescription` configured for representing italicized text.
+"""
+font_desc_italic.set_style(Pango.Style.ITALIC)
+
+renderer_text_desc = Gtk.CellRendererText()
+"""
+A :py:class:`Gtk.CellRendererText` instance which is configured to be suitable
+for showing descriptions of various object.
+"""
+renderer_text_desc.set_property('ellipsize', Pango.EllipsizeMode.END)
+renderer_text_desc.set_property('font-desc', font_desc_italic)
+renderer_text_desc.set_property('foreground', ColorHexCode.GRAY)
+renderer_text_desc.set_property('max-width-chars', 20)
+
+class CompanyEditorGrid(gui_utilities.GladeProxy):
+	"""
+	An embeddable widget which contains the necessary widgets to edit the
+	various fields of a company object.
+	"""
+	name = 'CompanyEditorGrid'
+	"""The name of the top level widget in the GTK Builder data file."""
+	children = (
+		'combobox_company_industry',
+		'entry_company_industry',
+		'entry_company_name',
+		'entry_company_description',
+		'entry_company_url_main',
+		'entry_company_url_email',
+		'entry_company_url_remote_access'
+	)
+	"""The children widgets that can be used to edit the fields of the comapny."""

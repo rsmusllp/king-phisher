@@ -69,7 +69,7 @@ __requirements__ = [
 	'termcolor>=1.1.0'
 ]
 if its.py_v2:
-	__requirements__.append('py2-ipaddress==3.4.1')
+	__requirements__.append('ipaddress>=1.0.16')
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')

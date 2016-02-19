@@ -45,7 +45,8 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
-from king_phisher.client import widget_managers
+from king_phisher.client.widget import extras
+from king_phisher.client.widget import managers
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.constants import SPFResult
 from king_phisher.errors import KingPhisherInputValidationError
@@ -65,13 +66,6 @@ if sys.version_info[0] < 3:
 	urllib.parse.urlencode = urllib.urlencode
 else:
 	import urllib.parse
-
-try:
-	from gi.repository import WebKit2 as WebKitX
-	has_webkit2 = True
-except ImportError:
-	from gi.repository import WebKit as WebKitX
-	has_webkit2 = False
 
 def test_webserver_url(target_url, secret_id):
 	"""
@@ -459,10 +453,8 @@ class MailSenderPreviewTab(object):
 		self.box = Gtk.Box()
 		self.box.set_property('orientation', Gtk.Orientation.VERTICAL)
 		self.box.show()
-		self.webview = WebKitX.WebView()
-		"""The :py:class:`WebKit2.WebView` object used to render the message HTML."""
-		if has_webkit2:
-			self.webview.get_context().set_cache_model(WebKitX.CacheModel.DOCUMENT_VIEWER)
+		self.webview = extras.WebKitHTMLView()
+		"""The :py:class:`~.extras.WebKitHTMLView` object used to render the message HTML."""
 		self.webview.show()
 		scrolled_window = Gtk.ScrolledWindow()
 		scrolled_window.add(self.webview)
@@ -507,22 +499,8 @@ class MailSenderPreviewTab(object):
 			self.info_bar.show()
 		else:
 			html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
-			self.load_html_data(html_data, html_file_uri)
+			self.webview.load_html_data(html_data, html_file_uri)
 			self.info_bar.hide()
-
-	def load_html_data(self, html_data, html_file_uri=None):
-		"""
-		Load arbitrary HTML data into the WebKit engine to be rendered.
-
-		:param str html_data: The HTML data to load into WebKit.
-		:param str html_file_uri: The URI of the file where the HTML data came from.
-		"""
-		if isinstance(html_file_uri, str) and not html_file_uri.startswith('file://'):
-			html_file_uri = 'file://' + html_file_uri
-		if has_webkit2:
-			self.webview.load_html(html_data, html_file_uri)
-		else:
-			self.webview.load_html_string(html_data, (html_file_uri or os.devnull))
 
 	def show_tab(self):
 		"""Configure the webview to preview the the message HTML file."""
@@ -530,7 +508,7 @@ class MailSenderPreviewTab(object):
 			if self.file_monitor:
 				self.file_monitor.stop()
 				self.file_monitor = None
-			self.load_html_data('')
+			self.webview.load_html_data('')
 			return
 		self.load_html_file()
 		if self.file_monitor and self.file_monitor.path != self.config['mailer.html_file']:
@@ -612,7 +590,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 				current_name = os.path.basename(html_file)
 			else:
 				current_name = 'message.html'
-			dialog = gui_utilities.FileChooser('Save HTML File', self.parent)
+			dialog = extras.FileChooserDialog('Save HTML File', self.parent)
 			response = dialog.run_quick_save(current_name=current_name)
 			dialog.destroy()
 			if not response:
@@ -626,7 +604,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		return True
 
 	def signal_toolbutton_open(self, button):
-		dialog = gui_utilities.FileChooser('Choose File', self.parent)
+		dialog = extras.FileChooserDialog('Choose File', self.parent)
 		dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -713,7 +691,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		return True
 
 	def signal_activate_popup_menu_insert_image(self, widget):
-		dialog = gui_utilities.FileChooser('Choose Image', self.parent)
+		dialog = extras.FileChooserDialog('Choose Image', self.parent)
 		dialog.quick_add_filter('Images', ['*.gif', '*.jpeg', '*.jpg', '*.png'])
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -773,7 +751,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			'radiobutton_target_type_single',
 			'spinbutton_calendar_invite_duration',
 			'spinbutton_calendar_invite_start_hour',
-			'spinbutton_calendar_invite_start_minute'
+			'spinbutton_calendar_invite_start_minute',
+			'viewport'
 		),
 		top_level=(
 			'ClockHourAdjustment',
@@ -793,9 +772,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
 		self.application.connect('exit', self.signal_kpc_exit)
 
-		self.message_type = widget_managers.RadioButtonGroupManager(self, 'message_type')
+		self.message_type = managers.RadioButtonGroupManager(self, 'message_type')
 		self.message_type.set_active(self.config['mailer.message_type'])
-		self.target_type = widget_managers.RadioButtonGroupManager(self, 'target_type')
+		self.target_type = managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
 
 	def objects_load_from_config(self):
@@ -845,7 +824,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.gobjects['spinbutton_calendar_invite_start_minute'].set_sensitive(not all_day)
 
 	def signal_entry_activate_open_file(self, entry):
-		dialog = gui_utilities.FileChooser('Choose File', self.parent)
+		dialog = extras.FileChooserDialog('Choose File', self.parent)
 		if entry == self.gobjects.get('entry_html_file'):
 			dialog.quick_add_filter('HTML Files', ['*.htm', '*.html'])
 		elif entry == self.gobjects.get('entry_target_file'):
@@ -877,9 +856,11 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		with gui_utilities.gobject_signal_blocked(button, 'toggled'):
 			self.message_type.set_active(message_type)
 
+	def signal_expander_notify_expanded(self, expander, _):
+		if expander.get_expanded():
+			self.gobjects['viewport'].queue_draw()
+
 	def signal_kpc_campaign_load(self, _, campaign_id):
-		if not campaign_id == self.config.get('campaign_id'):
-			return
 		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
 		if campaign.company_id is None:
 			self.config['mailer.company_name'] = None
@@ -1018,7 +999,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.FileChooser('Export Message Configuration', self.parent)
+		dialog = extras.FileChooserDialog('Export Message Configuration', self.parent)
 		response = dialog.run_quick_save('message.kpm')
 		dialog.destroy()
 		if not response:
@@ -1040,7 +1021,7 @@ class MailSenderTab(object):
 			return
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = gui_utilities.FileChooser('Import Message Configuration', self.parent)
+		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
 		dialog.quick_add_filter('All Files', '*')
 		response = dialog.run_quick_open()
@@ -1049,7 +1030,7 @@ class MailSenderTab(object):
 			return
 		target_file = response['target_path']
 
-		dialog = gui_utilities.FileChooser('Destination Directory', self.parent)
+		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
 		response = dialog.run_quick_select_directory()
 		dialog.destroy()
 		if not response:
@@ -1062,7 +1043,7 @@ class MailSenderTab(object):
 			return
 
 		config_keys = set(key for key in self.config.keys() if key.startswith(config_prefix))
-		config_types = dict(zip(config_keys, map(type, config_keys)))
+		config_types = dict(zip(config_keys, [type(self.config[key]) for key in config_keys]))
 		for key, value in message_data.items():
 			key = config_prefix + key
 			if not key in config_keys:
@@ -1074,5 +1055,12 @@ class MailSenderTab(object):
 			if not config_type in (bool, dict, int, list, str, tuple):
 				continue
 			self.config[unset_key] = config_type()
+
+		# set missing defaults for backwards compatibility
+		if not self.config.get('mailer.message_type'):
+			self.config['mailer.message_type'] = 'email'
+		if not self.config.get('mailer.target_type'):
+			self.config['mailer.target_type'] = 'file'
+
 		config_tab.objects_load_from_config()
 		gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message.')

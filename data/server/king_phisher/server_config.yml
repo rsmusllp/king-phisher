@@ -19,6 +19,8 @@ server:
     #cache_timeout: 10m
     # Require authenticating users to be a member of the specified group
     #group: king-phisher
+    # The service to use for PAM authentication
+    #pam_service: sshd
     # How long an authenticated RPC session should be valid for after no
     # requests have been received.
     #session_timeout: 30m
