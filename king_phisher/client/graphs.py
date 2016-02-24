@@ -37,6 +37,7 @@ from king_phisher import color
 from king_phisher import ipaddress
 from king_phisher import its
 from king_phisher import ua_parser
+from king_phisher.client import client_rpc
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
 from king_phisher.constants import ColorHexCode
@@ -299,7 +300,10 @@ class CampaignGraph(object):
 			if stop_event and stop_event.is_set():
 				return info_cache
 			if not table in info_cache:
-				info_cache[table] = tuple(self.rpc.remote_table(table, query_filter={'campaign_id': self.config['campaign_id']}))
+				query_filter = None
+				if 'campaign_id' in client_rpc.database_table_objects[table].__slots__:
+					query_filter = {'campaign_id': self.config['campaign_id']}
+				info_cache[table] = tuple(self.rpc.remote_table(table, query_filter=query_filter))
 		for ax in self.axes:
 			ax.clear()
 		if self._legend is not None:
@@ -317,6 +321,7 @@ class CampaignGraph(object):
 		return info_cache
 
 class CampaignBarGraph(CampaignGraph):
+	yticklabel_fmt = "{0:,}"
 	def __init__(self, *args, **kwargs):
 		super(CampaignBarGraph, self).__init__(*args, **kwargs)
 		self.figure.subplots_adjust(top=0.85, right=0.9, bottom=0.05, left=0.225)
@@ -363,6 +368,9 @@ class CampaignBarGraph(CampaignGraph):
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
 
+	def _graph_null_bar(self, title):
+		return self.graph_bar([0], 1, [''], xlabel=title)
+
 	def graph_bar(self, bars, max_bars, yticklabels, xlabel=None):
 		"""
 		Create a horizontal bar graph with better defaults for the standard use
@@ -388,7 +396,7 @@ class CampaignBarGraph(CampaignGraph):
 		ax1.set_yticklabels(yticklabels, color=color_fg, size=10)
 
 		ax2.set_yticks(yticks)
-		ax2.set_yticklabels(["{0:,}".format(bar) for bar in bars], color=color_fg, size=12)
+		ax2.set_yticklabels([self.yticklabel_fmt.format(bar) for bar in bars], color=color_fg, size=12)
 		ax2.set_ylim(ax1.get_ylim())
 
 		# remove the y-axis tick marks
@@ -424,7 +432,8 @@ class CampaignPieGraph(CampaignGraph):
 			colors=(self.get_color('pie_low', ColorHexCode.GRAY),),
 			labels=(title,),
 			shadow=True,
-			startangle=90
+			startangle=225,
+			textprops={'color': self.get_color('fg', ColorHexCode.BLACK)}
 		)
 		ax.axis('equal')
 		return
@@ -453,6 +462,42 @@ class CampaignPieGraph(CampaignGraph):
 		if legend_labels is not None:
 			self.add_legend_patch(zip(colors, legend_labels), fontsize='x-small')
 		return pie
+
+@export_graph_provider
+class CampaignGraphDepartmentComparison(CampaignBarGraph):
+	"""Display a graph which compares the different departments."""
+	graph_title = 'Campaign Department Comparison'
+	name_human = 'Bar - Campaign Department Comparison'
+	table_subscriptions = ('company_departments', 'messages', 'visits')
+	yticklabel_fmt = "{0:.01f}%"
+	def _load_graph(self, info_cache):
+		departments = info_cache['company_departments']
+		departments = dict((department.id, department.name) for department in departments)
+
+		messages = info_cache['messages']
+		message_departments = dict((message.id, departments[message.company_department_id]) for message in messages if message.company_department_id is not None)
+		if not len(message_departments):
+			self._graph_null_bar('')
+			return
+		messages = [message for message in messages if message.id in message_departments]
+
+		visits = info_cache['visits']
+		visits = [visit for visit in visits if visit.message_id in message_departments]
+		visits = unique(visits, key=lambda visit: visit.message_id)
+
+		department_visits = collections.Counter()
+		department_visits.update(message_departments[visit.message_id] for visit in visits)
+
+		department_totals = collections.Counter()
+		department_totals.update(message_departments[message.id] for message in messages)
+
+		department_scores = dict((department, (department_visits[department] / total) * 100) for department, total in department_totals.items())
+		department_scores = sorted(department_scores.items(), key=lambda x: (x[1], x[0]), reverse=True)
+		department_scores = collections.OrderedDict(department_scores)
+
+		yticklabels, bars = zip(*department_scores.items())
+		self.graph_bar(bars, len(yticklabels), yticklabels)
+		return
 
 @export_graph_provider
 class CampaignGraphOverview(CampaignBarGraph):
