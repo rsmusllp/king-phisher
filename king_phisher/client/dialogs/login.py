@@ -123,7 +123,7 @@ class LoginDialog(LoginDialogBase):
 		dialog.destroy()
 		if response is None:
 			return
-		self.application.merge_config(response['target_path'])
+		self.application.merge_config(response['target_path'], strict=False)
 		self.objects_load_from_config()
 
 	def signal_switch_ssl(self, switch, _):

@@ -32,8 +32,11 @@
 
 import datetime
 import json
+import re
 
 from king_phisher.utilities import switch
+
+CLEAN_JSON_REGEX = re.compile(r',(\s+[}\]])')
 
 def _json_default(obj):
 	for case in switch(obj.__class__):
@@ -95,22 +98,26 @@ def dumps(data, pretty=True):
 		kwargs['separators'] = (',', ': ')
 	return json.dumps(data, **kwargs)
 
-def load(file_h):
+def load(file_h, strict=True):
 	"""
 	Load JSON encoded data from a file handle. The underlying logic is provided
 	by the :py:func:`.loads` function.
 
 	:param file file_h: The file to read and load encoded data from.
+	:param bool strict: Do not try remove trailing commas from the JSON data.
 	:return: The Python object represented by the encoded data.
 	"""
-	return loads(file_h.read())
+	return loads(file_h.read(), strict=strict)
 
-def loads(data):
+def loads(data, strict=True):
 	"""
 	Load a string of JSON encoded data. This also provides support for
 	additional Python types such as :py:class:`datetime.datetime` instances.
 
 	:param str data: The encoded data to load.
+	:param bool strict: Do not try remove trailing commas from the JSON data.
 	:return: The Python object represented by the encoded data.
 	"""
+	if not strict:
+		data = CLEAN_JSON_REGEX.sub(r'\1', data)
 	return json.loads(data, object_hook=_json_object_hook)
