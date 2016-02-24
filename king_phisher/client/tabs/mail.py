@@ -34,6 +34,7 @@ import codecs
 import datetime
 import hashlib
 import os
+import re
 import sys
 import urllib
 
@@ -79,7 +80,7 @@ def test_webserver_url(target_url, secret_id):
 	query['id'] = [secret_id]
 	query = urllib.parse.urlencode(query, True)
 	target_url = urllib.parse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.params, query, parsed_url.fragment))
-	return requests.get(target_url, timeout=5.0)
+	return requests.get(target_url, timeout=6.0)
 
 class MailSenderSendTab(gui_utilities.GladeGObject):
 	"""
@@ -793,24 +794,34 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	def signal_button_clicked_verify(self, button):
 		target_url = self.gobjects['entry_webserver_url'].get_text()
 		error_description = None
-		try:
-			response = test_webserver_url(target_url, self.config['server_config']['server.secret_id'])
-		except (requests.exceptions.ConnectionError, requests.exceptions.RequestException) as error:
-			if isinstance(error, requests.exceptions.ConnectionError):
-				self.logger.warning('verify url attempt failed, could not connect')
-				error_description = 'Could not connect to the server'
-			elif isinstance(error, requests.exceptions.Timeout):
-				self.logger.warning('verify url attempt failed, a timeout occurred')
-				error_description = 'The HTTP request timed out'
-			else:
-				self.logger.warning('unknown verify url exception: ' + repr(error))
-				error_description = 'An unknown verify URL exception occurred'
-		else:
-			if response.ok:
-				self.logger.debug("verify url HTTP status: {0} {1}".format(response.status_code, response.reason))
-			else:
+		if re.match(r'^\s+', target_url):
+			target_url = target_url.strip()
+			self.gobjects['entry_webserver_url'].set_text(target_url)
+		for _ in range(1):
+			if not target_url.strip().startswith('http'):
+				error_description = 'The web server URL is invalid'
+				break
+
+			try:
+				response = test_webserver_url(target_url, self.config['server_config']['server.secret_id'])
+			except (requests.exceptions.ConnectionError, requests.exceptions.RequestException) as error:
+				if isinstance(error, requests.exceptions.ConnectionError):
+					self.logger.warning('verify url attempt failed, could not connect')
+					error_description = 'Could not connect to the server'
+				elif isinstance(error, requests.exceptions.Timeout):
+					self.logger.warning('verify url attempt failed, a timeout occurred')
+					error_description = 'The HTTP request timed out'
+				else:
+					self.logger.warning('unknown verify url exception: ' + repr(error))
+					error_description = 'An unknown verify URL exception occurred'
+				break
+
+			if not response.ok:
 				self.logger.warning("verify url HTTP error: {0} {1}".format(response.status_code, response.reason))
 				error_description = "HTTP status {0} {1}".format(response.status_code, response.reason)
+				break
+
+			self.logger.debug("verify url HTTP status: {0} {1}".format(response.status_code, response.reason))
 		if error_description:
 			gui_utilities.show_dialog_warning('Unable To Open The Web Server URL', self.parent, error_description)
 		else:
