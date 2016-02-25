@@ -476,7 +476,7 @@ class CampaignPieGraph(CampaignGraph):
 		)
 		ax.axis('equal')
 		if legend_labels is not None:
-			self.add_legend_patch(zip(colors, legend_labels), fontsize='x-small')
+			self.add_legend_patch(tuple(zip(colors, legend_labels)), fontsize='x-small')
 		return pie
 
 @export_graph_provider
