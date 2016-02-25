@@ -149,8 +149,10 @@ class CampaignGraph(object):
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
 		self.manager = None
-		if size_request:
-			self.canvas.set_size_request(*size_request)
+		self.minimum_size = (380, 200)
+		"""An absolute minimum size for the canvas."""
+		if size_request is not None:
+			self.resize(*size_request)
 		self.canvas.mpl_connect('button_press_event', self.mpl_signal_canvas_button_pressed)
 		self.canvas.show()
 		self.navigation_toolbar = NavigationToolbar(self.canvas, self.application.get_active_window())
@@ -320,11 +322,24 @@ class CampaignGraph(object):
 		self.canvas.draw()
 		return info_cache
 
+	def resize(self, width=0, height=0):
+		"""
+		Attempt to resize the canvas. Regardless of the parameters the canvas
+		will never be resized to be smaller than :py:attr:`.minimum_size`.
+
+		:param int width: The desired width of the canvas.
+		:param int height: The desired height of the canvas.
+		"""
+		min_width, min_height = self.minimum_size
+		width = max(width, min_width)
+		height = max(height, min_height)
+		self.canvas.set_size_request(width, height)
+
 class CampaignBarGraph(CampaignGraph):
 	yticklabel_fmt = "{0:,}"
 	def __init__(self, *args, **kwargs):
 		super(CampaignBarGraph, self).__init__(*args, **kwargs)
-		self.figure.subplots_adjust(top=0.85, right=0.9, bottom=0.05, left=0.225)
+		self.figure.subplots_adjust(top=0.85, right=0.85, bottom=0.05, left=0.225)
 		ax = self.axes[0]
 		ax.tick_params(
 			axis='both',
@@ -344,6 +359,7 @@ class CampaignBarGraph(CampaignGraph):
 		color_bar_fg = self.get_color('bar_fg', ColorHexCode.BLACK)
 
 		ax.set_axis_bgcolor(color_bg)
+		self.resize(height=60 + 20 * len(bars))
 
 		# draw the foreground / filled bar
 		bar_container = ax.barh(
@@ -466,8 +482,8 @@ class CampaignPieGraph(CampaignGraph):
 @export_graph_provider
 class CampaignGraphDepartmentComparison(CampaignBarGraph):
 	"""Display a graph which compares the different departments."""
-	graph_title = 'Campaign Department Comparison'
-	name_human = 'Bar - Campaign Department Comparison'
+	graph_title = 'Department Comparison'
+	name_human = 'Bar - Department Comparison'
 	table_subscriptions = ('company_departments', 'messages', 'visits')
 	yticklabel_fmt = "{0:.01f}%"
 	def _load_graph(self, info_cache):

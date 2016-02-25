@@ -352,11 +352,11 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		self.graphs = []
 		"""The :py:class:`.CampaignGraph` classes represented on the dash board."""
 
-		# Position: (DefaultGraphName, Size)
 		dash_ports = {
+			# dashboard position, (width, height)
 			'top_left': (380, 200),
 			'top_right': (380, 200),
-			'bottom': None
+			'bottom': (760, 200)
 		}
 		for dash_port, details in dash_ports.items():
 			graph_name = self.config['dashboard.' + dash_port]
@@ -370,7 +370,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 					self.gobjects['scrolledwindow_' + dash_port].add(image)
 				continue
 			graph_inst = cls(self.application, details, getattr(self, self.top_gobject).get_style_context())
-			self.gobjects['scrolledwindow_' + dash_port].add_with_viewport(graph_inst.canvas)
+			self.gobjects['scrolledwindow_' + dash_port].add(graph_inst.canvas)
 			self.gobjects['box_' + dash_port].pack_end(graph_inst.navigation_toolbar, False, False, 0)
 			self.graphs.append(graph_inst)
 		self.logger.debug("dashboard refresh frequency set to {0} seconds".format(self.refresh_frequency))
