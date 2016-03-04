@@ -181,6 +181,7 @@ class MessageTemplateEnvironment(TemplateEnvironmentBase):
 	MODE_SEND = 2
 	def __init__(self, *args, **kwargs):
 		super(MessageTemplateEnvironment, self).__init__(*args, **kwargs)
+		self._mode = None
 		self.set_mode(self.MODE_PREVIEW)
 		self.globals['inline_image'] = self._inline_image_handler
 		self.attachment_images = {}

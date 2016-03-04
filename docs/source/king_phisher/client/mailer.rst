@@ -10,9 +10,9 @@ the client application.
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.mailer.format_message
-
 .. autofunction:: king_phisher.client.mailer.guess_smtp_server_address
+
+.. autofunction:: king_phisher.client.mailer.render_message_template
 
 Classes
 -------

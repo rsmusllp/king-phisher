@@ -491,7 +491,7 @@ class MailSenderPreviewTab(object):
 		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
 		try:
-			html_data = mailer.format_message(html_data, self.config)
+			html_data = mailer.render_message_template(html_data, self.config)
 		except jinja2.TemplateSyntaxError as error:
 			self.info_bar_label.set_text("Template syntax error: {error.message} on line {error.lineno}.".format(error=error))
 			self.info_bar.show()

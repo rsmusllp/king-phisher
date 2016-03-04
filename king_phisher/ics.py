@@ -319,3 +319,6 @@ class Calendar(icalendar.Calendar):
 		attendee.params['RSVP'] = icalendar.vText(str(bool(rsvp)).upper())
 		attendee.params['CN'] = icalendar.vText(cn or email)
 		self._event.add('attendee', attendee)
+
+	def to_ical(self, encoding='utf-8', **kwargs):
+		super(Calendar, self).to_ical(**kwargs).decode('utf-8')

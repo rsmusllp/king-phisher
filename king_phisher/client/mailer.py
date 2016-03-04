@@ -73,48 +73,63 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse
 
-__all__ = ('format_message', 'guess_smtp_server_address', 'MailSenderThread')
+__all__ = (
+	'guess_smtp_server_address',
+	'MailSenderThread',
+	'render_message_template'
+)
 
 make_uid = lambda: utilities.random_string(16)
 template_environment = templates.MessageTemplateEnvironment()
 
-def format_message(template, config, first_name=None, last_name=None, uid=None, target_email=None):
+MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
+"""A named tuple for holding both image and file attachments for a message."""
+MessageTarget = collections.namedtuple('MessageTarget', ('first_name', 'last_name', 'email_address', 'department', 'uid'))
+"""A named tuple for holding information regarding a messages intended recipient."""
+
+def render_message_template(template, config, target=None, analyze=False):
 	"""
 	Take a message from a template and format it to be sent by replacing
-	variables and processing other template directives. If the *uid* parameter
-	is not set, then the message is formatted to be previewed.
+	variables and processing other template directives. If the *target*
+	parameter is not set, a placeholder will be created and the message will be
+	formatted to be previewed.
 
 	:param str template: The message template.
 	:param dict config: The King Phisher client configuration.
-	:param str first_name: The first name of the message's recipient.
-	:param str last_name: The last name of the message's recipient.
-	:param str uid: The messages unique identifier.
-	:param str target_email: The message's destination email address.
+	:param target: The messages intended target information.
+	:type target: :py:class:`.MessageTarget`
+	:param bool analyze: Set the template environment to analyze mode.
 	:return: The formatted message.
 	:rtype: str
 	"""
-	if uid == None:
+	if target is None:
+		target = MessageTarget(
+			first_name='Alice',
+			last_name='Liddle',
+			email_address='aliddle@wonderland.com',
+			department=None,
+			uid=(config['server_config'].get('server.secret_id') or make_uid())
+		)
 		template_environment.set_mode(template_environment.MODE_PREVIEW)
-	first_name = ('Alice' if not isinstance(first_name, str) else first_name)
-	last_name = ('Liddle' if not isinstance(last_name, str) else last_name)
-	target_email = ('aliddle@wonderland.com' if not isinstance(target_email, str) else target_email)
-	uid = (uid or config['server_config'].get('server.secret_id') or make_uid())
+
+	if analyze:
+		template_environment.set_mode(template_environment.MODE_ANALYZE)
 
 	template = template_environment.from_string(template)
 	template_vars = {}
 	template_vars['client'] = dict(
-		first_name=first_name,
-		last_name=last_name,
-		email_address=target_email,
+		first_name=target.first_name,
+		last_name=target.last_name,
+		email_address=target.email_address,
 		company_name=config.get('mailer.company_name'),
-		message_id=uid
+		message_id=target.uid
 	)
 	template_vars['sender'] = dict(
 		email=config.get('mailer.source_email'),
 		friendly_alias=config.get('mailer.source_email_alias'),
 		reply_to=config.get('mailer.reply_to_email')
 	)
-	template_vars['uid'] = uid
+	template_vars['uid'] = target.uid
 
 	message_type = config.get('mailer.message_type', 'email')
 	template_vars['message_type'] = message_type
@@ -130,13 +145,13 @@ def format_message(template, config, first_name=None, last_name=None, uid=None, 
 	webserver_url = urllib.parse.urlparse(webserver_url)
 	tracking_image = config['server_config']['server.tracking_image']
 	template_vars['webserver'] = webserver_url.netloc
-	tracking_url = urllib.parse.urlunparse((webserver_url.scheme, webserver_url.netloc, tracking_image, '', 'id=' + uid, ''))
+	tracking_url = urllib.parse.urlunparse((webserver_url.scheme, webserver_url.netloc, tracking_image, '', 'id=' + target.uid, ''))
 	webserver_url = urllib.parse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
 	template_vars['tracking_dot_image_tag'] = "<img src=\"{0}\" style=\"display:none\" />".format(tracking_url)
 
 	template_vars_url = {}
 	template_vars_url['rickroll'] = 'http://www.youtube.com/watch?v=oHg5SJYRHA0'
-	template_vars_url['webserver'] = webserver_url + '?id=' + uid
+	template_vars_url['webserver'] = webserver_url + '?id=' + target.uid
 	template_vars_url['webserver_raw'] = webserver_url
 	template_vars_url['tracking_dot'] = tracking_url
 	template_vars['url'] = template_vars_url
@@ -197,11 +212,6 @@ def guess_smtp_server_address(host, forward_host=None):
 		return guess_smtp_server_address(forward_host)
 	return
 
-MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
-"""A named tuple for holding both image and file attachments for a message."""
-MessageTarget = collections.namedtuple('MessageTarget', ('first_name', 'last_name', 'email_address', 'department'))
-"""A named tuple for holding information regarding a messages intended recipient."""
-
 class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 	"""
 	A :py:class:`.mime.multipart.MIMEMultipart` subclass for representing the top / outer most
@@ -215,7 +225,7 @@ class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 		:type target: :py:class:`.MessageTarget`
 		"""
 		mime.multipart.MIMEMultipart.__init__(self, mime_type)
-		self['Subject'] = config['mailer.subject']
+		self['Subject'] = render_message_template(config['mailer.subject'], config, target)
 		if config.get('mailer.reply_to_email'):
 			self.add_header('reply-to', config['mailer.reply_to_email'])
 		if config.get('mailer.source_email_alias'):
@@ -408,7 +418,8 @@ class MailSenderThread(threading.Thread):
 				first_name=target_name[0].strip(),
 				last_name=target_name[1].strip(),
 				email_address=self.config['mailer.target_email_address'],
-				department=None
+				department=None,
+				uid=make_uid()
 			)
 			yield target
 		elif target_type == 'file':
@@ -432,7 +443,8 @@ class MailSenderThread(threading.Thread):
 					first_name=raw_target['first_name'].strip(),
 					last_name=raw_target['last_name'].strip(),
 					email_address=email_address,
-					department=department
+					department=department,
+					uid=make_uid()
 				)
 				yield target
 			target_file_h.close()
@@ -464,16 +476,15 @@ class MailSenderThread(threading.Thread):
 			if emails_done > 0 and (emails_done % max_messages_per_connection):
 				self.server_smtp_reconnect()
 
-			uid = make_uid()
 			emails_done += 1
-			self.tab_notify_status(sending_line.format(emails_done, uid, target.email_address))
-			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, uid, attachments)
+			self.tab_notify_status(sending_line.format(emails_done, target.uid, target.email_address))
+			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, target.uid, attachments)
 			if not self._try_send_message(target.email_address, msg):
 				break
 
 			self.tab_notify_sent(emails_done, emails_total)
 			campaign_id = self.config['campaign_id']
-			self.rpc('campaign/message/new', campaign_id, uid, target.email_address, target.first_name, target.last_name, target.department)
+			self.rpc('campaign/message/new', campaign_id, target.uid, target.email_address, target.first_name, target.last_name, target.department)
 
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)
@@ -547,7 +558,7 @@ class MailSenderThread(threading.Thread):
 
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
-		formatted_msg = format_message(msg_template, self.config, first_name=target.first_name, last_name=target.last_name, uid=uid, target_email=target.email_address)
+		formatted_msg = render_message_template(msg_template, self.config, target=target)
 		part = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
 		alt_msg.attach(part)
 
@@ -566,7 +577,7 @@ class MailSenderThread(threading.Thread):
 		ical.add_attendee(target.email_address, rsvp=self.config.get('mailer.calendar_request_rsvp', False))
 
 		part = mime.base.MIMEBase('text', 'calendar', charset='utf-8', method='REQUEST')
-		part.set_payload(str(ical))
+		part.set_payload(ical.to_ical(encoding='utf-8'))
 		encoders.encode_base64(part)
 		alt_msg.attach(part)
 
@@ -601,7 +612,7 @@ class MailSenderThread(threading.Thread):
 		msg.attach(msg_alt)
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
-		formatted_msg = format_message(msg_template, self.config, first_name=target.first_name, last_name=target.last_name, uid=uid, target_email=target.email_address)
+		formatted_msg = render_message_template(msg_template, self.config, target=target)
 		msg_body = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
 		msg_alt.attach(msg_body)
 
@@ -640,8 +651,7 @@ class MailSenderThread(threading.Thread):
 	def _prepare_env(self):
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
-		template_environment.set_mode(template_environment.MODE_ANALYZE)
-		format_message(msg_template, self.config, uid=make_uid())
+		render_message_template(msg_template, self.config, analyze=True)
 		template_environment.set_mode(template_environment.MODE_SEND)
 
 	def _try_send_message(self, *args, **kwargs):
