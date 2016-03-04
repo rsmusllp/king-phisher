@@ -4441,6 +4441,15 @@ Brandan Geise</property>
               </object>
             </child>
             <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_help_templates">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Templates</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_help_templates" swapped="no"/>
+              </object>
+            </child>
+            <child>
               <object class="GtkImageMenuItem" id="MainMenuBar.imagemenuitem_help_wiki">
                 <property name="label" translatable="yes">Wiki</property>
                 <property name="visible">True</property>

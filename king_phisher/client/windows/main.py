@@ -173,6 +173,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def do_help_about(self, _):
 		dialogs.AboutDialog(self.application).interact()
 
+	def do_help_templates(self, _):
+		utilities.open_uri('https://github.com/securestate/king-phisher-templates')
+
 	def do_help_wiki(self, _):
 		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
 
