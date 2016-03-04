@@ -478,7 +478,7 @@ class MailSenderThread(threading.Thread):
 
 			emails_done += 1
 			self.tab_notify_status(sending_line.format(emails_done, target.uid, target.email_address))
-			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, target.uid, attachments)
+			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, attachments)
 			if not self._try_send_message(target.email_address, msg):
 				break
 
@@ -531,7 +531,7 @@ class MailSenderThread(threading.Thread):
 			self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		return True
 
-	def create_calendar_invite(self, target, uid, attachments):
+	def create_calendar_invite(self, target, attachments):
 		"""
 		Create a MIME calendar invite to be sent from a set of parameters.
 
@@ -588,7 +588,7 @@ class MailSenderThread(threading.Thread):
 			top_msg.attach(attach)
 		return top_msg
 
-	def create_email(self, target, uid, attachments):
+	def create_email(self, target, attachments):
 		"""
 		Create a MIME email to be sent from a set of parameters.
 

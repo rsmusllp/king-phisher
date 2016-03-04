@@ -321,4 +321,4 @@ class Calendar(icalendar.Calendar):
 		self._event.add('attendee', attendee)
 
 	def to_ical(self, encoding='utf-8', **kwargs):
-		super(Calendar, self).to_ical(**kwargs).decode('utf-8')
+		return super(Calendar, self).to_ical(**kwargs).decode('utf-8')
