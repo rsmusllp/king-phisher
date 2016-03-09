@@ -179,6 +179,15 @@ else
 	fi
 fi
 
+# update apt-get package information and only continue if successful
+if [ "$(command -v apt-get)" ]; then
+	echo "attempting to update apt-get cache pacakge information"
+	apt-get update
+	if [ ! $? = 0 ]; then
+		echo "apt-get update failed, please correct issues then try again"
+		exit
+fi
+
 # install git if necessary
 if [ ! "$(command -v git)" ]; then
 	if [ "$LINUX_VERSION" == "CentOS" ]; then
