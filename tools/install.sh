@@ -1,4 +1,5 @@
 #!/bin/bash
+# vim: tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab
 ###############################################################################
 # This is the Linux installation script for the King Phisher Client and
 # Server on supported distributions.
@@ -181,10 +182,10 @@ fi
 
 # update apt-get package information and only continue if successful
 if [ "$(command -v apt-get)" ]; then
-	echo "attempting to update apt-get cache pacakge information"
+	echo "Attempting to update apt-get cache pacakge information"
 	apt-get update
 	if [ ! $? = 0 ]; then
-		echo "apt-get update failed, please correct issues then try again"
+		echo "Command 'apt-get update' failed, please correct the issues and try again"
 		exit
 	fi
 fi
