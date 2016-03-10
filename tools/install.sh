@@ -186,6 +186,7 @@ if [ "$(command -v apt-get)" ]; then
 	if [ ! $? = 0 ]; then
 		echo "apt-get update failed, please correct issues then try again"
 		exit
+	fi
 fi
 
 # install git if necessary
