@@ -374,7 +374,7 @@ class ForkedAuthenticator(object):
 				self.logger.warning('authentication request received without a sequence number')
 				continue
 			action = request.get('action', 'UNKNOWN')
-			self.logger.debug('pam control child received authentication request ' + action)
+			self.logger.debug('pam control child received request ' + action)
 			if action == 'stop':
 				break
 			elif action != 'authenticate':
@@ -384,7 +384,7 @@ class ForkedAuthenticator(object):
 
 			start_time = time.time()
 			pam_handle = pam.pam()
-			result = pam_handle.authenticate(username, password, service=self.service)
+			result = pam_handle.authenticate(username, password, service=self.service, resetcreds=False)
 			end_time = time.time() - start_time
 			self.logger.debug("pam returned code: {0} reason: '{1}' for user {2} after {3:.2f} seconds".format(pam_handle.code, pam_handle.reason, username, end_time))
 
@@ -422,7 +422,7 @@ class ForkedAuthenticator(object):
 		cached_password = self.cache.get(username)
 		if cached_password is not None:
 			if cached_password.time + self.cache_timeout >= time.time():
-				self.logger.debug("checking authentication for user {0} with hashed and cached password".format(username))
+				self.logger.debug("checking authentication for user {0} with cached password hash".format(username))
 				return cached_password == password
 			self.logger.debug('removing expired hashed and cached password for user ' + username)
 			del self.cache[username]
