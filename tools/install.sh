@@ -1,4 +1,5 @@
 #!/bin/bash
+# vim: tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab
 ###############################################################################
 # This is the Linux installation script for the King Phisher Client and
 # Server on supported distributions.
@@ -176,6 +177,16 @@ else
 	prompt_yes_or_no "Install and use PostgreSQL? (Highly recommended and required for upgrading)" KING_PHISHER_USE_POSTGRESQL
 	if [ $KING_PHISHER_USE_POSTGRESQL == "yes" ]; then
 		echo "Will install and configure PostgreSQL for the server"
+	fi
+fi
+
+# update apt-get package information and only continue if successful
+if [ "$(command -v apt-get)" ]; then
+	echo "Attempting to update apt-get cache pacakge information"
+	apt-get update
+	if [ ! $? = 0 ]; then
+		echo "Command 'apt-get update' failed, please correct the issues and try again"
+		exit
 	fi
 fi
 
