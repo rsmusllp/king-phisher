@@ -41,19 +41,25 @@ import boltons.strutils
 from gi.repository import Gdk
 from gi.repository import GObject
 from gi.repository import Gtk
-from gi.repository import WebKit2
+try:
+	from gi.repository import WebKit2 as WebKitX
+	has_webkit2 = True
+except ImportError:
+	from gi.repository import WebKit as WebkitX
+	has_webkit2 = False
+#from gi.repository import WebKit2
 
 if isinstance(Gtk.Widget, utilities.Mock):
 	_Gtk_CellRendererText = type('Gtk.CellRendererText', (object,), {})
 	_Gtk_CellRendererText.__module__ = ''
 	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {})
 	_Gtk_FileChooserDialog.__module__ = ''
-	_WebKit2_WebView = type('WebKit2.WebView', (object,), {})
-	_WebKit2_WebView.__module__ = ''
+	_WebKitX_WebView = type('WebKitX.WebView', (object,), {})
+	_WebKitX_WebView.__module__ = ''
 else:
 	_Gtk_CellRendererText = Gtk.CellRendererText
 	_Gtk_FileChooserDialog = Gtk.FileChooserDialog
-	_WebKit2_WebView = WebKit2.WebView
+	_WebKitX_WebView = WebKitX.WebView
 
 class CellRendererBytes(_Gtk_CellRendererText):
 	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
@@ -163,7 +169,7 @@ class FileChooserDialog(_Gtk_FileChooserDialog):
 		target_path = self.get_filename()
 		return {'target_uri': target_uri, 'target_path': target_path}
 
-class WebKitHTMLView(_WebKit2_WebView):
+class WebKitHTMLView(_WebKitX_WebView):
 	"""
 	A WebView widget with additional convenience methods for rendering simple
 	HTML content from either files or strings. If a link is opened within the
@@ -171,12 +177,13 @@ class WebKitHTMLView(_WebKit2_WebView):
 	to it.
 	"""
 	__gsignals__ = {
-		'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, WebKit2.NavigationPolicyDecision))
+		'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, WebKitX.NavigationPolicyDecision))
 	}
 	def __init__(self):
 		super(WebKitHTMLView, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
-		self.get_context().set_cache_model(WebKit2.CacheModel.DOCUMENT_VIEWER)
+		if has_webkit2:
+			self.get_context().set_cache_model(WebKitX.CacheModel.DOCUMENT_VIEWER)
 		self.connect('button-press-event', self.signal_button_pressed)
 		self.connect('decide-policy', self.signal_decide_policy)
 
@@ -205,7 +212,7 @@ class WebKitHTMLView(_WebKit2_WebView):
 			return True
 
 	def signal_decide_policy(self, _, decision, decision_type):
-		if decision_type == WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+		if decision_type == WebKitX.PolicyDecisionType.NAVIGATION_ACTION:
 			uri_request = decision.get_request()
 			uri = uri_request.get_uri()
 			if uri.startswith('file:'):
