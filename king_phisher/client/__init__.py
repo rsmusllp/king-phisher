@@ -43,7 +43,7 @@ _gi_versions = [
 	('GtkSource', '3.0'),
 	('JavaScriptCore', ('3.0', '4.0')),
 	('Pango', '1.0'),
-	('WebKit2', ('3.0', '4.0'))
+	(('WebKit', 'WebKit2'), ('3.0', '4.0'))
 ]
 
 if its.on_linux:
