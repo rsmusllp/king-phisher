@@ -68,14 +68,6 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse
 
-try:
-	from gi.repository import WebKit2 as WebKitX
-	has_webkit2 = True
-except ImportError:
-	from gi.repository import WebKit as WebkitX
-	has_webkit2 = False
-
-
 def test_webserver_url(target_url, secret_id):
 	"""
 	Test the target URL to ensure that it is valid and the server is responding.

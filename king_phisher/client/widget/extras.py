@@ -42,7 +42,6 @@ from gi.repository import Gdk
 from gi.repository import GObject
 from gi.repository import Gtk
 
-# webkit support for windows build
 try:
 	from gi.repository import WebKit2 as WebKitX
 	has_webkit2 = True
@@ -177,28 +176,27 @@ class WebKitHTMLView(_WebKitX_WebView):
 	document, the webview will emit the 'open-uri' signal instead of navigating
 	to it.
 	"""
-	# webkit support for windows build
+
 	if has_webkit2:
-                __gsignals__ = {
-                        'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, WebKitX.NavigationPolicyDecision))
-                }
-        else:
-                __gsignals__ = {
-                        'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, WebKitX.WebPolicyDecision))
-                }
+		__gsignals__ = {
+			'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, WebKitX.NavigationPolicyDecision))
+		}
+	else:
+		__gsignals__ = {
+			'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, WebKitX.WebPolicyDecision))
+		}
 
 	def __init__(self):
 		super(WebKitHTMLView, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 
-                # webkit support for windows build
 		if has_webkit2:
-                        self.get_context().set_cache_model(WebKitX.CacheModel.DOCUMENT_VIEWER)
-                        self.connect('decide-policy', self.signal_decide_policy)
-                else:
-                        self.connect('navigation-policy-decision-requested', self.signal_decide_policy_webkit)
+			self.get_context().set_cache_model(WebKitX.CacheModel.DOCUMENT_VIEWER)
+			self.connect('decide-policy', self.signal_decide_policy)
+		else:
+			self.connect('navigation-policy-decision-requested', self.signal_decide_policy_webkit)
 
-                self.connect('button-press-event', self.signal_button_pressed)
+		self.connect('button-press-event', self.signal_button_pressed)
 
 	def do_open_remote_uri(self, uri, decision):
 		self.logger.debug('received request to open uri: ' + uri)
@@ -213,11 +211,10 @@ class WebKitHTMLView(_WebKitX_WebView):
 		if isinstance(html_file_uri, str) and not html_file_uri.startswith('file://'):
 			html_file_uri = 'file://' + html_file_uri
 
-		# webkit support for windows build
 		if has_webkit2:
-                        self.load_html(html_data, html_file_uri)
-                else:
-                        self.load_html_string(html_data, html_file_uri)
+			self.load_html(html_data, html_file_uri)
+		else:
+			self.load_html_string(html_data, html_file_uri)
 
 	def load_html_file(self, html_file):
 		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
@@ -229,22 +226,22 @@ class WebKitHTMLView(_WebKitX_WebView):
 			# disable right click altogether
 			return True
 
-        # webkit2 signal handler
+	# webkit2 signal handler
 	def signal_decide_policy(self, _, decision, decision_type):
-                if decision_type == WebKitX.PolicyDecisionType.NAVIGATION_ACTION:
-                        uri_request = decision.get_request()
-                        uri = uri_request.get_uri()
-                        if uri.startswith('file:'):
-                                decision.use()
-                        else:
-                                decision.ignore()
-                                self.emit('open-remote-uri', uri, decision)
+		if decision_type == WebKitX.PolicyDecisionType.NAVIGATION_ACTION:
+			uri_request = decision.get_request()
+			uri = uri_request.get_uri()
+			if uri.startswith('file:'):
+				decision.use()
+			else:
+				decision.ignore()
+				self.emit('open-remote-uri', uri, decision)
 
-        # webkit signal handler
-        def signal_decide_policy_webkit(self, view, frame, request, action, policy):
-                uri = request.get_uri()
-                if uri.startswith('file://'):
-                        policy.use()
-                else:
-                        policy.ignore()
-                        self.emit('open-remote-uri', uri, policy)
+	# webkit signal handler
+	def signal_decide_policy_webkit(self, view, frame, request, action, policy):
+		uri = request.get_uri()
+		if uri.startswith('file://'):
+			policy.use()
+		else:
+			policy.ignore()
+			self.emit('open-remote-uri', uri, policy)

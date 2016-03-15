@@ -37,19 +37,20 @@ import gi
 repo = gi.Repository.get_default()
 repo.get_loaded_namespaces()
 
-if 'WebKit2' in repo.get_loaded_namespaces():
-        WebKitX = 'WebKit2'
-else:
-        WebKitX = 'WebKit'
-
 _gi_versions = [
 	('Gdk', '3.0'),
 	('Gtk', '3.0'),
 	('GtkSource', '3.0'),
 	('JavaScriptCore', ('3.0', '4.0')),
-	('Pango', '1.0'),
-        (WebKitX, ('3.0', '4.0'))
+	('Pango', '1.0')
 ]
+
+if 'WebKit2' in repo.get_loaded_namespaces():
+	_gi_versions.append(('WebKit2', ('3.0', '4.0')))
+elif 'WebKit' in repo.get_loaded_namespaces():
+	_gi_versions.append(('WebKit', '3.0'))
+else:
+	_gi_versions.append(('WebKit2', ('3.0', '4.0')))
 
 if its.on_linux:
 	_gi_versions.append(('Vte', ('2.90', '2.91')))
