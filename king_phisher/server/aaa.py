@@ -54,6 +54,7 @@ import smoke_zephyr.utilities
 
 __all__ = ('AuthenticatedSessionManager', 'ForkedAuthenticator')
 
+@smoke_zephyr.utilities.Cache('3h')
 def get_groups_for_user(username):
 	"""
 	Get the groups that a user is a member of.
@@ -321,6 +322,10 @@ class ForkedAuthenticator(object):
 		self.sequence_number += 1
 		if self.sequence_number > 0xffffffff:
 			self.sequence_number = 0
+		log_msg = "sending request with sequence number {0}".format(request['sequence'])
+		if 'action' in request:
+			log_msg += " with action '{0}'".format(request['action'])
+		self.logger.debug(log_msg)
 		self._raw_send(request)
 
 	def _raw_send(self, request):
@@ -343,21 +348,22 @@ class ForkedAuthenticator(object):
 
 	def _seq_recv(self):
 		"""
-		Receive a request from the other process and decode it. This also
-		ensures that 'sequence' member of the request is the expected value.
+		Receive a reseponse from the other process and decode it. This also
+		ensures that 'sequence' member of the response is the expected value.
 		"""
 		timeout = self.response_timeout
 		expected_sequence = self.sequence_number - 1
 		while timeout > 0:
 			start_time = time.time()
-			request = self._raw_recv(timeout)
-			if request.get('sequence') == expected_sequence:
+			response = self._raw_recv(timeout)
+			if response.get('sequence') == expected_sequence:
 				break
-			self.logger.warning("dropping request due to sequence number mismatch (received: {0} expected: {1})".format(request.get('sequence'), expected_sequence))
+			self.logger.warning("dropping response due to sequence number mismatch (received: {0} expected: {1})".format(response.get('sequence'), expected_sequence))
 			timeout -= time.time() - start_time
 		else:
 			raise errors.KingPhisherTimeoutError('a response was not received within the timeout')
-		return request
+		self.logger.debug("received response for sequence number {0}".format(response.get('sequence')))
+		return response
 
 	def child_routine(self):
 		"""
@@ -368,13 +374,13 @@ class ForkedAuthenticator(object):
 		while True:
 			request = self._raw_recv(timeout=None)
 			if 'action' not in request:
-				self.logger.warning('authentication request received without a specified action')
+				self.logger.warning('request received without a specified action')
 				continue
-			if 'sequence' not in request:
-				self.logger.warning('authentication request received without a sequence number')
+			if not isinstance(request.get('sequence'), int):
+				self.logger.warning('request received without a valid sequence number')
 				continue
 			action = request.get('action', 'UNKNOWN')
-			self.logger.debug('pam control child received request ' + action)
+			self.logger.debug("received request with sequence number {0} and action '{1}'".format(request['sequence'], action))
 			if action == 'stop':
 				break
 			elif action != 'authenticate':
@@ -401,7 +407,7 @@ class ForkedAuthenticator(object):
 					except AssertionError:
 						self.logger.warning("authentication failed for user: {0} reason: lack of group membership".format(username))
 					except KeyError:
-						self.logger.error("encountered a KeyError while looking up group member ship for user: {0}".format(username))
+						self.logger.error("encountered a KeyError while looking up group membership for user: {0}".format(username))
 					else:
 						result['result'] = True
 			else:
