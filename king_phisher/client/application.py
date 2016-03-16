@@ -43,6 +43,7 @@ import uuid
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
+from king_phisher import its
 from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher import version
@@ -67,6 +68,11 @@ from gi.repository import Gtk
 import paramiko
 from smoke_zephyr.utilities import parse_server
 from smoke_zephyr.utilities import which
+
+if its.py_v2:
+	from httplib import BadStatusLine
+else:
+	from http.client import BadStatusLine
 
 CONFIG_FILE_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'config.json')
 """The default search location for the client configuration file."""
@@ -466,13 +472,18 @@ class KingPhisherClientApplication(_Gtk_Application):
 			except ValueError as error:
 				self.logger.error("failed to set the rpc serializer, error: '{0}'".format(error.message))
 
+		generic_message = 'Can not contact the RPC HTTP service, ensure that the '
+		generic_message += "King Phisher Server is currently running on port {0}.".format(int(self.config['server_remote_port']))
 		connection_failed = True
 		try:
 			server_version_info = rpc('version')
 			assert server_version_info is not None
 		except AdvancedHTTPServerRPCError as error:
-			self.logger.warning('failed to connect to the remote rpc service with http status: ' + str(error.status))
+			self.logger.warning('failed to connect to the remote rpc service due to http status: ' + str(error.status))
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, "The server responded with HTTP status: {0}.".format(str(error.status)))
+		except BadStatusLine as error:
+			self.logger.warning('failed to connect to the remote rpc service due to http bad status line: ' + error.line)
+			gui_utilities.show_dialog_error(title_rpc_error, active_window, generic_message)
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, active_window)
 		except ssl.CertificateError as error:
@@ -480,7 +491,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server presented an invalid SSL certificate.')
 		except Exception:
 			self.logger.warning('failed to connect to the remote rpc service', exc_info=True)
-			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'Ensure that the King Phisher Server is currently running.')
+			gui_utilities.show_dialog_error(title_rpc_error, active_window, generic_message)
 		else:
 			connection_failed = False
 
