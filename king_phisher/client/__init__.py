@@ -37,14 +37,28 @@ import gi
 repo = gi.Repository.get_default()
 repo.get_loaded_namespaces()
 
+def repo_has_namespace(name):
+	"""
+	Check that the repository has the specified namespace.
+
+	:param str name: The namespace to check for.
+	:return: Whether or not the namespace is available.
+	:rtype: bool
+	"""
+	return bool(repo.enumerate_versions(name))
+
 _gi_versions = [
 	('Gdk', '3.0'),
 	('Gtk', '3.0'),
 	('GtkSource', '3.0'),
 	('JavaScriptCore', ('3.0', '4.0')),
-	('Pango', '1.0'),
-	('WebKit2', ('3.0', '4.0'))
+	('Pango', '1.0')
 ]
+
+if repo_has_namespace('WebKit2') or not repo_has_namespace('WebKit'):
+	_gi_versions.append(('WebKit2', ('3.0', '4.0')))
+else:
+	_gi_versions.append(('WebKit', '3.0'))
 
 if its.on_linux:
 	_gi_versions.append(('Vte', ('2.90', '2.91')))
