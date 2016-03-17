@@ -26,3 +26,6 @@ if 1%ms% lss 100 set ms=0%ms%
 :: mission accomplished
 set /a totalsecs = %hours%*3600 + %mins%*60 + %secs%
 echo build completed in %hours%:%mins%:%secs%.%ms% (%totalsecs%.%ms%s total)
+
+echo the generated exe is located in the build/ directory
+echo the generated msi is located in the dist/ directory

@@ -643,7 +643,7 @@ class FileMonitor(object):
 	def __init__(self, path, on_changed):
 		"""
 		:param str path: The path to monitor for changes.
-		:param on_changed: The call back function to be called when changes are detected.
+		:param on_changed: The callback function to be called when changes are detected.
 		:type on_changed: function
 		"""
 		self.logger = logging.getLogger('KingPhisher.Utility.FileMonitor')
