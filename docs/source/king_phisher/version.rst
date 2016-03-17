@@ -13,6 +13,8 @@ Data
 
 .. autodata:: king_phisher.version.distutils_version
 
+.. autodata:: king_phisher.version.revision
+
 .. autodata:: king_phisher.version.rpc_api_version
 
 .. autodata:: king_phisher.version.version
@@ -20,3 +22,8 @@ Data
 .. autodata:: king_phisher.version.version_info
 
 .. autodata:: king_phisher.version.version_label
+
+Functions
+---------
+
+.. autofunction:: king_phisher.version.get_revision

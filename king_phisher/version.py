@@ -31,6 +31,37 @@
 #
 
 import collections
+import os
+import subprocess
+
+import smoke_zephyr.utilities
+
+def get_revision():
+	"""
+	Retrieve the current git revision identifier. If the git binary can not be
+	found or the repository information is unavailable, None will be returned.
+
+	:return: The git revision tag if it's available.
+	:rtype: str
+	"""
+	git_bin = smoke_zephyr.utilities.which('git')
+	if not git_bin:
+		return None
+	proc_h = subprocess.Popen(
+		[git_bin, 'rev-parse', 'HEAD'],
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE,
+		close_fds=True,
+		cwd=os.path.dirname(os.path.abspath(__file__))
+	)
+	rev = proc_h.stdout.read().strip()
+	proc_h.wait()
+	if not len(rev):
+		return None
+	return rev
+
+revision = get_revision()
+"""The git revision identifying the latest commit if available."""
 
 version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(1, 2, 0)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
@@ -46,6 +77,8 @@ distutils_version = version
 
 if version_label:
 	version += '-' + version_label
+	if revision:
+		version += " (rev: {0})".format(revision[:8])
 	distutils_version += version_label[0]
 	if version_label[-1].isdigit():
 		distutils_version += version_label[-1]
