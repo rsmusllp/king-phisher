@@ -10,7 +10,7 @@ Version 1.x.x
 Version 1.2.0
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.2.0` on March 18th, 2016
 
 * SSH host key validation
 * Install script command line flags
