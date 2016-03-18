@@ -176,15 +176,9 @@ class WebKitHTMLView(_WebKitX_WebView):
 	document, the webview will emit the 'open-uri' signal instead of navigating
 	to it.
 	"""
-
-	if has_webkit2:
-		__gsignals__ = {
-			'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, WebKitX.NavigationPolicyDecision))
-		}
-	else:
-		__gsignals__ = {
-			'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, WebKitX.WebPolicyDecision))
-		}
+	__gsignals__ = {
+		'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, (WebKitX.NavigationPolicyDecision if has_webkit2 else WebKitX.WebPolicyDecision)))
+	}
 
 	def __init__(self):
 		super(WebKitHTMLView, self).__init__()
@@ -214,7 +208,7 @@ class WebKitHTMLView(_WebKitX_WebView):
 		if has_webkit2:
 			self.load_html(html_data, html_file_uri)
 		else:
-			self.load_html_string(html_data, html_file_uri)
+			self.load_string(html_data, 'text/html', 'UTF-8', html_file_uri)
 
 	def load_html_file(self, html_file):
 		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:

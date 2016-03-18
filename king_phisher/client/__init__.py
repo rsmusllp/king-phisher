@@ -51,7 +51,6 @@ _gi_versions = [
 	('Gdk', '3.0'),
 	('Gtk', '3.0'),
 	('GtkSource', '3.0'),
-	('JavaScriptCore', ('3.0', '4.0')),
 	('Pango', '1.0')
 ]
 
