@@ -61,7 +61,7 @@ except ImportError:
 	has_matplotlib = False
 	"""Whether the :py:mod:`matplotlib` module is available."""
 else:
-	if not its.frozen and check_requirements(['matplotlib>=1.5']):
+	if not its.frozen and check_requirements(['matplotlib>=1.5.1']):
 		has_matplotlib = False
 	else:
 		has_matplotlib = True
