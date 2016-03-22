@@ -41,7 +41,7 @@ class VersionTests(testing.KingPhisherTestCase):
 	def test_version_info(self):
 		if version_label:
 			self.assertIn(version_label, ('alpha', 'beta'), msg='the version label is invalid')
-		version_regex = r'^\d+\.\d+\.\d+(-(alpha|beta))?$'
+		version_regex = r'^\d+\.\d+\.\d+(-(alpha|beta))?( \(rev: [a-f0-9]{8}\))?$'
 		self.assertRegex(version, version_regex, msg='the version format is invalid')
 		version_regex = r'^\d+\.\d+\.\d+((a|b)\d)?$'
 		self.assertRegex(distutils_version, version_regex, msg='the distutils version format is invalid')

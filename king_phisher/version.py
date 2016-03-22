@@ -58,7 +58,7 @@ def get_revision():
 	proc_h.wait()
 	if not len(rev):
 		return None
-	return rev
+	return rev.decode('utf-8')
 
 revision = get_revision()
 """The git revision identifying the latest commit if available."""
