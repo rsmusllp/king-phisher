@@ -33,16 +33,19 @@
 import contextlib
 import logging
 import os
+import subprocess
 
 from . import models
 from king_phisher import archive
 from king_phisher import errors
 from king_phisher import find
+from king_phisher import ipaddress
 
 import alembic.command
 import alembic.config
 import alembic.environment
 import alembic.script
+import smoke_zephyr.utilities
 import sqlalchemy
 import sqlalchemy.engine.url
 import sqlalchemy.exc
@@ -212,6 +215,7 @@ def init_database(connection_url):
 		engine = sqlalchemy.create_engine(connection_url, connect_args={'check_same_thread': False}, poolclass=sqlalchemy.pool.StaticPool)
 		sqlalchemy.event.listens_for(engine, 'begin')(lambda conn: conn.execute('BEGIN'))
 	elif connection_url.drivername == 'postgresql':
+		init_database_postgresql(connection_url)
 		engine = sqlalchemy.create_engine(connection_url)
 	else:
 		raise errors.KingPhisherDatabaseError('only sqlite and postgresql database drivers are supported')
@@ -264,3 +268,32 @@ def init_database(connection_url):
 
 	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
 	return engine
+
+def init_database_postgresql(connection_url):
+	"""
+	Perform additional initialization checks and operations for a PostgreSQL
+	database. If the database is hosted locally this will ensure that the
+	service is currently running and start it if it is not.
+
+	:param str connection_url: The url for the PostgreSQL database connection.
+	:return: The initialized database engine.
+	"""
+	if not ipaddress.is_loopback(connection_url.host):
+		return
+	popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+	systemctl_bin = smoke_zephyr.utilities.which('systemctl')
+	if systemctl_bin is None:
+		logger.info('postgresql service status check failed (could not find systemctl)')
+		return
+
+	proc_h = popen([systemctl_bin, 'status', 'postgresql.service'])
+	# wait for the process to return and check if it's running (status 0)
+	if proc_h.wait() == 0:
+		logger.debug('postgresql service is already running via systemctl')
+	else:
+		logger.info('postgresql service is not running, starting it now via systemctl')
+		proc_h = popen([systemctl_bin, 'start', 'postgresql'])
+		if not proc_h.wait() == 0:
+			logger.error('postgresql service failed to start via systemctl')
+			raise errors.KingPhisherDatabaseError('postgresql service failed to start via systemctl')
+		logger.debug('postgresql service successfully started via systemctl')

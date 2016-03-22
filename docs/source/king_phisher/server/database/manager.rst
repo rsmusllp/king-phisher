@@ -24,4 +24,6 @@ Functions
 
 .. autofunction:: king_phisher.server.database.manager.init_database
 
+.. autofunction:: king_phisher.server.database.manager.init_database_postgresql
+
 .. autofunction:: king_phisher.server.database.manager.set_meta_data
