@@ -33,6 +33,7 @@
 import contextlib
 import logging
 import os
+import re
 import subprocess
 
 from . import models
@@ -56,6 +57,13 @@ import sqlalchemy.pool
 Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 logger = logging.getLogger('KingPhisher.Server.Database')
 _meta_data_type_map = {'int': int, 'str': str}
+_popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+
+def _popen_psql(sql):
+	proc_h = _popen(['su', 'postgres', '-c', "psql -At -c \"{0}\"".format(sql)])
+	if proc_h.wait():
+		raise errors.KingPhisherDatabaseError("failed to execute postgresql query '{0}' via su and psql".format(sql))
+	return proc_h.stdout.read().strip().split('\n')
 
 def clear_database():
 	"""
@@ -273,27 +281,54 @@ def init_database_postgresql(connection_url):
 	"""
 	Perform additional initialization checks and operations for a PostgreSQL
 	database. If the database is hosted locally this will ensure that the
-	service is currently running and start it if it is not.
+	service is currently running and start it if it is not. Additionally if the
+	specified database or user do not exist, they will be created.
 
-	:param str connection_url: The url for the PostgreSQL database connection.
+	:param connection_url: The url for the PostgreSQL database connection.
+	:type connection_url: :py:class:`sqlalchemy.engine.url.URL`
 	:return: The initialized database engine.
 	"""
 	if not ipaddress.is_loopback(connection_url.host):
 		return
-	popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+
+	is_sanitary = lambda s: re.match(r'^[a-zA-Z0-9_]+$', s) is not None
+
 	systemctl_bin = smoke_zephyr.utilities.which('systemctl')
 	if systemctl_bin is None:
 		logger.info('postgresql service status check failed (could not find systemctl)')
-		return
-
-	proc_h = popen([systemctl_bin, 'status', 'postgresql.service'])
-	# wait for the process to return and check if it's running (status 0)
-	if proc_h.wait() == 0:
-		logger.debug('postgresql service is already running via systemctl')
 	else:
-		logger.info('postgresql service is not running, starting it now via systemctl')
-		proc_h = popen([systemctl_bin, 'start', 'postgresql'])
-		if not proc_h.wait() == 0:
-			logger.error('postgresql service failed to start via systemctl')
-			raise errors.KingPhisherDatabaseError('postgresql service failed to start via systemctl')
-		logger.debug('postgresql service successfully started via systemctl')
+		proc_h = _popen([systemctl_bin, 'status', 'postgresql.service'])
+		# wait for the process to return and check if it's running (status 0)
+		if proc_h.wait() == 0:
+			logger.debug('postgresql service is already running via systemctl')
+		else:
+			logger.info('postgresql service is not running, starting it now via systemctl')
+			proc_h = _popen([systemctl_bin, 'start', 'postgresql'])
+			if not proc_h.wait() == 0:
+				logger.error('failed to start the postgresql service via systemctl')
+				raise errors.KingPhisherDatabaseError('postgresql service failed to start via systemctl')
+			logger.debug('postgresql service successfully started via systemctl')
+
+	rows = _popen_psql('SELECT usename FROM pg_user')
+	if not connection_url.username in rows:
+		logger.info('the specified postgresql user does not exist, adding it now')
+		if not is_sanitary(connection_url.username):
+			raise errors.KingPhisherInputValidationError('will not create the postgresql user (username contains bad characters)')
+		if not is_sanitary(connection_url.password):
+			raise errors.KingPhisherInputValidationError('will not create the postgresql user (password contains bad characters)')
+		rows = _popen_psql("CREATE USER {url.username} WITH PASSWORD '{url.password}'".format(url=connection_url))
+		if rows != ['CREATE ROLE']:
+			logger.error('failed to create the postgresql user')
+			raise errors.KingPhisherDatabaseError('failed to create the postgresql user')
+		logger.debug('the specified postgresql user was successfully created')
+
+	rows = _popen_psql('SELECT datname FROM pg_database')
+	if not connection_url.database in rows:
+		logger.info('the specified postgresql database does not exist, adding it now')
+		if not is_sanitary(connection_url.database):
+			raise errors.KingPhisherInputValidationError('will not create the postgresql database (name contains bad characters)')
+		rows = _popen_psql("CREATE DATABASE {url.database} OWNER {url.username}".format(url=connection_url))
+		if rows != ['CREATE DATABASE']:
+			logger.error('failed to create the postgresql database')
+			raise errors.KingPhisherDatabaseError('failed to create the postgresql database')
+		logger.debug('the specified postgresql database was successfully created')
