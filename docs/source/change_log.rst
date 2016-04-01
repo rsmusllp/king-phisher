@@ -7,6 +7,13 @@ Phisher.
 Version 1.x.x
 -------------
 
+Version 1.3.0
+^^^^^^^^^^^^^
+
+*In Progress*
+
+* Added automatic setup of PostgreSQL database for the server
+
 Version 1.2.0
 ^^^^^^^^^^^^^
 
