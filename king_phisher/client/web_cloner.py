@@ -179,14 +179,7 @@ class WebPageCloner(object):
 		resource_path = resource_path.lstrip('/')
 		resource_path = os.path.join(self.dest_dir, resource_path)
 		if mime_type == 'text/html':
-			try:
-				codec = codecs.lookup(charset)
-			except LookupError as error:
-				self.logger.warning('failed to decode data from web response, ' + error.args[0])
-			else:
-				data = codec.decode(data)[0]
-				data = self.patch_html(data)
-				data = codec.encode(data)[0]
+			data = self.patch_html(data, charset)
 		with open(resource_path, 'wb') as file_h:
 			file_h.write(data)
 
@@ -194,7 +187,7 @@ class WebPageCloner(object):
 		self.cloned_resources[resource_url.path] = crd
 		self.logger.debug("wrote {0:,} bytes to {1}".format(crd.size, resource_path))
 
-	def patch_html(self, data):
+	def patch_html(self, data, encoding='utf-8'):
 		"""
 		Patch the HTML data to include the King Phisher javascript resource.
 		The script tag is inserted just before the closing head tag. If no head
@@ -204,9 +197,21 @@ class WebPageCloner(object):
 		:return: The patched HTML data.
 		:rtype: str
 		"""
+		try:
+			codec = codecs.lookup(encoding)
+		except LookupError as error:
+			self.logger.warning('failed to decode data from web response, ' + error.args[0])
+			return data
+
+		try:
+			data = codec.decode(data)[0]
+		except Exception as error:
+			self.logger.error("failed to decode data from web response ({0}) using encoding {1}".format(error.__class__.__name__, encoding))
+			return data
+
 		match = re.search(r'</head>', data, flags=re.IGNORECASE)
 		if not match:
-			return data
+			return codec.encode(data)[0]
 		end_head = match.start(0)
 		patched = ''
 		patched += data[:end_head]
@@ -216,7 +221,7 @@ class WebPageCloner(object):
 			ws_cursor -= 1
 		patched += data[ws_cursor + 1:end_head]
 		patched += data[end_head:]
-		return patched
+		return codec.encode(patched)[0]
 
 	def resource_is_on_target(self, resource):
 		"""
