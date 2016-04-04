@@ -60,6 +60,8 @@ _meta_data_type_map = {'int': int, 'str': str}
 _popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 
 def _popen_psql(sql):
+	if os.getuid():
+		raise RuntimeError('_popen_psql can only be used as root due to su requirement')
 	proc_h = _popen(['su', 'postgres', '-c', "psql -At -c \"{0}\"".format(sql)])
 	if proc_h.wait():
 		raise errors.KingPhisherDatabaseError("failed to execute postgresql query '{0}' via su and psql".format(sql))
@@ -207,13 +209,14 @@ def normalize_connection_url(connection_url):
 		connection_url = 'sqlite:///' + os.path.abspath(connection_url)
 	return connection_url
 
-def init_database(connection_url):
+def init_database(connection_url, extra_init=False):
 	"""
 	Create and initialize the database engine. This must be done before the
 	session object can be used. This will also attempt to perform any updates to
 	the database schema if the backend supports such operations.
 
 	:param str connection_url: The url for the database connection.
+	:param bool extra_init: Run optional extra dbms-specific initialization logic.
 	:return: The initialized database engine.
 	"""
 	connection_url = normalize_connection_url(connection_url)
@@ -223,7 +226,8 @@ def init_database(connection_url):
 		engine = sqlalchemy.create_engine(connection_url, connect_args={'check_same_thread': False}, poolclass=sqlalchemy.pool.StaticPool)
 		sqlalchemy.event.listens_for(engine, 'begin')(lambda conn: conn.execute('BEGIN'))
 	elif connection_url.drivername == 'postgresql':
-		init_database_postgresql(connection_url)
+		if extra_init:
+			init_database_postgresql(connection_url)
 		engine = sqlalchemy.create_engine(connection_url)
 	else:
 		raise errors.KingPhisherDatabaseError('only sqlite and postgresql database drivers are supported')

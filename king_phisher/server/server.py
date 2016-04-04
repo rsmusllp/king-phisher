@@ -758,7 +758,7 @@ class KingPhisherServer(AdvancedHTTPServer.AdvancedHTTPServer):
 		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
 		self.serve_robots_txt = True
-		self.database_engine = db_manager.init_database(config.get('server.database'))
+		self.database_engine = db_manager.init_database(config.get('server.database'), extra_init=True)
 
 		self.http_server.config = config
 		self.http_server.throttle_semaphore = threading.Semaphore()

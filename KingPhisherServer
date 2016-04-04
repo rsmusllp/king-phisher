@@ -133,6 +133,7 @@ def main():
 		return os.EX_CONFIG
 	if arguments.verify_config:
 		color.print_good('configuration verification passed')
+		color.print_good('all required settings are present')
 		return os.EX_OK
 	if arguments.update_geoip_db:
 		color.print_status('downloading a new geoip database')
