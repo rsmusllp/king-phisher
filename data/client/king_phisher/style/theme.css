@@ -180,8 +180,12 @@ GtkEntry {
 }
 
 GtkEntry:insensitive {
-  background-color: alpha(gray, 0.8);
+  background-color: alpha(darkgray, 0.8);
   background-image: none;
+}
+
+GtkEntry:selected {
+  background-color: @theme_color_1;
   color: white;
 }
 
@@ -308,6 +312,11 @@ GtkSwitch.slider {
 GtkTextView {
   background-color: @theme_color_bg;
   border-radius: 4px;
+  color: white;
+}
+
+GtkTextView:selected {
+  background-color: @theme_color_1;
   color: white;
 }
 
