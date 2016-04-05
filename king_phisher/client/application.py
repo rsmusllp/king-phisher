@@ -102,6 +102,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 	__gsignals__ = {
 		'campaign-changed': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'config-save': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'reload-css-style': (GObject.SIGNAL_RUN_FIRST, None, ()),
@@ -125,7 +126,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.debug("matplotlib version: {0}".format(graphs.matplotlib.__version__))
 		self.set_property('application-id', 'org.king-phisher.client')
 		self.set_property('register-session', True)
-		self.config_file = CONFIG_FILE_PATH
+		self.config_file = config_file or CONFIG_FILE_PATH
 		"""The file containing the King Phisher client configuration."""
 		if not os.path.isfile(self.config_file):
 			self._create_config()
@@ -153,6 +154,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		action.connect('activate', self.action_emit_application_signal)
 		accelerators = (
 			('<Control><Shift>F1', 'rpc-cache-clear'),
+			('<Control><Shift>F2', 'config-save'),
 			('<Control><Shift>F12', 'reload-css-style')
 		)
 		for key, signal_name in accelerators:
@@ -320,6 +322,15 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
 		self.emit('rpc-cache-clear')
 
+	def do_config_save(self):
+		self.logger.info('writing the client configuration to disk')
+		config = copy.copy(self.config)
+		for key in self.config.keys():
+			if 'password' in key or key == 'server_config':
+				del config[key]
+		with open(os.path.expanduser(self.config_file), 'w') as config_file_h:
+			json_ex.dump(config, config_file_h)
+
 	def do_exit(self):
 		self.main_window.hide()
 		gui_utilities.gtk_widget_destroy_children(self.main_window)
@@ -368,7 +379,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def do_shutdown(self):
 		Gtk.Application.do_shutdown(self)
 		sys.excepthook = sys.__excepthook__
-		self.save_config()
+		self.emit('config-save')
 
 	@property
 	def theme_file(self):
@@ -439,16 +450,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 			Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
 		)
 		return style_provider
-
-	def save_config(self):
-		"""Write the client configuration to disk."""
-		self.logger.info('writing the client configuration to disk')
-		config = copy.copy(self.config)
-		for key in self.config.keys():
-			if 'password' in key or key == 'server_config':
-				del config[key]
-		with open(os.path.expanduser(self.config_file), 'w') as config_file_h:
-			json_ex.dump(config, config_file_h)
 
 	def server_connect(self, username, password, otp=None):
 		# pylint: disable=too-many-locals
@@ -581,7 +582,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""
 		dialog = dialogs.ConfigurationDialog(self)
 		if dialog.interact() != Gtk.ResponseType.CANCEL:
-			self.save_config()
+			self.emit('config-save')
 
 	def signal_css_provider_parsing_error(self, css_provider, css_section, gerror):
 		file_path = css_section.get_file()

@@ -27,6 +27,12 @@ events.
 
    :param str campaign_id: The ID of the new campaign.
 
+.. py:function:: config-save()
+
+   This signal is emitted when the client configuration is written to disk. This
+   saves all of the settings used within the GUI so they can be restored at a
+   later point in time.
+
 .. py:function:: exit()
 
    This signal is emitted when the client is exiting. Subscribers can use it as
