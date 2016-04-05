@@ -980,7 +980,7 @@ class MailSenderTab(object):
 				if its.py_v2:
 					text = text.decode('utf-8')
 				html_file = self.config.get('mailer.html_file')
-				if html_file:
+				if html_file and os.access(html_file, os.R_OK):
 					with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 						old_text = file_h.read()
 					if old_text == text:
