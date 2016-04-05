@@ -265,9 +265,10 @@ class KingPhisherRequestHandlerRPC(object):
 		counter to be incremented.
 
 		:param int campaign_id: The ID of the campaign.
-		:param str hostname: The VHOST for the request.
+		:param str hostname: The hostname which will be used to serve the request.
 		:param str page: The request resource.
 		"""
+		hostname = hostname.split(':', 1)[0]
 		page = page.lstrip('/')
 		query = session.query(db_models.LandingPage)
 		query = query.filter_by(campaign_id=campaign_id, hostname=hostname, page=page)
