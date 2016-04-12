@@ -90,7 +90,6 @@ the [LICENSE](https://github.com/securestate/king-phisher/blob/master/LICENSE) f
 ## Credits
 Special Thanks (QA / Beta Testing):
 
- - Erik Daguerre - wolfthefallen
  - Jake Garlie - jagar
  - Jeremy Schoeneman - Shad0wman
  - Ken Smith - p4tchw0rk
@@ -98,6 +97,7 @@ Special Thanks (QA / Beta Testing):
 
 King Phisher Development Team:
 
+ - Erik Daguerre - wolfthefallen ([@wolf_thefallen](https://twitter.com/wolf_thefallen))
  - Brandan Geise - coldfusion ([@coldfusion39](https://twitter.com/coldfusion39))
  - Jeff McCutchan - jamcut ([@jamcut](https://twitter.com/jamcut))
  - Spencer McIntyre - zeroSteiner ([@zeroSteiner](https://twitter.com/zeroSteiner))

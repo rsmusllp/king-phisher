@@ -13,6 +13,7 @@ Version 1.3.0
 *In Progress*
 
 * Added automatic setup of PostgreSQL database for the server
+* Server bug fixes when running on non-standard HTTP ports
 
 Version 1.2.0
 ^^^^^^^^^^^^^

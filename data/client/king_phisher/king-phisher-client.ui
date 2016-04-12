@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.19.0 
 
-Copyright (c) 2013-2015, SecureState LLC
+Copyright (c) 2013-2016, SecureState LLC
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Authors:
-Spencer McIntyre
-Jeff McCutchan
+Erik Daguerre
 Brandan Geise
+Jeff McCutchan
+Spencer McIntyre
 
 -->
 <interface>
@@ -39,17 +40,17 @@ Brandan Geise
   <!-- interface-license-type bsd3c -->
   <!-- interface-name King Phisher -->
   <!-- interface-description Social Engineering Phishing Toolkit -->
-  <!-- interface-copyright 2013-2015, SecureState LLC -->
+  <!-- interface-copyright 2013-2016, SecureState LLC -->
   <!-- interface-authors Spencer McIntyre\nJeff McCutchan\nBrandan Geise -->
   <object class="GtkAboutDialog" id="AboutDialog">
     <property name="can_focus">False</property>
-    <property name="type_hint">dialog</property>
+    <property name="type_hint">menu</property>
     <property name="program_name">King Phisher</property>
-    <property name="copyright" translatable="yes">Copyright (c) 2013-2015, SecureState LLC</property>
+    <property name="copyright" translatable="yes">Copyright (c) 2013-2016, SecureState LLC</property>
     <property name="comments" translatable="yes">Phishing Campaign Toolkit</property>
     <property name="website">https://github.com/securestate/king-phisher</property>
     <property name="website_label" translatable="yes">GitHub Home Page</property>
-    <property name="license" translatable="yes">Copyright (c) 2013-2015, SecureState LLC
+    <property name="license" translatable="yes">Copyright (c) 2013-2016, SecureState LLC
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -78,9 +79,10 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 </property>
-    <property name="authors">Spencer McIntyre
+    <property name="authors">Erik Daguerre
+Brandan Geise
 Jeff McCutchan
-Brandan Geise</property>
+Spencer McIntyre</property>
     <property name="documenters">Spencer McIntyre</property>
     <property name="artists">Emily Gundry</property>
     <property name="logo_icon_name">image-missing</property>

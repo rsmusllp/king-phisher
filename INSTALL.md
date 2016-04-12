@@ -17,9 +17,10 @@ server must be running SSH and allow ports to be forwarded. The client after
 connecting, communicates via RPC to the server through the encrypted SSH tunnel.
 
 Additionally, the user logging in with the King Phisher Client will require a
-valid local account on the King Phisher Server. The King Phisher Server runs a
-self contained HTTP server and does not require an additional one such as
-Apache, or Nginx.
+valid local account on the King Phisher Server. The King Phisher Server provides
+its own HTTP server and does not require an additional one such as Apache, or
+Nginx. Running an additional server such as Apache or Nginx will likely result
+in a conflict in when trying to bind to a default port.
 
 ## Linux Install Steps
 
