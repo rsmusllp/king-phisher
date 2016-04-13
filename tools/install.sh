@@ -147,7 +147,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Kali"
 fi
 
-grep -E "Ubuntu 1[45]\.(04|10)" /etc/issue &> /dev/null
+grep -E "Ubuntu 1[456]\.(04|10)" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Ubuntu"
 fi
@@ -156,7 +156,6 @@ grep -E "Ubuntu Xenial Xerus" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Ubuntu"
 fi
-
 
 if [ -z "$LINUX_VERSION" ]; then
 	echo "Failed to detect the version of Linux"
@@ -273,23 +272,22 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
 			libgtk-3-dev libpq-dev python-gi python-gi-cairo libpq-dev \
 			python-gobject python-gobject-dev python-paramiko pkg-config
-		if [ $? -eq 0 ]; then
-			echo "Successfully installed dependancies"
-		else
-			echo -e "\nFailed to install the following dependencies with apt-get: \n\n \
-			gir1.2-gtk-3.0 gir1.2-gtksource-3.0 gir1.2-vte-2.90 \
-			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
-			libgtk-3-dev libpq-dev python-gi python-gi-cairo \
-			python-gobject python-gobject-dev python-paramiko pkg-config \
-			\n\nPlease correct issues and try again"
+		if [ $? -ne 0 ]; then
+			echo -e "\nFailed to install dependencies with apt-get\n"
 			exit
 		fi
 
 		apt-cache search gir1.2-vte-2.91
 		if [ $? -eq 0 ]; then
 			apt-get install gir1.2-vte-2.91
+			if [ $? -ne 0 ]; then
+				echo "Failed to install gir1.2-vte-2.91"
+			fi
 		else
 			apt-get install gir1.2-vte-2.90
+			if [ $? -ne 0 ]; then
+				echo "Failed to install girl1.2-vte-2.90"
+			fi
 		fi
 
 		apt-get install -y gir1.2-webkit2-3.0 &> /dev/null
@@ -299,6 +297,7 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 			echo "Failed to install gir1.2-webkit2-3.0 with apt-get"
 		fi
 	fi
+
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		apt-get install -y postgresql postgresql-server-dev-all &> /dev/null
 	fi
