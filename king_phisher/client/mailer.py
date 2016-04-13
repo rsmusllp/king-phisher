@@ -662,8 +662,9 @@ class MailSenderThread(threading.Thread):
 					self.send_message(*args, **kwargs)
 					message_sent = True
 					break
-				except smtplib.SMTPException:
-					self.tab_notify_status('Failed to send message')
+				except smtplib.SMTPException as error:
+					self.tab_notify_status("Failed to send message (exception: {0})".format(error.__class__.__name__))
+					self.logger.warning("failed to send message (exception: smtplib.{0})".format(error.__class__.__name__))
 					time.sleep(1)
 			if not message_sent:
 				self.server_smtp_disconnect()

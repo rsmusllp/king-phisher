@@ -322,11 +322,11 @@ class ForkedAuthenticator(object):
 		self.sequence_number += 1
 		if self.sequence_number > 0xffffffff:
 			self.sequence_number = 0
-		log_msg = "sending request with sequence number {0}".format(request['sequence'])
-		if 'action' in request:
-			log_msg += " with action '{0}'".format(request['action'])
-		self.logger.debug(log_msg)
 		self._raw_send(request)
+		log_msg = "sent request with sequence number {0}".format(request['sequence'])
+		if 'action' in request:
+			log_msg += " and action '{0}'".format(request['action'])
+		self.logger.debug(log_msg)
 
 	def _raw_send(self, request):
 		self.wfile.write(json.dumps(request) + '\n')
@@ -362,7 +362,7 @@ class ForkedAuthenticator(object):
 			timeout -= time.time() - start_time
 		else:
 			raise errors.KingPhisherTimeoutError('a response was not received within the timeout')
-		self.logger.debug("received response for sequence number {0}".format(response.get('sequence')))
+		self.logger.debug("received response with sequence number {0}".format(response.get('sequence')))
 		return response
 
 	def child_routine(self):
@@ -413,6 +413,7 @@ class ForkedAuthenticator(object):
 			else:
 				self.logger.warning("authentication failed for user: {0} reason: bad username or password".format(username))
 			self._raw_send(result)
+			self.logger.debug("sent response with sequence number {0}".format(request['sequence']))
 
 	def authenticate(self, username, password):
 		"""
