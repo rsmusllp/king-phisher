@@ -152,6 +152,12 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Ubuntu"
 fi
 
+grep -E "Ubuntu Xenial Xerus" /etc/issue &> /dev/null
+if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+	LINUX_VERSION="Ubuntu"
+fi
+
+
 if [ -z "$LINUX_VERSION" ]; then
 	echo "Failed to detect the version of Linux"
 	echo "This installer only supports the following Linux distributions:"
@@ -263,10 +269,29 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	 [ "$LINUX_VERSION" == "Ubuntu"  ]; then
 	apt-get install -y libfreetype6-dev python-dev python-pip
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-		apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 gir1.2-vte-2.90 \
+		apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
+			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
+			libgtk-3-dev libpq-dev python-gi python-gi-cairo libpq-dev \
+			python-gobject python-gobject-dev python-paramiko pkg-config
+		if [ $? -eq 0 ]; then
+			echo "Successfully installed dependancies"
+		else
+			echo -e "\nFailed to install the following dependencies with apt-get: \n\n \
+			gir1.2-gtk-3.0 gir1.2-gtksource-3.0 gir1.2-vte-2.90 \
 			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
 			libgtk-3-dev libpq-dev python-gi python-gi-cairo \
-			python-gobject python-gobject-dev python-paramiko
+			python-gobject python-gobject-dev python-paramiko pkg-config \
+			\n\nPlease correct issues and try again"
+			exit
+		fi
+
+		apt-cache search gir1.2-vte-2.91
+		if [ $? -eq 0 ]; then
+			apt-get install gir1.2-vte-2.91
+		else
+			apt-get install gir1.2-vte-2.90
+		fi
+
 		apt-get install -y gir1.2-webkit2-3.0 &> /dev/null
 		if [ $? -eq 0 ]; then
 			echo "Successfully installed gir1.2-webkit2-3.0 with apt-get"
@@ -275,7 +300,7 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 		fi
 	fi
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
-		apt-get install -y postgresql
+		apt-get install -y postgresql postgresql-server-dev-all &> /dev/null
 	fi
 	if [ "$LINUX_VERSION" == "Kali" ]; then
 		easy_install -U distribute
@@ -286,6 +311,7 @@ fi
 echo "Installing Python package dependencies from PyPi"
 # six needs to be installed before requirements.txt for matplotlib
 pip install --upgrade pip
+pip install --upgrade setuptools
 pip install --upgrade six
 pip install -r requirements.txt
 if [ $? -ne 0 ]; then
