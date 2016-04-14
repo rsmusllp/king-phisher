@@ -30,15 +30,23 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import re
-import gi
-gi.require_version('Gtk', '3.0')
-gi.require_version('GtkSource', '3.0')
+
+from king_phisher import utilities
 
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import GtkSource
 
-class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider):
+if isinstance(Gtk.Widget, utilities.Mock):
+	_GObject_GObject = type('GObject.GObject', (object,), {})
+	_GObject_GObject.__module__ = ''
+	_GtkSource_CompletionProvider = type('GtkSource.CompletionProvider', (object,), {})
+	_GtkSource_CompletionProvider.__module__ = ''
+else:
+	_GObject_GObject = GObject.GObject
+	_GtkSource_CompletionProvider = GtkSource.CompletionProvider
+
+class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvider):
 	"""
 	A custom GtkSource.CompletionProvider
 	This class is used to create GtkSource Completion Providers that will provide syntax
@@ -66,7 +74,7 @@ class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider
 		"""
 		This must be defined in class that is inheriting CustomCompletionProviderBase
 		:param context:
-		:type context: :py:class:`GtkSource.CompletionContextClass`
+		:type context: :py:class:`GtkSource.CompletionContext`
 		:param re.MatchObject match: the match from the regex.match()
 		"""
 		raise NotImplementedError()
@@ -77,7 +85,7 @@ class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider
 		extraction_regex
 
 		:param context:
-		:type context: :py:class:`GtkSource.CompletionContextClass`
+		:type context: :py:class:`GtkSource.CompletionContext`
 		:return: re.MatchObject
 		"""
 		end_iter = context.get_iter()
@@ -101,7 +109,7 @@ class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider
 		This is done to reduce the amount of caching occurring.
 
 		:param context:
-		:type context: :py:class:`GtkSource.CompletionContextClass`
+		:type context: :py:class:`GtkSource.CompletionContext`
 		:return: True
 		"""
 		return True
@@ -136,7 +144,7 @@ class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider
 		Used to iterate through the dictionaries of looking for possible matches.
 
 		:param dict search: The Dictionary to iterate through.
-		:param List match: string for matching split at any '.' as a list
+		:param List match: string for matching split at any `.` as a list
 		:return: A list of words that are a possible match.
 		:rtype: list
 		"""
@@ -234,7 +242,6 @@ class JinjaPageComletionProvider(JinjaComletionProvider):
 	"""
 	Class used to update the Jinja base completion provider.
 	"""
-	name = 'Jinja Page'
 	jinja_vars = {
 		'client': {
 			'address': None,

@@ -64,7 +64,7 @@ def linkcode_resolve(domain, info):
 intersphinx_mapping = {
 	'glib': ('http://lazka.github.io/pgi-docs/GLib-2.0/', None),
 	'gobject': ('http://lazka.github.io/pgi-docs/GObject-2.0/', None),
-	'gtksource': ('https://lazka.github.io/pgi-docs/GtkSource-3.0/', None)
+	'gtksource': ('https://lazka.github.io/pgi-docs/GtkSource-3.0/', None),
 	'gtk': ('http://lazka.github.io/pgi-docs/Gtk-3.0/', None),
 	'paramiko': ('http://docs.paramiko.org/en/latest/', None),
 	'smokezephyr': ('https://smoke-zephyr.readthedocs.org/en/latest/', None),

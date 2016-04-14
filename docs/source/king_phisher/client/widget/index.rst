@@ -8,3 +8,4 @@
    extras.rst
    managers.rst
    resources.rst
+   completion_providers.rst
