@@ -190,7 +190,10 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 	"""
 	left_delimiter = '{'
 	left_delimiter_adjustment = -1
-	extraction_regex = re.compile(r'.*(?:{{\s*|{%\s+(?:if|elif|for\s+[a-z_]+\s+in)\s+)(?P<var>[a-z_.]+)(?P<is_filter>\s*\|\s*(?P<filter>[a-z_]+)?)?$')
+	extraction_regex = re.compile(
+		r'.*(?:{{\s*|{%\s+(?:if|elif|for\s+[a-z_]+\s+in)\s+)(?P<var>[a-z_.]+)'
+		r'((?P<is_test>\s+is\s+(?P<test>[a-z_]+))|(?P<is_filter>\s*\|\s*(?P<filter>[a-z_]+))?)?$'
+	)
 	name = 'Jinja'
 	__common_jinja_vars = {
 		'time': {
@@ -263,6 +266,25 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		'singularize',
 		'possessive',
 	]
+	jinja_tests = [
+		'callable',
+		'defined',
+		'divisibleby',
+		'equalto',
+		'escaped',
+		'even',
+		'iterable',
+		'lower',
+		'mapping',
+		'none',
+		'number',
+		'odd',
+		'sameas',
+		'sequence',
+		'string',
+		'undefined',
+		'upper',
+	]
 	jinja_vars = {}
 
 	def __init__(self, *args, **kwargs):
@@ -292,6 +314,9 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		if match.group('is_filter'):
 			jinja_filter = match.group('filter') or ''
 			proposal_terms = [term for term in self.jinja_filters if term.startswith(jinja_filter)]
+		elif match.group('is_test'):
+			jinja_test = match.group('test') or ''
+			proposal_terms = [term for term in self.jinja_tests if term.startswith(jinja_test)]
 		else:
 			tokens = match.group('var')
 			tokens = tokens.split('.')
