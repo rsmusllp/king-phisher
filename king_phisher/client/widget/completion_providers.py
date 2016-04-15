@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/widget/extras.py
+#  king_phisher/client/widget/completion_providers.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -50,12 +50,12 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 	"""
 	A custom GtkSource.CompletionProvider
 	This class is used to create GtkSource Completion Providers that will provide syntax
-	options and recognize special characters according to the defined extraction_regex
+	completion options and recognize special characters according to the defined extraction_regex
 	and left delimiter.
 
-	check class that inherits this class must:
-	define its own populate function
-	and set the following variables
+	Classes that inherits this class must:
+	1) Define its own populate function.
+	2) Set the following variables:
 	 - left_delimiter
 	 - extraction_regex
 	 - name
@@ -73,16 +73,18 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 	def populate(self, context, match):
 		"""
 		This must be defined in class that is inheriting CustomCompletionProviderBase
+
 		:param context:
 		:type context: :py:class:`GtkSource.CompletionContext`
-		:param re.MatchObject match: the match from the regex.match()
+		:param match: the match from the regex.match()
+		:type match: re.MatchObject
 		"""
 		raise NotImplementedError()
 
 	def extract(self, context):
 		"""
 		Used to extract the text according to the left_delimiter and
-		extraction_regex
+		extraction_regex.
 
 		:param context:
 		:type context: :py:class:`GtkSource.CompletionContext`
@@ -105,8 +107,9 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 
 	def do_match(self, context):
 		"""
+		Called by GtkSourceCompletion when text is typed.
 		Always return true as though there is a match.
-		This is done to reduce the amount of caching occurring.
+		This is done to reduce the amount of caching.
 
 		:param context:
 		:type context: :py:class:`GtkSource.CompletionContext`
@@ -116,15 +119,15 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 
 	def do_populate(self, context):
 		"""
-		An automated function called GtkSource.CompletionClass when a do_match
-		is True.
+		An automated function called by GtkSource.Completion,
+		when a do_match is True.
 
 		This function is used to provide suggested completion words for the match
+		This is done by creating a list of suggesting and adding them to the
+		GtkSource.CompletionContext.
 
 		:param context:
 		:type context: :py:class:`GtkSource.CompletionContext`
-		:return: a list of GtkSource.CompletionItemClass of suggestions.
-		:rtype: list
 		"""
 		match = self.extract(context)
 		if match is None:
@@ -141,10 +144,10 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 
 	def find_match(self, search, match):
 		"""
-		Used to iterate through the dictionaries of looking for possible matches.
+		Used to iterate through the dictionaries looking for possible matches.
 
 		:param dict search: The Dictionary to iterate through.
-		:param List match: string for matching split at any `.` as a list
+		:param list match: string for matching split at any `.` as a list
 		:return: A list of words that are a possible match.
 		:rtype: list
 		"""
@@ -178,7 +181,9 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 
 	def __init__(self, *args, **kwargs):
 		"""
-		Used to init the super class and update the Jinja Dictionary.
+		Used to init the super class and update the jinja dictionary,
+		form any inheriting sub classes.
+
 		:param args:
 		:param kwargs:
 		"""
@@ -189,11 +194,11 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		"""
 		Utilizes the match from the regex check to see if there
 		is a possible match in the dictionary, then returns
-		the suggests to from the match to be populated.
+		the suggests to be populated.
 
 		:param match: The matching object.
 		:types match: `re.MatchObject`
-		:return: List of strings to for population.
+		:return: List of strings for population.
 		:rtype: list
 		"""
 		matching = match.group(1)

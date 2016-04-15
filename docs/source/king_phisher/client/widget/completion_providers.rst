@@ -1,7 +1,7 @@
 :mod:`widget.completion_providers`
 ==================================
 
-.. module:: widget.managers
+.. module:: widget.completion_providers
    :synopsis:
 
 This module contains classes for custom auto completion for GtkSourceCompletion.
