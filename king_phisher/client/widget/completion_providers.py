@@ -68,7 +68,7 @@ def get_proposal_terms(search, tokens):
 		if tokens[1:]:
 			found = get_proposal_terms(found, tokens[1:])
 		else:
-			found = list(found.keys())
+			found = []
 	else:
 		token_0 = tokens[0]
 		found = [term for term in search.keys() if term.startswith(token_0) and term != token_0]
@@ -84,6 +84,8 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 	"""The regular expression used to match completion string extracted with the :py:attr:`.left_delimiter`."""
 	left_delimiter = None
 	"""The delimiter used to terminate the left end of the match string."""
+	left_delimiter_adjustment = 0
+	"""A number of characters to adjust to beyond the delimiter string."""
 	name = 'Undefined'
 	"""The name of this completion provider as it should appear in the UI."""
 	def __init__(self):
@@ -124,9 +126,14 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 			return
 		buf = end_iter.get_buffer()
 		mov_iter = end_iter.copy()
-		if not mov_iter.backward_search(self.left_delimiter, Gtk.TextSearchFlags.VISIBLE_ONLY):
+		mov_iter = mov_iter.backward_search(self.left_delimiter, Gtk.TextSearchFlags.VISIBLE_ONLY)
+		if not mov_iter:
 			return
-		mov_iter, _ = mov_iter.backward_search(self.left_delimiter, Gtk.TextSearchFlags.VISIBLE_ONLY)
+		mov_iter, _ = mov_iter
+		if self.left_delimiter_adjustment > 0:
+			mov_iter.forward_chars(self.left_delimiter_adjustment)
+		elif self.left_delimiter_adjustment < 0:
+			mov_iter.backward_chars(abs(self.left_delimiter_adjustment))
 		left_text = buf.get_text(mov_iter, end_iter, True)
 
 		return self.extraction_regex.match(left_text)
@@ -167,10 +174,13 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 		matching_suggestions = self.populate(context, match)
 		matching_suggestions.sort()
 		for suggestion in matching_suggestions:
-			if suggestion:
-				proposals.append(
-					GtkSource.CompletionItem(label=suggestion, text=suggestion)
-				)
+			if not suggestion:
+				continue
+			if isinstance(suggestion, str):
+				item = GtkSource.CompletionItem(label=suggestion, text=suggestion)
+			else:
+				item = GtkSource.CompletionItem(label=suggestion[0], text=suggestion[1])
+			proposals.append(item)
 		context.add_proposals(self, proposals, True)
 
 class JinjaComletionProvider(CustomCompletionProviderBase):
@@ -178,8 +188,9 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 	Used as the base GtkSource.CompletionProviderClass for
 	King Phisher's template editing.
 	"""
-	left_delimiter = '{{'
-	extraction_regex = re.compile(r'{{\s*([a-z_.]+)$')
+	left_delimiter = '{'
+	left_delimiter_adjustment = -1
+	extraction_regex = re.compile(r'.*(?:{{\s*|{%\s+(?:if|elif|for\s+[a-z_]+\s+in)\s+)(?P<var>[a-z_.]+)(?P<is_filter>\s*\|\s*(?P<filter>[a-z_]+)?)?$')
 	name = 'Jinja'
 	__common_jinja_vars = {
 		'time': {
@@ -187,9 +198,71 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 			'utc': None
 		},
 		'version': None,
-		'random_integer': None,
-		'parse_user_agent': None,
+		'random_integer(': None,
+		'parse_user_agent(': None,
 	}
+	jinja_filters = [
+		# stock jinja2 filters
+		'abs',
+		'attr(',
+		'batch(',
+		'capitalize',
+		'center',
+		'default',
+		'dictsort',
+		'escape',
+		'filesizeformat',
+		'first',
+		'float',
+		'forceescape',
+		'format(',
+		'groupby(',
+		'indent',
+		'int',
+		'join',
+		'last',
+		'length',
+		'list',
+		'lower',
+		'map(',
+		'pprint',
+		'random',
+		'replace(',
+		'reverse',
+		'round',
+		'safe',
+		'slice(',
+		'sort',
+		'string',
+		'striptags',
+		'sum',
+		'title',
+		'trim',
+		'trunscate',
+		'upper',
+		'urlencode',
+		'urlize',
+		'wordcount',
+		'wordwrap',
+		'xmlattr',
+		# date / time filters
+		'strftime(',
+		'timedelta(',
+		'tomorrow',
+		'next_week',
+		'next_month',
+		'next_year',
+		'yesterday',
+		'last_week',
+		'last_month',
+		'last_year',
+		# misc string filters
+		'cardinalize',
+		'ordinalize',
+		'pluralize',
+		'singularize',
+		'possessive',
+	]
 	jinja_vars = {}
 
 	def __init__(self, *args, **kwargs):
@@ -212,12 +285,19 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		:type context: :py:class:`GtkSource.CompletionContext`
 		:param match: The matching object.
 		:types match: `re.MatchObject`
-		:return: List of strings for population.
+		:return: List of strings to be used for creation of proposals.
 		:rtype: list
 		"""
-		tokens = match.group(1)
-		tokens = tokens.split('.')
-		return get_proposal_terms(self.jinja_vars, tokens)
+		proposal_terms = []
+		if match.group('is_filter'):
+			jinja_filter = match.group('filter') or ''
+			proposal_terms = [term for term in self.jinja_filters if term.startswith(jinja_filter)]
+		else:
+			tokens = match.group('var')
+			tokens = tokens.split('.')
+			proposal_terms = get_proposal_terms(self.jinja_vars, tokens)
+		proposal_terms = [(term.split('(', 1)[0], term) for term in proposal_terms]
+		return proposal_terms
 
 class JinjaEmailCompletionProvider(JinjaComletionProvider):
 	"""
@@ -250,7 +330,7 @@ class JinjaEmailCompletionProvider(JinjaComletionProvider):
 		},
 		'tracking_dot_image_tag': None,
 		'uid': None,
-		'inline_image': None,
+		'inline_image(': None,
 	}
 
 class JinjaPageComletionProvider(JinjaComletionProvider):

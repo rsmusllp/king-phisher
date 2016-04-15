@@ -44,11 +44,11 @@ class ClientJinjaComletionProviderTests(testing.KingPhisherTestCase):
 			['time']
 		)
 		self.assertIsInstance(proposal_strings, list)
-		self.assertIn('local', proposal_strings)
+		self.assertNotIn('local', proposal_strings)
 
 		proposal_strings = completion_providers.get_proposal_terms(
 			provider.jinja_vars,
-			['time', 'l']
+			['time', '']
 		)
 		self.assertIsInstance(proposal_strings, list)
 		self.assertIn('local', proposal_strings)
