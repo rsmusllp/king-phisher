@@ -29,6 +29,7 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
 import re
 
 from king_phisher import utilities
@@ -48,22 +49,16 @@ else:
 
 class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvider):
 	"""
-	A custom GtkSource.CompletionProvider
-	This class is used to create GtkSource Completion Providers that will provide syntax
-	completion options and recognize special characters according to the defined extraction_regex
-	and left delimiter.
-
-	Classes that inherits this class must:
-	1) Define its own populate function.
-	2) Set the following variables:
-	 - left_delimiter
-	 - extraction_regex
-	 - name
+	This class is used to create GtkSource Completion Providers that will
+	provide syntax completion options and recognize special characters according
+	to the defined extraction_regex and left delimiter.
 	"""
+	extraction_regex = r''
+	"""The regular expression used to match completion string extracted with the :py:attr:`.left_delimiter`."""
 	left_delimiter = None
-	extraction_regex = ''
+	"""The delimiter used to terminate the left end of the match string."""
 	name = 'Undefined'
-
+	"""The name of this completion provider as it should appear in the UI."""
 	def __init__(self):
 		super(CustomCompletionProviderBase, self).__init__()
 
@@ -72,23 +67,26 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 
 	def populate(self, context, match):
 		"""
-		This must be defined in class that is inheriting CustomCompletionProviderBase
+		This is called when the :py:attr:`.extraction_regex` returns a match.
+		Subclasses must then use this opportunity to populate the *context* with
+		proposals.
 
-		:param context:
+		:param context: The context for the completion.
 		:type context: :py:class:`GtkSource.CompletionContext`
-		:param match: the match from the regex.match()
-		:type match: re.MatchObject
+		:param match: The resulting match from the :py:attr:`.extraction_regex`.
+		:type match: :py:class:`re.MatchObject`
 		"""
 		raise NotImplementedError()
 
 	def extract(self, context):
 		"""
-		Used to extract the text according to the left_delimiter and
-		extraction_regex.
+		Used to extract the text according to the :py:attr:`.left_delimiter` and
+		:py:attr:`.extraction_regex`.
 
-		:param context:
+		:param context: The context for the completion.
 		:type context: :py:class:`GtkSource.CompletionContext`
-		:return: re.MatchObject
+		:return: The resulting match from the :py:attr:`.extraction_regex`.
+		:rtype: :py:class:`re.MatchObject`
 		"""
 		end_iter = context.get_iter()
 		if not isinstance(end_iter, Gtk.TextIter):
@@ -107,33 +105,36 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 
 	def do_match(self, context):
 		"""
-		Called by GtkSourceCompletion when text is typed.
-		Always return true as though there is a match.
-		This is done to reduce the amount of caching.
+		Called by GtkSourceCompletion when text is typed. Always return true as
+		though there is a match. This is done to eliminate the need to cache the
+		text which is extracted and matched against a regular expression from
+		the context.
 
-		:param context:
+		:param context: The context for the completion.
 		:type context: :py:class:`GtkSource.CompletionContext`
-		:return: True
+		:return: Always true to cause :py:meth:`.do_populate` to be called.
+		:rtype: bool
 		"""
 		return True
 
 	def do_populate(self, context):
 		"""
-		An automated function called by GtkSource.Completion,
-		when a do_match is True.
+		An automated function called by GtkSource.Completion, when
+		:py:meth:`.do_match` returns True. This function is used to provide
+		suggested completion words (referred to as proposals) for the context
+		based on the match. This is done by creating a list of suggestions and
+		adding them with :py:meth:`GtkSource.CompletionContext.add_proposals`.
 
-		This function is used to provide suggested completion words for the match
-		This is done by creating a list of suggesting and adding them to the
-		GtkSource.CompletionContext.
-
-		:param context:
+		:param context: The context for the completion.
 		:type context: :py:class:`GtkSource.CompletionContext`
 		"""
 		match = self.extract(context)
 		if match is None:
+			# if extract returns none, return here without calling self.populate
 			return
+
 		proposals = []
-		matching_suggestions = self.populate(match)
+		matching_suggestions = self.populate(context, match)
 		matching_suggestions.sort()
 		for suggestion in matching_suggestions:
 			if suggestion:
@@ -142,22 +143,24 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 				)
 		context.add_proposals(self, proposals, True)
 
-	def find_match(self, search, match):
+	def find_match(self, search, tokens):
 		"""
 		Used to iterate through the dictionaries looking for possible matches.
 
-		:param dict search: The Dictionary to iterate through.
-		:param list match: string for matching split at any `.` as a list
-		:return: A list of words that are a possible match.
+		:param dict search: The dictionary to iterate through looking for proposals.
+		:param list tokens: List of tokens split on a hierarchy delimiter.
+		:return: The words to be suggested for completion.
 		:rtype: list
 		"""
-		found = search.get(match[0], [])
+		if isinstance(tokens, str):
+			tokens = [tokens]
+		found = search.get(tokens[0], [])
 		if found:
-			if match[1:]:
-				found = self.find_match(found, match[1:])
+			if tokens[1:]:
+				found = self.find_match(found, tokens[1:])
 		else:
-			search_term = match[0]
-			found = [term for term in search.keys() if term.startswith(search_term) and term != search_term]
+			token_0 = tokens[0]
+			found = [term for term in search.keys() if term.startswith(token_0) and term != token_0]
 		return found
 
 class JinjaComletionProvider(CustomCompletionProviderBase):
@@ -190,28 +193,24 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		super(JinjaComletionProvider, self).__init__(*args, **kwargs)
 		self.jinja_vars.update(self.__common_jinja_vars)
 
-	def populate(self, match):
+	def populate(self, context, match):
 		"""
-		Utilizes the match from the regex check to see if there
-		is a possible match in the dictionary, then returns
-		the suggests to be populated.
+		Utilizes the match from the regular expression check to check for
+		possible matches of :py:attr:`.jinja_vars`.
 
 		:param match: The matching object.
 		:types match: `re.MatchObject`
 		:return: List of strings for population.
 		:rtype: list
 		"""
-		matching = match.group(1)
-		if '.' in matching:
-			split_match = matching.split('.')
-			sug_words = self.find_match(self.jinja_vars, split_match)
-		else:
-			sug_words = self.find_match(self.jinja_vars, [matching])
+		tokens = match.group(1)
+		tokens = tokens.split('.')
+		sug_words = self.find_match(self.jinja_vars, tokens)
 		return sug_words
 
 class JinjaEmailCompletionProvider(JinjaComletionProvider):
 	"""
-	Class used to update the Jinja base completion provider.
+	Completion provider for Jinja syntax within an Email.
 	"""
 	jinja_vars = {
 		'calendar_invite': {
@@ -245,7 +244,7 @@ class JinjaEmailCompletionProvider(JinjaComletionProvider):
 
 class JinjaPageComletionProvider(JinjaComletionProvider):
 	"""
-	Class used to update the Jinja base completion provider.
+	Completion provider for Jinja syntax within a web page.
 	"""
 	jinja_vars = {
 		'client': {

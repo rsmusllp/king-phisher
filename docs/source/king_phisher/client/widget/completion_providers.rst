@@ -5,7 +5,8 @@
    :synopsis:
 
 This module contains classes for custom auto completion for GtkSourceCompletion.
-It provides support to recognize special characters and suggests syntax completion.
+It provides support to recognize special characters and suggests syntax
+completion.
 
 Classes
 -------
