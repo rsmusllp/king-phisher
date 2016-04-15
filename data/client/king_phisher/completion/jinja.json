@@ -1,0 +1,197 @@
+{
+  "context": {
+    "email": {
+      "tokens": {
+        "calendar_invite": {
+          "all_day": null,
+          "location": null,
+          "start": null,
+          "summary": null
+        },
+        "client": {
+          "company_name": null,
+          "email_address": null,
+          "first_name": null,
+          "last_name": null,
+          "message_id": null
+        },
+        "inline_image(": null,
+        "message_type": null,
+        "sender": {
+          "email": null,
+          "friendly_alias": null,
+          "reply_to": null
+        },
+        "tracking_dot_image_tag": null,
+        "uid": null,
+        "url": {
+          "tracking_dot": null,
+          "webserver": null,
+          "webserver_raw": null
+        }
+      }
+    },
+    "page": {
+      "tokens": {
+        "client": {
+          "address": null,
+          "company": {
+            "name": null,
+            "url_email": null,
+            "url_main": null,
+            "url_remote_access": null
+          },
+          "email_address": null,
+          "first_name": null,
+          "is_trained": null,
+          "last_name": null,
+          "message_id": null,
+          "visit_count": null,
+          "visit_id": null
+        },
+        "request": {
+          "command": null,
+          "cookies": null,
+          "parameters": null,
+          "user_agent": null
+        },
+        "server": {
+          "address": null,
+          "hostname": null
+        }
+      }
+    }
+  },
+  "global": {
+    "filters": [
+      "abs",
+      "attr(",
+      "batch(",
+      "capitalize",
+      "center",
+      "default",
+      "dictsort",
+      "escape",
+      "filesizeformat",
+      "first",
+      "float",
+      "forceescape",
+      "format(",
+      "groupby(",
+      "indent",
+      "int",
+      "join",
+      "last",
+      "length",
+      "list",
+      "lower",
+      "map(",
+      "pprint",
+      "random",
+      "replace(",
+      "reverse",
+      "round",
+      "safe",
+      "slice(",
+      "sort",
+      "string",
+      "striptags",
+      "sum",
+      "title",
+      "trim",
+      "trunscate",
+      "upper",
+      "urlencode",
+      "urlize",
+      "wordcount",
+      "wordwrap",
+      "xmlattr",
+      "strftime(",
+      "timedelta(",
+      "tomorrow",
+      "next_week",
+      "next_month",
+      "next_year",
+      "yesterday",
+      "last_week",
+      "last_month",
+      "last_year",
+      "cardinalize",
+      "ordinalize",
+      "pluralize",
+      "singularize",
+      "possessive"
+    ],
+    "tests": [
+      "abs",
+      "attr(",
+      "batch(",
+      "capitalize",
+      "center",
+      "default",
+      "dictsort",
+      "escape",
+      "filesizeformat",
+      "first",
+      "float",
+      "forceescape",
+      "format(",
+      "groupby(",
+      "indent",
+      "int",
+      "join",
+      "last",
+      "length",
+      "list",
+      "lower",
+      "map(",
+      "pprint",
+      "random",
+      "replace(",
+      "reverse",
+      "round",
+      "safe",
+      "slice(",
+      "sort",
+      "string",
+      "striptags",
+      "sum",
+      "title",
+      "trim",
+      "trunscate",
+      "upper",
+      "urlencode",
+      "urlize",
+      "wordcount",
+      "wordwrap",
+      "xmlattr",
+      "strftime(",
+      "timedelta(",
+      "tomorrow",
+      "next_week",
+      "next_month",
+      "next_year",
+      "yesterday",
+      "last_week",
+      "last_month",
+      "last_year",
+      "cardinalize",
+      "ordinalize",
+      "pluralize",
+      "singularize",
+      "possessive"
+    ],
+    "tokens": {
+      "dict(": null,
+      "libsum": null,
+      "parse_user_agent(": null,
+      "random_integer(": null,
+      "range(": null,
+      "time": {
+        "local": null,
+        "utc": null
+      },
+      "version": null
+    }
+  }
+}

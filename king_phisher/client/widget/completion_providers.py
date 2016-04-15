@@ -30,8 +30,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
 import re
 
+from king_phisher import find
+from king_phisher import json_ex
 from king_phisher import utilities
 
 from gi.repository import GObject
@@ -195,98 +198,7 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		r'((?P<is_test>\s+is\s+(?P<test>[a-z_]+))|(?P<is_filter>\s*\|\s*(?P<filter>[a-z_]+))?)?$'
 	)
 	name = 'Jinja'
-	__common_jinja_vars = {
-		'time': {
-			'local': None,
-			'utc': None
-		},
-		'version': None,
-		'random_integer(': None,
-		'parse_user_agent(': None,
-	}
-	jinja_filters = [
-		# stock jinja2 filters
-		'abs',
-		'attr(',
-		'batch(',
-		'capitalize',
-		'center',
-		'default',
-		'dictsort',
-		'escape',
-		'filesizeformat',
-		'first',
-		'float',
-		'forceescape',
-		'format(',
-		'groupby(',
-		'indent',
-		'int',
-		'join',
-		'last',
-		'length',
-		'list',
-		'lower',
-		'map(',
-		'pprint',
-		'random',
-		'replace(',
-		'reverse',
-		'round',
-		'safe',
-		'slice(',
-		'sort',
-		'string',
-		'striptags',
-		'sum',
-		'title',
-		'trim',
-		'trunscate',
-		'upper',
-		'urlencode',
-		'urlize',
-		'wordcount',
-		'wordwrap',
-		'xmlattr',
-		# date / time filters
-		'strftime(',
-		'timedelta(',
-		'tomorrow',
-		'next_week',
-		'next_month',
-		'next_year',
-		'yesterday',
-		'last_week',
-		'last_month',
-		'last_year',
-		# misc string filters
-		'cardinalize',
-		'ordinalize',
-		'pluralize',
-		'singularize',
-		'possessive',
-	]
-	jinja_tests = [
-		'callable',
-		'defined',
-		'divisibleby',
-		'equalto',
-		'escaped',
-		'even',
-		'iterable',
-		'lower',
-		'mapping',
-		'none',
-		'number',
-		'odd',
-		'sameas',
-		'sequence',
-		'string',
-		'undefined',
-		'upper',
-	]
-	jinja_vars = {}
-
+	var_context = None
 	def __init__(self, *args, **kwargs):
 		"""
 		Used to init the super class and update the jinja dictionary,
@@ -296,7 +208,25 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		:param kwargs:
 		"""
 		super(JinjaComletionProvider, self).__init__(*args, **kwargs)
-		self.jinja_vars.update(self.__common_jinja_vars)
+		completion_data = find.find_data_file(os.path.join('completion', 'jinja.json'))
+		if completion_data is None:
+			raise RuntimeError('failed to find completion data file')
+		with open(completion_data, 'r') as file_h:
+			completion_data = json_ex.load(file_h)
+		self.jinja_filters = completion_data['global']['filters']
+		self.jinja_tests = completion_data['global']['tests']
+		self.jinja_tokens = completion_data['global']['tokens']
+		if self.var_context is not None:
+			context = completion_data['context']
+			if not self.var_context in context:
+				raise RuntimeError('the specified context is not defined')
+			context = context[self.var_context]
+			if 'filters' in context:
+				self.jinja_filters.extend(context['filters'])
+			if 'tests' in context:
+				self.jinja_tests.extend(context['tests'])
+			if 'tokens' in context:
+				self.jinja_tokens.update(context['tokens'])
 
 	def populate(self, context, match):
 		"""
@@ -320,7 +250,7 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		else:
 			tokens = match.group('var')
 			tokens = tokens.split('.')
-			proposal_terms = get_proposal_terms(self.jinja_vars, tokens)
+			proposal_terms = get_proposal_terms(self.jinja_tokens, tokens)
 		proposal_terms = [(term.split('(', 1)[0], term) for term in proposal_terms]
 		return proposal_terms
 
@@ -328,65 +258,10 @@ class JinjaEmailCompletionProvider(JinjaComletionProvider):
 	"""
 	Completion provider for Jinja syntax within an Email.
 	"""
-	jinja_vars = {
-		'calendar_invite': {
-			'all_day': None,
-			'location': None,
-			'start': None,
-			'summary': None,
-		},
-		'client': {
-			'company_name': None,
-			'email_adress': None,
-			'first_name': None,
-			'last_name': None,
-			'message_id': None,
-		},
-		'message_type': None,
-		'sender': {
-			'email': None,
-			'friendly_alias': None,
-			'reply_to': None,
-		},
-		'url': {
-			'tracking_dot': None,
-			'webserver': None,
-			'webserver_raw': None,
-		},
-		'tracking_dot_image_tag': None,
-		'uid': None,
-		'inline_image(': None,
-	}
+	var_context = 'email'
 
 class JinjaPageComletionProvider(JinjaComletionProvider):
 	"""
 	Completion provider for Jinja syntax within a web page.
 	"""
-	jinja_vars = {
-		'client': {
-			'address': None,
-			'email_adress': None,
-			'first_name': None,
-			'last_name': None,
-			'message_id': None,
-			'company': {
-				'name': None,
-				'url_email': None,
-				'url_main': None,
-				'url_remote_access': None,
-			},
-			'is_trained': None,
-			'visit_count': None,
-			'visit_id': None,
-		},
-		'request': {
-			'command': None,
-			'cookies': None,
-			'parameters': None,
-			'user_agent': None,
-		},
-		'server': {
-			'address': None,
-			'hostname': None,
-		}
-	}
+	var_context = 'page'
