@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/client/widget/__init__.py
+#  tests/client/widget/completion_providers.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,9 +30,28 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
+import unittest
 
-from .completion_providers import ClientJinjaComletionProviderTests
-from .managers import ClientTreeViewManagerTests
+from king_phisher import testing
+from king_phisher.client.widget import completion_providers
+
+class ClientJinjaComletionProviderTests(testing.KingPhisherTestCase):
+	def test_get_proposal_terms(self):
+		provider = completion_providers.JinjaComletionProvider()
+
+		proposal_strings = completion_providers.get_proposal_terms(
+			provider.jinja_vars,
+			['time']
+		)
+		self.assertIsInstance(proposal_strings, list)
+		self.assertIn('local', proposal_strings)
+
+		proposal_strings = completion_providers.get_proposal_terms(
+			provider.jinja_vars,
+			['time', 'l']
+		)
+		self.assertIsInstance(proposal_strings, list)
+		self.assertIn('local', proposal_strings)
+
+if __name__ == '__main__':
+	unittest.main()

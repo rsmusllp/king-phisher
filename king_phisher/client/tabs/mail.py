@@ -46,6 +46,7 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
+from king_phisher.client.widget import completion_providers
 from king_phisher.client.widget import extras
 from king_phisher.client.widget import managers
 from king_phisher.constants import ConnectionErrorReason
@@ -555,6 +556,10 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		else:
 			self.logger.error("invalid GTK source theme: '{0}'".format(style_scheme_name))
 		self.file_monitor = None
+
+		source_completion = self.textview.get_completion()
+		source_completion.set_property('auto-complete-delay', 375)
+		source_completion.add_provider(completion_providers.JinjaEmailCompletionProvider())
 
 	def _html_file_changed(self, path, monitor_event):
 		if monitor_event in (Gio.FileMonitorEvent.CHANGED, Gio.FileMonitorEvent.CHANGES_DONE_HINT, Gio.FileMonitorEvent.CREATED):

@@ -14,6 +14,7 @@ Version 1.3.0
 
 * Added automatic setup of PostgreSQL database for the server
 * Server bug fixes when running on non-standard HTTP ports
+* Added completion to the messaged editor
 
 Version 1.2.0
 ^^^^^^^^^^^^^
