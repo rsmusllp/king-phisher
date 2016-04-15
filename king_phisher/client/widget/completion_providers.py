@@ -47,6 +47,33 @@ else:
 	_GObject_GObject = GObject.GObject
 	_GtkSource_CompletionProvider = GtkSource.CompletionProvider
 
+def get_proposal_terms(search, tokens):
+	"""
+	Used to iterate through the *search* dictionary definition representing
+	tokens for completion. Terms within this dictionary have a hierarchy to
+	their definition in which keys are always terms represented as strings and
+	values are either sub-dictionaries following the same pattern or None in the
+	case that the term is a leaf node.
+
+	:param dict search: The dictionary to iterate through looking for proposals.
+	:param tokens: List of tokens split on the hierarchy delimiter.
+	:type tokens: list, str
+	:return: A list of strings to be used for completion proposals.
+	:rtype: list
+	"""
+	if isinstance(tokens, str):
+		tokens = [tokens]
+	found = search.get(tokens[0], {})
+	if found:
+		if tokens[1:]:
+			found = get_proposal_terms(found, tokens[1:])
+		else:
+			found = list(found.keys())
+	else:
+		token_0 = tokens[0]
+		found = [term for term in search.keys() if term.startswith(token_0) and term != token_0]
+	return found
+
 class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvider):
 	"""
 	This class is used to create GtkSource Completion Providers that will
@@ -81,7 +108,8 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 	def extract(self, context):
 		"""
 		Used to extract the text according to the :py:attr:`.left_delimiter` and
-		:py:attr:`.extraction_regex`.
+		:py:attr:`.extraction_regex`. If the extraction regular expression does
+		not match, None is returned.
 
 		:param context: The context for the completion.
 		:type context: :py:class:`GtkSource.CompletionContext`
@@ -124,6 +152,8 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 		suggested completion words (referred to as proposals) for the context
 		based on the match. This is done by creating a list of suggestions and
 		adding them with :py:meth:`GtkSource.CompletionContext.add_proposals`.
+		If :py:meth:`.extract` returns None, then :py:meth:`.populate` will not
+		be called.
 
 		:param context: The context for the completion.
 		:type context: :py:class:`GtkSource.CompletionContext`
@@ -142,26 +172,6 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 					GtkSource.CompletionItem(label=suggestion, text=suggestion)
 				)
 		context.add_proposals(self, proposals, True)
-
-	def find_match(self, search, tokens):
-		"""
-		Used to iterate through the dictionaries looking for possible matches.
-
-		:param dict search: The dictionary to iterate through looking for proposals.
-		:param list tokens: List of tokens split on a hierarchy delimiter.
-		:return: The words to be suggested for completion.
-		:rtype: list
-		"""
-		if isinstance(tokens, str):
-			tokens = [tokens]
-		found = search.get(tokens[0], [])
-		if found:
-			if tokens[1:]:
-				found = self.find_match(found, tokens[1:])
-		else:
-			token_0 = tokens[0]
-			found = [term for term in search.keys() if term.startswith(token_0) and term != token_0]
-		return found
 
 class JinjaComletionProvider(CustomCompletionProviderBase):
 	"""
@@ -198,6 +208,8 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		Utilizes the match from the regular expression check to check for
 		possible matches of :py:attr:`.jinja_vars`.
 
+		:param context: The context for the completion.
+		:type context: :py:class:`GtkSource.CompletionContext`
 		:param match: The matching object.
 		:types match: `re.MatchObject`
 		:return: List of strings for population.
@@ -205,8 +217,7 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		"""
 		tokens = match.group(1)
 		tokens = tokens.split('.')
-		sug_words = self.find_match(self.jinja_vars, tokens)
-		return sug_words
+		return get_proposal_terms(self.jinja_vars, tokens)
 
 class JinjaEmailCompletionProvider(JinjaComletionProvider):
 	"""

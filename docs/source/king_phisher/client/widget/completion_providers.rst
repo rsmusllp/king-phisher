@@ -8,6 +8,11 @@ This module contains classes for custom auto completion for GtkSourceCompletion.
 It provides support to recognize special characters and suggests syntax
 completion.
 
+Functions
+---------
+
+.. autofunction:: king_phisher.client.widget.completion_providers.get_proposal_terms
+
 Classes
 -------
 
