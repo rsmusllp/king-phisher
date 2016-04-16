@@ -79,11 +79,11 @@ def get_proposal_terms(search, tokens):
 
 class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvider):
 	"""
-	This class is used to create GtkSource Completion Providers that will
-	provide syntax completion options and recognize special characters according
-	to the defined extraction_regex and left delimiter.
+	This class is used to create completion providers that will provide syntax
+	completion options and recognize special characters.
 	"""
 	data_file = None
+	"""A JSON encoded data file from which to load completion data."""
 	extraction_regex = r''
 	"""The regular expression used to match completion string extracted with the :py:attr:`.left_delimiter`."""
 	left_delimiter = None
@@ -206,6 +206,9 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 		context.add_proposals(self, proposals, True)
 
 class HTMLComletionProvider(CustomCompletionProviderBase):
+	"""
+	A completion provider which supports HTML5 tags and attributes.
+	"""
 	data_file = 'html.json'
 	left_delimiter = '<'
 	extraction_regex = re.compile(
@@ -232,8 +235,8 @@ class HTMLComletionProvider(CustomCompletionProviderBase):
 
 class JinjaComletionProvider(CustomCompletionProviderBase):
 	"""
-	Used as the base GtkSource.CompletionProviderClass for
-	King Phisher's template editing.
+	Used as the base completion provider for King Phisher's Jinja2 template
+	editing.
 	"""
 	data_file = 'jinja.json'
 	left_delimiter = '{'
