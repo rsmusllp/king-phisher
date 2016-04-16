@@ -195,7 +195,11 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 	left_delimiter_adjustment = -1
 	extraction_regex = re.compile(
 		r'.*(?:{{\s*|{%\s+(?:if|elif|for\s+[a-z_]+\s+in)\s+)(?P<var>[a-z_.]+)'
-		r'((?P<is_test>\s+is\s+(?P<test>[a-z_]+))|(?P<is_filter>\s*\|\s*(?P<filter>[a-z_]+))?)?$'
+		r'('
+			r'(?P<is_test>\s+is\s+(?P<test>[a-z_]+))'
+			r'|'
+			r'(?P<is_filter>\s*\|\s*(?:[a-z_]+\s*\|\s*)*(?P<filter>[a-z_]*(?!\|)))'
+		r'?)?$'
 	)
 	name = 'Jinja'
 	var_context = None
@@ -203,9 +207,6 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		"""
 		Used to init the super class and update the jinja dictionary,
 		form any inheriting sub classes.
-
-		:param args:
-		:param kwargs:
 		"""
 		super(JinjaComletionProvider, self).__init__(*args, **kwargs)
 		completion_data = find.find_data_file(os.path.join('completion', 'jinja.json'))
@@ -247,7 +248,7 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		elif match.group('is_test'):
 			jinja_test = match.group('test') or ''
 			proposal_terms = [term for term in self.jinja_tests if term.startswith(jinja_test)]
-		else:
+		elif match.group('var'):
 			tokens = match.group('var')
 			tokens = tokens.split('.')
 			proposal_terms = get_proposal_terms(self.jinja_tokens, tokens)
