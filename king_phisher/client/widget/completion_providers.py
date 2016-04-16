@@ -213,7 +213,7 @@ class HTMLComletionProvider(CustomCompletionProviderBase):
 	left_delimiter = '<'
 	extraction_regex = re.compile(
 		r'<(?P<tag>[a-z]+)'
-		r'(?P<is_attr>\s+(?P<attr>[a-z_]*))?'
+		r'(?P<is_attr>\s+(?:[a-z_]+(=(?P<quote>["\'])(?:(\\.|[^\4])*)\4)?\s+)*(?P<attr>[a-z_]*))?'
 		r'$'
 	)
 	name = 'HTML'
