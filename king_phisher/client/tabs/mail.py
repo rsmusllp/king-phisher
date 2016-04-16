@@ -561,6 +561,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		source_completion.set_property('accelerators', 0)
 		source_completion.set_property('auto-complete-delay', 375)
 		source_completion.set_property('show-icons', False)
+		source_completion.add_provider(completion_providers.HTMLComletionProvider())
 		source_completion.add_provider(completion_providers.JinjaEmailCompletionProvider())
 
 	def _html_file_changed(self, path, monitor_event):

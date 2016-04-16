@@ -1,0 +1,202 @@
+{
+  "a": [
+    "download",
+    "href",
+    "hreflang",
+    "media",
+    "name",
+    "rel",
+    "target",
+    "type"
+  ],
+  "blockquote": [
+    "cite"
+  ],
+  "body": [
+    "onafterprint",
+    "onbeforeprint",
+    "onbeforeunload",
+    "onblur",
+    "onerror",
+    "onfocus",
+    "onhaschange",
+    "onload",
+    "onmessage",
+    "onoffline",
+    "ononline",
+    "onpopstate",
+    "onredo",
+    "onresize",
+    "onstorage",
+    "onundo",
+    "onunload"
+  ],
+  "br": null,
+  "button": [
+    "autofocus!",
+    "disabled!",
+    "form",
+    "formaction",
+    "formenctype",
+    "formmethod",
+    "formnovalidate!",
+    "formtarget",
+    "name",
+    "type",
+    "value"
+  ],
+  "center": null,
+  "code": null,
+  "div": null,
+  "embed": [
+    "height",
+    "src",
+    "type",
+    "width"
+  ],
+  "footer": null,
+  "h1": null,
+  "h2": null,
+  "h3": null,
+  "h4": null,
+  "h5": null,
+  "head": null,
+  "header": null,
+  "html": null,
+  "iframe": [
+    "height",
+    "name",
+    "sandbox",
+    "src",
+    "srcdoc",
+    "width"
+  ],
+  "img": [
+    "alt",
+    "crossorigin",
+    "height",
+    "ismap!",
+    "longdesc",
+    "src",
+    "width"
+  ],
+  "input": [
+    "accept",
+    "alt",
+    "autocomplete",
+    "autofocus!",
+    "checked!",
+    "dirname",
+    "disabled!",
+    "form",
+    "formaction",
+    "formenctype",
+    "formmethod",
+    "formnovalidate",
+    "formtarget",
+    "height",
+    "list",
+    "max",
+    "maxlength",
+    "min",
+    "multiple",
+    "name",
+    "pattern",
+    "placeholder",
+    "readonly!",
+    "required!",
+    "size",
+    "src",
+    "step",
+    "type",
+    "value",
+    "width"
+  ],
+  "label": [
+    "for",
+    "form"
+  ],
+  "link": [
+    "charset",
+    "crossorigin",
+    "href",
+    "hreflang",
+    "media",
+    "rel",
+    "rev",
+    "sizes",
+    "target",
+    "type"
+  ],
+  "meta": [
+    "charset",
+    "content",
+    "http-equiv",
+    "name",
+    "scheme"
+  ],
+  "noscript": null,
+  "script": [
+    "async!",
+    "charset",
+    "defer!",
+    "src",
+    "type"
+  ],
+  "section": null,
+  "select": [
+    "autofocus!",
+    "disabled!",
+    "form",
+    "multiple!",
+    "required!",
+    "size"
+  ],
+  "small": null,
+  "source": [
+    "media",
+    "src",
+    "type"
+  ],
+  "span": null,
+  "strong": null,
+  "style": [
+    "media",
+    "scoped!",
+    "type"
+  ],
+  "table": [
+    "border",
+    "sortable!"
+  ],
+  "td": [
+    "colspan",
+    "headers",
+    "rowspan"
+  ],
+  "textarea": [
+    "autofocus!",
+    "cols",
+    "dirname",
+    "disabled!",
+    "form",
+    "maxlength",
+    "name",
+    "placeholder",
+    "readonly!",
+    "required!",
+    "rows",
+    "wrap"
+  ],
+  "th": [
+    "abbr",
+    "colspan",
+    "headers",
+    "rowspan",
+    "scope",
+    "sorted"
+  ],
+  "title": null,
+  "tr": null,
+  "ul": null
+}

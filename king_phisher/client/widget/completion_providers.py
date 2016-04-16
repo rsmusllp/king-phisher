@@ -83,6 +83,7 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 	provide syntax completion options and recognize special characters according
 	to the defined extraction_regex and left delimiter.
 	"""
+	data_file = None
 	extraction_regex = r''
 	"""The regular expression used to match completion string extracted with the :py:attr:`.left_delimiter`."""
 	left_delimiter = None
@@ -93,9 +94,28 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 	"""The name of this completion provider as it should appear in the UI."""
 	def __init__(self):
 		super(CustomCompletionProviderBase, self).__init__()
+		if self.data_file is not None:
+			completion_data = find.find_data_file(os.path.join('completion', self.data_file))
+			if completion_data is None:
+				raise RuntimeError("failed to find completion data file '{0}'".format(self.data_file))
+			with open(completion_data, 'r') as file_h:
+				completion_data = json_ex.load(file_h)
+			self.load_data(completion_data)
 
 	def do_get_name(self):
 		return self.name
+
+	def load_data(self, completion_data):
+		"""
+		When :py:attr:`.data_file` is defined, this function is called on
+		initialization after loading the JSON data encoded within it. This
+		method can then be overridden by subclasses to provide additional setup
+		and define completion data prior to the class being registered as a
+		provider.
+
+		:param completion_data: The arbitrary JSON encoded data contained within the specified file.
+		"""
+		pass
 
 	def populate(self, context, match):
 		"""
@@ -143,17 +163,16 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 
 	def do_match(self, context):
 		"""
-		Called by GtkSourceCompletion when text is typed. Always return true as
-		though there is a match. This is done to eliminate the need to cache the
-		text which is extracted and matched against a regular expression from
-		the context.
+		Called by GtkSourceCompletion to determine if this provider matches the
+		context. This returns true if the :py:meth:`.extract` returns a valid
+		match object from the regular expression.
 
 		:param context: The context for the completion.
 		:type context: :py:class:`GtkSource.CompletionContext`
-		:return: Always true to cause :py:meth:`.do_populate` to be called.
+		:return: Whether or not the :py:meth:`.extract` method returned a match.
 		:rtype: bool
 		"""
-		return True
+		return self.extract(context) is not None
 
 	def do_populate(self, context):
 		"""
@@ -186,34 +205,51 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 			proposals.append(item)
 		context.add_proposals(self, proposals, True)
 
+class HTMLComletionProvider(CustomCompletionProviderBase):
+	data_file = 'html.json'
+	left_delimiter = '<'
+	extraction_regex = re.compile(
+		r'<(?P<tag>[a-z]+)'
+		r'(?P<is_attr>\s+(?P<attr>[a-z_]*))?'
+		r'$'
+	)
+	name = 'HTML'
+	def load_data(self, completion_data):
+		self.html_tags = completion_data
+
+	def populate(self, context, match):
+		proposal_terms = []
+		tag = match.group('tag')
+		if match.group('is_attr'):
+			if tag in self.html_tags:
+				comp_attr = match.group('attr') or ''
+				attrs = self.html_tags[tag] + ['class', 'id', 'style', 'title']
+				proposal_terms = [term for term in attrs if term.startswith(comp_attr)]
+				proposal_terms = [(term[:-1], term[:-1] + ' ') if term[-1] == '!' else (term, term + '="') for term in proposal_terms]
+		else:
+			proposal_terms = [(term, term + ' ') for term in self.html_tags.keys() if term.startswith(tag)]
+		return proposal_terms
+
 class JinjaComletionProvider(CustomCompletionProviderBase):
 	"""
 	Used as the base GtkSource.CompletionProviderClass for
 	King Phisher's template editing.
 	"""
+	data_file = 'jinja.json'
 	left_delimiter = '{'
 	left_delimiter_adjustment = -1
 	extraction_regex = re.compile(
 		r'.*(?:{{\s*|{%\s+(?:if|elif|for\s+[a-z_]+\s+in)\s+)(?P<var>[a-z_.]+)'
 		r'('
-			r'(?P<is_test>\s+is\s+(?P<test>[a-z_]+))'
-			r'|'
-			r'(?P<is_filter>\s*\|\s*(?:[a-z_]+\s*\|\s*)*(?P<filter>[a-z_]*(?!\|)))'
-		r'?)?$'
+		r'(?P<is_test>\s+is\s+(?P<test>[a-z_]+))'
+		r'|'
+		r'(?P<is_filter>\s*\|\s*(?:[a-z_]+\s*\|\s*)*(?P<filter>[a-z_]*(?!\|)))'
+		r')?'
+		r'$'
 	)
 	name = 'Jinja'
 	var_context = None
-	def __init__(self, *args, **kwargs):
-		"""
-		Used to init the super class and update the jinja dictionary,
-		form any inheriting sub classes.
-		"""
-		super(JinjaComletionProvider, self).__init__(*args, **kwargs)
-		completion_data = find.find_data_file(os.path.join('completion', 'jinja.json'))
-		if completion_data is None:
-			raise RuntimeError('failed to find completion data file')
-		with open(completion_data, 'r') as file_h:
-			completion_data = json_ex.load(file_h)
+	def load_data(self, completion_data):
 		self.jinja_filters = completion_data['global']['filters']
 		self.jinja_tests = completion_data['global']['tests']
 		self.jinja_tokens = completion_data['global']['tokens']
