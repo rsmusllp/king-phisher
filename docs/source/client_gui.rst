@@ -7,5 +7,6 @@ Client GUI
    :titlesonly:
 
    client_gui/configuration.rst
+   client_gui/completion_data.rst
    client_gui/gobject_signals.rst
    client_gui/key_shortcuts.rst

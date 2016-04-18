@@ -215,6 +215,10 @@ class HTMLComletionProvider(CustomCompletionProviderBase):
 	A completion provider which supports HTML5 tags and attributes.
 	"""
 	data_file = 'html.json'
+	"""
+	A JSON encoded data file from which to load completion data in the format
+	specified in the :ref:`completion-data-html` section.
+	"""
 	left_delimiter = '<'
 	extraction_regex = re.compile(
 		r'<(?P<tag>[a-z]+)'
@@ -244,6 +248,10 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 	editing.
 	"""
 	data_file = 'jinja.json'
+	"""
+	A JSON encoded data file from which to load completion data in the format
+	specified in the :ref:`completion-data-jinja` section.
+	"""
 	left_delimiter = '{'
 	left_delimiter_adjustment = -1
 	extraction_regex = re.compile(
