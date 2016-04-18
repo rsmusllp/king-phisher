@@ -8,12 +8,11 @@ Overview
 
 The RPC API is used by the King Phisher client to communicate with the server.
 It uses the RPC capabilities provided by the
-:py:mod:`~king_phisher.third_party.AdvancedHTTPServer` module for the
-underlying communications. The RPC API provides a way for the client to
-retrieve and set information regarding campaigns as well as the server's
-configuration. RPC requests must be authenticated and are only permitted from
-the loopback interface. The client is responsible for using SSH to set up a port
-forward for requests.
+:py:mod:`AdvancedHTTPServer` module for the underlying communications. The RPC
+API provides a way for the client to retrieve and set information regarding
+campaigns as well as the server's configuration. RPC requests must be
+authenticated and are only permitted from the loopback interface. The client is
+responsible for using SSH to set up a port forward for requests.
 
 .. _rpc-api-general-api-label:
 

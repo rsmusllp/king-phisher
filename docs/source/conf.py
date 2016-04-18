@@ -49,8 +49,7 @@ extensions = [
 ]
 
 extlinks = {
-	'release': ("https://github.com/{0}/releases/tag/v%s".format(GITHUB_REPO), 'v'),
-	'rfc': ("https://tools.ietf.org/html/%s", 'RFC-')
+	'release': ("https://github.com/{0}/releases/tag/v%s".format(GITHUB_REPO), 'v')
 }
 
 def linkcode_resolve(domain, info):
