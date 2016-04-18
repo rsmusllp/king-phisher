@@ -90,6 +90,8 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 	"""The delimiter used to terminate the left end of the match string."""
 	left_delimiter_adjustment = 0
 	"""A number of characters to adjust to beyond the delimiter string."""
+	left_limit = 512
+	"""The maximum number of characters to search backwards for the :py:attr:`.left_delimiter`."""
 	name = 'Undefined'
 	"""The name of this completion provider as it should appear in the UI."""
 	def __init__(self):
@@ -149,7 +151,10 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 			return
 		buf = end_iter.get_buffer()
 		mov_iter = end_iter.copy()
-		mov_iter = mov_iter.backward_search(self.left_delimiter, Gtk.TextSearchFlags.VISIBLE_ONLY)
+		limit_iter = end_iter.copy()
+		if self.left_limit:
+			limit_iter.backward_chars(self.left_limit)
+		mov_iter = mov_iter.backward_search(self.left_delimiter, Gtk.TextSearchFlags.VISIBLE_ONLY, limit=limit_iter)
 		if not mov_iter:
 			return
 		mov_iter, _ = mov_iter
@@ -181,8 +186,8 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 		suggested completion words (referred to as proposals) for the context
 		based on the match. This is done by creating a list of suggestions and
 		adding them with :py:meth:`GtkSource.CompletionContext.add_proposals`.
-		If :py:meth:`.extract` returns None, then :py:meth:`.populate` will not
-		be called.
+		If :py:meth:`.extract` returns None, then
+		:py:meth:`~.CustomCompletionProviderBase.populate` will not be called.
 
 		:param context: The context for the completion.
 		:type context: :py:class:`GtkSource.CompletionContext`
