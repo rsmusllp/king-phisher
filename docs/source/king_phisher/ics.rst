@@ -21,9 +21,9 @@ Functions
 
 .. autofunction:: king_phisher.ics.get_timedelta_for_offset
 
-.. autofunction:: king_phisher.ics.get_tz_posix_env_var
+.. autofunction:: king_phisher.ics.get_tz_posix_env_var(tz_name)
 
-.. autofunction:: king_phisher.ics.parse_tz_posix_env_var
+.. autofunction:: king_phisher.ics.parse_tz_posix_env_var(posix_env_var)
 
 Classes
 -------

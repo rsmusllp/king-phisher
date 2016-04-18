@@ -109,7 +109,7 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 
 	def load_data(self, completion_data):
 		"""
-		When :py:attr:`.data_file` is defined, this function is called on
+		When :py:attr:`.CustomCompletionProviderBase.data_file` is defined, this function is called on
 		initialization after loading the JSON data encoded within it. This
 		method can then be overridden by subclasses to provide additional setup
 		and define completion data prior to the class being registered as a
