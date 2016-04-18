@@ -55,6 +55,17 @@
     "width"
   ],
   "footer": null,
+  "form": [
+    "accept",
+    "accept-charset",
+    "action",
+    "autocomplete",
+    "enctype",
+    "method",
+    "name",
+    "novalidate!",
+    "target"
+  ],
   "h1": null,
   "h2": null,
   "h3": null,

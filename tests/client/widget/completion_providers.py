@@ -30,8 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import glob
+import os
 import unittest
 
+from king_phisher import find
+from king_phisher import json_ex
 from king_phisher import testing
 from king_phisher.client.widget import completion_providers
 
@@ -52,6 +56,18 @@ class ClientJinjaComletionProviderTests(testing.KingPhisherTestCase):
 		)
 		self.assertIsInstance(proposal_strings, list)
 		self.assertIn('local', proposal_strings)
+
+	def test_load_data_files(self):
+		completion_dir = find.find_data_directory('completion')
+		self.assertIsNotNone(completion_dir, 'failed to find the \'completion\' directory')
+		# validate that completion definitions claiming to be json are loadable as json
+		for json_file in glob.glob(os.path.join(completion_dir, '*.json')):
+			json_file = os.path.abspath(json_file)
+			with open(json_file, 'r') as file_h:
+				try:
+					json_ex.load(file_h, strict=True)
+				except Exception:
+					self.fail("failed to load file '{0}' as json data".format(json_file))
 
 if __name__ == '__main__':
 	unittest.main()

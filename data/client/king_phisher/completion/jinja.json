@@ -49,6 +49,9 @@
           "visit_count": null,
           "visit_id": null
         },
+        "embed_youtube_video(": null,
+        "make_csrf_page(": null,
+        "make redirect_page(": null,
         "request": {
           "command": null,
           "cookies": null,
