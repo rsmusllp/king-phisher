@@ -51,9 +51,8 @@ from gi.repository import GdkPixbuf
 from gi.repository import Gtk
 import xlsxwriter
 
-if isinstance(Gtk.ApplicationWindow, utilities.Mock):
-	_Gtk_ApplicationWindow = type('Gtk.ApplicationWindow', (object,), {})
-	_Gtk_ApplicationWindow.__module__ = ''
+if isinstance(Gtk.Widget, utilities.Mock):
+	_Gtk_ApplicationWindow = type('Gtk.ApplicationWindow', (object,), {'__module__': ''})
 else:
 	_Gtk_ApplicationWindow = Gtk.ApplicationWindow
 

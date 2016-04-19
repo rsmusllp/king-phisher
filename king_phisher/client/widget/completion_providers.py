@@ -42,10 +42,8 @@ from gi.repository import Gtk
 from gi.repository import GtkSource
 
 if isinstance(Gtk.Widget, utilities.Mock):
-	_GObject_GObject = type('GObject.GObject', (object,), {})
-	_GObject_GObject.__module__ = ''
-	_GtkSource_CompletionProvider = type('GtkSource.CompletionProvider', (object,), {})
-	_GtkSource_CompletionProvider.__module__ = ''
+	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
+	_GtkSource_CompletionProvider = type('GtkSource.CompletionProvider', (object,), {'__module__': ''})
 else:
 	_GObject_GObject = GObject.GObject
 	_GtkSource_CompletionProvider = GtkSource.CompletionProvider
@@ -77,7 +75,7 @@ def get_proposal_terms(search, tokens):
 		found = [term for term in search.keys() if term.startswith(token_0) and term != token_0]
 	return found
 
-class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvider):
+class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider):
 	"""
 	This class is used to create completion providers that will provide syntax
 	completion options and recognize special characters.
@@ -109,11 +107,11 @@ class CustomCompletionProviderBase(_GObject_GObject, _GtkSource_CompletionProvid
 
 	def load_data(self, completion_data):
 		"""
-		When :py:attr:`.CustomCompletionProviderBase.data_file` is defined, this function is called on
-		initialization after loading the JSON data encoded within it. This
-		method can then be overridden by subclasses to provide additional setup
-		and define completion data prior to the class being registered as a
-		provider.
+		When :py:attr:`.CustomCompletionProviderBase.data_file` is defined, this
+		function is called on initialization after loading the JSON data encoded
+		within it. This method can then be overridden by subclasses to provide
+		additional setup and define completion data prior to the class being
+		registered as a provider.
 
 		:param completion_data: The arbitrary JSON encoded data contained within the specified file.
 		"""

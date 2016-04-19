@@ -50,12 +50,9 @@ except ImportError:
 	has_webkit2 = False
 
 if isinstance(Gtk.Widget, utilities.Mock):
-	_Gtk_CellRendererText = type('Gtk.CellRendererText', (object,), {})
-	_Gtk_CellRendererText.__module__ = ''
-	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {})
-	_Gtk_FileChooserDialog.__module__ = ''
-	_WebKitX_WebView = type('WebKitX.WebView', (object,), {})
-	_WebKitX_WebView.__module__ = ''
+	_Gtk_CellRendererText = type('Gtk.CellRendererText', (object,), {'__module__': ''})
+	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {'__module__': ''})
+	_WebKitX_WebView = type('WebKitX.WebView', (object,), {'__module__': ''})
 else:
 	_Gtk_CellRendererText = Gtk.CellRendererText
 	_Gtk_FileChooserDialog = Gtk.FileChooserDialog

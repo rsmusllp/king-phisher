@@ -83,9 +83,8 @@ DISABLED = typeutils.make_sentinel('DISABLED')
 GTK3_DEFAULT_THEME = 'Adwaita'
 """The default GTK3 Theme for style information."""
 
-if isinstance(Gtk.Application, utilities.Mock):
-	_Gtk_Application = type('Gtk.Application', (object,), {})
-	_Gtk_Application.__module__ = ''
+if isinstance(Gtk.Widget, utilities.Mock):
+	_Gtk_Application = type('Gtk.Application', (object,), {'__module__': ''})
 else:
 	_Gtk_Application = Gtk.Application
 
