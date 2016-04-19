@@ -408,8 +408,11 @@ class ForkedAuthenticator(object):
 						self.logger.warning("authentication failed for user: {0} reason: lack of group membership".format(username))
 					except KeyError:
 						self.logger.error("encountered a KeyError while looking up group membership for user: {0}".format(username))
+					except Exception:
+						self.logger.error("encountered an Exception while looking up group membership for user: {0}".format(username), exc_info=True)
 					else:
 						result['result'] = True
+						self.logger.debug("group requirement met for user: {0}".format(username))
 			else:
 				self.logger.warning("authentication failed for user: {0} reason: bad username or password".format(username))
 			self._raw_send(result)
