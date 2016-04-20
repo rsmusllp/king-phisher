@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import logging
 import os
 import re
 
@@ -94,10 +95,12 @@ class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider
 	"""The name of this completion provider as it should appear in the UI."""
 	def __init__(self):
 		super(CustomCompletionProviderBase, self).__init__()
+		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		if self.data_file is not None:
 			completion_data = find.find_data_file(os.path.join('completion', self.data_file))
 			if completion_data is None:
 				raise RuntimeError("failed to find completion data file '{0}'".format(self.data_file))
+			self.logger.debug("loading {0} completion data from: {1}".format(self.name, completion_data))
 			with open(completion_data, 'r') as file_h:
 				completion_data = json_ex.load(file_h)
 			self.load_data(completion_data)
@@ -196,7 +199,11 @@ class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider
 			return
 
 		proposals = []
-		matching_suggestions = self.populate(context, match)
+		try:
+			matching_suggestions = self.populate(context, match)
+		except Exception:
+			self.logger.warning('encountered an exception in the completion populate routine', exc_info=True)
+			return
 		matching_suggestions.sort()
 		for suggestion in matching_suggestions:
 			if not suggestion:
@@ -233,7 +240,7 @@ class HTMLComletionProvider(CustomCompletionProviderBase):
 		if match.group('is_attr'):
 			if tag in self.html_tags:
 				comp_attr = match.group('attr') or ''
-				attrs = self.html_tags[tag] + ['class', 'id', 'style', 'title']
+				attrs = (self.html_tags[tag] or []) + ['class', 'id', 'style', 'title']
 				proposal_terms = [term for term in attrs if term.startswith(comp_attr)]
 				proposal_terms = [(term[:-1], term[:-1] + ' ') if term[-1] == '!' else (term, term + '="') for term in proposal_terms]
 		else:
