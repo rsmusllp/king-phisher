@@ -402,6 +402,7 @@ class ForkedAuthenticator(object):
 			if result['result']:
 				if self.required_group:
 					result['result'] = False
+					self.logger.debug("checking groups for user: {0}".format(username))
 					try:
 						assert self.required_group in get_groups_for_user(username)
 					except AssertionError:

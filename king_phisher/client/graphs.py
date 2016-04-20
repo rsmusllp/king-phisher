@@ -37,6 +37,7 @@ from king_phisher import color
 from king_phisher import ipaddress
 from king_phisher import its
 from king_phisher import ua_parser
+from king_phisher import utilities
 from king_phisher.client import client_rpc
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
@@ -590,7 +591,7 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 		color_line_bg = self.get_color('line_bg', ColorHexCode.WHITE)
 		color_line_fg = self.get_color('line_fg', ColorHexCode.BLACK)
 		visits = info_cache['visits']
-		first_visits = [visit.first_visit for visit in visits]
+		first_visits = [utilities.datetime_utc_to_local(visit.first_visit) for visit in visits]
 
 		ax = self.axes[0]
 		ax.tick_params(
