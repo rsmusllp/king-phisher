@@ -35,10 +35,16 @@ import weakref
 from king_phisher import plugins
 
 class ClientPlugin(plugins.PluginBase):
+	"""
+	The base object to be inherited by plugins that are loaded into the King
+	Phisher client. This provides a convenient interface for interacting with
+	the runtime.
+	"""
 	_logging_prefix = 'KingPhisher.Plugins.Client.'
 	def __init__(self, application):
 		super(ClientPlugin, self).__init__()
 		self.application = application
+		"""A reference to the :py:class:`~king_phisher.client.application.KingPhisherClientApplication`."""
 		self._signals = []
 
 	def _cleanup(self):
@@ -51,6 +57,9 @@ class ClientPlugin(plugins.PluginBase):
 
 	@property
 	def config(self):
+		"""
+		A dictionary that can be used by this plugin for persistent storage of it's configuration.
+		"""
 		config = self.application.config['plugins'].get(self.name)
 		if config is None:
 			config = {}
@@ -58,11 +67,30 @@ class ClientPlugin(plugins.PluginBase):
 		return config
 
 	def signal_connect(self, name, handler, gobject=None):
+		"""
+		Connect *handler* to a signal by *name* to an arbitrary GObject. Signals
+		connected through this method are automatically cleaned up when the
+		plugin is disabled. If not GObject is specified, the application is
+		used.
+
+		.. warning::
+			If the signal needs to be disconnected manually by the plugin, this
+			method should not be used. Instead the handler id should be kept as
+			returned by the GObject's native connect method.
+
+		:param str name: The name of the signal.
+		:param handler: The function to be invoked with the signal is emitted.
+		:type handler: function
+		:param gobject: The object to connect the signal to.
+		"""
 		gobject = gobject or self.application
 		handler_id = gobject.connect(name, handler)
 		self._signals.append((weakref.ref(gobject), handler_id))
 
 class ClientPluginManager(plugins.PluginManagerBase):
+	"""
+	The manager for plugins loaded into the King Phisher client application.
+	"""
 	_plugin_klass = ClientPlugin
 	def __init__(self, path, application):
 		super(ClientPluginManager, self).__init__(path, (application,))

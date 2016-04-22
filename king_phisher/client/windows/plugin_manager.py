@@ -38,6 +38,11 @@ from gi.repository import Gtk
 __all__ = ('PluginManagerWindow',)
 
 class PluginManagerWindow(gui_utilities.GladeGObject):
+	"""
+	The window which allows the user to selectively enable and disable plugins
+	for the client application. This also handles configuration changes, so the
+	enabled plugins will persist across application runs.
+	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
 			'treeview_plugins',
@@ -74,6 +79,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.window.show()
 
 	def load_plugins(self):
+		"""
+		Load the plugins which are available into the treeview to make them
+		visible to the user.
+		"""
 		store = self._model
 		store.clear()
 		pm = self.application.plugin_manager

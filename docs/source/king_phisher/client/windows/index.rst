@@ -9,5 +9,6 @@ client application.
    :titlesonly:
 
    main.rst
+   plugin_manager.rst
    rpc_terminal.rst
 
