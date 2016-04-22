@@ -47,10 +47,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_plugins']
-		self.treeview_manager = managers.TreeViewManager(treeview, cb_refresh=self.load_plugins)
+		tvm = managers.TreeViewManager(
+			treeview,
+			selection_mode=Gtk.SelectionMode.MULTIPLE,
+			cb_refresh=self.load_plugins
+		)
 		toggle_renderer = Gtk.CellRendererToggle()
 		toggle_renderer.connect('toggled', self.signal_renderer_toggled)
-		self.treeview_manager.set_column_titles(
+		tvm.set_column_titles(
 			('Enabled', 'Plugin'),
 			column_offset=1,
 			renderers=(toggle_renderer, Gtk.CellRendererText())
@@ -59,6 +63,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._model.set_sort_column_id(2, Gtk.SortType.DESCENDING)
 		treeview.set_model(self._model)
 		self.load_plugins()
+
+		self.popup_menu = tvm.get_popup_menu()
+		self.popup_menu.append(Gtk.SeparatorMenuItem())
+		menu_item = Gtk.MenuItem.new_with_label('Reload')
+		menu_item.connect('activate', self.signal_popup_menu_activate_reload)
+		self.popup_menu.append(menu_item)
+		self.popup_menu.show_all()
+
 		self.window.show()
 
 	def load_plugins(self):
@@ -72,6 +84,19 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				plugin.name in pm.enabled_plugins,
 				plugin.title
 			))
+
+	def signal_popup_menu_activate_reload(self, _):
+		treeview = self.gobjects['treeview_plugins']
+		pm = self.application.plugin_manager
+		for tree_iter in gui_utilities.gtk_treeview_selection_iterate(treeview):
+			name = self._model[tree_iter][0]
+			if not name in pm.loaded_plugins:
+				continue
+			enabled = name in pm.enabled_plugins
+			pm.unload(name)
+			pm.load(name, reload_module=True)
+			if enabled:
+				pm.enable(name)
 
 	def signal_renderer_toggled(self, _, path):
 		pm = self.application.plugin_manager

@@ -267,6 +267,22 @@ def gtk_treesortable_sort_func_numeric(model, iter1, iter2, column_id):
 	item2 = model.get_value(iter2, column_id)
 	return cmp(item1, item2)
 
+def gtk_treeview_selection_iterate(treeview):
+	"""
+	Iterate over the a treeview's selected rows.
+
+	:param treeview: The treeview for which to iterate over.
+	:type treeview: :py:class:`Gtk.TreeView`
+	:return: The rows which are selected within the treeview.
+	:rtype: :py:class:`Gtk.TreeIter`
+	"""
+	selection = treeview.get_selection()
+	(model, tree_paths) = selection.get_selected_rows()
+	if not tree_paths:
+		return
+	for tree_path in tree_paths:
+		yield model.get_iter(tree_path)
+
 def gtk_treeview_selection_to_clipboard(treeview, columns=0):
 	"""
 	Copy the currently selected values from the specified columns in the

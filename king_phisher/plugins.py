@@ -34,13 +34,29 @@ import logging
 import threading
 
 from king_phisher import errors
+from king_phisher import its
 
 import pluginbase
 
+if its.py_v2:
+	_reload = reload
+else:
+	import importlib
+	_reload = importlib.reload
+
 class PluginBase(object):
+	"""
+	A base class to be inherited by all plugins. Overriding or extending the
+	standard __init__ method should be avoided to be compatible with future API
+	changes. Instead the :py:meth:`.initialize` and :py:meth:`.finalize` methods
+	should be overridden to provide plugin functionality.
+	"""
 	authors = []
+	"""The list of authors who have provided this plugin."""
 	title = None
+	"""The title of the plugin."""
 	description = None
+	"""A description of the plugin and what it does."""
 	_logging_prefix = 'KingPhisher.Plugins.'
 	def __init__(self):
 		self.logger = logging.getLogger(self._logging_prefix + self.__class__.__name__)
@@ -49,20 +65,39 @@ class PluginBase(object):
 		pass
 
 	def finalize(self):
+		"""
+		This method can be overridden to perform any clean up action that the
+		plugin needs such as closing files. It is called automatically by the
+		manager when the plugin is disabled.
+		"""
 		pass
 
 	def initialize(self):
+		"""
+		This method should be overridden to provide the primary functionality of
+		the plugin. It is called automatically by the manager when the plugin is
+		enabled.
+		"""
 		pass
 
 class PluginManagerBase(object):
+	"""
+	A managing object to control loading and enabling individual plugin objects.
+	"""
 	_plugin_klass = PluginBase
 	def __init__(self, path, args=None):
+		"""
+		:param tuple path: A tuple of directories from which to load plugins.
+		:param tuple args: Arguments which should be passed to plugins when their class is initialized.
+		"""
 		self._lock = threading.RLock()
 		self.plugin_init_args = (args or ())
 		self.plugin_base = pluginbase.PluginBase(package='king_phisher.plugins.loaded')
 		self.plugin_source = self.plugin_base.make_plugin_source(searchpath=path)
 		self.loaded_plugins = {}
+		"""A dictionary of the loaded plugins and their respective modules."""
 		self.enabled_plugins = {}
+		"""A dictionary of the enabled plugins and their respective instances."""
 		self.logger = logging.getLogger('KingPhisher.Plugins.Manager')
 		self.load_all()
 
@@ -84,19 +119,39 @@ class PluginManagerBase(object):
 
 	@property
 	def available(self):
-		return self.plugin_source.list_plugins()
+		"""Return a tuple of all available plugins that can be loaded."""
+		return tuple(self.plugin_source.list_plugins())
 
 	def shutdown(self):
+		"""
+		Unload all plugins and perform additional clean up operations.
+		"""
 		self.unload_all()
 		self.plugin_source.cleanup()
 
 	# methods to deal with plugin enable operations
 	def enable(self, name):
+		"""
+		Enable a plugin by it's name. This will create a new instance of the
+		plugin modules "Plugin" class, passing it the arguments defined in
+		:py:attr:`.plugin_init_args`. A reference to the plugin instance is kept
+		in :py:attr:`.enabled_plugins`. After the instance is created, the
+		plugins :py:meth:`~.PluginBase.initialize` method is called. The plugin
+		will be loaded if it has not been already.
+
+		:param str name: The name of the plugin to enable.
+		:return: The newly created instance.
+		:rtype: :py:class:`.PluginBase`
+		"""
 		self._lock.acquire()
+		if name in self.enabled_plugins:
+			self._lock.release()
+			return
 		klass = self.loaded_plugins.get(name, None)
 		if klass is None:
 			klass = self.load(name)
 			if klass is None:
+				self._lock.release()
 				raise errors.KingPhisherResourceError('the plugin could not be loaded')
 		inst = klass(*self.plugin_init_args)
 		self.enabled_plugins[name] = inst
@@ -105,6 +160,13 @@ class PluginManagerBase(object):
 		return inst
 
 	def disable(self, name):
+		"""
+		Disable a plugin by it's name. This call the plugins
+		:py:meth:`.PluginBase.finalize` method to allow it to perform any
+		clean up operations.
+
+		:param str name: The name of the plugin to disable.
+		"""
 		self._lock.acquire()
 		inst = self.enabled_plugins[name]
 		inst.finalize()
@@ -113,14 +175,28 @@ class PluginManagerBase(object):
 		self._lock.release()
 
 	# methods to deal with plugin load operations
-	def load(self, name):
+	def load(self, name, reload_module=False):
+		"""
+		Load a plugin into memory, this is effectively the Python equivalent of
+		importing it. A reference to the plugin class is kept in
+		:py:attr:`.loaded_plugins`.
+
+		:param str name: The name of the plugin to load.
+		:param bool reload_module: Reload the module.
+		:return:
+		"""
 		self._lock.acquire()
+		if name in self.loaded_plugins:
+			self._lock.release()
+			return
 		try:
 			module = self.plugin_source.load_plugin(name)
 		except Exception as error:
 			self._lock.release()
 			self.logger.warning("failed to load plugin '{0}' with {1}".format(name, error.__class__.__name__), exc_info=True)
 			return None
+		if reload_module:
+			_reload(module)
 		klass = getattr(module, 'Plugin', None)
 		if klass is None:
 			self._lock.release()
@@ -137,6 +213,7 @@ class PluginManagerBase(object):
 		return klass
 
 	def load_all(self):
+		"""Load all available plugins."""
 		self._lock.acquire()
 		plugins = self.plugin_source.list_plugins()
 		self.logger.info("loading {0:,} plugins".format(len(plugins)))
@@ -145,6 +222,12 @@ class PluginManagerBase(object):
 		self._lock.release()
 
 	def unload(self, name):
+		"""
+		Unload a plugin from memory. If the specified plugin is currently
+		enabled, it will first be disabled before being unloaded.
+
+		:param str name: The name of the plugin to unload.
+		"""
 		self._lock.acquire()
 		if name in self.enabled_plugins:
 			self.disable(name)
@@ -153,6 +236,7 @@ class PluginManagerBase(object):
 		self._lock.release()
 
 	def unload_all(self):
+		"""Unload all available plugins."""
 		self._lock.acquire()
 		self.logger.info("unloading {0:,} plugins".format(len(self.loaded_plugins)))
 		for name in tuple(self.loaded_plugins.keys()):
