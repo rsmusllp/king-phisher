@@ -33,6 +33,8 @@
 import logging
 import threading
 
+from king_phisher import errors
+
 import pluginbase
 
 class PluginBase(object):
@@ -94,6 +96,8 @@ class PluginManagerBase(object):
 		klass = self.loaded_plugins.get(name, None)
 		if klass is None:
 			klass = self.load(name)
+			if klass is None:
+				raise errors.KingPhisherResourceError('the plugin could not be loaded')
 		inst = klass(*self.plugin_init_args)
 		self.enabled_plugins[name] = inst
 		self._lock.release()
@@ -111,14 +115,21 @@ class PluginManagerBase(object):
 	# methods to deal with plugin load operations
 	def load(self, name):
 		self._lock.acquire()
-		module = self.plugin_source.load_plugin(name)
+		try:
+			module = self.plugin_source.load_plugin(name)
+		except Exception as error:
+			self._lock.release()
+			self.logger.warning("failed to load plugin '{0}' with {1}".format(name, error.__class__.__name__), exc_info=True)
+			return None
 		klass = getattr(module, 'Plugin', None)
 		if klass is None:
 			self._lock.release()
-			raise Exception
+			self.logger.warning("failed to load plugin '{0}', Plugin class not found".format(name))
+			raise errors.KingPhisherResourceError('the Plugin class is missing')
 		if not issubclass(klass, self._plugin_klass):
 			self._lock.release()
-			raise Exception
+			self.logger.warning("failed to load plugin '{0}', Plugin class is invalid".format(name))
+			raise errors.KingPhisherResourceError('the Plugin class is invalid')
 		klass.name = name
 		self.loaded_plugins[name] = klass
 		self.logger.debug("plugin '{0}' has been loaded".format(name))

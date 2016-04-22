@@ -78,6 +78,13 @@ class KingPhisherPermissionError(KingPhisherError):
 	"""
 	pass
 
+class KingPhisherResourceError(KingPhisherError):
+	"""
+	An exception that is raised by King Phisher when there is a problem relating
+	to a resource such as it is missing, locked or otherwise invalid.
+	"""
+	pass
+
 class KingPhisherTimeoutError(KingPhisherError):
 	"""
 	An exception that is raised by King Phisher when some form of a request

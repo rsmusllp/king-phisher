@@ -320,8 +320,16 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.main_window.set_position(Gtk.WindowPosition.CENTER)
 		self.main_window.show()
 
-		for name in self.config['plugins'].keys():
-			self.plugin_manager.enable(name)
+		for name in list(self.config['plugins.enabled']):
+			try:
+				self.plugin_manager.enable(name)
+			except errors.KingPhisherResourceError:
+				self.config['plugins.enabled'].remove(name)
+				gui_utilities.show_dialog_error(
+					'Failed To Enable Plugin',
+					self.main_window,
+					"Plugin '{0}' could not be enabled.".format(name)
+				)
 
 	def do_campaign_changed(self, campaign_id):
 		pass
