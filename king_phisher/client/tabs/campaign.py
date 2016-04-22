@@ -125,16 +125,15 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
 
-	def _prompt_to_delete_row(self, treeview, selection):
+	def _prompt_to_delete_row(self, treeview, _):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
 			return
-		(model, tree_paths) = selection.get_selected_rows()
-		if not tree_paths:
+		model = treeview.get_model()
+		row_ids = [model.get_value(ti, 0) for ti in gui_utilities.gtk_treeview_selection_iterate(treeview)]
+		if len(row_ids) == 0:
 			return
-		tree_iters = map(model.get_iter, tree_paths)
-		row_ids = [model.get_value(ti, 0) for ti in tree_iters]
-		if len(row_ids) == 1:
+		elif len(row_ids) == 1:
 			message = 'Delete This Row?'
 		else:
 			message = "Delete These {0:,} Rows?".format(len(row_ids))
