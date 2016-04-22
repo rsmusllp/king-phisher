@@ -44,7 +44,8 @@ Spencer McIntyre
   <!-- interface-authors Spencer McIntyre\nJeff McCutchan\nBrandan Geise -->
   <object class="GtkAboutDialog" id="AboutDialog">
     <property name="can_focus">False</property>
-    <property name="type_hint">menu</property>
+    <property name="type">popup</property>
+    <property name="type_hint">dialog</property>
     <property name="program_name">King Phisher</property>
     <property name="copyright" translatable="yes">Copyright (c) 2013-2016, SecureState LLC</property>
     <property name="comments" translatable="yes">Phishing Campaign Toolkit</property>
@@ -2418,6 +2419,31 @@ Spencer McIntyre</property>
       </row>
     </data>
   </object>
+  <object class="GtkApplicationWindow" id="PluginManagerWindow">
+    <property name="width_request">400</property>
+    <property name="height_request">250</property>
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Plugin Manager</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="destroy_with_parent">True</property>
+    <child>
+      <object class="GtkScrolledWindow" id="scrolledwindow6">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="shadow_type">in</property>
+        <child>
+          <object class="GtkTreeView" id="PluginManagerWindow.treeview_plugins">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="treeview-selection12"/>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkAdjustment" id="PortAdjustment">
     <property name="lower">1</property>
     <property name="upper">65535</property>
@@ -4405,6 +4431,16 @@ Spencer McIntyre</property>
                 <property name="label" translatable="yes">Clone Web Page</property>
                 <property name="use_underline">True</property>
                 <signal name="activate" handler="do_tools_clone_page" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_tools_manage_plugins">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="accel_path">&lt;KingPhisherClient&gt;/Tools/Manage Plugins</property>
+                <property name="label" translatable="yes">Manage Plugins</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_tools_manage_plugins" swapped="no"/>
               </object>
             </child>
             <child>

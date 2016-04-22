@@ -40,6 +40,7 @@ from king_phisher.client import export
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
+from king_phisher.client.windows import plugin_manager
 from king_phisher.client.windows import rpc_terminal
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.campaign import CampaignViewGenericTableTab
@@ -162,6 +163,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 
 	def do_tools_clone_page(self, _):
 		dialogs.ClonePageDialog(self.application).interact()
+
+	def do_tools_manage_plugins(self, _):
+		plugin_manager.PluginManagerWindow(self.application)
 
 	def do_tools_sftp_client(self, _):
 		self.application.start_sftp_client()
