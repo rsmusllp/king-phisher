@@ -8,6 +8,7 @@
   "filter.campaign.expired": false,
   "filter.campaign.user": true,
   "filter.campaign.other_users": false,
+  "plugins": {},
   "remove_attachment_metadata": true,
   "rpc.serializer": null,
   "server": "localhost:22",

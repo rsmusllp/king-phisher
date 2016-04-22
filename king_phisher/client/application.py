@@ -50,9 +50,10 @@ from king_phisher import version
 from king_phisher.client import assistants
 from king_phisher.client import client_rpc
 from king_phisher.client import dialogs
-from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
+from king_phisher.client import plugins
+from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.client.windows import main
 from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
@@ -74,8 +75,8 @@ if its.py_v2:
 else:
 	from http.client import BadStatusLine
 
-CONFIG_FILE_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'config.json')
-"""The default search location for the client configuration file."""
+USER_DATA_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher')
+"""The default folder location of user specific data storage."""
 
 DISABLED = typeutils.make_sentinel('DISABLED')
 """A sentinel value to indicate that a feature is disabled."""
@@ -125,7 +126,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.debug("matplotlib version: {0}".format(graphs.matplotlib.__version__))
 		self.set_property('application-id', 'org.king-phisher.client')
 		self.set_property('register-session', True)
-		self.config_file = config_file or CONFIG_FILE_PATH
+		self.config_file = config_file or os.path.join(USER_DATA_PATH, 'config.json')
 		"""The file containing the King Phisher client configuration."""
 		if not os.path.isfile(self.config_file):
 			self._create_config()
@@ -147,6 +148,11 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.connect('window-added', self.signal_window_added)
 		self.actions = {}
 		self._create_actions()
+
+		self.plugin_manager = plugins.ClientPluginManager(
+			[os.path.join(USER_DATA_PATH, 'plugins'), find.find_data_directory('plugins')],
+			self
+		)
 
 	def _create_actions(self):
 		action = Gio.SimpleAction.new('emit-application-signal', GLib.VariantType.new('s'))
@@ -314,6 +320,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.main_window.set_position(Gtk.WindowPosition.CENTER)
 		self.main_window.show()
 
+		for name in self.config['plugins'].keys():
+			self.plugin_manager.enable(name)
+
 	def do_campaign_changed(self, campaign_id):
 		pass
 
@@ -331,6 +340,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 			json_ex.dump(config, config_file_h)
 
 	def do_exit(self):
+		self.plugin_manager.shutdown()
+
 		self.main_window.hide()
 		gui_utilities.gtk_widget_destroy_children(self.main_window)
 		gui_utilities.gtk_sync()
