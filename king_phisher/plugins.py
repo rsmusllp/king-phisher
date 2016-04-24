@@ -140,23 +140,14 @@ class PluginManagerBase(object):
 		plugin modules "Plugin" class, passing it the arguments defined in
 		:py:attr:`.plugin_init_args`. A reference to the plugin instance is kept
 		in :py:attr:`.enabled_plugins`. After the instance is created, the
-		plugins :py:meth:`~.PluginBase.initialize` method is called. The plugin
-		will be loaded if it has not been already.
+		plugins :py:meth:`~.PluginBase.initialize` method is called.
 
 		:param str name: The name of the plugin to enable.
 		:return: The newly created instance.
 		:rtype: :py:class:`.PluginBase`
 		"""
 		self._lock.acquire()
-		if name in self.enabled_plugins:
-			self._lock.release()
-			return
-		klass = self.loaded_plugins.get(name, None)
-		if klass is None:
-			klass = self.load(name)
-			if klass is None:
-				self._lock.release()
-				raise errors.KingPhisherResourceError('the plugin could not be loaded')
+		klass = self.loaded_plugins[name]
 		inst = klass(*self.plugin_init_args)
 		self.enabled_plugins[name] = inst
 		self._lock.release()
@@ -183,10 +174,11 @@ class PluginManagerBase(object):
 		"""
 		Load a plugin into memory, this is effectively the Python equivalent of
 		importing it. A reference to the plugin class is kept in
-		:py:attr:`.loaded_plugins`.
+		:py:attr:`.loaded_plugins`. If the plugin is already loaded, no changes
+		are made.
 
 		:param str name: The name of the plugin to load.
-		:param bool reload_module: Reload the module.
+		:param bool reload_module: Reload the module to allow changes to take affect.
 		:return:
 		"""
 		self._lock.acquire()
@@ -197,8 +189,7 @@ class PluginManagerBase(object):
 			module = self.plugin_source.load_plugin(name)
 		except Exception as error:
 			self._lock.release()
-			self.logger.warning("failed to load plugin '{0}' with {1}".format(name, error.__class__.__name__), exc_info=True)
-			return None
+			raise error
 		if reload_module:
 			_reload(module)
 		klass = getattr(module, 'Plugin', None)
@@ -217,22 +208,32 @@ class PluginManagerBase(object):
 		return klass
 
 	def load_all(self):
-		"""Load all available plugins."""
+		"""
+		Load all available plugins. Exceptions while loading specific plugins
+		are ignored.
+		"""
 		self._lock.acquire()
 		plugins = self.plugin_source.list_plugins()
 		self.logger.info("loading {0:,} plugins".format(len(plugins)))
 		for name in plugins:
-			self.load(name)
+			try:
+				self.load(name)
+			except Exception:
+				pass
 		self._lock.release()
 
 	def unload(self, name):
 		"""
 		Unload a plugin from memory. If the specified plugin is currently
-		enabled, it will first be disabled before being unloaded.
+		enabled, it will first be disabled before being unloaded. If the plugin
+		is not already loaded, no changes are made.
 
 		:param str name: The name of the plugin to unload.
 		"""
 		self._lock.acquire()
+		if not name in self.loaded_plugins:
+			self._lock.release()
+			return
 		if name in self.enabled_plugins:
 			self.disable(name)
 		del self.loaded_plugins[name]
@@ -240,9 +241,15 @@ class PluginManagerBase(object):
 		self._lock.release()
 
 	def unload_all(self):
-		"""Unload all available plugins."""
+		"""
+		Unload all available plugins. Exceptions while unloading specific
+		plugins are ignored.
+		"""
 		self._lock.acquire()
 		self.logger.info("unloading {0:,} plugins".format(len(self.loaded_plugins)))
 		for name in tuple(self.loaded_plugins.keys()):
-			self.unload(name)
+			try:
+				self.unload(name)
+			except Exception:
+				pass
 		self._lock.release()
