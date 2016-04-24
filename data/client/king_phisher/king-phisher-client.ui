@@ -2421,7 +2421,7 @@ Spencer McIntyre</property>
   </object>
   <object class="GtkApplicationWindow" id="PluginManagerWindow">
     <property name="width_request">550</property>
-    <property name="height_request">250</property>
+    <property name="height_request">300</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Plugin Manager</property>
@@ -2462,7 +2462,7 @@ Spencer McIntyre</property>
             <property name="can_focus">True</property>
             <child>
               <object class="GtkScrolledWindow" id="PluginManagerWindow.scrolledwindow_plugin_info">
-                <property name="height_request">100</property>
+                <property name="height_request">125</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="border_width">3</property>
@@ -2509,7 +2509,7 @@ Spencer McIntyre</property>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
-                            <property name="top_attach">1</property>
+                            <property name="top_attach">2</property>
                           </packing>
                         </child>
                         <child>
@@ -2526,7 +2526,7 @@ Spencer McIntyre</property>
                           </object>
                           <packing>
                             <property name="left_attach">2</property>
-                            <property name="top_attach">1</property>
+                            <property name="top_attach">2</property>
                           </packing>
                         </child>
                         <child>
@@ -2542,7 +2542,7 @@ Spencer McIntyre</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
-                            <property name="top_attach">1</property>
+                            <property name="top_attach">2</property>
                           </packing>
                         </child>
                         <child>
@@ -2558,7 +2558,7 @@ Spencer McIntyre</property>
                           </object>
                           <packing>
                             <property name="left_attach">3</property>
-                            <property name="top_attach">1</property>
+                            <property name="top_attach">2</property>
                           </packing>
                         </child>
                         <child>
@@ -2575,7 +2575,7 @@ Spencer McIntyre</property>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
-                            <property name="top_attach">2</property>
+                            <property name="top_attach">3</property>
                           </packing>
                         </child>
                         <child>
@@ -2592,9 +2592,30 @@ Spencer McIntyre</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
-                            <property name="top_attach">2</property>
+                            <property name="top_attach">3</property>
                             <property name="width">3</property>
                           </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_homepage">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">&lt;a href=""&gt;Homepage&lt;/a&gt;</property>
+                            <property name="use_markup">True</property>
+                            <property name="track_visited_links">False</property>
+                            <signal name="activate-link" handler="signal_label_activate_link" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">1</property>
+                            <property name="width">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
                         </child>
                       </object>
                     </child>

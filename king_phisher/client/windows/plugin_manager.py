@@ -32,6 +32,7 @@
 
 import textwrap
 
+from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
 
@@ -50,6 +51,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			'expander_plugin_info',
 			'label_plugin_info_authors',
 			'label_plugin_info_description',
+			'label_plugin_info_homepage',
 			'label_plugin_info_title',
 			'label_plugin_info_version',
 			'treeview_plugins',
@@ -102,6 +104,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				plugin.title
 			))
 
+	def signal_label_activate_link(self, _, uri):
+		utilities.open_uri(uri)
+
 	def signal_popup_menu_activate_reload(self, _):
 		treeview = self.gobjects['treeview_plugins']
 		pm = self.application.plugin_manager
@@ -138,6 +143,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.gobjects['label_plugin_info_title'].set_text(klass.title)
 		self.gobjects['label_plugin_info_authors'].set_text('\n'.join(klass.authors))
 		self.gobjects['label_plugin_info_version'].set_text(klass.version)
+		label_homepage = self.gobjects['label_plugin_info_homepage']
+		if klass.homepage is None:
+			label_homepage.set_property('visible', False)
+		else:
+			label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(klass.homepage))
+			label_homepage.set_property('visible', True)
 		description = klass.description
 		if description[0] == '\n':
 			description = description[1:]
