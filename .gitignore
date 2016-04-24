@@ -8,7 +8,7 @@
 *.yml
 .pylintrc
 build/*
-data/*/king_phisher/plugins/*
+data/*/king_phisher/plugins*
 dist/*
 docs/build/*
 docs/html/*

@@ -30,6 +30,8 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import textwrap
+
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
 
@@ -45,6 +47,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
+			'expander_plugin_info',
+			'label_plugin_info_authors',
+			'label_plugin_info_description',
+			'label_plugin_info_title',
+			'label_plugin_info_version',
 			'treeview_plugins',
 		)
 	)
@@ -54,7 +61,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		treeview = self.gobjects['treeview_plugins']
 		tvm = managers.TreeViewManager(
 			treeview,
-			selection_mode=Gtk.SelectionMode.MULTIPLE,
 			cb_refresh=self.load_plugins
 		)
 		toggle_renderer = Gtk.CellRendererToggle()
@@ -77,6 +83,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.popup_menu.show_all()
 
 		self.window.show()
+		selection = treeview.get_selection()
+		selection.unselect_all()
 
 	def load_plugins(self):
 		"""
@@ -118,3 +126,21 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			pm.enable(name)
 			self._model[path][1] = True
 			self.config['plugins.enabled'].append(name)
+
+	def signal_treeview_row_activated(self, treeview, path, column):
+		expander = self.gobjects['expander_plugin_info']
+		if not expander.is_sensitive():
+			expander.set_sensitive(True)
+			expander.set_expanded(True)
+		pm = self.application.plugin_manager
+		name = self._model[path][0]
+		klass = pm.loaded_plugins[name]
+		self.gobjects['label_plugin_info_title'].set_text(klass.title)
+		self.gobjects['label_plugin_info_authors'].set_text('\n'.join(klass.authors))
+		self.gobjects['label_plugin_info_version'].set_text(klass.version)
+		description = klass.description
+		if description[0] == '\n':
+			description = description[1:]
+		description = textwrap.dedent(description)
+		description = description.replace('\n', ' ')
+		self.gobjects['label_plugin_info_description'].set_text(description)

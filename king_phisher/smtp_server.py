@@ -53,7 +53,7 @@ class BaseSMTPServer(smtpd.SMTPServer, object):
 
 	def serve_forever(self):
 		"""
-		Process requests until a :py:meth:`.shutdown` is called.
+		Process requests until a :py:meth:`BaseSMTPServer.shutdown` is called.
 		"""
 		asyncore.loop()
 

@@ -57,6 +57,10 @@ class PluginBase(object):
 	"""The title of the plugin."""
 	description = None
 	"""A description of the plugin and what it does."""
+	homepage = None
+	"""An optional homepage for the plugin."""
+	version = '1.0'
+	"""The version identifier of this plugin."""
 	_logging_prefix = 'KingPhisher.Plugins.'
 	def __init__(self):
 		self.logger = logging.getLogger(self._logging_prefix + self.__class__.__name__)
