@@ -35,7 +35,9 @@ class KingPhisherError(Exception):
 	The base exception that is inherited by all custom King Phisher error
 	classes.
 	"""
-	pass
+	def __init__(self, message=''):
+		super(KingPhisherError, self).__init__()
+		self.message = message
 
 class KingPhisherAbortError(KingPhisherError):
 	"""
