@@ -109,7 +109,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'rpc-cache-clear': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
-	def __init__(self, config_file=None, use_style=True):
+	def __init__(self, config_file=None, use_plugins=True, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
 		if use_style:
 			self._theme_file = 'theme.css'
@@ -149,6 +149,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.actions = {}
 		self._create_actions()
 
+		if not use_plugins:
+			self.logger.info('disabling all plugins')
+			self.config['plugins.enabled'] = []
 		self.plugin_manager = plugins.ClientPluginManager(
 			[os.path.join(USER_DATA_PATH, 'plugins'), find.find_data_directory('plugins')],
 			self

@@ -103,7 +103,6 @@ class PluginManagerBase(object):
 		self.enabled_plugins = {}
 		"""A dictionary of the enabled plugins and their respective instances."""
 		self.logger = logging.getLogger('KingPhisher.Plugins.Manager')
-		self.load_all()
 
 	def __contains__(self, key):
 		return key in self.loaded_plugins
