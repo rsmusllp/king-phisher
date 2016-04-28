@@ -15,6 +15,11 @@ Classes
    :members:
    :special-members: __init__
 
+.. autoclass:: king_phisher.plugins.PluginBaseMeta
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
 .. autoclass:: king_phisher.plugins.PluginManagerBase
    :show-inheritance:
    :members:

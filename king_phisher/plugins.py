@@ -30,11 +30,13 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import distutils.version
 import logging
 import threading
 
 from king_phisher import errors
 from king_phisher import its
+from king_phisher import version
 
 import pluginbase
 
@@ -44,7 +46,33 @@ else:
 	import importlib
 	_reload = importlib.reload
 
-class PluginBase(object):
+StrictVersion = distutils.version.StrictVersion
+
+class PluginBaseMeta(type):
+	"""
+	The meta class for :py:class:`.PluginBase` which provides additional class
+	properties based on defined attributes.
+	"""
+	req_min_version = None
+	@property
+	def is_compatible(cls):
+		"""
+		Whether or not this plugin is compatible with this version of King
+		Phisher. This can only be checked after the module is imported, so any
+		references to non-existent classes in older versions outside of the
+		class methods will still cause a load error.
+		"""
+		if cls.req_min_version is not None:
+			if StrictVersion(cls.req_min_version) > StrictVersion(version.distutils_version):
+				return False
+		return True
+
+	@property
+	def name(cls):
+		return cls.__module__.split('.')[-1]
+
+# stylized metaclass definition to be Python 2.7 and 3.x compatible
+class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""
 	A base class to be inherited by all plugins. Overriding or extending the
 	standard __init__ method should be avoided to be compatible with future API
@@ -59,11 +87,18 @@ class PluginBase(object):
 	"""A description of the plugin and what it does."""
 	homepage = None
 	"""An optional homepage for the plugin."""
+	req_min_version = '1.3.0b0'
+	"""The required minimum version for compatibility."""
 	version = '1.0'
 	"""The version identifier of this plugin."""
 	_logging_prefix = 'KingPhisher.Plugins.'
 	def __init__(self):
 		self.logger = logging.getLogger(self._logging_prefix + self.__class__.__name__)
+
+	@property
+	def name(self):
+		"""The name of this plugin."""
+		return self.__class__.name
 
 	def _cleanup(self):
 		pass
@@ -147,6 +182,8 @@ class PluginManagerBase(object):
 		"""
 		self._lock.acquire()
 		klass = self.loaded_plugins[name]
+		if not klass.is_compatible:
+			raise errors.KingPhisherError('this plugin is incompatible')
 		inst = klass(*self.plugin_init_args)
 		self.enabled_plugins[name] = inst
 		self._lock.release()
@@ -200,7 +237,6 @@ class PluginManagerBase(object):
 			self._lock.release()
 			self.logger.warning("failed to load plugin '{0}', Plugin class is invalid".format(name))
 			raise errors.KingPhisherResourceError('the Plugin class is invalid')
-		klass.name = name
 		self.loaded_plugins[name] = klass
 		self.logger.debug("plugin '{0}' has been loaded".format(name))
 		self._lock.release()
