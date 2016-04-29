@@ -47,6 +47,7 @@ class ClientOptionMixin(object):
 	def get_widget_value(self, widget):
 		raise NotImplementedError()
 
+# base option types
 class ClientOptionBoolean(ClientOptionMixin, plugins.OptionBoolean):
 	def get_widget(self, value):
 		widget = Gtk.Switch()
@@ -95,6 +96,8 @@ class ClientOptionString(ClientOptionMixin, plugins.OptionString):
 
 	def get_widget_value(self, widget):
 		return widget.get_text()
+
+# extended option types
 
 class ClientPlugin(plugins.PluginBase):
 	"""

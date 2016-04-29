@@ -159,7 +159,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 
 	def _configure_settings_plugins(self):
 		pm = self.application.plugin_manager
-		plugin_klasses = [klass for _, klass in pm if klass.options]
+		plugin_klasses = [klass for _, klass in pm if klass.options and klass.is_compatible]
 		plugin_klasses = sorted(plugin_klasses, key=lambda k: k.title)
 		for plugin_klass in plugin_klasses:
 			self._configure_settings_plugin_options(plugin_klass)

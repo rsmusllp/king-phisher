@@ -147,8 +147,11 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 		This method should be overridden to provide the primary functionality of
 		the plugin. It is called automatically by the manager when the plugin is
 		enabled.
+
+		:return: Whether or not the plugin successfully initialized itself.
+		:rtype: bool
 		"""
-		pass
+		return True
 
 class PluginManagerBase(object):
 	"""
@@ -216,9 +219,11 @@ class PluginManagerBase(object):
 		if not klass.is_compatible:
 			raise errors.KingPhisherError('this plugin is incompatible')
 		inst = klass(*self.plugin_init_args)
+		if not inst.initialize():
+			self._lock.release()
+			return
 		self.enabled_plugins[name] = inst
 		self._lock.release()
-		inst.initialize()
 		return inst
 
 	def disable(self, name):

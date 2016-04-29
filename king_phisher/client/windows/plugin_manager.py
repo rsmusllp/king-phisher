@@ -128,7 +128,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self._model[path][1] = False
 			self.config['plugins.enabled'].remove(name)
 		else:
-			pm.enable(name)
+			if not pm.enable(name):
+				return
 			self._model[path][1] = True
 			self.config['plugins.enabled'].append(name)
 
