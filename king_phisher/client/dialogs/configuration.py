@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import string
 
 from king_phisher.client import graphs
@@ -64,7 +65,9 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			'entry_ssh_username',
 			# Client Tab
 			'checkbutton_remove_attachment_metadata',
-			'combobox_spf_check_level'
+			'combobox_spf_check_level',
+			# Plugins Tab
+			'box_plugin_options'
 		),
 		top_level=(
 			'SMSCarriers',
@@ -76,6 +79,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(ConfigurationDialog, self).__init__(*args, **kwargs)
 		self.gobjects['entry_smtp_server'].set_sensitive(not self.gobjects['switch_smtp_ssh_enable'].get_active())
+		self._plugin_option_widgets = collections.defaultdict(list)
 
 	def signal_switch_smtp_ssh(self, switch, _):
 		active = switch.get_property('active')
@@ -121,6 +125,45 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			ti = gui_utilities.gtk_list_store_search(graph_providers, self.config.get('dashboard.' + dash_position), column=1)
 			combobox.set_active_iter(ti)
 
+	def _configure_settings_plugin_options(self, plugin_klass):
+		plugin_config = self.config['plugins'].get(plugin_klass.name) or {}  # use or instead of get incase the value is actually None
+		frame = Gtk.Frame()
+		self.gobjects['box_plugin_options'].pack_end(frame, True, True, 0)
+		frame.set_label(plugin_klass.title)
+
+		grid = Gtk.Grid()
+		frame.add(grid)
+		if Gtk.check_version(3, 12, 0):
+			grid.set_property('margin-left', 12)
+		else:
+			grid.set_property('margin-start', 12)
+		grid.set_property('column-spacing', 3)
+		grid.set_property('row-spacing', 3)
+		grid.insert_column(0)
+		grid.insert_column(0)
+		for row, opt in enumerate(plugin_klass.options):
+			grid.insert_row(row)
+
+			name_label = Gtk.Label()
+			name_label.set_property('tooltip-text', opt.description)
+			name_label.set_property('width-request', 175)
+			name_label.set_text(opt.display_name)
+			grid.attach(name_label, 0, row, 1, 1)
+
+			widget = opt.get_widget(plugin_config.get(opt.name, opt.default))
+			widget.set_property('tooltip-text', opt.description)
+			grid.attach(widget, 1, row, 1, 1)
+			self._plugin_option_widgets[plugin_klass.name].append((opt, widget))
+
+		frame.show_all()
+
+	def _configure_settings_plugins(self):
+		pm = self.application.plugin_manager
+		plugin_klasses = [klass for _, klass in pm if klass.options]
+		plugin_klasses = sorted(plugin_klasses, key=lambda k: k.title)
+		for plugin_klass in plugin_klasses:
+			self._configure_settings_plugin_options(plugin_klass)
+
 	def _configure_settings_server(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
 		cb_reject_after_creds = self.gtk_builder_get('checkbutton_reject_after_credentials')
@@ -157,6 +200,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 
 	def interact(self):
 		self._configure_settings_dashboard()
+		self._configure_settings_plugins()
 		self._configure_settings_server()
 		self.gtk_builder_get('combobox_spf_check_level').emit('changed')
 
@@ -164,6 +208,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		response = self.dialog.run()
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
+			self.save_plugin_options()
 			self.verify_sms_settings()
 			entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
 			self.application.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
@@ -171,6 +216,12 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 				self._finialize_settings_dashboard()
 		self.dialog.destroy()
 		return response
+
+	def save_plugin_options(self):
+		for name, options in self._plugin_option_widgets.items():
+			plugin_config = self.config['plugins'].get(name) or {}  # use or instead of get incase the value is actually None
+			for opt, widget in options:
+				plugin_config[opt.name] = opt.get_widget_value(widget)
 
 	def verify_sms_settings(self):
 		phone_number = gui_utilities.gobject_get_value(self.gobjects['entry_sms_phone_number'])

@@ -34,6 +34,68 @@ import weakref
 
 from king_phisher import plugins
 
+from gi.repository import Gtk
+
+class ClientOptionMixin(object):
+	def __init__(self, name, *args, **kwargs):
+		self.display_name = kwargs.pop('display_name', name)
+		super(ClientOptionMixin, self).__init__(name, *args, **kwargs)
+
+	def get_widget(self, value):
+		raise NotImplementedError()
+
+	def get_widget_value(self, widget):
+		raise NotImplementedError()
+
+class ClientOptionBoolean(ClientOptionMixin, plugins.OptionBoolean):
+	def get_widget(self, value):
+		widget = Gtk.Switch()
+		widget.set_active(bool(value))
+		widget.set_property('halign', Gtk.Align.START)
+		return widget
+
+	def get_widget_value(self, widget):
+		return widget.get_active()
+
+class ClientOptionEnum(ClientOptionMixin, plugins.OptionEnum):
+	def get_widget(self, value):
+		widget = Gtk.ComboBoxText()
+		widget.set_hexpand(True)
+		for choice in self.choices:
+			widget.append_text(choice)
+		if value in self.choices:
+			widget.set_active(self.choices.index(value))
+		elif self.default is not None:
+			widget.set_active(self.choices.index(self.default))
+		else:
+			widget.set_active(0)
+		return widget
+
+	def get_widget_value(self, widget):
+		return widget.get_active_text()
+
+class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
+	def get_widget(self, value):
+		widget = Gtk.SpinButton()
+		widget.set_hexpand(True)
+		widget.set_adjustment(Gtk.Adjustment(int(round(value)), -0x7fffffff, 0x7fffffff, 1, 10, 0))
+		widget.set_numeric(True)
+		widget.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
+		return widget
+
+	def get_widget_value(self, widget):
+		return widget.get_value_as_int()
+
+class ClientOptionString(ClientOptionMixin, plugins.OptionString):
+	def get_widget(self, value):
+		widget = Gtk.Entry()
+		widget.set_hexpand(True)
+		widget.set_text((value if value else ''))
+		return widget
+
+	def get_widget_value(self, widget):
+		return widget.get_text()
+
 class ClientPlugin(plugins.PluginBase):
 	"""
 	The base object to be inherited by plugins that are loaded into the King
@@ -42,9 +104,9 @@ class ClientPlugin(plugins.PluginBase):
 	"""
 	_logging_prefix = 'KingPhisher.Plugins.Client.'
 	def __init__(self, application):
-		super(ClientPlugin, self).__init__()
 		self.application = application
 		"""A reference to the :py:class:`~king_phisher.client.application.KingPhisherClientApplication`."""
+		super(ClientPlugin, self).__init__()
 		self._signals = []
 
 	def _cleanup(self):

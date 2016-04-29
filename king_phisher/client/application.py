@@ -156,6 +156,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 			[os.path.join(USER_DATA_PATH, 'plugins'), find.find_data_directory('plugins')],
 			self
 		)
+		if use_plugins:
+			self.plugin_manager.load_all()
 
 	def _create_actions(self):
 		action = Gio.SimpleAction.new('emit-application-signal', GLib.VariantType.new('s'))
@@ -206,7 +208,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The server responded that the credentials are invalid.')
 		except paramiko.SSHException as error:
-			self.logger.warning("failed with ssh exception '{0}'".format(error.message))
+			self.logger.warning("failed with ssh exception '{0}'".format(error.args[0]))
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, active_window, title=title_ssh_error)
 		except Exception as error:

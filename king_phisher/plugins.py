@@ -48,6 +48,28 @@ else:
 
 StrictVersion = distutils.version.StrictVersion
 
+class OptionBase(object):
+	_type = (unicode if its.py_v2 else str)
+	def __init__(self, name, description, default=None):
+		self.name = name
+		self.description = description
+		self.default = default
+
+class OptionBoolean(OptionBase):
+	_type = bool
+
+class OptionEnum(OptionBase):
+	_type = str
+	def __init__(self, name, description, choices, default=None):
+		self.choices = choices
+		super(OptionEnum, self).__init__(name, description, default=default)
+
+class OptionInteger(OptionBase):
+	_type = int
+
+class OptionString(OptionBase):
+	pass
+
 class PluginBaseMeta(type):
 	"""
 	The meta class for :py:class:`.PluginBase` which provides additional class
@@ -87,6 +109,8 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""A description of the plugin and what it does."""
 	homepage = None
 	"""An optional homepage for the plugin."""
+	options = []
+	"""A list of configurable option definitions for the plugin."""
 	req_min_version = '1.3.0b0'
 	"""The required minimum version for compatibility."""
 	version = '1.0'
@@ -94,6 +118,13 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	_logging_prefix = 'KingPhisher.Plugins.'
 	def __init__(self):
 		self.logger = logging.getLogger(self._logging_prefix + self.__class__.__name__)
+		if getattr(self, 'config') is None:  # hasattr will return False with subclass properties
+			self.config = {}
+			"""The plugins configuration dictionary for storing the values of it's options."""
+		for option in self.options:
+			if option.name in self.config:
+				continue
+			self.config[option.name] = option.default
 
 	@property
 	def name(self):
@@ -149,8 +180,8 @@ class PluginManagerBase(object):
 		self.unload(key)
 
 	def __iter__(self):
-		for name, inst in self.loaded_plugins.items():
-			yield name, inst
+		for name, klass in self.loaded_plugins.items():
+			yield name, klass
 
 	def __len__(self):
 		return len(self.loaded_plugins)
