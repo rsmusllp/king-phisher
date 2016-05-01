@@ -50,6 +50,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		children=(
 			'expander_plugin_info',
 			'label_plugin_info_authors',
+			'label_plugin_info_compatible',
 			'label_plugin_info_description',
 			'label_plugin_info_homepage',
 			'label_plugin_info_title',
@@ -128,6 +129,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self._model[path][1] = False
 			self.config['plugins.enabled'].remove(name)
 		else:
+			if not pm.loaded_plugins[name].is_compatible:
+				gui_utilities.show_dialog_error('Incompatible Plugin', self.window, 'This plugin is not compatible.')
+				return
 			if not pm.enable(name):
 				return
 			self._model[path][1] = True
@@ -142,8 +146,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		name = self._model[path][0]
 		klass = pm.loaded_plugins[name]
 		self.gobjects['label_plugin_info_title'].set_text(klass.title)
-		self.gobjects['label_plugin_info_authors'].set_text('\n'.join(klass.authors))
+		self.gobjects['label_plugin_info_compatible'].set_text('Yes' if klass.is_compatible else 'No')
 		self.gobjects['label_plugin_info_version'].set_text(klass.version)
+		self.gobjects['label_plugin_info_authors'].set_text('\n'.join(klass.authors))
 		label_homepage = self.gobjects['label_plugin_info_homepage']
 		if klass.homepage is None:
 			label_homepage.set_property('visible', False)
