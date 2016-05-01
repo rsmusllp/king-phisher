@@ -49,25 +49,43 @@ else:
 StrictVersion = distutils.version.StrictVersion
 
 class OptionBase(object):
+	"""
+	A base class for options which can be configured for plugins.
+	"""
 	_type = (unicode if its.py_v2 else str)
 	def __init__(self, name, description, default=None):
+		"""
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param default: The default value of this option.
+		"""
 		self.name = name
 		self.description = description
 		self.default = default
 
 class OptionBoolean(OptionBase):
+	"""A plugin option which is represented with a boolean value."""
 	_type = bool
 
 class OptionEnum(OptionBase):
+	"""A plugin option which is represented with an enumerable value."""
 	_type = str
 	def __init__(self, name, description, choices, default=None):
+		"""
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param tuple choices: The supported values for this option.
+		:param default: The default value of this option.
+		"""
 		self.choices = choices
 		super(OptionEnum, self).__init__(name, description, default=default)
 
 class OptionInteger(OptionBase):
+	"""A plugin option which is represented with an integer value."""
 	_type = int
 
 class OptionString(OptionBase):
+	"""A plugin option which is represented with a string value."""
 	pass
 
 class PluginBaseMeta(type):
