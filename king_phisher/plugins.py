@@ -292,7 +292,7 @@ class PluginManagerBase(object):
 			self.logger.warning("failed to load plugin '{0}', Plugin class is invalid".format(name))
 			raise errors.KingPhisherResourceError('the Plugin class is invalid')
 		self.loaded_plugins[name] = klass
-		self.logger.debug("plugin '{0}' has been loaded".format(name))
+		self.logger.debug("plugin '{0}' has been {1}loaded".format(name, 're' if reload_module else ''))
 		self._lock.release()
 		return klass
 
