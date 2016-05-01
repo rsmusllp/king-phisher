@@ -356,7 +356,7 @@ def gtk_widget_destroy_children(widget):
 	for child in widget.get_children():
 		child.destroy()
 
-def show_dialog(message_type, message, parent, secondary_text=None, message_buttons=Gtk.ButtonsType.OK):
+def show_dialog(message_type, message, parent, secondary_text=None, message_buttons=Gtk.ButtonsType.OK, use_markup=False, secondary_use_markup=False):
 	"""
 	Display a dialog and return the response. The response is dependent on
 	the value of *message_buttons*.
@@ -369,12 +369,22 @@ def show_dialog(message_type, message, parent, secondary_text=None, message_butt
 	:param str secondary_text: Optional subtext for the dialog.
 	:param message_buttons: The buttons to display in the dialog box.
 	:type message_buttons: :py:class:`Gtk.ButtonsType`
+	:param bool use_markup: Whether or not to treat the message text as markup.
+	:param bool secondary_use_markup: Whether or not to treat the secondary text as markup.
 	:return: The response of the dialog.
 	:rtype: int
 	"""
-	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, message_type, message_buttons, message)
-	if secondary_text:
-		dialog.format_secondary_text(secondary_text)
+	dialog = Gtk.MessageDialog(parent, Gtk.DialogFlags.DESTROY_WITH_PARENT, message_type, message_buttons)
+	dialog.set_property('text', message)
+	dialog.set_property('use-markup', use_markup)
+	dialog.set_property('secondary-text', secondary_text)
+	dialog.set_property('secondary-use-markup', secondary_use_markup)
+	if secondary_use_markup:
+		signal_label_activate_link = lambda _, uri: utilities.open_uri(uri)
+		for label in dialog.get_message_area().get_children():
+			if not isinstance(label, Gtk.Label):
+				continue
+			label.connect('activate-link', signal_label_activate_link)
 	dialog.show_all()
 	response = dialog.run()
 	dialog.destroy()

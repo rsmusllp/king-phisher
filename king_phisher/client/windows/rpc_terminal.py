@@ -33,6 +33,7 @@
 import logging
 import os
 import signal
+import sys
 
 from king_phisher import find
 from king_phisher import json_ex
@@ -44,7 +45,6 @@ from king_phisher.client import gui_utilities
 
 from gi.repository import GLib
 from gi.repository import Gtk
-from smoke_zephyr.utilities import which
 
 try:
 	from gi.repository import Vte
@@ -160,8 +160,11 @@ class RPCTerminal(object):
 
 		child_pid, _, _, _ = GLib.spawn_async(
 			working_directory=os.getcwd(),
-			argv=[which('python'), '-c', python_command],
-			envp=['PYTHONPATH=' + module_path, find.ENV_VAR + '=' + os.environ[find.ENV_VAR]],
+			argv=[sys.executable, '-c', python_command],
+			envp=[
+				'PATH=' + os.environ['PATH'],
+				'PYTHONPATH=' + module_path, find.ENV_VAR + '=' + os.environ[find.ENV_VAR]
+			],
 			flags=(GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD),
 			child_setup=self._child_setup,
 			user_data=vte_pty
