@@ -37,14 +37,41 @@ from king_phisher import plugins
 from gi.repository import Gtk
 
 class ClientOptionMixin(object):
+	"""
+	A mixin for options used by plugins for the client application. It provides
+	additional methods for creating GTK widgets for the user to set the option's
+	value as well as retrieve it.
+	"""
 	def __init__(self, name, *args, **kwargs):
+		"""
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param default: The default value of this option.
+		:param str display_name: The name to display in the UI to the user for this option.
+		"""
 		self.display_name = kwargs.pop('display_name', name)
 		super(ClientOptionMixin, self).__init__(name, *args, **kwargs)
 
 	def get_widget(self, value):
+		"""
+		Create a widget suitable for configuring this option. This is meant to
+		allow subclasses to specify and create an appropriate widget type.
+
+		:param value: The initial value to set for this widget.
+		:return: The widget for the user to set the option with.
+		:rtype: :py:class:`Gtk.Widget`
+		"""
 		raise NotImplementedError()
 
 	def get_widget_value(self, widget):
+		"""
+		Get the value of a widget previously created with
+		:py:meth:`~.ClientOptionMixin.get_widget`.
+
+		:param widget: The widget from which to retrieve the value from for this option.
+		:type widget: :py:class:`Gtk.Widget`
+		:return: The value for this option as set in the widget.
+		"""
 		raise NotImplementedError()
 
 # base option types
@@ -59,6 +86,13 @@ class ClientOptionBoolean(ClientOptionMixin, plugins.OptionBoolean):
 		return widget.get_active()
 
 class ClientOptionEnum(ClientOptionMixin, plugins.OptionEnum):
+	"""
+	:param str name: The name of this option.
+	:param str description: The description of this option.
+	:param tuple choices: The supported values for this option.
+	:param default: The default value of this option.
+	:param str display_name: The name to display in the UI to the user for this option
+	"""
 	def get_widget(self, value):
 		widget = Gtk.ComboBoxText()
 		widget.set_hexpand(True)
