@@ -2458,7 +2458,6 @@ Spencer McIntyre</property>
         <child>
           <object class="GtkExpander" id="PluginManagerWindow.expander_plugin_info">
             <property name="visible">True</property>
-            <property name="sensitive">False</property>
             <property name="can_focus">True</property>
             <child>
               <object class="GtkScrolledWindow" id="PluginManagerWindow.scrolledwindow_plugin_info">
@@ -2566,12 +2565,12 @@ Spencer McIntyre</property>
                         <child>
                           <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_description">
                             <property name="visible">True</property>
-                            <property name="sensitive">False</property>
-                            <property name="can_focus">False</property>
+                            <property name="can_focus">True</property>
                             <property name="tooltip_text" translatable="yes">The description of this plugin and the features it provides.</property>
                             <property name="halign">start</property>
                             <property name="valign">start</property>
                             <property name="wrap">True</property>
+                            <property name="selectable">True</property>
                             <attributes>
                               <attribute name="scale" value="0.90000000000000002"/>
                             </attributes>
@@ -2616,7 +2615,6 @@ Spencer McIntyre</property>
                           <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_homepage">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="tooltip_text" translatable="yes">The home page of this plugin.</property>
                             <property name="label" translatable="yes">&lt;a href=""&gt;Homepage&lt;/a&gt;</property>
                             <property name="use_markup">True</property>
                             <property name="track_visited_links">False</property>

@@ -174,10 +174,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.config['plugins.enabled'].append(name)
 
 	def signal_treeview_row_activated(self, treeview, path, column):
-		expander = self.gobjects['expander_plugin_info']
-		if not expander.is_sensitive():
-			expander.set_sensitive(True)
-			expander.set_expanded(True)
 		pm = self.application.plugin_manager
 		name = self._model[path][0]
 		self._last_plugin_selected = name
@@ -191,6 +187,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			label_homepage.set_property('visible', False)
 		else:
 			label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(klass.homepage))
+			label_homepage.set_property('tooltip-text', klass.homepage)
 			label_homepage.set_property('visible', True)
 		description = klass.description
 		if description[0] == '\n':

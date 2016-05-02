@@ -304,7 +304,9 @@ def gtk_treeview_selection_to_clipboard(treeview, columns=0):
 	tree_iters = map(model.get_iter, tree_paths)
 	selection_lines = []
 	for ti in tree_iters:
-		selection_lines.append(' '.join((model.get_value(ti, column) or '') for column in columns).strip())
+		values = (model.get_value(ti, column) for column in columns)
+		values = (('' if value is None else str(value)) for value in values)
+		selection_lines.append(' '.join(values).strip())
 	selection_lines = os.linesep.join(selection_lines)
 	clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 	clipboard.set_text(selection_lines, -1)

@@ -244,7 +244,7 @@ class TreeViewManager(object):
 		keyval = event.get_keyval()[1]
 		if event.get_state() == Gdk.ModifierType.CONTROL_MASK:
 			if keyval == Gdk.KEY_c and self.column_titles:
-				gui_utilities.gtk_treeview_selection_to_clipboard(treeview, self.column_titles.values()[0])
+				gui_utilities.gtk_treeview_selection_to_clipboard(treeview, list(self.column_titles.values())[0])
 		elif keyval == Gdk.KEY_F5 and self.cb_refresh:
 			self.cb_refresh()
 		elif keyval == Gdk.KEY_Delete:
