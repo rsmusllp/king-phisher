@@ -94,6 +94,7 @@ class PluginBaseMeta(type):
 	properties based on defined attributes.
 	"""
 	req_min_version = None
+	req_packages = None
 	@property
 	def is_compatible(cls):
 		"""
@@ -101,11 +102,33 @@ class PluginBaseMeta(type):
 		Phisher. This can only be checked after the module is imported, so any
 		references to non-existent classes in older versions outside of the
 		class methods will still cause a load error.
+
+		:return: Whether or not this plugin class is compatible.
+		:rtype: bool
 		"""
 		if cls.req_min_version is not None:
 			if StrictVersion(cls.req_min_version) > StrictVersion(version.distutils_version):
 				return False
+		if cls.req_packages:
+			if not all(cls.req_packages.values()):
+				return False
 		return True
+
+	@property
+	def compatibility(cls):
+		"""
+		A generator which yields tuples of compatibility information based on
+		the classes defined attributes. Each tuple contains three elements, a
+		string describing the requirement, the requirements value, and a boolean
+		indicating whether or not the requirement is met.
+
+		:return: Tuples of compatibility information.
+		"""
+		if cls.req_min_version is not None:
+			yield ('King Phisher Version', cls.req_min_version, StrictVersion(cls.req_min_version) <= StrictVersion(version.distutils_version))
+		if cls.req_packages is not None:
+			for name, available in cls.req_packages.items():
+				yield ('Required Package', name, available)
 
 	@property
 	def name(cls):
@@ -131,6 +154,8 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""A list of configurable option definitions for the plugin."""
 	req_min_version = '1.3.0b0'
 	"""The required minimum version for compatibility."""
+	req_packages = {}
+	"""A dictionary of required packages, keyed by the package name and a boolean value of it's availability."""
 	version = '1.0'
 	"""The version identifier of this plugin."""
 	_logging_prefix = 'KingPhisher.Plugins.'

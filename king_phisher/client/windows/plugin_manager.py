@@ -36,6 +36,7 @@ from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
 
+from gi.repository import Gdk
 from gi.repository import Gtk
 
 __all__ = ('PluginManagerWindow',)
@@ -50,6 +51,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		children=(
 			'expander_plugin_info',
 			'label_plugin_info_authors',
+			'label_plugin_info_for_compatible',
 			'label_plugin_info_compatible',
 			'label_plugin_info_description',
 			'label_plugin_info_homepage',
@@ -62,6 +64,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_plugins']
+		self._last_plugin_selected = None
 		tvm = managers.TreeViewManager(
 			treeview,
 			cb_refresh=self.load_plugins
@@ -108,6 +111,39 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def signal_label_activate_link(self, _, uri):
 		utilities.open_uri(uri)
 
+	def signal_eventbox_button_press(self, widget, event):
+		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_PRIMARY):
+			return
+		name = self._last_plugin_selected
+		if name is None:
+			return
+		klass = self.application.plugin_manager[name]
+		popover = Gtk.Popover()
+		popover.set_relative_to(self.gobjects['label_plugin_info_for_compatible'])
+		grid = Gtk.Grid()
+		popover.add(grid)
+		grid.insert_column(0)
+		grid.insert_column(0)
+		grid.insert_column(0)
+		grid.set_column_spacing(3)
+		row = 0
+		for req in klass.compatibility:
+			grid.insert_row(row)
+			label = Gtk.Label(req[0])
+			label.set_property('halign', Gtk.Align.START)
+			grid.attach(label, 0, row, 1, 1)
+			label = Gtk.Label(req[1])
+			label.set_property('halign', Gtk.Align.START)
+			grid.attach(label, 1, row, 1, 1)
+			label = Gtk.Label('Yes' if req[2] else 'No')
+			label.set_property('halign', Gtk.Align.END)
+			grid.attach(label, 2, row, 1, 1)
+			row += 1
+		if not row:
+			popover.destroy()
+			return
+		popover.show_all()
+
 	def signal_popup_menu_activate_reload(self, _):
 		treeview = self.gobjects['treeview_plugins']
 		pm = self.application.plugin_manager
@@ -144,6 +180,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			expander.set_expanded(True)
 		pm = self.application.plugin_manager
 		name = self._model[path][0]
+		self._last_plugin_selected = name
 		klass = pm.loaded_plugins[name]
 		self.gobjects['label_plugin_info_title'].set_text(klass.title)
 		self.gobjects['label_plugin_info_compatible'].set_text('Yes' if klass.is_compatible else 'No')
