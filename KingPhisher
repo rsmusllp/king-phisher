@@ -60,6 +60,7 @@ __requirements__ = [
 	'icalendar>=3.9.2',
 	'Jinja2>=2.8',
 	'paramiko>=1.16.0',
+	'pluginbase>=0.3',
 	'python-dateutil>=2.5.1',
 	'pytz>=2016.1',
 	'requests>=2.9.1',

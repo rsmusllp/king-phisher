@@ -2428,12 +2428,12 @@ Spencer McIntyre</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <child>
-      <object class="GtkBox" id="box29">
+      <object class="GtkBox" id="PluginManagerWindow.box_main">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow6">
+          <object class="GtkScrolledWindow" id="PluginManagerWindow.scrolledwindow_plugins">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="shadow_type">in</property>
@@ -2444,7 +2444,7 @@ Spencer McIntyre</property>
                 <property name="activate_on_single_click">True</property>
                 <signal name="row-activated" handler="signal_treeview_row_activated" swapped="no"/>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection12"/>
+                  <object class="GtkTreeSelection" id="PluginManagerWindow.treeview_selection_plugins"/>
                 </child>
               </object>
             </child>
@@ -2473,7 +2473,7 @@ Spencer McIntyre</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkGrid" id="grid13">
+                      <object class="GtkGrid" id="PluginManagerWindow.grid_plugin_info">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="row_spacing">3</property>
@@ -2648,7 +2648,7 @@ Spencer McIntyre</property>
               </object>
             </child>
             <child type="label">
-              <object class="GtkLabel" id="label44">
+              <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Plugin Information</property>
