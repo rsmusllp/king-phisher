@@ -40,6 +40,8 @@
 
 _arguments \
   "--logger[specify the root logger]:logger" \
+  "--no-plugins[disable all plugins]" \
+  "--no-style[disable interface styling]" \
   {-L,--log}"[set the logging level]:loglvl:(DEBUG INFO WARNING ERROR CRITICAL)" \
   {-c,--config}"[specify a configuration file to use]:config file" \
   {-h,--help}"[show help text]" \

@@ -35,7 +35,9 @@ class KingPhisherError(Exception):
 	The base exception that is inherited by all custom King Phisher error
 	classes.
 	"""
-	pass
+	def __init__(self, message=''):
+		super(KingPhisherError, self).__init__()
+		self.message = message
 
 class KingPhisherAbortError(KingPhisherError):
 	"""
@@ -75,6 +77,13 @@ class KingPhisherPermissionError(KingPhisherError):
 	"""
 	An exception that is raised by King Phisher when some form of a request can
 	not be satisfied due to the configured level of access.
+	"""
+	pass
+
+class KingPhisherResourceError(KingPhisherError):
+	"""
+	An exception that is raised by King Phisher when there is a problem relating
+	to a resource such as it is missing, locked or otherwise invalid.
 	"""
 	pass
 

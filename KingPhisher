@@ -60,6 +60,7 @@ __requirements__ = [
 	'icalendar>=3.9.2',
 	'Jinja2>=2.8',
 	'paramiko>=1.16.0',
+	'pluginbase>=0.3',
 	'python-dateutil>=2.5.1',
 	'pytz>=2016.1',
 	'requests>=2.9.1',
@@ -74,11 +75,13 @@ def main():
 	parser = argparse.ArgumentParser(description='King Phisher Client GUI', conflict_handler='resolve')
 	utilities.argp_add_args(parser, default_root='KingPhisher')
 	parser.add_argument('-c', '--config', dest='config_file', required=False, help='specify a configuration file to use')
+	parser.add_argument('--no-plugins', dest='use_plugins', default=True, action='store_false', help='disable all plugins')
 	parser.add_argument('--no-style', dest='use_style', default=True, action='store_false', help='disable interface styling')
 	arguments = parser.parse_args()
 
 	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
 	config_file = arguments.config_file
+	use_plugins = arguments.use_plugins
 	use_style = arguments.use_style
 	del arguments, parser
 	logger = logging.getLogger('KingPhisher.Client.CLI')
@@ -116,7 +119,7 @@ def main():
 	start_time = time.time()
 	logger.debug('using ui data from glade file: ' + gui_utilities.which_glade())
 	try:
-		app = application.KingPhisherClientApplication(config_file=config_file, use_style=use_style)
+		app = application.KingPhisherClientApplication(config_file=config_file, use_plugins=use_plugins, use_style=use_style)
 	except Exception as error:
 		logger.critical("initialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
 		color.print_error('failed to initialize the King Phisher client')

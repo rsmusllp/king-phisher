@@ -18,6 +18,7 @@ The King Phisher Package
    king_phisher/ics.rst
    king_phisher/ipaddress.rst
    king_phisher/json_ex.rst
+   king_phisher/plugins.rst
    king_phisher/scrubber.rst
    king_phisher/sms.rst
    king_phisher/smtp_server.rst

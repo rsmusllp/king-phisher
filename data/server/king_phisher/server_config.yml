@@ -40,7 +40,7 @@ server:
   # details
   database: sqlite:////var/king-phisher/king-phisher.db
 
-  # The Postgres database to use
+  # The PostgreSQL database to use
   #database: postgresql://user:pass@localhost/king_phisher
 
   # Fork the server process into the background

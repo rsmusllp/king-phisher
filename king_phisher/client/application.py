@@ -50,9 +50,10 @@ from king_phisher import version
 from king_phisher.client import assistants
 from king_phisher.client import client_rpc
 from king_phisher.client import dialogs
-from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
+from king_phisher.client import plugins
+from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.client.windows import main
 from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
@@ -74,8 +75,8 @@ if its.py_v2:
 else:
 	from http.client import BadStatusLine
 
-CONFIG_FILE_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'config.json')
-"""The default search location for the client configuration file."""
+USER_DATA_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher')
+"""The default folder location of user specific data storage."""
 
 DISABLED = typeutils.make_sentinel('DISABLED')
 """A sentinel value to indicate that a feature is disabled."""
@@ -108,7 +109,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'rpc-cache-clear': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ())
 	}
-	def __init__(self, config_file=None, use_style=True):
+	def __init__(self, config_file=None, use_plugins=True, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
 		if use_style:
 			self._theme_file = 'theme.css'
@@ -125,7 +126,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.debug("matplotlib version: {0}".format(graphs.matplotlib.__version__))
 		self.set_property('application-id', 'org.king-phisher.client')
 		self.set_property('register-session', True)
-		self.config_file = config_file or CONFIG_FILE_PATH
+		self.config_file = config_file or os.path.join(USER_DATA_PATH, 'config.json')
 		"""The file containing the King Phisher client configuration."""
 		if not os.path.isfile(self.config_file):
 			self._create_config()
@@ -147,6 +148,16 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.connect('window-added', self.signal_window_added)
 		self.actions = {}
 		self._create_actions()
+
+		if not use_plugins:
+			self.logger.info('disabling all plugins')
+			self.config['plugins.enabled'] = []
+		self.plugin_manager = plugins.ClientPluginManager(
+			[os.path.join(USER_DATA_PATH, 'plugins'), find.find_data_directory('plugins')],
+			self
+		)
+		if use_plugins:
+			self.plugin_manager.load_all()
 
 	def _create_actions(self):
 		action = Gio.SimpleAction.new('emit-application-signal', GLib.VariantType.new('s'))
@@ -197,7 +208,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The server responded that the credentials are invalid.')
 		except paramiko.SSHException as error:
-			self.logger.warning("failed with ssh exception '{0}'".format(error.message))
+			self.logger.warning("failed with ssh exception '{0}'".format(error.args[0]))
 		except socket.error as error:
 			gui_utilities.show_dialog_exc_socket_error(error, active_window, title=title_ssh_error)
 		except Exception as error:
@@ -314,6 +325,18 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.main_window.set_position(Gtk.WindowPosition.CENTER)
 		self.main_window.show()
 
+		for name in list(self.config['plugins.enabled']):
+			try:
+				self.plugin_manager.load(name)
+				self.plugin_manager.enable(name)
+			except Exception:
+				self.config['plugins.enabled'].remove(name)
+				gui_utilities.show_dialog_error(
+					'Failed To Enable Plugin',
+					self.main_window,
+					"Plugin '{0}' could not be enabled.".format(name)
+				)
+
 	def do_campaign_changed(self, campaign_id):
 		pass
 
@@ -331,6 +354,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 			json_ex.dump(config, config_file_h)
 
 	def do_exit(self):
+		self.plugin_manager.shutdown()
+
 		self.main_window.hide()
 		gui_utilities.gtk_widget_destroy_children(self.main_window)
 		gui_utilities.gtk_sync()

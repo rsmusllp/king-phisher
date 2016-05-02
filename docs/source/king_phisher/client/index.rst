@@ -19,9 +19,10 @@ application.
    windows/index.rst
 
    application.rst
+   client_rpc.rst
    export.rst
    graphs.rst
    gui_utilities.rst
    mailer.rst
-   client_rpc.rst
+   plugins.rst
    web_cloner.rst

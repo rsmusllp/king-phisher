@@ -44,7 +44,8 @@ Spencer McIntyre
   <!-- interface-authors Spencer McIntyre\nJeff McCutchan\nBrandan Geise -->
   <object class="GtkAboutDialog" id="AboutDialog">
     <property name="can_focus">False</property>
-    <property name="type_hint">menu</property>
+    <property name="type">popup</property>
+    <property name="type_hint">dialog</property>
     <property name="program_name">King Phisher</property>
     <property name="copyright" translatable="yes">Copyright (c) 2013-2016, SecureState LLC</property>
     <property name="comments" translatable="yes">Phishing Campaign Toolkit</property>
@@ -2418,6 +2419,251 @@ Spencer McIntyre</property>
       </row>
     </data>
   </object>
+  <object class="GtkApplicationWindow" id="PluginManagerWindow">
+    <property name="width_request">550</property>
+    <property name="height_request">300</property>
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Plugin Manager</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="destroy_with_parent">True</property>
+    <child>
+      <object class="GtkBox" id="PluginManagerWindow.box_main">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkScrolledWindow" id="PluginManagerWindow.scrolledwindow_plugins">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTreeView" id="PluginManagerWindow.treeview_plugins">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="activate_on_single_click">True</property>
+                <signal name="row-activated" handler="signal_treeview_row_activated" swapped="no"/>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="PluginManagerWindow.treeview_selection_plugins"/>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkExpander" id="PluginManagerWindow.expander_plugin_info">
+            <property name="visible">True</property>
+            <property name="sensitive">False</property>
+            <property name="can_focus">True</property>
+            <child>
+              <object class="GtkScrolledWindow" id="PluginManagerWindow.scrolledwindow_plugin_info">
+                <property name="height_request">125</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="border_width">3</property>
+                <property name="hscrollbar_policy">never</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkViewport" id="PluginManagerWindow.viewport_plugin_info">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkGrid" id="PluginManagerWindow.grid_plugin_info">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="row_spacing">3</property>
+                        <property name="column_spacing">3</property>
+                        <property name="column_homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_title">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can_focus">False</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                              <attribute name="scale" value="1.25"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">0</property>
+                            <property name="width">4</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_authors">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="valign">start</property>
+                            <property name="label" translatable="yes">Authors:</property>
+                            <attributes>
+                              <attribute name="scale" value="0.90000000000000002"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_authors">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can_focus">False</property>
+                            <property name="tooltip_text" translatable="yes">The contributors who have written and provided this plugin.</property>
+                            <property name="halign">start</property>
+                            <property name="valign">start</property>
+                            <attributes>
+                              <attribute name="scale" value="0.90000000000000002"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_version">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can_focus">False</property>
+                            <property name="tooltip_text" translatable="yes">The version identifier of this plugin.</property>
+                            <property name="halign">start</property>
+                            <property name="valign">start</property>
+                            <attributes>
+                              <attribute name="scale" value="0.90000000000000002"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">3</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_description">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="valign">start</property>
+                            <property name="label" translatable="yes">Description:</property>
+                            <attributes>
+                              <attribute name="scale" value="0.90000000000000002"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_description">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can_focus">False</property>
+                            <property name="tooltip_text" translatable="yes">The description of this plugin and the features it provides.</property>
+                            <property name="halign">start</property>
+                            <property name="valign">start</property>
+                            <property name="wrap">True</property>
+                            <attributes>
+                              <attribute name="scale" value="0.90000000000000002"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">3</property>
+                            <property name="width">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_version">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="valign">start</property>
+                            <property name="label" translatable="yes">Version:</property>
+                            <attributes>
+                              <attribute name="scale" value="0.90000000000000002"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="left_attach">2</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_compatible">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="valign">start</property>
+                            <property name="label" translatable="yes">Compatible:</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_compatible">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="tooltip_text" translatable="yes">Whether or not this plugin is compatible with this environment.</property>
+                            <property name="halign">start</property>
+                            <property name="valign">start</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_homepage">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">The home page of this plugin.</property>
+                            <property name="label" translatable="yes">&lt;a href=""&gt;Homepage&lt;/a&gt;</property>
+                            <property name="use_markup">True</property>
+                            <property name="track_visited_links">False</property>
+                            <signal name="activate-link" handler="signal_label_activate_link" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="left_attach">2</property>
+                            <property name="top_attach">2</property>
+                            <property name="width">2</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Plugin Information</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkAdjustment" id="PortAdjustment">
     <property name="lower">1</property>
     <property name="upper">65535</property>
@@ -2829,11 +3075,11 @@ Spencer McIntyre</property>
           </packing>
         </child>
         <child>
-          <object class="GtkNotebook" id="ConfigurationDialog.notebook1">
+          <object class="GtkNotebook" id="ConfigurationDialog.notebook_config">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
-              <object class="GtkBox" id="box2">
+              <object class="GtkBox" id="ConfigurationDialog.box_server_tab">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="valign">start</property>
@@ -3078,7 +3324,7 @@ Spencer McIntyre</property>
               </packing>
             </child>
             <child>
-              <object class="GtkScrolledWindow" id="scrolledwindow5">
+              <object class="GtkScrolledWindow" id="ConfigurationDialog.scrolledwindow_smtp_tab">
                 <property name="height_request">0</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -3335,7 +3581,7 @@ Spencer McIntyre</property>
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="box3">
+              <object class="GtkBox" id="ConfigurationDialog.box_campaign_tab">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="valign">start</property>
@@ -3395,7 +3641,7 @@ Spencer McIntyre</property>
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="box1">
+              <object class="GtkBox" id="ConfigurationDialog.box_client_tab">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="valign">start</property>
@@ -3640,6 +3886,62 @@ Spencer McIntyre</property>
               </object>
               <packing>
                 <property name="position">3</property>
+                <property name="tab_fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow" id="ConfigurationDialog.scrolledwindow_plugins_tab">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hscrollbar_policy">never</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkViewport" id="ConfigurationDialog.viewport_plugins_tab">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkBox" id="ConfigurationDialog.box_plugin_options">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">3</property>
+                        <child>
+                          <object class="GtkLabel" id="label46">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Plugins with configurable options can have those options set here.</property>
+                            <property name="justify">center</property>
+                            <property name="wrap">True</property>
+                            <attributes>
+                              <attribute name="style" value="italic"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel" id="label45">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Plugins</property>
+              </object>
+              <packing>
+                <property name="position">4</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -4405,6 +4707,16 @@ Spencer McIntyre</property>
                 <property name="label" translatable="yes">Clone Web Page</property>
                 <property name="use_underline">True</property>
                 <signal name="activate" handler="do_tools_clone_page" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_tools_manage_plugins">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="accel_path">&lt;KingPhisherClient&gt;/Tools/Manage Plugins</property>
+                <property name="label" translatable="yes">Manage Plugins</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_tools_manage_plugins" swapped="no"/>
               </object>
             </child>
             <child>
