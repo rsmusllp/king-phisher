@@ -31,6 +31,7 @@
 #
 
 import base64
+import contextlib
 import grp
 import hashlib
 import json
@@ -39,6 +40,7 @@ import os
 import pwd
 import random
 import select
+import signal
 import string
 import threading
 import time
@@ -53,6 +55,18 @@ import pam
 import smoke_zephyr.utilities
 
 __all__ = ('AuthenticatedSessionManager', 'ForkedAuthenticator')
+
+def _alarm_handler(signum, frame):
+	raise errors.KingPhisherTimeoutError('alarm')
+
+@contextlib.contextmanager
+def alarm_set(seconds):
+	if seconds <= 0:
+		raise errors.KingPhisherTimeoutError('alarm')
+	signal.signal(signal.SIGALRM, _alarm_handler)
+	signal.alarm(seconds)
+	yield
+	signal.alarm(0)
 
 @smoke_zephyr.utilities.Cache('3h')
 def get_groups_for_user(username):
@@ -277,6 +291,8 @@ class ForkedAuthenticator(object):
 		self.logger = logging.getLogger('KingPhisher.Server.Authenticator')
 		self.cache_timeout = smoke_zephyr.utilities.parse_timespan(cache_timeout)
 		"""The timeout of the credential cache in seconds."""
+		self.response_timeout = 30
+		"""The timeout for individual requests in seconds."""
 		self.required_group = required_group
 		self.service = pam_service
 		self.logger.debug("use pam service '{0}' for authentication".format(self.service))
@@ -305,7 +321,6 @@ class ForkedAuthenticator(object):
 		# below this are attributes exclusive to the parent process
 		self.cache = {}
 		"""The credential cache dictionary. Keys are usernames and values are tuples of password hashes and ages."""
-		self.response_timeout = 30
 		self.sequence_number = 0
 		"""A sequence number to use to align requests with responses."""
 		return
@@ -390,9 +405,14 @@ class ForkedAuthenticator(object):
 
 			start_time = time.time()
 			pam_handle = pam.pam()
-			result = pam_handle.authenticate(username, password, service=self.service, resetcreds=False)
-			end_time = time.time() - start_time
-			self.logger.debug("pam returned code: {0} reason: '{1}' for user {2} after {3:.2f} seconds".format(pam_handle.code, pam_handle.reason, username, end_time))
+			try:
+				with alarm_set(self.response_timeout):
+					result = pam_handle.authenticate(username, password, service=self.service, resetcreds=False)
+			except errors.KingPhisherTimeoutError:
+				self.logger.warning("authentication failed for user: {0} reason: received timeout".format(username))
+				result = False
+			elapsed_time = time.time() - start_time
+			self.logger.debug("pam returned code: {0} reason: '{1}' for user {2} after {3:.2f} seconds".format(pam_handle.code, pam_handle.reason, username, elapsed_time))
 
 			result = {
 				'result': result,
@@ -404,7 +424,11 @@ class ForkedAuthenticator(object):
 					result['result'] = False
 					self.logger.debug("checking groups for user: {0}".format(username))
 					try:
-						assert self.required_group in get_groups_for_user(username)
+						with alarm_set(int(round(self.response_timeout - elapsed_time))):
+							groups = get_groups_for_user(username)
+						assert self.required_group in groups
+					except errors.KingPhisherTimeoutError:
+						self.logger.warning("authentication failed for user: {0} reason: received timeout".format(username))
 					except AssertionError:
 						self.logger.warning("authentication failed for user: {0} reason: lack of group membership".format(username))
 					except KeyError:
