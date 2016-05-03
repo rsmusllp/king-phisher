@@ -16,6 +16,7 @@ Version 1.3.0
 * Server bug fixes when running on non-standard HTTP ports
 * Added completion to the messaged editor
 * Support for plugins in the client application
+* Add a client plugin to automatically check for updates
 
 Version 1.2.0
 ^^^^^^^^^^^^^

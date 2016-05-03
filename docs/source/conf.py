@@ -66,7 +66,7 @@ intersphinx_mapping = {
 	'gtksource': ('https://lazka.github.io/pgi-docs/GtkSource-3.0/', None),
 	'gtk': ('http://lazka.github.io/pgi-docs/Gtk-3.0/', None),
 	'paramiko': ('http://docs.paramiko.org/en/latest/', None),
-	'smokezephyr': ('https://smoke-zephyr.readthedocs.org/en/latest/', None),
+	'smokezephyr': ('https://smoke-zephyr.readthedocs.io/en/latest/', None),
 	'webkit2': ('http://lazka.github.io/pgi-docs/WebKit2-4.0/', None)
 }
 

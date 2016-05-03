@@ -63,5 +63,5 @@ see descriptions of the SMS plugin commands by running `help` in msfconsole.
    `sms_stop`
 
 [metasploit]: https://github.com/rapid7/metasploit-framework
-[rest-api-docs]: https://king-phisher.readthedocs.org/en/latest/server_api/rest_api.html?highlight=sms#get--_-api-sms-send
+[rest-api-docs]: https://king-phisher.readthedocs.io/en/latest/server_api/rest_api.html?highlight=sms#get--_-api-sms-send
 [sms]: ./sms.rb

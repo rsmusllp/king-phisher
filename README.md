@@ -3,7 +3,7 @@
 # King Phisher
 Phishing Campaign Toolkit
 
-[![Documentation Status](https://readthedocs.org/projects/king-phisher/badge/?version=latest&style=flat-square)](http://king-phisher.readthedocs.org/en/latest)
+[![Documentation Status](https://readthedocs.org/projects/king-phisher/badge/?version=latest&style=flat-square)](http://king-phisher.readthedocs.io/en/latest)
 [![Github Issues](http://img.shields.io/github/issues/securestate/king-phisher.svg?style=flat-square)](https://github.com/securestate/king-phisher/issues)
 
 King Phisher is a tool for testing and promoting user awareness by simulating
@@ -81,7 +81,7 @@ King Phisher uses Sphinx for internal technical documentation. This
 documentation can be generated from source with the command
 ```sphinx-build -b html docs/source docs/html```. The latest documentation is
 kindly hosted on [ReadTheDocs](https://readthedocs.org/) at
-[king-phisher.readthedocs.org](https://king-phisher.readthedocs.org/en/latest/).
+[king-phisher.readthedocs.io](https://king-phisher.readthedocs.io/en/latest/).
 
 ## License
 King Phisher is released under the BSD 3-clause license, for more details see
