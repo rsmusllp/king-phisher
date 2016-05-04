@@ -78,6 +78,28 @@ def database_access(function):
 		return result
 	return wrapper
 
+rpc_logger = logging.getLogger('KingPhisher.Server.RPC')
+def log_call(function):
+	"""
+	A wrapping function that provides logging of the arguments with which an RPC
+	method is called.
+	"""
+	@functools.wraps(function)
+	def wrapper(handler_instance, *args, **kwargs):
+		if rpc_logger.isEnabledFor(logging.DEBUG):
+			args_repr = repr(args)[1:-1]
+			if args_repr and args_repr[-1] == ',':
+				args_repr = args_repr[:-1]
+			if kwargs:
+				for key, value in sorted(kwargs.items()):
+					args_repr += ", {0}={1!r}".format(key, value)
+			msg = "calling RPC method {0}({1})".format(function.__name__, args_repr)
+			if getattr(handler_instance, 'rpc_session', False):
+				msg = handler_instance.rpc_session.user + ' is ' + msg
+			rpc_logger.debug(msg)
+		return function(handler_instance, *args, **kwargs)
+	return wrapper
+
 class KingPhisherRequestHandlerRPC(object):
 	"""
 	This superclass of :py:class:`.KingPhisherRequestHandler` maintains
@@ -115,6 +137,7 @@ class KingPhisherRequestHandlerRPC(object):
 		self.rpc_handler_map['^/login$'] = self.rpc_login
 		self.rpc_handler_map['^/logout$'] = self.rpc_logout
 
+	@log_call
 	def rpc_ping(self):
 		"""
 		An RPC method that can be used by clients to assert the status
@@ -125,6 +148,7 @@ class KingPhisherRequestHandlerRPC(object):
 		"""
 		return True
 
+	@log_call
 	def rpc_shutdown(self):
 		"""
 		This method can be used to shut down the server. This function will
@@ -138,6 +162,7 @@ class KingPhisherRequestHandlerRPC(object):
 		shutdown_thread.start()
 		return
 
+	@log_call
 	def rpc_version(self):
 		"""
 		Get the version information of the server. This returns a
@@ -192,6 +217,7 @@ class KingPhisherRequestHandlerRPC(object):
 			self.config.set(option_name, option_value)
 		return
 
+	@log_call
 	@database_access
 	def rpc_campaign_new(self, session, name, description=None):
 		"""
@@ -211,6 +237,7 @@ class KingPhisherRequestHandlerRPC(object):
 		session.commit()
 		return campaign.id
 
+	@log_call
 	@database_access
 	def rpc_campaign_alerts_is_subscribed(self, session, campaign_id):
 		"""
@@ -225,6 +252,7 @@ class KingPhisherRequestHandlerRPC(object):
 		query = query.filter_by(campaign_id=campaign_id, user_id=username)
 		return query.count()
 
+	@log_call
 	@database_access
 	def rpc_campaign_alerts_subscribe(self, session, campaign_id):
 		"""
@@ -241,6 +269,7 @@ class KingPhisherRequestHandlerRPC(object):
 			session.add(subscription)
 			session.commit()
 
+	@log_call
 	@database_access
 	def rpc_campaign_alerts_unsubscribe(self, session, campaign_id):
 		"""
@@ -257,6 +286,7 @@ class KingPhisherRequestHandlerRPC(object):
 			session.delete(subscription)
 			session.commit()
 
+	@log_call
 	@database_access
 	def rpc_campaign_landing_page_new(self, session, campaign_id, hostname, page):
 		"""
@@ -278,6 +308,7 @@ class KingPhisherRequestHandlerRPC(object):
 			session.add(landing_page)
 			session.commit()
 
+	@log_call
 	@database_access
 	def rpc_campaign_message_new(self, session, campaign_id, email_id, target_email, first_name, last_name, department_name=None):
 		"""
@@ -367,6 +398,7 @@ class KingPhisherRequestHandlerRPC(object):
 			return None
 		return {'columns': columns, 'rows': rows, 'total_rows': total_rows, 'page_size': VIEW_ROW_COUNT}
 
+	@log_call
 	@database_access
 	def rpc_database_delete_row_by_id(self, session, table_name, row_id):
 		"""
@@ -387,6 +419,7 @@ class KingPhisherRequestHandlerRPC(object):
 		session.delete(row)
 		session.commit()
 
+	@log_call
 	@database_access
 	def rpc_database_delete_rows_by_id(self, session, table_name, row_ids):
 		"""
@@ -560,6 +593,7 @@ class KingPhisherRequestHandlerRPC(object):
 		logger.info("successful login request from {0} for user {1}".format(self.client_address[0], username))
 		return True, ConnectionErrorReason.SUCCESS, self.server.session_manager.put(username)
 
+	@log_call
 	def rpc_logout(self):
 		username = self.rpc_session.user
 		self.server.session_manager.remove(self.rpc_session_id)
