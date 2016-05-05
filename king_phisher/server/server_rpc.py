@@ -87,9 +87,7 @@ def log_call(function):
 	@functools.wraps(function)
 	def wrapper(handler_instance, *args, **kwargs):
 		if rpc_logger.isEnabledFor(logging.DEBUG):
-			args_repr = repr(args)[1:-1]
-			if args_repr and args_repr[-1] == ',':
-				args_repr = args_repr[:-1]
+			args_repr = ', '.join(map(repr, args))
 			if kwargs:
 				for key, value in sorted(kwargs.items()):
 					args_repr += ", {0}={1!r}".format(key, value)
@@ -519,6 +517,7 @@ class KingPhisherRequestHandlerRPC(object):
 		row.assert_session_has_permissions('u', self.rpc_session)
 		session.commit()
 
+	@log_call
 	def rpc_geoip_lookup(self, ip, lang=None):
 		"""
 		Look up an IP address in the servers GeoIP database. If the IP address
@@ -535,6 +534,7 @@ class KingPhisherRequestHandlerRPC(object):
 			result = None
 		return result
 
+	@log_call
 	def rpc_geoip_lookup_multi(self, ips, lang=None):
 		"""
 		Look up multiple IP addresses in the servers GeoIP database. Each IP

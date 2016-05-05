@@ -17,6 +17,7 @@ Version 1.3.0
 * Added completion to the messaged editor
 * Support for plugins in the client application
 * Add a client plugin to automatically check for updates
+* Added debug logging of parameters for key RPC methods
 
 Version 1.2.0
 ^^^^^^^^^^^^^

@@ -23,6 +23,8 @@ Functions
 
 .. autofunction:: king_phisher.server.server_rpc.database_access
 
+.. autofunction:: king_phisher.server.server_rpc.log_call
+
 Classes
 -------
 
