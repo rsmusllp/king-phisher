@@ -417,6 +417,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			return
 		with self.loader_thread_lock:
 			self._sync_loader_thread()
+			self.loader_thread_stop.clear()
 			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
 			self.loader_thread.daemon = True
 			self.loader_thread.start()
