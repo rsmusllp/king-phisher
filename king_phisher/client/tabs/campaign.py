@@ -75,10 +75,33 @@ class CampaignViewGenericTab(gui_utilities.GladeGObject):
 		"""The thread object which loads the data from the server."""
 		self.loader_thread_lock = threading.Lock()
 		"""The :py:class:`threading.Lock` object used for synchronization between the loader and main threads."""
+		self.loader_thread_stop = threading.Event()
+		"""The :py:class:`threading.Event` object used to request that the loader thread stop before completion."""
+		self.application.connect('campaign-set', self.signal_kpc_campaign_set)
+
+	def _sync_loader_thread(self):
+		"""
+		Synchronize the loader thread by ensuring that it is stopped. If it is
+		currently running, this will use :py:attr:`~.loader_thread_stop` to
+		request that the loader stops early.
+		"""
+		if not self.loader_thread_is_running:
+			return
+		# it's alive so tell it to stop, wait for it, then proceed
+		self.loader_thread_stop.set()
+		while self.loader_thread.is_alive():
+			gui_utilities.gtk_sync()
+			self.loader_thread.join(1)
 
 	@property
 	def rpc(self):
 		return self.application.rpc
+
+	@property
+	def loader_thread_is_running(self):
+		if self.loader_thread is None:
+			return False
+		return self.loader_thread.is_alive()
 
 	def load_campaign_information(self, force=True):
 		raise NotImplementedError()
@@ -88,11 +111,15 @@ class CampaignViewGenericTab(gui_utilities.GladeGObject):
 
 	def signal_destroy(self, gobject):
 		self.is_destroyed.set()
+		self.loader_thread_stop.set()
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			self.logger.debug("waiting on thread: {0}.loader_thread (tid: 0x{1:x})".format(self.__class__.__name__, self.loader_thread.ident))
 			while self.loader_thread.is_alive():
 				gui_utilities.gtk_sync()
 			self.logger.debug("joined thread: {0}.loader_thread (tid: 0x{1:x})".format(self.__class__.__name__, self.loader_thread.ident))
+
+	def signal_kpc_campaign_set(self, kpc, cid):
+		self.load_campaign_information()
 
 class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	"""
@@ -124,6 +151,10 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.treeview_manager.set_column_titles(self.view_columns, column_offset=1)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
+		treeview = self.gobjects['treeview_campaign']
+		store_columns = [str] * (len(self.view_columns) + 1)
+		store = Gtk.ListStore(*store_columns)
+		treeview.set_model(store)
 
 	def _prompt_to_delete_row(self, treeview, _):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
@@ -187,19 +218,11 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""
 		if not force and ((time.time() - self.last_load_time) < self.refresh_frequency):
 			return
-		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
-			return
 		self.loader_thread_lock.acquire()
-		treeview = self.gobjects['treeview_campaign']
-		store = treeview.get_model()
-		if store == None:
-			store_columns = [str]
-			for _ in range(len(self.view_columns)):
-				store_columns.append(str)
-			store = Gtk.ListStore(*store_columns)
-			treeview.set_model(store)
-		else:
-			store.clear()
+		self._sync_loader_thread()
+		self.loader_thread_stop.clear()
+		store = self.gobjects['treeview_campaign'].get_model()
+		store.clear()
 		self.loader_thread = threading.Thread(target=self.loader_thread_routine, args=(store,))
 		self.loader_thread.daemon = True
 		self.loader_thread.start()
@@ -215,6 +238,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
 		for row in self.rpc.remote_table(self.remote_table_name, query_filter={'campaign_id': self.config['campaign_id']}):
+			if self.loader_thread_stop.is_set():
+				break
 			if self.is_destroyed.is_set():
 				break
 			if self.rpc is None:
@@ -391,15 +416,14 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			self.logger.warning('skipping load_campaign_information because rpc is not initialized')
 			return
 		with self.loader_thread_lock:
-			if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
-				return
+			self._sync_loader_thread()
 			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
 			self.loader_thread.daemon = True
 			self.loader_thread.start()
 
 	def loader_idle_routine(self):
 		"""The routine which refreshes the campaign data at a regular interval."""
-		if self.rpc:
+		if self.rpc and not self.loader_thread_is_running:
 			self.logger.debug('idle loader routine called')
 			self.load_campaign_information()
 		return True
@@ -412,10 +436,13 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			return
 		info_cache = {}
 		for graph in self.graphs:
+			if self.loader_thread_stop.is_set():
+				break
 			if self.is_destroyed.is_set():
 				break
-			info_cache.update(gui_utilities.glib_idle_add_wait(lambda g=graph: g.refresh(info_cache, self.is_destroyed)))
-		self.last_load_time = time.time()
+			info_cache.update(gui_utilities.glib_idle_add_wait(lambda g=graph: g.refresh(info_cache, self.loader_thread_stop)))
+		else:
+			self.last_load_time = time.time()
 
 class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding incoming visitors."""
@@ -564,12 +591,6 @@ class CampaignViewTab(object):
 		for tab in self.tabs.values():
 			tab.box.show()
 		self.notebook.show()
-		self.application.connect('campaign-set', self.signal_kpc_campaign_set)
-
-	def signal_kpc_campaign_set(self, kpc, cid):
-		for tab in self.tabs.values():
-			if hasattr(tab, 'load_campaign_information'):
-				tab.load_campaign_information()
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		if not hasattr(self.parent, 'rpc'):
