@@ -4,10 +4,10 @@ Completion Data
 ===============
 
 Some classes provided by the
-:py:mod:`widget.completion_providers` module require large
-amounts of data to function. This data is stored encoded in JSON to be loaded
-when these classes are initialized. The formats of the data are specific to each
-completion provider depending on the needs of their target syntax.
+:py:mod:`widget.completion_providers` module require large amounts of data to
+function. This data is stored encoded in JSON to be loaded when these classes
+are initialized. The formats of the data are specific to each completion
+provider depending on the needs of their target syntax.
 
 .. _completion-data-html:
 
@@ -25,6 +25,7 @@ token or not.
 Example data containing completion information for the html and input tags:
 
 .. code-block:: javascript
+   tab-width: 4
 
    {
      "html": null,

@@ -169,8 +169,8 @@ class ClientPlugin(plugins.PluginBase):
 		"""
 		Connect *handler* to a signal by *name* to an arbitrary GObject. Signals
 		connected through this method are automatically cleaned up when the
-		plugin is disabled. If not GObject is specified, the application is
-		used.
+		plugin is disabled. If no GObject is specified, the
+		:py:attr:`~.ClientPlugin.application` instance is used.
 
 		.. warning::
 			If the signal needs to be disconnected manually by the plugin, this

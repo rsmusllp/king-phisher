@@ -48,6 +48,8 @@ extensions = [
 	'sphinxcontrib.httpdomain'
 ]
 
+tab_width = 4
+
 extlinks = {
 	'release': ("https://github.com/{0}/releases/tag/v%s".format(GITHUB_REPO), 'v')
 }
