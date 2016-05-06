@@ -552,8 +552,7 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 			ua = ua_parser.parse_user_agent(visit.visitor_details)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 
-		os_names = operating_systems.keys()
-		os_names.sort()
+		os_names = sorted(operating_systems.keys())
 		bars = [operating_systems[os_name] for os_name in os_names]
 		self.graph_bar(bars, len(OSFamily), os_names)
 		return

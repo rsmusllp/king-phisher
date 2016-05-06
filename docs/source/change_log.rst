@@ -18,6 +18,7 @@ Version 1.3.0
 * Support for plugins in the client application
 * Add a client plugin to automatically check for updates
 * Added debug logging of parameters for key RPC methods
+* Lots of Python 3.x compatiblity fixes
 
 Version 1.2.0
 ^^^^^^^^^^^^^
