@@ -35,6 +35,7 @@ import io
 import os
 import tarfile
 
+from king_phisher import its
 from king_phisher import json_ex
 from king_phisher import version
 
@@ -89,7 +90,9 @@ class ArchiveFile(object):
 		:param data: The data to place into the archive.
 		:type data: bytes, str
 		"""
-		if isinstance(data, str):
+		if its.py_v2 and isinstance(data, unicode):
+			data = data.encode(self.encoding)
+		elif its.py_v3 and isinstance(data, str):
 			data = data.encode(self.encoding)
 		pseudo_file = io.BytesIO()
 		pseudo_file.write(data)
