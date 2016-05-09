@@ -251,7 +251,8 @@ if [ "$LINUX_VERSION" == "CentOS" ]; then
 	fi
 elif [ "$LINUX_VERSION" == "Fedora" ]; then
 	dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
-		libpng-devel postgresql-devel python-devel python-pip
+		libpng-devel postgresql-devel python-devel python-pip \
+		libffi-devel openssl-devel
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		dnf install -y geos geos-devel gtksourceview3 vte3
 	fi
