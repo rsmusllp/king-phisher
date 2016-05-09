@@ -168,7 +168,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		plugin_manager.PluginManagerWindow(self.application)
 
 	def do_tools_sftp_client(self, _):
-		self.application.start_sftp_client()
+		self.application.emit('sftp-client-start')
 
 	def do_tools_show_campaign_graph(self, _, graph_name):
 		self.application.show_campaign_graph(graph_name)

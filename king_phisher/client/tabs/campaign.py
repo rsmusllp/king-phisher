@@ -172,8 +172,24 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			return
 		if len(row_ids) == 1:
 			self.rpc('db/table/delete', self.remote_table_name, row_ids[0])
+			if self.remote_table_name == 'messages':
+				self.application.emit('message-deleted', row_ids[0])
+			elif self.remote_table_name == 'visits':
+				self.application.emit('visit-deleted', row_ids[0])
+			elif self.remote_table_name == 'visits':
+				self.application.emit('credential-deleted', row_ids[0])
 		else:
+			print(self.remote_table_name)
 			self.rpc('db/table/delete/multi', self.remote_table_name, row_ids)
+			if self.remote_table_name == 'messages':
+				for row in row_ids:
+					self.application.emit('message-deleted', row)
+			elif self.remote_table_name == 'visits':
+				for row in row_ids:
+					self.application.emit('visit-deleted', row)
+			elif self.remote_table_name == 'credentials':
+				for row in row_ids:
+					self.application.emit('credential-deleted', row)
 		self.load_campaign_information()
 
 	def format_row_data(self, row):

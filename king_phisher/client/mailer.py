@@ -485,6 +485,7 @@ class MailSenderThread(threading.Thread):
 			self.tab_notify_sent(emails_done, emails_total)
 			campaign_id = self.config['campaign_id']
 			self.rpc('campaign/message/new', campaign_id, target.uid, target.email_address, target.first_name, target.last_name, target.department)
+			self.application.emit('message-sent', target.uid, target.email_address)
 
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)

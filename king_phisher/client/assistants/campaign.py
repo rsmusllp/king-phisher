@@ -293,6 +293,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		else:
 			try:
 				cid = self.application.rpc('campaign/new', campaign_name, description=campaign_description)
+				self.application.emit('campaign-created', cid)
 			except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
 				if not error.is_remote_exception:
 					raise error
