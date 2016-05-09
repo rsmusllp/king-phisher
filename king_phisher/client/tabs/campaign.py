@@ -179,7 +179,6 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			elif self.remote_table_name == 'visits':
 				self.application.emit('credential-deleted', row_ids[0])
 		else:
-			print(self.remote_table_name)
 			self.rpc('db/table/delete/multi', self.remote_table_name, row_ids)
 			if self.remote_table_name == 'messages':
 				for row in row_ids:
