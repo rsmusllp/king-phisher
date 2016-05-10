@@ -165,7 +165,7 @@ class ClientPlugin(plugins.PluginBase):
 			self.application.config['plugins'][self.name] = config
 		return config
 
-	def signal_connect(self, name, handler, gobject=None):
+	def signal_connect(self, name, handler, gobject=None, after=False):
 		"""
 		Connect *handler* to a signal by *name* to an arbitrary GObject. Signals
 		connected through this method are automatically cleaned up when the
@@ -181,9 +181,13 @@ class ClientPlugin(plugins.PluginBase):
 		:param handler: The function to be invoked with the signal is emitted.
 		:type handler: function
 		:param gobject: The object to connect the signal to.
+		:param bool after: Whether to call the user specified handler after the default signal handler or before.
 		"""
 		gobject = gobject or self.application
-		handler_id = gobject.connect(name, handler)
+		if after:
+			handler_id = gobject.connect_after(name, handler)
+		else:
+			handler_id = gobject.connect(name, handler)
 		self._signals.append((weakref.ref(gobject), handler_id))
 
 class ClientPluginManager(plugins.PluginManagerBase):
