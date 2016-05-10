@@ -170,25 +170,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			message = "Delete These {0:,} Rows?".format(len(row_ids))
 		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
-		if len(row_ids) == 1:
-			self.rpc('db/table/delete', self.remote_table_name, row_ids[0])
-			if self.remote_table_name == 'messages':
-				self.application.emit('message-deleted', row_ids[0])
-			elif self.remote_table_name == 'visits':
-				self.application.emit('visit-deleted', row_ids[0])
-			elif self.remote_table_name == 'visits':
-				self.application.emit('credential-deleted', row_ids[0])
-		else:
-			self.rpc('db/table/delete/multi', self.remote_table_name, row_ids)
-			if self.remote_table_name == 'messages':
-				for row in row_ids:
-					self.application.emit('message-deleted', row)
-			elif self.remote_table_name == 'visits':
-				for row in row_ids:
-					self.application.emit('visit-deleted', row)
-			elif self.remote_table_name == 'credentials':
-				for row in row_ids:
-					self.application.emit('credential-deleted', row)
+		self.application.emit(self.remote_table_name[:-1] + '-deleted', row_ids)
 		self.load_campaign_information()
 
 	def format_row_data(self, row):

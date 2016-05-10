@@ -102,21 +102,21 @@ class KingPhisherClientApplication(_Gtk_Application):
 	__gsignals__ = {
 		'campaign-changed': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'campaign-created': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
-		'campaign-deleted': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'campaign-deleted': (GObject.SIGNAL_RUN_LAST, None, (str,)),
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
-		'config-load': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'config-load': (GObject.SIGNAL_RUN_LAST, None, (bool,)),
 		'config-save': (GObject.SIGNAL_RUN_LAST, None, ()),
-		'credential-deleted': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'credential-deleted': (GObject.SIGNAL_RUN_LAST, None, (str,)),
 		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
-		'message-deleted': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
-		'message-sent': (GObject.SIGNAL_RUN_LAST, None, (str, str)),
+		'message-deleted': (GObject.SIGNAL_RUN_LAST, None, (str,)),
+		'message-sent': (GObject.SIGNAL_RUN_FIRST, None, (str, str)),
 		'reload-css-style': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'rpc-cache-clear': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'server-disconnected': (GObject.SIGNAL_RUN_FIRST, None, ()),
-		'sftp-client-start': (GObject.SIGNAL_RUN_FIRST, None, ()),
-		'visit-deleted': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'sftp-client-start': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'visit-deleted': (GObject.SIGNAL_RUN_LAST, None, (str,)),
 	}
 
 	def __init__(self, config_file=None, use_plugins=True, use_style=True):
@@ -150,7 +150,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The SSH forwarder responsible for tunneling RPC communications."""
 		self.style_provider = None
 		try:
-			self.emit('config-load')
+			self.emit('config-load', True)
 		except IOError:
 			self.logger.critical('failed to load the client configuration')
 			raise
@@ -255,11 +255,23 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		assistant.interact()
 
-	def do_campaign_created(self, campaign_id):
-		pass
+	def do_message_deleted(self, row_ids):
+		if len(row_ids) == 1:
+			self.rpc('db/table/delete', 'messages', row_ids[0])
+		else:
+			self.rpc('db/table/delete/multi', 'messages', row_ids)
 
-	def do_campaign_deleted(self, campaign_id):
-		pass
+	def do_visit_deleted(self, row_ids):
+		if len(row_ids) == 1:
+			self.rpc('db/table/delete', 'visits', row_ids[0])
+		else:
+			self.rpc('db/table/delete/multi', 'visits', row_ids)
+
+	def do_credential_deleted(self, row_ids):
+		if len(row_ids) == 1:
+			self.rpc('db/table/delete', 'credentials', row_ids[0])
+		else:
+			self.rpc('db/table/delete/multi', 'credentials', row_ids)
 
 	def campaign_delete(self):
 		"""
@@ -354,9 +366,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 					"Plugin '{0}' could not be enabled.".format(name)
 				)
 
-	def do_campaign_changed(self, campaign_id):
-		pass
-
 	def do_campaign_set(self, campaign_id):
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
 		self.emit('rpc-cache-clear')
@@ -428,10 +437,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return DISABLED
 		return find.find_data_file(os.path.join('style', self._theme_file))
 
-	def do_config_load(self):
-		self.load_config(load_defaults=True)
-
-	def load_config(self, load_defaults=False):
+	def do_config_load(self, load_defaults=False):
 		"""
 		Load the client configuration from disk and set the
 		:py:attr:`~.KingPhisherClientApplication.config` attribute.
@@ -494,18 +500,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 			Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
 		)
 		return style_provider
-
-	def do_credential_deleted(self, row_id):
-		pass
-
-	def do_message_deleted(self, row_id):
-		pass
-
-	def do_message_sent(self, target_uid, target_email):
-		pass
-
-	def do_visit_deleted(self, row_id):
-		pass
 
 	def server_connect(self, username, password, otp=None):
 		# pylint: disable=too-many-locals

@@ -58,13 +58,13 @@ events.
    later point in time.
    Signal emission stage set to run last.
 
-.. py:function:: credential-deleted(row_id)
+.. py:function:: credential-deleted(row_ids)
 
    This signal is emitted when the user deletes a credential entry. Subscribers
-   to this signal can use it to conduct an action after the entry is deleted.
-   Signal emission stage set to run first.
+   to this signal can use it to conduct an action an entry is deleted.
+   Signal emission stage set to run last.
 
-   :param str row_id: The row ID that was deleted.
+   :param str row_id: The row IDs that was deleted.
 
 .. py:function:: exit()
 
@@ -79,11 +79,11 @@ events.
    exit. Subscribers to this signal can use it as a chance to display a warning
    dialog and cancel the operation.
 
-.. py:function:: message-deleted(row_id)
+.. py:function:: message-deleted(row_ids)
 
    This signal is emitted when the user deletes a message entry. Subscribers
-   to this signal can use it to conduct an action after the entry is deleted.
-   Signal emission stage set to run first.
+   to this signal can use it to conduct an action an entry is deleted.
+   Signal emission stage set to run last.
 
    :param str row_id: The row ID that was deleted.
 
@@ -92,7 +92,7 @@ events.
    This signal is emitted when the user sends a message. Subscribers
    to this signal can use it to conduct an action after the message is sent,
    and the information saved to the database.
-   Signal emission stage set to run last.
+   Signal emission stage set to run first.
 
    :param str target_uid: Message uid that was sent.
    :param str target_email: Email address associated with the sent message.
@@ -123,13 +123,12 @@ events.
    This signal is emitted when the client starts sftp transfer from within
    King Phisher. Subscribers can conduct an action prior to the default option
    being ran from the client configuration.
-   Signal emission stage set to run first.
+   Signal emission stage set to run last.
 
 .. py:function:: visit-deleted(row_id)
 
    This signal is emitted when the user deletes a visit entry. Subscribers
-   to this signal can use it to conduct an action after the entry is deleted.
-   Signal emission stage set to run first.
+   to this signal can use it to conduct an action an entry is deleted.
+   Signal emission stage set to run last.
 
    :param str row_id: The row ID that was deleted.
-
