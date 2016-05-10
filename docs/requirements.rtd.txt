@@ -12,6 +12,7 @@ Jinja2>=2.8
 markupsafe>=0.23
 msgpack-python>=0.4.7
 paramiko>=1.16.0
+pluginbase>=0.3
 pyotp>=2.0.1
 python-dateutil>=2.5.1
 python-pam>=1.8.2
