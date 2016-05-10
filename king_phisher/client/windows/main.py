@@ -108,7 +108,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		self.application.campaign_configure()
 
 	def do_edit_delete_campaign(self, _):
-		self.application.campaign_delete()
+		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.application.get_active_window(), 'This action is irreversible, all campaign data will be lost.'):
+			return
+		self.application.emit('campaign-delete', self.config['campaign_id'])
 
 	def do_edit_preferences(self, _):
 		self.application.show_preferences()
@@ -168,7 +170,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		plugin_manager.PluginManagerWindow(self.application)
 
 	def do_tools_sftp_client(self, _):
-		self.application.start_sftp_client()
+		self.application.emit('sftp-client-start')
 
 	def do_tools_show_campaign_graph(self, _, graph_name):
 		self.application.show_campaign_graph(graph_name)

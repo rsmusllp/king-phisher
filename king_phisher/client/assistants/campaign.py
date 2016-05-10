@@ -302,6 +302,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				gui_utilities.show_dialog_error('Failed To Create Campaign', self.parent, error_message)
 				set_current_page('Basic Settings')
 				return True
+			self.application.emit('campaign-created', cid)
 
 		properties['campaign_type_id'] = self._get_tag_from_combobox(self.gobjects['combobox_campaign_type'], 'campaign_types')
 		properties['company_id'] = company_id

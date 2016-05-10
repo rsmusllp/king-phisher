@@ -125,7 +125,7 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 			self.set_status('Done')
 			gui_utilities.gtk_sync()
 		if len(self.resources) and gui_utilities.show_dialog_yes_no('Transfer Cloned Pages', self.dialog, 'Would you like to start the SFTP client\nto upload the cloned pages?'):
-			self.application.start_sftp_client()
+			self.application.emit('sftp-client-start')
 		self.dialog.destroy()
 
 	def signal_multi_set_directory(self, _):

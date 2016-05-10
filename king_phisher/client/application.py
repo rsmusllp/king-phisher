@@ -101,14 +101,24 @@ class KingPhisherClientApplication(_Gtk_Application):
 	# pylint: disable=too-many-public-methods
 	__gsignals__ = {
 		'campaign-changed': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'campaign-created': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'campaign-delete': (GObject.SIGNAL_RUN_LAST, None, (str,)),
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'config-load': (GObject.SIGNAL_RUN_LAST, None, (bool,)),
 		'config-save': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'credential-delete': (GObject.SIGNAL_RUN_LAST, None, (str,)),
 		'exit': (GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit-confirm': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'message-delete': (GObject.SIGNAL_RUN_LAST, None, (str,)),
+		'message-sent': (GObject.SIGNAL_RUN_FIRST, None, (str, str)),
 		'reload-css-style': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'rpc-cache-clear': (GObject.SIGNAL_RUN_FIRST, None, ()),
-		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ())
+		'server-connected': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'server-disconnected': (GObject.SIGNAL_RUN_FIRST, None, ()),
+		'sftp-client-start': (GObject.SIGNAL_RUN_LAST, None, ()),
+		'visit-delete': (GObject.SIGNAL_RUN_LAST, None, (str,)),
 	}
+
 	def __init__(self, config_file=None, use_plugins=True, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
 		if use_style:
@@ -140,7 +150,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The SSH forwarder responsible for tunneling RPC communications."""
 		self.style_provider = None
 		try:
-			self.load_config(load_defaults=True)
+			self.emit('config-load', True)
 		except IOError:
 			self.logger.critical('failed to load the client configuration')
 			raise
@@ -216,7 +226,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			gui_utilities.show_dialog_error(title_ssh_error, active_window, "An {0}.{1} error occurred.".format(error.__class__.__module__, error.__class__.__name__))
 		else:
 			return self._ssh_forwarder.local_server
-		self.server_disconnect()
+		self.emit('server-disconnected')
 		return
 
 	def _create_config(self):
@@ -245,17 +255,33 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		assistant.interact()
 
-	def campaign_delete(self):
+	def do_message_delete(self, row_ids):
+		if len(row_ids) == 1:
+			self.rpc('db/table/delete', 'messages', row_ids[0])
+		else:
+			self.rpc('db/table/delete/multi', 'messages', row_ids)
+
+	def do_visit_delete(self, row_ids):
+		if len(row_ids) == 1:
+			self.rpc('db/table/delete', 'visits', row_ids[0])
+		else:
+			self.rpc('db/table/delete/multi', 'visits', row_ids)
+
+	def do_credential_delete(self, row_ids):
+		if len(row_ids) == 1:
+			self.rpc('db/table/delete', 'credentials', row_ids[0])
+		else:
+			self.rpc('db/table/delete/multi', 'credentials', row_ids)
+
+	def do_campaign_delete(self, campaign_id):
 		"""
 		Delete the campaign on the server. A confirmation dialog will be
-		displayed before the operation is performed. If the campaign is
-		deleted and a new campaign is not selected with
+		displayed before the operation is performed. If the campaign is deleted
+		and a new campaign is not selected with
 		:py:meth:`.show_campaign_selection`, the client will quit.
 		"""
-		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.get_active_window(), 'This action is irreversible, all campaign data will be lost.'):
-			return
-		self.rpc('db/table/delete', 'campaigns', self.config['campaign_id'])
-		if not self.show_campaign_selection():
+		self.rpc('db/table/delete', 'campaigns', campaign_id)
+		if campaign_id == self.config['campaign_id'] and not self.show_campaign_selection():
 			gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'A campaign must be selected.')
 			self.quit()
 
@@ -337,9 +363,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 					"Plugin '{0}' could not be enabled.".format(name)
 				)
 
-	def do_campaign_changed(self, campaign_id):
-		pass
-
 	def do_campaign_set(self, campaign_id):
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
 		self.emit('rpc-cache-clear')
@@ -359,7 +382,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.main_window.hide()
 		gui_utilities.gtk_widget_destroy_children(self.main_window)
 		gui_utilities.gtk_sync()
-		self.server_disconnect()
+		self.emit('server-disconnected')
 		self.main_window.destroy()
 		return
 
@@ -411,7 +434,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return DISABLED
 		return find.find_data_file(os.path.join('style', self._theme_file))
 
-	def load_config(self, load_defaults=False):
+	def do_config_load(self, load_defaults):
 		"""
 		Load the client configuration from disk and set the
 		:py:attr:`~.KingPhisherClientApplication.config` attribute.
@@ -521,7 +544,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			connection_failed = False
 
 		if connection_failed:
-			self.server_disconnect()
+			self.emit('server-disconnected')
 			return False, ConnectionErrorReason.ERROR_CONNECTION
 
 		server_rpc_api_version = server_version_info.get('rpc_api_version', -1)
@@ -545,13 +568,13 @@ class KingPhisherClientApplication(_Gtk_Application):
 			error_text += '\nPlease update the local client installation.'
 		if error_text:
 			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', active_window, error_text)
-			self.server_disconnect()
+			self.emit('server-disconnected')
 			return False, ConnectionErrorReason.ERROR_INCOMPATIBLE_VERSIONS
 
 		login_result, login_reason = rpc.login(username, password, otp)
 		if not login_result:
 			self.logger.warning('failed to authenticate to the remote king phisher service, reason: ' + login_reason)
-			self.server_disconnect()
+			self.emit('server-disconnected')
 			return False, login_reason
 		rpc.username = username
 		self.logger.debug('successfully authenticated to the remote king phisher service')
@@ -560,7 +583,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.emit('server-connected')
 		return True, ConnectionErrorReason.SUCCESS
 
-	def server_disconnect(self):
+	def do_server_disconnected(self):
 		"""Clean up the SSH TCP connections and disconnect from the server."""
 		if self.rpc is not None:
 			try:
@@ -621,7 +644,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		for action in self.actions.values():
 			window.add_action(action)
 
-	def start_sftp_client(self):
+	def do_sftp_client_start(self):
 		"""
 		Start the client's preferred sftp client application in a new process.
 		"""
