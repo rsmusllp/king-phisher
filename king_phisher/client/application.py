@@ -102,7 +102,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 	__gsignals__ = {
 		'campaign-changed': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'campaign-created': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
-		'campaign-deleted': (GObject.SIGNAL_RUN_LAST, None, (str,)),
+		'campaign-delete': (GObject.SIGNAL_RUN_LAST, None, (str,)),
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'config-load': (GObject.SIGNAL_RUN_LAST, None, (bool,)),
 		'config-save': (GObject.SIGNAL_RUN_LAST, None, ()),
@@ -273,18 +273,15 @@ class KingPhisherClientApplication(_Gtk_Application):
 		else:
 			self.rpc('db/table/delete/multi', 'credentials', row_ids)
 
-	def campaign_delete(self):
+	def do_campaign_delete(self, campaign_id):
 		"""
 		Delete the campaign on the server. A confirmation dialog will be
-		displayed before the operation is performed. If the campaign is
-		deleted and a new campaign is not selected with
+		displayed before the operation is performed. If the campaign is deleted
+		and a new campaign is not selected with
 		:py:meth:`.show_campaign_selection`, the client will quit.
 		"""
-		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.get_active_window(), 'This action is irreversible, all campaign data will be lost.'):
-			return
-		self.rpc('db/table/delete', 'campaigns', self.config['campaign_id'])
-		self.emit('campaign-deleted', self.config['campaign_id'])
-		if not self.show_campaign_selection():
+		self.rpc('db/table/delete', 'campaigns', campaign_id)
+		if campaign_id == self.config['campaign_id'] and not self.show_campaign_selection():
 			gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'A campaign must be selected.')
 			self.quit()
 

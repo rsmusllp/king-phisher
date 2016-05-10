@@ -151,8 +151,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			return
 		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.dialog, 'This action is irreversible, all campaign data will be lost.'):
 			return
-		self.application.rpc('db/table/delete', 'campaigns', campaign_id)
-		self.application.emit('campaign-deleted', campaign_id)
+		self.application.emit('campaign-delete', campaign_id)
 		self.load_campaigns()
 		self._highlight_campaign(self.config.get('campaign_name'))
 
