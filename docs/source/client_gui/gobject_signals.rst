@@ -114,13 +114,12 @@ events.
 .. py:function:: server-disconnected()
 
    This signal is emitted when the client has disconnected from the King Phisher
-   server. The default handler sets the initial campaign optionally prompting
-   the user to select one if one has not already been selected.
+   server.
    Signal emission stage set to run first.
 
 .. py:function:: sftp-client-start()
 
-   This signal is emitted when the client starts sftp transfer from within
+   This signal is emitted when the client starts sftp client from within
    King Phisher. Subscribers can conduct an action prior to the default option
    being ran from the client configuration.
    Signal emission stage set to run last.
