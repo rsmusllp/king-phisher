@@ -434,7 +434,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return DISABLED
 		return find.find_data_file(os.path.join('style', self._theme_file))
 
-	def do_config_load(self, load_defaults=False):
+	def do_config_load(self, load_defaults):
 		"""
 		Load the client configuration from disk and set the
 		:py:attr:`~.KingPhisherClientApplication.config` attribute.
