@@ -30,7 +30,6 @@ class Plugin(plugins.ClientPlugin):
 	will be notified with a dialog box after logging into the server.
 	"""
 	homepage = 'https://github.com/securestate/king-phisher'
-	req_min_version = '1.0'
 	def initialize(self):
 		self.signal_connect('server-connected', self.signal_server_connected)
 		return True

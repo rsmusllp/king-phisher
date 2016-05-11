@@ -25,7 +25,6 @@ token or not.
 Example data containing completion information for the html and input tags:
 
 .. code-block:: javascript
-   tab-width: 4
 
    {
      "html": null,

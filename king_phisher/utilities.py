@@ -139,6 +139,9 @@ class Mock(object):
 		else:
 			return Mock()
 
+	def __or__(self, other):
+		return other
+
 	@classmethod
 	def __setattr__(cls, name):
 		pass
