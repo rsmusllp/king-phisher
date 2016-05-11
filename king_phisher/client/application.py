@@ -256,21 +256,18 @@ class KingPhisherClientApplication(_Gtk_Application):
 		assistant.interact()
 
 	def do_message_delete(self, row_ids):
-		#row_ids = eval(row_ids)
 		if len(row_ids) == 1:
 			self.rpc('db/table/delete', 'messages', row_ids[0])
 		else:
 			self.rpc('db/table/delete/multi', 'messages', row_ids)
 
 	def do_visit_delete(self, row_ids):
-		#row_ids = eval(row_ids)
 		if len(row_ids) == 1:
 			self.rpc('db/table/delete', 'visits', row_ids[0])
 		else:
 			self.rpc('db/table/delete/multi', 'visits', row_ids)
 
 	def do_credential_delete(self, row_ids):
-		#row_ids = eval(row_ids)
 		if len(row_ids) == 1:
 			self.rpc('db/table/delete', 'credentials', row_ids[0])
 		else:
