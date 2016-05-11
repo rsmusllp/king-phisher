@@ -68,7 +68,7 @@ use the *connect_after* method instead of *connect*.
    to this signal can use it to conduct an action an entry is deleted.
 
    :signal flags: ``SIGNAL_ACTION | SIGNAL_RUN_LAST``
-   :param list row_ids: The row IDs that are to be deleted.
+   :param [str, ...] row_ids: The row IDs that are to be deleted.
 
 .. py:function:: exit()
 
@@ -93,7 +93,7 @@ use the *connect_after* method instead of *connect*.
    to this signal can use it to conduct an action an entry is deleted.
 
    :signal flags: ``SIGNAL_ACTION | SIGNAL_RUN_LAST``
-   :param list row_ids: The row IDs that are to be deleted.
+   :param [str, ...] row_ids: The row IDs that are to be deleted.
 
 .. py:function:: message-sent(target_uid, target_email)
 
@@ -149,4 +149,4 @@ use the *connect_after* method instead of *connect*.
    to this signal can use it to conduct an action an entry is deleted.
 
    :signal flags: ``SIGNAL_ACTION | SIGNAL_RUN_LAST``
-   :param list row_ids: The row IDs that are to be deleted.
+   :param [str, ...] row_ids: The row IDs that are to be deleted.
