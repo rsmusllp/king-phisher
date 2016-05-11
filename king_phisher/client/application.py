@@ -106,17 +106,17 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'config-load': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (bool,)),
 		'config-save': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
-		'credential-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (str,)),
+		'credential-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
 		'exit': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit-confirm': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
-		'message-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (str,)),
+		'message-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
 		'message-sent': (GObject.SIGNAL_RUN_FIRST, None, (str, str)),
 		'reload-css-style': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'rpc-cache-clear': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'server-connected': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'server-disconnected': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'sftp-client-start': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
-		'visit-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (str,)),
+		'visit-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
 	}
 
 	def __init__(self, config_file=None, use_plugins=True, use_style=True):
@@ -255,24 +255,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		assistant.interact()
 
-	def do_message_delete(self, row_ids):
-		if len(row_ids) == 1:
-			self.rpc('db/table/delete', 'messages', row_ids[0])
-		else:
-			self.rpc('db/table/delete/multi', 'messages', row_ids)
-
-	def do_visit_delete(self, row_ids):
-		if len(row_ids) == 1:
-			self.rpc('db/table/delete', 'visits', row_ids[0])
-		else:
-			self.rpc('db/table/delete/multi', 'visits', row_ids)
-
-	def do_credential_delete(self, row_ids):
-		if len(row_ids) == 1:
-			self.rpc('db/table/delete', 'credentials', row_ids[0])
-		else:
-			self.rpc('db/table/delete/multi', 'credentials', row_ids)
-
 	def do_campaign_delete(self, campaign_id):
 		"""
 		Delete the campaign on the server. A confirmation dialog will be
@@ -284,6 +266,24 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if campaign_id == self.config['campaign_id'] and not self.show_campaign_selection():
 			gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'A campaign must be selected.')
 			self.quit()
+
+	def do_credential_delete(self, row_ids):
+		if len(row_ids) == 1:
+			self.rpc('db/table/delete', 'credentials', row_ids[0])
+		else:
+			self.rpc('db/table/delete/multi', 'credentials', row_ids)
+
+	def do_message_delete(self, row_ids):
+		if len(row_ids) == 1:
+			self.rpc('db/table/delete', 'messages', row_ids[0])
+		else:
+			self.rpc('db/table/delete/multi', 'messages', row_ids)
+
+	def do_visit_delete(self, row_ids):
+		if len(row_ids) == 1:
+			self.rpc('db/table/delete', 'visits', row_ids[0])
+		else:
+			self.rpc('db/table/delete/multi', 'visits', row_ids)
 
 	def campaign_rename(self):
 		"""
