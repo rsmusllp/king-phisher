@@ -31,6 +31,12 @@ Classes
    :inherited-members:
    :special-members: __init__
 
+.. autoclass:: king_phisher.client.plugins.ClientOptionPort
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :special-members: __init__
+
 .. autoclass:: king_phisher.client.plugins.ClientOptionString
    :show-inheritance:
    :members:

@@ -110,10 +110,24 @@ class ClientOptionEnum(ClientOptionMixin, plugins.OptionEnum):
 		return widget.get_active_text()
 
 class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
+	def __init__(self, name, *args, **kwargs):
+		"""
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param default: The default value of this option.
+		:param str display_name: The name to display in the UI to the user for this option.
+		:param adjustment: The adjustment details of the options value.
+		:type adjustment: :py:class:`Gtk.Adjustment`
+		"""
+		self.display_name = kwargs.pop('display_name', name)
+		self.adjustment = kwargs.pop('adjustment', Gtk.Adjustment(0, -0x7fffffff, 0x7fffffff, 1, 10, 0))
+		super(ClientOptionMixin, self).__init__(name, *args, **kwargs)
+
 	def get_widget(self, value):
+		self.adjustment.set_value(int(round(value)))
 		widget = Gtk.SpinButton()
 		widget.set_hexpand(True)
-		widget.set_adjustment(Gtk.Adjustment(int(round(value)), -0x7fffffff, 0x7fffffff, 1, 10, 0))
+		widget.set_adjustment(self.adjustment)
 		widget.set_numeric(True)
 		widget.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
 		return widget
@@ -132,6 +146,16 @@ class ClientOptionString(ClientOptionMixin, plugins.OptionString):
 		return widget.get_text()
 
 # extended option types
+class ClientOptionPort(ClientOptionInteger):
+	def __init__(self, *args, **kwargs):
+		"""
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param default: The default value of this option.
+		:param str display_name: The name to display in the UI to the user for this option.
+		"""
+		kwargs['adjustment'] = Gtk.Adjustment(1, 1, 0xffff, 1, 10, 0)
+		super(ClientOptionPort, self).__init__(*args, **kwargs)
 
 class ClientPlugin(plugins.PluginBase):
 	"""
