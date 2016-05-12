@@ -324,7 +324,13 @@ class PluginManagerBase(object):
 	def load_all(self, on_error=None):
 		"""
 		Load all available plugins. Exceptions while loading specific plugins
-		are ignored.
+		are ignored. If *on_error* is specified, it will be called from within
+		the exception handler when a plugin fails to load correctly. It will be
+		called with two parameters, the name of the plugin and the exception
+		instance.
+
+		:param on_error: A call back function to call when an error occurs while loading a plugin.
+		:type on_error: function
 		"""
 		self._lock.acquire()
 		plugins = self.plugin_source.list_plugins()
