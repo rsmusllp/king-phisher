@@ -297,7 +297,7 @@ class PluginManagerBase(object):
 		:return:
 		"""
 		self._lock.acquire()
-		if name in self.loaded_plugins:
+		if not reload_module and name in self.loaded_plugins:
 			self._lock.release()
 			return
 		try:
@@ -321,7 +321,7 @@ class PluginManagerBase(object):
 		self._lock.release()
 		return klass
 
-	def load_all(self):
+	def load_all(self, on_error=None):
 		"""
 		Load all available plugins. Exceptions while loading specific plugins
 		are ignored.
@@ -332,8 +332,9 @@ class PluginManagerBase(object):
 		for name in plugins:
 			try:
 				self.load(name)
-			except Exception:
-				pass
+			except Exception as error:
+				if on_error:
+					on_error(name, error)
 		self._lock.release()
 
 	def unload(self, name):
