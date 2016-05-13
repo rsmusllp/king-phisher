@@ -44,6 +44,7 @@ import king_phisher.client.plugins as plugins
 import king_phisher.client.gui_utilities as gui_utilities
 import king_phisher.client.widget.extras as extras
 
+from gi.repository import Gtk
 from smoke_zephyr.utilities import unique
 
 __version__ = '1.0'
@@ -87,7 +88,8 @@ class Plugin(plugins.ClientPlugin):
 			'cycle_days',
 			'Number of days between reminders to submit data.',
 			default=90,
-			display_name='Cycle in Days'
+			display_name='Cycle in Days',
+			adjustment=Gtk.Adjustment(0, 1, 365, 1, 10, 0)
 		)
 	]
 

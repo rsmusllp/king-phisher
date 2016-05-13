@@ -219,7 +219,9 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 
 	def save_plugin_options(self):
 		for name, options in self._plugin_option_widgets.items():
-			plugin_config = self.config['plugins'].get(name) or {}  # use or instead of get incase the value is actually None
+			if name not in self.config['plugins']:
+				self.config['plugins'][name] = {}
+			plugin_config = self.config['plugins'][name]  # use or instead of get incase the value is actually None
 			for opt, widget in options:
 				plugin_config[opt.name] = opt.get_widget_value(widget)
 
