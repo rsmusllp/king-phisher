@@ -92,13 +92,21 @@ class Plugin(plugins.ClientPlugin):
 	]
 
 	def initialize(self):
+		config = self.config
 		self.signal_connect('server-connected', self.signal_server_connected)
+		if 'last_date' not in config and self.application.rpc:
+			self.prompt_and_generate()
+			config['last_date'] = datetime.datetime.utcnow()
 		return True
 
 	def signal_server_connected(self, _):
 		config = self.config
-		if 'last_data' in config and datetime.datetime.utcnow() - config['last_date'] < datetime.timedelta(days=config['cycle_days']):
+		if 'last_date' in config and datetime.datetime.utcnow() - config['last_date'] < datetime.timedelta(days=config['cycle_days']):
 			return
+		self.prompt_and_generate()
+
+	def prompt_and_generate(self):
+		config = self.config
 		dialog_txt = 'Would you like to generate research data to submit to SecureState?'
 		if not gui_utilities.show_dialog_yes_no('Phishing Data Collection', self.application.get_active_window(), dialog_txt):
 			return
