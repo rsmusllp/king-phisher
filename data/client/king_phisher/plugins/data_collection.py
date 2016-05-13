@@ -1,13 +1,45 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#  king_phisher/plugins/data_collection.py
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are
+#  met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following disclaimer
+#    in the documentation and/or other materials provided with the
+#    distribution.
+#  * Neither the name of the project nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+#  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+#  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+#  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+#  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
 import argparse
 import copy
 import datetime
 import hashlib
 import sys
 
-from king_phisher import color
-from king_phisher import its
-from king_phisher import json_ex
-from king_phisher import version
+import king_phisher.color as color
+import king_phisher.its as its
+import king_phisher.json_ex as json_ex
+import king_phisher.version as version
 import king_phisher.client.plugins as plugins
 import king_phisher.client.gui_utilities as gui_utilities
 import king_phisher.client.widget.extras as extras
@@ -32,29 +64,29 @@ def verify_signature(data):
 	return data['hash'] == generate_signature(data)
 
 class Plugin(plugins.ClientPlugin):
+	version = __version__
 	authors = ['Spencer McIntyre', 'Erik Daguerre']
 	title = 'Anonymous Data Collection'
 	description = """
-	By default this plugin will be disabled, You must opt-in to this feature, to
-	have your campaign data anonymize, furthermore you will need to email the data in
+	This plugin will anonymize your campaign data, furthermore you will need to email the data in
 	for analyze.
 
 	By enabling this plugin, you are allowing this plugin to anonymize your campaign
 	data and prompt you to review the anonymous data collected and email it in for processing.
 	"""
-	homepage = 'http://github.com/securestate/king-phisher-plugins'
+	homepage = 'https://github.com/securestate/king-phisher'
 	options = [
-		plugins.ClientOptionInteger('cycle_days', 'Number of days between reminders to submit data.', default=90,
+		plugins.ClientOptionInteger('cycle_days',
+									'Number of days between reminders to submit data.',
+									default=90,
 									display_name='Cycle in Days'),
 	]
 
 	def initialize(self):
-		version = __version__
-		self.signal_connect('server-connected', self.server_connected)
-
+		self.signal_connect('server-connected', self.signal_server_connected)
 		return True
 
-	def server_connected(self, _):
+	def signal_server_connected(self, _):
 		config = self.config
 		if self.config.get('last_date'):
 			if datetime.datetime.utcnow() - config['last_date'] < datetime.timedelta(days=config['cycle_days']):
@@ -74,14 +106,13 @@ class Plugin(plugins.ClientPlugin):
 			return
 		file = open(response['target_path'], 'w')
 		file.write(stats)
-		gui_utilities.show_dialog_info('Please review and email:\n {} \nto KingPhisher@securestate.com'.format(response['target_path']),
+		gui_utilities.show_dialog_info("Please review and email:\n{} \nto KingPhisher@securestate.com".format(response['target_path']),
 										self.application.get_active_window())
 		config['last_date'] = datetime.datetime.utcnow()
 
 class StatsGenerator(object):
 	def __init__(self, rpc):
 		self.rpc = rpc
-		self.encoding = 'utf-8'
 
 	def generate_stats(self):
 		stats = {
