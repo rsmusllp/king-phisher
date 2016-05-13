@@ -60,6 +60,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			'label_plugin_info_homepage',
 			'label_plugin_info_title',
 			'label_plugin_info_version',
+			'scrolledwindow_plugins',
 			'stack_plugin_info',
 			'treeview_plugins',
 			'textview_plugin_info',
@@ -251,7 +252,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if description[0] == '\n':
 			description = description[1:]
 		description = textwrap.dedent(description)
-		description = description.replace('\n', ' ')
+		description = description.split('\n\n')
+		description = [chunk.replace('\n', ' ').strip() for chunk in description]
+		description = '\n\n'.join(description)
 		self.gobjects['label_plugin_info_description'].set_text(description)
 
 	def _set_plugin_info_error(self, name):

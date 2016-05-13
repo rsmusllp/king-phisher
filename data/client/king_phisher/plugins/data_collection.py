@@ -68,18 +68,27 @@ class Plugin(plugins.ClientPlugin):
 	authors = ['Spencer McIntyre', 'Erik Daguerre']
 	title = 'Anonymous Data Collection'
 	description = """
-	This plugin will anonymize your campaign data, furthermore you will need to email the data in
-	for analyze.
+	Generate anonymized data regarding the campaigns that have been run to
+	submit to SecureState for collection and aggregation. Your submissions will
+	help to fuel research into the effectiveness of phishing campaigns and user
+	awareness. No identifying information regarding your campaigns will be
+	collected.
 
-	By enabling this plugin, you are allowing this plugin to anonymize your campaign
-	data and prompt you to review the anonymous data collected and email it in for processing.
+	This plugin will generate a text file with the anonymous data. After the
+	data file has been saved, please email it to king-phisher@securestate.com.
+	If you would like credit when the research results are published, please
+	include you or your companies attribution information.
+
+	We greatly appreciate your data contributions to the King Phisher project!
 	"""
 	homepage = 'https://github.com/securestate/king-phisher'
 	options = [
-		plugins.ClientOptionInteger('cycle_days',
-									'Number of days between reminders to submit data.',
-									default=90,
-									display_name='Cycle in Days'),
+		plugins.ClientOptionInteger(
+			'cycle_days',
+			'Number of days between reminders to submit data.',
+			default=90,
+			display_name='Cycle in Days'
+		)
 	]
 
 	def initialize(self):
@@ -88,10 +97,9 @@ class Plugin(plugins.ClientPlugin):
 
 	def signal_server_connected(self, _):
 		config = self.config
-		if self.config.get('last_date'):
-			if datetime.datetime.utcnow() - config['last_date'] < datetime.timedelta(days=config['cycle_days']):
-				return
-		dialog_txt = "It has been {} days since your last phishing data submission.\nWould you like to anonymize data for submission?".format(config['cycle_days'])
+		if 'last_data' in config and datetime.datetime.utcnow() - config['last_date'] < datetime.timedelta(days=config['cycle_days']):
+			return
+		dialog_txt = 'Would you like to generate research data to submit to SecureState?'
 		if not gui_utilities.show_dialog_yes_no('Phishing Data Collection', self.application.get_active_window(), dialog_txt):
 			return
 
@@ -99,15 +107,18 @@ class Plugin(plugins.ClientPlugin):
 		stats = get_stats.generate_stats()
 
 		dialog = extras.FileChooserDialog('Save Anonymized Data', self.application.get_active_window())
-		file_name = 'anonmized_phishing_data.txt'
+		file_name = 'anonymized_phishing_data.txt'
 		response = dialog.run_quick_save(file_name)
 		dialog.destroy()
 		if not response['target_path']:
 			return
-		file = open(response['target_path'], 'w')
-		file.write(stats)
-		gui_utilities.show_dialog_info("Please review and email:\n{} \nto KingPhisher@securestate.com".format(response['target_path']),
-										self.application.get_active_window())
+		with open(response['target_path'], 'w') as file_h:
+			file_h.write(stats)
+		gui_utilities.show_dialog_info(
+			'Successfully Generated Data',
+			self.application.get_active_window(),
+			"Please review and email:\n{}\nto king-phisher@securestate.com".format(response['target_path'])
+		)
 		config['last_date'] = datetime.datetime.utcnow()
 
 class StatsGenerator(object):
@@ -170,7 +181,7 @@ def main():
 
 	try:
 		data = json_ex.load(arguments.data_file)
-	except:
+	except Exception:
 		color.print_error('failed to load the data')
 		return 1
 	else:
