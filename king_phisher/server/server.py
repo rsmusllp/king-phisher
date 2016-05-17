@@ -245,6 +245,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		}
 		if not self.message_id:
 			return client_vars
+		credential_count = 0
+		expired_campaign = True
 		visit_count = 0
 		result = None
 		session = db_manager.Session()
@@ -264,9 +266,14 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 						'url_remote_access': message.campaign.company.url_remote_access
 					}
 				result = (message.target_email, message.first_name, message.last_name, message.trained)
+			query = session.query(db_models.Credential)
+			query = query.filter_by(message_id=self.message_id)
+			credential_count = query.count()
+			expired_campaign = message.campaign.has_expired
 		if not result:
 			session.close()
 			return client_vars
+
 		client_vars['email_address'] = result[0]
 		client_vars['first_name'] = result[1]
 		client_vars['last_name'] = result[2]
@@ -277,8 +284,12 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
 			client_vars['visit_id'] = visit.id
 			visit_count = visit.visit_count
-		# increment the count preemptively
-		client_vars['visit_count'] = visit_count + 1
+
+		# increment some counters preemptively
+		if not expired_campaign and self.get_query_creds()[0] is not None:
+			credential_count += 1
+		client_vars['credential_count'] = credential_count
+		client_vars['visit_count'] = visit_count + (0 if expired_campaign else 1)
 
 		session.close()
 		return client_vars
