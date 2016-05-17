@@ -10,13 +10,14 @@ Version 1.x.x
 Version 1.3.0
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.3.0` on May 17th, 2016
 
 * Added automatic setup of PostgreSQL database for the server
 * Server bug fixes when running on non-standard HTTP ports
 * Added completion to the messaged editor
 * Support for plugins in the client application
-* Add a client plugin to automatically check for updates
+* Added a client plugin to automatically check for updates
+* Added a client plugin to generate anonmous statistics
 * Added debug logging of parameters for key RPC methods
 * Lots of Python 3.x compatiblity fixes
 

@@ -54,6 +54,9 @@ missing_dlls = [
 	'libdbus-1-3.dll',
 	'libdbus-glib-1-2.dll',
 	'libenchant-1.dll',
+	'lib\enchant\libenchant_myspell.dll',
+	'lib\enchant\libenchant_voikko.dll',
+	'lib\enchant\libenchant_ispell.dll',
 	'libffi-6.dll',
 	'libfontconfig-1.dll',
 	'libfreetype-6.dll',
@@ -75,6 +78,7 @@ missing_dlls = [
 	'libgsttag-1.0-0.dll',
 	'libgstvideo-1.0-0.dll',
 	'libgtk-3-0.dll',
+	'libgtksourceview-3.0-1.dll',
 	'libgnutls-26.dll',
 	'libgconf-2-4.dll',
 	'libharfbuzz-gobject-0.dll',
@@ -92,6 +96,7 @@ missing_dlls = [
 	'librsvg-2-2.dll',
 	'libsoup-2.4-1.dll',
 	'libsqlite3-0.dll',
+	'libtiff-5.dll',
 	'libwebkitgtk-3.0-0.dll',
 	'libwebp-5.dll',
 	'libwinpthread-1.dll',
@@ -137,8 +142,12 @@ build_exe_options = dict(
 		'matplotlib',
 		'mpl_toolkits',
 		'msgpack',
-		'paramiko'
-	]
+		'paramiko',
+		'pkg_resources',
+		'pluginbase',
+		'smoke_zephyr',
+	],
+	excludes=['collections.abc']
 )
 
 setup(
