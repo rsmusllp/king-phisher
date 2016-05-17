@@ -35,6 +35,15 @@
       "tokens": {
         "client": {
           "address": null,
+          "campaign": {
+            "created": null,
+            "credential_count": null,
+            "expiration": null,
+            "has_expired": null,
+            "message_count": null,
+            "visit_count": null
+          },
+          "credential_count": null,
           "company": {
             "name": null,
             "url_email": null,

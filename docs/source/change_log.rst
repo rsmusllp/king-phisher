@@ -12,6 +12,8 @@ Version 1.4.0
 
 *In Progress*
 
+* Added additional Jinja variables for server pages
+
 Version 1.3.0
 ^^^^^^^^^^^^^
 

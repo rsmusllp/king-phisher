@@ -16,6 +16,15 @@ client.message_id:        {{ client.message_id }}
 client.credential_count:  {{ client.credential_count }}
 client.visit_count:       {{ client.visit_count }}
 client.visit_id:          {{ client.visit_id }}
+
+### Client Session Campaign Variables
+client.campaign.name:              {{ client.campaign.name }}
+client.campaign.created:           {{ client.campaign.created }}
+client.campaign.expiration:        {{ client.campaign.expiration }}
+client.campaign.has_expired:       {{ client.campaign.has_expired }}
+client.campaign.message_count:     {{ client.campaign.message_count }}
+client.campaign.visit_count:       {{ client.campaign.visit_count }}
+client.campaign.credential_count:  {{ client.campaign.credential_count }}
 {% endif %}
 {% if client.company is defined %}
 

@@ -257,13 +257,23 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		elif self.message_id:
 			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
 			if message:
+				campaign = message.campaign
+				client_vars['campaign'] = {
+					'name': campaign.name,
+					'created': campaign.created,
+					'expiration': campaign.expiration,
+					'has_expired': campaign.has_expired,
+					'message_count': session.query(db_models.Message).filter_by(campaign_id=campaign.id).count(),
+					'visit_count': session.query(db_models.Visit).filter_by(campaign_id=campaign.id).count(),
+					'credential_count': session.query(db_models.Credential).filter_by(campaign_id=campaign.id).count(),
+				}
 				if message.campaign.company:
 					client_vars['company_name'] = message.campaign.company.name
 					client_vars['company'] = {
-						'name': message.campaign.company.name,
-						'url_email': message.campaign.company.url_email,
-						'url_main': message.campaign.company.url_main,
-						'url_remote_access': message.campaign.company.url_remote_access
+						'name': campaign.company.name,
+						'url_email': campaign.company.url_email,
+						'url_main': campaign.company.url_main,
+						'url_remote_access': campaign.company.url_remote_access
 					}
 				result = (message.target_email, message.first_name, message.last_name, message.trained)
 			query = session.query(db_models.Credential)
