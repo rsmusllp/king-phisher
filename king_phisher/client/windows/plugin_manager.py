@@ -261,5 +261,5 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		textview = self.gobjects['textview_plugin_info']
 		exc, formatted_exc = self._module_errors[name]
 		buf = textview.get_buffer()
-		buf.insert_markup(buf.get_end_iter(), "<b>{0}</b>\n\n".format(repr(exc)), -1)
+		buf.insert(buf.get_end_iter(), "{0!r}\n\n".format(exc), -1)
 		buf.insert(buf.get_end_iter(), ''.join(formatted_exc), -1)
