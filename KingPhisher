@@ -54,19 +54,19 @@ from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
-	'boltons>=16.1.1',
+	'boltons>=16.2.2',
 	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),
 	'geojson>=1.3.2',
 	'icalendar>=3.9.2',
 	'Jinja2>=2.8',
-	'paramiko>=1.16.0',
+	'paramiko>=2.0.0',
 	'pluginbase>=0.3',
-	'python-dateutil>=2.5.1',
-	'pytz>=2016.1',
-	'requests>=2.9.1',
+	'python-dateutil>=2.5.3',
+	'pytz>=2016.4',
+	'requests>=2.10.0',
 	'termcolor>=1.1.0',
 	'tzlocal>=1.2.2',
-	'XlsxWriter>=0.8.4'
+	'XlsxWriter>=0.8.7'
 ]
 if its.py_v2:
 	__requirements__.append('ipaddress>=1.0.16')
