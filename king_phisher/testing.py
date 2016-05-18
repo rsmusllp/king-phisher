@@ -54,7 +54,7 @@ if sys.version_info[0] < 3:
 	urllib.parse.urlencode = urllib.urlencode
 else:
 	import http.client
-	import urllib.parse
+	import urllib.parse # pylint: disable=ungrouped-imports
 
 __all__ = (
 	'TEST_MESSAGE_TEMPLATE',

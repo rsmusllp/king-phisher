@@ -71,7 +71,7 @@ if sys.version_info[0] < 3:
 	import urlparse
 	urllib.parse = urlparse
 else:
-	import urllib.parse
+	import urllib.parse # pylint: disable=ungrouped-imports
 
 __all__ = (
 	'guess_smtp_server_address',

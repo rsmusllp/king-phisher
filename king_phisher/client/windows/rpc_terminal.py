@@ -95,7 +95,7 @@ class RPCTerminalAppWindow(gui_utilities.GladeGObject):
 		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
 
 	def signal_window_destroy(self, window):
-		if self.child_pid == None:
+		if self.child_pid is None:
 			self.logger.error('signal_window_destory was called but the child pid is None')
 			return
 		if os.path.exists("/proc/{0}".format(self.child_pid)):
