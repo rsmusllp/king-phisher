@@ -181,7 +181,8 @@ class ClientPlugin(plugins.PluginBase):
 	@property
 	def config(self):
 		"""
-		A dictionary that can be used by this plugin for persistent storage of it's configuration.
+		A dictionary that can be used by this plugin for persistent storage of
+		it's configuration.
 		"""
 		config = self.application.config['plugins'].get(self.name)
 		if config is None:

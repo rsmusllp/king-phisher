@@ -65,7 +65,10 @@ def _popen_psql(sql):
 	proc_h = _popen(['su', 'postgres', '-c', "psql -At -c \"{0}\"".format(sql)])
 	if proc_h.wait():
 		raise errors.KingPhisherDatabaseError("failed to execute postgresql query '{0}' via su and psql".format(sql))
-	return proc_h.stdout.read().strip().split('\n')
+	output = proc_h.stdout.read()
+	output = output.decode('utf-8')
+	output = output.strip()
+	return output.split('\n')
 
 def clear_database():
 	"""
@@ -301,6 +304,8 @@ def init_database_postgresql(connection_url):
 	if systemctl_bin is None:
 		logger.info('postgresql service status check failed (could not find systemctl)')
 	else:
+		proc_h = _popen([smoke_zephyr.utilities.which('postgresql-setup'), '--initdb'])
+		proc_h.wait()
 		proc_h = _popen([systemctl_bin, 'status', 'postgresql.service'])
 		# wait for the process to return and check if it's running (status 0)
 		if proc_h.wait() == 0:
