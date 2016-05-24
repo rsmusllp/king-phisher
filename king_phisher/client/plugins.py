@@ -121,7 +121,7 @@ class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
 		"""
 		self.display_name = kwargs.pop('display_name', name)
 		self.adjustment = kwargs.pop('adjustment', Gtk.Adjustment(0, -0x7fffffff, 0x7fffffff, 1, 10, 0))
-		super(ClientOptionMixin, self).__init__(name, *args, **kwargs)
+		super(ClientOptionInteger, self).__init__(name, *args, **kwargs)
 
 	def get_widget(self, value):
 		self.adjustment.set_value(int(round(value)))

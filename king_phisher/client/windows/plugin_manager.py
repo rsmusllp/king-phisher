@@ -179,7 +179,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			selected_plugin = model[tree_paths[0]][0]
 
 		for tree_iter in gui_utilities.gtk_treeview_selection_iterate(treeview):
-			name = self._model[tree_iter][0]
+			name = self._model[tree_iter][0] # pylint: disable=unsubscriptable-object
 			enabled = name in pm.enabled_plugins
 			pm.unload(name)
 			try:
@@ -188,11 +188,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				self._on_plugin_load_error(name, error)
 				if name == selected_plugin:
 					self._set_plugin_info(name)
-				self._model[tree_iter][2] = "{0} (Reload Failed)".format(name)
+				self._model[tree_iter][2] = "{0} (Reload Failed)".format(name) # pylint: disable=unsubscriptable-object
 				continue
 			if name in self._module_errors:
 				del self._module_errors[name]
-				self._model[tree_iter][2] = klass.title
+				self._model[tree_iter][2] = klass.title # pylint: disable=unsubscriptable-object
 			if name == selected_plugin:
 				self._set_plugin_info(name)
 			if enabled:
@@ -200,13 +200,13 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def signal_renderer_toggled(self, _, path):
 		pm = self.application.plugin_manager
-		name = self._model[path][0]
+		name = self._model[path][0] # pylint: disable=unsubscriptable-object
 		if name in self._module_errors:
 			gui_utilities.show_dialog_error('Can Not Enable Plugin', self.window, 'Can not enable a plugin which failed to load.')
 			return
-		if self._model[path][1]:
+		if self._model[path][1]: # pylint: disable=unsubscriptable-object
 			pm.disable(name)
-			self._model[path][1] = False
+			self._model[path][1] = False # pylint: disable=unsubscriptable-object
 			self.config['plugins.enabled'].remove(name)
 		else:
 			if not pm.loaded_plugins[name].is_compatible:
@@ -214,11 +214,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				return
 			if not pm.enable(name):
 				return
-			self._model[path][1] = True
+			self._model[path][1] = True # pylint: disable=unsubscriptable-object
 			self.config['plugins.enabled'].append(name)
 
 	def signal_treeview_row_activated(self, treeview, path, column):
-		name = self._model[path][0]
+		name = self._model[path][0] # pylint: disable=unsubscriptable-object
 		self._set_plugin_info(name)
 
 	def _set_plugin_info(self, name):

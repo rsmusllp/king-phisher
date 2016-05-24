@@ -67,7 +67,7 @@ if sys.version_info[0] < 3:
 	urllib.parse = urlparse
 	urllib.parse.urlencode = urllib.urlencode
 else:
-	import urllib.parse
+	import urllib.parse # pylint: disable=ungrouped-imports
 
 def test_webserver_url(target_url, secret_id):
 	"""

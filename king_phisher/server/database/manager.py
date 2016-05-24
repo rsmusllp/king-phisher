@@ -178,7 +178,7 @@ def set_meta_data(key, value, session=None):
 	:param session: The session to use to store the value.
 	"""
 	value_type = type(value).__name__
-	if not value_type in _meta_data_type_map:
+	if value_type not in _meta_data_type_map:
 		raise ValueError('incompatible data type:' + value_type)
 	close_session = session is None
 	session = (session or Session())
@@ -308,7 +308,7 @@ def init_database_postgresql(connection_url):
 		else:
 			logger.info('postgresql service is not running, starting it now via systemctl')
 			proc_h = _popen([systemctl_bin, 'start', 'postgresql'])
-			if not proc_h.wait() == 0:
+			if proc_h.wait() != 0:
 				logger.error('failed to start the postgresql service via systemctl')
 				raise errors.KingPhisherDatabaseError('postgresql service failed to start via systemctl')
 			logger.debug('postgresql service successfully started via systemctl')

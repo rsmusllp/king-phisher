@@ -194,8 +194,7 @@ class SenderPolicyFramework(object):
 		if not len(records):
 			raise SPFPermError('failed to parse spf data')
 
-		for record_id in range(len(records)):
-			record = records[record_id]
+		for record_id, record in enumerate(records):
 			if len(self.spf_records) and self.spf_records[-1][0] == 'all':
 				break
 

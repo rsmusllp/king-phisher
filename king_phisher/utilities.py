@@ -143,7 +143,7 @@ class Mock(object):
 		return other
 
 	@classmethod
-	def __setattr__(cls, name):
+	def __setattr__(cls, name, value):
 		pass
 
 	def __getitem__(self, name):
@@ -272,7 +272,7 @@ def is_valid_email_address(email_address):
 	:return: Whether the email address appears to be valid or not.
 	:rtype: bool
 	"""
-	if email_address == None:
+	if email_address is None:
 		return False
 	return EMAIL_REGEX.match(email_address) != None
 

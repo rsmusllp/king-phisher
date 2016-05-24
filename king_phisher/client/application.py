@@ -293,7 +293,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
 		prompt = dialogs.TextEntryDialog.build_prompt(self, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
 		response = prompt.interact()
-		if response == None or response == campaign.name:
+		if response is None or response == campaign.name:
 			return
 		self.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'name', response)
 		gui_utilities.show_dialog_info('Campaign Name Updated', self.get_active_window(), 'The campaign name was successfully changed.')
