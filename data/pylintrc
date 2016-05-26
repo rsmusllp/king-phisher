@@ -1,6 +1,5 @@
 [MASTER]
 persistent=yes
-profile=no
 jobs=1
 unsafe-load-any-extension=no
 
@@ -82,7 +81,6 @@ min-public-methods=0
 max-public-methods=25
 
 [CLASSES]
-ignore-iface-methods=isImplementedBy,deferred,extends,names,namesAndDescriptions,queryDescriptionFor,getBases,getDescriptionFor,getDoc,getName,getTaggedValue,getTaggedValueTags,isEqualOrExtendedBy,setTaggedValue,isImplementedByInstancesOf,adaptWith,is_implemented_by
 defining-attr-methods=__init__,__new__,setUp
 valid-classmethod-first-arg=cls
 valid-metaclass-classmethod-first-arg=mcs

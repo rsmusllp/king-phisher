@@ -13,6 +13,9 @@ Data
 .. autodata:: king_phisher.sms.CARRIERS
    :annotation:
 
+.. autodata:: king_phisher.sms.DEFAULT_FROM_ADDRESS
+   :annotation:
+
 Functions
 ---------
 

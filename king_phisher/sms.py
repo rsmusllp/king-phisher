@@ -43,7 +43,7 @@ if sys.version_info[0] < 3:
 else:
 	from email.mime.text import MIMEText
 
-__version__ = '0.1'
+__version__ = '1.0'
 __all__ = ('lookup_carrier_gateway', 'send_sms')
 
 CARRIERS = {
@@ -55,6 +55,9 @@ CARRIERS = {
 	'Virgin Mobile': 'vmobl.com',
 }
 """A dictionary for mapping carrier names to SMS via email gateways."""
+
+DEFAULT_FROM_ADDRESS = 'sms@king-phisher.com'
+"""The default email address to use in the from field."""
 
 @smoke_zephyr.utilities.Cache('6h')
 def get_smtp_servers(domain):
@@ -100,7 +103,7 @@ def send_sms(message_text, phone_number, carrier, from_address=None):
 	:return: This returns the status of the sent messsage.
 	:rtype: bool
 	"""
-	from_address = (from_address or 'donotreply@nowhere.com')
+	from_address = (from_address or DEFAULT_FROM_ADDRESS)
 	phone_number = phone_number.replace('-', '').replace(' ', '')
 	if len(message_text) > 160:
 		raise ValueError('message length exceeds 160 characters')
@@ -135,13 +138,14 @@ def _argp_sms_carrier_type(arg):
 
 def main():
 	parser = argparse.ArgumentParser(description='Send SMS Messages', conflict_handler='resolve')
+	parser.add_argument('--from', dest='from_email', default=DEFAULT_FROM_ADDRESS, help='the email address to send the message from')
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + __version__)
 	parser.add_argument('phone_number', help='destination phone number')
 	parser.add_argument('carrier', type=_argp_sms_carrier_type, help='target carrier')
 	parser.add_argument('message', help='message text to send')
 	results = parser.parse_args()
 
-	if send_sms(results.message, results.phone_number, results.carrier):
+	if send_sms(results.message, results.phone_number, results.carrier, from_address=results.from_email):
 		print('[+] Successfully Sent!')  # pylint: disable=superfluous-parens
 	else:
 		print('[-] Failed To Send')  # pylint: disable=superfluous-parens
