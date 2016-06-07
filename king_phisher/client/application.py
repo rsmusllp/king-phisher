@@ -59,7 +59,7 @@ from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.ssh_forward import SSHTCPForwarder
 
-from AdvancedHTTPServer import AdvancedHTTPServerRPCError
+import advancedhttpserver
 from boltons import typeutils
 from gi.repository import Gdk
 from gi.repository import Gio
@@ -526,7 +526,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		try:
 			server_version_info = rpc('version')
 			assert server_version_info is not None
-		except AdvancedHTTPServerRPCError as error:
+		except advancedhttpserver.RPCError as error:
 			self.logger.warning('failed to connect to the remote rpc service due to http status: ' + str(error.status))
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, "The server responded with HTTP status: {0}.".format(str(error.status)))
 		except BadStatusLine as error:
@@ -588,7 +588,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if self.rpc is not None:
 			try:
 				self.rpc('logout')
-			except AdvancedHTTPServerRPCError as error:
+			except advancedhttpserver.RPCError as error:
 				self.logger.warning('failed to logout, rpc error: ' + error.message)
 			self.rpc = None
 		if self._ssh_forwarder:

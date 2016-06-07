@@ -105,8 +105,8 @@ class KingPhisherRequestHandlerRPC(object):
 
 	:RPC API: :ref:`rpc-api-label`
 	"""
-	def install_handlers(self):
-		super(KingPhisherRequestHandlerRPC, self).install_handlers()
+	def on_init(self):
+		super(KingPhisherRequestHandlerRPC, self).on_init()
 		self.rpc_handler_map['^/ping$'] = self.rpc_ping
 		self.rpc_handler_map['^/shutdown$'] = self.rpc_shutdown
 		self.rpc_handler_map['^/version$'] = self.rpc_version
@@ -156,7 +156,7 @@ class KingPhisherRequestHandlerRPC(object):
 			This action will stop the server process and there is no
 			confirmation before it takes place.
 		"""
-		shutdown_thread = threading.Thread(target=self.server.shutdown)
+		shutdown_thread = threading.Thread(target=self.server.kp_shutdown)
 		shutdown_thread.start()
 		return
 

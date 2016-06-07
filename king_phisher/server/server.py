@@ -54,30 +54,27 @@ from king_phisher.server import server_rpc
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
-import AdvancedHTTPServer
+import advancedhttpserver
 import jinja2
 from smoke_zephyr import job
 
 make_uid = lambda: utilities.random_string(24)
 
-def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
+def build_king_phisher_server(config, handler_klass=None):
 	"""
-	Build a server from a provided configuration instance. If *ServerClass* or
-	*HandlerClass* is specified, then the object must inherit from the
-	corresponding KingPhisherServer base class.
+	Build a server from a provided configuration instance. If *handler_klass* is
+	specified, then the object must inherit from the corresponding
+	KingPhisherServer base class.
 
 	:param config: Configuration to retrieve settings from.
 	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
-	:param ServerClass: Alternative server class to use.
-	:type ServerClass: :py:class:`.KingPhisherServer`
-	:param HandlerClass: Alternative handler class to use.
-	:type HandlerClass: :py:class:`.KingPhisherRequestHandler`
+	:param handler_klass: Alternative handler class to use.
+	:type handler_klass: :py:class:`.KingPhisherRequestHandler`
 	:return: A configured server instance.
 	:rtype: :py:class:`.KingPhisherServer`
 	"""
 	logger = logging.getLogger('KingPhisher.Server.build')
-	ServerClass = (ServerClass or KingPhisherServer)
-	HandlerClass = (HandlerClass or KingPhisherRequestHandler)
+	handler_klass = (handler_klass or KingPhisherRequestHandler)
 	# set config defaults
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
@@ -95,7 +92,7 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 				logger.critical("setting server.ssl_key file '{0}' not found".format(ssl_keyfile))
 				raise errors.KingPhisherError('invalid ssl configuration, missing file')
 	try:
-		server = ServerClass(config, HandlerClass, address=address, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+		server = KingPhisherServer(config, handler_klass, address=address, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
 		error_number, error_message = error.args
 		if error_number == 98:
@@ -110,7 +107,8 @@ def build_king_phisher_server(config, ServerClass=None, HandlerClass=None):
 		logger.info('rest api initialized with token: ' + config.get('server.rest_api.token'))
 	return server
 
-class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, AdvancedHTTPServer.AdvancedHTTPServerRequestHandler):
+class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, advancedhttpserver.RequestHandler):
+	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 	def __init__(self, *args, **kwargs):
 		# this is for attribute documentation
 		self.config = None
@@ -119,9 +117,8 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 		"""The resource path of the current HTTP request."""
 		super(KingPhisherRequestHandler, self).__init__(*args, **kwargs)
 
-	def install_handlers(self):
-		self.logger = logging.getLogger('KingPhisher.Server.RequestHandler')
-		super(KingPhisherRequestHandler, self).install_handlers()
+	def on_init(self):
+		super(KingPhisherRequestHandler, self).on_init()
 		self.config = self.server.config
 		regex_prefix = '^'
 		if self.config.get('server.vhost_directories'):
@@ -169,7 +166,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			return
 		if not self.vhost:
 			raise errors.KingPhisherAbortRequestError()
-		if self.vhost in ['localhost', '127.0.0.1'] and self.client_address[0] != '127.0.0.1':
+		if self.vhost in ('localhost', '127.0.0.1') and self.client_address[0] != '127.0.0.1':
 			raise errors.KingPhisherAbortRequestError()
 		self.path = '/' + self.vhost + self.path
 
@@ -425,7 +422,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			self._respond_file_raw(file_path, attachment)
 			return
 		try:
-			template = self.server.template_env.get_template(os.path.relpath(file_path, self.server.serve_files_root))
+			template = self.server.template_env.get_template(os.path.relpath(file_path, self.config.get('server.web_root')))
 		except jinja2.exceptions.TemplateSyntaxError as error:
 			self.server.logger.error("jinja2 syntax error in template {0}:{1} {2}".format(error.filename, error.lineno, error.message))
 			raise errors.KingPhisherAbortRequestError()
@@ -749,17 +746,17 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, Advance
 			alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
 
-class KingPhisherServer(AdvancedHTTPServer.AdvancedHTTPServer):
+class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 	"""
 	The main HTTP and RPC server for King Phisher.
 	"""
-	def __init__(self, config, HandlerClass, *args, **kwargs):
+	def __init__(self, config, handler_klass, *args, **kwargs):
 		"""
 		:param config: Configuration to retrieve settings from.
 		:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 		"""
 		# additional mime types to be treated as html because they're probably cloned pages
-		HandlerClass.extensions_map.update({
+		handler_klass.extensions_map.update({
 			'': 'text/html',
 			'.asp': 'text/html',
 			'.aspx': 'text/html',
@@ -771,7 +768,7 @@ class KingPhisherServer(AdvancedHTTPServer.AdvancedHTTPServer):
 			'.php': 'text/html',
 			'.srf': 'text/html'
 		})
-		super(KingPhisherServer, self).__init__(HandlerClass, *args, **kwargs)
+		super(KingPhisherServer, self).__init__(handler_klass, *args, **kwargs)
 		self.logger = logging.getLogger('KingPhisher.Server')
 		self.config = config
 		"""A :py:class:`~smoke_zephyr.configuration.Configuration` instance used as the main King Phisher server configuration."""
@@ -781,12 +778,11 @@ class KingPhisherServer(AdvancedHTTPServer.AdvancedHTTPServer):
 		self.serve_robots_txt = True
 		self.database_engine = db_manager.init_database(config.get('server.database'), extra_init=True)
 
-		self.http_server.config = config
-		self.http_server.throttle_semaphore = threading.Semaphore()
-		self.http_server.session_manager = aaa.AuthenticatedSessionManager(
+		self.throttle_semaphore = threading.Semaphore()
+		self.session_manager = aaa.AuthenticatedSessionManager(
 			timeout=config.get_if_exists('server.authentication.cache_timeout', '30m')
 		)
-		self.http_server.forked_authenticator = aaa.ForkedAuthenticator(
+		self.forked_authenticator = aaa.ForkedAuthenticator(
 			cache_timeout=config.get_if_exists('server.authentication.cache_timeout', '10m'),
 			required_group=config.get_if_exists('server.authentication.group'),
 			pam_service=config.get_if_exists('server.authentication.pam_service', 'sshd')
@@ -794,7 +790,6 @@ class KingPhisherServer(AdvancedHTTPServer.AdvancedHTTPServer):
 		self.job_manager = job.JobManager()
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
-		self.http_server.job_manager = self.job_manager
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
 		global_vars = {}
 		if config.has_section('server.page_variables'):
@@ -802,25 +797,35 @@ class KingPhisherServer(AdvancedHTTPServer.AdvancedHTTPServer):
 		global_vars['embed_youtube_video'] = pages.embed_youtube_video
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
-		self.http_server.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
-		self.__geoip_db = geoip.init_database(config.get('server.geoip.database'))
+		self.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
 
+		for http_server in self.sub_servers:
+			http_server.config = config
+			http_server.throttle_semaphore = self.throttle_semaphore
+			http_server.session_manager = self.session_manager
+			http_server.forked_authenticator = self.forked_authenticator
+			http_server.job_manager = self.job_manager
+			http_server.template_env = self.template_env
+			http_server.kp_shutdown = self.shutdown
+
+		self.__geoip_db = geoip.init_database(config.get('server.geoip.database'))
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
+		self.__shutdown_lock = threading.Lock()
 
 	def shutdown(self, *args, **kwargs):
 		"""
-		Request that the server perform any cleanup necessary and then
-		shut down. This will wait for the server to stop before it
-		returns.
+		Request that the server perform any cleanup necessary and then shut
+		down. This will wait for the server to stop before it returns.
 		"""
-		if self.__is_shutdown.is_set():
-			return
-		self.logger.warning('processing shutdown request')
-		super(KingPhisherServer, self).shutdown(*args, **kwargs)
-		self.http_server.session_manager.stop()
-		self.http_server.forked_authenticator.stop()
-		self.logger.debug('stopped the forked authenticator process')
-		self.job_manager.stop()
-		self.__geoip_db.close()
-		self.__is_shutdown.set()
+		with self.__shutdown_lock:
+			if self.__is_shutdown.is_set():
+				return
+			self.logger.warning('processing shutdown request')
+			super(KingPhisherServer, self).shutdown(*args, **kwargs)
+			self.session_manager.stop()
+			self.forked_authenticator.stop()
+			self.logger.debug('stopped the forked authenticator process')
+			self.job_manager.stop()
+			self.__geoip_db.close()
+			self.__is_shutdown.set()

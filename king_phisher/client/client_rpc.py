@@ -41,7 +41,7 @@ from king_phisher import geoip
 from king_phisher import json_ex
 from king_phisher import utilities
 
-import AdvancedHTTPServer
+import advancedhttpserver
 from gi.repository import Gtk
 
 try:
@@ -168,7 +168,7 @@ class Visit(RemoteRow):
 
 database_table_objects.freeze()
 
-class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached):
+class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 	"""
 	The main RPC object for communicating with the King Phisher Server
 	over RPC.
@@ -193,11 +193,11 @@ class KingPhisherRPCClient(AdvancedHTTPServer.AdvancedHTTPServerRPCClientCached)
 				context = ssl.create_default_context()
 				context.check_hostname = False
 				context.verify_mode = ssl.CERT_NONE
-				self.client = AdvancedHTTPServer.http.client.HTTPSConnection(self.host, self.port, context=context)
+				self.client = advancedhttpserver.http.client.HTTPSConnection(self.host, self.port, context=context)
 			else:
-				self.client = AdvancedHTTPServer.http.client.HTTPSConnection(self.host, self.port)
+				self.client = advancedhttpserver.http.client.HTTPSConnection(self.host, self.port)
 		else:
-			self.client = AdvancedHTTPServer.http.client.HTTPConnection(self.host, self.port)
+			self.client = advancedhttpserver.http.client.HTTPConnection(self.host, self.port)
 		self.lock.release()
 
 	def remote_table(self, table, query_filter=None):

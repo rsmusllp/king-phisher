@@ -13,6 +13,8 @@ docs/build/*
 docs/html/*
 ssl/*
 
+lextab.py
+yacctab.py
 DODO
 todo.txt
 notes.txt

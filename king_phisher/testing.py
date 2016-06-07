@@ -42,7 +42,7 @@ from king_phisher.client import client_rpc
 from king_phisher.server import rest_api
 from king_phisher.server import server
 
-import AdvancedHTTPServer
+import advancedhttpserver
 import smoke_zephyr.configuration
 import smoke_zephyr.utilities
 
@@ -115,8 +115,8 @@ def skip_on_travis(test_method):
 	return decorated
 
 class KingPhisherRequestHandlerTest(server.KingPhisherRequestHandler):
-	def install_handlers(self):
-		super(KingPhisherRequestHandlerTest, self).install_handlers()
+	def on_init(self, *args, **kwargs):
+		super(KingPhisherRequestHandlerTest, self).on_init(*args, **kwargs)
 		self.rpc_handler_map['^/login$'] = self.rpc_test_login
 
 	def rpc_test_login(self, username, password, otp=None):
@@ -146,8 +146,8 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 		config.set('server.rest_api.enabled', True)
 		config.set('server.rest_api.token', rest_api.generate_token())
 		self.config = config
-		self.server = server.build_king_phisher_server(config, HandlerClass=KingPhisherRequestHandlerTest)
-		config.set('server.address.port', self.server.http_server.server_port)
+		self.server = server.build_king_phisher_server(config, handler_klass=KingPhisherRequestHandlerTest)
+		config.set('server.address.port', self.server.sub_servers[0].server_port)
 		self.assertIsInstance(self.server, server.KingPhisherServer)
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
 		self.server_thread.daemon = True
@@ -179,7 +179,7 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 		"""
 		try:
 			self.rpc(method, *args, **kwargs)
-		except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
+		except advancedhttpserver.RPCError as error:
 			name = error.remote_exception.get('name')
 			if name.endswith('.KingPhisherPermissionError'):
 				return

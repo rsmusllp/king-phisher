@@ -38,7 +38,7 @@ from king_phisher import ipaddress
 from king_phisher import sms
 from king_phisher import utilities
 
-from AdvancedHTTPServer import AdvancedHTTPServerRegisterPath
+import advancedhttpserver
 
 __all__ = ('generate_token',)
 
@@ -102,14 +102,14 @@ def rest_handler(handle_function):
 		return
 	return wrapped
 
-@AdvancedHTTPServerRegisterPath(REST_API_BASE + 'geoip/lookup')
+@advancedhttpserver.RegisterPath(REST_API_BASE + 'geoip/lookup')
 @rest_handler
 def rest_api_geoip_lookup(handler, params):
 	ip = handler.get_query('ip')
 	assert ip
 	return geoip.lookup(ip)
 
-@AdvancedHTTPServerRegisterPath(REST_API_BASE + 'sms/send')
+@advancedhttpserver.RegisterPath(REST_API_BASE + 'sms/send')
 @rest_handler
 def rest_api_sms_send(handler, params):
 	sms.send_sms(

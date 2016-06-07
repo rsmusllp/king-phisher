@@ -36,7 +36,7 @@ from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import resources
 
-import AdvancedHTTPServer
+import advancedhttpserver
 
 __all__ = ('CampaignAssistant',)
 
@@ -293,7 +293,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		else:
 			try:
 				cid = self.application.rpc('campaign/new', campaign_name, description=campaign_description)
-			except AdvancedHTTPServer.AdvancedHTTPServerRPCError as error:
+			except advancedhttpserver.RPCError as error:
 				if not error.is_remote_exception:
 					raise error
 				if not error.remote_exception['name'] == 'exceptions.ValueError':

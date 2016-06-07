@@ -41,7 +41,7 @@ from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import gui_utilities
 
-import AdvancedHTTPServer
+import advancedhttpserver
 from gi.repository import Gtk
 from gi.repository import Pango
 
@@ -105,7 +105,7 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 				pversion += ' (Frozen=False)'
 		exc_name = "{0}.{1}".format(exc_type.__module__, exc_type.__name__)
 		rpc_error_details = 'N/A (Not a remote RPC error)'
-		if isinstance(exc_value, AdvancedHTTPServer.AdvancedHTTPServerRPCError) and exc_value.is_remote_exception:
+		if isinstance(exc_value, advancedhttpserver.RPCError) and exc_value.is_remote_exception:
 			rpc_error_details = "Name: {0}".format(exc_value.remote_exception['name'])
 			if exc_value.remote_exception.get('message'):
 				rpc_error_details += " Message: '{0}'".format(exc_value.remote_exception['message'])

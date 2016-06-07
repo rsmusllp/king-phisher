@@ -35,7 +35,7 @@ import functools
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
 
-import AdvancedHTTPServer
+import advancedhttpserver
 from gi.repository import Gtk
 from gi.repository import Pango
 
@@ -122,7 +122,7 @@ class TagEditorDialog(gui_utilities.GladeGObject):
 
 		try:
 			self.application.rpc('db/table/set', tag_table, tag_id, (property_name,), (property_value,))
-		except AdvancedHTTPServer.AdvancedHTTPServerRPCError:
+		except advancedhttpserver.RPCError:
 			gui_utilities.show_dialog_error('Failed To Modify', self.dialog, 'An error occurred while modifying the information.')
 		else:
 			model.set_value(model_iter, store_id, property_value)
