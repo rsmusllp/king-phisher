@@ -50,7 +50,7 @@ from king_phisher import version
 from dateutil import tz
 from smoke_zephyr.utilities import which
 
-EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,6}$', flags=re.IGNORECASE)
+EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,7}$', flags=re.IGNORECASE)
 TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 class FreezableDict(collections.OrderedDict):

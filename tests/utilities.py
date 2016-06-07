@@ -47,6 +47,7 @@ class UtilitiesTests(testing.KingPhisherTestCase):
 			'aliddle@wonderland.com',
 			'aliddle@wonderland.co.uk',
 			'alice.liddle1+spam@wonderland.com',
+			'alice.liddle@wonderland.support'
 		]
 		invalid_emails = [
 			'aliddle.wonderland.com'
