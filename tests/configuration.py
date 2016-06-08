@@ -48,7 +48,10 @@ class ServerConfigurationTests(testing.KingPhisherTestCase):
 		self.assertTrue(os.path.isfile(config_file))
 		config = configuration.Configuration(config_file)
 		self.assertTrue(config.has_section('server'))
-		self.assertTrue(config.has_section('server.address'))
+		self.assertTrue(config.has_option('server.addresses'))
+		addresses = config.get('server.addresses')
+		self.assertIsInstance(addresses, list)
+		self.assertGreater(len(addresses), 0)
 
 	def test_server_config_verification(self):
 		config_file = find.find_data_file('server_config.yml')

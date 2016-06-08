@@ -1,6 +1,6 @@
 # these are also hard coded into the respective executable files for checking as
 # part of their startup routine
-advancedhttpserver==2.0.1
+advancedhttpserver==2.0.2
 alembic>=0.8.6
 boltons>=16.2.2
 dnspython>=1.13.0              ; python_version < '3.0'

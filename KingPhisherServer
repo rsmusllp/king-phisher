@@ -53,7 +53,7 @@ from smoke_zephyr.configuration import Configuration
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
-	'advancedhttpserver==2.0.1',
+	'advancedhttpserver==2.0.2',
 	'alembic>=0.8.6',
 	'boltons>=16.2.2',
 	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),

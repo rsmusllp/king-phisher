@@ -8,10 +8,11 @@ logging:
   console: false
 
 server:
-  # Bind address information
-  address:
-    host: 0.0.0.0
-    port: 80
+  # Bind address information, multiple ports can be
+  addresses:
+    - host: 0.0.0.0
+      port: 80
+      ssl: false
 
   # Server RPC authentication related settings
   #authentication:
@@ -76,9 +77,14 @@ server:
   # Drop privileges to the specified user
   setuid_username: nobody
 
-  # SSL settings
+  # Default SSL certificate settings
   #ssl_cert: /path/to/ssl.crt
   #ssl_key: /path/to/ssl.key
+  # Hostname specific SSL certificates can be added below
+  #ssl_hosts:
+  #  - host: www.king-phisher.com
+  #    ssl_cert: /path/to/www.king-phisher.com/ssl.crt
+  #    ssl_key: /path/to/www.king-phisher.com/ssl.key
 
   # Configure the image file name used to track opened emails
   tracking_image: email_logo_banner.gif

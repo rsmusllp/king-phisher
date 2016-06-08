@@ -78,7 +78,16 @@ def build_king_phisher_server(config, handler_klass=None):
 	# set config defaults
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', make_uid())
-	address = (config.get('server.address.host'), config.get('server.address.port'))
+	addresses = []
+	if config.has_option('server.address'):
+		addresses.append((config.get_if_exists('server.address.host', '0.0.0.0'), config.get('server.address.port'), config.has_option('server.ssl_cert')))
+	if config.has_option('server.addresses'):
+		for address in config.get('server.addresses'):
+			addresses.append((address['host'], address['port'], address.get('ssl', False)))
+
+	if not len(addresses):
+		raise errors.KingPhisherError('at least one address to listen on must be specified')
+
 	ssl_certfile = None
 	ssl_keyfile = None
 	if config.has_option('server.ssl_cert'):
@@ -91,12 +100,16 @@ def build_king_phisher_server(config, handler_klass=None):
 			if not os.access(ssl_keyfile, os.R_OK):
 				logger.critical("setting server.ssl_key file '{0}' not found".format(ssl_keyfile))
 				raise errors.KingPhisherError('invalid ssl configuration, missing file')
+
+	if any([address[2] for address in addresses]) and ssl_certfile is None:
+		raise errors.KingPhisherError('an ssl certificate must be specified when ssl is enabled')
+
 	try:
-		server = KingPhisherServer(config, handler_klass, address=address, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+		server = KingPhisherServer(config, handler_klass, addresses=addresses, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
 		error_number, error_message = error.args
 		if error_number == 98:
-			logger.critical("failed to bind server to address {0}:{1} (socket error #98)".format(*address))
+			logger.critical('failed to bind server to address (socket error #98)')
 		raise errors.KingPhisherError("socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
