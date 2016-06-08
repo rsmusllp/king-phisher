@@ -60,6 +60,28 @@ from smoke_zephyr import job
 
 make_uid = lambda: utilities.random_string(24)
 
+def get_ssl_hostnames(config):
+	logger = logging.getLogger('KingPhisher.Server.build')
+	ssl_hostnames = []
+	for entry, ssl_host in enumerate(config.get_if_exists('server.ssl_hosts', [])):
+		hostname = ssl_host.get('host')
+		if hostname is None:
+			logger.critical("setting server.ssl_hosts[{0}] host not specified".format(entry))
+			raise errors.KingPhisherError("invalid ssl host configuration #{0}, host must be specified".format(entry + 1))
+		ssl_certfile = ssl_host.get('ssl_cert')
+		if ssl_certfile is None:
+			logger.critical("setting server.ssl_hosts[{0}] cert file not specified".format(entry))
+			raise errors.KingPhisherError("invalid ssl host configuration #{0}, missing cert file".format(entry + 1))
+		if not os.access(ssl_certfile, os.R_OK):
+			logger.critical("setting server.ssl_hosts[{0}] file '{1}' not found".format(entry, ssl_certfile))
+			raise errors.KingPhisherError("invalid ssl host configuration #{0}, missing cert file".format(entry + 1))
+		ssl_keyfile = ssl_host.get('ssl_key')
+		if ssl_keyfile is not None and not os.access(ssl_keyfile, os.R_OK):
+			logger.critical("setting server.ssl_hosts[{0}] file '{1}' not found".format(entry, ssl_keyfile))
+			raise errors.KingPhisherError("invalid ssl host configuration #{0}, missing key file".format(entry + 1))
+		ssl_hostnames.append((hostname, ssl_certfile, ssl_keyfile))
+	return ssl_hostnames
+
 def build_king_phisher_server(config, handler_klass=None):
 	"""
 	Build a server from a provided configuration instance. If *handler_klass* is
@@ -81,9 +103,8 @@ def build_king_phisher_server(config, handler_klass=None):
 	addresses = []
 	if config.has_option('server.address'):
 		addresses.append((config.get_if_exists('server.address.host', '0.0.0.0'), config.get('server.address.port'), config.has_option('server.ssl_cert')))
-	if config.has_option('server.addresses'):
-		for address in config.get('server.addresses'):
-			addresses.append((address['host'], address['port'], address.get('ssl', False)))
+	for address in config.get_if_exists('server.addresses', []):
+		addresses.append((address['host'], address['port'], address.get('ssl', False)))
 
 	if not len(addresses):
 		raise errors.KingPhisherError('at least one address to listen on must be specified')
@@ -95,6 +116,7 @@ def build_king_phisher_server(config, handler_klass=None):
 		if not os.access(ssl_certfile, os.R_OK):
 			logger.critical("setting server.ssl_cert file '{0}' not found".format(ssl_certfile))
 			raise errors.KingPhisherError('invalid ssl configuration, missing file')
+		logger.info("using default ssl cert file '{0}'".format(ssl_certfile))
 		if config.has_option('server.ssl_key'):
 			ssl_keyfile = config.get('server.ssl_key')
 			if not os.access(ssl_keyfile, os.R_OK):
@@ -103,6 +125,10 @@ def build_king_phisher_server(config, handler_klass=None):
 
 	if any([address[2] for address in addresses]) and ssl_certfile is None:
 		raise errors.KingPhisherError('an ssl certificate must be specified when ssl is enabled')
+	if ssl_certfile is None:
+		ssl_hostnames = []
+	else:
+		ssl_hostnames = get_ssl_hostnames(config)
 
 	try:
 		server = KingPhisherServer(config, handler_klass, addresses=addresses, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
@@ -113,6 +139,9 @@ def build_king_phisher_server(config, handler_klass=None):
 		raise errors.KingPhisherError("socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
+	for hostname, ssl_certfile, ssl_keyfile in ssl_hostnames:
+		logger.info("adding configuration for ssl hostname: {0} with cert: {1}".format(hostname, ssl_certfile))
+		server.add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 	if not config.get_if_exists('server.rest_api.token'):
 		config.set('server.rest_api.token', rest_api.generate_token())
