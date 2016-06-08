@@ -46,7 +46,7 @@ from king_phisher import geoip
 from king_phisher import its
 from king_phisher import utilities
 from king_phisher import version
-from king_phisher.server import server
+from king_phisher.server import build
 
 from boltons import strutils
 from smoke_zephyr.configuration import Configuration
@@ -166,7 +166,7 @@ def main():
 		return os.EX_OK
 
 	try:
-		king_phisher_server = server.build_king_phisher_server(config)
+		king_phisher_server = build.server_from_config(config)
 	except errors.KingPhisherError as error:
 		logger.critical(error.message)
 		return os.EX_SOFTWARE

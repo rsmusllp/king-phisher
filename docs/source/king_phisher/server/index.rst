@@ -11,6 +11,7 @@ application.
    database/index.rst
 
    aaa.rst
+   build.rst
    pages.rst
    rest_api.rst
    server.rst

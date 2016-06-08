@@ -7,11 +7,6 @@
 This module contains the functionality that provides the application's low-level
 HTTP server logic.
 
-Functions
----------
-
-.. autofunction:: king_phisher.server.server.build_king_phisher_server
-
 Classes
 -------
 
