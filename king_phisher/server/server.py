@@ -469,7 +469,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, advance
 		if mime_type.startswith('text'):
 			mime_type += '; charset=utf-8'
 		self.send_header('Content-Type', mime_type)
-		self.send_header('Content-Length', str(len(template_data)))
+		self.send_header('Content-Length', len(template_data))
 		for header in headers:
 			self.send_header(*header)
 
@@ -490,7 +490,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, advance
 		fs = os.fstat(file_obj.fileno())
 		self.send_response(200)
 		self.send_header('Content-Type', self.guess_mime_type(file_path))
-		self.send_header('Content-Length', str(fs[6]))
+		self.send_header('Content-Length', fs[6])
 		if attachment:
 			file_name = os.path.basename(file_path)
 			self.send_header('Content-Disposition', 'attachment; filename=' + file_name)
@@ -535,13 +535,15 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, advance
 	def respond_not_found(self):
 		self.send_response(404, 'Resource Not Found')
 		self.send_header('Content-Type', 'text/html')
-		self.end_headers()
 		page_404 = find.find_data_file('error_404.html')
 		if page_404:
-			with open(page_404, 'rb') as page_404:
-				shutil.copyfileobj(page_404, self.wfile)
+			with open(page_404, 'rb') as file_h:
+				message = file_h.read()
 		else:
-			self.wfile.write('Resource Not Found\n')
+			message = 'Resource Not Found\n'
+		self.send_header('Content-Length', len(message))
+		self.end_headers()
+		self.wfile.write(message)
 		return
 
 	def respond_redirect(self, location='/'):
@@ -659,7 +661,7 @@ class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, advance
 		self.send_header('Expires', '0')
 		self.send_header('Access-Control-Allow-Origin', '*')
 		self.send_header('Access-Control-Allow-Methods', 'POST, GET')
-		self.send_header('Content-Length', str(len(javascript)))
+		self.send_header('Content-Length', len(javascript))
 		self.end_headers()
 		if not isinstance(javascript, bytes):
 			javascript = javascript.encode('utf-8')
