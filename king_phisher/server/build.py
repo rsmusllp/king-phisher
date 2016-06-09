@@ -40,7 +40,50 @@ from king_phisher.server.server import KingPhisherRequestHandler, KingPhisherSer
 
 logger = logging.getLogger('KingPhisher.Server.build')
 
+def get_bind_addresses(config):
+	"""
+	Retrieve the addresses on which the server should bind to. Each of these
+	addresses should be an IP address, port and optionally enable SSL. The
+	returned list will contain tuples for each address found in the
+	configuration. These tuples will be in the (host, port, use_ssl) format that
+	is compatible with AdvancedHTTPServer.
+
+	:param config: Configuration to retrieve settings from.
+	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
+	:return: The specified addresses to bind to.
+	:rtype: list
+	"""
+	addresses = []
+	# pull the legacy lone address
+	if config.has_option('server.address'):
+		host = config.get_if_exists('server.address.host', '0.0.0.0')
+		port = config.get('server.address.port')
+		if not isinstance(port, int) and (0 <= port <= 0xffff):
+			logger.critical("can not bind to invalid port: {0!r}".format(port))
+			raise errors.KingPhisherError("invalid port configuration for address '{0}'".format(host))
+		addresses.append((host, port, config.has_option('server.ssl_cert')))
+
+	# pull the new-style list of addresses
+	for entry, address in enumerate(config.get_if_exists('server.addresses', [])):
+		host = address.get('host', '0.0.0.0')
+		port = address['port']
+		if not (isinstance(port, int) and (0 <= port <= 0xffff)):
+			logger.critical("setting server.addresses[{0}] invalid port specified".format(entry))
+			raise errors.KingPhisherError("invalid port configuration for address #{0}".format(entry + 1))
+		addresses.append((host, port, address.get('ssl', False)))
+	return addresses
+
 def get_ssl_hostnames(config):
+	"""
+	Retrieve the SSL hosts that are specified within the configuration. This
+	also ensures that the settings appear to be valid by ensuring that the
+	necessary files are defined and readable.
+
+	:param config: Configuration to retrieve settings from.
+	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
+	:return: The specified SSH hosts.
+	:rtype: list
+	"""
 	ssl_hostnames = []
 	for entry, ssl_host in enumerate(config.get_if_exists('server.ssl_hosts', [])):
 		hostname = ssl_host.get('host')
@@ -78,11 +121,7 @@ def server_from_config(config, handler_klass=None):
 	# set config defaults
 	if not config.has_option('server.secret_id'):
 		config.set('server.secret_id', rest_api.generate_token())
-	addresses = []
-	if config.has_option('server.address'):
-		addresses.append((config.get_if_exists('server.address.host', '0.0.0.0'), config.get('server.address.port'), config.has_option('server.ssl_cert')))
-	for address in config.get_if_exists('server.addresses', []):
-		addresses.append((address['host'], address['port'], address.get('ssl', False)))
+	addresses = get_bind_addresses(config)
 
 	if not len(addresses):
 		raise errors.KingPhisherError('at least one address to listen on must be specified')

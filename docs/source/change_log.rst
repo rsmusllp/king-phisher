@@ -13,6 +13,10 @@ Version 1.4.0
 *In Progress*
 
 * Added additional Jinja variables for server pages
+* Upgraded to AdvancedHTTPServer version 2
+
+   * Added support for binding to multiple interfaces
+   * Added support for multiple SSL hostnames via SNI
 
 Version 1.3.0
 ^^^^^^^^^^^^^

@@ -11,4 +11,8 @@ potential configuration problems contained.
 Functions
 ---------
 
+.. autofunction:: king_phisher.server.build.get_bind_addresses
+
+.. autofunction:: king_phisher.server.build.get_ssl_hostnames
+
 .. autofunction:: king_phisher.server.build.server_from_config
