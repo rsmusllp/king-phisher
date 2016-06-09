@@ -304,8 +304,13 @@ def init_database_postgresql(connection_url):
 	if systemctl_bin is None:
 		logger.info('postgresql service status check failed (could not find systemctl)')
 	else:
-		proc_h = _popen([smoke_zephyr.utilities.which('postgresql-setup'), '--initdb'])
-		proc_h.wait()
+		postgresql_setup = smoke_zephyr.utilities.which('postgresql-setup')
+		if postgresql_setup is None:
+			logger.debug('postgresql-setup was not found')
+		else:
+			logger.debug('using postgresql-setup to ensure that the database is initialized')
+			proc_h = _popen([postgresql_setup, '--initdb'])
+			proc_h.wait()
 		proc_h = _popen([systemctl_bin, 'status', 'postgresql.service'])
 		# wait for the process to return and check if it's running (status 0)
 		if proc_h.wait() == 0:
