@@ -15,8 +15,11 @@
 GITHUB_BRANCH = 'dev'
 GITHUB_REPO = 'securestate/king-phisher'
 
-import sys
 import os
+import ssl
+import sys
+
+ssl.HAS_SNI = False  # patch this to work around an issue with RTDs
 
 _prj_root = os.path.dirname(__file__)
 _prj_root = os.path.relpath(os.path.join('..', '..'), _prj_root)

@@ -64,6 +64,9 @@ def get_bind_addresses(config):
 		addresses.append((host, port, config.has_option('server.ssl_cert')))
 
 	# pull the new-style list of addresses
+	if not isinstance(config.get_if_exists('server.addresses', []), list):
+		logger.critical('the server.addresses configuration is invalid, it must be a list of entries')
+		raise errors.KingPhisherError('invalid server.addresses configuration')
 	for entry, address in enumerate(config.get_if_exists('server.addresses', [])):
 		host = address.get('host', '0.0.0.0')
 		port = address['port']
