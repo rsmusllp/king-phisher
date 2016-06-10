@@ -71,6 +71,12 @@ def get_bind_addresses(config):
 			logger.critical("setting server.addresses[{0}] invalid port specified".format(entry))
 			raise errors.KingPhisherError("invalid port configuration for address #{0}".format(entry + 1))
 		addresses.append((host, port, address.get('ssl', False)))
+
+	for host, port, use_ssl in addresses:
+		if port in (443, 8443) and not use_ssl:
+			logger.warning("running on port {0} without ssl, specify server.ssl_cert to enable ssl".format(port))
+		elif port in (80, 8080) and use_ssl:
+			logger.warning("running on port {0} with ssl, remove server.ssl_cert to disable ssl".format(port))
 	return addresses
 
 def get_ssl_hostnames(config):
