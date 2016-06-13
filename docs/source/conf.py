@@ -66,6 +66,7 @@ def linkcode_resolve(domain, info):
 	return "https://github.com/{0}/blob/{1}/{2}".format(GITHUB_REPO, GITHUB_BRANCH, file_name)
 
 intersphinx_mapping = {
+	'advancedhttpserver': ('https://advancedhttpserver.readthedocs.io/en/latest/', None),
 	'glib': ('http://lazka.github.io/pgi-docs/GLib-2.0/', None),
 	'gobject': ('http://lazka.github.io/pgi-docs/GObject-2.0/', None),
 	'gtksource': ('https://lazka.github.io/pgi-docs/GtkSource-3.0/', None),

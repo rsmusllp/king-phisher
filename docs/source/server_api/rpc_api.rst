@@ -21,23 +21,23 @@ General API
 
 .. rpc:function:: login()
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_login`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_login`
 
 .. rpc:function:: logout()
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_logout`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_logout`
 
 .. rpc:function:: ping()
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_ping`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_ping`
 
 .. rpc:function:: shutdown()
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_shutdown`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_shutdown`
 
 .. rpc:function:: version()
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_version`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_version`
 
 .. _rpc-api-campaign-api-label:
 
@@ -46,27 +46,27 @@ Campaign API
 
 .. rpc:function:: campaign/alerts/is_subscribed(campaign_id)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_is_subscribed`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_alerts_is_subscribed`
 
 .. rpc:function:: campaign/alerts/subscribe(campaign_id)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_subscribe`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_alerts_subscribe`
 
 .. rpc:function:: campaign/alerts/unsubscribe(campaign_id)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_alerts_unsubscribe`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_alerts_unsubscribe`
 
 .. rpc:function:: campaign/landing_page/new(campaign_id, hostname, page)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_landing_page_new`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_landing_page_new`
 
 .. rpc:function:: campaign/message/new(campaign_id, email_id, email_target, company_name, first_name, last_name)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_message_new`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_message_new`
 
 .. rpc:function:: campaign/new(name, description=None)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_campaign_new`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_new`
 
 .. _rpc-api-configuration-api-label:
 
@@ -75,11 +75,11 @@ Configuration API
 
 .. rpc:function:: config/get(option_name)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_config_get`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_config_get`
 
 .. rpc:function:: config/set(options)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_config_set`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_config_set`
 
 .. _rpc-api-geoip-api-label:
 
@@ -88,11 +88,11 @@ GeoIP API
 
 .. rpc:function:: geoip/lookup(ip, lang=None)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_geoip_lookup`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_geoip_lookup`
 
 .. rpc:function:: geoip/lookup/multi(ips, lang=None)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_geoip_lookup_multi`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_geoip_lookup_multi`
 
 .. _rpc-api-table-api-label:
 
@@ -101,28 +101,28 @@ Table API
 
 .. rpc:function:: db/table/count(table_name, query_filter=None)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_count_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_database_count_rows`
 
 .. rpc:function:: db/table/delete(table_name, row_id)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_row_by_id`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_database_delete_row_by_id`
 
 .. rpc:function:: db/table/delete/multi(table_name, row_ids)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_delete_rows_by_id`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_database_delete_rows_by_id`
 
 .. rpc:function:: db/table/get(table_name, row_id)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_get_row_by_id`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_database_get_row_by_id`
 
 .. rpc:function:: db/table/insert(table_name, keys, values)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_insert_row`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_database_insert_row`
 
 .. rpc:function:: db/table/set(table_name, row_id, keys, values)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_set_row_value`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_database_set_row_value`
 
 .. rpc:function:: db/table/view(table_name, page=0, query_filter=None)
 
-   :handler: :py:func:`~king_phisher.server.server_rpc.KingPhisherRequestHandlerRPC.rpc_database_view_rows`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_database_view_rows`

@@ -49,7 +49,7 @@ from king_phisher import xor
 from king_phisher.server import aaa
 from king_phisher.server import pages
 from king_phisher.server import rest_api
-from king_phisher.server import server_rpc
+from king_phisher.server import server_rpc  # pylint: disable=W0611
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
@@ -59,7 +59,7 @@ from smoke_zephyr import job
 
 make_uid = lambda: utilities.random_string(24)
 
-class KingPhisherRequestHandler(server_rpc.KingPhisherRequestHandlerRPC, advancedhttpserver.RequestHandler):
+class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 	def __init__(self, *args, **kwargs):
 		# this is for attribute documentation

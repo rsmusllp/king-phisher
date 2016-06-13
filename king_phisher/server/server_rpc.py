@@ -43,6 +43,7 @@ from king_phisher.constants import ConnectionErrorReason
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
+import advancedhttpserver
 import pyotp
 
 CONFIG_READABLE = (
@@ -63,539 +64,501 @@ VIEW_ROW_COUNT = 50
 database_tables = db_models.database_tables
 database_table_objects = db_models.database_table_objects
 
-def database_access(function):
-	"""
-	A wrapping function that provides the consumer with a database session in
-	an exception handling block that will automatically be closed.
-	"""
-	@functools.wraps(function)
-	def wrapper(handler_instance, *args, **kwargs):
-		session = db_manager.Session()
-		try:
-			result = function(handler_instance, session, *args, **kwargs)
-		finally:
-			session.close()
-		return result
-	return wrapper
-
 rpc_logger = logging.getLogger('KingPhisher.Server.RPC')
-def log_call(function):
+
+def register_rpc(path, database_access=False, log_call=False):
 	"""
-	A wrapping function that provides logging of the arguments with which an RPC
-	method is called.
+	Register an RPC function with the HTTP request handler. This allows the
+	method to be remotely invoked using King Phisher's standard RPC interface.
+	If *database_access* is specified, a SQLAlchemy session will be passed as
+	the second argument, after the standard
+	:py:class:`~advancedhttpserver.RequestHandler` instance.
+
+	:param str path: The path for the RPC function.
+	:param bool database_access: Whether or not the function requires database access.
+	:param bool log_call: Whether or not to log the arguments which the function is called with.
 	"""
-	@functools.wraps(function)
-	def wrapper(handler_instance, *args, **kwargs):
-		if rpc_logger.isEnabledFor(logging.DEBUG):
-			args_repr = ', '.join(map(repr, args))
-			if kwargs:
-				for key, value in sorted(kwargs.items()):
-					args_repr += ", {0}={1!r}".format(key, value)
-			msg = "calling RPC method {0}({1})".format(function.__name__, args_repr)
-			if getattr(handler_instance, 'rpc_session', False):
-				msg = handler_instance.rpc_session.user + ' is ' + msg
-			rpc_logger.debug(msg)
-		return function(handler_instance, *args, **kwargs)
-	return wrapper
+	path = '^' + path + '$'
+	def decorator(function):
+		@functools.wraps(function)
+		def wrapper(handler_instance, *args, **kwargs):
+			if log_call and rpc_logger.isEnabledFor(logging.DEBUG):
+				args_repr = ', '.join(map(repr, args))
+				if kwargs:
+					for key, value in sorted(kwargs.items()):
+						args_repr += ", {0}={1!r}".format(key, value)
+				msg = "calling RPC method {0}({1})".format(function.__name__, args_repr)
+				if getattr(handler_instance, 'rpc_session', False):
+					msg = handler_instance.rpc_session.user + ' is ' + msg
+				rpc_logger.debug(msg)
+			if database_access:
+				session = db_manager.Session()
+				try:
+					result = function(handler_instance, session, *args, **kwargs)
+				finally:
+					session.close()
+			else:
+				result = function(handler_instance, *args, **kwargs)
+			return result
+		advancedhttpserver.RegisterPath(path, is_rpc=True)(wrapper)
+		return wrapper
+	return decorator
 
-class KingPhisherRequestHandlerRPC(object):
+@register_rpc('/ping', log_call=True)
+def rpc_ping(handler):
 	"""
-	This superclass of :py:class:`.KingPhisherRequestHandler` maintains
-	all of the RPC call back functions.
+	An RPC method that can be used by clients to assert the status
+	and responsiveness of this server.
 
-	:RPC API: :ref:`rpc-api-label`
+	:return: This method always returns True.
+	:rtype: bool
 	"""
-	def on_init(self):
-		super(KingPhisherRequestHandlerRPC, self).on_init()
-		self.rpc_handler_map['^/ping$'] = self.rpc_ping
-		self.rpc_handler_map['^/shutdown$'] = self.rpc_shutdown
-		self.rpc_handler_map['^/version$'] = self.rpc_version
-		self.rpc_handler_map['^/geoip/lookup$'] = self.rpc_geoip_lookup
-		self.rpc_handler_map['^/geoip/lookup/multi$'] = self.rpc_geoip_lookup_multi
+	return True
 
-		self.rpc_handler_map['^/config/get$'] = self.rpc_config_get
-		self.rpc_handler_map['^/config/set$'] = self.rpc_config_set
+@register_rpc('/shutdown', log_call=True)
+def rpc_shutdown(handler):
+	"""
+	This method can be used to shut down the server. This function will
+	return, however no subsequent requests will be processed.
 
-		self.rpc_handler_map['^/campaign/alerts/is_subscribed$'] = self.rpc_campaign_alerts_is_subscribed
-		self.rpc_handler_map['^/campaign/alerts/subscribe$'] = self.rpc_campaign_alerts_subscribe
-		self.rpc_handler_map['^/campaign/alerts/unsubscribe$'] = self.rpc_campaign_alerts_unsubscribe
-		self.rpc_handler_map['^/campaign/landing_page/new$'] = self.rpc_campaign_landing_page_new
-		self.rpc_handler_map['^/campaign/message/new$'] = self.rpc_campaign_message_new
-		self.rpc_handler_map['^/campaign/new$'] = self.rpc_campaign_new
+	.. warning::
+		This action will stop the server process and there is no
+		confirmation before it takes place.
+	"""
+	shutdown_thread = threading.Thread(target=handler.server.kp_shutdown)
+	shutdown_thread.start()
+	return
 
-		# all the direct database methods
-		self.rpc_handler_map['^/db/table/count$'] = self.rpc_database_count_rows
-		self.rpc_handler_map['^/db/table/delete$'] = self.rpc_database_delete_row_by_id
-		self.rpc_handler_map['^/db/table/delete/multi$'] = self.rpc_database_delete_rows_by_id
-		self.rpc_handler_map['^/db/table/get$'] = self.rpc_database_get_row_by_id
-		self.rpc_handler_map['^/db/table/insert$'] = self.rpc_database_insert_row
-		self.rpc_handler_map['^/db/table/set$'] = self.rpc_database_set_row_value
-		self.rpc_handler_map['^/db/table/view$'] = self.rpc_database_view_rows
+@register_rpc('/version', log_call=True)
+def rpc_version(handler):
+	"""
+	Get the version information of the server. This returns a
+	dictionary with keys of version, version_info and rpc_api_version.
+	These values are provided for the client to determine
+	compatibility.
 
-		self.rpc_handler_map['^/login$'] = self.rpc_login
-		self.rpc_handler_map['^/logout$'] = self.rpc_logout
+	:return: A dictionary with version information.
+	:rtype: dict
+	"""
+	assert ipaddress.ip_address(handler.client_address[0]).is_loopback
 
-	@log_call
-	def rpc_ping(self):
-		"""
-		An RPC method that can be used by clients to assert the status
-		and responsiveness of this server.
+	vinfo = {
+		'rpc_api_version': version.rpc_api_version,
+		'version': version.version,
+		'version_info': version.version_info._asdict()
+	}
+	return vinfo
 
-		:return: This method always returns True.
-		:rtype: bool
-		"""
-		return True
+@register_rpc('/config/get')
+def rpc_config_get(handler, option_name):
+	"""
+	Retrieve a value from the server's configuration.
 
-	@log_call
-	def rpc_shutdown(self):
-		"""
-		This method can be used to shut down the server. This function will
-		return, however no subsequent requests will be processed.
+	:param str option_name: The name of the configuration option.
+	:return: The option's value.
+	"""
+	if isinstance(option_name, (list, tuple)):
+		option_names = option_name
+		option_values = {}
+		for option_name in option_names:
+			if not option_name in CONFIG_READABLE:
+				raise errors.KingPhisherPermissionError('permission denied to read config option: ' + option_name)
+			if handler.config.has_option(option_name):
+				option_values[option_name] = handler.config.get(option_name)
+		return option_values
+	if not option_name in CONFIG_READABLE:
+		raise errors.KingPhisherPermissionError('permission denied to read config option: ' + option_name)
+	if handler.config.has_option(option_name):
+		return handler.config.get(option_name)
+	return
 
-		.. warning::
-			This action will stop the server process and there is no
-			confirmation before it takes place.
-		"""
-		shutdown_thread = threading.Thread(target=self.server.kp_shutdown)
-		shutdown_thread.start()
-		return
+@register_rpc('/config/set')
+def rpc_config_set(handler, options):
+	"""
+	Set options in the server's configuration. Any changes to the
+	server's configuration are not written to disk.
 
-	@log_call
-	def rpc_version(self):
-		"""
-		Get the version information of the server. This returns a
-		dictionary with keys of version, version_info and rpc_api_version.
-		These values are provided for the client to determine
-		compatibility.
+	:param dict options: A dictionary of option names and values
+	"""
+	for option_name, option_value in options.items():
+		if not option_name in CONFIG_WRITEABLE:
+			raise errors.KingPhisherPermissionError('permission denied to write config option: ' + option_name)
+		handler.config.set(option_name, option_value)
+	return
 
-		:return: A dictionary with version information.
-		:rtype: dict
-		"""
-		assert ipaddress.ip_address(self.client_address[0]).is_loopback
+@register_rpc('/campaign/new', database_access=True, log_call=True)
+def rpc_campaign_new(self, session, name, description=None):
+	"""
+	Create a new King Phisher campaign and initialize the database
+	information.
 
-		vinfo = {
-			'rpc_api_version': version.rpc_api_version,
-			'version': version.version,
-			'version_info': version.version_info._asdict()
-		}
-		return vinfo
+	:param str name: The new campaign's name.
+	:param str description: The new campaign's description.
+	:return: The ID of the new campaign.
+	:rtype: int
+	"""
+	if session.query(db_models.Campaign).filter_by(name=name).count():
+		raise ValueError('the specified campaign name already exists')
+	campaign = db_models.Campaign(name=name, description=description, user_id=self.rpc_session.user)
+	campaign.assert_session_has_permissions('c', self.rpc_session)
+	session.add(campaign)
+	session.commit()
+	return campaign.id
 
-	def rpc_config_get(self, option_name):
-		"""
-		Retrieve a value from the server's configuration.
+@register_rpc('/campaign/alerts/is_subscribed', database_access=True, log_call=True)
+def rpc_campaign_alerts_is_subscribed(self, session, campaign_id):
+	"""
+	Check if the user is subscribed to alerts for the specified campaign.
 
-		:param str option_name: The name of the configuration option.
-		:return: The option's value.
-		"""
-		if isinstance(option_name, (list, tuple)):
-			option_names = option_name
-			option_values = {}
-			for option_name in option_names:
-				if not option_name in CONFIG_READABLE:
-					raise errors.KingPhisherPermissionError('permission denied to read config option: ' + option_name)
-				if self.config.has_option(option_name):
-					option_values[option_name] = self.config.get(option_name)
-			return option_values
-		if not option_name in CONFIG_READABLE:
-			raise errors.KingPhisherPermissionError('permission denied to read config option: ' + option_name)
-		if self.config.has_option(option_name):
-			return self.config.get(option_name)
-		return
+	:param int campaign_id: The ID of the campaign.
+	:return: The alert subscription status.
+	:rtype: bool
+	"""
+	username = self.rpc_session.user
+	query = session.query(db_models.AlertSubscription)
+	query = query.filter_by(campaign_id=campaign_id, user_id=username)
+	return query.count()
 
-	def rpc_config_set(self, options):
-		"""
-		Set options in the server's configuration. Any changes to the
-		server's configuration are not written to disk.
+@register_rpc('/campaign/alerts/subscribe', database_access=True, log_call=True)
+def rpc_campaign_alerts_subscribe(handler, session, campaign_id):
+	"""
+	Subscribe to alerts for the specified campaign.
 
-		:param dict options: A dictionary of option names and values
-		"""
-		for option_name, option_value in options.items():
-			if not option_name in CONFIG_WRITEABLE:
-				raise errors.KingPhisherPermissionError('permission denied to write config option: ' + option_name)
-			self.config.set(option_name, option_value)
-		return
-
-	@log_call
-	@database_access
-	def rpc_campaign_new(self, session, name, description=None):
-		"""
-		Create a new King Phisher campaign and initialize the database
-		information.
-
-		:param str name: The new campaign's name.
-		:param str description: The new campaign's description.
-		:return: The ID of the new campaign.
-		:rtype: int
-		"""
-		if session.query(db_models.Campaign).filter_by(name=name).count():
-			raise ValueError('the specified campaign name already exists')
-		campaign = db_models.Campaign(name=name, description=description, user_id=self.rpc_session.user)
-		campaign.assert_session_has_permissions('c', self.rpc_session)
-		session.add(campaign)
-		session.commit()
-		return campaign.id
-
-	@log_call
-	@database_access
-	def rpc_campaign_alerts_is_subscribed(self, session, campaign_id):
-		"""
-		Check if the user is subscribed to alerts for the specified campaign.
-
-		:param int campaign_id: The ID of the campaign.
-		:return: The alert subscription status.
-		:rtype: bool
-		"""
-		username = self.rpc_session.user
-		query = session.query(db_models.AlertSubscription)
-		query = query.filter_by(campaign_id=campaign_id, user_id=username)
-		return query.count()
-
-	@log_call
-	@database_access
-	def rpc_campaign_alerts_subscribe(self, session, campaign_id):
-		"""
-		Subscribe to alerts for the specified campaign.
-
-		:param int campaign_id: The ID of the campaign.
-		"""
-		username = self.rpc_session.user
-		query = session.query(db_models.AlertSubscription)
-		query = query.filter_by(campaign_id=campaign_id, user_id=username)
-		if query.count() == 0:
-			subscription = db_models.AlertSubscription(campaign_id=campaign_id, user_id=username)
-			subscription.assert_session_has_permissions('c', self.rpc_session)
-			session.add(subscription)
-			session.commit()
-
-	@log_call
-	@database_access
-	def rpc_campaign_alerts_unsubscribe(self, session, campaign_id):
-		"""
-		Unsubscribe to alerts for the specified campaign.
-
-		:param int campaign_id: The ID of the campaign.
-		"""
-		username = self.rpc_session.user
-		query = session.query(db_models.AlertSubscription)
-		query = query.filter_by(campaign_id=campaign_id, user_id=username)
-		subscription = query.first()
-		if subscription:
-			subscription.assert_session_has_permissions('d', self.rpc_session)
-			session.delete(subscription)
-			session.commit()
-
-	@log_call
-	@database_access
-	def rpc_campaign_landing_page_new(self, session, campaign_id, hostname, page):
-		"""
-		Add a landing page for the specified campaign. Landing pages refer
-		to resources that when visited by a user should cause the visit
-		counter to be incremented.
-
-		:param int campaign_id: The ID of the campaign.
-		:param str hostname: The hostname which will be used to serve the request.
-		:param str page: The request resource.
-		"""
-		hostname = hostname.split(':', 1)[0]
-		page = page.lstrip('/')
-		query = session.query(db_models.LandingPage)
-		query = query.filter_by(campaign_id=campaign_id, hostname=hostname, page=page)
-		if query.count() == 0:
-			landing_page = db_models.LandingPage(campaign_id=campaign_id, hostname=hostname, page=page)
-			landing_page.assert_session_has_permissions('c', self.rpc_session)
-			session.add(landing_page)
-			session.commit()
-
-	@log_call
-	@database_access
-	def rpc_campaign_message_new(self, session, campaign_id, email_id, target_email, first_name, last_name, department_name=None):
-		"""
-		Record a message that has been sent as part of a campaign. These
-		details can be retrieved later for value substitution in template
-		pages.
-
-		:param int campaign_id: The ID of the campaign.
-		:param str email_id: The message id of the sent email.
-		:param str target_email: The email address that the message was sent to.
-		:param str first_name: The first name of the message's recipient.
-		:param str last_name: The last name of the message's recipient.
-		:param str department_name: The name of the company department that the message's recipient belongs to.
-		"""
-		department = None
-		if department_name is not None:
-			department = session.query(db_models.CompanyDepartment).filter_by(name=department_name).first()
-			if department is None:
-				department = db_models.CompanyDepartment(name=department_name)
-				department.assert_session_has_permissions('c', self.rpc_session)
-				session.add(department)
-				session.commit()
-		message = db_models.Message()
-		message.id = email_id
-		message.campaign_id = campaign_id
-		message.target_email = target_email
-		message.first_name = first_name
-		message.last_name = last_name
-		if department is not None:
-			message.company_department_id = department.id
-		message.assert_session_has_permissions('c', self.rpc_session)
-		session.add(message)
+	:param int campaign_id: The ID of the campaign.
+	"""
+	username = handler.rpc_session.user
+	query = session.query(db_models.AlertSubscription)
+	query = query.filter_by(campaign_id=campaign_id, user_id=username)
+	if query.count() == 0:
+		subscription = db_models.AlertSubscription(campaign_id=campaign_id, user_id=username)
+		subscription.assert_session_has_permissions('c', handler.rpc_session)
+		session.add(subscription)
 		session.commit()
 
-	@database_access
-	def rpc_database_count_rows(self, session, table_name, query_filter=None):
-		"""
-		Get a count of the rows in the specified table where the search
-		criteria matches.
+@register_rpc('/campaign/alerts/unsubscribe', database_access=True, log_call=True)
+def rpc_campaign_alerts_unsubscribe(handler, session, campaign_id):
+	"""
+	Unsubscribe to alerts for the specified campaign.
 
-		:param str table_name: The name of the database table to query.
-		:param dict query_filter: A dictionary mapping optional search criteria for matching the query.
-		:return: The number of matching rows.
-		:rtype: int
-		"""
-		table = database_table_objects.get(table_name)
-		assert table
-		query_filter = query_filter or {}
-		columns = database_tables[table_name]
-		for column in query_filter.keys():
-			assert column in columns
-		query = session.query(table)
-		query = query.filter_by(**query_filter)
-		return query.count()
+	:param int campaign_id: The ID of the campaign.
+	"""
+	username = handler.rpc_session.user
+	query = session.query(db_models.AlertSubscription)
+	query = query.filter_by(campaign_id=campaign_id, user_id=username)
+	subscription = query.first()
+	if subscription:
+		subscription.assert_session_has_permissions('d', handler.rpc_session)
+		session.delete(subscription)
+		session.commit()
 
-	@database_access
-	def rpc_database_view_rows(self, session, table_name, page=0, query_filter=None):
-		"""
-		Retrieve the rows from the specified table where the search
-		criteria matches.
+@register_rpc('/campaign/landing_page/new', database_access=True, log_call=True)
+def rpc_campaign_landing_page_new(handler, session, campaign_id, hostname, page):
+	"""
+	Add a landing page for the specified campaign. Landing pages refer
+	to resources that when visited by a user should cause the visit
+	counter to be incremented.
 
-		:param str table_name: The name of the database table to query.
-		:param int page: The page number to retrieve results for.
-		:param dict query_filter: A dictionary mapping optional search criteria for matching the query.
-		:return: A dictionary with columns and rows keys.
-		:rtype: dict
-		"""
-		table = database_table_objects.get(table_name)
-		assert table
-		query_filter = query_filter or {}
-		columns = database_tables[table_name]
-		for column in query_filter.keys():
-			assert column in columns
+	:param int campaign_id: The ID of the campaign.
+	:param str hostname: The hostname which will be used to serve the request.
+	:param str page: The request resource.
+	"""
+	hostname = hostname.split(':', 1)[0]
+	page = page.lstrip('/')
+	query = session.query(db_models.LandingPage)
+	query = query.filter_by(campaign_id=campaign_id, hostname=hostname, page=page)
+	if query.count() == 0:
+		landing_page = db_models.LandingPage(campaign_id=campaign_id, hostname=hostname, page=page)
+		landing_page.assert_session_has_permissions('c', handler.rpc_session)
+		session.add(landing_page)
+		session.commit()
 
-		offset = page * VIEW_ROW_COUNT
-		# it's critical that the columns are in the order that the client is expecting
-		rows = []
-		query = session.query(table)
-		query = query.filter_by(**query_filter)
-		total_rows = query.count()
-		for row in query[offset:]:
-			if len(rows) == VIEW_ROW_COUNT:
-				break
-			if row.session_has_permissions('r', self.rpc_session):
-				rows.append([getattr(row, c) for c in columns])
-		if not len(rows):
-			return None
-		return {'columns': columns, 'rows': rows, 'total_rows': total_rows, 'page_size': VIEW_ROW_COUNT}
+@register_rpc('/campaign/message/new', database_access=True, log_call=True)
+def rpc_campaign_message_new(handler, session, campaign_id, email_id, target_email, first_name, last_name, department_name=None):
+	"""
+	Record a message that has been sent as part of a campaign. These
+	details can be retrieved later for value substitution in template
+	pages.
 
-	@log_call
-	@database_access
-	def rpc_database_delete_row_by_id(self, session, table_name, row_id):
-		"""
-		Delete the row from the table with the specified value in the id column.
-		If the row does not exist, no error is raised.
+	:param int campaign_id: The ID of the campaign.
+	:param str email_id: The message id of the sent email.
+	:param str target_email: The email address that the message was sent to.
+	:param str first_name: The first name of the message's recipient.
+	:param str last_name: The last name of the message's recipient.
+	:param str department_name: The name of the company department that the message's recipient belongs to.
+	"""
+	department = None
+	if department_name is not None:
+		department = session.query(db_models.CompanyDepartment).filter_by(name=department_name).first()
+		if department is None:
+			department = db_models.CompanyDepartment(name=department_name)
+			department.assert_session_has_permissions('c', handler.rpc_session)
+			session.add(department)
+			session.commit()
+	message = db_models.Message()
+	message.id = email_id
+	message.campaign_id = campaign_id
+	message.target_email = target_email
+	message.first_name = first_name
+	message.last_name = last_name
+	if department is not None:
+		message.company_department_id = department.id
+	message.assert_session_has_permissions('c', handler.rpc_session)
+	session.add(message)
+	session.commit()
 
-		:param str table_name: The name of the database table to delete a row from.
-		:param row_id: The id value.
-		"""
-		table = database_table_objects.get(table_name)
-		assert table
+@register_rpc('/db/table/count', database_access=True)
+def rpc_database_count_rows(handler, session, table_name, query_filter=None):
+	"""
+	Get a count of the rows in the specified table where the search
+	criteria matches.
+
+	:param str table_name: The name of the database table to query.
+	:param dict query_filter: A dictionary mapping optional search criteria for matching the query.
+	:return: The number of matching rows.
+	:rtype: int
+	"""
+	table = database_table_objects.get(table_name)
+	assert table
+	query_filter = query_filter or {}
+	columns = database_tables[table_name]
+	for column in query_filter.keys():
+		assert column in columns
+	query = session.query(table)
+	query = query.filter_by(**query_filter)
+	return query.count()
+
+@register_rpc('/db/table/view', database_access=True)
+def rpc_database_view_rows(handler, session, table_name, page=0, query_filter=None):
+	"""
+	Retrieve the rows from the specified table where the search
+	criteria matches.
+
+	:param str table_name: The name of the database table to query.
+	:param int page: The page number to retrieve results for.
+	:param dict query_filter: A dictionary mapping optional search criteria for matching the query.
+	:return: A dictionary with columns and rows keys.
+	:rtype: dict
+	"""
+	table = database_table_objects.get(table_name)
+	assert table
+	query_filter = query_filter or {}
+	columns = database_tables[table_name]
+	for column in query_filter.keys():
+		assert column in columns
+
+	offset = page * VIEW_ROW_COUNT
+	# it's critical that the columns are in the order that the client is expecting
+	rows = []
+	query = session.query(table)
+	query = query.filter_by(**query_filter)
+	total_rows = query.count()
+	for row in query[offset:]:
+		if len(rows) == VIEW_ROW_COUNT:
+			break
+		if row.session_has_permissions('r', handler.rpc_session):
+			rows.append([getattr(row, c) for c in columns])
+	if not len(rows):
+		return None
+	return {'columns': columns, 'rows': rows, 'total_rows': total_rows, 'page_size': VIEW_ROW_COUNT}
+
+@register_rpc('/db/table/delete', database_access=True, log_call=True)
+def rpc_database_delete_row_by_id(handler, session, table_name, row_id):
+	"""
+	Delete the row from the table with the specified value in the id column.
+	If the row does not exist, no error is raised.
+
+	:param str table_name: The name of the database table to delete a row from.
+	:param row_id: The id value.
+	"""
+	table = database_table_objects.get(table_name)
+	assert table
+	row = db_manager.get_row_by_id(session, table, row_id)
+	if row is None:
+		logger = logging.getLogger('KingPhisher.Server.API.RPC')
+		logger.debug("received delete request for non existing row with id {0} from table {1}".format(row_id, table_name))
+		return
+	row.assert_session_has_permissions('d', handler.rpc_session)
+	session.delete(row)
+	session.commit()
+
+@register_rpc('/db/table/delete/multi', database_access=True, log_call=True)
+def rpc_database_delete_rows_by_id(handler, session, table_name, row_ids):
+	"""
+	Delete multiple rows from a table with the specified values in the id
+	column. If a row id specified in *row_ids* does not exist, then it will
+	be skipped and no error will be thrown.
+
+	:param str table_name: The name of the database table to delete rows from.
+	:param list row_ids: The row ids to delete.
+	:return: The row ids that were deleted.
+	:rtype: list
+	"""
+	table = database_table_objects.get(table_name)
+	assert table
+	deleted_rows = []
+	for row_id in row_ids:
 		row = db_manager.get_row_by_id(session, table, row_id)
-		if row is None:
-			logger = logging.getLogger('KingPhisher.Server.API.RPC')
-			logger.debug("received delete request for non existing row with id {0} from table {1}".format(row_id, table_name))
-			return
-		row.assert_session_has_permissions('d', self.rpc_session)
+		if not row:
+			continue
+		if not row.session_has_permissions('d', handler.rpc_session):
+			continue
 		session.delete(row)
-		session.commit()
+		deleted_rows.append(row_id)
+	session.commit()
+	return deleted_rows
 
-	@log_call
-	@database_access
-	def rpc_database_delete_rows_by_id(self, session, table_name, row_ids):
-		"""
-		Delete multiple rows from a table with the specified values in the id
-		column. If a row id specified in *row_ids* does not exist, then it will
-		be skipped and no error will be thrown.
+@register_rpc('/db/table/get', database_access=True)
+def rpc_database_get_row_by_id(handler, session, table_name, row_id):
+	"""
+	Retrieve a row from a given table with the specified value in the
+	id column.
 
-		:param str table_name: The name of the database table to delete rows from.
-		:param list row_ids: The row ids to delete.
-		:return: The row ids that were deleted.
-		:rtype: list
-		"""
-		table = database_table_objects.get(table_name)
-		assert table
-		deleted_rows = []
-		for row_id in row_ids:
-			row = db_manager.get_row_by_id(session, table, row_id)
-			if not row:
-				continue
-			if not row.session_has_permissions('d', self.rpc_session):
-				continue
-			session.delete(row)
-			deleted_rows.append(row_id)
-		session.commit()
-		return deleted_rows
+	:param str table_name: The name of the database table to retrieve a row from.
+	:param row_id: The id value.
+	:return: The specified row data.
+	:rtype: dict
+	"""
+	table = database_table_objects.get(table_name)
+	assert table
+	columns = database_tables[table_name]
+	row = db_manager.get_row_by_id(session, table, row_id)
+	if row:
+		row.assert_session_has_permissions('r', handler.rpc_session)
+		row = dict(zip(columns, (getattr(row, c) for c in columns)))
+	return row
 
-	@database_access
-	def rpc_database_get_row_by_id(self, session, table_name, row_id):
-		"""
-		Retrieve a row from a given table with the specified value in the
-		id column.
+@register_rpc('/db/table/insert', database_access=True)
+def rpc_database_insert_row(handler, session, table_name, keys, values):
+	"""
+	Insert a new row into the specified table.
 
-		:param str table_name: The name of the database table to retrieve a row from.
-		:param row_id: The id value.
-		:return: The specified row data.
-		:rtype: dict
-		"""
-		table = database_table_objects.get(table_name)
-		assert table
-		columns = database_tables[table_name]
-		row = db_manager.get_row_by_id(session, table, row_id)
-		if row:
-			row.assert_session_has_permissions('r', self.rpc_session)
-			row = dict(zip(columns, (getattr(row, c) for c in columns)))
-		return row
+	:param str table_name: The name of the database table to insert a new row into.
+	:param tuple keys: The column names of *values*.
+	:param tuple values: The values to be inserted in the row.
+	:return: The id of the new row that has been added.
+	"""
+	if not isinstance(keys, (list, tuple)):
+		keys = (keys,)
+	if not isinstance(values, (list, tuple)):
+		values = (values,)
+	assert len(keys) == len(values)
+	for key, value in zip(keys, values):
+		assert key in database_tables[table_name]
+	table = database_table_objects.get(table_name)
+	assert table
 
-	@database_access
-	def rpc_database_insert_row(self, session, table_name, keys, values):
-		"""
-		Insert a new row into the specified table.
+	row = table()
+	for key, value in zip(keys, values):
+		setattr(row, key, value)
+	row.assert_session_has_permissions('c', handler.rpc_session)
+	session.add(row)
+	session.commit()
+	return row.id
 
-		:param str table_name: The name of the database table to insert a new row into.
-		:param tuple keys: The column names of *values*.
-		:param tuple values: The values to be inserted in the row.
-		:return: The id of the new row that has been added.
-		"""
-		if not isinstance(keys, (list, tuple)):
-			keys = (keys,)
-		if not isinstance(values, (list, tuple)):
-			values = (values,)
-		assert len(keys) == len(values)
-		for key, value in zip(keys, values):
-			assert key in database_tables[table_name]
-		table = database_table_objects.get(table_name)
-		assert table
+@register_rpc('/db/table/set', database_access=True)
+def rpc_database_set_row_value(handler, session, table_name, row_id, keys, values):
+	"""
+	Set values for a row in the specified table with an id of *row_id*.
 
-		row = table()
-		for key, value in zip(keys, values):
-			setattr(row, key, value)
-		row.assert_session_has_permissions('c', self.rpc_session)
-		session.add(row)
-		session.commit()
-		return row.id
+	:param str table_name: The name of the database table to set the values of the specified row.
+	:param tuple keys: The column names of *values*.
+	:param tuple values: The values to be updated in the row.
+	"""
+	if not isinstance(keys, (list, tuple)):
+		keys = (keys,)
+	if not isinstance(values, (list, tuple)):
+		values = (values,)
+	assert len(keys) == len(values)
+	for key, value in zip(keys, values):
+		assert key in database_tables[table_name]
+	table = database_table_objects.get(table_name)
+	assert table
+	row = db_manager.get_row_by_id(session, table, row_id)
+	assert row
+	for key, value in zip(keys, values):
+		setattr(row, key, value)
+	row.assert_session_has_permissions('u', handler.rpc_session)
+	session.commit()
 
-	@database_access
-	def rpc_database_set_row_value(self, session, table_name, row_id, keys, values):
-		"""
-		Set values for a row in the specified table with an id of *row_id*.
+@register_rpc('/geoip/lookup', log_call=True)
+def rpc_geoip_lookup(handler, ip, lang=None):
+	"""
+	Look up an IP address in the servers GeoIP database. If the IP address
+	can not be found in the database, None will be returned.
 
-		:param str table_name: The name of the database table to set the values of the specified row.
-		:param tuple keys: The column names of *values*.
-		:param tuple values: The values to be updated in the row.
-		"""
-		if not isinstance(keys, (list, tuple)):
-			keys = (keys,)
-		if not isinstance(values, (list, tuple)):
-			values = (values,)
-		assert len(keys) == len(values)
-		for key, value in zip(keys, values):
-			assert key in database_tables[table_name]
-		table = database_table_objects.get(table_name)
-		assert table
-		row = db_manager.get_row_by_id(session, table, row_id)
-		assert row
-		for key, value in zip(keys, values):
-			setattr(row, key, value)
-		row.assert_session_has_permissions('u', self.rpc_session)
-		session.commit()
+	:param str ip: The IP address to look up.
+	:param str lang: The language to prefer for regional names.
+	:return: The geographic information for the specified IP address.
+	:rtype: dict
+	"""
+	try:
+		result = geoip.lookup(ip, lang=lang)
+	except geoip.AddressNotFoundError:
+		result = None
+	return result
 
-	@log_call
-	def rpc_geoip_lookup(self, ip, lang=None):
-		"""
-		Look up an IP address in the servers GeoIP database. If the IP address
-		can not be found in the database, None will be returned.
+@register_rpc('/geoip/lookup/multi', log_call=True)
+def rpc_geoip_lookup_multi(handler, ips, lang=None):
+	"""
+	Look up multiple IP addresses in the servers GeoIP database. Each IP
+	address that can not be found in the database will have its result set
+	to None.
 
-		:param str ip: The IP address to look up.
-		:param str lang: The language to prefer for regional names.
-		:return: The geographic information for the specified IP address.
-		:rtype: dict
-		"""
+	:param list ips: The list of IP addresses to look up.
+	:param str lang: The language to prefer for regional names.
+	:return: A dictionary containing the results keyed by the specified IP
+		addresses.
+	:rtype: dict
+	"""
+	results = {}
+	for ip in ips:
 		try:
 			result = geoip.lookup(ip, lang=lang)
 		except geoip.AddressNotFoundError:
 			result = None
-		return result
+		results[ip] = result
+	return results
 
-	@log_call
-	def rpc_geoip_lookup_multi(self, ips, lang=None):
-		"""
-		Look up multiple IP addresses in the servers GeoIP database. Each IP
-		address that can not be found in the database will have its result set
-		to None.
+@register_rpc('/login', database_access=True)
+def rpc_login(handler, session, username, password, otp=None):
+	logger = logging.getLogger('KingPhisher.Server.Authentication')
+	if not ipaddress.ip_address(handler.client_address[0]).is_loopback:
+		logger.warning("failed login request from {0} for user {1}, (invalid source address)".format(handler.client_address[0], username))
+		raise ValueError('invalid source address for login')
+	fail_default = (False, ConnectionErrorReason.ERROR_INVALID_CREDENTIALS, None)
+	fail_otp = (False, ConnectionErrorReason.ERROR_INVALID_OTP, None)
 
-		:param list ips: The list of IP addresses to look up.
-		:param str lang: The language to prefer for regional names.
-		:return: A dictionary containing the results keyed by the specified IP
-			addresses.
-		:rtype: dict
-		"""
-		results = {}
-		for ip in ips:
-			try:
-				result = geoip.lookup(ip, lang=lang)
-			except geoip.AddressNotFoundError:
-				result = None
-			results[ip] = result
-		return results
+	if not (username and password):
+		logger.warning("failed login request from {0} for user {1}, (missing username or password)".format(handler.client_address[0], username))
+		return fail_default
+	if not handler.server.forked_authenticator.authenticate(username, password):
+		logger.warning("failed login request from {0} for user {1}, (authentication failed)".format(handler.client_address[0], username))
+		return fail_default
 
-	@database_access
-	def rpc_login(self, session, username, password, otp=None):
-		logger = logging.getLogger('KingPhisher.Server.Authentication')
-		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
-			logger.warning("failed login request from {0} for user {1}, (invalid source address)".format(self.client_address[0], username))
-			raise ValueError('invalid source address for login')
-		fail_default = (False, ConnectionErrorReason.ERROR_INVALID_CREDENTIALS, None)
-		fail_otp = (False, ConnectionErrorReason.ERROR_INVALID_OTP, None)
+	user = db_manager.get_row_by_id(session, db_models.User, username)
+	if not user:
+		logger.info('creating new user object with id: ' + username)
+		user = db_models.User(id=username)
+		session.add(user)
+		session.commit()
+	elif user.otp_secret:
+		if otp is None:
+			logger.debug("failed login request from {0} for user {1}, (missing otp)".format(handler.client_address[0], username))
+			return fail_otp
+		if not (isinstance(otp, str) and len(otp) == 6 and otp.isdigit()):
+			logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(handler.client_address[0], username))
+			return fail_otp
+		totp = pyotp.TOTP(user.otp_secret)
+		now = datetime.datetime.now()
+		if not otp in (totp.at(now + datetime.timedelta(seconds=offset)) for offset in (0, -30, 30)):
+			logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(handler.client_address[0], username))
+			return fail_otp
+	logger.info("successful login request from {0} for user {1}".format(handler.client_address[0], username))
+	return True, ConnectionErrorReason.SUCCESS, handler.server.session_manager.put(username)
 
-		if not (username and password):
-			logger.warning("failed login request from {0} for user {1}, (missing username or password)".format(self.client_address[0], username))
-			return fail_default
-		if not self.server.forked_authenticator.authenticate(username, password):
-			logger.warning("failed login request from {0} for user {1}, (authentication failed)".format(self.client_address[0], username))
-			return fail_default
-
-		user = db_manager.get_row_by_id(session, db_models.User, username)
-		if not user:
-			logger.info('creating new user object with id: ' + username)
-			user = db_models.User(id=username)
-			session.add(user)
-			session.commit()
-		elif user.otp_secret:
-			if otp is None:
-				logger.debug("failed login request from {0} for user {1}, (missing otp)".format(self.client_address[0], username))
-				return fail_otp
-			if not (isinstance(otp, str) and len(otp) == 6 and otp.isdigit()):
-				logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(self.client_address[0], username))
-				return fail_otp
-			totp = pyotp.TOTP(user.otp_secret)
-			now = datetime.datetime.now()
-			if not otp in (totp.at(now + datetime.timedelta(seconds=offset)) for offset in (0, -30, 30)):
-				logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(self.client_address[0], username))
-				return fail_otp
-		logger.info("successful login request from {0} for user {1}".format(self.client_address[0], username))
-		return True, ConnectionErrorReason.SUCCESS, self.server.session_manager.put(username)
-
-	@log_call
-	def rpc_logout(self):
-		username = self.rpc_session.user
-		self.server.session_manager.remove(self.rpc_session_id)
-		logger = logging.getLogger('KingPhisher.Server.Authentication')
-		logger.info("successful logout request from {0} for user {1}".format(self.client_address[0], username))
+@register_rpc('/logout', log_call=True)
+def rpc_logout(handler):
+	username = handler.rpc_session.user
+	handler.server.session_manager.remove(handler.rpc_session_id)
+	logger = logging.getLogger('KingPhisher.Server.Authentication')
+	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], username))
