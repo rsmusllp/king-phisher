@@ -82,6 +82,7 @@ def download_geolite2_city_db(dest):
 			shutil.copyfileobj(gzip.GzipFile(tfile, mode='rb'), file_h)
 	finally:
 		os.remove(tfile)
+	os.chmod(dest, 0o644)
 	return os.stat(dest).st_size
 
 def init_database(database_file):
@@ -96,10 +97,12 @@ def init_database(database_file):
 	"""
 	# pylint: disable=global-statement
 	global _geoip_db
-	if not os.path.isfile(database_file):
+	if os.path.isfile(database_file) and os.stat(database_file).st_size == 0:
+		logger.warning('the specified geoip database is empty, downloading a new copy')
+		download_geolite2_city_db(database_file)
+	elif not os.path.isfile(database_file):
 		logger.warning('the specified geoip database does not exist, downloading a new copy')
 		download_geolite2_city_db(database_file)
-		os.chmod(database_file, 0o644)
 	_geoip_db = geoip2.database.Reader(database_file)
 	metadata = _geoip_db.metadata()
 	if not metadata.database_type == 'GeoLite2-City':
