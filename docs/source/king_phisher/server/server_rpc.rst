@@ -16,6 +16,8 @@ Data
 .. autodata:: king_phisher.server.server_rpc.CONFIG_WRITEABLE
    :annotation:
 
+.. autodata:: king_phisher.server.server_rpc.RPC_AUTH_HEADER
+
 .. autodata:: king_phisher.server.server_rpc.VIEW_ROW_COUNT
 
 Functions

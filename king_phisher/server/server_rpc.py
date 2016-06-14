@@ -58,6 +58,8 @@ CONFIG_READABLE = (
 """Configuration options that can be accessed by the client."""
 CONFIG_WRITEABLE = ('beef.hook_url',)
 """Configuration options that can be changed by the client at run time."""
+RPC_AUTH_HEADER = 'X-RPC-Auth'
+"""The header which contains the RPC authorization / session token."""
 VIEW_ROW_COUNT = 50
 """The default number of rows to return when one of the /view methods are called."""
 

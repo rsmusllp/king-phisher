@@ -49,7 +49,7 @@ from king_phisher import xor
 from king_phisher.server import aaa
 from king_phisher.server import pages
 from king_phisher.server import rest_api
-from king_phisher.server import server_rpc  # pylint: disable=W0611
+from king_phisher.server import server_rpc
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
@@ -269,7 +269,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 	@property
 	def rpc_session_id(self):
-		return self.headers.get('X-RPC-Auth', None)
+		return self.headers.get(server_rpc.RPC_AUTH_HEADER, None)
 
 	@property
 	def campaign_id(self):
