@@ -47,6 +47,7 @@ from king_phisher import its
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import build
+from king_phisher.server import plugins
 
 from boltons import strutils
 from smoke_zephyr.configuration import Configuration
@@ -61,6 +62,7 @@ __requirements__ = [
 	'Jinja2>=2.8',
 	'markupsafe>=0.23',
 	'msgpack-python>=0.4.7',
+	'pluginbase>=0.4',
 	'psycopg2>=2.6.1',
 	'pyotp>=2.1.1',
 	'python-dateutil>=2.5.3',
@@ -156,6 +158,13 @@ def main():
 			console_log_handler.setLevel(log_level)
 	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
 
+	# initialize the plugin manager
+	try:
+		plugin_manager = plugins.ServerPluginManager(config)
+	except errors.KingPhisherError as error:
+		color.print_error(error.message)
+		return os.EX_SOFTWARE
+
 	# fork into the background
 	should_fork = True
 	if arguments.foreground:
@@ -170,6 +179,9 @@ def main():
 	except errors.KingPhisherError as error:
 		logger.critical(error.message)
 		return os.EX_SOFTWARE
+
+	# set the server instance for the plugin manager
+	plugin_manager.server = king_phisher_server
 
 	server_pid = os.getpid()
 	logger.info("server running in process: {0} main tid: 0x{1:x}".format(server_pid, threading.current_thread().ident))
@@ -210,6 +222,7 @@ def main():
 	except KeyboardInterrupt:
 		pass
 	king_phisher_server.shutdown()
+	plugin_manager.shutdown()
 	logging.shutdown()
 	return os.EX_OK
 

@@ -179,7 +179,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			selected_plugin = model[tree_paths[0]][0]
 
 		for tree_iter in gui_utilities.gtk_treeview_selection_iterate(treeview):
-			name = self._model[tree_iter][0] # pylint: disable=unsubscriptable-object
+			name = self._model[tree_iter][0]  # pylint: disable=unsubscriptable-object
 			enabled = name in pm.enabled_plugins
 			pm.unload(name)
 			try:
@@ -188,11 +188,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				self._on_plugin_load_error(name, error)
 				if name == selected_plugin:
 					self._set_plugin_info(name)
-				self._model[tree_iter][2] = "{0} (Reload Failed)".format(name) # pylint: disable=unsubscriptable-object
+				self._model[tree_iter][2] = "{0} (Reload Failed)".format(name)  # pylint: disable=unsubscriptable-object
 				continue
 			if name in self._module_errors:
 				del self._module_errors[name]
-				self._model[tree_iter][2] = klass.title # pylint: disable=unsubscriptable-object
+				self._model[tree_iter][2] = klass.title  # pylint: disable=unsubscriptable-object
 			if name == selected_plugin:
 				self._set_plugin_info(name)
 			if enabled:

@@ -54,6 +54,16 @@ server:
   # Set a file to write the PID to
   pid_file: /var/run/king-phisher.pid
 
+  # Add additional search paths for plugin directories
+  #plugin_directories:
+  #  - /some/plugin/path
+  # List the plugins that need to be enabled
+  #plugins:
+  #  # The plugin to enable's name
+  #  some_plugin:
+  #    # An option specific to this particular plugin
+  #    value_for_some_plugin: true
+
   # Require an ID associated with a campaign to load pages
   require_id: true
 
