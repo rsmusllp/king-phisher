@@ -41,7 +41,7 @@ from king_phisher import version
 import pluginbase
 
 if its.py_v2:
-	_reload = reload
+	_reload = reload  # pylint: disable=E0602
 else:
 	import importlib
 	_reload = importlib.reload
@@ -52,7 +52,7 @@ class OptionBase(object):
 	"""
 	A base class for options which can be configured for plugins.
 	"""
-	_type = (unicode if its.py_v2 else str)
+	_type = (unicode if its.py_v2 else str)  # pylint: disable=E0602
 	def __init__(self, name, description, default=None):
 		"""
 		:param str name: The name of this option.
@@ -260,7 +260,7 @@ class PluginManagerBase(object):
 		self._lock.acquire()
 		klass = self.loaded_plugins[name]
 		if not klass.is_compatible:
-			raise errors.KingPhisherError('this plugin is incompatible')
+			raise errors.KingPhisherPluginError(name, 'the plugin is incompatible')
 		inst = klass(*self.plugin_init_args)
 		if not inst.initialize():
 			self._lock.release()
@@ -311,11 +311,11 @@ class PluginManagerBase(object):
 		if klass is None:
 			self._lock.release()
 			self.logger.warning("failed to load plugin '{0}', Plugin class not found".format(name))
-			raise errors.KingPhisherResourceError('the Plugin class is missing')
+			raise errors.KingPhisherPluginError(name, 'the Plugin class is missing')
 		if not issubclass(klass, self._plugin_klass):
 			self._lock.release()
 			self.logger.warning("failed to load plugin '{0}', Plugin class is invalid".format(name))
-			raise errors.KingPhisherResourceError('the Plugin class is invalid')
+			raise errors.KingPhisherPluginError(name, 'the Plugin class is invalid')
 		self.loaded_plugins[name] = klass
 		self.logger.debug("plugin '{0}' has been {1}loaded".format(name, 're' if reload_module else ''))
 		self._lock.release()

@@ -80,6 +80,15 @@ class KingPhisherPermissionError(KingPhisherError):
 	"""
 	pass
 
+class KingPhisherPluginError(KingPhisherError):
+	"""
+	An exception that is raised by King Phisher to indicate an error regarding
+	a particular plugin.
+	"""
+	def __init__(self, plugin_name, *args, **kwargs):
+		super(KingPhisherPluginError, self).__init__(*args, **kwargs)
+		self.plugin_name = plugin_name
+
 class KingPhisherResourceError(KingPhisherError):
 	"""
 	An exception that is raised by King Phisher when there is a problem relating

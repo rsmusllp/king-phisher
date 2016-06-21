@@ -162,7 +162,10 @@ def main():
 	try:
 		plugin_manager = plugins.ServerPluginManager(config)
 	except errors.KingPhisherError as error:
-		color.print_error(error.message)
+		if isinstance(error, errors.KingPhisherPluginError):
+			color.print_error("plugin error: {0} ({1})".format(error.plugin_name, error.message))
+		else:
+			color.print_error(error.message)
 		return os.EX_SOFTWARE
 
 	# fork into the background

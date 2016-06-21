@@ -30,6 +30,11 @@ Exceptions
 .. autoexception:: king_phisher.errors.KingPhisherPermissionError
    :show-inheritance:
 
+.. autoexception:: king_phisher.errors.KingPhisherPluginError
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
 .. autoexception:: king_phisher.errors.KingPhisherResourceError
    :show-inheritance:
 

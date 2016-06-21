@@ -49,6 +49,9 @@ class ServerPlugin(plugins.PluginBase):
 		self.server = None
 		"""A reference to the :py:class:`~king_phisher.server.server.KingPhisherServer` instance. Only available if the instance has been created."""
 		super(ServerPlugin, self).__init__()
+		for option in self.options:
+			if self.config[option.name] is None:
+				raise errors.KingPhisherPluginError(self.name, 'missing required option: ' + option.name)
 
 	@property
 	def config(self):
@@ -74,12 +77,13 @@ class ServerPluginManager(plugins.PluginManagerBase):
 		self._server = None
 		super(ServerPluginManager, self).__init__(path, (config,))
 		for plugin in config.get_if_exists('server.plugins', {}).keys():
+			# load the plugin
 			try:
 				self.load(plugin)
 			except Exception:
 				self.logger.critical('failed to load plugin: ' + plugin, exc_info=True)
-				raise errors.KingPhisherError('failed to load plugin: ' + plugin)
-
+				raise errors.KingPhisherPluginError(plugin, 'failed to load')
+			# check compatibility
 			klass = self[plugin]
 			for req_type, req_value, req_met in klass.compatibility:
 				req_type = req_type.lower()
@@ -87,12 +91,15 @@ class ServerPluginManager(plugins.PluginManagerBase):
 					self.logger.debug("plugin {0} requirement {1} ({2}) met".format(plugin, req_type, req_value))
 					continue
 				self.logger.warning("plugin {0} unmet requirement {1} ({2})".format(plugin, req_type, req_value))
-				raise errors.KingPhisherError("failed to meet requirement: ({0}) for plugin: {1}".format(req_type, plugin))
+				raise errors.KingPhisherPluginError(plugin, 'failed to meet requirement: ' + req_type)
+			# enable the plugin
 			try:
 				self.enable(plugin)
+			except errors.KingPhisherPluginError as error:
+				raise error
 			except Exception:
 				self.logger.critical('failed to enable plugin: ' + plugin, exc_info=True)
-				raise errors.KingPhisherError('failed to enable plugin: ' + plugin)
+				raise errors.KingPhisherPluginError(plugin, 'failed to enable')
 
 	def _get_path(self):
 		path = [find.find_data_directory('plugins')]
