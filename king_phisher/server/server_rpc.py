@@ -94,6 +94,7 @@ def register_rpc(path, database_access=False, log_call=False):
 				if getattr(handler_instance, 'rpc_session', False):
 					msg = handler_instance.rpc_session.user + ' is ' + msg
 				rpc_logger.debug(msg)
+			signals.rpc_method_call.send(handler_instance, method=path[1:-1], args=args, kwargs=kwargs)
 			if database_access:
 				session = db_manager.Session()
 				try:
@@ -558,7 +559,7 @@ def rpc_login(handler, session, username, password, otp=None):
 			return fail_otp
 	session_id = handler.server.session_manager.put(username)
 	logger.info("successful login request from {0} for user {1}".format(handler.client_address[0], username))
-	signals.rpc_user_login.send(session_id, username)
+	signals.rpc_user_logged_in.send(handler, session=session_id, name=username)
 	return True, ConnectionErrorReason.SUCCESS, session_id
 
 @register_rpc('/logout', log_call=True)
@@ -567,4 +568,4 @@ def rpc_logout(handler):
 	handler.server.session_manager.remove(handler.rpc_session_id)
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
 	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], username))
-	signals.rpc_user_logout.send(handler.rpc_session_id, username)
+	signals.rpc_user_logged_out.send(handler, session=handler.rpc_session_id, name=username)

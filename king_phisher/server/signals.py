@@ -62,23 +62,38 @@ credentials_received = blinker.NamedSignal(
 	"""
 )
 
-rpc_user_login = blinker.NamedSignal(
-	'rpc-user-login',
+rpc_method_call = blinker.NamedSignal(
+	'rpc-method-call',
+	"""
+	Sent when a new RPC request has been received and it's corresponding method
+	is about to be called.
+
+	:param request_handler: The handler for the received request.
+	:param str method: The RPC method which is about to be executed.
+	:param tuple args: The arguments that are to be passed to the method.
+	:param dict kwargs: The key word arguments that are to be passed to the method.
+	"""
+)
+
+rpc_user_logged_in = blinker.NamedSignal(
+	'rpc-user-logged-in',
 	"""
 	Sent when a new RPC user has successfully logged in and created a new
 	authenticated session.
 
+	:param request_handler: The handler for the received request.
 	:param str session: The session ID of the newly logged in user.
 	:param str name: The username of the newly logged in user.
 	"""
 )
 
-rpc_user_logout = blinker.NamedSignal(
-	'rpc-user-logout',
+rpc_user_logged_out = blinker.NamedSignal(
+	'rpc-user-logged-out',
 	"""
 	Sent when an authenticated RPC user has successfully logged out and
 	terminated their authenticated session.
 
+	:param request_handler: The handler for the received request.
 	:param str session: The session ID of the user who has logged out.
 	:param str name: The username of the user who has logged out.
 	"""

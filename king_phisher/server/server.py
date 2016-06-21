@@ -701,7 +701,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
 			alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
-		signals.credentials_received.send(self, username, password)
+		signals.credentials_received.send(self, username=username, password=password)
 
 class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 	"""
