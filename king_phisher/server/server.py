@@ -50,6 +50,7 @@ from king_phisher.server import aaa
 from king_phisher.server import pages
 from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
+from king_phisher.server import signals
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
@@ -70,7 +71,6 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		super(KingPhisherRequestHandler, self).__init__(*args, **kwargs)
 
 	def on_init(self):
-		super(KingPhisherRequestHandler, self).on_init()
 		self.config = self.server.config
 		regex_prefix = '^'
 		if self.config.get('server.vhost_directories'):
@@ -85,6 +85,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		tracking_image = self.config.get('server.tracking_image')
 		tracking_image = tracking_image.replace('.', '\\.')
 		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
+		signals.request_received.send(self)
 
 	def issue_alert(self, alert_text, campaign_id):
 		"""
@@ -673,6 +674,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
 				alert_text = "{0} visits reached for campaign: {{campaign_name}}".format(visit_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
+			signals.visit_received.send(self)
 
 		assert visit_id is not None, 'the visit id has not been set'
 		self._handle_page_visit_creds(session, visit_id)
@@ -699,6 +701,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
 			alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
+		signals.credentials_received.send(self, username, password)
 
 class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 	"""

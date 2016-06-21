@@ -32,4 +32,64 @@
 
 import blinker
 
-on_request = blinker.NamedSignal('on_request')
+server_initialized = blinker.NamedSignal(
+	'server-initialized',
+	"""
+	Sent when a new instance of
+	:py:class:`~king_phisher.server.server.KingPhisherServer` is initialized.
+
+	:param server: The newly initialized server instance.
+	"""
+)
+
+request_received = blinker.NamedSignal(
+	'request-received',
+	"""
+	Sent when a new HTTP request has been received and is about to be processed.
+
+	:param request_handler: The handler for the received request.
+	"""
+)
+
+credentials_received = blinker.NamedSignal(
+	'credentials-received',
+	"""
+	Sent when a new pair of credentials have been submitted.
+
+	:param request_handler: The handler for the received request.
+	:param str username: The username of the credentials that were submitted.
+	:param str password: The password of the credentials that were submitted.
+	"""
+)
+
+rpc_user_login = blinker.NamedSignal(
+	'rpc-user-login',
+	"""
+	Sent when a new RPC user has successfully logged in and created a new
+	authenticated session.
+
+	:param str session: The session ID of the newly logged in user.
+	:param str name: The username of the newly logged in user.
+	"""
+)
+
+rpc_user_logout = blinker.NamedSignal(
+	'rpc-user-logout',
+	"""
+	Sent when an authenticated RPC user has successfully logged out and
+	terminated their authenticated session.
+
+	:param str session: The session ID of the user who has logged out.
+	:param str name: The username of the user who has logged out.
+	"""
+)
+
+visit_received = blinker.NamedSignal(
+	'visit-received',
+	"""
+	Sent when a new visit is received on a landing page. This is only emitted
+	when a new visit entry is added to the database.
+
+	:param request_handler: The handler for the received request.
+	"""
+)

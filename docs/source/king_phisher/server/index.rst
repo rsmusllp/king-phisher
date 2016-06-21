@@ -16,3 +16,4 @@ application.
    rest_api.rst
    server.rst
    server_rpc.rst
+   signals.rst

@@ -2,6 +2,7 @@
 # part of their startup routine
 advancedhttpserver==2.0.3
 alembic>=0.8.6
+blinker>=1.4
 boltons>=16.2.2
 dnspython>=1.13.0              ; python_version < '3.0'
 dnspython3>=1.12.0             ; python_version >= '3.0'

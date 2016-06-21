@@ -2,6 +2,7 @@
 # because it can not install certain packages such as matplotlib
 advancedhttpserver==2.0.3
 alembic>=0.8.6
+blinker>=1.4
 boltons>=16.2.2
 dnspython>=1.13.0
 geoip2>=2.3.0

@@ -36,6 +36,7 @@ import socket
 
 from king_phisher import errors
 from king_phisher.server import rest_api
+from king_phisher.server import signals
 from king_phisher.server.server import KingPhisherRequestHandler, KingPhisherServer
 
 logger = logging.getLogger('KingPhisher.Server.build')
@@ -173,4 +174,6 @@ def server_from_config(config, handler_klass=None):
 		config.set('server.rest_api.token', rest_api.generate_token())
 	if config.get('server.rest_api.enabled'):
 		logger.info('rest api initialized with token: ' + config.get('server.rest_api.token'))
+
+	signals.server_initialized.send(server)
 	return server

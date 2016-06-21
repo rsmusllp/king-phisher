@@ -40,6 +40,7 @@ from king_phisher import geoip
 from king_phisher import ipaddress
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
+from king_phisher.server import signals
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
@@ -555,8 +556,10 @@ def rpc_login(handler, session, username, password, otp=None):
 		if not otp in (totp.at(now + datetime.timedelta(seconds=offset)) for offset in (0, -30, 30)):
 			logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(handler.client_address[0], username))
 			return fail_otp
+	session_id = handler.server.session_manager.put(username)
 	logger.info("successful login request from {0} for user {1}".format(handler.client_address[0], username))
-	return True, ConnectionErrorReason.SUCCESS, handler.server.session_manager.put(username)
+	signals.rpc_user_login.send(session_id, username)
+	return True, ConnectionErrorReason.SUCCESS, session_id
 
 @register_rpc('/logout', log_call=True)
 def rpc_logout(handler):
@@ -564,3 +567,4 @@ def rpc_logout(handler):
 	handler.server.session_manager.remove(handler.rpc_session_id)
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
 	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], username))
+	signals.rpc_user_logout.send(handler.rpc_session_id, username)
