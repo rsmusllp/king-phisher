@@ -29,7 +29,7 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=too-many-locals
+#  pylint: disable=too-many-locals
 
 import argparse
 import logging
@@ -75,6 +75,68 @@ __requirements__ = [
 if its.py_v2:
 	__requirements__.append('ipaddress>=1.0.16')
 
+logger = logging.getLogger('KingPhisher.Server.CLI')
+
+def build_and_run(arguments, config, plugin_manager):
+	# fork into the background
+	should_fork = True
+	if arguments.foreground:
+		should_fork = False
+	elif config.has_option('server.fork'):
+		should_fork = bool(config.get('server.fork'))
+	if should_fork and os.fork():
+		return os.EX_OK
+
+	try:
+		king_phisher_server = build.server_from_config(config)
+	except errors.KingPhisherError as error:
+		logger.critical(error.message)
+		return os.EX_SOFTWARE
+
+	# set the server instance for the plugin manager
+	plugin_manager.server = king_phisher_server
+
+	server_pid = os.getpid()
+	logger.info("server running in process: {0} main tid: 0x{1:x}".format(server_pid, threading.current_thread().ident))
+
+	if should_fork and config.has_option('server.pid_file'):
+		pid_file = open(config.get('server.pid_file'), 'w')
+		pid_file.write(str(server_pid))
+		pid_file.close()
+
+	if config.has_option('server.setuid_username'):
+		setuid_username = config.get('server.setuid_username')
+		try:
+			user_info = pwd.getpwnam(setuid_username)
+		except KeyError:
+			logger.critical('an invalid username was specified as \'server.setuid_username\'')
+			king_phisher_server.shutdown()
+			return os.EX_NOUSER
+		if config.has_option('logging.file') and config.get('logging.file'):
+			os.chown(config.get('logging.file'), user_info.pw_uid, user_info.pw_gid)
+		os.setregid(user_info.pw_gid, user_info.pw_gid)
+		os.setreuid(user_info.pw_uid, user_info.pw_uid)
+		logger.info("dropped privileges to the {0} account".format(setuid_username))
+	else:
+		logger.warning('running with root privileges is dangerous, drop them by configuring \'server.setuid_username\'')
+
+	db_engine_url = king_phisher_server.database_engine.url
+	if db_engine_url.drivername == 'sqlite':
+		logger.warning('sqlite is no longer fully supported, see https://github.com/securestate/king-phisher/wiki/Database#sqlite for more details')
+		database_dir = os.path.dirname(db_engine_url.database)
+		if not os.access(database_dir, os.W_OK):
+			logger.critical('sqlite requires write permissions to the folder containing the database')
+			king_phisher_server.shutdown()
+			return os.EX_NOPERM
+	sighup_handler = lambda: threading.Thread(target=king_phisher_server.shutdown).start()
+	signal.signal(signal.SIGHUP, lambda signum, frame: sighup_handler())
+	try:
+		king_phisher_server.serve_forever(fork=False)
+	except KeyboardInterrupt:
+		pass
+	king_phisher_server.shutdown()
+	return os.EX_OK
+
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
@@ -88,7 +150,6 @@ def main():
 	console_log_handler = utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
 	config_file = arguments.config_file
 	del parser
-	logger = logging.getLogger('KingPhisher.Server.CLI')
 
 	missing_requirements = check_requirements(__requirements__)
 	if missing_requirements:
@@ -146,12 +207,10 @@ def main():
 		return os.EX_OK
 
 	# setup logging based on the configuration
-	log_file_path = None
 	if config.has_section('logging'):
 		log_level = min(getattr(logging, arguments.loglvl), getattr(logging, config.get('logging.level').upper()))
 		if config.has_option('logging.file') and config.get('logging.file'):
-			log_file_path = config.get('logging.file')
-			file_handler = logging.FileHandler(log_file_path)
+			file_handler = logging.FileHandler(config.get('logging.file'))
 			file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)-50s %(levelname)-8s %(message)s"))
 			logging.getLogger('').addHandler(file_handler)
 			file_handler.setLevel(log_level)
@@ -169,66 +228,10 @@ def main():
 			color.print_error(error.message)
 		return os.EX_SOFTWARE
 
-	# fork into the background
-	should_fork = True
-	if arguments.foreground:
-		should_fork = False
-	elif config.has_option('server.fork'):
-		should_fork = bool(config.get('server.fork'))
-	if should_fork and os.fork():
-		return os.EX_OK
-
-	try:
-		king_phisher_server = build.server_from_config(config)
-	except errors.KingPhisherError as error:
-		logger.critical(error.message)
-		return os.EX_SOFTWARE
-
-	# set the server instance for the plugin manager
-	plugin_manager.server = king_phisher_server
-
-	server_pid = os.getpid()
-	logger.info("server running in process: {0} main tid: 0x{1:x}".format(server_pid, threading.current_thread().ident))
-
-	if should_fork and config.has_option('server.pid_file'):
-		pid_file = open(config.get('server.pid_file'), 'w')
-		pid_file.write(str(server_pid))
-		pid_file.close()
-
-	if config.has_option('server.setuid_username'):
-		setuid_username = config.get('server.setuid_username')
-		try:
-			user_info = pwd.getpwnam(setuid_username)
-		except KeyError:
-			logger.critical('an invalid username was specified as \'server.setuid_username\'')
-			king_phisher_server.shutdown()
-			return os.EX_NOUSER
-		if log_file_path:
-			os.chown(log_file_path, user_info.pw_uid, user_info.pw_gid)
-		os.setregid(user_info.pw_gid, user_info.pw_gid)
-		os.setreuid(user_info.pw_uid, user_info.pw_uid)
-		logger.info("dropped privileges to the {0} account".format(setuid_username))
-	else:
-		logger.warning('running with root privileges is dangerous, drop them by configuring \'server.setuid_username\'')
-
-	db_engine_url = king_phisher_server.database_engine.url
-	if db_engine_url.drivername == 'sqlite':
-		logger.warning('sqlite is no longer fully supported, see https://github.com/securestate/king-phisher/wiki/Database#sqlite for more details')
-		database_dir = os.path.dirname(db_engine_url.database)
-		if not os.access(database_dir, os.W_OK):
-			logger.critical('sqlite requires write permissions to the folder containing the database')
-			king_phisher_server.shutdown()
-			return os.EX_NOPERM
-	sighup_handler = lambda: threading.Thread(target=king_phisher_server.shutdown).start()
-	signal.signal(signal.SIGHUP, lambda signum, frame: sighup_handler())
-	try:
-		king_phisher_server.serve_forever(fork=False)
-	except KeyboardInterrupt:
-		pass
-	king_phisher_server.shutdown()
+	status_code = build_and_run(arguments, config, plugin_manager)
 	plugin_manager.shutdown()
 	logging.shutdown()
-	return os.EX_OK
+	return status_code
 
 if __name__ == '__main__':
 	sys.exit(main())
