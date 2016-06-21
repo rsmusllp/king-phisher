@@ -32,6 +32,7 @@
 
 import blinker
 
+# server signals
 server_initialized = blinker.NamedSignal(
 	'server-initialized',
 	"""
@@ -42,6 +43,7 @@ server_initialized = blinker.NamedSignal(
 	"""
 )
 
+# handler signals
 request_received = blinker.NamedSignal(
 	'request-received',
 	"""

@@ -8,3 +8,4 @@ Server API
 
    rest_api.rst
    rpc_api.rst
+   signals.rst
