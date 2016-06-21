@@ -26,6 +26,12 @@ Signals
 .. autodata:: king_phisher.server.signals.request_received
    :annotation:
 
+.. autodata:: king_phisher.server.signals.rpc_method_call
+   :annotation:
+
+.. autodata:: king_phisher.server.signals.rpc_method_called
+   :annotation:
+
 .. autodata:: king_phisher.server.signals.rpc_user_logged_in
    :annotation:
 

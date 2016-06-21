@@ -114,10 +114,24 @@ rpc_method_call = blinker.NamedSignal(
 	Sent when a new RPC request has been received and it's corresponding method
 	is about to be called.
 
-	:param request_handler: The handler for the received request.
 	:param str method: The RPC method which is about to be executed.
+	:param request_handler: The handler for the received request.
 	:param tuple args: The arguments that are to be passed to the method.
 	:param dict kwargs: The key word arguments that are to be passed to the method.
+	"""
+)
+
+rpc_method_called = blinker.NamedSignal(
+	'rpc-method-called',
+	"""
+	Sent after an RPC request has been received and it's corresponding method
+	has been called.
+
+	:param str method: The RPC method which has been executed.
+	:param request_handler: The handler for the received request.
+	:param tuple args: The arguments that were passed to the method.
+	:param dict kwargs: The key word arguments that were passed to the method.
+	:param retval: The value returned from the RPC method invocation.
 	"""
 )
 

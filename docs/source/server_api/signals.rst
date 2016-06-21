@@ -45,6 +45,14 @@ signals use the respective instance of
    :annotation:
    :noindex:
 
+.. autodata:: king_phisher.server.signals.rpc_method_call
+   :annotation:
+   :noindex:
+
+.. autodata:: king_phisher.server.signals.rpc_method_called
+   :annotation:
+   :noindex:
+
 .. autodata:: king_phisher.server.signals.rpc_user_logged_in
    :annotation:
    :noindex:

@@ -94,7 +94,7 @@ def register_rpc(path, database_access=False, log_call=False):
 				if getattr(handler_instance, 'rpc_session', False):
 					msg = handler_instance.rpc_session.user + ' is ' + msg
 				rpc_logger.debug(msg)
-			signals.rpc_method_call.send(handler_instance, method=path[1:-1], args=args, kwargs=kwargs)
+			signals.rpc_method_call.send(path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs)
 			if database_access:
 				session = db_manager.Session()
 				try:
@@ -103,6 +103,7 @@ def register_rpc(path, database_access=False, log_call=False):
 					session.close()
 			else:
 				result = function(handler_instance, *args, **kwargs)
+			signals.rpc_method_called.send(path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs, retval=result)
 			return result
 		advancedhttpserver.RegisterPath(path, is_rpc=True)(wrapper)
 		return wrapper
