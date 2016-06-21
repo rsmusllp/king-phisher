@@ -11,6 +11,23 @@ This allows plugins to subscribe specific functions to be executed when a
 particular event occurs. These signals are defined in the
 :py:mod:`~server.signals` module.
 
+.. _server-signals-database-label:
+
+Database Signals
+----------------
+
+.. autodata:: king_phisher.server.signals.db_table_delete
+   :annotation:
+   :noindex:
+
+.. autodata:: king_phisher.server.signals.db_table_insert
+   :annotation:
+   :noindex:
+
+.. autodata:: king_phisher.server.signals.db_table_update
+   :annotation:
+   :noindex:
+
 .. _server-signals-request-handler-label:
 
 Request Handler Signals

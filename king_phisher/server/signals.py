@@ -32,18 +32,62 @@
 
 import blinker
 
-# server signals
-server_initialized = blinker.NamedSignal(
-	'server-initialized',
+# database signals
+db_table_delete = blinker.NamedSignal(
+	'db-table-delete',
 	"""
-	Sent when a new instance of
-	:py:class:`~king_phisher.server.server.KingPhisherServer` is initialized.
+	Emitted before a row inheriting from
+	:py:class:`~king_phisher.server.server.database.models.Base` is deleted from
+	the database table. To only subscribe to delete events for a specific table,
+	specify the table's name as the *sender* parameter when calling
+	:py:meth:`blinker.base.Signal.connect`.
 
-	:param server: The newly initialized server instance.
+	:param str table: The name of the table for which the target object belongs.
+	:param target: The target object instance.
+	:param connection: The SQLAlchemy connection object which is being used to emit the SQL statements for the instance.
+	:type connection: :py:class:`sqlalchemy.engine.Connection`
+	:param mapper: The Mapper object which is the target of the event.
+	:type mapper: :py:class:`sqlalchemy.orm.mapper.Mapper`
 	"""
 )
 
-# handler signals
+db_table_insert = blinker.NamedSignal(
+	'db-table-insert',
+	"""
+	Emitted before a row inheriting from
+	:py:class:`~king_phisher.server.server.database.models.Base` is inserted
+	into the database table. To only subscribe to insert events for a specific
+	table, specify the table's name as the *sender* parameter when calling
+	:py:meth:`blinker.base.Signal.connect`.
+
+	:param str table: The name of the table for which the target object belongs.
+	:param target: The target object instance.
+	:param connection: The SQLAlchemy connection object which is being used to emit the SQL statements for the instance.
+	:type connection: :py:class:`sqlalchemy.engine.Connection`
+	:param mapper: The Mapper object which is the target of the event.
+	:type mapper: :py:class:`sqlalchemy.orm.mapper.Mapper`
+	"""
+)
+
+db_table_update = blinker.NamedSignal(
+	'db-table-update',
+	"""
+	Emitted before a row inheriting from
+	:py:class:`~king_phisher.server.server.database.models.Base` is updated in
+	the database table. To only subscribe to update events for a specific table,
+	specify the table's name as the *sender* parameter when calling
+	:py:meth:`blinker.base.Signal.connect`.
+
+	:param str table: The name of the table for which the target object belongs.
+	:param target: The target object instance.
+	:param connection: The SQLAlchemy connection object which is being used to emit the SQL statements for the instance.
+	:type connection: :py:class:`sqlalchemy.engine.Connection`
+	:param mapper: The Mapper object which is the target of the event.
+	:type mapper: :py:class:`sqlalchemy.orm.mapper.Mapper`
+	"""
+)
+
+# request handler signals
 request_received = blinker.NamedSignal(
 	'request-received',
 	"""
@@ -108,5 +152,16 @@ visit_received = blinker.NamedSignal(
 	when a new visit entry is added to the database.
 
 	:param request_handler: The handler for the received request.
+	"""
+)
+
+# server signals
+server_initialized = blinker.NamedSignal(
+	'server-initialized',
+	"""
+	Sent when a new instance of
+	:py:class:`~king_phisher.server.server.KingPhisherServer` is initialized.
+
+	:param server: The newly initialized server instance.
 	"""
 )

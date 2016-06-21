@@ -34,9 +34,11 @@ import datetime
 import operator
 
 from king_phisher import errors
+from king_phisher.server import signals
 from king_phisher.utilities import switch
 
 import sqlalchemy
+import sqlalchemy.event
 import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 
@@ -69,16 +71,30 @@ def get_tables_with_column_id(column_id):
 	"""
 	return set(x[0] for x in database_tables.items() if column_id in x[1])
 
+def forward_signal_delete(mapper, connection, target):
+	signals.db_table_delete.send(target.__tablename__, target=target, mapper=mapper, connection=connection)
+
+def forward_signal_insert(mapper, connection, target):
+	signals.db_table_insert.send(target.__tablename__, target=target, mapper=mapper, connection=connection)
+
+def forward_signal_update(mapper, connection, target):
+	signals.db_table_update.send(target.__tablename__, target=target, mapper=mapper, connection=connection)
+
 def register_table(table):
 	"""
 	Register a database table. This will populate the information provided in
-	DATABASE_TABLES dictionary.
+	DATABASE_TABLES dictionary. This also forwards signals to the appropriate
+	listeners within the :py:mod:`server.signal` module.
 
 	:param cls table: The table to register.
 	"""
 	columns = tuple(col.name for col in table.__table__.columns)
 	database_tables[table.__tablename__] = columns
 	database_table_objects[table.__tablename__] = table
+
+	sqlalchemy.event.listen(table, 'before_delete', forward_signal_delete)
+	sqlalchemy.event.listen(table, 'before_insert', forward_signal_insert)
+	sqlalchemy.event.listen(table, 'before_update', forward_signal_update)
 	return table
 
 class BaseRowCls(object):

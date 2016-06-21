@@ -32,8 +32,6 @@ sys.path.insert(2, _pkg)
 del _prj_root, _pkg
 
 import king_phisher.client
-import king_phisher.its
-import king_phisher.version
 import king_phisher.utilities
 
 # -- General configuration ------------------------------------------------
@@ -67,12 +65,14 @@ def linkcode_resolve(domain, info):
 
 intersphinx_mapping = {
 	'advancedhttpserver': ('https://advancedhttpserver.readthedocs.io/en/latest/', None),
+	'blinker': ('https://pythonhosted.org/blinker/', None),
 	'glib': ('http://lazka.github.io/pgi-docs/GLib-2.0/', None),
 	'gobject': ('http://lazka.github.io/pgi-docs/GObject-2.0/', None),
 	'gtksource': ('https://lazka.github.io/pgi-docs/GtkSource-3.0/', None),
 	'gtk': ('http://lazka.github.io/pgi-docs/Gtk-3.0/', None),
 	'paramiko': ('http://docs.paramiko.org/en/latest/', None),
 	'smokezephyr': ('https://smoke-zephyr.readthedocs.io/en/latest/', None),
+	'sqlalchemy': ('http://docs.sqlalchemy.org/en/latest/', None),
 	'webkit2': ('http://lazka.github.io/pgi-docs/WebKit2-4.0/', None)
 }
 
