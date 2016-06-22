@@ -85,7 +85,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		tracking_image = self.config.get('server.tracking_image')
 		tracking_image = tracking_image.replace('.', '\\.')
 		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
-		signals.request_received.send(self)
+		signals.safe_send('request-received', self.logger, self)
 
 	def issue_alert(self, alert_text, campaign_id):
 		"""
@@ -674,7 +674,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
 				alert_text = "{0} visits reached for campaign: {{campaign_name}}".format(visit_count)
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
-			signals.visit_received.send(self)
+			signals.safe_send('visit-received', self.logger, self)
 
 		assert visit_id is not None, 'the visit id has not been set'
 		self._handle_page_visit_creds(session, visit_id)
@@ -701,7 +701,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
 			alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
-		signals.credentials_received.send(self, username=username, password=password)
+		signals.safe_send('credentials-received', self.logger, self, username=username, password=password)
 
 class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 	"""

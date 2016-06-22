@@ -30,10 +30,37 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import inspect
+import logging
+
+from king_phisher import utilities
+
 import blinker
 
+def safe_send(signal, logger, *args, **kwargs):
+	"""
+	Send a signal and catch any exception which may be raised during it's
+	emission. Details regarding the error that occurs (including a stack trace)
+	are logged to the specified *logger*. This is suitable for allowing signals
+	to be emitted in critical code paths without interrupting the emitter.
+
+	:param str signal: The name of the signal to send safely.
+	:param logger: The logger to use for logging exceptions.
+	:type logger: :py:class:`logging.Logger`
+	:param args: The arguments to be forwarded to the signal as it is sent.
+	:param kwargs: The key word arguments to be forward to the signal as it is sent.
+	"""
+	utilities.assert_arg_type(signal, str, 1)
+	utilities.assert_arg_type(logger, logging.Logger, 2)
+	try:
+		blinker.signal(signal).send(*args, **kwargs)
+	except Exception:
+		calling_frame = inspect.stack()[1]
+		logger.error("an error occurred while emitting signal '{0}' from {1}:{2}".format(signal, calling_frame[1], calling_frame[2]), exc_info=True)
+	return
+
 # database signals
-db_initialized = blinker.NamedSignal(
+db_initialized = blinker.signal(
 	'db-initialized',
 	"""
 	Emitted after a connection has been made and the database has been fully
@@ -44,7 +71,7 @@ db_initialized = blinker.NamedSignal(
 	"""
 )
 
-db_table_delete = blinker.NamedSignal(
+db_table_delete = blinker.signal(
 	'db-table-delete',
 	"""
 	Emitted before a row inheriting from
@@ -64,7 +91,7 @@ db_table_delete = blinker.NamedSignal(
 	"""
 )
 
-db_table_insert = blinker.NamedSignal(
+db_table_insert = blinker.signal(
 	'db-table-insert',
 	"""
 	Emitted before a row inheriting from
@@ -84,7 +111,7 @@ db_table_insert = blinker.NamedSignal(
 	"""
 )
 
-db_table_update = blinker.NamedSignal(
+db_table_update = blinker.signal(
 	'db-table-update',
 	"""
 	Emitted before a row inheriting from
@@ -105,7 +132,7 @@ db_table_update = blinker.NamedSignal(
 )
 
 # request handler signals
-request_received = blinker.NamedSignal(
+request_received = blinker.signal(
 	'request-received',
 	"""
 	Sent when a new HTTP request has been received and is about to be processed.
@@ -114,7 +141,7 @@ request_received = blinker.NamedSignal(
 	"""
 )
 
-credentials_received = blinker.NamedSignal(
+credentials_received = blinker.signal(
 	'credentials-received',
 	"""
 	Sent when a new pair of credentials have been submitted.
@@ -125,7 +152,7 @@ credentials_received = blinker.NamedSignal(
 	"""
 )
 
-rpc_method_call = blinker.NamedSignal(
+rpc_method_call = blinker.signal(
 	'rpc-method-call',
 	"""
 	Sent when a new RPC request has been received and it's corresponding method
@@ -138,7 +165,7 @@ rpc_method_call = blinker.NamedSignal(
 	"""
 )
 
-rpc_method_called = blinker.NamedSignal(
+rpc_method_called = blinker.signal(
 	'rpc-method-called',
 	"""
 	Sent after an RPC request has been received and it's corresponding method
@@ -152,7 +179,7 @@ rpc_method_called = blinker.NamedSignal(
 	"""
 )
 
-rpc_user_logged_in = blinker.NamedSignal(
+rpc_user_logged_in = blinker.signal(
 	'rpc-user-logged-in',
 	"""
 	Sent when a new RPC user has successfully logged in and created a new
@@ -164,7 +191,7 @@ rpc_user_logged_in = blinker.NamedSignal(
 	"""
 )
 
-rpc_user_logged_out = blinker.NamedSignal(
+rpc_user_logged_out = blinker.signal(
 	'rpc-user-logged-out',
 	"""
 	Sent when an authenticated RPC user has successfully logged out and
@@ -176,7 +203,7 @@ rpc_user_logged_out = blinker.NamedSignal(
 	"""
 )
 
-visit_received = blinker.NamedSignal(
+visit_received = blinker.signal(
 	'visit-received',
 	"""
 	Sent when a new visit is received on a landing page. This is only emitted
@@ -187,7 +214,7 @@ visit_received = blinker.NamedSignal(
 )
 
 # server signals
-server_initialized = blinker.NamedSignal(
+server_initialized = blinker.signal(
 	'server-initialized',
 	"""
 	Sent when a new instance of

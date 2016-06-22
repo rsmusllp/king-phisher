@@ -8,6 +8,11 @@ This module contains the signals which are used by the server to dispatch
 events. Additional signal details regarding how these signals are used is
 available in the :ref:`server-signals-label` documentation.
 
+Functions
+---------
+
+.. autofunction:: king_phisher.server.signals.safe_send
+
 Signals
 -------
 

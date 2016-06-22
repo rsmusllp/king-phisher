@@ -31,6 +31,7 @@
 #
 
 import datetime
+import logging
 import operator
 
 from king_phisher import errors
@@ -51,6 +52,7 @@ database_tables = {}
 """A dictionary which contains all the database tables and their columns."""
 database_table_objects = {}
 """A dictionary which contains all the database tables and their primitive objects."""
+logger = logging.getLogger('KingPhisher.Server.Database.Models')
 
 def current_timestamp(*args, **kwargs):
 	"""
@@ -72,13 +74,13 @@ def get_tables_with_column_id(column_id):
 	return set(x[0] for x in database_tables.items() if column_id in x[1])
 
 def forward_signal_delete(mapper, connection, target):
-	signals.db_table_delete.send(target.__tablename__, mapper=mapper, connection=connection, target=target)
+	signals.safe_send('db-table-delete', logger, target.__tablename__, mapper=mapper, connection=connection, target=target)
 
 def forward_signal_insert(mapper, connection, target):
-	signals.db_table_insert.send(target.__tablename__, mapper=mapper, connection=connection, target=target)
+	signals.safe_send('db-table-insert', logger, target.__tablename__, mapper=mapper, connection=connection, target=target)
 
 def forward_signal_update(mapper, connection, target):
-	signals.db_table_update.send(target.__tablename__, mapper=mapper, connection=connection, target=target)
+	signals.safe_send('db-table-update', logger, target.__tablename__, mapper=mapper, connection=connection, target=target)
 
 def register_table(table):
 	"""
