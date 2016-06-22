@@ -33,6 +33,17 @@
 import blinker
 
 # database signals
+db_initialized = blinker.NamedSignal(
+	'db-initialized',
+	"""
+	Emitted after a connection has been made and the database has been fully
+	initialized. At this point, it is safe to operate on the database.
+
+	:param connection_url: The connection string for the database that has been initialized.
+	:type connection_url: :py:class:`sqlalchemy.engine.url.URL`
+	"""
+)
+
 db_table_delete = blinker.NamedSignal(
 	'db-table-delete',
 	"""
@@ -41,13 +52,15 @@ db_table_delete = blinker.NamedSignal(
 	the database table. To only subscribe to delete events for a specific table,
 	specify the table's name as the *sender* parameter when calling
 	:py:meth:`blinker.base.Signal.connect`.
+	See :py:meth:`sqlalchemy.orm.events.MapperEvents.before_delete` for more
+	details.
 
 	:param str table: The name of the table for which the target object belongs.
-	:param target: The target object instance.
-	:param connection: The SQLAlchemy connection object which is being used to emit the SQL statements for the instance.
-	:type connection: :py:class:`sqlalchemy.engine.Connection`
 	:param mapper: The Mapper object which is the target of the event.
 	:type mapper: :py:class:`sqlalchemy.orm.mapper.Mapper`
+	:param connection: The SQLAlchemy connection object which is being used to emit the SQL statements for the instance.
+	:type connection: :py:class:`sqlalchemy.engine.Connection`
+	:param target: The target object instance.
 	"""
 )
 
@@ -59,13 +72,15 @@ db_table_insert = blinker.NamedSignal(
 	into the database table. To only subscribe to insert events for a specific
 	table, specify the table's name as the *sender* parameter when calling
 	:py:meth:`blinker.base.Signal.connect`.
+	See :py:meth:`sqlalchemy.orm.events.MapperEvents.before_insert` for more
+	details.
 
 	:param str table: The name of the table for which the target object belongs.
-	:param target: The target object instance.
-	:param connection: The SQLAlchemy connection object which is being used to emit the SQL statements for the instance.
-	:type connection: :py:class:`sqlalchemy.engine.Connection`
 	:param mapper: The Mapper object which is the target of the event.
 	:type mapper: :py:class:`sqlalchemy.orm.mapper.Mapper`
+	:param connection: The SQLAlchemy connection object which is being used to emit the SQL statements for the instance.
+	:type connection: :py:class:`sqlalchemy.engine.Connection`
+	:param target: The target object instance.
 	"""
 )
 
@@ -77,13 +92,15 @@ db_table_update = blinker.NamedSignal(
 	the database table. To only subscribe to update events for a specific table,
 	specify the table's name as the *sender* parameter when calling
 	:py:meth:`blinker.base.Signal.connect`.
+	See :py:meth:`sqlalchemy.orm.events.MapperEvents.before_update` for more
+	details.
 
 	:param str table: The name of the table for which the target object belongs.
-	:param target: The target object instance.
-	:param connection: The SQLAlchemy connection object which is being used to emit the SQL statements for the instance.
-	:type connection: :py:class:`sqlalchemy.engine.Connection`
 	:param mapper: The Mapper object which is the target of the event.
 	:type mapper: :py:class:`sqlalchemy.orm.mapper.Mapper`
+	:param connection: The SQLAlchemy connection object which is being used to emit the SQL statements for the instance.
+	:type connection: :py:class:`sqlalchemy.engine.Connection`
+	:param target: The target object instance.
 	"""
 )
 

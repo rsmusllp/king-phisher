@@ -72,13 +72,13 @@ def get_tables_with_column_id(column_id):
 	return set(x[0] for x in database_tables.items() if column_id in x[1])
 
 def forward_signal_delete(mapper, connection, target):
-	signals.db_table_delete.send(target.__tablename__, target=target, mapper=mapper, connection=connection)
+	signals.db_table_delete.send(target.__tablename__, mapper=mapper, connection=connection, target=target)
 
 def forward_signal_insert(mapper, connection, target):
-	signals.db_table_insert.send(target.__tablename__, target=target, mapper=mapper, connection=connection)
+	signals.db_table_insert.send(target.__tablename__, mapper=mapper, connection=connection, target=target)
 
 def forward_signal_update(mapper, connection, target):
-	signals.db_table_update.send(target.__tablename__, target=target, mapper=mapper, connection=connection)
+	signals.db_table_update.send(target.__tablename__, mapper=mapper, connection=connection, target=target)
 
 def register_table(table):
 	"""

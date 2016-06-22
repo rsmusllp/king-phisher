@@ -16,6 +16,10 @@ particular event occurs. These signals are defined in the
 Database Signals
 ----------------
 
+.. autodata:: king_phisher.server.signals.db_initialized
+   :annotation:
+   :noindex:
+
 .. autodata:: king_phisher.server.signals.db_table_delete
    :annotation:
    :noindex:

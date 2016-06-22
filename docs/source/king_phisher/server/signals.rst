@@ -14,6 +14,9 @@ Signals
 .. autodata:: king_phisher.server.signals.credentials_received
    :annotation:
 
+.. autodata:: king_phisher.server.signals.db_initialized
+   :annotation:
+
 .. autodata:: king_phisher.server.signals.db_table_delete
    :annotation:
 

@@ -41,6 +41,7 @@ from king_phisher import archive
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
+from king_phisher.server import signals
 
 import alembic.command
 import alembic.config
@@ -282,6 +283,7 @@ def init_database(connection_url, extra_init=False):
 	set_meta_data('schema_version', models.SCHEMA_VERSION)
 
 	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
+	signals.db_initialized.send(connection_url)
 	return engine
 
 def init_database_postgresql(connection_url):
