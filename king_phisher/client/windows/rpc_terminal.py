@@ -133,8 +133,7 @@ class RPCTerminal(object):
 				'use_ssl': rpc.use_ssl,
 				'username': rpc.username,
 				'uri_base': rpc.uri_base,
-				'headers': rpc.headers,
-				'hmac_key': rpc.hmac_key
+				'headers': rpc.headers
 			}
 		}
 
