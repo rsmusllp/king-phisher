@@ -18,6 +18,9 @@ Version 1.4.0
    * Added support for binding to multiple interfaces
    * Added support for multiple SSL hostnames via SNI
 
+* Support for plugins in the server application
+* Added server signals for event subscriptions in plugins
+
 Version 1.3.0
 ^^^^^^^^^^^^^
 
