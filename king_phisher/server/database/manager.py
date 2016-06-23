@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import contextlib
 import logging
 import os
@@ -50,6 +51,7 @@ import alembic.script
 import smoke_zephyr.utilities
 import sqlalchemy
 import sqlalchemy.engine.url
+import sqlalchemy.event
 import sqlalchemy.exc
 import sqlalchemy.ext.serializer
 import sqlalchemy.orm
@@ -57,8 +59,23 @@ import sqlalchemy.pool
 
 Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 logger = logging.getLogger('KingPhisher.Server.Database')
+# map of signal names to sqlalchemy.orm.session.Session attributes
+_flush_signal_map = (
+	('db-session-deleted', 'deleted'),
+	('db-session-inserted', 'new'),
+	('db-session-updated', 'dirty')
+)
 _meta_data_type_map = {'int': int, 'str': str}
 _popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+
+@sqlalchemy.event.listens_for(Session, 'after_flush')
+def on_session_after_flush(session, flush_context):
+	for signal, session_attribute in _flush_signal_map:
+		objs = collections.defaultdict(list)
+		for obj in getattr(session, session_attribute):
+			objs[obj.__tablename__].append(obj)
+		for table, targets in objs.items():
+			signals.safe_send(signal, logger, table, targets=tuple(targets), session=session)
 
 def _popen_psql(sql):
 	if os.getuid():

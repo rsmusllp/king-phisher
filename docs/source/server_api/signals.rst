@@ -20,6 +20,18 @@ Database Signals
    :annotation:
    :noindex:
 
+.. autodata:: king_phisher.server.signals.db_session_deleted
+   :annotation:
+   :noindex:
+
+.. autodata:: king_phisher.server.signals.db_session_inserted
+   :annotation:
+   :noindex:
+
+.. autodata:: king_phisher.server.signals.db_session_updated
+   :annotation:
+   :noindex:
+
 .. autodata:: king_phisher.server.signals.db_table_delete
    :annotation:
    :noindex:

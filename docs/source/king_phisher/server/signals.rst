@@ -22,6 +22,15 @@ Signals
 .. autodata:: king_phisher.server.signals.db_initialized
    :annotation:
 
+.. autodata:: king_phisher.server.signals.db_session_deleted
+   :annotation:
+
+.. autodata:: king_phisher.server.signals.db_session_inserted
+   :annotation:
+
+.. autodata:: king_phisher.server.signals.db_session_updated
+   :annotation:
+
 .. autodata:: king_phisher.server.signals.db_table_delete
    :annotation:
 

@@ -71,6 +71,48 @@ db_initialized = blinker.signal(
 	"""
 )
 
+db_session_deleted = blinker.signal(
+	'db-session-deleted',
+	"""
+	Emitted after one or more rows have been deleted on a SQLAlchemy session. At
+	this point, references are valid but objects can not be modified. See
+	:py:meth:`sqlalchemy.orm.events.SessionEvents.after_flush` for more details.
+
+	:param str table: The name of the table for which the target objects belong.
+	:param tuple targets: The objects that have been deleted with the session.
+	:param session: The SQLAlchemy session with which the *targets* are associated.
+	:type session: :py:class:`sqlalchemy.orm.session.Session`
+	"""
+)
+
+db_session_inserted = blinker.signal(
+	'db-session-inserted',
+	"""
+	Emitted after one or more rows have been inserted in a SQLAlchemy session.
+	At this point, references are valid but objects can not be modified. See
+	:py:meth:`sqlalchemy.orm.events.SessionEvents.after_flush` for more details.
+
+	:param str table: The name of the table for which the target objects belong.
+	:param tuple targets: The objects that have been inserted with the session.
+	:param session: The SQLAlchemy session with which the *targets* are associated.
+	:type session: :py:class:`sqlalchemy.orm.session.Session`
+	"""
+)
+
+db_session_updated = blinker.signal(
+	'db-session-updated',
+	"""
+	Emitted after one or more rows have been updated in a SQLAlchemy session.
+	At this point, references are valid but objects can not be modified. See
+	:py:meth:`sqlalchemy.orm.events.SessionEvents.after_flush` for more details.
+
+	:param str table: The name of the table for which the target objects belong.
+	:param tuple targets: The objects that have been updated with the session.
+	:param session: The SQLAlchemy session with which the *targets* are associated.
+	:type session: :py:class:`sqlalchemy.orm.session.Session`
+	"""
+)
+
 db_table_delete = blinker.signal(
 	'db-table-delete',
 	"""
