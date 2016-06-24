@@ -126,7 +126,7 @@ executables = [
 		'KingPhisher',
 		base=exe_base,
 		icon='data/client/king_phisher/king-phisher-icon.ico',
-		shortcutName='KingPhisher',
+		shortcutName='King Phisher',
 		shortcutDir='ProgramMenuFolder'
 	)
 ]
@@ -136,6 +136,7 @@ build_exe_options = dict(
 	include_files=include_files,
 	packages=[
 		'cairo',
+		'Crypto',
 		'email',
 		'gi',
 		'jinja2',
@@ -151,8 +152,8 @@ build_exe_options = dict(
 )
 
 setup(
-	name='KingPhisher',
-	author='Spencer McIntyre',
+	name='King Phisher',
+	author='SecureState',
 	version=version.distutils_version,
 	description='King Phisher Client',
 	options=dict(build_exe=build_exe_options),
