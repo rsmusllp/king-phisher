@@ -486,14 +486,14 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		return
 
 	def respond_not_found(self):
-		self.send_response(404, 'Resource Not Found')
+		self.send_response(404, 'Not Found')
 		self.send_header('Content-Type', 'text/html')
 		page_404 = find.find_data_file('error_404.html')
 		if page_404:
 			with open(page_404, 'rb') as file_h:
 				message = file_h.read()
 		else:
-			message = 'Resource Not Found\n'
+			message = b'Resource Not Found\n'
 		self.send_header('Content-Length', len(message))
 		self.end_headers()
 		self.wfile.write(message)
