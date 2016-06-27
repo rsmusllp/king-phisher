@@ -32,6 +32,7 @@
 
 import collections
 import string
+import random
 
 from king_phisher import color
 from king_phisher import ipaddress
@@ -55,6 +56,7 @@ try:
 	from matplotlib import dates
 	from matplotlib import patches
 	from matplotlib import pyplot
+	from matplotlib import ticker
 	from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo as FigureCanvas
 	from matplotlib.backends.backend_gtk3cairo import FigureManagerGTK3Cairo as FigureManager
 	from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
@@ -122,7 +124,7 @@ def get_graphs():
 	"""
 	return sorted(EXPORTED_GRAPHS.keys())
 
-class CampaignGraph(object):
+class GraphBase(object):
 	"""
 	A basic graph provider for using :py:mod:`matplotlib` to create graph
 	representations of campaign data. This class is meant to be subclassed
@@ -134,14 +136,13 @@ class CampaignGraph(object):
 	"""The human readable name of the graph provider used for UI identification."""
 	graph_title = 'Unknown'
 	"""The title that will be given to the graph."""
-	table_subscriptions = []
-	"""A list of tables from which information is needed to produce the graph."""
 	is_available = True
 	def __init__(self, application, size_request=None, style_context=None):
 		"""
 		:param tuple size_request: The size to set for the canvas.
 		"""
 		self.application = application
+		self.rpc = application.rpc
 		self.style_context = style_context
 		self.config = application.config
 		"""A reference to the King Phisher client configuration."""
@@ -150,7 +151,7 @@ class CampaignGraph(object):
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
 		self.manager = None
-		self.minimum_size = (380, 200)
+		self.minimum_size = (450, 250)
 		"""An absolute minimum size for the canvas."""
 		if size_request is not None:
 			self.resize(*size_request)
@@ -175,10 +176,6 @@ class CampaignGraph(object):
 		self.navigation_toolbar.hide()
 		self._legend = None
 
-	@property
-	def rpc(self):
-		return self.application.rpc
-
 	@staticmethod
 	def _ax_hide_ticks(ax):
 		for tick in ax.yaxis.get_major_ticks():
@@ -189,9 +186,6 @@ class CampaignGraph(object):
 	def _ax_set_spine_color(ax, spine_color):
 		for pos in ('top', 'right', 'bottom', 'left'):
 			ax.spines[pos].set_color(spine_color)
-
-	def _load_graph(self, info_cache):
-		raise NotImplementedError()
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
 		if self._legend is not None:
@@ -281,6 +275,29 @@ class CampaignGraph(object):
 		else:
 			self.navigation_toolbar.hide()
 
+	def resize(self, width=0, height=0):
+		"""
+		Attempt to resize the canvas. Regardless of the parameters the canvas
+		will never be resized to be smaller than :py:attr:`.minimum_size`.
+
+		:param int width: The desired width of the canvas.
+		:param int height: The desired height of the canvas.
+		"""
+		min_width, min_height = self.minimum_size
+		width = max(width, min_width)
+		height = max(height, min_height)
+		self.canvas.set_size_request(width, height)
+
+class CampaignGraph(GraphBase):
+	"""
+	Class used as a template for all graphs that can be used for single
+	campaigns
+	"""
+	table_subscriptions = []
+	"""A list of tables from which information is needed to produce the graph."""
+	def _load_graph(self, info_cache):
+		raise NotImplementedError()
+
 	def load_graph(self):
 		"""Load the graph information via :py:meth:`.refresh`."""
 		self.refresh()
@@ -322,19 +339,6 @@ class CampaignGraph(object):
 		)
 		self.canvas.draw()
 		return info_cache
-
-	def resize(self, width=0, height=0):
-		"""
-		Attempt to resize the canvas. Regardless of the parameters the canvas
-		will never be resized to be smaller than :py:attr:`.minimum_size`.
-
-		:param int width: The desired width of the canvas.
-		:param int height: The desired height of the canvas.
-		"""
-		min_width, min_height = self.minimum_size
-		width = max(width, min_width)
-		height = max(height, min_height)
-		self.canvas.set_size_request(width, height)
 
 class CampaignBarGraph(CampaignGraph):
 	yticklabel_fmt = "{0:,}"
@@ -801,3 +805,103 @@ class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 					met += 1
 					break
 		return met >= 3
+
+class CampaignCompGraph(GraphBase):
+	graph_title = 'Campaign Comparison Graph'
+	name_human = 'Line - Comparison Timeline'
+	
+	def _load_graph(self, data):
+		# define the necessary colors
+		color_bg = self.get_color('bg', ColorHexCode.WHITE)
+		color_fg = self.get_color('fg', ColorHexCode.BLACK)
+		color_line_bg = self.get_color('line_bg', ColorHexCode.WHITE)
+		color_line_fg = self.get_color('line_fg', ColorHexCode.BLACK)
+
+		ax = self.axes[0]
+		ax2 = ax.twinx()
+		ax.tick_params(
+			axis='both',
+			which='both',
+			colors=color_fg,
+			top='off',
+			bottom='off'
+		)
+		ax2.tick_params(
+			axis='both',
+			which='both',
+			colors=color_fg,
+			top='off',
+			bottom='off'
+		)
+		ax.set_axis_bgcolor(color_line_bg)
+		ax2.set_axis_bgcolor(color_line_bg)
+		ax.set_ylabel('Ratio of Vizits', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
+		ax.set_xlabel('Campaign Name', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
+		self._ax_hide_ticks(ax)
+		self._ax_hide_ticks(ax2)
+		ax2.set_ylabel('Messages', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5, rotation=270, labelpad=20)
+		self._ax_set_spine_color(ax, color_bg)
+		self._ax_set_spine_color(ax2, color_bg)
+		ax2.get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+		self.refresh(data, ax2)
+		ax.tick_params(axis='x', labelsize=10, pad=15)
+		return self.canvas
+
+	def refresh(self, data, ax2):
+		ax = self.axes[0]
+		comp_data = {}
+		x_labels = list()
+		messages_count = list()
+		visits_percent = list()
+		creds_percent = list()
+		x=1
+		for campaign in data:
+			created_ts = utilities.datetime_utc_to_local(campaign.created)
+			created_ts = utilities.format_datetime(created_ts)
+			rpc = self.rpc
+			messages_count.append(rpc('db/table/count', 'messages', query_filter={'campaign_id': str(campaign.id)}))
+			visits_percent.append(rpc('db/table/count', 'visits', query_filter={'campaign_id': str(campaign.id)}))
+			creds_percent.append(rpc('db/table/count', 'credentials', query_filter={'campaign_id': str(campaign.id)}))
+			if messages_count[x-1] != 0:
+				visits_percent[x-1] = visits_percent[x-1] / float(messages_count[x-1]) * 100 
+				creds_percent[x-1] = creds_percent[x-1] / float(messages_count[x-1]) * 100 
+			x_labels.append("{0}".format(campaign.name, created_ts))
+			x+=1
+		sorted(x_labels)
+		ax.set_xticks(range(x-1))
+		pyplot.xticks(range(x), x_labels)
+		ax2.plot(messages_count, label="Messages", color=ColorHexCode.BLUE)
+		ax.plot(visits_percent, label="Visits", color=ColorHexCode.RED)
+		ax.plot(creds_percent, label="Credentials", color=ColorHexCode.GRAY)
+		ax.set_ylim((0,100))
+		legend_labels = ["Messages", "Visits", "Credentials"]
+		colors = [ColorHexCode.BLUE, ColorHexCode.RED, ColorHexCode.GRAY]
+		self.add_legend_patch(tuple(zip(colors, legend_labels)), fontsize='xx-small')
+
+	def add_legend_patch(self, legend_rows, fontsize=None):
+		if self._legend is not None:
+			self._legend.remove()
+			self._legend = None
+		if fontsize is None:
+			scale = self.markersize_scale
+			if scale < 5:
+				fontsize = 'xx-small'
+			elif scale < 7:
+				fontsize = 'x-small'
+			elif scale < 9:
+				fontsize = 'small'
+			else:
+				fontsize = 'medium'
+		legend_bbox = self.figure.legend(
+			tuple(patches.Patch(color=patch_color) for patch_color, _ in legend_rows),
+			tuple(label for _, label in legend_rows),
+			borderaxespad=5,
+			fontsize=fontsize,
+			frameon=True,
+			handlelength=1.5,
+			handletextpad=0.75,
+			labelspacing=0.3,
+			loc='upper right'
+		)
+		legend_bbox.legendPatch.set_linewidth(0)
+		self._legend = legend_bbox

@@ -118,6 +118,8 @@ Spencer McIntyre</property>
   </object>
   <object class="GtkWindow" id="CampaignCompWindow">
     <property name="can_focus">False</property>
+    <property name="default_width">750</property>
+    <property name="default_height">350</property>
     <child>
       <object class="GtkNotebook" id="CampaignCompWindow.notebook_main">
         <property name="visible">True</property>
@@ -147,22 +149,6 @@ Spencer McIntyre</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
-                <child>
-                  <object class="GtkCheckButton" id="CampaignCompWindow.checkbutton_expire">
-                    <property name="label" translatable="yes">Expired Campaigns</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="pack_type">end</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -176,7 +162,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">True</property>
                 <property name="shadow_type">in</property>
                 <child>
-                  <object class="GtkTreeView" id="CampaignCompWindow.treeview">
+                  <object class="GtkTreeView" id="CampaignCompWindow.treeview_campaigns">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <child internal-child="selection">
@@ -204,7 +190,17 @@ Spencer McIntyre</property>
           </packing>
         </child>
         <child>
-          <placeholder/>
+          <object class="GtkBox" id="CampaignCompWindow.box_graph">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
         </child>
         <child type="tab">
           <object class="GtkLabel" id="CampaignCompWindow.label_graph">
@@ -289,6 +285,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
                 <property name="label" translatable="yes">Showing 0 of 0 Campaigns</property>
+                <property name="ellipsize">end</property>
                 <attributes>
                   <attribute name="scale" value="1.25"/>
                 </attributes>

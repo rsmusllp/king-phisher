@@ -65,6 +65,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 			'scrolledwindow',
 			'label_list',
 			'label_graph',
+			'box_graph',
 			'treeview_campaigns'
 		),
 
@@ -154,6 +155,8 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		for campaign in self.application.rpc.remote_table('campaigns'):
 			if campaign.name in self.campaigns_enabled:
 				campaigns.append(campaign)
-		comp_graph = CampaignCompGraph()
-		comp_graph.show()
-		print campaigns
+		comp_graph = CampaignCompGraph(self.application, size_request=(500,450), style_context=self.application.style_context)
+		for i in self.gobjects['box_graph']:
+			self.gobjects['box_graph'].remove(i)
+		self.gobjects['box_graph'].pack_start(comp_graph._load_graph(campaigns), True, True, 0)
+		self.gobjects['box_graph'].show_all()
