@@ -58,15 +58,9 @@ else:
 class CampaignCompWindow(gui_utilities.GladeGObject):
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
-			'notebook_main',
-			'box_internal',
-			'box_info',
+			'treeview_campaigns',
 			'label_status',
-			'scrolledwindow',
-			'label_list',
-			'label_graph',
-			'box_graph',
-			'treeview_campaigns'
+			'box_graph'
 		),
 
 	)
@@ -83,17 +77,16 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		toggle_renderer.connect('toggled', self.signal_renderer_toggled)
 		b = Gtk.CellRendererText()
 		tvm.set_column_titles(
-			('Selected', 'Name', 'Company', 'Type', 'Created By', 'Creation Date', 'Expiration'),
+			('Compare', 'Name', 'Company', 'Type', 'Created By', 'Creation Date', 'Expiration'),
 			column_offset=1,
 			renderers=(toggle_renderer, b, b, b, b, b, b)
 		)
 		self._model = Gtk.ListStore(str, bool, str, str, str, str, str, str,  Gdk.RGBA, Gdk.RGBA, str)
 		self._model.set_sort_column_id(2, Gtk.SortType.DESCENDING)
 		treeview.set_model(self._model)
+
 		self.load_campaigns()
-
-
-		self.window.show()
+		self.window.show_all()
 
 
 	def load_campaigns(self):
@@ -159,4 +152,4 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		for i in self.gobjects['box_graph']:
 			self.gobjects['box_graph'].remove(i)
 		self.gobjects['box_graph'].pack_start(comp_graph._load_graph(campaigns), True, True, 0)
-		self.gobjects['box_graph'].show_all()
+		self.window.show_all()
