@@ -124,7 +124,8 @@ def get_graphs():
 	"""
 	return sorted(EXPORTED_GRAPHS.keys())
 
-class GraphBase(object):
+
+class CampaignGraph(object):
 	"""
 	A basic graph provider for using :py:mod:`matplotlib` to create graph
 	representations of campaign data. This class is meant to be subclassed
@@ -136,13 +137,14 @@ class GraphBase(object):
 	"""The human readable name of the graph provider used for UI identification."""
 	graph_title = 'Unknown'
 	"""The title that will be given to the graph."""
+	table_subscriptions = []
+	"""A list of tables from which information is needed to produce the graph."""
 	is_available = True
 	def __init__(self, application, size_request=None, style_context=None):
 		"""
 		:param tuple size_request: The size to set for the canvas.
 		"""
 		self.application = application
-		self.rpc = application.rpc
 		self.style_context = style_context
 		self.config = application.config
 		"""A reference to the King Phisher client configuration."""
@@ -151,7 +153,7 @@ class GraphBase(object):
 		self.axes = self.figure.get_axes()
 		self.canvas = FigureCanvas(self.figure)
 		self.manager = None
-		self.minimum_size = (450, 250)
+		self.minimum_size = (380, 200)
 		"""An absolute minimum size for the canvas."""
 		if size_request is not None:
 			self.resize(*size_request)
@@ -176,6 +178,10 @@ class GraphBase(object):
 		self.navigation_toolbar.hide()
 		self._legend = None
 
+	@property
+	def rpc(self):
+		return self.application.rpc
+
 	@staticmethod
 	def _ax_hide_ticks(ax):
 		for tick in ax.yaxis.get_major_ticks():
@@ -186,6 +192,9 @@ class GraphBase(object):
 	def _ax_set_spine_color(ax, spine_color):
 		for pos in ('top', 'right', 'bottom', 'left'):
 			ax.spines[pos].set_color(spine_color)
+
+	def _load_graph(self, info_cache):
+		raise NotImplementedError()
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
 		if self._legend is not None:
@@ -221,7 +230,6 @@ class GraphBase(object):
 		specified color does not exist, default will be returned. The underlying
 		logic for this function is provided by
 		:py:func:`~.gui_utilities.gtk_style_context_get_color`.
-
 		:param str color_name: The style name of the color.
 		:param default: The default color to return if the specified one was not found.
 		:return: The desired color if it was found.
@@ -234,7 +242,6 @@ class GraphBase(object):
 	def make_window(self):
 		"""
 		Create a window from the figure manager.
-
 		:return: The graph in a new, dedicated window.
 		:rtype: :py:class:`Gtk.Window`
 		"""
@@ -275,29 +282,6 @@ class GraphBase(object):
 		else:
 			self.navigation_toolbar.hide()
 
-	def resize(self, width=0, height=0):
-		"""
-		Attempt to resize the canvas. Regardless of the parameters the canvas
-		will never be resized to be smaller than :py:attr:`.minimum_size`.
-
-		:param int width: The desired width of the canvas.
-		:param int height: The desired height of the canvas.
-		"""
-		min_width, min_height = self.minimum_size
-		width = max(width, min_width)
-		height = max(height, min_height)
-		self.canvas.set_size_request(width, height)
-
-class CampaignGraph(GraphBase):
-	"""
-	Class used as a template for all graphs that can be used for single
-	campaigns
-	"""
-	table_subscriptions = []
-	"""A list of tables from which information is needed to produce the graph."""
-	def _load_graph(self, info_cache):
-		raise NotImplementedError()
-
 	def load_graph(self):
 		"""Load the graph information via :py:meth:`.refresh`."""
 		self.refresh()
@@ -306,7 +290,6 @@ class CampaignGraph(GraphBase):
 		"""
 		Refresh the graph data by retrieving the information from the
 		remote server.
-
 		:param dict info_cache: An optional cache of data tables.
 		:param stop_event: An optional object indicating that the operation should stop.
 		:type stop_event: :py:class:`threading.Event`
@@ -339,6 +322,18 @@ class CampaignGraph(GraphBase):
 		)
 		self.canvas.draw()
 		return info_cache
+
+	def resize(self, width=0, height=0):
+		"""
+		Attempt to resize the canvas. Regardless of the parameters the canvas
+		will never be resized to be smaller than :py:attr:`.minimum_size`.
+		:param int width: The desired width of the canvas.
+		:param int height: The desired height of the canvas.
+		"""
+		min_width, min_height = self.minimum_size
+		width = max(width, min_width)
+		height = max(height, min_height)
+		self.canvas.set_size_request(width, height)
 
 class CampaignBarGraph(CampaignGraph):
 	yticklabel_fmt = "{0:,}"
@@ -806,7 +801,7 @@ class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 					break
 		return met >= 3
 
-class CampaignCompGraph(GraphBase):
+class CampaignCompGraph(CampaignGraph):
 	graph_title = 'Campaign Comparison Graph'
 	name_human = 'Line - Comparison Timeline'
 	
@@ -835,7 +830,8 @@ class CampaignCompGraph(GraphBase):
 		)
 		ax.set_axis_bgcolor(color_line_bg)
 		ax2.set_axis_bgcolor(color_line_bg)
-		ax.set_ylabel('Ratio of Vizits', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
+		pyplot.title('Campaign Comparison', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
+		ax.set_ylabel('Percent Visits/Credentials', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
 		ax.set_xlabel('Campaign Name', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
 		self._ax_hide_ticks(ax)
 		self._ax_hide_ticks(ax2)
@@ -851,9 +847,11 @@ class CampaignCompGraph(GraphBase):
 		ax = self.axes[0]
 		comp_data = {}
 		x_labels = list()
+		x_times = list()
 		messages_count = list()
 		visits_percent = list()
 		creds_percent = list()
+		time_to_camp = {}
 		x=1
 		for campaign in data:
 			created_ts = utilities.datetime_utc_to_local(campaign.created)
@@ -865,17 +863,20 @@ class CampaignCompGraph(GraphBase):
 			if messages_count[x-1] != 0:
 				visits_percent[x-1] = visits_percent[x-1] / float(messages_count[x-1]) * 100 
 				creds_percent[x-1] = creds_percent[x-1] / float(messages_count[x-1]) * 100 
-			x_labels.append("{0}".format(campaign.name, created_ts))
+			time_to_camp[created_ts] = campaign.name
+			x_times.append(created_ts)
 			x+=1
-		sorted(x_labels)
+		x_times = sorted(x_times)
+		for i in range(0, len(x_times)):
+			x_labels.append(time_to_camp[x_times[i]])
 		ax.set_xticks(range(x-1))
 		pyplot.xticks(range(x), x_labels)
 		ax2.plot(messages_count, label="Messages", color=ColorHexCode.BLUE)
 		ax.plot(visits_percent, label="Visits", color=ColorHexCode.RED)
-		ax.plot(creds_percent, label="Credentials", color=ColorHexCode.GRAY)
+		ax.plot(creds_percent, label="Credentials", color=ColorHexCode.BLACK)
 		ax.set_ylim((0,100))
 		legend_labels = ["Messages", "Visits", "Credentials"]
-		colors = [ColorHexCode.BLUE, ColorHexCode.RED, ColorHexCode.GRAY]
+		colors = [ColorHexCode.BLUE, ColorHexCode.RED, ColorHexCode.BLACK]
 		self.add_legend_patch(tuple(zip(colors, legend_labels)), fontsize='xx-small')
 
 	def add_legend_patch(self, legend_rows, fontsize=None):

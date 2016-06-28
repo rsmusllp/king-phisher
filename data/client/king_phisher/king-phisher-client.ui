@@ -121,34 +121,19 @@ Spencer McIntyre</property>
     <property name="default_width">750</property>
     <property name="default_height">350</property>
     <child>
-      <object class="GtkNotebook" id="CampaignCompWindow.notebook_main">
+      <object class="GtkNotebook" id="notebook1">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="margin_left">10</property>
-        <property name="margin_right">10</property>
-        <property name="margin_top">10</property>
-        <property name="margin_bottom">10</property>
         <child>
-          <object class="GtkBox" id="CampaignCompWindow.box_internal">
+          <object class="GtkBox" id="box2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkBox" id="CampaignCompWindow.box_info">
+              <object class="GtkLabel" id="CampaignCompWindow.label_status">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <child>
-                  <object class="GtkLabel" id="CampaignCompWindow.label_status">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Showing 0 of 0 Campaigns</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
+                <property name="label" translatable="yes">Showing 0 Campaigns</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -157,7 +142,7 @@ Spencer McIntyre</property>
               </packing>
             </child>
             <child>
-              <object class="GtkScrolledWindow" id="CampaignCompWindow.scrolledwindow">
+              <object class="GtkScrolledWindow" id="scrolledwindow5">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="shadow_type">in</property>
@@ -180,7 +165,7 @@ Spencer McIntyre</property>
           </object>
         </child>
         <child type="tab">
-          <object class="GtkLabel" id="CampaignCompWindow.label_list">
+          <object class="GtkLabel" id="label44">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Campaigns</property>
@@ -203,7 +188,7 @@ Spencer McIntyre</property>
           </packing>
         </child>
         <child type="tab">
-          <object class="GtkLabel" id="CampaignCompWindow.label_graph">
+          <object class="GtkLabel" id="label69">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Graph</property>
