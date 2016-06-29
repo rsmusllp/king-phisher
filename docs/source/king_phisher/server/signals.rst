@@ -40,7 +40,13 @@ Signals
 .. autodata:: king_phisher.server.signals.db_table_update
    :annotation:
 
+.. autodata:: king_phisher.server.signals.email_opened
+   :annotation:
+
 .. autodata:: king_phisher.server.signals.request_received
+   :annotation:
+
+.. autodata:: king_phisher.server.signals.response_sent
    :annotation:
 
 .. autodata:: king_phisher.server.signals.rpc_method_call

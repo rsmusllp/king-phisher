@@ -57,7 +57,15 @@ signals use the respective instance of
    :annotation:
    :noindex:
 
+.. autodata:: king_phisher.server.signals.email_opened
+   :annotation:
+   :noindex:
+
 .. autodata:: king_phisher.server.signals.request_received
+   :annotation:
+   :noindex:
+
+.. autodata:: king_phisher.server.signals.response_sent
    :annotation:
    :noindex:
 
