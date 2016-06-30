@@ -57,6 +57,7 @@ try:
 	from matplotlib import patches
 	from matplotlib import pyplot
 	from matplotlib import ticker
+	from matplotlib import lines
 	from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo as FigureCanvas
 	from matplotlib.backends.backend_gtk3cairo import FigureManagerGTK3Cairo as FigureManager
 	from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
@@ -830,7 +831,8 @@ class CampaignCompGraph(CampaignGraph):
 		)
 		ax.set_axis_bgcolor(color_line_bg)
 		ax2.set_axis_bgcolor(color_line_bg)
-		pyplot.title('Campaign Comparison', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
+		title = pyplot.title('Campaign Comparison', color=self.get_color('fg', ColorHexCode.WHITE), size=15, loc='left')
+		title.set_position([0.05,1.05])
 		ax.set_ylabel('Percent Visits/Credentials', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
 		ax.set_xlabel('Campaign Name', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
 		self._ax_hide_ticks(ax)
@@ -851,18 +853,26 @@ class CampaignCompGraph(CampaignGraph):
 		messages_count = list()
 		visits_percent = list()
 		creds_percent = list()
+		unique_visits_percent = list()
+		unique_creds_percent = list()
 		time_to_camp = {}
-		x=1
+		x = 1
+		rpc = self.rpc
 		for campaign in data:
 			created_ts = utilities.datetime_utc_to_local(campaign.created)
 			created_ts = utilities.format_datetime(created_ts)
-			rpc = self.rpc
 			messages_count.append(rpc('db/table/count', 'messages', query_filter={'campaign_id': str(campaign.id)}))
 			visits_percent.append(rpc('db/table/count', 'visits', query_filter={'campaign_id': str(campaign.id)}))
+			visit_data = tuple(rpc.remote_table('visits', query_filter={'campaign_id': str(campaign.id)}))
+			unique_visits_percent.append(len(unique(visit_data, key=lambda visit: visit.message_id)))
 			creds_percent.append(rpc('db/table/count', 'credentials', query_filter={'campaign_id': str(campaign.id)}))
+			creds_data = tuple(rpc.remote_table('credentials', query_filter={'campaign_id': str(campaign.id)}))
+			unique_creds_percent.append(len(unique(creds_data, key=lambda creds: creds.message_id)))
 			if messages_count[x-1] != 0:
-				visits_percent[x-1] = visits_percent[x-1] / float(messages_count[x-1]) * 100 
+				visits_percent[x-1] = visits_percent[x-1] / float(messages_count[x-1]) * 100
+				unique_visits_percent[x-1] = unique_visits_percent[x-1] / float(messages_count[x-1]) * 100
 				creds_percent[x-1] = creds_percent[x-1] / float(messages_count[x-1]) * 100 
+				unique_creds_percent[x-1] = unique_creds_percent[x-1] / float(messages_count[x-1]) * 100 
 			time_to_camp[created_ts] = campaign.name
 			x_times.append(created_ts)
 			x+=1
@@ -870,34 +880,37 @@ class CampaignCompGraph(CampaignGraph):
 		for i in range(0, len(x_times)):
 			x_labels.append(time_to_camp[x_times[i]])
 		ax.set_xticks(range(x-1))
+		ax.grid(True)
 		pyplot.xticks(range(x), x_labels)
-		ax2.plot(messages_count, label="Messages", color=ColorHexCode.BLUE)
-		ax.plot(visits_percent, label="Visits", color=ColorHexCode.RED)
-		ax.plot(creds_percent, label="Credentials", color=ColorHexCode.BLACK)
+		labels = ax.get_xticklabels()
+		pyplot.setp(labels, rotation=15)
+
+		visits_line_color = self.get_color('line_fg', ColorHexCode.RED)
+		creds_line_color = self.get_color('map_marker1', ColorHexCode.BLACK)
+		unique_visits_line_color = visits_line_color
+		unique_creds_line_color = creds_line_color
+
+		ax2.plot(messages_count, label="Messages", color='#046D8B', lw=3)
+		ax.plot(visits_percent, label="Visits", color=visits_line_color, lw=3)
+		ax.plot(unique_visits_percent, label=" Unique Visits", color=unique_visits_line_color, lw=3, ls='dashed')
+		ax.plot(creds_percent, label="Credentials", color=creds_line_color, lw=3)
+		ax.plot(unique_creds_percent, label="Unique Credentials", color=unique_creds_line_color, lw=3, ls='dashed')
 		ax.set_ylim((0,100))
-		legend_labels = ["Messages", "Visits", "Credentials"]
-		colors = [ColorHexCode.BLUE, ColorHexCode.RED, ColorHexCode.BLACK]
-		self.add_legend_patch(tuple(zip(colors, legend_labels)), fontsize='xx-small')
+		legend_labels = ["Messages", "Unique Visits", "Visits", "Credentials", "Unique Credentials"]
+		style = ["solid", "dotted", "solid", "solid", "dotted"]
+		colors = ['#046D8B', unique_visits_line_color, visits_line_color, creds_line_color, unique_creds_line_color]
+		self.add_legend_patch(tuple(zip(colors, style, legend_labels)))
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
 		if self._legend is not None:
 			self._legend.remove()
 			self._legend = None
-		if fontsize is None:
-			scale = self.markersize_scale
-			if scale < 5:
-				fontsize = 'xx-small'
-			elif scale < 7:
-				fontsize = 'x-small'
-			elif scale < 9:
-				fontsize = 'small'
-			else:
-				fontsize = 'medium'
 		legend_bbox = self.figure.legend(
-			tuple(patches.Patch(color=patch_color) for patch_color, _ in legend_rows),
-			tuple(label for _, label in legend_rows),
-			borderaxespad=5,
-			fontsize=fontsize,
+			tuple(lines.Line2D([], [], color=patch_color, lw=3, ls=style) for patch_color, style, _ in legend_rows),
+			tuple(label for _, _, label in legend_rows),
+			borderaxespad=1.25,
+			fontsize= 'xx-small',
+			ncol=5,
 			frameon=True,
 			handlelength=1.5,
 			handletextpad=0.75,
@@ -906,3 +919,4 @@ class CampaignCompGraph(CampaignGraph):
 		)
 		legend_bbox.legendPatch.set_linewidth(0)
 		self._legend = legend_bbox
+
