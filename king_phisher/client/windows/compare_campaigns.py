@@ -59,8 +59,10 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
 			'treeview_campaigns',
-			'label_status',
-			'box_graph'
+			'scrolledwindow',
+			'stackswitcher',
+			'box_stack',
+			'stack_1'
 		),
 
 	)
@@ -75,6 +77,11 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		)
 		toggle_renderer = Gtk.CellRendererToggle()
 		toggle_renderer.connect('toggled', self.signal_renderer_toggled)
+		stack_switcher = self.gobjects['stackswitcher']
+		stack_switcher.connect('button-release-event', self.show_options)
+		self.box_stack = self.gobjects['box_stack']
+		self.stack = self.gobjects['stack_1']
+		self.signal_ready = False
 		b = Gtk.CellRendererText()
 		tvm.set_column_titles(
 			('Compare', 'Name', 'Company', 'Type', 'Created By', 'Creation Date', 'Expiration'),
@@ -84,8 +91,8 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		self._model = Gtk.ListStore(str, bool, str, str, str, str, str, str,  Gdk.RGBA, Gdk.RGBA, str)
 		self._model.set_sort_column_id(2, Gtk.SortType.DESCENDING)
 		treeview.set_model(self._model)
-
 		self.load_campaigns()
+		self.window.resize(750, 500)
 		self.window.show_all()
 
 
@@ -128,10 +135,6 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 				(fg_color),
 				(html.escape(campaign.description, quote=True) if campaign.description else None)
 			))
-		self.gobjects['label_status'].set_text("Showing {0} Campaign{1}".format(
-			len(self._model),
-			('' if len(self._model) == 1 else 's')
-		))
 
 	def signal_renderer_toggled(self, _, path):
 		name = self._model[path][2]
@@ -141,6 +144,11 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		else:
 			self._model[path][1] = True
 			self.campaigns_enabled.append(name)
+		if len(self.campaigns_enabled) > 1:
+			self.signal_ready = True
+		else:
+			self.signal_ready = False
+
 		self.init_graph()
 
 	def init_graph(self):
@@ -148,8 +156,12 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		for campaign in self.application.rpc.remote_table('campaigns'):
 			if campaign.name in self.campaigns_enabled:
 				campaigns.append(campaign)
-		comp_graph = CampaignCompGraph(self.application, size_request=(500,450), style_context=self.application.style_context)
-		for i in self.gobjects['box_graph']:
-			self.gobjects['box_graph'].remove(i)
-		self.gobjects['box_graph'].pack_start(comp_graph._load_graph(campaigns), True, True, 0)
+		comp_graph = CampaignCompGraph(self.application, size_request=(500,400), style_context=self.application.style_context)
+		for i in self.gobjects['scrolledwindow']:
+			self.gobjects['scrolledwindow'].remove(i)
+		self.gobjects['scrolledwindow'].add(comp_graph._load_graph(campaigns))
 		self.window.show_all()
+
+	def show_options(self, _, path):
+		if not self.signal_ready:
+			self.stack.set_visible_child(self.box_stack)
