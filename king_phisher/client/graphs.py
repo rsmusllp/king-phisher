@@ -32,7 +32,6 @@
 
 import collections
 import string
-import random
 
 from king_phisher import color
 from king_phisher import ipaddress
@@ -58,7 +57,6 @@ try:
 	from matplotlib import pyplot
 	from matplotlib import ticker
 	from matplotlib import lines
-	from matplotlib.widgets import Slider
 	from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo as FigureCanvas
 	from matplotlib.backends.backend_gtk3cairo import FigureManagerGTK3Cairo as FigureManager
 	from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
@@ -296,6 +294,9 @@ class GraphBase(object):
 		self.canvas.set_size_request(width, height)
 
 class CampaignGraph(GraphBase):
+	""" Graph format used for the graphs generated in the dashboard and 
+	in the create graphs tab.
+	"""
 	def __init__(self, *args, **kwargs):
 		super(CampaignGraph, self).__init__(*args, **kwargs)
 
@@ -811,6 +812,7 @@ class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 		return met >= 3
 
 class CampaignCompGraph(GraphBase):
+	""" Display selected campaigns data by order of campaign start date."""
 	graph_title = 'Campaign Comparison Graph'
 	name_human = 'Graph'
 	def _load_graph(self, data):
@@ -850,12 +852,16 @@ class CampaignCompGraph(GraphBase):
 		self._ax_set_spine_color(ax, color_bg)
 		self._ax_set_spine_color(ax2, color_bg)
 		ax2.get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
-		self.refresh(data)
+		self.refresh_selection(data)
 		ax.tick_params(axis='x', labelsize=10, pad=5)
 		pyplot.tight_layout()
 		return self.canvas
 
-	def refresh(self, data):
+	def refresh_selection(self, data):
+		"""
+		Different refresh function which takes the data from the 
+		toggled campaigns.
+		"""
 		ax = self.axes[0]
 		ax2 = self.axes[1]
 		comp_data = {}
@@ -917,6 +923,9 @@ class CampaignCompGraph(GraphBase):
 		self.canvas.set_size_request(500 + 75*(len(x_labels)-1), 500)
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
+		"""Overriden method of GraphBase, puts the legend in the top right
+		corner, uses lines instead of patches, and makes multiple rows.
+		"""
 		if self._legend is not None:
 			self._legend.remove()
 			self._legend = None
@@ -939,4 +948,7 @@ class CampaignCompGraph(GraphBase):
 		self._legend = legend_bbox
 
 	def signal_activate_popup_refresh(self, event):
-		self.refresh(self.data)
+		""" Overridden method of GraphBase, prevents error upon refresh by
+		adding the arguement for campaign data.
+		"""
+		self.refresh_selection(self.data)
