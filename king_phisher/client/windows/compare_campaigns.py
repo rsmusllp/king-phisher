@@ -56,6 +56,10 @@ else:
 	import html
 
 class CampaignCompWindow(gui_utilities.GladeGObject):
+	"""
+	The window which allows the user to select campaigns and compare the data
+	using graphical representation.
+	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
 			'treeview_campaigns',
@@ -156,12 +160,16 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		for campaign in self.application.rpc.remote_table('campaigns'):
 			if campaign.name in self.campaigns_enabled:
 				campaigns.append(campaign)
-		comp_graph = CampaignCompGraph(self.application, size_request=(500,400), style_context=self.application.style_context)
+		comp_graph = CampaignCompGraph(self.application, style_context=self.application.style_context)
 		for i in self.gobjects['scrolledwindow']:
 			self.gobjects['scrolledwindow'].remove(i)
 		self.gobjects['scrolledwindow'].add(comp_graph._load_graph(campaigns))
 		self.window.show_all()
 
 	def show_options(self, _, path):
+		"""
+		Disables the user from rendering a graph with only one campaign
+		selected.
+		"""
 		if not self.signal_ready:
 			self.stack.set_visible_child(self.box_stack)
