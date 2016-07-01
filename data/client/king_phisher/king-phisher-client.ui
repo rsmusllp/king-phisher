@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.19.0 
+<!-- Generated with glade 3.18.3 
 
 Copyright (c) 2013-2016, SecureState LLC
 All rights reserved.
@@ -116,6 +116,92 @@ Spencer McIntyre</property>
       </object>
     </child>
   </object>
+  <object class="GtkWindow" id="CampaignCompWindow">
+    <property name="can_focus">False</property>
+    <property name="default_width">750</property>
+    <property name="default_height">350</property>
+    <child>
+      <object class="GtkBox" id="box1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkStackSwitcher" id="CampaignCompWindow.stackswitcher">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="halign">center</property>
+            <property name="margin_top">3</property>
+            <property name="margin_bottom">3</property>
+            <property name="stack">CampaignCompWindow.stack_1</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkStack" id="CampaignCompWindow.stack_1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkBox" id="CampaignCompWindow.box_stack">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkScrolledWindow" id="scrolledwindow5">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTreeView" id="CampaignCompWindow.treeview_campaigns">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection"/>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="name">Compare</property>
+                <property name="title" translatable="yes">Compare</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow" id="CampaignCompWindow.scrolledwindow">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="vscrollbar_policy">never</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="name">Graph</property>
+                <property name="title" translatable="yes">Graph</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkDialog" id="CampaignSelectionDialog">
     <property name="width_request">650</property>
     <property name="height_request">350</property>
@@ -179,6 +265,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">False</property>
                 <property name="halign">start</property>
                 <property name="label" translatable="yes">Showing 0 of 0 Campaigns</property>
+                <property name="ellipsize">end</property>
                 <attributes>
                   <attribute name="scale" value="1.25"/>
                 </attributes>
@@ -4754,6 +4841,15 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Tools/Create Graph</property>
                 <property name="label" translatable="yes">Create Graph</property>
                 <property name="use_underline">True</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="MainMenuBar.menuitem_tools_compare_campaigns">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Compare Campaigns</property>
+                <property name="use_underline">True</property>
+                <signal name="activate" handler="do_tools_compare_campaigns" swapped="no"/>
               </object>
             </child>
           </object>
