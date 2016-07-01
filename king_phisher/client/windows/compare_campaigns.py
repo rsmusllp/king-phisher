@@ -156,6 +156,9 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		self.init_graph()
 
 	def init_graph(self):
+		"""Initialize the graph instance of campaign comparison upon a
+		change in the number and data of campaigns toggled.
+		"""
 		campaigns = list()
 		for campaign in self.application.rpc.remote_table('campaigns'):
 			if campaign.name in self.campaigns_enabled:
