@@ -1,19 +1,14 @@
 Client Plugins
 ==============
 
-The King Phisher client supports loading plugins to allow the user to add
-additional features out side of what is supported by the main-stream
-application. These plugins are implemented as Python modules which define a
-`Plugin` class that is the plugins entry point. In order for plugin's meta-data
-to be available to the GUI, class attributes are used. This allows information
-such as the title, description, etc. to be accessed without initializing the
-class.
-
 Client plugins need to inherit from the
 :py:class:`~king_phisher.client.plugins.ClientPlugin` class which provides the
-basic outline. Clients have access to a dictionary for persistent configuration
-storage through the :py:attr:`~king_phisher.client.plugins.ClientPlugin.config`
-attribute.
+basic outline. Client plugins have access to a dictionary for persistent
+configuration storage through the
+:py:attr:`~king_phisher.client.plugins.ClientPlugin.config` attribute. In order
+for the plugin's meta-data to be available to the GUI, class attributes are
+used. This allows information such as the title, description, etc. to be
+accessed without initializing the class.
 
 Plugin Manager
 --------------

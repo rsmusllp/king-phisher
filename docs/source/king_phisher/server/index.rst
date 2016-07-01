@@ -13,6 +13,7 @@ application.
    aaa.rst
    build.rst
    pages.rst
+   plugins.rst
    rest_api.rst
    server.rst
    server_rpc.rst
