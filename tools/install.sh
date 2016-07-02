@@ -132,7 +132,7 @@ if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-grep -E "Fedora release 2[2-3]" /etc/redhat-release &> /dev/null
+grep -E "Fedora release 2[3-4]" /etc/redhat-release &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="Fedora"
 fi
