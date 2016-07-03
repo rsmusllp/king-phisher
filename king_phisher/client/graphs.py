@@ -294,7 +294,8 @@ class GraphBase(object):
 		self.canvas.set_size_request(width, height)
 
 class CampaignGraph(GraphBase):
-	""" Graph format used for the graphs generated in the dashboard and 
+	"""
+	Graph format used for the graphs generated in the dashboard and
 	in the create graphs tab.
 	"""
 	def __init__(self, *args, **kwargs):
@@ -756,8 +757,8 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		return
 
 	def _map_set_line_color(self, map_lines, line_color):
-		for lines, texts in map_lines.values():
-			for line in lines:
+		for sub_lines, texts in map_lines.values():
+			for line in sub_lines:
 				line.set_color(line_color)
 			for text in texts:
 				text.set_color(line_color)
@@ -843,7 +844,7 @@ class CampaignCompGraph(GraphBase):
 		ax.set_axis_bgcolor(color_line_bg)
 		ax2.set_axis_bgcolor(color_line_bg)
 		title = pyplot.title('Campaign Comparison', color=self.get_color('fg', ColorHexCode.WHITE), size=15, loc='left')
-		title.set_position([0.075,1.05])
+		title.set_position([0.075, 1.05])
 		ax.set_ylabel('Percent Visits/Credentials', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
 		ax.set_xlabel('Campaign Name', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
 		self._ax_hide_ticks(ax)
@@ -859,12 +860,11 @@ class CampaignCompGraph(GraphBase):
 
 	def refresh_selection(self, data):
 		"""
-		Different refresh function which takes the data from the 
+		Different refresh function which takes the data from the
 		toggled campaigns.
 		"""
 		ax = self.axes[0]
 		ax2 = self.axes[1]
-		comp_data = {}
 		x_labels = list()
 		x_times = list()
 		messages_count = list()
@@ -885,18 +885,18 @@ class CampaignCompGraph(GraphBase):
 			creds_percent.append(rpc('db/table/count', 'credentials', query_filter={'campaign_id': str(campaign.id)}))
 			creds_data = tuple(rpc.remote_table('credentials', query_filter={'campaign_id': str(campaign.id)}))
 			unique_creds_percent.append(len(unique(creds_data, key=lambda creds: creds.message_id)))
-			if messages_count[x-1] != 0:
-				visits_percent[x-1] = visits_percent[x-1] / float(messages_count[x-1]) * 100
-				unique_visits_percent[x-1] = unique_visits_percent[x-1] / float(messages_count[x-1]) * 100
-				creds_percent[x-1] = creds_percent[x-1] / float(messages_count[x-1]) * 100 
-				unique_creds_percent[x-1] = unique_creds_percent[x-1] / float(messages_count[x-1]) * 100 
+			if messages_count[x - 1] != 0:
+				visits_percent[x - 1] = visits_percent[x - 1] / float(messages_count[x - 1]) * 100
+				unique_visits_percent[x - 1] = unique_visits_percent[x - 1] / float(messages_count[x - 1]) * 100
+				creds_percent[x - 1] = creds_percent[x - 1] / float(messages_count[x - 1]) * 100
+				unique_creds_percent[x - 1] = unique_creds_percent[x - 1] / float(messages_count[x - 1]) * 100
 			time_to_camp[created_ts] = campaign.name
 			x_times.append(created_ts)
-			x+=1
+			x += 1
 		x_times = sorted(x_times)
 		for i in range(0, len(x_times)):
 			x_labels.append(time_to_camp[x_times[i]])
-		ax.set_xticks(range(x-1))
+		ax.set_xticks(range(x - 1))
 		ax.grid(True)
 		ax.set_xticks(range(x))
 		ax.set_xticklabels(x_labels)
@@ -908,22 +908,23 @@ class CampaignCompGraph(GraphBase):
 		unique_creds_line_color = creds_line_color
 		messages_color = '#046D8B'
 
-		ax2.plot(messages_count, label="Messages", color=messages_color, lw=3)
-		ax.plot(visits_percent, label="Visits", color=visits_line_color, lw=3)
-		ax.plot(unique_visits_percent, label=" Unique Visits", color=unique_visits_line_color, lw=3, ls='dashed')
-		ax.plot(creds_percent, label="Credentials", color=creds_line_color, lw=3)
-		ax.plot(unique_creds_percent, label="Unique Credentials", color=unique_creds_line_color, lw=3, ls='dashed')
-		ax.set_ylim((0,100))
+		ax2.plot(messages_count, label='Messages', color=messages_color, lw=3)
+		ax.plot(visits_percent, label='Visits', color=visits_line_color, lw=3)
+		ax.plot(unique_visits_percent, label=' Unique Visits', color=unique_visits_line_color, lw=3, ls='dashed')
+		ax.plot(creds_percent, label='Credentials', color=creds_line_color, lw=3)
+		ax.plot(unique_creds_percent, label='Unique Credentials', color=unique_creds_line_color, lw=3, ls='dashed')
+		ax.set_ylim((0, 100))
 
-		legend_labels = ["Messages", "Unique Visits", "Visits", "Credentials", "Unique Credentials"]
-		style = ["solid", "dotted", "solid", "solid", "dotted"]
+		legend_labels = ['Messages', 'Unique Visits', 'Visits', 'Credentials', 'Unique Credentials']
+		style = ['solid', 'dotted', 'solid', 'solid', 'dotted']
 		colors = [messages_color, unique_visits_line_color, visits_line_color, creds_line_color, unique_creds_line_color]
 		self.add_legend_patch(tuple(zip(colors, style, legend_labels)))
 
-		self.canvas.set_size_request(500 + 75*(len(x_labels)-1), 500)
+		self.canvas.set_size_request(500 + 75 * (len(x_labels) - 1), 500)
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
-		"""Overriden method of GraphBase, puts the legend in the top right
+		"""
+		Overriden method of GraphBase, puts the legend in the top right
 		corner, uses lines instead of patches, and makes multiple rows.
 		"""
 		if self._legend is not None:
@@ -933,22 +934,23 @@ class CampaignCompGraph(GraphBase):
 			tuple(lines.Line2D([], [], color=patch_color, lw=5, ls=style) for patch_color, style, _ in legend_rows),
 			tuple(label for _, _, label in legend_rows),
 			borderaxespad=1.25,
-			fontsize= 'x-small',
+			fontsize='x-small',
 			ncol=3,
 			frameon=True,
 			handlelength=1.5,
 			handletextpad=1,
 			labelspacing=0.75,
-			loc= 'upper right'
+			loc='upper right'
 		)
 		legend_bbox.get_frame().set_facecolor(self.get_color('line_bg', ColorHexCode.GRAY))
 		for text in legend_bbox.get_texts():
-			text.set_color("white")
+			text.set_color('white')
 		legend_bbox.legendPatch.set_linewidth(0)
 		self._legend = legend_bbox
 
 	def signal_activate_popup_refresh(self, event):
-		""" Overridden method of GraphBase, prevents error upon refresh by
-		adding the arguement for campaign data.
+		"""
+		Overridden method of GraphBase, prevents error upon refresh by
+		adding the argument for campaign data.
 		"""
 		self.refresh_selection(self.data)
