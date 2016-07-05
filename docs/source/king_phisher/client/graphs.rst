@@ -26,6 +26,11 @@ Functions
 Classes
 -------
 
+.. autoclass:: king_phisher.client.graphs.GraphBase
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   
 .. autoclass:: king_phisher.client.graphs.CampaignGraph
    :show-inheritance:
    :members:
@@ -84,3 +89,8 @@ Classes
    :members:
    :special-members: __init__
    :undoc-members:
+
+.. autoclass:: king_phisher.client.graphs.CampaignCompGraph
+   :show-inheritance:
+   :members:
+   :special-members: __init__

@@ -152,7 +152,7 @@ build_exe_options = dict(
 )
 
 setup(
-	name='King Phisher',
+	name='KingPhisher',
 	author='SecureState',
 	version=version.distutils_version,
 	description='King Phisher Client',

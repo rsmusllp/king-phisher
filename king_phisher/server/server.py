@@ -367,6 +367,10 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			address = cookie_value
 		return address
 
+	def send_response(self, code, message=None):
+		super(KingPhisherRequestHandler, self).send_response(code, message)
+		signals.safe_send('response-sent', self.logger, self, code=code, message=message)
+
 	def respond_file(self, file_path, attachment=False, query=None):
 		self._respond_file_check_id()
 		file_path = os.path.abspath(file_path)
@@ -486,14 +490,14 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		return
 
 	def respond_not_found(self):
-		self.send_response(404, 'Resource Not Found')
+		self.send_response(404, 'Not Found')
 		self.send_header('Content-Type', 'text/html')
 		page_404 = find.find_data_file('error_404.html')
 		if page_404:
 			with open(page_404, 'rb') as file_h:
 				message = file_h.read()
 		else:
-			message = 'Resource Not Found\n'
+			message = b'Resource Not Found\n'
 		self.send_header('Content-Length', len(message))
 		self.end_headers()
 		self.wfile.write(message)
@@ -597,6 +601,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			message.opener_user_agent = self.headers.get('user-agent', None)
 			session.commit()
 		session.close()
+		signals.safe_send('email-opened', self.logger, self)
 
 	def handle_javascript_hook(self, query):
 		kp_hook_js = find.find_data_file('javascript_hook.js')

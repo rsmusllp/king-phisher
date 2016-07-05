@@ -42,6 +42,7 @@ from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
 from king_phisher.client.windows import plugin_manager
 from king_phisher.client.windows import rpc_terminal
+from king_phisher.client.windows import compare_campaigns
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.campaign import CampaignViewGenericTableTab
 from king_phisher.client.tabs.mail import MailSenderTab
@@ -165,6 +166,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 
 	def do_tools_clone_page(self, _):
 		dialogs.ClonePageDialog(self.application).interact()
+
+	def do_tools_compare_campaigns(self, _):
+		compare_campaigns.CampaignCompWindow(self.application)
 
 	def do_tools_manage_plugins(self, _):
 		plugin_manager.PluginManagerWindow(self.application)

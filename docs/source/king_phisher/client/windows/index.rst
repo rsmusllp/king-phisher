@@ -11,4 +11,4 @@ client application.
    main.rst
    plugin_manager.rst
    rpc_terminal.rst
-
+   compare_campaigns.rst

@@ -1,6 +1,6 @@
 # these are also hard coded into the respective executable files for checking as
 # part of their startup routine
-advancedhttpserver==2.0.3
+advancedhttpserver==2.0.5
 alembic>=0.8.6
 blinker>=1.4
 boltons>=16.2.2

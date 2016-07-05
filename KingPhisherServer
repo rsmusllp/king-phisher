@@ -54,7 +54,7 @@ from smoke_zephyr.configuration import Configuration
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
-	'advancedhttpserver==2.0.3',
+	'advancedhttpserver==2.0.5',
 	'alembic>=0.8.6',
 	'blinker>=1.4',
 	'boltons>=16.2.2',
@@ -85,7 +85,7 @@ def build_and_run(arguments, config, plugin_manager):
 	elif config.has_option('server.fork'):
 		should_fork = bool(config.get('server.fork'))
 	if should_fork and os.fork():
-		return os.EX_OK
+		return sys.exit(os.EX_OK)
 
 	try:
 		king_phisher_server = build.server_from_config(config)
@@ -217,6 +217,8 @@ def main():
 		if config.has_option('logging.console') and config.get('logging.console'):
 			console_log_handler.setLevel(log_level)
 	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+	if its.py_v2:
+		logger.warning('python 2.7 support is deprecated, see https://github.com/securestate/king-phisher/wiki/Python-3 for details')
 
 	# initialize the plugin manager
 	try:

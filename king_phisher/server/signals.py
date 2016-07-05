@@ -194,6 +194,27 @@ credentials_received = blinker.signal(
 	"""
 )
 
+email_opened = blinker.signal(
+	'email-opened',
+	"""
+	Sent when a request for the embedded image is received.
+
+	:param request_handler: The handler for the received request.
+	"""
+)
+
+response_sent = blinker.signal(
+	'response-sent',
+	"""
+	Sent after a response to an HTTP request has been sent to the client. At
+	this point headers may be added to the response body.
+
+	:param request_handler: The handler for the received request.
+	:param int code: The HTTP status code that was sent in the response.
+	:param str message: The HTTP message that was sent in the response.
+	"""
+)
+
 rpc_method_call = blinker.signal(
 	'rpc-method-call',
 	"""
