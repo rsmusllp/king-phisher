@@ -1,0 +1,390 @@
+/* vim: tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab
+ *
+ * theme.v2.scss
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * * Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above
+ *   copyright notice, this list of conditions and the following disclaimer
+ *   in the documentation and/or other materials provided with the
+ *   distribution.
+ * * Neither the name of the  nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Authors:
+ *   - Emily Gundry
+ *   - Spencer McIntyre
+ * Version: 2 (Gtk 3.20+)
+ *
+ * For reference, the source to the default GTK theme Adwaita can be found here:
+ * https://github.com/GNOME/gtk/tree/master/gtk/theme/Adwaita
+ *
+ * Complex widgets that are defined in gtk/ui (i.e. GtkFileChooserDialog) can
+ * have their subwidget components and style classes inspected by reading
+ * through their definitions in the .ui files located here:
+ * https://github.com/GNOME/gtk/tree/master/gtk/ui
+ */
+
+@import 'colors';
+@import 'common';
+
+* {
+  -gtk-icon-shadow: none;
+  border: none;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.background {
+  background-color: $theme_color_bg;
+  color: white;
+}
+
+.background-add {
+  background-image: url("./background.svg");
+  background-size: 100% 100%;
+  color: white;
+}
+
+.background-remove {
+  background-image: none;
+}
+
+.sidebar {
+  background-image: linear-gradient(to bottom, shade($theme_color_1, 1.1), shade($theme_color_0, 1.3));
+  color: white;
+  .highlight {
+    background-image: linear-gradient(to bottom, shade($theme_color_0, 1.25), shade($theme_color_0, 1.50));
+    font: bold;
+  }
+}
+
+.titlebar {
+  background-color: mix($theme_color_0, $theme_color_1, 0.4);
+  background-image: none;
+  color: white;
+}
+
+.tooltip {
+  background-color: gtkalpha($theme_color_0, 0.8);
+  background-image: none;
+  border-radius: 5px;
+}
+
+%button,
+button {
+  background-image: linear-gradient(to bottom, mix($theme_color_0, $theme_color_1, 0.75), $theme_color_0);
+  background-size: 100% 100%;
+  border-radius: 3px;
+  border: 1px solid;
+  border-color: $theme_color_0;
+  color: white;
+  &:active {
+    background-image: linear-gradient(to bottom, shade(gtkalpha($theme_color_1, 0.7), 1), shade(gtkalpha($theme_color_1, 0.7), 1.25));
+    background-size: 100% 100%;
+    color: $theme_color_0;
+  }
+  &:hover {
+    background-image: linear-gradient(to bottom, shade(gtkalpha($theme_color_1, 0.7), 1), shade(gtkalpha($theme_color_1, 0.7), 1.25));
+    background-size: 100% 100%;
+  }
+  &:disabled {
+    background-color: gtkalpha(darkgray, 0.8);
+    background-image: none;
+    border-color: darkgray;
+  }
+  &:selected {
+    background-image: linear-gradient(to bottom, shade(gtkalpha($theme_color_1, 0.7), 1), shade(gtkalpha($theme_color_1, 0.7), 1.25));
+    background-size: 100% 100%;
+    color: $theme_color_0;
+  }
+}
+
+calendar {
+  background-color: white;
+  background-image: none;
+  color: $theme_color_0;
+  &:disabled {
+    background-color: gtkalpha(gray, 0.8);
+    color: white;
+    &:selected {
+      background-color: gtkalpha(lightgray, 0.8);
+    }
+  }
+  &:selected {
+    background-color: $theme_color_2;
+    color: white;
+  }
+  .header {
+    background-color: $theme_color_1;
+    color: white;
+  }
+}
+
+checkbutton.text-button {
+  background-image: none;
+  border-radius: 3px;
+  border: 0px solid;
+  border-color: $theme_color_1;
+  color: mix($theme_color_0, $theme_color_1, 0.25);
+  padding: 1px 2px 4px;
+  &:hover {
+    background-color: gtkalpha($theme_color_0, 0.8);
+    color: $theme_color_1;
+  }
+}
+
+combobox {
+  .separator {
+    -GtkWidget-horizontal-separator: 0;
+    -GtkWidget-vertical-separator: 0;
+  }
+}
+
+entry {
+  background-color: gtkalpha(white, 0.8);
+  background-image: none;
+  border-radius: 3px;
+  color: $theme_color_0;
+  &:disabled {
+    background-color: gtkalpha(darkgray, 0.8);
+  }
+  &:selected {
+    background-color: $theme_color_1;
+    color: white;
+  }
+}
+
+filechooser {
+  background-color: $theme_color_bg;
+  .view {
+    background-color: $theme_color_bg;
+  }
+}
+
+frame {
+  background: none;
+  border: 2px solid shade($theme_color_0, 1.75);
+}
+
+grid {
+  background: none;
+}
+
+label {
+  background: none;
+  color: white;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+list {
+  background-color: $theme_color_bg;
+  color: white;
+  row {
+    background-color: $theme_color_bg;
+    color: white;
+    &:hover {
+      background-color: $theme_color_1;
+      color: white;
+    }
+  }
+}
+
+menubar {
+  background-color: mix($theme_color_0, $theme_color_1, 0.4);
+  color: white;
+  > menuitem {
+    background-color: mix($theme_color_0, $theme_color_1, 0.4);
+    background-image: none;
+    > label {
+      color: white;
+    }
+  }
+}
+
+menuitem {
+  background-color: white;
+  background-image: none;
+  color: black;
+  > label {
+    color: black;
+  }
+  &:hover {
+    background-color: $theme_color_1;
+    background-image: none;
+    color: white;
+  }
+  &:hover > label {
+    color: white;
+  }
+}
+
+modelbutton {
+  background-color: $theme_color_0;
+  color: white;
+  &:disabled {
+    background-color: gtkalpha(darkgray, 0.8);
+    background-image: none;
+    border-color: darkgray;
+  }
+  &:hover {
+    background-color: $theme_color_1;
+  }
+}
+
+notebook {
+  > header {
+    background-color: $theme_color_bg;
+    border-width: 2px;
+    color: white;
+    padding: 2px;
+  }
+  tab {
+    background-color: transparent;
+    background-image: none;
+    border-color: transparent;
+    padding: 2px 8px 2px 8px;
+    &:checked {
+      background-image: linear-gradient(to bottom, shade($theme_color_1, 1), shade($theme_color_0, 1.25));
+      border-radius: 4px 4px 2px 2px;
+    }
+  }
+  stack {
+    background-color: $theme_color_bg;
+    color: white;
+  }
+}
+
+placessidebar {
+  > viewport.frame { border-style: none; }
+  row {
+    background-color: $theme_color_bg;
+    color: white;
+    &:selected {
+      background-color: $theme_color_1;
+      color: white;
+    }
+  }
+}
+
+placesview {
+  background-color: $theme_color_bg;
+}
+
+popover.background {
+  background-color: mix($theme_color_1, $theme_color_0, 0.2);
+  color: white;
+}
+
+progressbar {
+  background-image: none;
+  background-color: $theme_color_bg;
+  color: white;
+  trough {
+    background-color: $theme_color_1;
+    border-radius: 3px;
+    progress {
+      background-color: $theme_color_2;
+      background-image: none;
+      border-radius: 3px;
+      border-width: 0 0 2px;
+      margin: 2px -6px;
+    }
+  }
+  &.horizontal {
+    trough,
+    progress { min-height: 5px; }
+  }
+  &.vertical {
+    trough,
+    progress { min-width: 5px; }
+  }
+}
+
+radiobutton {
+  background-image: none;
+}
+
+radiobutton.text-button {
+  background-image: none;
+  border-radius: 3px;
+  border: 0px solid;
+  border-color: $theme_color_1;
+  color: mix($theme_color_0, $theme_color_1, 0.25);
+  padding: 1px 2px 4px;
+  &:hover {
+    background-color: gtkalpha($theme_color_0, 0.8);
+    color: $theme_color_1;
+  }
+}
+
+spinbutton {
+  background-color: gtkalpha(white, 0.8);
+  background-image: none;
+  color: $theme_color_0;
+}
+
+switch {
+  font-size: smaller;
+  font-weight: bold;
+  outline-offset: -4px;
+}
+
+textview.view {
+  text {
+    background-color: $theme_color_bg;
+    color: white;
+    selection {
+      background-color: $theme_color_1;
+      color: white;
+    }
+  }
+}
+
+toolbar {
+  background-color: $theme_color_1;
+  background-image: none;
+}
+
+treeview.view {
+  background-color: $theme_color_tv_bg;
+  color: $theme_color_tv_fg;
+  &:hover {
+    background-color: $theme_color_tv_hobg;
+    color: $theme_color_tv_hofg;
+  }
+  &:selected {
+    background-color: $theme_color_tv_hobg;
+    color: $theme_color_tv_hofg;
+  }
+  header {
+    button {
+      border: 1px solid;
+      border-color: $theme_color_bg;
+      border-radius: 0px;
+    }
+  }
+}
+
+viewport {
+  background-color: $theme_color_bg;
+  color: white;
+}

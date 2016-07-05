@@ -1,0 +1,337 @@
+/* vim: tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab
+ *
+ * theme.v2.scss
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * * Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above
+ *   copyright notice, this list of conditions and the following disclaimer
+ *   in the documentation and/or other materials provided with the
+ *   distribution.
+ * * Neither the name of the  nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Authors:
+ *   - Emily Gundry
+ *   - Spencer McIntyre
+ * Version: 2 (Gtk 3.20+)
+ *
+ * For reference, the source to the default GTK theme Adwaita can be found here:
+ * https://github.com/GNOME/gtk/tree/master/gtk/theme/Adwaita
+ *
+ * Complex widgets that are defined in gtk/ui (i.e. GtkFileChooserDialog) can
+ * have their subwidget components and style classes inspected by reading
+ * through their definitions in the .ui files located here:
+ * https://github.com/GNOME/gtk/tree/master/gtk/ui
+ */
+/* two primary colors for mixing and one for highlighting */
+@define-color theme_color_0 #00203a;
+@define-color theme_color_1 #5d84a8;
+@define-color theme_color_2 #00bf8c;
+@define-color theme_color_bg shade(#00203a, 1.2);
+/* treeview normal */
+@define-color theme_color_tv_bg #00203a;
+@define-color theme_color_tv_fg #ffffff;
+/* treeview highlight */
+@define-color theme_color_tv_hlbg @theme_color_2;
+@define-color theme_color_tv_hlfg white;
+/* treeview hover */
+@define-color theme_color_tv_hobg #5d84a8;
+@define-color theme_color_tv_hofg #ffffff;
+/* graph colors */
+@define-color theme_color_graph_bg #254866;
+@define-color theme_color_graph_fg #ffffff;
+@define-color theme_color_graph_bar_bg #3c5b77;
+@define-color theme_color_graph_bar_fg #c0dcff;
+@define-color theme_color_graph_line_bg #92a4b3;
+@define-color theme_color_graph_line_fg #002645;
+@define-color theme_color_graph_map_land #3c5b77;
+@define-color theme_color_graph_map_marker1 #ffc20f;
+@define-color theme_color_graph_map_marker2 @theme_color_2;
+@define-color theme_color_graph_map_water #c0dcff;
+@define-color theme_color_graph_pie_high #c0dcff;
+@define-color theme_color_graph_pie_low #3c5b77;
+* {
+  -gtk-icon-shadow: none;
+  border: none;
+  box-shadow: none;
+  text-shadow: none; }
+
+.background {
+  background-color: shade(#00203a, 1.2);
+  color: white; }
+
+.background-add {
+  background-image: url("./background.svg");
+  background-size: 100% 100%;
+  color: white; }
+
+.background-remove {
+  background-image: none; }
+
+.sidebar {
+  background-image: linear-gradient(to bottom, shade(#5d84a8, 1.1), shade(#00203a, 1.3));
+  color: white; }
+  .sidebar .highlight {
+    background-image: linear-gradient(to bottom, shade(#00203a, 1.25), shade(#00203a, 1.5));
+    font: bold; }
+
+.titlebar {
+  background-color: #5d84a8;
+  background-image: none;
+  color: white; }
+
+.tooltip {
+  background-color: alpha(#00203a,0.8);
+  background-image: none;
+  border-radius: 5px; }
+
+button {
+  background-image: linear-gradient(to bottom, #5c83a7, #00203a);
+  background-size: 100% 100%;
+  border-radius: 3px;
+  border: 1px solid;
+  border-color: #00203a;
+  color: white; }
+  button:active {
+    background-image: linear-gradient(to bottom, shade(alpha(#5d84a8,0.7), 1), shade(alpha(#5d84a8,0.7), 1.25));
+    background-size: 100% 100%;
+    color: #00203a; }
+  button:hover {
+    background-image: linear-gradient(to bottom, shade(alpha(#5d84a8,0.7), 1), shade(alpha(#5d84a8,0.7), 1.25));
+    background-size: 100% 100%; }
+  button:disabled {
+    background-color: alpha(darkgray,0.8);
+    background-image: none;
+    border-color: darkgray; }
+  button:selected {
+    background-image: linear-gradient(to bottom, shade(alpha(#5d84a8,0.7), 1), shade(alpha(#5d84a8,0.7), 1.25));
+    background-size: 100% 100%;
+    color: #00203a; }
+
+calendar {
+  background-color: white;
+  background-image: none;
+  color: #00203a; }
+  calendar:disabled {
+    background-color: alpha(gray,0.8);
+    color: white; }
+    calendar:disabled:selected {
+      background-color: alpha(lightgray,0.8); }
+  calendar:selected {
+    background-color: #00bf8c;
+    color: white; }
+  calendar .header {
+    background-color: #5d84a8;
+    color: white; }
+
+checkbutton.text-button {
+  background-image: none;
+  border-radius: 3px;
+  border: 0px solid;
+  border-color: #5d84a8;
+  color: #5d84a8;
+  padding: 1px 2px 4px; }
+  checkbutton.text-button:hover {
+    background-color: alpha(#00203a,0.8);
+    color: #5d84a8; }
+
+combobox .separator {
+  -GtkWidget-horizontal-separator: 0;
+  -GtkWidget-vertical-separator: 0; }
+
+entry {
+  background-color: alpha(white,0.8);
+  background-image: none;
+  border-radius: 3px;
+  color: #00203a; }
+  entry:disabled {
+    background-color: alpha(darkgray,0.8); }
+  entry:selected {
+    background-color: #5d84a8;
+    color: white; }
+
+filechooser {
+  background-color: shade(#00203a, 1.2); }
+  filechooser .view {
+    background-color: shade(#00203a, 1.2); }
+
+frame {
+  background: none;
+  border: 2px solid shade(#00203a, 1.75); }
+
+grid {
+  background: none; }
+
+label {
+  background: none;
+  color: white;
+  padding-left: 4px;
+  padding-right: 4px; }
+
+list {
+  background-color: shade(#00203a, 1.2);
+  color: white; }
+  list row {
+    background-color: shade(#00203a, 1.2);
+    color: white; }
+    list row:hover {
+      background-color: #5d84a8;
+      color: white; }
+
+menubar {
+  background-color: #5d84a8;
+  color: white; }
+  menubar > menuitem {
+    background-color: #5d84a8;
+    background-image: none; }
+    menubar > menuitem > label {
+      color: white; }
+
+menuitem {
+  background-color: white;
+  background-image: none;
+  color: black; }
+  menuitem > label {
+    color: black; }
+  menuitem:hover {
+    background-color: #5d84a8;
+    background-image: none;
+    color: white; }
+  menuitem:hover > label {
+    color: white; }
+
+modelbutton {
+  background-color: #00203a;
+  color: white; }
+  modelbutton:disabled {
+    background-color: alpha(darkgray,0.8);
+    background-image: none;
+    border-color: darkgray; }
+  modelbutton:hover {
+    background-color: #5d84a8; }
+
+notebook > header {
+  background-color: shade(#00203a, 1.2);
+  border-width: 2px;
+  color: white;
+  padding: 2px; }
+notebook tab {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  padding: 2px 8px 2px 8px; }
+  notebook tab:checked {
+    background-image: linear-gradient(to bottom, shade(#5d84a8, 1), shade(#00203a, 1.25));
+    border-radius: 4px 4px 2px 2px; }
+notebook stack {
+  background-color: shade(#00203a, 1.2);
+  color: white; }
+
+placessidebar > viewport.frame {
+  border-style: none; }
+placessidebar row {
+  background-color: shade(#00203a, 1.2);
+  color: white; }
+  placessidebar row:selected {
+    background-color: #5d84a8;
+    color: white; }
+
+placesview {
+  background-color: shade(#00203a, 1.2); }
+
+popover.background {
+  background-color: #00203a;
+  color: white; }
+
+progressbar {
+  background-image: none;
+  background-color: shade(#00203a, 1.2);
+  color: white; }
+  progressbar trough {
+    background-color: #5d84a8;
+    border-radius: 3px; }
+    progressbar trough progress {
+      background-color: #00bf8c;
+      background-image: none;
+      border-radius: 3px;
+      border-width: 0 0 2px;
+      margin: 2px -6px; }
+  progressbar.horizontal trough,
+  progressbar.horizontal progress {
+    min-height: 5px; }
+  progressbar.vertical trough,
+  progressbar.vertical progress {
+    min-width: 5px; }
+
+radiobutton {
+  background-image: none; }
+
+radiobutton.text-button {
+  background-image: none;
+  border-radius: 3px;
+  border: 0px solid;
+  border-color: #5d84a8;
+  color: #5d84a8;
+  padding: 1px 2px 4px; }
+  radiobutton.text-button:hover {
+    background-color: alpha(#00203a,0.8);
+    color: #5d84a8; }
+
+spinbutton {
+  background-color: alpha(white,0.8);
+  background-image: none;
+  color: #00203a; }
+
+switch {
+  font-size: smaller;
+  font-weight: bold;
+  outline-offset: -4px; }
+
+textview.view text {
+  background-color: shade(#00203a, 1.2);
+  color: white; }
+  textview.view text selection {
+    background-color: #5d84a8;
+    color: white; }
+
+toolbar {
+  background-color: #5d84a8;
+  background-image: none; }
+
+treeview.view {
+  background-color: #00203a;
+  color: #ffffff; }
+  treeview.view:hover {
+    background-color: #5d84a8;
+    color: #ffffff; }
+  treeview.view:selected {
+    background-color: #5d84a8;
+    color: #ffffff; }
+  treeview.view header button {
+    border: 1px solid;
+    border-color: shade(#00203a, 1.2);
+    border-radius: 0px; }
+
+viewport {
+  background-color: shade(#00203a, 1.2);
+  color: white; }
+
+/*# sourceMappingURL=theme.v2.css.map */
