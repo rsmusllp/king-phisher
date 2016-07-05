@@ -272,8 +272,8 @@ progressbar {
       background-color: #00bf8c;
       background-image: none;
       border-radius: 3px;
-      border-width: 0 0 2px;
-      margin: 2px -6px; }
+      border-width: 0 0 0px;
+      margin: 2px 0px 2px; }
   progressbar.horizontal trough,
   progressbar.horizontal progress {
     min-height: 5px; }
@@ -301,9 +301,22 @@ spinbutton {
   color: #00203a; }
 
 switch {
+  background-color: shade(#00203a, 1.2);
   font-size: smaller;
-  font-weight: bold;
-  outline-offset: -4px; }
+  font-weight: bold; }
+  switch slider {
+    border: 1px solid;
+    border-radius: 3px;
+    color: white;
+    margin: 0px;
+    min-width: 40px;
+    min-height: 22px; }
+  switch:checked {
+    background-color: #00bf8c;
+    color: white; }
+  switch:disabled {
+    color: #8e9192;
+    background-color: #f4f4f4; }
 
 textview.view text {
   background-color: shade(#00203a, 1.2);

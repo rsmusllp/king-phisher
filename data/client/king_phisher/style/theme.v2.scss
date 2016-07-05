@@ -305,8 +305,8 @@ progressbar {
       background-color: $theme_color_2;
       background-image: none;
       border-radius: 3px;
-      border-width: 0 0 2px;
-      margin: 2px -6px;
+      border-width: 0 0 0px;
+      margin: 2px 0px 2px;
     }
   }
   &.horizontal {
@@ -343,9 +343,25 @@ spinbutton {
 }
 
 switch {
+  background-color: $theme_color_bg;
   font-size: smaller;
   font-weight: bold;
-  outline-offset: -4px;
+  slider {
+    border: 1px solid;
+    border-radius: 3px;
+    color: white;
+    margin: 0px;
+    min-width: 40px;
+    min-height: 22px;
+  }
+  &:checked {
+    background-color: $theme_color_2;
+    color: white;
+  }
+  &:disabled {
+    color: #8e9192;
+    background-color: #f4f4f4;
+  }
 }
 
 textview.view {

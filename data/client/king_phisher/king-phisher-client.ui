@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.19.0 
+<!-- Generated with glade 3.20.0
 
 Copyright (c) 2013-2016, SecureState LLC
 All rights reserved.
@@ -43,6 +43,7 @@ Spencer McIntyre
   <!-- interface-copyright 2013-2016, SecureState LLC -->
   <!-- interface-authors Spencer McIntyre\nJeff McCutchan\nBrandan Geise -->
   <object class="GtkAboutDialog" id="AboutDialog">
+    <property name="width_request">550</property>
     <property name="can_focus">False</property>
     <property name="type">popup</property>
     <property name="type_hint">dialog</property>
@@ -2237,6 +2238,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">LoginDialogBase.button_cancel</action-widget>
       <action-widget response="-10">LoginDialogBase.button_connect</action-widget>
     </action-widgets>
+    <style>
+      <class name="background-add"/>
+    </style>
   </object>
   <object class="GtkBox" id="MailSenderEditTab">
     <property name="width_request">400</property>
@@ -2981,6 +2985,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">LoginDialog.button_cancel</action-widget>
       <action-widget response="-10">LoginDialog.button_connect</action-widget>
     </action-widgets>
+    <style>
+      <class name="background-add"/>
+    </style>
   </object>
   <object class="GtkListStore" id="SMSCarriers">
     <columns>
