@@ -30,22 +30,13 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
-import logging
-import os
-import signal
-import sys
-import datetime
-
 from king_phisher import its
 from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
-from king_phisher.client.assistants import CampaignAssistant
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
 from king_phisher.client.graphs import CampaignCompGraph
 
-from gi.repository import GLib
 from gi.repository import Gtk
 from gi.repository import Gdk
 
@@ -92,7 +83,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 			column_offset=1,
 			renderers=(toggle_renderer, b, b, b, b, b, b)
 		)
-		self._model = Gtk.ListStore(str, bool, str, str, str, str, str, str,  Gdk.RGBA, Gdk.RGBA, str)
+		self._model = Gtk.ListStore(str, bool, str, str, str, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
 		self._model.set_sort_column_id(2, Gtk.SortType.DESCENDING)
 		treeview.set_model(self._model)
 		self.load_campaigns()
@@ -107,9 +98,6 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		style_context = self.window.get_style_context()
 		bg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_bg', default=ColorHexCode.WHITE)
 		fg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_fg', default=ColorHexCode.BLACK)
-		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
-		hlfg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlfg', default=ColorHexCode.BLACK)
-		now = datetime.datetime.now()
 		for campaign in self.application.rpc.remote_table('campaigns'):
 			company = campaign.company
 			if company:
@@ -120,11 +108,8 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 			if campaign_type:
 				campaign_type = campaign_type.name
 			expiration_ts = campaign.expiration
-			is_expired = False
 			if expiration_ts is not None:
 				expiration_ts = utilities.datetime_utc_to_local(campaign.expiration)
-				if expiration_ts < now:
-					is_expired = True
 				expiration_ts = utilities.format_datetime(expiration_ts)
 			store.append((
 				str(campaign.id),
@@ -141,17 +126,17 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 			))
 
 	def signal_renderer_toggled(self, _, path):
-		name = self._model[path][2]
-		if self._model[path][1]:
-			self._model[path][1] = False
+		name = self._model[path][2]  # pylint: disable=unsubscriptable-object
+		if self._model[path][1]:  # pylint: disable=unsubscriptable-object
+			self._model[path][1] = False  # pylint: disable=unsubscriptable-object
 			self.campaigns_enabled.remove(name)
 		else:
-			self._model[path][1] = True
+			self._model[path][1] = True  # pylint: disable=unsubscriptable-object
 			self.campaigns_enabled.append(name)
+		self.signal_ready = False
 		if len(self.campaigns_enabled) > 1:
 			self.signal_ready = True
-		else:
-			self.signal_ready = False
+
 
 		self.init_graph()
 

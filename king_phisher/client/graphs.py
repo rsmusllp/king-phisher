@@ -822,7 +822,6 @@ class CampaignCompGraph(GraphBase):
 		color_bg = self.get_color('bg', ColorHexCode.WHITE)
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		color_line_bg = self.get_color('line_bg', ColorHexCode.WHITE)
-		color_line_fg = self.get_color('line_fg', ColorHexCode.BLACK)
 
 		ax = self.axes[0]
 		self.axes.append(ax.twinx())
@@ -843,13 +842,13 @@ class CampaignCompGraph(GraphBase):
 		)
 		ax.set_axis_bgcolor(color_line_bg)
 		ax2.set_axis_bgcolor(color_line_bg)
-		title = pyplot.title('Campaign Comparison', color=self.get_color('fg', ColorHexCode.WHITE), size=15, loc='left')
+		title = pyplot.title('Campaign Comparison', color=color_fg, size=15, loc='left')
 		title.set_position([0.075, 1.05])
-		ax.set_ylabel('Percent Visits/Credentials', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
-		ax.set_xlabel('Campaign Name', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5)
+		ax.set_ylabel('Percent Visits/Credentials', color=color_fg, size=12.5)
+		ax.set_xlabel('Campaign Name', color=color_fg, size=12.5)
 		self._ax_hide_ticks(ax)
 		self._ax_hide_ticks(ax2)
-		ax2.set_ylabel('Messages', color=self.get_color('fg', ColorHexCode.WHITE), size=12.5, rotation=270, labelpad=20)
+		ax2.set_ylabel('Messages', color=color_fg, size=12.5, rotation=270, labelpad=20)
 		self._ax_set_spine_color(ax, color_bg)
 		self._ax_set_spine_color(ax2, color_bg)
 		ax2.get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
@@ -878,13 +877,12 @@ class CampaignCompGraph(GraphBase):
 		for campaign in data:
 			created_ts = utilities.datetime_utc_to_local(campaign.created)
 			created_ts = utilities.format_datetime(created_ts)
-			messages_count.append(rpc('db/table/count', 'messages', query_filter={'campaign_id': str(campaign.id)}))
-			visits_percent.append(rpc('db/table/count', 'visits', query_filter={'campaign_id': str(campaign.id)}))
-			visit_data = tuple(rpc.remote_table('visits', query_filter={'campaign_id': str(campaign.id)}))
-			unique_visits_percent.append(len(unique(visit_data, key=lambda visit: visit.message_id)))
-			creds_percent.append(rpc('db/table/count', 'credentials', query_filter={'campaign_id': str(campaign.id)}))
-			creds_data = tuple(rpc.remote_table('credentials', query_filter={'campaign_id': str(campaign.id)}))
-			unique_creds_percent.append(len(unique(creds_data, key=lambda creds: creds.message_id)))
+			campaign_stats = rpc('/campaign/stats', str(campaign.id))
+			messages_count.append(campaign_stats['messages'])
+			visits_percent.append(campaign_stats['visits'])
+			unique_visits_percent.append(campaign_stats['visits-unique'])
+			creds_percent.append(campaign_stats['credentials'])
+			unique_creds_percent.append(campaign_stats['credentials-unique'])
 			if messages_count[x - 1] != 0:
 				visits_percent[x - 1] = visits_percent[x - 1] / float(messages_count[x - 1]) * 100
 				unique_visits_percent[x - 1] = unique_visits_percent[x - 1] / float(messages_count[x - 1]) * 100
