@@ -1,6 +1,6 @@
 /* vim: tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab
  *
- * theme.css
+ * theme.v1.css
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,6 +31,7 @@
  * Authors:
  *   - Emily Gundry
  *   - Spencer McIntyre
+ * Version: 1 (Gtk 3.10 - 3.18)
  *
  * For reference, the source to the default GTK theme Adwaita can be found here:
  * https://github.com/GNOME/gtk/tree/master/gtk/theme/Adwaita

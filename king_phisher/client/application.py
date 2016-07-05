@@ -122,7 +122,11 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def __init__(self, config_file=None, use_plugins=True, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
 		if use_style:
-			self._theme_file = 'theme.css'
+			gtk_version = (Gtk.get_major_version(), Gtk.get_minor_version())
+			if gtk_version > (3, 18):
+				self._theme_file = 'theme.v2.css'
+			else:
+				self._theme_file = 'theme.v1.css'
 		else:
 			self._theme_file = DISABLED
 		self.logger = logging.getLogger('KingPhisher.Client.Application')
@@ -637,7 +641,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			file_path = file_path.get_path()
 		else:
 			file_path = '[ unknown file ]'
-		self.logger.error("css parser error ({0}) in {1}:{2}".format(gerror.message, file_path, css_section.get_start_line()))
+		self.logger.error("css parser error ({0}) in {1}:{2}".format(gerror.message, file_path, css_section.get_start_line() + 1))
 		return
 
 	def signal_window_added(self, _, window):
