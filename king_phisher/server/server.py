@@ -712,7 +712,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 	"""
 	The main HTTP and RPC server for King Phisher.
 	"""
-	def __init__(self, config, handler_klass, *args, **kwargs):
+	def __init__(self, config, plugin_manager, handler_klass, *args, **kwargs):
 		"""
 		:param config: Configuration to retrieve settings from.
 		:type config: :py:class:`smoke_zephyr.configuration.Configuration`
@@ -734,6 +734,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self.logger = logging.getLogger('KingPhisher.Server')
 		self.config = config
 		"""A :py:class:`~smoke_zephyr.configuration.Configuration` instance used as the main King Phisher server configuration."""
+		self.plugin_manager = plugin_manager
 		self.serve_files = True
 		self.serve_files_root = config.get('server.web_root')
 		self.serve_files_list_directories = False
@@ -763,6 +764,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 
 		for http_server in self.sub_servers:
 			http_server.config = config
+			http_server.plugin_manager = plugin_manager
 			http_server.throttle_semaphore = self.throttle_semaphore
 			http_server.session_manager = self.session_manager
 			http_server.forked_authenticator = self.forked_authenticator
@@ -770,10 +772,18 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			http_server.template_env = self.template_env
 			http_server.kp_shutdown = self.shutdown
 
+		if not config.has_option('server.secret_id'):
+			config.set('server.secret_id', rest_api.generate_token())
+		if not config.get_if_exists('server.rest_api.token'):
+			config.set('server.rest_api.token', rest_api.generate_token())
+		if config.get('server.rest_api.enabled'):
+			self.logger.info('rest api initialized with token: ' + config.get('server.rest_api.token'))
+
 		self.__geoip_db = geoip.init_database(config.get('server.geoip.database'))
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
 		self.__shutdown_lock = threading.Lock()
+		plugin_manager.server = self
 
 	def shutdown(self, *args, **kwargs):
 		"""

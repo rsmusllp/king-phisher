@@ -31,6 +31,10 @@ General API
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_ping`
 
+.. rpc:function:: plugins/list()
+
+   :handler: :py:func:`~kking_phisher.server.server_rpc.rpc_plugins_list`
+
 .. rpc:function:: shutdown()
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_shutdown`
@@ -67,6 +71,10 @@ Campaign API
 .. rpc:function:: campaign/new(name, description=None)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_new`
+
+.. rpc:function:: campaign/stats(campaign_id)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_stats`
 
 .. _rpc-api-configuration-api-label:
 

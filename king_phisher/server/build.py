@@ -35,7 +35,6 @@ import os
 import socket
 
 from king_phisher import errors
-from king_phisher.server import rest_api
 from king_phisher.server import signals
 from king_phisher.server.server import KingPhisherRequestHandler, KingPhisherServer
 
@@ -114,7 +113,7 @@ def get_ssl_hostnames(config):
 		ssl_hostnames.append((hostname, ssl_certfile, ssl_keyfile))
 	return ssl_hostnames
 
-def server_from_config(config, handler_klass=None):
+def server_from_config(config, handler_klass=None, plugin_manager=None):
 	"""
 	Build a server from a provided configuration instance. If *handler_klass* is
 	specified, then the object must inherit from the corresponding
@@ -124,13 +123,12 @@ def server_from_config(config, handler_klass=None):
 	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 	:param handler_klass: Alternative handler class to use.
 	:type handler_klass: :py:class:`.KingPhisherRequestHandler`
+	:param plugin_manager: The server's plugin manager instance.
+	:type plugin_manager: :py:class:`~king_phisher.server.plugins.ServerPluginManager`
 	:return: A configured server instance.
 	:rtype: :py:class:`.KingPhisherServer`
 	"""
 	handler_klass = (handler_klass or KingPhisherRequestHandler)
-	# set config defaults
-	if not config.has_option('server.secret_id'):
-		config.set('server.secret_id', rest_api.generate_token())
 	addresses = get_bind_addresses(config)
 
 	if not len(addresses):
@@ -158,7 +156,7 @@ def server_from_config(config, handler_klass=None):
 		ssl_hostnames = get_ssl_hostnames(config)
 
 	try:
-		server = KingPhisherServer(config, handler_klass, addresses=addresses, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+		server = KingPhisherServer(config, plugin_manager, handler_klass, addresses=addresses, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
 		error_number, error_message = error.args
 		if error_number == 98:
@@ -169,11 +167,6 @@ def server_from_config(config, handler_klass=None):
 	for hostname, ssl_certfile, ssl_keyfile in ssl_hostnames:
 		logger.info("adding configuration for ssl hostname: {0} with cert: {1}".format(hostname, ssl_certfile))
 		server.add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
-
-	if not config.get_if_exists('server.rest_api.token'):
-		config.set('server.rest_api.token', rest_api.generate_token())
-	if config.get('server.rest_api.enabled'):
-		logger.info('rest api initialized with token: ' + config.get('server.rest_api.token'))
 
 	signals.server_initialized.send(server)
 	return server

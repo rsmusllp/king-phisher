@@ -31,7 +31,6 @@
 #
 
 import sys
-import textwrap
 import traceback
 
 from king_phisher import utilities
@@ -248,14 +247,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(klass.homepage))
 			label_homepage.set_property('tooltip-text', klass.homepage)
 			label_homepage.set_property('visible', True)
-		description = klass.description
-		if description[0] == '\n':
-			description = description[1:]
-		description = textwrap.dedent(description)
-		description = description.split('\n\n')
-		description = [chunk.replace('\n', ' ').strip() for chunk in description]
-		description = '\n\n'.join(description)
-		self.gobjects['label_plugin_info_description'].set_text(description)
+		self.gobjects['label_plugin_info_description'].set_text(klass.formatted_description)
 
 	def _set_plugin_info_error(self, name):
 		textview = self.gobjects['textview_plugin_info']

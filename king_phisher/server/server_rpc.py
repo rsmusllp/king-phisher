@@ -311,6 +311,26 @@ def rpc_campaign_message_new(handler, session, campaign_id, email_id, target_ema
 	session.add(message)
 	session.commit()
 
+@register_rpc('/campaign/stats', database_access=True, log_call=True)
+def rpc_campaign_stats(handler, session, campaign_id):
+	"""
+	Generate statistics regarding the specified campaign and return them in a
+	dictionary. The dictionary will contain the keys credentials,
+	credentials-unique, messages, visits, visits-unique. Values with unique in
+	the key are counted unique by the message id for which they are associated.
+
+	:param campaign_id: The unique ID of the campaign to generate statistics for.
+	:return: The statistics for the specified campaign.
+	:rtype: dict
+	"""
+	stats = {}
+	stats['credentials'] = session.query(db_models.Credential).filter_by(campaign_id=campaign_id).count()
+	stats['credentials-unique'] = session.query(db_models.Credential).filter_by(campaign_id=campaign_id).distinct(db_models.Credential.message_id).count()
+	stats['messages'] = session.query(db_models.Message).filter_by(campaign_id=campaign_id).count()
+	stats['visits'] = session.query(db_models.Visit).filter_by(campaign_id=campaign_id).count()
+	stats['visits-unique'] = session.query(db_models.Visit).filter_by(campaign_id=campaign_id).distinct(db_models.Visit.message_id).count()
+	return stats
+
 @register_rpc('/db/table/count', database_access=True)
 def rpc_database_count_rows(handler, session, table_name, query_filter=None):
 	"""
@@ -570,3 +590,22 @@ def rpc_logout(handler):
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
 	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], username))
 	signals.rpc_user_logged_out.send(handler, session=handler.rpc_session_id, name=username)
+
+@register_rpc('/plugins/list', log_call=True)
+def rpc_plugins_list(handler):
+	"""
+	Return information regarding enabled plugins in the server.
+
+	:return: A dictionary representing enabled plugins and their meta-data.
+	:rtype: dict
+	"""
+	plugin_manager = handler.server.plugin_manager
+	plugins = {}
+	for _, plugin in plugin_manager:
+		plugins[plugin.name] = {
+			'description': plugin.formatted_description,
+			'name': plugin.name,
+			'title': plugin.title,
+			'version': plugin.version
+		}
+	return plugins

@@ -88,13 +88,10 @@ def build_and_run(arguments, config, plugin_manager):
 		return sys.exit(os.EX_OK)
 
 	try:
-		king_phisher_server = build.server_from_config(config)
+		king_phisher_server = build.server_from_config(config, plugin_manager=plugin_manager)
 	except errors.KingPhisherError as error:
 		logger.critical(error.message)
 		return os.EX_SOFTWARE
-
-	# set the server instance for the plugin manager
-	plugin_manager.server = king_phisher_server
 
 	server_pid = os.getpid()
 	logger.info("server running in process: {0} main tid: 0x{1:x}".format(server_pid, threading.current_thread().ident))

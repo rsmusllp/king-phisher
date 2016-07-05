@@ -32,6 +32,7 @@
 
 import distutils.version
 import logging
+import textwrap
 import threading
 
 from king_phisher import errors
@@ -96,6 +97,37 @@ class PluginBaseMeta(type):
 	req_min_version = None
 	req_packages = None
 	@property
+	def compatibility(cls):
+		"""
+		A generator which yields tuples of compatibility information based on
+		the classes defined attributes. Each tuple contains three elements, a
+		string describing the requirement, the requirements value, and a boolean
+		indicating whether or not the requirement is met.
+
+		:return: Tuples of compatibility information.
+		"""
+		if cls.req_min_version is not None:
+			yield ('King Phisher Version', cls.req_min_version, StrictVersion(cls.req_min_version) <= StrictVersion(version.distutils_version))
+		if cls.req_packages is not None:
+			for name, available in cls.req_packages.items():
+				yield ('Required Package', name, available)
+
+	@property
+	def formatted_description(cls):
+		"""
+		Format the text description by removing leading whitespace caused by the
+		definition within the class.
+		"""
+		description = cls.description
+		if description[0] == '\n':
+			description = description[1:]
+		description = textwrap.dedent(description)
+		description = description.split('\n\n')
+		description = [chunk.replace('\n', ' ').strip() for chunk in
+			description]
+		return '\n\n'.join(description)
+
+	@property
 	def is_compatible(cls):
 		"""
 		Whether or not this plugin is compatible with this version of King
@@ -113,22 +145,6 @@ class PluginBaseMeta(type):
 			if not all(cls.req_packages.values()):
 				return False
 		return True
-
-	@property
-	def compatibility(cls):
-		"""
-		A generator which yields tuples of compatibility information based on
-		the classes defined attributes. Each tuple contains three elements, a
-		string describing the requirement, the requirements value, and a boolean
-		indicating whether or not the requirement is met.
-
-		:return: Tuples of compatibility information.
-		"""
-		if cls.req_min_version is not None:
-			yield ('King Phisher Version', cls.req_min_version, StrictVersion(cls.req_min_version) <= StrictVersion(version.distutils_version))
-		if cls.req_packages is not None:
-			for name, available in cls.req_packages.items():
-				yield ('Required Package', name, available)
 
 	@property
 	def name(cls):
