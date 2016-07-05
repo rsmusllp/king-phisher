@@ -772,6 +772,13 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			http_server.template_env = self.template_env
 			http_server.kp_shutdown = self.shutdown
 
+		if not config.has_option('server.secret_id'):
+			config.set('server.secret_id', rest_api.generate_token())
+		if not config.get_if_exists('server.rest_api.token'):
+			config.set('server.rest_api.token', rest_api.generate_token())
+		if config.get('server.rest_api.enabled'):
+			self.logger.info('rest api initialized with token: ' + config.get('server.rest_api.token'))
+
 		self.__geoip_db = geoip.init_database(config.get('server.geoip.database'))
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
