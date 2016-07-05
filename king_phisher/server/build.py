@@ -114,7 +114,7 @@ def get_ssl_hostnames(config):
 		ssl_hostnames.append((hostname, ssl_certfile, ssl_keyfile))
 	return ssl_hostnames
 
-def server_from_config(config, handler_klass=None):
+def server_from_config(config, handler_klass=None, plugin_manager=None):
 	"""
 	Build a server from a provided configuration instance. If *handler_klass* is
 	specified, then the object must inherit from the corresponding
@@ -124,6 +124,8 @@ def server_from_config(config, handler_klass=None):
 	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 	:param handler_klass: Alternative handler class to use.
 	:type handler_klass: :py:class:`.KingPhisherRequestHandler`
+	:param plugin_manager: The server's plugin manager instance.
+	:type plugin_manager: :py:class:`~king_phisher.server.plugins.ServerPluginManager`
 	:return: A configured server instance.
 	:rtype: :py:class:`.KingPhisherServer`
 	"""
@@ -158,7 +160,7 @@ def server_from_config(config, handler_klass=None):
 		ssl_hostnames = get_ssl_hostnames(config)
 
 	try:
-		server = KingPhisherServer(config, handler_klass, addresses=addresses, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+		server = KingPhisherServer(config, plugin_manager, handler_klass, addresses=addresses, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
 		error_number, error_message = error.args
 		if error_number == 98:

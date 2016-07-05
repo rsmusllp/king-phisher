@@ -40,6 +40,7 @@ import urllib
 from king_phisher import find
 from king_phisher.client import client_rpc
 from king_phisher.server import build
+from king_phisher.server import plugins
 from king_phisher.server import rest_api
 from king_phisher.server import server
 
@@ -149,7 +150,8 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 		config.set('server.rest_api.enabled', True)
 		config.set('server.rest_api.token', rest_api.generate_token())
 		self.config = config
-		self.server = build.server_from_config(config, handler_klass=KingPhisherRequestHandlerTest)
+		self.plugin_manager = plugins.ServerPluginManager(config)
+		self.server = build.server_from_config(config, handler_klass=KingPhisherRequestHandlerTest, plugin_manager=self.plugin_manager)
 		config.set('server.address.port', self.server.sub_servers[0].server_port)
 		self.assertIsInstance(self.server, server.KingPhisherServer)
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
