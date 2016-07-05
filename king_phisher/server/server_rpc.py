@@ -590,3 +590,22 @@ def rpc_logout(handler):
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
 	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], username))
 	signals.rpc_user_logged_out.send(handler, session=handler.rpc_session_id, name=username)
+
+@register_rpc('/plugins/list', log_call=True)
+def rpc_plugins_list(handler):
+	"""
+	Return information regarding enabled plugins in the server.
+
+	:return: A dictionary representing enabled plugins and their meta-data.
+	:rtype: dict
+	"""
+	plugin_manager = handler.server.plugin_manager
+	plugins = {}
+	for _, plugin in plugin_manager:
+		plugins[plugin.name] = {
+			'description': plugin.formatted_description,
+			'name': plugin.name,
+			'title': plugin.title,
+			'version': plugin.version
+		}
+	return plugins

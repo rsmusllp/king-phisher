@@ -31,6 +31,10 @@ General API
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_ping`
 
+.. rpc:function:: plugins/list()
+
+   :handler: :py:func:`~kking_phisher.server.server_rpc.rpc_plugins_list`
+
 .. rpc:function:: shutdown()
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_shutdown`

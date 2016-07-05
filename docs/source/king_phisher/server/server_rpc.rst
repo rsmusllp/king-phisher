@@ -67,6 +67,8 @@ Functions
 
 .. autofunction:: king_phisher.server.server_rpc.rpc_ping
 
+.. autofunction:: king_phisher.server.server_rpc.rpc_plugins_list
+
 .. autofunction:: king_phisher.server.server_rpc.rpc_shutdown
 
 .. autofunction:: king_phisher.server.server_rpc.rpc_version
