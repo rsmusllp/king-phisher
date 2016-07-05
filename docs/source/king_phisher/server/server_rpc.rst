@@ -37,6 +37,8 @@ Functions
 
 .. autofunction:: king_phisher.server.server_rpc.rpc_campaign_new
 
+.. autofunction:: king_phisher.server.server_rpc.rpc_campaign_stats
+
 .. autofunction:: king_phisher.server.server_rpc.rpc_config_get
 
 .. autofunction:: king_phisher.server.server_rpc.rpc_config_set

@@ -68,6 +68,10 @@ Campaign API
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_new`
 
+.. rpc:function:: campaign/stats(campaign_id)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_campaign_stats`
+
 .. _rpc-api-configuration-api-label:
 
 Configuration API
