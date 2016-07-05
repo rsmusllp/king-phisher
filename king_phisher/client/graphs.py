@@ -226,6 +226,7 @@ class GraphBase(object):
 		specified color does not exist, default will be returned. The underlying
 		logic for this function is provided by
 		:py:func:`~.gui_utilities.gtk_style_context_get_color`.
+
 		:param str color_name: The style name of the color.
 		:param default: The default color to return if the specified one was not found.
 		:return: The desired color if it was found.
@@ -238,6 +239,7 @@ class GraphBase(object):
 	def make_window(self):
 		"""
 		Create a window from the figure manager.
+
 		:return: The graph in a new, dedicated window.
 		:rtype: :py:class:`Gtk.Window`
 		"""
@@ -285,6 +287,7 @@ class GraphBase(object):
 		"""
 		Attempt to resize the canvas. Regardless of the parameters the canvas
 		will never be resized to be smaller than :py:attr:`.minimum_size`.
+
 		:param int width: The desired width of the canvas.
 		:param int height: The desired height of the canvas.
 		"""
@@ -298,9 +301,6 @@ class CampaignGraph(GraphBase):
 	Graph format used for the graphs generated in the dashboard and
 	in the create graphs tab.
 	"""
-	def __init__(self, *args, **kwargs):
-		super(CampaignGraph, self).__init__(*args, **kwargs)
-
 	def _load_graph(self, info_cache):
 		raise NotImplementedError()
 
@@ -312,6 +312,7 @@ class CampaignGraph(GraphBase):
 		"""
 		Refresh the graph data by retrieving the information from the
 		remote server.
+
 		:param dict info_cache: An optional cache of data tables.
 		:param stop_event: An optional object indicating that the operation should stop.
 		:type stop_event: :py:class:`threading.Event`

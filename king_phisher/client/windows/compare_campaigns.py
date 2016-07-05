@@ -40,12 +40,6 @@ from king_phisher.client.graphs import CampaignCompGraph
 from gi.repository import Gtk
 from gi.repository import Gdk
 
-
-if its.py_v2:
-	import cgi as html
-else:
-	import html
-
 class CampaignCompWindow(gui_utilities.GladeGObject):
 	"""
 	The window which allows the user to select campaigns and compare the data
@@ -59,7 +53,6 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 			'box_stack',
 			'stack_1'
 		),
-
 	)
 	top_gobject = 'window'
 	def __init__(self, *args, **kwargs):
@@ -136,12 +129,11 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		self.signal_ready = False
 		if len(self.campaigns_enabled) > 1:
 			self.signal_ready = True
-
-
 		self.init_graph()
 
 	def init_graph(self):
-		"""Initialize the graph instance of campaign comparison upon a
+		"""
+		Initialize the graph instance of campaign comparison upon a
 		change in the number and data of campaigns toggled.
 		"""
 		campaigns = list()

@@ -8,7 +8,7 @@ client application.
    :maxdepth: 2
    :titlesonly:
 
+   compare_campaigns.rst
    main.rst
    plugin_manager.rst
    rpc_terminal.rst
-   compare_campaigns.rst
