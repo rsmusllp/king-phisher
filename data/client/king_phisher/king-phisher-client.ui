@@ -119,7 +119,7 @@ Spencer McIntyre</property>
   <object class="GtkWindow" id="CampaignCompWindow">
     <property name="can_focus">False</property>
     <property name="default_width">750</property>
-    <property name="default_height">350</property>
+    <property name="default_height">500</property>
     <child>
       <object class="GtkBox" id="box1">
         <property name="visible">True</property>
@@ -145,7 +145,7 @@ Spencer McIntyre</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkBox" id="CampaignCompWindow.box_stack">
+              <object class="GtkBox" id="CampaignCompWindow.box_in_stack">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>

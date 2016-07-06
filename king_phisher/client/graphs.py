@@ -798,7 +798,6 @@ class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 			return
 		ctr = collections.Counter()
 		ctr.update(self._check_complexity(password) for password in passwords)
-
 		self.graph_pie((ctr[True], ctr[False]), autopct='%1.1f%%', legend_labels=('Complex', 'Not Complex'))
 		return
 
@@ -817,16 +816,12 @@ class CampaignCompGraph(GraphBase):
 	""" Display selected campaigns data by order of campaign start date."""
 	graph_title = 'Campaign Comparison Graph'
 	name_human = 'Graph'
-	def _load_graph(self, data):
-		self.data = data
+
+	def config_axes(self, ax, ax2):
 		# define the necessary colors
 		color_bg = self.get_color('bg', ColorHexCode.WHITE)
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		color_line_bg = self.get_color('line_bg', ColorHexCode.WHITE)
-
-		ax = self.axes[0]
-		self.axes.append(ax.twinx())
-		ax2 = self.axes[1]
 		ax.tick_params(
 			axis='both',
 			which='both',
@@ -853,18 +848,26 @@ class CampaignCompGraph(GraphBase):
 		self._ax_set_spine_color(ax, color_bg)
 		self._ax_set_spine_color(ax2, color_bg)
 		ax2.get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
-		self.refresh_selection(data)
 		ax.tick_params(axis='x', labelsize=10, pad=5)
-		pyplot.tight_layout()
+
+	def load_graph(self):
+		"""Set up the axis, titles, and layouts while adjusting for tight fit"""
+		ax = self.axes[0]
+		self.axes.append(ax.twinx())
+		ax2 = self.axes[1]
+		self.config_axes(ax, ax2)
 		return self.canvas
 
-	def refresh_selection(self, data):
+	def refresh_selection(self, id_list):
 		"""
 		Different refresh function which takes the data from the
 		toggled campaigns.
 		"""
 		ax = self.axes[0]
 		ax2 = self.axes[1]
+		ax.clear()
+		ax2.clear()
+		self.config_axes(ax, ax2)
 		x_labels = list()
 		x_times = list()
 		messages_count = list()
@@ -873,12 +876,24 @@ class CampaignCompGraph(GraphBase):
 		unique_visits_percent = list()
 		unique_creds_percent = list()
 		time_to_camp = {}
+		name_to_id = {}
 		x = 1
 		rpc = self.rpc
-		for campaign in data:
-			created_ts = utilities.datetime_utc_to_local(campaign.created)
+		for _id in id_list:
+			campaign = rpc('/db/table/get', 'campaigns', _id)
+			created_ts = utilities.datetime_utc_to_local(campaign['created'])
 			created_ts = utilities.format_datetime(created_ts)
-			campaign_stats = rpc('/campaign/stats', str(campaign.id))
+			time_to_camp[created_ts] = campaign['name']
+			name_to_id[campaign['name']] = _id
+			x_times.append(created_ts)
+			x += 1
+		x_times = sorted(x_times)
+		for i in range(0, len(x_times)):
+			x_labels.append(time_to_camp[x_times[i]])
+		x = 1
+		for name in x_labels:
+			_id = name_to_id[name]
+			campaign_stats = rpc('/campaign/stats', _id)
 			messages_count.append(campaign_stats['messages'])
 			visits_percent.append(campaign_stats['visits'])
 			unique_visits_percent.append(campaign_stats['visits-unique'])
@@ -889,13 +904,7 @@ class CampaignCompGraph(GraphBase):
 				unique_visits_percent[x - 1] = unique_visits_percent[x - 1] / float(messages_count[x - 1]) * 100
 				creds_percent[x - 1] = creds_percent[x - 1] / float(messages_count[x - 1]) * 100
 				unique_creds_percent[x - 1] = unique_creds_percent[x - 1] / float(messages_count[x - 1]) * 100
-			time_to_camp[created_ts] = campaign.name
-			x_times.append(created_ts)
 			x += 1
-		x_times = sorted(x_times)
-		for i in range(0, len(x_times)):
-			x_labels.append(time_to_camp[x_times[i]])
-		ax.set_xticks(range(x - 1))
 		ax.grid(True)
 		ax.set_xticks(range(x))
 		ax.set_xticklabels(x_labels)
@@ -906,20 +915,19 @@ class CampaignCompGraph(GraphBase):
 		unique_visits_line_color = visits_line_color
 		unique_creds_line_color = creds_line_color
 		messages_color = '#046D8B'
-
-		ax2.plot(messages_count, label='Messages', color=messages_color, lw=3)
-		ax.plot(visits_percent, label='Visits', color=visits_line_color, lw=3)
-		ax.plot(unique_visits_percent, label=' Unique Visits', color=unique_visits_line_color, lw=3, ls='dashed')
-		ax.plot(creds_percent, label='Credentials', color=creds_line_color, lw=3)
+		ax2.plot(messages_count, label='Messages', color=messages_color, lw=3),
+		ax.plot(visits_percent, label='Visits', color=visits_line_color, lw=3),
+		ax.plot(unique_visits_percent, label=' Unique Visits', color=unique_visits_line_color, lw=3, ls='dashed'),
+		ax.plot(creds_percent, label='Credentials', color=creds_line_color, lw=3),
 		ax.plot(unique_creds_percent, label='Unique Credentials', color=unique_creds_line_color, lw=3, ls='dashed')
 		ax.set_ylim((0, 100))
-
+		ax2.set_ylim(bottom=0)
+		self.canvas.set_size_request(500 + 75 * (len(x_labels) - 1), 500)
 		legend_labels = ['Messages', 'Unique Visits', 'Visits', 'Credentials', 'Unique Credentials']
 		style = ['solid', 'dotted', 'solid', 'solid', 'dotted']
 		colors = [messages_color, unique_visits_line_color, visits_line_color, creds_line_color, unique_creds_line_color]
 		self.add_legend_patch(tuple(zip(colors, style, legend_labels)))
-
-		self.canvas.set_size_request(500 + 75 * (len(x_labels) - 1), 500)
+		pyplot.tight_layout()
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
 		"""

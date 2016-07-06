@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/client/windows/rpc_terminal.py
+#  king_phisher/client/windows/compare_campaigns.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,15 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from king_phisher import its
 from king_phisher import utilities
-from king_phisher.constants import ColorHexCode
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
 from king_phisher.client.graphs import CampaignCompGraph
 
 from gi.repository import Gtk
-from gi.repository import Gdk
 
 class CampaignCompWindow(gui_utilities.GladeGObject):
 	"""
@@ -50,15 +47,16 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 			'treeview_campaigns',
 			'scrolledwindow',
 			'stackswitcher',
-			'box_stack',
+			'box_in_stack',
 			'stack_1'
 		),
 	)
 	top_gobject = 'window'
 	def __init__(self, *args, **kwargs):
 		super(CampaignCompWindow, self).__init__(*args, **kwargs)
+		self.comp_graph = CampaignCompGraph(self.application, style_context=self.application.style_context)
+		self.gobjects['scrolledwindow'].add(self.comp_graph.load_graph())
 		treeview = self.gobjects['treeview_campaigns']
-		self.campaigns_enabled = list()
 		tvm = managers.TreeViewManager(
 			treeview,
 			cb_refresh=self.load_campaigns
@@ -67,30 +65,25 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		toggle_renderer.connect('toggled', self.signal_renderer_toggled)
 		stack_switcher = self.gobjects['stackswitcher']
 		stack_switcher.connect('button-release-event', self.show_options)
-		self.box_stack = self.gobjects['box_stack']
+		self.box_stack = self.gobjects['box_in_stack']
 		self.stack = self.gobjects['stack_1']
-		self.signal_ready = False
+		self.prev_child = self.stack.get_visible_child()
 		b = Gtk.CellRendererText()
 		tvm.set_column_titles(
 			('Compare', 'Name', 'Company', 'Type', 'Created By', 'Creation Date', 'Expiration'),
 			column_offset=1,
 			renderers=(toggle_renderer, b, b, b, b, b, b)
 		)
-		self._model = Gtk.ListStore(str, bool, str, str, str, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
+		self._model = Gtk.ListStore(str, bool, str, str, str, str, str, str)
 		self._model.set_sort_column_id(2, Gtk.SortType.DESCENDING)
 		treeview.set_model(self._model)
 		self.load_campaigns()
-		self.window.resize(750, 500)
 		self.window.show_all()
-
 
 	def load_campaigns(self):
 		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
 		store = self._model
 		store.clear()
-		style_context = self.window.get_style_context()
-		bg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_bg', default=ColorHexCode.WHITE)
-		fg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_fg', default=ColorHexCode.BLACK)
 		for campaign in self.application.rpc.remote_table('campaigns'):
 			company = campaign.company
 			if company:
@@ -112,24 +105,14 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 				campaign_type,
 				campaign.user_id,
 				created_ts,
-				expiration_ts,
-				(bg_color),
-				(fg_color),
-				(html.escape(campaign.description, quote=True) if campaign.description else None)
+				expiration_ts
 			))
 
 	def signal_renderer_toggled(self, _, path):
-		name = self._model[path][2]  # pylint: disable=unsubscriptable-object
 		if self._model[path][1]:  # pylint: disable=unsubscriptable-object
 			self._model[path][1] = False  # pylint: disable=unsubscriptable-object
-			self.campaigns_enabled.remove(name)
 		else:
 			self._model[path][1] = True  # pylint: disable=unsubscriptable-object
-			self.campaigns_enabled.append(name)
-		self.signal_ready = False
-		if len(self.campaigns_enabled) > 1:
-			self.signal_ready = True
-		self.init_graph()
 
 	def init_graph(self):
 		"""
@@ -137,19 +120,17 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		change in the number and data of campaigns toggled.
 		"""
 		campaigns = list()
-		for campaign in self.application.rpc.remote_table('campaigns'):
-			if campaign.name in self.campaigns_enabled:
-				campaigns.append(campaign)
-		comp_graph = CampaignCompGraph(self.application, style_context=self.application.style_context)
-		for i in self.gobjects['scrolledwindow']:
-			self.gobjects['scrolledwindow'].remove(i)
-		self.gobjects['scrolledwindow'].add(comp_graph._load_graph(campaigns))
-		self.window.show_all()
+		for campaign in self._model:  # pylint: disable=not-an-iterable
+			if campaign[1]:
+				campaigns.append(campaign[0])
+		self.comp_graph.refresh_selection(campaigns)
 
 	def show_options(self, _, path):
 		"""
 		Disables the user from rendering a graph with only one campaign
 		selected.
 		"""
-		if not self.signal_ready:
-			self.stack.set_visible_child(self.box_stack)
+		view = self.stack.get_visible_child()
+		if view == self.gobjects['scrolledwindow'] and view != self.prev_child:
+			self.init_graph()
+		self.prev_child = view
