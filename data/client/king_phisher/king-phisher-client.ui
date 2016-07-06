@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0
+<!-- Generated with glade 3.20.0 
 
 Copyright (c) 2013-2016, SecureState LLC
 All rights reserved.
@@ -126,6 +126,7 @@ Spencer McIntyre</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
+        <signal name="button-release-event" handler="signal_stackswitcher_button_release" swapped="no"/>
         <child>
           <object class="GtkStackSwitcher" id="CampaignCompWindow.stackswitcher">
             <property name="visible">True</property>
@@ -133,7 +134,7 @@ Spencer McIntyre</property>
             <property name="halign">center</property>
             <property name="margin_top">3</property>
             <property name="margin_bottom">3</property>
-            <property name="stack">CampaignCompWindow.stack_1</property>
+            <property name="stack">CampaignCompWindow.stack_main</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -142,16 +143,16 @@ Spencer McIntyre</property>
           </packing>
         </child>
         <child>
-          <object class="GtkStack" id="CampaignCompWindow.stack_1">
+          <object class="GtkStack" id="CampaignCompWindow.stack_main">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkBox" id="CampaignCompWindow.box_in_stack">
+              <object class="GtkBox" id="CampaignCompWindow.box_select">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkScrolledWindow" id="scrolledwindow5">
+                  <object class="GtkScrolledWindow" id="CampaignCompWindow.scrolledwindow_select">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="shadow_type">in</property>
@@ -173,23 +174,38 @@ Spencer McIntyre</property>
                 </child>
               </object>
               <packing>
-                <property name="name">Compare</property>
-                <property name="title" translatable="yes">Compare</property>
+                <property name="name">Select</property>
+                <property name="title" translatable="yes">Select</property>
               </packing>
             </child>
             <child>
-              <object class="GtkScrolledWindow" id="CampaignCompWindow.scrolledwindow">
+              <object class="GtkBox" id="CampaignCompWindow.box_compare">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="vscrollbar_policy">never</property>
-                <property name="shadow_type">in</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkScrolledWindow" id="CampaignCompWindow.scrolledwindow_compare">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="vscrollbar_policy">never</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <placeholder/>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
                 <child>
                   <placeholder/>
                 </child>
               </object>
               <packing>
-                <property name="name">Graph</property>
-                <property name="title" translatable="yes">Graph</property>
+                <property name="name">Compare</property>
+                <property name="title" translatable="yes">Compare</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -2324,6 +2340,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">LoginDialogBase.button_cancel</action-widget>
       <action-widget response="-10">LoginDialogBase.button_connect</action-widget>
     </action-widgets>
+    <style>
+      <class name="background-add"/>
+    </style>
   </object>
   <object class="GtkBox" id="MailSenderEditTab">
     <property name="width_request">400</property>
@@ -3068,6 +3087,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">LoginDialog.button_cancel</action-widget>
       <action-widget response="-10">LoginDialog.button_connect</action-widget>
     </action-widgets>
+    <style>
+      <class name="background-add"/>
+    </style>
   </object>
   <object class="GtkListStore" id="SMSCarriers">
     <columns>

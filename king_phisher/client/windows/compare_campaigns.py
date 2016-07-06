@@ -45,17 +45,21 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
 			'treeview_campaigns',
-			'scrolledwindow',
+			'scrolledwindow_compare',
+			'scrolledwindow_select',
 			'stackswitcher',
-			'box_in_stack',
-			'stack_1'
+			'box_compare',
+			'box_select',
+			'stack_main'
 		),
 	)
 	top_gobject = 'window'
 	def __init__(self, *args, **kwargs):
 		super(CampaignCompWindow, self).__init__(*args, **kwargs)
 		self.comp_graph = CampaignCompGraph(self.application, style_context=self.application.style_context)
-		self.gobjects['scrolledwindow'].add(self.comp_graph.canvas)
+		self.gobjects['scrolledwindow_compare'].add(self.comp_graph.canvas)
+		self.gobjects['box_compare'].pack_end(self.comp_graph.navigation_toolbar, False, False, 0)
+		self.comp_graph.navigation_toolbar.hide()
 		treeview = self.gobjects['treeview_campaigns']
 		tvm = managers.TreeViewManager(
 			treeview,
@@ -63,10 +67,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		)
 		toggle_renderer = Gtk.CellRendererToggle()
 		toggle_renderer.connect('toggled', self.signal_renderer_toggled)
-		stack_switcher = self.gobjects['stackswitcher']
-		stack_switcher.connect('button-release-event', self.show_options)
-		self.box_stack = self.gobjects['box_in_stack']
-		self.stack = self.gobjects['stack_1']
+		self.stack = self.gobjects['stack_main']
 		self.prev_child = self.stack.get_visible_child()
 		b = Gtk.CellRendererText()
 		tvm.set_column_titles(
@@ -78,7 +79,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		self._model.set_sort_column_id(2, Gtk.SortType.DESCENDING)
 		treeview.set_model(self._model)
 		self.load_campaigns()
-		self.window.show_all()
+		self.window.show()
 
 	def load_campaigns(self):
 		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
@@ -112,13 +113,9 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		campaign = self._model[path]  # pylint: disable=unsubscriptable-object
 		campaign[1] = not campaign[1]
 
-	def show_options(self, _, path):
-		"""
-		Disables the user from rendering a graph with only one campaign
-		selected.
-		"""
+	def signal_stackswitcher_button_release(self, widget, event):
 		view = self.stack.get_visible_child()
-		if view == self.gobjects['scrolledwindow'] and view != self.prev_child:
+		if view == self.gobjects['box_compare'] and self.prev_child == self.gobjects['box_select']:
 			campaigns = [campaign for campaign in self._model if campaign[1]]  # pylint: disable=not-an-iterable
 			campaigns = sorted(campaigns, key=lambda campaign: campaign[6])
 			campaigns = [campaign[0] for campaign in campaigns]

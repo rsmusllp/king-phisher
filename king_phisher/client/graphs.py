@@ -196,16 +196,7 @@ class GraphBase(object):
 		if self._legend is not None:
 			self._legend.remove()
 			self._legend = None
-		if fontsize is None:
-			scale = self.markersize_scale
-			if scale < 5:
-				fontsize = 'xx-small'
-			elif scale < 7:
-				fontsize = 'x-small'
-			elif scale < 9:
-				fontsize = 'small'
-			else:
-				fontsize = 'medium'
+		fontsize = fontsize or self.fontsize_scale
 		legend_bbox = self.figure.legend(
 			tuple(patches.Patch(color=patch_color) for patch_color, _ in legend_rows),
 			tuple(label for _, label in legend_rows),
@@ -252,6 +243,19 @@ class GraphBase(object):
 		window.set_transient_for(self.application.get_active_window())
 		window.set_title(self.graph_title)
 		return window
+
+	@property
+	def fontsize_scale(self):
+		scale = self.markersize_scale
+		if scale < 5:
+			fontsize = 'xx-small'
+		elif scale < 7:
+			fontsize = 'x-small'
+		elif scale < 9:
+			fontsize = 'small'
+		else:
+			fontsize = 'medium'
+		return fontsize
 
 	@property
 	def markersize_scale(self):
@@ -822,6 +826,7 @@ class CampaignCompGraph(GraphBase):
 		self.axes.append(ax.twinx())
 		ax2 = self.axes[1]
 		self._config_axes(ax, ax2)
+		self._campaigns = []
 
 	def _config_axes(self, ax, ax2):
 		# define the necessary colors
@@ -844,13 +849,13 @@ class CampaignCompGraph(GraphBase):
 		)
 		ax.set_axis_bgcolor(color_line_bg)
 		ax2.set_axis_bgcolor(color_line_bg)
-		title = pyplot.title('Campaign Comparison', color=color_fg, size=15, loc='left')
+		title = pyplot.title('Campaign Comparison', color=color_fg, size=self.markersize_scale * 1.75, loc='left')
 		title.set_position([0.075, 1.05])
-		ax.set_ylabel('Percent Visits/Credentials', color=color_fg, size=12.5)
-		ax.set_xlabel('Campaign Name', color=color_fg, size=12.5)
+		ax.set_ylabel('Percent Visits/Credentials', color=color_fg, size=self.markersize_scale * 1.5)
+		ax.set_xlabel('Campaign Name', color=color_fg, size=self.markersize_scale * 1.5)
 		self._ax_hide_ticks(ax)
 		self._ax_hide_ticks(ax2)
-		ax2.set_ylabel('Messages', color=color_fg, size=12.5, rotation=270, labelpad=20)
+		ax2.set_ylabel('Messages', color=color_fg, size=self.markersize_scale * 1.25, rotation=270, labelpad=20)
 		self._ax_set_spine_color(ax, color_bg)
 		self._ax_set_spine_color(ax2, color_bg)
 		ax2.get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
@@ -859,7 +864,8 @@ class CampaignCompGraph(GraphBase):
 	def load_graph(self, campaigns):
 		"""
 		Load the information to compare the specified and paint it to the
-		canvas.
+		canvas. Campaigns are graphed on the X-axis in the order that they are
+		provided. No sorting of campaigns is done by this method.
 
 		:param tuple campaigns: A tuple containing campaign IDs to compare.
 		"""
@@ -871,15 +877,19 @@ class CampaignCompGraph(GraphBase):
 
 		rpc = self.rpc
 		calc = lambda stats, key: (0 if stats['messages'] == 0 else (float(stats[key]) / stats['messages']) * 100)
+		ellipsize = lambda text: (text if len(text) < 20 else text[:17] + '...')
 		visits_line_color = self.get_color('line_fg', ColorHexCode.RED)
 		creds_line_color = self.get_color('map_marker1', ColorHexCode.BLACK)
 		messages_color = '#046D8B'
 
 		ax.grid(True)
 		ax.set_xticks(range(len(campaigns)))
-		ax.set_xticklabels([rpc.remote_table_row('campaigns', cid).name for cid in campaigns])
+		ax.set_xticklabels([ellipsize(rpc.remote_table_row('campaigns', cid).name) for cid in campaigns])
+		for tick in ax.xaxis.get_major_ticks():
+			tick.label.set_fontsize(self.markersize_scale * 1.25)
 		labels = ax.get_xticklabels()
 		pyplot.setp(labels, rotation=15)
+		self._campaigns = campaigns
 
 		campaigns = [rpc('/campaign/stats', cid) for cid in campaigns]
 		ax2.plot([stats['messages'] for stats in campaigns], label='Messages', color=messages_color, lw=3)
@@ -889,11 +899,11 @@ class CampaignCompGraph(GraphBase):
 		ax.plot([calc(stats, 'credentials-unique') for stats in campaigns], label='Unique Credentials', color=creds_line_color, lw=3, ls='dashed')
 		ax.set_ylim((0, 100))
 		ax2.set_ylim(bottom=0)
-		self.canvas.set_size_request(500 + 75 * (len(campaigns) - 1), 500)
+		self.canvas.set_size_request(500 + 50 * (len(campaigns) - 1), 500)
 		self.add_legend_patch(tuple(zip(
-			[messages_color, visits_line_color, visits_line_color, creds_line_color, creds_line_color],
-			['solid', 'dotted', 'solid', 'solid', 'dotted'],
-			['Messages', 'Unique Visits', 'Visits', 'Credentials', 'Unique Credentials']
+			[visits_line_color, visits_line_color, creds_line_color, creds_line_color, messages_color],
+			['dotted', 'solid', 'solid', 'dotted', 'solid'],
+			['Unique Visits', 'Visits', 'Credentials', 'Unique Credentials', 'Messages']
 		)))
 		pyplot.tight_layout()
 
@@ -902,15 +912,16 @@ class CampaignCompGraph(GraphBase):
 			self._legend.remove()
 			self._legend = None
 		legend_bbox = self.figure.legend(
-			tuple(lines.Line2D([], [], color=patch_color, lw=5, ls=style) for patch_color, style, _ in legend_rows),
+			tuple(lines.Line2D([], [], color=patch_color, lw=3, ls=style) for patch_color, style, _ in legend_rows),
 			tuple(label for _, _, label in legend_rows),
-			borderaxespad=1.25,
-			fontsize='x-small',
+			borderaxespad=1,
+			columnspacing=1.5,
+			fontsize=self.fontsize_scale,
 			ncol=3,
 			frameon=True,
-			handlelength=1.5,
-			handletextpad=1,
-			labelspacing=0.75,
+			handlelength=2,
+			handletextpad=0.5,
+			labelspacing=0.5,
 			loc='upper right'
 		)
 		legend_bbox.get_frame().set_facecolor(self.get_color('line_bg', ColorHexCode.GRAY))
@@ -919,9 +930,5 @@ class CampaignCompGraph(GraphBase):
 		legend_bbox.legendPatch.set_linewidth(0)
 		self._legend = legend_bbox
 
-	def signal_activate_popup_refresh(self, event):
-		"""
-		Overridden method of GraphBase, prevents error upon refresh by
-		adding the argument for campaign data.
-		"""
-		self.refresh_selection(self.data)
+	def refresh(self):
+		self.load_graph(self._campaigns)
