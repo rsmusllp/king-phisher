@@ -55,7 +55,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 	def __init__(self, *args, **kwargs):
 		super(CampaignCompWindow, self).__init__(*args, **kwargs)
 		self.comp_graph = CampaignCompGraph(self.application, style_context=self.application.style_context)
-		self.gobjects['scrolledwindow'].add(self.comp_graph.load_graph())
+		self.gobjects['scrolledwindow'].add(self.comp_graph.canvas)
 		treeview = self.gobjects['treeview_campaigns']
 		tvm = managers.TreeViewManager(
 			treeview,
@@ -109,21 +109,8 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 			))
 
 	def signal_renderer_toggled(self, _, path):
-		if self._model[path][1]:  # pylint: disable=unsubscriptable-object
-			self._model[path][1] = False  # pylint: disable=unsubscriptable-object
-		else:
-			self._model[path][1] = True  # pylint: disable=unsubscriptable-object
-
-	def init_graph(self):
-		"""
-		Initialize the graph instance of campaign comparison upon a
-		change in the number and data of campaigns toggled.
-		"""
-		campaigns = list()
-		for campaign in self._model:  # pylint: disable=not-an-iterable
-			if campaign[1]:
-				campaigns.append(campaign[0])
-		self.comp_graph.refresh_selection(campaigns)
+		campaign = self._model[path]  # pylint: disable=unsubscriptable-object
+		campaign[1] = not campaign[1]
 
 	def show_options(self, _, path):
 		"""
@@ -132,5 +119,8 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		"""
 		view = self.stack.get_visible_child()
 		if view == self.gobjects['scrolledwindow'] and view != self.prev_child:
-			self.init_graph()
+			campaigns = [campaign for campaign in self._model if campaign[1]]  # pylint: disable=not-an-iterable
+			campaigns = sorted(campaigns, key=lambda campaign: campaign[6])
+			campaigns = [campaign[0] for campaign in campaigns]
+			self.comp_graph.load_graph(campaigns)
 		self.prev_child = view
