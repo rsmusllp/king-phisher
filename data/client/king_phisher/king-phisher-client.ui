@@ -36,12 +36,12 @@ Spencer McIntyre
 <interface>
   <requires lib="gtk+" version="3.10"/>
   <requires lib="gtksourceview" version="3.0"/>
-  <!-- interface-css-provider-path style/theme.css -->
+  <!-- interface-css-provider-path style/theme.v2.css -->
   <!-- interface-license-type bsd3c -->
   <!-- interface-name King Phisher -->
   <!-- interface-description Social Engineering Phishing Toolkit -->
   <!-- interface-copyright 2013-2016, SecureState LLC -->
-  <!-- interface-authors Spencer McIntyre\nJeff McCutchan\nBrandan Geise -->
+  <!-- interface-authors Erik Daguerre\nBrandan Geise\nJeff McCutchan\nSpencer McIntyre -->
   <object class="GtkAboutDialog" id="AboutDialog">
     <property name="width_request">550</property>
     <property name="can_focus">False</property>
@@ -1103,7 +1103,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
                 <property name="tooltip_text" translatable="yes">Receive SMS messages for events regarding this campaign.</property>
-                <property name="xalign">0</property>
+                <property name="halign">start</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -1119,7 +1119,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
                 <property name="tooltip_text" translatable="yes">Deny HTTP requests after credentials have been received from the client.</property>
-                <property name="xalign">0</property>
+                <property name="halign">start</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -1198,7 +1198,6 @@ Spencer McIntyre</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
                     <property name="draw_indicator">True</property>
                     <property name="group">CampaignAssistant.radiobutton_company_none</property>
                     <signal name="toggled" handler="signal_radiobutton_toggled" swapped="no"/>
@@ -1215,7 +1214,6 @@ Spencer McIntyre</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
                     <property name="draw_indicator">True</property>
                     <property name="group">CampaignAssistant.radiobutton_company_none</property>
                     <signal name="toggled" handler="signal_radiobutton_toggled" swapped="no"/>
@@ -1232,7 +1230,6 @@ Spencer McIntyre</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
                     <property name="active">True</property>
                     <property name="draw_indicator">True</property>
                     <signal name="toggled" handler="signal_radiobutton_toggled" swapped="no"/>
@@ -1415,7 +1412,7 @@ Spencer McIntyre</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">False</property>
-            <property name="xalign">0</property>
+            <property name="halign">start</property>
             <property name="draw_indicator">True</property>
             <signal name="toggled" handler="signal_checkbutton_expire_campaign_toggled" swapped="no"/>
           </object>
@@ -1834,7 +1831,7 @@ Spencer McIntyre</property>
       <object class="GtkEntry" id="CompanyEditorGrid.entry_company_description">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="tooltip_text" translatable="yes">A description of the new company.</property>
+        <property name="tooltip_text" translatable="yes">A short description of the company.</property>
         <property name="hexpand">True</property>
         <property name="placeholder_text" translatable="yes">company description (OPTIONAL)</property>
       </object>
@@ -1847,7 +1844,7 @@ Spencer McIntyre</property>
       <object class="GtkEntry" id="CompanyEditorGrid.entry_company_name">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="tooltip_text" translatable="yes">The name of the new company to create.</property>
+        <property name="tooltip_text" translatable="yes">The name of the company.</property>
         <property name="hexpand">True</property>
         <property name="placeholder_text" translatable="yes">company name (REQUIRED)</property>
       </object>
@@ -1860,7 +1857,7 @@ Spencer McIntyre</property>
       <object class="GtkComboBox" id="CompanyEditorGrid.combobox_company_industry">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="tooltip_text" translatable="yes">The industry in which the new company operates.</property>
+        <property name="tooltip_text" translatable="yes">The industry in which the company operates.</property>
         <property name="hexpand">True</property>
         <property name="has_entry">True</property>
         <property name="entry_text_column">1</property>
@@ -3734,7 +3731,7 @@ Spencer McIntyre</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="tooltip_text" translatable="yes">Receive SMS messages for events regarding this campaign.</property>
-                    <property name="xalign">0</property>
+                    <property name="halign">start</property>
                     <property name="draw_indicator">True</property>
                     <signal name="toggled" handler="signal_toggle_alert_subscribe" swapped="no"/>
                   </object>
@@ -3751,7 +3748,7 @@ Spencer McIntyre</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="tooltip_text" translatable="yes">Deny HTTP requests after credentials have been received from the client.</property>
-                    <property name="xalign">0</property>
+                    <property name="halign">start</property>
                     <property name="draw_indicator">True</property>
                     <signal name="toggled" handler="signal_toggle_reject_after_credentials" swapped="no"/>
                   </object>
@@ -3964,7 +3961,8 @@ Spencer McIntyre</property>
                       <object class="GtkLabel" id="label37">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xpad">5</property>
+                        <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
                         <property name="label" translatable="yes">SFTP Client</property>
                       </object>
                       <packing>
@@ -4001,7 +3999,6 @@ Spencer McIntyre</property>
                     <property name="receives_default">False</property>
                     <property name="tooltip_text" translatable="yes">Remove metadata in Office document attachments such as docx, pptx, and xlsx files.</property>
                     <property name="halign">end</property>
-                    <property name="xalign">0</property>
                     <property name="draw_indicator">True</property>
                   </object>
                   <packing>
@@ -5284,7 +5281,7 @@ your communications. Please contact the system administrator.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="xalign">0</property>
+                <property name="halign">start</property>
                 <property name="draw_indicator">True</property>
                 <signal name="toggled" handler="signal_checkbutton_toggled" swapped="no"/>
               </object>
@@ -5840,7 +5837,6 @@ your communications. Please contact the system administrator.</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">False</property>
                                         <property name="tooltip_text" translatable="yes">Send messages to all targets specified in a CSV file.</property>
-                                        <property name="xalign">0</property>
                                         <property name="draw_indicator">True</property>
                                         <property name="group">MailSenderConfigurationTab.radiobutton_target_type_single</property>
                                         <signal name="toggled" handler="signal_radiobutton_toggled_target_type" swapped="no"/>
@@ -5858,7 +5854,6 @@ your communications. Please contact the system administrator.</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">False</property>
                                         <property name="tooltip_text" translatable="yes">Send a single message to a specific recipient.</property>
-                                        <property name="xalign">0</property>
                                         <property name="active">True</property>
                                         <property name="draw_indicator">True</property>
                                         <signal name="toggled" handler="signal_radiobutton_toggled_target_type" swapped="no"/>
@@ -5990,7 +5985,6 @@ your communications. Please contact the system administrator.</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="xalign">0</property>
                             <property name="active">True</property>
                             <property name="draw_indicator">True</property>
                             <signal name="toggled" handler="signal_radiobutton_toggled_message_type" swapped="no"/>
@@ -6007,7 +6001,6 @@ your communications. Please contact the system administrator.</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="xalign">0</property>
                             <property name="draw_indicator">True</property>
                             <property name="group">MailSenderConfigurationTab.radiobutton_message_type_email</property>
                             <signal name="toggled" handler="signal_radiobutton_toggled_message_type" swapped="no"/>
@@ -6464,14 +6457,11 @@ your communications. Please contact the system administrator.</property>
                     <child>
                       <object class="GtkCheckButton" id="MailSenderConfigurationTab.checkbutton_calendar_invite_all_day">
                         <property name="label" translatable="yes">All Day Event</property>
-                        <property name="width_request">250</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
                         <property name="tooltip_text" translatable="yes">Whether or not the event should be scheduled to last the entire day.</property>
                         <property name="halign">start</property>
-                        <property name="hexpand">True</property>
-                        <property name="xalign">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="signal_checkbutton_toggled_calendar_invite_all_day" swapped="no"/>
                       </object>
@@ -6487,7 +6477,7 @@ your communications. Please contact the system administrator.</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
                         <property name="tooltip_text" translatable="yes">Whether to request an RSVP response to the invite. If enabled, responses will be sent to the "Source Email (MIME)" address.</property>
-                        <property name="xalign">0</property>
+                        <property name="halign">start</property>
                         <property name="draw_indicator">True</property>
                       </object>
                       <packing>
