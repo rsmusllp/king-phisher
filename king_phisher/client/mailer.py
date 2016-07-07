@@ -84,8 +84,26 @@ template_environment = templates.MessageTemplateEnvironment()
 
 MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
 """A named tuple for holding both image and file attachments for a message."""
-MessageTarget = collections.namedtuple('MessageTarget', ('first_name', 'last_name', 'email_address', 'department', 'uid'))
-"""A named tuple for holding information regarding a messages intended recipient."""
+
+class MessageTarget(object):
+	"""
+	A simple class for holding information regarding a messages intended
+	recipient.
+	"""
+	__slots__ = 'department', 'email_address', 'first_name', 'last_name', 'line', 'uid'
+	def __init__(self, first_name, last_name, email_address, uid, department=None, line=None):
+		self.first_name = first_name
+		"""The target recipient's first name."""
+		self.last_name = last_name
+		"""The target recipient's last name."""
+		self.email_address = email_address
+		"""The target recipient's email address."""
+		self.uid = uid
+		"""The unique identifier that is going to be used for this target."""
+		self.department = department
+		"""The target recipient's department name."""
+		self.line = line
+		"""The line number in the file from which this target was loaded."""
 
 def render_message_template(template, config, target=None, analyze=False):
 	"""
@@ -410,6 +428,7 @@ class MailSenderThread(threading.Thread):
 
 	def iterate_targets(self):
 		target_type = self.config['mailer.target_type']
+		mailer_tab = self.application.main_tabs['mailer']
 		if target_type == 'single':
 			target_name = self.config['mailer.target_name'].split(' ')
 			while len(target_name) < 2:
@@ -421,6 +440,7 @@ class MailSenderThread(threading.Thread):
 				department=None,
 				uid=make_uid()
 			)
+			mailer_tab.emit('send-target', target)
 			yield target
 		elif target_type == 'file':
 			target_file_h = open(self.target_file, 'rU')
@@ -433,19 +453,21 @@ class MailSenderThread(threading.Thread):
 						department = None
 				email_address = raw_target['email_address'] or ''
 				email_address = email_address.strip()
-				if not email_address:
-					self.logger.warning("skipping line {0} in target csv file due to missing email address".format(line_no))
-					continue
-				if not utilities.is_valid_email_address(email_address):
-					self.logger.warning("skipping line {0} in target csv file due to invalid email address: {1}".format(line_no, email_address))
-					continue
 				target = MessageTarget(
 					first_name=raw_target['first_name'].strip(),
 					last_name=raw_target['last_name'].strip(),
 					email_address=email_address,
 					department=department,
-					uid=make_uid()
+					uid=make_uid(),
+					line=line_no
 				)
+				mailer_tab.emit('send-target', target)
+				if not target.email_address:
+					self.logger.warning("skipping line {0} in target csv file due to missing email address".format(line_no))
+					continue
+				if not utilities.is_valid_email_address(target.email_address):
+					self.logger.warning("skipping line {0} in target csv file due to invalid email address: {1}".format(line_no, email_address))
+					continue
 				yield target
 			target_file_h.close()
 		else:

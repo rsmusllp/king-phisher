@@ -163,6 +163,12 @@ MailSenderTab Signals
 The following are the signals for the
 :py:class:`~king_phisher.client.tabs.mail.MailSenderTab` object.
 
+.. py:function:: send-finished()
+
+   This signal is emitted after all messages have been sent.
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+
 .. py:function:: send-precheck()
 
    This signal is emitted when the user is about to start sending phishing
@@ -173,3 +179,13 @@ The following are the signals for the
    :signal flags: ``SIGNAL_RUN_LAST``
    :return: Whether or not the handler's pre-check condition has passed.
    :rtype: bool
+
+.. py:function:: send-target(target)
+
+   This signal is emitted when the target for a message has been loaded.
+   Subscribers to this signal can use it as an opportunity to modify the
+   target's attributes, including but not limited to the email address.
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param target: The target for the message.
+   :type target: :py:class:`~king_phisher.client.mailer.MessageTarget`

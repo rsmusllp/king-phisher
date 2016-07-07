@@ -437,8 +437,8 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 
 	def notify_stopped(self):
 		"""
-		A call back use by :py:class:`.MailSenderThread` to notify when
-		the thread has stopped.
+		A callback used by :py:class:`.MailSenderThread` to notify when the
+		thread has stopped.
 		"""
 		self.progressbar.set_fraction(1)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(False)
@@ -446,6 +446,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.gobjects['togglebutton_mail_sender_pause'].set_sensitive(False)
 		self.gobjects['button_mail_sender_start'].set_sensitive(True)
 		self.sender_thread = None
+		self.application.main_tabs['mailer'].emit('send-finished')
 
 class MailSenderPreviewTab(object):
 	"""
@@ -923,7 +924,9 @@ class MailSenderTab(_GObject_GObject):
 	configuring, previewing and sending messages as part of a campaign.
 	"""
 	__gsignals__ = {
-		'send-precheck': (GObject.SIGNAL_RUN_LAST, object, (), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r))
+		'send-finished': (GObject.SIGNAL_RUN_FIRST, None, ()),
+		'send-precheck': (GObject.SIGNAL_RUN_LAST, object, (), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r)),
+		'send-target': (GObject.SIGNAL_RUN_FIRST, None, (object,))
 	}
 	def __init__(self, parent, application):
 		"""
