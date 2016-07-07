@@ -37,4 +37,3 @@ Classes
    :show-inheritance:
    :members:
    :special-members: __init__
-   :undoc-members:

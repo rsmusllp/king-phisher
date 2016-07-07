@@ -144,6 +144,29 @@ def gobject_signal_blocked(gobject, signal_name):
 	yield
 	GObject.signal_handler_unblock(gobject, handler_id)
 
+def gobject_signal_accumulator(test=None):
+	"""
+	Create an accumulator function for use with GObject signals. All return
+	values will be collected and returned in a list. If provided, *test* is a
+	callback that will be called with two arguments, the return value from the
+	handler and the list of accumulated return values.
+
+	.. code-block:: python
+
+	  stop = test(retval, accumulated)
+
+	:param test: A callback to test whether additional handler should be executed.
+	"""
+	if test is None:
+		test = lambda retval, accumulated: True
+	def _accumulator(_, accumulated, retval):
+		if accumulated is None:
+			accumulated = []
+		stop = test(retval, accumulated)
+		accumulated.append(retval)
+		return (stop, accumulated)
+	return _accumulator
+
 def gtk_calendar_get_pydate(calendar):
 	"""
 	Get the Python date from a :py:class:`Gtk.Calendar` instance.

@@ -1,6 +1,11 @@
 GObject Signals
 ===============
 
+These signals can be used by the client API and plugins to subscribe to
+specific events. To explicitly connect after the default handler for a signal,
+use the *connect_after* method instead of *connect*. Some signals require a
+value to be returned by their handlers as noted.
+
 .. _gobject-signals-application-label:
 
 KingPhisherClientApplication Signals
@@ -8,9 +13,7 @@ KingPhisherClientApplication Signals
 
 The following are the signals for the
 :py:class:`~king_phisher.client.application.KingPhisherClientApplication`
-object. These signals can be used by the client API and plugins to subscribe to
-specific events. To explicitly connect after the default handler for a signal,
-use the *connect_after* method instead of *connect*.
+object.
 
 .. py:function:: campaign-changed(campaign_id)
 
@@ -153,3 +156,20 @@ use the *connect_after* method instead of *connect*.
    :signal flags: ``SIGNAL_ACTION | SIGNAL_RUN_LAST``
    :param row_ids: The row IDs that are to be deleted.
    :type row_ids: [str, ...]
+
+MailSenderTab Signals
+---------------------
+
+The following are the signals for the
+:py:class:`~king_phisher.client.tabs.mail.MailSenderTab` object.
+
+.. py:function:: send-precheck()
+
+   This signal is emitted when the user is about to start sending phishing
+   messages. It is used to ensure that all settings are sufficient before
+   proceeding. A handler can return False to indicate that a pre-check condition
+   has failed and the operation should be aborted.
+
+   :signal flags: ``SIGNAL_RUN_LAST``
+   :return: Whether or not the handler's pre-check condition has passed.
+   :rtype: bool

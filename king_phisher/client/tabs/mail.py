@@ -55,6 +55,7 @@ from king_phisher.errors import KingPhisherInputValidationError
 
 from gi.repository import Gdk
 from gi.repository import Gio
+from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import GtkSource
 from gi.repository import Pango
@@ -68,6 +69,11 @@ if sys.version_info[0] < 3:
 	urllib.parse.urlencode = urllib.urlencode
 else:
 	import urllib.parse # pylint: disable=ungrouped-imports
+
+if isinstance(Gtk.Widget, utilities.Mock):
+	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
+else:
+	_GObject_GObject = GObject.GObject
 
 def test_webserver_url(target_url, secret_id):
 	"""
@@ -268,6 +274,11 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			return
 		if not self._sender_precheck_attachment():
 			return
+		mailer_tab = self.application.main_tabs['mailer']
+		if not all(mailer_tab.emit('send-precheck')):
+			self.text_insert('Message pre-check conditions failed, aborting.\n')
+			return
+
 		self.text_insert("Sending messages started at: {:%A %B %d, %Y %H:%M:%S}\n".format(datetime.datetime.now()))
 		self.text_insert("Message mode is: {0}\n".format(self.config['mailer.message_type'].replace('_', ' ').title()))
 
@@ -905,12 +916,15 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.gobjects['entry_target_name'].set_sensitive(target_type == 'single')
 		self.gobjects['entry_target_email_address'].set_sensitive(target_type == 'single')
 
-class MailSenderTab(object):
+class MailSenderTab(_GObject_GObject):
 	"""
 	The King Phisher client top-level 'Send Messages' tab. This object
 	manages the sub-tabs which display useful information for
 	configuring, previewing and sending messages as part of a campaign.
 	"""
+	__gsignals__ = {
+		'send-precheck': (GObject.SIGNAL_RUN_LAST, object, (), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r))
+	}
 	def __init__(self, parent, application):
 		"""
 		:param parent: The parent window for this object.
@@ -918,6 +932,7 @@ class MailSenderTab(object):
 		:param application: The main client application instance.
 		:type application: :py:class:`Gtk.Application`
 		"""
+		super(MailSenderTab, self).__init__()
 		self.parent = parent
 		self.application = application
 		self.config = application.config
@@ -1082,3 +1097,6 @@ class MailSenderTab(object):
 
 		config_tab.objects_load_from_config()
 		gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message.')
+
+	def do_send_precheck(self):
+		return True
