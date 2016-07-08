@@ -1,3 +1,22 @@
-@function gtkalpha($c,$a) {
-  @return unquote("alpha(#{$c},#{$a})");
+$transition: 200ms ease-out;
+
+@function gtkalpha($c, $a) {
+  @return unquote("alpha(#{$c}, #{$a})");
+}
+
+/* background mixins */
+@mixin bg-opaque() {
+  background-color: $theme_color_bg;
+  background-image: none;
+  color: $theme_color_fg;
+}
+
+/* border mixins */
+@mixin bo-opaque() {
+  border-radius: 3px;
+  border: 1px solid;
+  border-color: $theme_color_bg;
+  &:disabled {
+    border-color: white;
+  }
 }

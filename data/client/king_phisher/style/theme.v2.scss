@@ -53,8 +53,7 @@
 }
 
 .background {
-  background-color: $theme_color_bg;
-  color: white;
+  @include bg-opaque();
 }
 
 .background-add {
@@ -92,9 +91,7 @@
 button {
   background-image: linear-gradient(to bottom, mix($theme_color_0, $theme_color_1, 0.75), $theme_color_0);
   background-size: 100% 100%;
-  border-radius: 3px;
-  border: 1px solid;
-  border-color: $theme_color_0;
+  @include bo-opaque();
   color: white;
   &:active {
     background-image: linear-gradient(to bottom, shade(gtkalpha($theme_color_1, 0.7), 1), shade(gtkalpha($theme_color_1, 0.7), 1.25));
@@ -107,8 +104,7 @@ button {
   }
   &:disabled {
     background-color: gtkalpha(darkgray, 0.8);
-    background-image: none;
-    border-color: darkgray;
+    background-image: none
   }
   &:selected {
     background-image: linear-gradient(to bottom, shade(gtkalpha($theme_color_1, 0.7), 1), shade(gtkalpha($theme_color_1, 0.7), 1.25));
@@ -159,12 +155,14 @@ combobox {
 }
 
 entry {
+  @include bo-opaque();
   background-color: gtkalpha(white, 0.8);
   background-image: none;
   border-radius: 3px;
   color: $theme_color_0;
   &:disabled {
     background-color: gtkalpha(darkgray, 0.8);
+    color: white;
   }
   &:selected {
     background-color: $theme_color_1;
@@ -173,9 +171,9 @@ entry {
 }
 
 filechooser {
-  background-color: $theme_color_bg;
+  @include bg-opaque();
   .view {
-    background-color: $theme_color_bg;
+    @include bg-opaque();
   }
 }
 
@@ -196,11 +194,9 @@ label {
 }
 
 list {
-  background-color: $theme_color_bg;
-  color: white;
+  @include bg-opaque();
   row {
-    background-color: $theme_color_bg;
-    color: white;
+    @include bg-opaque();
     &:hover {
       background-color: $theme_color_1;
       color: white;
@@ -238,8 +234,7 @@ menuitem {
 }
 
 modelbutton {
-  background-color: $theme_color_0;
-  color: white;
+  @include bg-opaque();
   &:disabled {
     background-color: gtkalpha(darkgray, 0.8);
     background-image: none;
@@ -252,9 +247,8 @@ modelbutton {
 
 notebook {
   > header {
-    background-color: $theme_color_bg;
+    @include bg-opaque();
     border-width: 2px;
-    color: white;
     padding: 2px;
   }
   tab {
@@ -268,16 +262,14 @@ notebook {
     }
   }
   stack {
-    background-color: $theme_color_bg;
-    color: white;
+    @include bg-opaque();
   }
 }
 
 placessidebar {
   > viewport.frame { border-style: none; }
   row {
-    background-color: $theme_color_bg;
-    color: white;
+    @include bg-opaque();
     &:selected {
       background-color: $theme_color_1;
       color: white;
@@ -286,7 +278,7 @@ placessidebar {
 }
 
 placesview {
-  background-color: $theme_color_bg;
+  @include bg-opaque();
 }
 
 popover.background {
@@ -296,8 +288,7 @@ popover.background {
 
 progressbar {
   background-image: none;
-  background-color: $theme_color_bg;
-  color: white;
+  @include bg-opaque();
   trough {
     background-color: $theme_color_1;
     border-radius: 3px;
@@ -336,20 +327,47 @@ radiobutton.text-button {
   }
 }
 
+scrollbar {
+  $_slider_min_length: 40px;
+  @at-root * {
+    -GtkScrollbar-has-backward-stepper: false;
+    -GtkScrollbar-has-forward-stepper: false;
+  }
+  background-color: $theme_color_fg;
+  transition: 300ms;
+  button {
+    padding: 0px;
+    min-width: 4px;
+    min-height: 4px;
+    border-style: none;
+    border-radius: 0;
+  }
+  slider {
+    min-width: 6px;
+    min-height: 6px;
+    border: 4px solid transparent;
+    border-radius: 8px;
+    background-color: $theme_color_bg;
+  }
+  &.top { border-bottom: 1px solid $theme_color_bg; }
+  &.bottom { border-top: 1px solid $theme_color_bg; }
+  &.left { border-right: 1px solid $theme_color_bg; }
+  &.right { border-left: 1px solid $theme_color_bg; }
+}
+
 spinbutton {
-  background-color: gtkalpha(white, 0.8);
+  background-color: transparent;
   background-image: none;
   color: $theme_color_0;
 }
 
 switch {
-  background-color: $theme_color_bg;
+  @include bg-opaque();
   font-size: smaller;
   font-weight: bold;
+  transition: $transition;
   slider {
-    border: 1px solid;
-    border-radius: 3px;
-    color: white;
+    @include bo-opaque();
     margin: 0px;
     min-width: 40px;
     min-height: 22px;
@@ -366,8 +384,7 @@ switch {
 
 textview.view {
   text {
-    background-color: $theme_color_bg;
-    color: white;
+    @include bg-opaque();
     selection {
       background-color: $theme_color_1;
       color: white;
@@ -401,6 +418,5 @@ treeview.view {
 }
 
 viewport {
-  background-color: $theme_color_bg;
-  color: white;
+  @include bg-opaque();
 }

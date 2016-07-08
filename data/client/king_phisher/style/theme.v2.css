@@ -68,6 +68,8 @@
 @define-color theme_color_graph_map_water #c0dcff;
 @define-color theme_color_graph_pie_high #c0dcff;
 @define-color theme_color_graph_pie_low #3c5b77;
+/* background mixins */
+/* border mixins */
 * {
   -gtk-icon-shadow: none;
   border: none;
@@ -76,7 +78,8 @@
 
 .background {
   background-color: shade(#00203a, 1.2);
-  color: white; }
+  background-image: none;
+  color: #ffffff; }
 
 .background-add {
   background-image: url("./background.svg");
@@ -99,7 +102,7 @@
   color: white; }
 
 .tooltip {
-  background-color: alpha(#00203a,0.8);
+  background-color: alpha(#00203a, 0.8);
   background-image: none;
   border-radius: 5px; }
 
@@ -108,21 +111,22 @@ button {
   background-size: 100% 100%;
   border-radius: 3px;
   border: 1px solid;
-  border-color: #00203a;
+  border-color: shade(#00203a, 1.2);
   color: white; }
+  button:disabled {
+    border-color: white; }
   button:active {
-    background-image: linear-gradient(to bottom, shade(alpha(#5d84a8,0.7), 1), shade(alpha(#5d84a8,0.7), 1.25));
+    background-image: linear-gradient(to bottom, shade(alpha(#5d84a8, 0.7), 1), shade(alpha(#5d84a8, 0.7), 1.25));
     background-size: 100% 100%;
     color: #00203a; }
   button:hover {
-    background-image: linear-gradient(to bottom, shade(alpha(#5d84a8,0.7), 1), shade(alpha(#5d84a8,0.7), 1.25));
+    background-image: linear-gradient(to bottom, shade(alpha(#5d84a8, 0.7), 1), shade(alpha(#5d84a8, 0.7), 1.25));
     background-size: 100% 100%; }
   button:disabled {
-    background-color: alpha(darkgray,0.8);
-    background-image: none;
-    border-color: darkgray; }
+    background-color: alpha(darkgray, 0.8);
+    background-image: none; }
   button:selected {
-    background-image: linear-gradient(to bottom, shade(alpha(#5d84a8,0.7), 1), shade(alpha(#5d84a8,0.7), 1.25));
+    background-image: linear-gradient(to bottom, shade(alpha(#5d84a8, 0.7), 1), shade(alpha(#5d84a8, 0.7), 1.25));
     background-size: 100% 100%;
     color: #00203a; }
 
@@ -131,10 +135,10 @@ calendar {
   background-image: none;
   color: #00203a; }
   calendar:disabled {
-    background-color: alpha(gray,0.8);
+    background-color: alpha(gray, 0.8);
     color: white; }
     calendar:disabled:selected {
-      background-color: alpha(lightgray,0.8); }
+      background-color: alpha(lightgray, 0.8); }
   calendar:selected {
     background-color: #00bf8c;
     color: white; }
@@ -150,7 +154,7 @@ checkbutton.text-button {
   color: #5d84a8;
   padding: 1px 2px 4px; }
   checkbutton.text-button:hover {
-    background-color: alpha(#00203a,0.8);
+    background-color: alpha(#00203a, 0.8);
     color: #5d84a8; }
 
 combobox .separator {
@@ -158,20 +162,30 @@ combobox .separator {
   -GtkWidget-vertical-separator: 0; }
 
 entry {
-  background-color: alpha(white,0.8);
+  border-radius: 3px;
+  border: 1px solid;
+  border-color: shade(#00203a, 1.2);
+  background-color: alpha(white, 0.8);
   background-image: none;
   border-radius: 3px;
   color: #00203a; }
   entry:disabled {
-    background-color: alpha(darkgray,0.8); }
+    border-color: white; }
+  entry:disabled {
+    background-color: alpha(darkgray, 0.8);
+    color: white; }
   entry:selected {
     background-color: #5d84a8;
     color: white; }
 
 filechooser {
-  background-color: shade(#00203a, 1.2); }
+  background-color: shade(#00203a, 1.2);
+  background-image: none;
+  color: #ffffff; }
   filechooser .view {
-    background-color: shade(#00203a, 1.2); }
+    background-color: shade(#00203a, 1.2);
+    background-image: none;
+    color: #ffffff; }
 
 frame {
   background: none;
@@ -188,10 +202,12 @@ label {
 
 list {
   background-color: shade(#00203a, 1.2);
-  color: white; }
+  background-image: none;
+  color: #ffffff; }
   list row {
     background-color: shade(#00203a, 1.2);
-    color: white; }
+    background-image: none;
+    color: #ffffff; }
     list row:hover {
       background-color: #5d84a8;
       color: white; }
@@ -219,10 +235,11 @@ menuitem {
     color: white; }
 
 modelbutton {
-  background-color: #00203a;
-  color: white; }
+  background-color: shade(#00203a, 1.2);
+  background-image: none;
+  color: #ffffff; }
   modelbutton:disabled {
-    background-color: alpha(darkgray,0.8);
+    background-color: alpha(darkgray, 0.8);
     background-image: none;
     border-color: darkgray; }
   modelbutton:hover {
@@ -230,8 +247,9 @@ modelbutton {
 
 notebook > header {
   background-color: shade(#00203a, 1.2);
+  background-image: none;
+  color: #ffffff;
   border-width: 2px;
-  color: white;
   padding: 2px; }
 notebook tab {
   background-color: transparent;
@@ -243,19 +261,23 @@ notebook tab {
     border-radius: 4px 4px 2px 2px; }
 notebook stack {
   background-color: shade(#00203a, 1.2);
-  color: white; }
+  background-image: none;
+  color: #ffffff; }
 
 placessidebar > viewport.frame {
   border-style: none; }
 placessidebar row {
   background-color: shade(#00203a, 1.2);
-  color: white; }
+  background-image: none;
+  color: #ffffff; }
   placessidebar row:selected {
     background-color: #5d84a8;
     color: white; }
 
 placesview {
-  background-color: shade(#00203a, 1.2); }
+  background-color: shade(#00203a, 1.2);
+  background-image: none;
+  color: #ffffff; }
 
 popover.background {
   background-color: #00203a;
@@ -264,7 +286,8 @@ popover.background {
 progressbar {
   background-image: none;
   background-color: shade(#00203a, 1.2);
-  color: white; }
+  background-image: none;
+  color: #ffffff; }
   progressbar trough {
     background-color: #5d84a8;
     border-radius: 3px; }
@@ -292,25 +315,57 @@ radiobutton.text-button {
   color: #5d84a8;
   padding: 1px 2px 4px; }
   radiobutton.text-button:hover {
-    background-color: alpha(#00203a,0.8);
+    background-color: alpha(#00203a, 0.8);
     color: #5d84a8; }
 
+scrollbar {
+  background-color: #ffffff;
+  transition: 300ms; }
+  * {
+    -GtkScrollbar-has-backward-stepper: false;
+    -GtkScrollbar-has-forward-stepper: false; }
+  scrollbar button {
+    padding: 0px;
+    min-width: 4px;
+    min-height: 4px;
+    border-style: none;
+    border-radius: 0; }
+  scrollbar slider {
+    min-width: 6px;
+    min-height: 6px;
+    border: 4px solid transparent;
+    border-radius: 8px;
+    background-color: shade(#00203a, 1.2); }
+  scrollbar.top {
+    border-bottom: 1px solid shade(#00203a, 1.2); }
+  scrollbar.bottom {
+    border-top: 1px solid shade(#00203a, 1.2); }
+  scrollbar.left {
+    border-right: 1px solid shade(#00203a, 1.2); }
+  scrollbar.right {
+    border-left: 1px solid shade(#00203a, 1.2); }
+
 spinbutton {
-  background-color: alpha(white,0.8);
+  background-color: transparent;
   background-image: none;
   color: #00203a; }
 
 switch {
   background-color: shade(#00203a, 1.2);
+  background-image: none;
+  color: #ffffff;
   font-size: smaller;
-  font-weight: bold; }
+  font-weight: bold;
+  transition: 200ms ease-out; }
   switch slider {
-    border: 1px solid;
     border-radius: 3px;
-    color: white;
+    border: 1px solid;
+    border-color: shade(#00203a, 1.2);
     margin: 0px;
     min-width: 40px;
     min-height: 22px; }
+    switch slider:disabled {
+      border-color: white; }
   switch:checked {
     background-color: #00bf8c;
     color: white; }
@@ -320,7 +375,8 @@ switch {
 
 textview.view text {
   background-color: shade(#00203a, 1.2);
-  color: white; }
+  background-image: none;
+  color: #ffffff; }
   textview.view text selection {
     background-color: #5d84a8;
     color: white; }
@@ -345,6 +401,7 @@ treeview.view {
 
 viewport {
   background-color: shade(#00203a, 1.2);
-  color: white; }
+  background-image: none;
+  color: #ffffff; }
 
 /*# sourceMappingURL=theme.v2.css.map */

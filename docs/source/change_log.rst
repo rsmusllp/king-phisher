@@ -20,6 +20,8 @@ Version 1.4.0
 
 * Support for plugins in the server application
 * Added server signals for event subscriptions in plugins
+* Updated the style for GTK 3.20
+* Start to warn users about the impending Python 2.7 deprecation
 
 Version 1.3.0
 ^^^^^^^^^^^^^
