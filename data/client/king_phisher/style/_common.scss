@@ -13,10 +13,26 @@ $transition: 200ms ease-out;
 
 /* border mixins */
 @mixin bo-opaque() {
-  border-radius: 3px;
   border: 1px solid;
   border-color: $theme_color_bg;
+  border-radius: 3px;
   &:disabled {
     border-color: white;
+  }
+}
+
+/* button mixins */
+@mixin btn-text() {
+  background-image: none;
+  border: 1px solid;
+  border-color: transparent;
+  border-radius: 3px;
+  padding: 2px 2px 4px;
+  transition: $transition;
+  &:hover {
+    @include bo-opaque();
+    background-color: gtkalpha($theme_color_0, 0.8);
+    color: $theme_color_1;
+    padding: 2px 2px 4px;
   }
 }
