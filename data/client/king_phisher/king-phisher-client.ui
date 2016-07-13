@@ -6264,7 +6264,7 @@ your communications. Please contact the system administrator.</property>
                   <object class="GtkGrid" id="grid12">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="hexpand">True</property>
+                    <property name="halign">start</property>
                     <property name="row_spacing">3</property>
                     <property name="column_spacing">5</property>
                     <child>
@@ -6273,7 +6273,6 @@ your communications. Please contact the system administrator.</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The date that the invite's event should start on.</property>
-                        <property name="halign">start</property>
                         <property name="valign">start</property>
                         <property name="year">2015</property>
                         <property name="month">9</property>
@@ -6304,7 +6303,6 @@ your communications. Please contact the system administrator.</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">The number of minutes that the event should be scheduled to last.</property>
-                        <property name="halign">start</property>
                         <property name="text" translatable="yes">60</property>
                         <property name="input_purpose">phone</property>
                         <property name="adjustment">TimeDuration</property>
