@@ -321,9 +321,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	@property
 	def visit_id(self):
 		"""
-		The visit id that is associated with the current request's
-		visitor. This is retrieved by looking for the King Phisher cookie.
-		If no cookie is set, this value is None.
+		The visit id that is associated with the current request's visitor. This
+		is retrieved by looking for the King Phisher cookie. If no cookie is
+		set, this value is None.
 		"""
 		if hasattr(self, '_visit_id'):
 			return self._visit_id
@@ -660,6 +660,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
 				if visit.message_id == self.message_id:
 					visit.visit_count += 1
+					visit.last_visit = db_models.current_timestamp()
 				else:
 					set_new_visit = True
 					visit_id = None
