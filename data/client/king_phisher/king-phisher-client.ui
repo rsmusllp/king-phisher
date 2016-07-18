@@ -161,7 +161,7 @@ Spencer McIntyre</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <child internal-child="selection">
-                          <object class="GtkTreeSelection"/>
+                          <object class="GtkTreeSelection" id="CampaignCompWindow.treeselection_campaigns"/>
                         </child>
                       </object>
                     </child>
@@ -339,7 +339,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">True</property>
                 <signal name="row-activated" handler="signal_treeview_row_activated" swapped="no"/>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection4"/>
+                  <object class="GtkTreeSelection" id="CampaignSelectionDialog.treeselection_campaigns"/>
                 </child>
               </object>
             </child>
