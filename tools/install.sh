@@ -121,7 +121,7 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-grep -E "BackBox Linux 4\.[2-5]" /etc/issue &> /dev/null
+grep -E "BackBox Linux 4\.[4-6]" /etc/issue &> /dev/null
 if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
 	LINUX_VERSION="BackBox"
 fi
@@ -245,13 +245,13 @@ echo "Installing $LINUX_VERSION dependencies"
 if [ "$LINUX_VERSION" == "CentOS" ]; then
 	yum install -y epel-release
 	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
-		postgresql-devel python-devel python-pip
+		postgresql-devel python3-devel python3-pip
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		yum install -y postgresql-server
 	fi
 elif [ "$LINUX_VERSION" == "Fedora" ]; then
 	dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
-		libpng-devel postgresql-devel python-devel python-pip \
+		libpng-devel postgresql-devel python3-devel python3-pip \
 		libffi-devel openssl-devel
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		dnf install -y geos geos-devel gtksourceview3 vte3
@@ -267,12 +267,12 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	 [ "$LINUX_VERSION" == "Debian"  ] || \
 	 [ "$LINUX_VERSION" == "Kali"    ] || \
 	 [ "$LINUX_VERSION" == "Ubuntu"  ]; then
-	apt-get install -y libfreetype6-dev python-dev python-pip
+	apt-get install -y libfreetype6-dev python3-dev python3-pip
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
-			gir1.2-webkit-3.0 python-cairo libgeos++-dev \
-			libgtk-3-dev libpq-dev python-gi python-gi-cairo libpq-dev \
-			python-gobject python-gobject-dev python-paramiko pkg-config
+			gir1.2-webkit-3.0 python3-cairo libgeos++-dev \
+			libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev \
+			python-gobject python-gobject-dev pkg-config
 		if [ $? -ne 0 ]; then
 			echo -e "\nFailed to install dependencies with apt-get\n"
 			exit
@@ -280,14 +280,14 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 
 		apt-cache search gir1.2-vte-2.91
 		if [ $? -eq 0 ]; then
-			apt-get install gir1.2-vte-2.91
+			apt-get -y install gir1.2-vte-2.91
 			if [ $? -ne 0 ]; then
 				echo "Failed to install gir1.2-vte-2.91"
 			fi
 		else
-			apt-get install gir1.2-vte-2.90
+			apt-get -y install gir1.2-vte-2.90
 			if [ $? -ne 0 ]; then
-				echo "Failed to install girl1.2-vte-2.90"
+				echo "Failed to install gir1.2-vte-2.90"
 			fi
 		fi
 
@@ -310,10 +310,15 @@ fi
 
 echo "Installing Python package dependencies from PyPi"
 # six needs to be installed before requirements.txt for matplotlib
-pip install --upgrade pip
-pip install --upgrade setuptools
-pip install --upgrade six
-pip install -r requirements.txt
+python3 -m pip install --upgrade pip
+# set pip back to python2 if pip2 is installed
+which pip2 &> /dev/null
+if [ $? -eq 0 ]; then
+	python -m pip install -U pip -I &> /dev/null
+fi
+python3 -m pip install --upgrade setuptools
+python3 -m pip install --upgrade six
+python3 -m pip install -r requirements.txt
 if [ $? -ne 0 ]; then
 	echo "Failed to install python requirements with pip"
 	exit $E_SOFTWARE
@@ -339,7 +344,7 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		fi
 	fi
 	# try to install basemap directly from it's sourceforge tarball
-	pip install http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz &> /dev/null
+	python3 -m pip install http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz &> /dev/null
 	if [ $? -eq 0 ]; then
 		echo "Successfully installed basemap with pip"
 	else
@@ -347,6 +352,8 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		echo "See https://github.com/securestate/king-phisher/wiki/Graphs#installing-basemap-with-pip for more information."
 	fi
 fi
+
+
 
 if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	egrep "^${KING_PHISHER_GROUP}:" /etc/group &> /dev/null
@@ -369,25 +376,44 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		if [ -f "/etc/init.d/postgresql" ]; then
 			/etc/init.d/postgresql start &> /dev/null
+			service postgresql status | grep online | grep -v grep &> /dev/null
+			if [ ! $? -eq 0 ]; then
+				postgresql-setup --initdb &> /dev/null
+				/etc/init.d/postgresql start &> /dev/null
+			fi
+		fi
+		if [ -f "/usr/lib/systemd/system/postgresql.service" ]; then
+			systemctl start postgresql &> /dev/null
+			systemctl is-active postgresql | grep active | grep -v grep &> /dev/null
+			if [ ! $? -eq 0 ]; then
+				postgresql-setup --initdb &> /dev/null
+				systemctl start postgresql &> /dev/null
+			fi
 		fi
 		echo "Configuring the PostgreSQL server"
 		PG_CONFIG_LOCATION=$(su postgres -c "psql -t -P format=unaligned -c 'show hba_file';")
 		echo "PostgreSQL configuration file found at $PG_CONFIG_LOCATION"
-		echo "# permit local connections from the king_phisher user for the king_phisher database" >> $PG_CONFIG_LOCATION
-		echo "host     king_phisher    king_phisher   127.0.0.1/32            md5" >> $PG_CONFIG_LOCATION
+		# put the king_phisher first in the line for localhost connects with md5
+		sed -i '/# IPv4 local connections:/a\# permit local connections from the king_phisher user for the king_phisher database' $PG_CONFIG_LOCATION
+		sed -i '/# permit local connections from the king_phisher user for the king_phisher database/a\host    king_phisher    king_phisher    127.0.0.1/32            md5' $PG_CONFIG_LOCATION
 		# generate a random 32 character long password for postgresql
 		PG_KP_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' |  head -c 40)
 		su postgres -c "psql -c \"CREATE USER king_phisher WITH PASSWORD '$PG_KP_PASSWORD';\"" &> /dev/null
 		su postgres -c "psql -c \"CREATE DATABASE king_phisher OWNER king_phisher;\"" &> /dev/null
 		sed -i -re "s|database: sqlite://|#database: sqlite://|" ./server_config.yml
 		sed -i -re "s|#\\s?database: postgresql://.*$|database: postgresql://king_phisher:$PG_KP_PASSWORD@localhost/king_phisher|" ./server_config.yml
+		# restart postgresql to have hda_file updates take affect
+		if [ -f "/etc/init.d/postgresql" ]; then
+			/etc/init.d/postgresql restart &> /dev/null
+		fi
+		if [ -f "/usr/lib/systemd/system/postgresql.service" ]; then
+			systemctl restart postgresql
+		fi
 	fi
 
 	if [ -d "/lib/systemd/system" -a "$(command -v systemctl)" ]; then
 		echo "Installing the King Phisher systemd service file in /lib/systemd/system/"
 		cp data/server/service_files/king-phisher.service /lib/systemd/system
-		sed -i -re "s|^ExecStart=KingPhisherServer|# ExecStart=KingPhisherServer|" /lib/systemd/system/king-phisher.service
-		sed -i -re "s|^#\\s?ExecStart=/opt|ExecStart=/opt|" /lib/systemd/system/king-phisher.service
 		sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" /lib/systemd/system/king-phisher.service
 
 		echo "Starting the King Phisher service"
@@ -397,14 +423,16 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	elif [ "$LINUX_VERSION" == "Ubuntu" ]; then
 		echo "Installing the King Phisher upstart service file in /etc/init/"
 		cp data/server/service_files/king-phisher.conf /etc/init
-		sed -i -re "s|^exec KingPhisherServer|# exec KingPhisherServer|" /etc/init/king-phisher.conf
-		sed -i -re "s|^#\\s?exec /opt|exec /opt|" /etc/init/king-phisher.conf
 		sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" /etc/init/king-phisher.conf
 
 		echo "Starting the King Phisher service"
 		start king-phisher
 	else
 		echo "Start the King Phisher server with the following command: "
-		echo "sudo $KING_PHISHER_DIR/KingPhisherServer -L INFO -f $KING_PHISHER_DIR/server_config.yml"
+		echo "sudo python3 $KING_PHISHER_DIR/KingPhisherServer -L INFO -f $KING_PHISHER_DIR/server_config.yml"
 	fi
+fi
+if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
+    echo "You Can start King Phisher Client with the following command: "
+    echo "python3 $KING_PHISHER_DIR/KingPhisher"
 fi
