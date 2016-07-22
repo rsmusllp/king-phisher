@@ -428,11 +428,13 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		echo "Starting the King Phisher service"
 		start king-phisher
 	else
-		echo "Start the King Phisher server with the following command: "
+		echo "-----------------------------------------------------------------------------------------------"
+		echo "Start the King Phisher server with the following command prior to starting the client: "
 		echo "sudo python3 $KING_PHISHER_DIR/KingPhisherServer -L INFO -f $KING_PHISHER_DIR/server_config.yml"
 	fi
 fi
 if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-    echo "You Can start King Phisher Client with the following command: "
-    echo "python3 $KING_PHISHER_DIR/KingPhisher"
+	echo "-----------------------------------------------------------------------------------------------"
+	echo "You can start King Phisher client with the following command: "
+	echo "python3 $KING_PHISHER_DIR/KingPhisher"
 fi
