@@ -121,39 +121,32 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-grep -E "BackBox Linux 4\.[4-6]" /etc/issue &> /dev/null
-if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+if [[ ! $LINUX_VERSION ]] && grep -E "BackBox Linux 4\.[4-6]" /etc/issue 2>&1 > /dev/null; then
 	LINUX_VERSION="BackBox"
 fi
 
-grep -E "CentOS Linux release 7(\.[0-9]{1,4}){2}" /etc/redhat-release &> /dev/null
-if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+if [[ ! $LINUX_VERSION ]] && grep -E "CentOS Linux release 7(\.[0-9]{1,4}){2}" /etc/redhat-release 2>&1 > /dev/null; then
 	LINUX_VERSION="CentOS"
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-grep -E "Fedora release 2[3-4]" /etc/redhat-release &> /dev/null
-if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[3-4]" /etc/redhat-release 2>&1 > /dev/null; then
 	LINUX_VERSION="Fedora"
 fi
 
-grep -E "Debian GNU\/Linux [8] " /etc/issue &> /dev/null
-if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Debian GNU\/Linux [8] " /etc/issue 2>&1 > /dev/null; then
 	LINUX_VERSION="Debian"
 fi
 
-grep 'Kali Linux 2\.[0-9]\|Kali Linux Rolling' /etc/debian_version &> /dev/null
-if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+if [[ ! $LINUX_VERSION ]] && grep 'Kali Linux 2\.[0-9]\|Kali Linux Rolling' /etc/debian_version 2>&1 > /dev/null; then
 	LINUX_VERSION="Kali"
 fi
 
-grep -E "Ubuntu 1[456]\.(04|10)" /etc/issue &> /dev/null
-if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu 1[456]\.(04|10)" /etc/issue 2>&1 > /dev/null; then
 	LINUX_VERSION="Ubuntu"
 fi
 
-grep -E "Ubuntu Xenial Xerus" /etc/issue &> /dev/null
-if [ -z "$LINUX_VERSION" -a $? -eq 0 ]; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu Xenial Xerus" /etc/issue 2>&1 > /dev/null; then
 	LINUX_VERSION="Ubuntu"
 fi
 
@@ -187,9 +180,8 @@ fi
 
 # update apt-get package information and only continue if successful
 if [ "$(command -v apt-get)" ]; then
-	echo "Attempting to update apt-get cache pacakge information"
-	apt-get update
-	if [ ! $? = 0 ]; then
+	echo "Attempting to update apt-get cache package information"
+	if ! apt-get update; then
 		echo "Command 'apt-get update' failed, please correct the issues and try again"
 		exit
 	fi
@@ -215,8 +207,7 @@ elif [ -d "$(dirname $(dirname $FILE_NAME))/king_phisher" ]; then
 else
 	echo "Downloading and installing the King Phisher server to $KING_PHISHER_DIR"
 	if [ ! -d "$KING_PHISHER_DIR" ]; then
-		git clone $GIT_CLONE_URL $KING_PHISHER_DIR &> /dev/null
-		if [ $? -ne 0 ]; then
+		if ! git clone $GIT_CLONE_URL $KING_PHISHER_DIR 2>&1 > /dev/null; then
 			echo "Failed to clone the Git repo"
 			exit $E_SOFTWARE
 		fi
@@ -231,13 +222,14 @@ if [ -n "$KING_PHISHER_DEV" ] && [ -d ".git" ]; then
 fi
 
 if [ "$LINUX_VERSION" == "Kali" ]; then
-	echo "Checking Kali 2 apt sources"
-	grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null
-	if [ $? -ne 0 ]; then
-		echo "Standard Kali 2 apt sources are missing, now adding them"
-		echo "See http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
-		echo "deb http://http.kali.org/kali sana main non-free contrib" >> /etc/apt/sources.list
-		apt-get update
+	if ! grep 'Kali Linux Rolling' /etc/debian_version 2>&1 > /dev/null; then
+		echo "Checking Kali 2 apt sources"
+		if ! grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list 2>&1 > /dev/null; then
+			echo "Standard Kali 2 apt sources are missing, now adding them"
+			echo "See http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
+			echo "deb http://http.kali.org/kali sana main non-free contrib" >> /etc/apt/sources.list
+			apt-get update
+		fi
 	fi
 fi
 
@@ -267,32 +259,26 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	 [ "$LINUX_VERSION" == "Debian"  ] || \
 	 [ "$LINUX_VERSION" == "Kali"    ] || \
 	 [ "$LINUX_VERSION" == "Ubuntu"  ]; then
-	apt-get install -y libfreetype6-dev python3-dev python3-pip
+	apt-get install -y libfreetype6-dev python3-dev python3-pip pkg-config
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-		apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
+		if ! apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
 			gir1.2-webkit-3.0 python3-cairo libgeos++-dev \
-			libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev \
-			python-gobject python-gobject-dev pkg-config
-		if [ $? -ne 0 ]; then
-			echo -e "\nFailed to install dependencies with apt-get\n"
-			exit
+			libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev; then
+				echo -e "\nFailed to install dependencies with apt-get\n"
+				exit
 		fi
 
-		apt-cache search gir1.2-vte-2.91
-		if [ $? -eq 0 ]; then
-			apt-get -y install gir1.2-vte-2.91
-			if [ $? -ne 0 ]; then
+		if apt-cache search gir1.2-vte-2.91 2>&1 > /dev/null; then
+			if ! apt-get -y install gir1.2-vte-2.91; then
 				echo "Failed to install gir1.2-vte-2.91"
 			fi
 		else
-			apt-get -y install gir1.2-vte-2.90
-			if [ $? -ne 0 ]; then
+			if ! apt-get -y install gir1.2-vte-2.90; then
 				echo "Failed to install gir1.2-vte-2.90"
 			fi
 		fi
 
-		apt-get install -y gir1.2-webkit2-3.0 &> /dev/null
-		if [ $? -eq 0 ]; then
+		if apt-get install -y gir1.2-webkit2-3.0 2>&1 > /dev/null; then
 			echo "Successfully installed gir1.2-webkit2-3.0 with apt-get"
 		else
 			echo "Failed to install gir1.2-webkit2-3.0 with apt-get"
@@ -310,16 +296,15 @@ fi
 
 echo "Installing Python package dependencies from PyPi"
 # six needs to be installed before requirements.txt for matplotlib
+PIP_VERSION=$(pip --version)
 python3 -m pip install --upgrade pip
-# set pip back to python2 if pip2 is installed
-which pip2 &> /dev/null
-if [ $? -eq 0 ]; then
+# set pip back to python2 if python2 was default
+if echo $PIP_VERSION | grep "python 2.7"; then
 	python -m pip install -U pip -I &> /dev/null
 fi
 python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade six
-python3 -m pip install -r requirements.txt
-if [ $? -ne 0 ]; then
+if ! python3 -m pip install -r requirements.txt; then
 	echo "Failed to install python requirements with pip"
 	exit $E_SOFTWARE
 fi
@@ -344,8 +329,7 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		fi
 	fi
 	# try to install basemap directly from it's sourceforge tarball
-	python3 -m pip install http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz &> /dev/null
-	if [ $? -eq 0 ]; then
+	if python3 -m pip install http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz &> /dev/null ; then
 		echo "Successfully installed basemap with pip"
 	else
 		echo "Failed to install basemap with PIP, this is not a required dependency for King Phisher"
@@ -356,8 +340,7 @@ fi
 
 
 if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
-	egrep "^${KING_PHISHER_GROUP}:" /etc/group &> /dev/null
-	if [ $? -ne 0 ]; then
+	if ! egrep "^${KING_PHISHER_GROUP}:" /etc/group 2>&1 > /dev/null; then
 		echo "Creating King Phisher admin group: '$KING_PHISHER_GROUP'"
 		groupadd $KING_PHISHER_GROUP
 		chown -R :$KING_PHISHER_GROUP $KING_PHISHER_DIR
@@ -375,19 +358,23 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		if [ -f "/etc/init.d/postgresql" ]; then
-			/etc/init.d/postgresql start &> /dev/null
-			service postgresql status | grep online | grep -v grep &> /dev/null
-			if [ ! $? -eq 0 ]; then
+			service postgresql start
+			if ! service postgresql status 2>&1 > /dev/null; then
 				postgresql-setup --initdb &> /dev/null
-				/etc/init.d/postgresql start &> /dev/null
+				if ! service postgresql start 2>&1 > /dev/null; then
+					echo "Error: Could not start postgresql"
+					exit
+				fi
 			fi
 		fi
 		if [ -f "/usr/lib/systemd/system/postgresql.service" ]; then
 			systemctl start postgresql &> /dev/null
-			systemctl is-active postgresql | grep active | grep -v grep &> /dev/null
-			if [ ! $? -eq 0 ]; then
+			if ! systemctl is-active 2>&1 > /dev/null; then
 				postgresql-setup --initdb &> /dev/null
-				systemctl start postgresql &> /dev/null
+				if ! systemctl start postgresql 2>&1 > /dev/null; then
+					echo "Error: Could not start postgresql"
+					exit
+				fi
 			fi
 		fi
 		echo "Configuring the PostgreSQL server"
@@ -429,12 +416,12 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		start king-phisher
 	else
 		echo "-----------------------------------------------------------------------------------------------"
-		echo "Start the King Phisher server with the following command prior to starting the client: "
+		echo "Start the King Phisher server with the following command prior to starting the client:"
 		echo "sudo python3 $KING_PHISHER_DIR/KingPhisherServer -L INFO -f $KING_PHISHER_DIR/server_config.yml"
 	fi
 fi
 if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 	echo "-----------------------------------------------------------------------------------------------"
-	echo "You can start King Phisher client with the following command: "
+	echo "You can start the King Phisher client with the following command:"
 	echo "python3 $KING_PHISHER_DIR/KingPhisher"
 fi
