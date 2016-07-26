@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=King Phisher
 GenericName=King Phisher
-Exec=python /opt/king-phisher/KingPhisher
+Exec=/usr/bin/python3 /opt/king-phisher/KingPhisher
 Terminal=false
 Type=Application
 Categories=Network;Security;
