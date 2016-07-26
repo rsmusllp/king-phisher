@@ -31,10 +31,13 @@
 #
 
 import argparse
+import base64
+import bz2
 import copy
 import datetime
 import hashlib
 import sys
+import textwrap
 
 import king_phisher.color as color
 import king_phisher.its as its
@@ -42,12 +45,12 @@ import king_phisher.json_ex as json_ex
 import king_phisher.version as version
 import king_phisher.client.plugins as plugins
 import king_phisher.client.gui_utilities as gui_utilities
-import king_phisher.client.widget.extras as extras
 
-from gi.repository import Gtk
-from smoke_zephyr.utilities import unique
+import gi.repository.Gtk as Gtk
+import requests
+import smoke_zephyr.utilities
 
-__version__ = '1.0'
+__version__ = '2.0'
 
 def generate_hash(data, algorithm='sha256'):
 	if its.py_v3 and isinstance(data, str):
@@ -75,10 +78,11 @@ class Plugin(plugins.ClientPlugin):
 	awareness. No identifying information regarding your campaigns will be
 	collected.
 
-	This plugin will generate a text file with the anonymous data. After the
-	data file has been saved, please email it to king-phisher@securestate.com.
-	If you would like credit when the research results are published, please
-	include you or your companies attribution information.
+	This plugin will generate and submit anonymous data containing statistics
+	regarding the size and success of campaigns. If you would like credit when
+	the research results are published, please include either your or your
+	companies attribution information in an email to
+	king-phisher@securestate.com.
 
 	We greatly appreciate your data contributions to the King Phisher project!
 	"""
@@ -108,28 +112,34 @@ class Plugin(plugins.ClientPlugin):
 		self.prompt_and_generate()
 
 	def prompt_and_generate(self):
-		config = self.config
-		dialog_txt = 'Would you like to generate research data to submit to SecureState?'
-		if not gui_utilities.show_dialog_yes_no('Phishing Data Collection', self.application.get_active_window(), dialog_txt):
+		active_window = self.application.get_active_window()
+		dialog_txt = 'Would you like to submit anonymized data to SecureState for research purposes?'
+		if not gui_utilities.show_dialog_yes_no('Submit Phishing Data', active_window, dialog_txt):
 			return
 
 		get_stats = StatsGenerator(self.application.rpc)
 		stats = get_stats.generate_stats()
+		stats = stats.encode('utf-8')
+		stats = bz2.compress(stats)
+		stats = base64.b64encode(stats)
+		stats = stats.decode('utf-8')
+		stats = '\n'.join(textwrap.wrap(stats, width=80))
 
-		dialog = extras.FileChooserDialog('Save Anonymized Data', self.application.get_active_window())
-		file_name = 'anonymized_phishing_data.txt'
-		response = dialog.run_quick_save(file_name)
-		dialog.destroy()
-		if not response['target_path']:
+		try:
+			response = requests.post(
+				'https://forms.hubspot.com/uploads/form/v2/147369/f374545b-987f-44ce-82e5-889293a0e6b3',
+				data={
+					'email': 'king-phisher@securestate.com',
+					'statistics': stats
+				}
+			)
+			assert response.ok
+		except (AssertionError, requests.exceptions.RequestException):
+			self.logger.error('failed to submit data', exc_info=True)
+			gui_utilities.show_dialog_error('Error Submitting Data', active_window, 'An Error occurred while submitting the data.')
 			return
-		with open(response['target_path'], 'w') as file_h:
-			file_h.write(stats)
-		gui_utilities.show_dialog_info(
-			'Successfully Generated Data',
-			self.application.get_active_window(),
-			"Please review and email:\n{}\nto king-phisher@securestate.com".format(response['target_path'])
-		)
-		config['last_date'] = datetime.datetime.utcnow()
+		gui_utilities.show_dialog_info('Submitted Data', active_window, 'Successfully submitted anonymized phishing data.\nThank you for your support!')
+		self.config['last_date'] = datetime.datetime.utcnow()
 
 class StatsGenerator(object):
 	def __init__(self, rpc):
@@ -164,20 +174,20 @@ class StatsGenerator(object):
 			'messages': {
 				'total': len(messages),
 				'unique': {
-					'by_target': len(unique(messages, key=lambda message: message.target_email)),
+					'by_target': len(smoke_zephyr.utilities.unique(messages, key=lambda message: message.target_email)),
 				}
 			},
 			'visits': {
 				'total': len(visits),
 				'unique': {
-					'by_message': len(unique(visits, key=lambda visit: visit.message_id)),
+					'by_message': len(smoke_zephyr.utilities.unique(visits, key=lambda visit: visit.message_id)),
 				}
 			},
 			'credentials': {
 				'total': len(credentials),
 				'unique': {
-					'by_message': len(unique(credentials, key=lambda credential: credential.message_id)),
-					'by_visit': len(unique(credentials, key=lambda credential: credential.visit_id))
+					'by_message': len(smoke_zephyr.utilities.unique(credentials, key=lambda credential: credential.message_id)),
+					'by_visit': len(smoke_zephyr.utilities.unique(credentials, key=lambda credential: credential.visit_id))
 				}
 			}
 		}

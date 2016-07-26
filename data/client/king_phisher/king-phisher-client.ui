@@ -2577,6 +2577,7 @@ Spencer McIntyre</property>
                       <object class="GtkStack" id="PluginManagerWindow.stack_plugin_info">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_right">12</property>
                         <child>
                           <object class="GtkGrid" id="PluginManagerWindow.grid_plugin_info">
                             <property name="visible">True</property>
