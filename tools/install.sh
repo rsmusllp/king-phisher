@@ -5,7 +5,9 @@
 # Server on supported distributions.
 #
 # Project Home Page: https://github.com/securestate/king-phisher/
-# Author: Spencer McIntyre
+# Authors:
+#   Erik Daguerre
+#   Spencer McIntyre
 #
 # Quick run command:
 #   wget -q https://github.com/securestate/king-phisher/raw/master/tools/install.sh && sudo bash ./install.sh
@@ -121,32 +123,32 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "BackBox Linux 4\.[4-6]" /etc/issue 2>&1 > /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "BackBox Linux 4\.[4-6]" /etc/issue &> /dev/null; then
 	LINUX_VERSION="BackBox"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "CentOS Linux release 7(\.[0-9]{1,4}){2}" /etc/redhat-release 2>&1 > /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "CentOS Linux release 7(\.[0-9]{1,4}){2}" /etc/redhat-release &> /dev/null; then
 	LINUX_VERSION="CentOS"
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[3-4]" /etc/redhat-release 2>&1 > /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[3-4]" /etc/redhat-release &> /dev/null; then
 	LINUX_VERSION="Fedora"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Debian GNU\/Linux [8] " /etc/issue 2>&1 > /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Debian GNU\/Linux [8] " /etc/issue &> /dev/null; then
 	LINUX_VERSION="Debian"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep 'Kali Linux 2\.[0-9]\|Kali Linux Rolling' /etc/debian_version 2>&1 > /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep 'Kali Linux 2\.[0-9]\|Kali Linux Rolling' /etc/debian_version &> /dev/null; then
 	LINUX_VERSION="Kali"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu 1[456]\.(04|10)" /etc/issue 2>&1 > /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu 1[456]\.(04|10)" /etc/issue &> /dev/null; then
 	LINUX_VERSION="Ubuntu"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu Xenial Xerus" /etc/issue 2>&1 > /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu Xenial Xerus" /etc/issue &> /dev/null; then
 	LINUX_VERSION="Ubuntu"
 fi
 
@@ -207,7 +209,7 @@ elif [ -d "$(dirname $(dirname $FILE_NAME))/king_phisher" ]; then
 else
 	echo "Downloading and installing the King Phisher server to $KING_PHISHER_DIR"
 	if [ ! -d "$KING_PHISHER_DIR" ]; then
-		if ! git clone $GIT_CLONE_URL $KING_PHISHER_DIR 2>&1 > /dev/null; then
+		if ! git clone $GIT_CLONE_URL $KING_PHISHER_DIR &> /dev/null; then
 			echo "Failed to clone the Git repo"
 			exit $E_SOFTWARE
 		fi
@@ -222,9 +224,9 @@ if [ -n "$KING_PHISHER_DEV" ] && [ -d ".git" ]; then
 fi
 
 if [ "$LINUX_VERSION" == "Kali" ]; then
-	if ! grep 'Kali Linux Rolling' /etc/debian_version 2>&1 > /dev/null; then
+	if ! grep 'Kali Linux Rolling' /etc/debian_version &> /dev/null; then
 		echo "Checking Kali 2 apt sources"
-		if ! grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list 2>&1 > /dev/null; then
+		if ! grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null; then
 			echo "Standard Kali 2 apt sources are missing, now adding them"
 			echo "See http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
 			echo "deb http://http.kali.org/kali sana main non-free contrib" >> /etc/apt/sources.list
@@ -268,7 +270,7 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 				exit
 		fi
 
-		if apt-cache search gir1.2-vte-2.91 2>&1 > /dev/null; then
+		if apt-cache search gir1.2-vte-2.91 &> /dev/null; then
 			if ! apt-get -y install gir1.2-vte-2.91; then
 				echo "Failed to install gir1.2-vte-2.91"
 			fi
@@ -278,7 +280,7 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 			fi
 		fi
 
-		if apt-get install -y gir1.2-webkit2-3.0 2>&1 > /dev/null; then
+		if apt-get install -y gir1.2-webkit2-3.0 &> /dev/null; then
 			echo "Successfully installed gir1.2-webkit2-3.0 with apt-get"
 		else
 			echo "Failed to install gir1.2-webkit2-3.0 with apt-get"
@@ -337,10 +339,8 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 	fi
 fi
 
-
-
 if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
-	if ! egrep "^${KING_PHISHER_GROUP}:" /etc/group 2>&1 > /dev/null; then
+	if ! egrep "^${KING_PHISHER_GROUP}:" /etc/group &> /dev/null; then
 		echo "Creating King Phisher admin group: '$KING_PHISHER_GROUP'"
 		groupadd $KING_PHISHER_GROUP
 		chown -R :$KING_PHISHER_GROUP $KING_PHISHER_DIR
@@ -359,9 +359,9 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		if [ -f "/etc/init.d/postgresql" ]; then
 			service postgresql start
-			if ! service postgresql status 2>&1 > /dev/null; then
+			if ! service postgresql status &> /dev/null; then
 				postgresql-setup --initdb &> /dev/null
-				if ! service postgresql start 2>&1 > /dev/null; then
+				if ! service postgresql start &> /dev/null; then
 					echo "Error: Could not start postgresql"
 					exit
 				fi
@@ -369,9 +369,9 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		fi
 		if [ -f "/usr/lib/systemd/system/postgresql.service" ]; then
 			systemctl start postgresql &> /dev/null
-			if ! systemctl is-active 2>&1 > /dev/null; then
+			if ! systemctl is-active &> /dev/null; then
 				postgresql-setup --initdb &> /dev/null
-				if ! systemctl start postgresql 2>&1 > /dev/null; then
+				if ! systemctl start postgresql &> /dev/null; then
 					echo "Error: Could not start postgresql"
 					exit
 				fi
