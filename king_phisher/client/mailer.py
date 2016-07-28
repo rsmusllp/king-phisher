@@ -495,7 +495,7 @@ class MailSenderThread(threading.Thread):
 				break
 			if not self.process_pause():
 				break
-			if emails_done > 0 and (emails_done % max_messages_per_connection):
+			if emails_done > 0 and max_messages_per_connection > 0 and (emails_done % max_messages_per_connection):
 				self.server_smtp_reconnect()
 
 			emails_done += 1
