@@ -1,22 +1,12 @@
 #!/bin/bash
 # vim: tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab
 ###############################################################################
-# This is the Linux installation script for the King Phisher Client and
+# This is the Linux uninstall script for the King Phisher Client and
 # Server on supported distributions.
 #
 # Project Home Page: https://github.com/securestate/king-phisher/
 # Authors:
 #   Erik Daguerre
-#
-# Supported Linux Distributions:
-#   Linux Flavor  | Client | Server |
-#   --------------|--------|--------|
-#   BackBox		  |   yes  |   yes  |
-#   CentOS		  |   no   |   yes  |
-#   Debian		  |   yes  |   yes  |
-#   Fedora		  |   yes  |   yes  |
-#   Kali		  |   yes  |   yes  |
-#   Ubuntu		  |   yes  |   yes  |
 #
 ###############################################################################
 
@@ -24,11 +14,6 @@ E_USAGE=64
 E_SOFTWARE=70
 E_NOTROOT=87
 FILE_NAME="$(dirname $(readlink -e $0) 2>/dev/null)/$(basename $0)"
-GIT_CLONE_URL="https://github.com/securestate/king-phisher.git"
-if [ -z "$KING_PHISHER_DIR" ]; then
-	KING_PHISHER_DIR="/opt/king-phisher"
-fi
-LINUX_VERSION=""
 
 answer_all_no=false
 answer_all_yes=false
@@ -60,14 +45,14 @@ function prompt_yes_or_no {
 function show_help {
 	echo "Usage: $(basename $0) [-h] [-n/-y]"
 	echo ""
-	echo "King Phisher Install Script"
+	echo "King Phisher uninstall Script"
 	echo ""
 	echo "optional arguments"
-	echo "  -h, --help			show this help message and exit"
-	echo "  -n, --no			 answer no to all questions"
-	echo "  -y, --yes			 answer yes to all questions"
-	echo "  --delete-database	 deletes king-phisher database and all campaigns"
-	echo "  --delete-directory	removes king-phisher directory and all files"
+	echo "  -h, --help            show this help message and exit"
+	echo "  -n, --no              answer no to all questions"
+	echo "  -y, --yes             answer yes to all questions"
+	echo "  --delete-database     delete the King Phisher database"
+	echo "  --delete-directory    delete the King Phisher directory"
 	return 0;
 }
 
@@ -94,7 +79,7 @@ while :; do
 		--delete-database)
 			KING_PHISHER_DELETE_DATABASE="x"
 			;;
-		--delete-dirctory)
+		--delete-directory)
 			KING_PHISHER_DELETE_DIRECTORY="x"
 			;;
 		--)
@@ -116,6 +101,36 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
+if [ $answer_all_yes == "true" ]; then
+	KING_PHISHER_DELETE_DATABASE="x"
+	KING_PHISHER_DELETE_DIRECTORY="x"
+fi
+
+if [ ! -z $KING_PHISHER_DELETE_DATABASE ]; then
+	echo "WARNING: King Phisher Database will be deleted. All campaign data will be Lost"
+	prompt_yes_or_no "Are you sure you want to continue" DATABASE_LAST_CHANCE
+	if [ $DATABASE_LAST_CHANCE == "yes" ]; then
+		su postgres -c "psql -c \"DROP DATABASE king_phisher;\"" &> /dev/null
+		su postgres -c "psql -c \"DROP USER king_phisher;\"" &> /dev/null
+		echo "The King Phisher database has been removed"
+	fi
+fi
+
+if [ ! -z $KING_PHISHER_DELETE_DIRECTORY ]; then
+	if git status &> /dev/null; then
+		KING_PHISHER_DIR="$(git rev-parse --show-toplevel)"
+		echo "Git repo found at $KING_PHISHER_DIR"
+	elif [ -d "$(dirname $(dirname $FILE_NAME))/king_phisher" ]; then
+		KING_PHISHER_DIR="$(dirname $(dirname $FILE_NAME))"
+		echo "Project directory found at $KING_PHISHER_DIR"
+	fi
+	echo "WARNING: $KING_PHISHER_DIR directory will be removed"
+	prompt_yes_or_no "Are you sure you want to continue" DIR_LAST_CHANCE
+	if [ $DIR_LAST_CHANCE == "yes" ]; then
+		rm -rf $KING_PHISHER_DIR
+		echo "The King Phisher directory has been removed"
+	fi
+fi
 
 if [ -f /lib/systemd/system/king-phisher.service ]; then
 	systemctl stop king-phisher
@@ -124,60 +139,28 @@ if [ -f /lib/systemd/system/king-phisher.service ]; then
 		rm /etc/systemd/system/multi-user.target.wants/king-phisher.service
 	fi
 	systemctl daemon-reload
+	echo "Removed King Phisher systemd service files"
 fi
 
 if [ -f /etc/init/king-phisher.conf ]; then
 	service king-phisher stop
 	rm /etc/init/king-phisher.conf
+	echo "Removed King Phisher initd service files"
 fi
 
 if [ -f "/usr/local/share/applications/king-phisher.desktop" ]; then
 	rm /usr/local/share/applications/king-phisher.desktop
-	echo "removed king-phisher.desktop"
+	echo "Removed king-phisher.desktop file"
 elif [ -f "/usr/share/applications/king-phisher.desktop" ]; then
 	rm /usr/share/applications/king-phisher.desktop
-	echo "removed king-phisher.desktop"
+	echo "Removed king-phisher.desktop file"
 fi
 if [ -f /usr/share/icons/hicolor/scalable/apps/king-phisher-icon.svg ]; then
 	rm /usr/share/icons/hicolor/scalable/apps/king-phisher-icon.svg
-	echo "removed king-phisher icon"
+	echo "Removed the King Phisher icon"
 fi
 
 if [ -f "/usr/share/icons/hicolor/index.theme" -a "$(command -v gtk-update-icon-cache)" ]; then
 	echo "Updating the GTK icon cache"
 	gtk-update-icon-cache --force /usr/share/icons/hicolor
-fi
-
-if [ $answer_all_yes == "true" ]; then
-	KING_PHISHER_DELETE_DATABASE="x"
-	KING_PHISHER_DELETE_DIRECTORY="x"
-	answer_all_yes=false # reset to allow for last chance
-fi
-
-if [ ! -z $KING_PHISHER_DELETE_DATABASE ]; then
-	echo "WARNING: Database will be deleted || ALL CAMPAIGN DATA WILL BE LOST"
-	LAST_CHANCE=""
-	prompt_yes_or_no "Are you sure you want to continue" LAST_CHANCE
-	if [ $LAST_CHANCE == "yes" ]; then
-		su postgres -c "psql -c \"DROP DATABASE king_phisher;\"" &> /dev/null
-		su postgres -c "psql -c \"DROP USER king_phisher;\"" &> /dev/null
-		echo "database removed"
-	fi
-fi
-
-if [ ! -z $KING_PHISHER_DELETE_DIRECTORY ]; then
-	echo "WARNING: $KING_PHISHER_DIR directory will be removed"
-	LAST_CHANCE=""
-	prompt_yes_or_no "Are you sure you want to continue" LAST_CHANCE
-	if [ $LAST_CHANCE == "yes" ]; then
-		if git status &> /dev/null; then
-			KING_PHISHER_DIR="$(git rev-parse --show-toplevel)"
-			echo "Git repo found at $KING_PHISHER_DIR"
-		elif [ -d "$(dirname $(dirname $FILE_NAME))/king_phisher" ]; then
-			KING_PHISHER_DIR="$(dirname $(dirname $FILE_NAME))"
-			echo "Project directory found at $KING_PHISHER_DIR"
-		fi
-		rm -rf $KING_PHISHER_DIR
-		echo "directory removed"
-	fi
 fi
