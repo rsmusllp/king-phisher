@@ -381,12 +381,9 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		PG_CONFIG_LOCATION=$(su postgres -c "psql -t -P format=unaligned -c 'show hba_file';")
 		echo "PostgreSQL configuration file found at $PG_CONFIG_LOCATION"
 		# put the king_phisher first in the line for localhost connects with md5
-		sed -i '/# IPv4 local connections:/a\# permit local connections from the king_phisher user for the king_phisher database' $PG_CONFIG_LOCATION
-		sed -i '/# permit local connections from the king_phisher user for the king_phisher database/a\host    king_phisher    king_phisher    127.0.0.1/32            md5' $PG_CONFIG_LOCATION
+		sed -i '/# IPv4 local connections:/a\host    king_phisher    king_phisher    127.0.0.1/32            md5' $PG_CONFIG_LOCATION
 		# generate a random 32 character long password for postgresql
 		PG_KP_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' |  head -c 40)
-		su postgres -c "psql -c \"CREATE USER king_phisher WITH PASSWORD '$PG_KP_PASSWORD';\"" &> /dev/null
-		su postgres -c "psql -c \"CREATE DATABASE king_phisher OWNER king_phisher;\"" &> /dev/null
 		sed -i -re "s|database: sqlite://|#database: sqlite://|" ./server_config.yml
 		sed -i -re "s|#\\s?database: postgresql://.*$|database: postgresql://king_phisher:$PG_KP_PASSWORD@localhost/king_phisher|" ./server_config.yml
 		# restart postgresql to have hda_file updates take affect

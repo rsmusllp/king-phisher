@@ -22,7 +22,8 @@ function prompt_yes_or_no {
 	# prompt the user to answer a yes or no question, defaulting to yes if no
 	# response is entered
 	local __prompt_text=$1
-	local __result_var=$2
+	local __default_answer=$2
+	local __result_var=$3
 	if [ "$answer_all_no" == "true" ]; then
 		$__result_var="no";
 		return 0;
@@ -30,10 +31,18 @@ function prompt_yes_or_no {
 		eval $__result_var="yes";
 		return 0;
 	fi
+	if [ "$__default_answer" == "yes" ]; then
+		__prompt_text="$__prompt_text [Y/n] "
+	elif [ "$__default_answer" == "no" ]; then
+		__prompt_text="$__prompt_text [y/N] "
+	else
+		echo "PROGRAMMING ERROR (arg #2 must be yes or no)"
+		exit $E_SOFTWARE
+	fi
 	while true; do
-		read -p "$__prompt_text [Y/n] " _response
+		read -p "$__prompt_text" _response
 		case $_response in
-			"" ) eval $__result_var="yes"; break;;
+			"" ) eval $__result_var="$__default_answer"; break;;
 			[Yy]* ) eval $__result_var="yes"; break;;
 			[Nn]* ) eval $__result_var="no";  break;;
 			* ) echo "Please answer yes or no.";;
@@ -101,17 +110,16 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-if [ $answer_all_yes == "true" ]; then
-	KING_PHISHER_DELETE_DATABASE="x"
-	KING_PHISHER_DELETE_DIRECTORY="x"
-fi
-
 if [ ! -z $KING_PHISHER_DELETE_DATABASE ]; then
-	echo "WARNING: King Phisher Database will be deleted. All campaign data will be Lost"
-	prompt_yes_or_no "Are you sure you want to continue" DATABASE_LAST_CHANCE
-	if [ $DATABASE_LAST_CHANCE == "yes" ]; then
+	echo "WARNING: The King Phisher database will be deleted. All campaign data will be lost."
+	prompt_yes_or_no "Are you sure you want to continue?" "no" KING_PHISHER_DELETE_CONFIRM
+	if [ $KING_PHISHER_DELETE_CONFIRM == "yes" ]; then
 		su postgres -c "psql -c \"DROP DATABASE king_phisher;\"" &> /dev/null
 		su postgres -c "psql -c \"DROP USER king_phisher;\"" &> /dev/null
+
+		PG_CONFIG_LOCATION=$(su postgres -c "psql -t -P format=unaligned -c 'show hba_file';")
+		echo "PostgreSQL configuration file found at $PG_CONFIG_LOCATION"
+		sed -i '/king_phisher/d' $PG_CONFIG_LOCATION
 		echo "The King Phisher database has been removed"
 	fi
 fi
@@ -124,40 +132,42 @@ if [ ! -z $KING_PHISHER_DELETE_DIRECTORY ]; then
 		KING_PHISHER_DIR="$(dirname $(dirname $FILE_NAME))"
 		echo "Project directory found at $KING_PHISHER_DIR"
 	fi
-	echo "WARNING: $KING_PHISHER_DIR directory will be removed"
-	prompt_yes_or_no "Are you sure you want to continue" DIR_LAST_CHANCE
-	if [ $DIR_LAST_CHANCE == "yes" ]; then
+	echo "WARNING: The $KING_PHISHER_DIR directory will be removed"
+	prompt_yes_or_no "Are you sure you want to continue?" "no" KING_PHISHER_DELETE_CONFIRM
+	if [ $KING_PHISHER_DELETE_CONFIRM == "yes" ]; then
 		rm -rf $KING_PHISHER_DIR
 		echo "The King Phisher directory has been removed"
 	fi
 fi
 
 if [ -f /lib/systemd/system/king-phisher.service ]; then
-	systemctl stop king-phisher
+	if ! systemctl is-active king-phisher; then
+		systemctl stop king-phisher
+	fi
+	if ! systemctl is-enabled king-phisher; then
+		systemctl disable king-phisher
+	fi
 	rm /lib/systemd/system/king-phisher.service
 	if [ -f /etc/systemd/system/multi-user.target.wants/king-phisher.service ]; then
 		rm /etc/systemd/system/multi-user.target.wants/king-phisher.service
 	fi
 	systemctl daemon-reload
-	echo "Removed King Phisher systemd service files"
-fi
-
-if [ -f /etc/init/king-phisher.conf ]; then
+elif [ -f /etc/init/king-phisher.conf ]; then
 	service king-phisher stop
 	rm /etc/init/king-phisher.conf
-	echo "Removed King Phisher initd service files"
 fi
+echo "Removed the King Phisher service files"
 
 if [ -f "/usr/local/share/applications/king-phisher.desktop" ]; then
 	rm /usr/local/share/applications/king-phisher.desktop
-	echo "Removed king-phisher.desktop file"
+	echo "Removed the king-phisher.desktop file"
 elif [ -f "/usr/share/applications/king-phisher.desktop" ]; then
 	rm /usr/share/applications/king-phisher.desktop
-	echo "Removed king-phisher.desktop file"
+	echo "Removed the king-phisher.desktop file"
 fi
 if [ -f /usr/share/icons/hicolor/scalable/apps/king-phisher-icon.svg ]; then
 	rm /usr/share/icons/hicolor/scalable/apps/king-phisher-icon.svg
-	echo "Removed the King Phisher icon"
+	echo "Removed the client King Phisher icon file"
 fi
 
 if [ -f "/usr/share/icons/hicolor/index.theme" -a "$(command -v gtk-update-icon-cache)" ]; then
