@@ -242,6 +242,7 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		self.tabs['campaign'] = campaign_tab
 		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page + 2)
 
+		self.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
 		self.set_size_request(800, 600)
 		self.connect('delete-event', self.signal_delete_event)
 		self.notebook.show()

@@ -22,6 +22,8 @@ Version 1.4.0
 * Added server signals for event subscriptions in plugins
 * Updated the style for GTK 3.20
 * Start to warn users about the impending Python 2.7 deprecation
+* Change to installing for Python 3
+* Added an uninstallation script
 
 Version 1.3.0
 ^^^^^^^^^^^^^

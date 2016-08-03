@@ -352,8 +352,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		# create and show the main window
 		self.main_window = main.MainAppWindow(self.config, self)
-		self.main_window.set_position(Gtk.WindowPosition.CENTER)
-		self.main_window.show()
 		self.main_tabs = self.main_window.tabs
 
 		for name in list(self.config['plugins.enabled']):

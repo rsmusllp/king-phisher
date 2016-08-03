@@ -135,16 +135,7 @@ calendar {
 }
 
 checkbutton.text-button {
-  background-image: none;
-  border-radius: 3px;
-  border: 0px solid;
-  border-color: $theme_color_1;
-  color: mix($theme_color_0, $theme_color_1, 0.25);
-  padding: 1px 2px 4px;
-  &:hover {
-    background-color: gtkalpha($theme_color_0, 0.8);
-    color: $theme_color_1;
-  }
+  @include btn-text();
 }
 
 combobox {
@@ -315,16 +306,7 @@ radiobutton {
 }
 
 radiobutton.text-button {
-  background-image: none;
-  border-radius: 3px;
-  border: 0px solid;
-  border-color: $theme_color_1;
-  color: mix($theme_color_0, $theme_color_1, 0.25);
-  padding: 1px 2px 4px;
-  &:hover {
-    background-color: gtkalpha($theme_color_0, 0.8);
-    color: $theme_color_1;
-  }
+  @include btn-text();
 }
 
 scrollbar {
@@ -343,11 +325,12 @@ scrollbar {
     border-radius: 0;
   }
   slider {
-    min-width: 6px;
-    min-height: 6px;
+    background-clip: padding-box;
+    background-color: $theme_color_bg;
     border: 4px solid transparent;
     border-radius: 8px;
-    background-color: $theme_color_bg;
+    min-height: 6px;
+    min-width: 6px;
   }
   &.top { border-bottom: 1px solid $theme_color_bg; }
   &.bottom { border-top: 1px solid $theme_color_bg; }
