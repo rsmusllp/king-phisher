@@ -358,7 +358,7 @@ def liststore_to_csv(store, target_file, columns):
 	:return: The number of rows that were written.
 	:rtype: int
 	"""
-	target_file_h = open(target_file, 'wb')
+	target_file_h = open(target_file, 'w')
 	writer = csv.writer(target_file_h, quoting=csv.QUOTE_ALL)
 	rows = liststore_export(store, columns, _csv_write, (writer,))
 	target_file_h.close()

@@ -70,6 +70,7 @@
 @define-color theme_color_graph_pie_low #3c5b77;
 /* background mixins */
 /* border mixins */
+/* button mixins */
 * {
   -gtk-icon-shadow: none;
   border: none;
@@ -109,9 +110,9 @@
 button {
   background-image: linear-gradient(to bottom, #5c83a7, #00203a);
   background-size: 100% 100%;
-  border-radius: 3px;
   border: 1px solid;
   border-color: shade(#00203a, 1.2);
+  border-radius: 3px;
   color: white; }
   button:disabled {
     border-color: white; }
@@ -148,23 +149,29 @@ calendar {
 
 checkbutton.text-button {
   background-image: none;
+  border: 1px solid;
+  border-color: transparent;
   border-radius: 3px;
-  border: 0px solid;
-  border-color: #5d84a8;
-  color: #5d84a8;
-  padding: 1px 2px 4px; }
+  padding: 2px 2px 4px;
+  transition: 200ms ease-out; }
   checkbutton.text-button:hover {
+    border: 1px solid;
+    border-color: shade(#00203a, 1.2);
+    border-radius: 3px;
     background-color: alpha(#00203a, 0.8);
-    color: #5d84a8; }
+    color: #5d84a8;
+    padding: 2px 2px 4px; }
+    checkbutton.text-button:hover:disabled {
+      border-color: white; }
 
 combobox .separator {
   -GtkWidget-horizontal-separator: 0;
   -GtkWidget-vertical-separator: 0; }
 
 entry {
-  border-radius: 3px;
   border: 1px solid;
   border-color: shade(#00203a, 1.2);
+  border-radius: 3px;
   background-color: alpha(white, 0.8);
   background-image: none;
   border-radius: 3px;
@@ -309,14 +316,20 @@ radiobutton {
 
 radiobutton.text-button {
   background-image: none;
+  border: 1px solid;
+  border-color: transparent;
   border-radius: 3px;
-  border: 0px solid;
-  border-color: #5d84a8;
-  color: #5d84a8;
-  padding: 1px 2px 4px; }
+  padding: 2px 2px 4px;
+  transition: 200ms ease-out; }
   radiobutton.text-button:hover {
+    border: 1px solid;
+    border-color: shade(#00203a, 1.2);
+    border-radius: 3px;
     background-color: alpha(#00203a, 0.8);
-    color: #5d84a8; }
+    color: #5d84a8;
+    padding: 2px 2px 4px; }
+    radiobutton.text-button:hover:disabled {
+      border-color: white; }
 
 scrollbar {
   background-color: #ffffff;
@@ -331,11 +344,12 @@ scrollbar {
     border-style: none;
     border-radius: 0; }
   scrollbar slider {
-    min-width: 6px;
-    min-height: 6px;
+    background-clip: padding-box;
+    background-color: shade(#00203a, 1.2);
     border: 4px solid transparent;
     border-radius: 8px;
-    background-color: shade(#00203a, 1.2); }
+    min-height: 6px;
+    min-width: 6px; }
   scrollbar.top {
     border-bottom: 1px solid shade(#00203a, 1.2); }
   scrollbar.bottom {
@@ -358,9 +372,9 @@ switch {
   font-weight: bold;
   transition: 200ms ease-out; }
   switch slider {
-    border-radius: 3px;
     border: 1px solid;
     border-color: shade(#00203a, 1.2);
+    border-radius: 3px;
     margin: 0px;
     min-width: 40px;
     min-height: 22px; }
