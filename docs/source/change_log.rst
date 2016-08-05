@@ -10,8 +10,6 @@ Version 1.x.x
 Version 1.4.0
 ^^^^^^^^^^^^^
 
-*In Progress*
-
 * Added additional Jinja variables for server pages
 * Upgraded to AdvancedHTTPServer version 2
 
