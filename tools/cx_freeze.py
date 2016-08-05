@@ -136,7 +136,9 @@ build_exe_options = dict(
 	include_files=include_files,
 	packages=[
 		'cairo',
-		'Crypto',
+		'cffi',             # cryptography requirement
+		'cryptography',     # paramiko requirement
+		'OpenSSL',          # cryptography backends
 		'email',
 		'gi',
 		'jinja2',
