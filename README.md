@@ -38,6 +38,11 @@ file. After installing, for instructions on how to get started please see the
  * Geo location of phishing visitors
  * Send email with calendar invitations
 
+## Plugins
+Both the client and server can be extended with functionality provided by
+plugins. A small number of plugins are packaged with King Phisher and
+additional ones are available in the [Plugins repository](https://github.com/securestate/king-phisher-plugins).
+
 ## Template Files
 Template files for both messages and server pages can be found in the separate
 King Phisher [Templates repository](https://github.com/securestate/king-phisher-templates).

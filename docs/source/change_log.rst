@@ -16,6 +16,8 @@ Version 1.5.0
 Version 1.4.0
 ^^^^^^^^^^^^^
 
+Released :release:`1.4.0` on August 5th, 2016
+
 * Added additional Jinja variables for server pages
 * Upgraded to AdvancedHTTPServer version 2
 
