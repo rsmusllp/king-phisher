@@ -30,6 +30,10 @@ Functions
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_list_store_search
 
+.. autofunction:: king_phisher.client.gui_utilities.gtk_menu_get_item_by_label
+
+.. autofunction:: king_phisher.client.gui_utilities.gtk_menu_insert_by_path
+
 .. autofunction:: king_phisher.client.gui_utilities.gtk_menu_position
 
 .. autofunction:: king_phisher.client.gui_utilities.gtk_style_context_get_color

@@ -33,6 +33,7 @@
 import weakref
 
 from king_phisher import plugins
+from king_phisher.client import gui_utilities
 
 from gi.repository import Gtk
 
@@ -168,6 +169,7 @@ class ClientPlugin(plugins.PluginBase):
 		self.application = application
 		"""A reference to the :py:class:`~king_phisher.client.application.KingPhisherClientApplication`."""
 		super(ClientPlugin, self).__init__()
+		self._menu_items = []
 		self._signals = []
 
 	def _cleanup(self):
@@ -177,6 +179,8 @@ class ClientPlugin(plugins.PluginBase):
 			if gobject is None:
 				continue
 			gobject.disconnect(handler_id)
+		for menu_item in self._menu_items:
+			menu_item.destroy()
 
 	@property
 	def config(self):
@@ -189,6 +193,28 @@ class ClientPlugin(plugins.PluginBase):
 			config = {}
 			self.application.config['plugins'][self.name] = config
 		return config
+
+	def add_menu_item(self, menu_path, handler):
+		"""
+		Add a new item into the main menu bar for the application.
+
+		:param str menu_path: The path to the menu item, delimited with > characters.
+		:param handler: The callback function to be connected to the new :py:class:`Gtk.MenuItem` instance's activate signal.
+		:return: The newly created and added menu item.
+		:rtype: :py:class:`Gtk.MenuItem`
+		"""
+		menu_path = [path_item.strip() for path_item in menu_path.split('>')]
+		menu_path = [path_item for path_item in menu_path if path_item]
+		if menu_path[0][0] != '_':
+			menu_path[0] = '_' + menu_path[0]
+		menu_item = Gtk.MenuItem.new_with_label(menu_path.pop())
+		self.signal_connect('activate', handler, gobject=menu_item)
+
+		menu_bar = self.application.main_window.menu_bar.menubar
+		gui_utilities.gtk_menu_insert_by_path(menu_bar, menu_path, menu_item)
+		menu_item.show()
+		self._menu_items.append(menu_item)
+		return menu_item
 
 	def signal_connect(self, name, handler, gobject=None, after=False):
 		"""

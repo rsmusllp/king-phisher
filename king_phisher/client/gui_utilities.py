@@ -216,6 +216,40 @@ def gtk_list_store_search(list_store, value, column=0):
 			return row.iter
 	return None
 
+def gtk_menu_get_item_by_label(menu, label):
+	"""
+	Retrieve a menu item from a menu by it's label. If more than one items share
+	the same label, only the first is returned.
+
+	:param menu: The menu to search for the item in.
+	:type menu: :py:class:`Gtk.Menu`
+	:param str label: The label to search for in *menu*.
+	:return: The identified menu item if it could be found, otherwise None is returned.
+	:rtype: :py:class:`Gtk.MenuItem`
+	"""
+	for item in menu:
+		if item.get_label() == label:
+			return item
+
+def gtk_menu_insert_by_path(menu, menu_path, menu_item):
+	"""
+	Add a new menu item into the existing menu at the path specified in
+	*menu_path*.
+
+	:param menu: The existing menu to add the new item to.
+	:type menu: :py:class:`Gtk.Menu`
+	:param list menu_path: The labels of submenus to traverse to insert the new item.
+	:param menu_item: The new menu item to insert.
+	:type menu_item: :py:class:`Gtk.MenuItem`
+	"""
+	while len(menu_path):
+		label = menu_path.pop(0)
+		menu_cursor = gtk_menu_get_item_by_label(menu, label)
+		if menu_cursor is None:
+			raise ValueError('missing node labeled: ' + label)
+		menu = menu_cursor.get_submenu()
+	menu.append(menu_item)
+
 def gtk_menu_position(event, *args):
 	"""
 	Create a menu at the given location for an event. This function is meant to
