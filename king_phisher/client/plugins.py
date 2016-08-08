@@ -169,7 +169,7 @@ class ClientPlugin(plugins.PluginBase):
 		self.application = application
 		"""A reference to the :py:class:`~king_phisher.client.application.KingPhisherClientApplication`."""
 		super(ClientPlugin, self).__init__()
-		self._menu_items = []
+		self._widgets = []
 		self._signals = []
 
 	def _cleanup(self):
@@ -179,8 +179,10 @@ class ClientPlugin(plugins.PluginBase):
 			if gobject is None:
 				continue
 			gobject.disconnect(handler_id)
-		for menu_item in self._menu_items:
-			menu_item.destroy()
+		self._signals = []
+		for widget in self._widgets:
+			widget.destroy()
+		self._widgets = []
 
 	@property
 	def config(self):
@@ -196,7 +198,9 @@ class ClientPlugin(plugins.PluginBase):
 
 	def add_menu_item(self, menu_path, handler):
 		"""
-		Add a new item into the main menu bar for the application.
+		Add a new item into the main menu bar of the application. Menu items
+		created through this method are automatically removed when the plugin is
+		disabled.
 
 		:param str menu_path: The path to the menu item, delimited with > characters.
 		:param handler: The callback function to be connected to the new :py:class:`Gtk.MenuItem` instance's activate signal.
@@ -213,7 +217,7 @@ class ClientPlugin(plugins.PluginBase):
 		menu_bar = self.application.main_window.menu_bar.menubar
 		gui_utilities.gtk_menu_insert_by_path(menu_bar, menu_path, menu_item)
 		menu_item.show()
-		self._menu_items.append(menu_item)
+		self._widgets.append(menu_item)
 		return menu_item
 
 	def signal_connect(self, name, handler, gobject=None, after=False):

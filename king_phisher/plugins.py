@@ -278,7 +278,17 @@ class PluginManagerBase(object):
 		if not klass.is_compatible:
 			raise errors.KingPhisherPluginError(name, 'the plugin is incompatible')
 		inst = klass(*self.plugin_init_args)
-		if not inst.initialize():
+		try:
+			initialized = inst.initialize()
+		except Exception:
+			self.logger.error("failed to enable plugin '{0}', initialize threw an exception".format(name), exc_info=True)
+			try:
+				inst._cleanup()
+			except Exception:
+				self.logger.error("failed to clean up resources for plugin '{0}'".format(name), exc_info=True)
+			self._lock.release()
+			raise
+		if not initialized:
 			self.logger.warning("failed to enable plugin '{0}', initialize check failed".format(name))
 			self._lock.release()
 			return
