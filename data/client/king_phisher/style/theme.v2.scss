@@ -213,6 +213,9 @@ menuitem {
   color: black;
   > label {
     color: black;
+    &:disabled {
+      color: darkgray;
+    }
   }
   &:hover {
     background-color: $theme_color_1;

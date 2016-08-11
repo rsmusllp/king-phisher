@@ -234,6 +234,8 @@ menuitem {
   color: black; }
   menuitem > label {
     color: black; }
+    menuitem > label:disabled {
+      color: darkgray; }
   menuitem:hover {
     background-color: #5d84a8;
     background-image: none;
