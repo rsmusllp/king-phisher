@@ -37,6 +37,7 @@ import sys
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from king_phisher import color
+from king_phisher import ipaddress
 from king_phisher import spf
 from king_phisher import utilities
 
@@ -52,7 +53,7 @@ def main():
 	server_ip = arguments.smtp_server_ip
 	target_email = arguments.target_email
 
-	if not utilities.is_valid_ip_address(server_ip):
+	if not ipaddress.is_valid(server_ip):
 		color.print_error('the smtp server ip address specified is invalid')
 		return
 
