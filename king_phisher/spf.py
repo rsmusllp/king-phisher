@@ -178,12 +178,12 @@ class SenderPolicyFramework(object):
 			if not top_level:
 				raise
 			answers = []
-		answers = list(answer for answer in answers if isinstance(answer, dns.rdtypes.ANY.TXT.TXT))
+		answers = list(part for part in answers if isinstance(part, dns.rdtypes.ANY.TXT.TXT))
 
-		answers = [answer for answer in answers if answer.strings[0].startswith('v=spf1 ')]
+		answers = [part for part in answers if part.strings[0].decode('utf-8').startswith('v=spf1 ')]
 		if len(answers) == 0:
 			return
-		record = ''.join(answers[0].strings)
+		record = ''.join([part.decode('utf-8') for part in answers[0].strings])
 		if not record.startswith('v=spf1 '):
 			raise SPFPermError('failed to parse spf data')
 

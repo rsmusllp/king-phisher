@@ -270,7 +270,7 @@ def init_database(connection_url, extra_init=False):
 	session.commit()
 	session.close()
 
-	logger.debug("current database schema version: {0} ({1}current)".format(schema_version, ('' if schema_version == models.SCHEMA_VERSION else 'not ')))
+	logger.debug("current database schema version: {0} ({1})".format(schema_version, ('latest' if schema_version == models.SCHEMA_VERSION else 'obsolete')))
 	if schema_version > models.SCHEMA_VERSION:
 		raise errors.KingPhisherDatabaseError('the database schema is for a newer version, automatic downgrades are not supported')
 	elif schema_version < models.SCHEMA_VERSION:

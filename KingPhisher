@@ -56,7 +56,7 @@ from smoke_zephyr.requirements import check_requirements
 __requirements__ = [
 	'advancedhttpserver==2.0.5',
 	'boltons>=16.2.2',
-	"dns{0}>=1.12.0".format('python' if its.py_v2 else 'python3'),
+	'dnspython>=1.14.0',
 	'geojson>=1.3.2',
 	'icalendar>=3.9.2',
 	'Jinja2>=2.8',
