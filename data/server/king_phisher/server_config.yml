@@ -4,6 +4,7 @@
 
 logging:
   file: /var/log/king-phisher.log
+  # Available levels: FATAL, ERROR, WARNING, INFO, DEBUG
   level: warning
   console: false
 
