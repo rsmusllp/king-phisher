@@ -292,7 +292,6 @@ class MailSenderThread(threading.Thread):
 		"""A :py:class:`threading.Event` object indicating if the email sending operation is or should be paused."""
 		self.should_stop = threading.Event()
 		self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
-		self._mime_attachments = None
 
 	def tab_notify_sent(self, emails_done, emails_total):
 		"""
@@ -474,54 +473,19 @@ class MailSenderThread(threading.Thread):
 			self.logger.error("the configured target type '{0}' is unsupported".format(target_type))
 
 	def run(self):
-		emails_done = 0
-		emails_total = self.count_messages()
-		max_messages_per_connection = self.config.get('mailer.max_messages_per_connection', 5)
 		self.running.set()
 		self.should_stop.clear()
 		self.paused.clear()
-		self._prepare_env()
 
-		emails_total = "{0:,}".format(emails_total)
-		sending_line = "Sending email {{0: >{0},}} of {1} with UID: {{1}} to {{2}}".format(len(emails_total), emails_total)
-		emails_total = int(emails_total.replace(',', ''))
-		attachments = self.get_mime_attachments()
-		self.logger.debug("loaded {0:,} MIME attachments".format(sum((len(attachments.files), len(attachments.images)))))
+		try:
+			self._prepare_env()
+			emails_done = self._send_messages()
+		except Exception:
+			self.logger.error('an error occurred while sending messages', exc_info=True)
+			self.tab_notify_status('An error occurred while sending messages.')
+		else:
+			self.tab_notify_status("Finished sending, successfully sent {0:,} messages.".format(emails_done))
 
-		for target in self.iterate_targets():
-			iteration_time = time.time()
-			if self.should_stop.is_set():
-				self.tab_notify_status('Sending emails cancelled')
-				break
-			if not self.process_pause():
-				break
-			if emails_done > 0 and max_messages_per_connection > 0 and (emails_done % max_messages_per_connection):
-				self.server_smtp_reconnect()
-
-			emails_done += 1
-			self.tab_notify_status(sending_line.format(emails_done, target.uid, target.email_address))
-			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, attachments)
-			if not self._try_send_message(target.email_address, msg):
-				break
-
-			self.tab_notify_sent(emails_done, emails_total)
-			campaign_id = self.config['campaign_id']
-			self.rpc('campaign/message/new', campaign_id, target.uid, target.email_address, target.first_name, target.last_name, target.department)
-			self.application.emit('message-sent', target.uid, target.email_address)
-
-			if self.max_messages_per_minute:
-				iteration_time = (time.time() - iteration_time)
-				sleep_time = (60.0 / float(self.max_messages_per_minute)) - iteration_time
-				while sleep_time > 0:
-					sleep_chunk = min(sleep_time, 0.5)
-					time.sleep(sleep_chunk)
-					if self.should_stop.is_set():
-						break
-					sleep_time -= sleep_chunk
-
-		self._mime_attachments = None
-
-		self.tab_notify_status("Finished sending, successfully sent {0:,} messages.".format(emails_done))
 		self.server_smtp_disconnect()
 		if self._ssh_forwarder:
 			self._ssh_forwarder.stop()
@@ -676,6 +640,48 @@ class MailSenderThread(threading.Thread):
 			msg_template = file_h.read()
 		render_message_template(msg_template, self.config, analyze=True)
 		template_environment.set_mode(template_environment.MODE_SEND)
+
+	def _send_messages(self):
+		emails_done = 0
+		max_messages_per_connection = self.config.get('mailer.max_messages_per_connection', 5)
+
+		emails_total = "{0:,}".format(self.count_messages())
+		sending_line = "Sending email {{0: >{0},}} of {1} with UID: {{1}} to {{2}}".format(len(emails_total), emails_total)
+		emails_total = int(emails_total.replace(',', ''))
+		attachments = self.get_mime_attachments()
+		self.logger.debug("loaded {0:,} MIME attachments".format(sum((len(attachments.files), len(attachments.images)))))
+
+		for target in self.iterate_targets():
+			iteration_time = time.time()
+			if self.should_stop.is_set():
+				self.tab_notify_status('Sending emails cancelled')
+				break
+			if not self.process_pause():
+				break
+			if emails_done > 0 and max_messages_per_connection > 0 and (emails_done % max_messages_per_connection):
+				self.server_smtp_reconnect()
+
+			emails_done += 1
+			self.tab_notify_status(sending_line.format(emails_done, target.uid, target.email_address))
+			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, attachments)
+			if not self._try_send_message(target.email_address, msg):
+				break
+
+			self.tab_notify_sent(emails_done, emails_total)
+			campaign_id = self.config['campaign_id']
+			self.rpc('campaign/message/new', campaign_id, target.uid, target.email_address, target.first_name, target.last_name, target.department)
+			self.application.emit('message-sent', target.uid, target.email_address)
+
+			if self.max_messages_per_minute:
+				iteration_time = (time.time() - iteration_time)
+				sleep_time = (60.0 / float(self.max_messages_per_minute)) - iteration_time
+				while sleep_time > 0:
+					sleep_chunk = min(sleep_time, 0.5)
+					time.sleep(sleep_chunk)
+					if self.should_stop.is_set():
+						break
+					sleep_time -= sleep_chunk
+		return emails_done
 
 	def _try_send_message(self, *args, **kwargs):
 		message_sent = False
