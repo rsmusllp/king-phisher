@@ -847,6 +847,37 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			gui_utilities.show_dialog_info('Successfully Opened The Web Server URL', self.parent)
 		return
 
+	def signal_button_clicked_verify_spf(self, button):
+		sender_email = self.gobjects['entry_source_email_smtp'].get_text()
+		error_description = None
+
+		if not utilities.is_valid_email_address(sender_email):
+			gui_utilities.show_dialog_info('WARNING: Can not check SPF records for an invalid source email address.\n', self.parent)
+			return True
+
+		spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
+		if not spf_test_ip:
+			gui_utilities.show_dialog_info('skipping spf policy check because the smtp server address could not be reliably detected', self.parent)
+			return True
+
+		spf_test_sender, spf_test_domain = sender_email.split('@')
+		try:
+			spf_test = spf.SenderPolicyFramework(spf_test_ip, spf_test_domain, spf_test_sender)
+			spf_result = spf_test.check_host()
+		except spf.SPFError as error:
+			gui_utilities.show_dialog_warning("Done, encountered exception: {0}.\n".format(error.__class__.__name__), self.parent)
+			return True
+
+		if not spf_result:
+			gui_utilities.show_dialog_info('No SPF records found.\n', self.parent)
+		else:
+			if spf_result is 'fail':
+				gui_utilities.show_dialog_info('SPF exists with a hard fail.\nYour messages will probably be blocked.\n', self.parent)
+			elif spf_result is 'softfail':
+				gui_utilities.show_dialog_info('SPF Exists with a soft fail.\nYour messages have strong possiblity of being blocked. Check your logs.\n', self.parent)
+			return True
+		return True
+
 	def signal_checkbutton_toggled_calendar_invite_all_day(self, button):
 		all_day = button.get_active()
 		self.gobjects['spinbutton_calendar_invite_duration'].set_sensitive(not all_day)
@@ -1103,3 +1134,4 @@ class MailSenderTab(_GObject_GObject):
 
 	def do_send_precheck(self):
 		return True
+

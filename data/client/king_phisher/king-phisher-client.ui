@@ -5774,28 +5774,6 @@ your communications. Please contact the system administrator.</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_reply_to_email">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">6</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email_smtp">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="tooltip_text" translatable="yes">The email address to use as the source in the SMTP connection.</property>
-                        <property name="placeholder_text" translatable="yes">sender@king-phisher.com</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">2</property>
-                      </packing>
-                    </child>
-                    <child>
                       <object class="GtkFrame" id="frame2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -6136,6 +6114,55 @@ your communications. Please contact the system administrator.</property>
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">14</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MailSenderConfigurationTab.entry_reply_to_email">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">6</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox" id="MailSenderConfigurationTab.box8">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">3</property>
+                        <child>
+                          <object class="GtkEntry" id="MailSenderConfigurationTab.entry_source_email_smtp">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">The email address to use as the source in the SMTP connection.</property>
+                            <property name="hexpand">True</property>
+                            <property name="placeholder_text" translatable="yes">sender@king-phisher.com</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="MailSenderConfigurationTab.button2">
+                            <property name="label" translatable="yes"> Check SPF </property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <signal name="clicked" handler="signal_button_clicked_verify_spf" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">2</property>
                       </packing>
                     </child>
                   </object>
