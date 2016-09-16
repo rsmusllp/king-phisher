@@ -868,12 +868,12 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			return True
 
 		if not spf_result:
-			gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'No SPF records found.\n')
+			gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'No SPF records found.')
 		else:
 			if spf_result is 'fail':
-				gui_utilities.show_dialog_info('SPF Check Results:', self.parent, 'SPF exists with a hard fail.\nYour messages will probably be blocked.\n')
+				gui_utilities.show_dialog_info('SPF Check Results:', self.parent, 'SPF exists with a hard fail. Your messages will probably be blocked.')
 			elif spf_result is 'softfail':
-				gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'SPF Exists with a soft fail.\nYour messages have strong possiblity of being blocked. Check your logs.\n')
+				gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'SPF Exists with a soft fail. Your messages have strong possiblity of being blocked. Check your logs.')
 			return True
 		return True
 
