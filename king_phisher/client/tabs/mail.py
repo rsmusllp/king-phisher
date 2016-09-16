@@ -849,8 +849,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	def signal_button_clicked_verify_spf(self, button):
 		sender_email = self.gobjects['entry_source_email_smtp'].get_text()
-		error_description = None
-
+		
 		if not utilities.is_valid_email_address(sender_email):
 			gui_utilities.show_dialog_warning('Warning', self.parent, 'Can not check SPF records for an invalid source email address.\n')
 			return True
