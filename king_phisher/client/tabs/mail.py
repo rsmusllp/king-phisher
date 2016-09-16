@@ -852,12 +852,12 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		error_description = None
 
 		if not utilities.is_valid_email_address(sender_email):
-			gui_utilities.show_dialog_info('WARNING: Can not check SPF records for an invalid source email address.\n', self.parent)
+			gui_utilities.show_dialog_warning('Warning', self.parent, 'Can not check SPF records for an invalid source email address.\n')
 			return True
 
 		spf_test_ip = mailer.guess_smtp_server_address(self.config['smtp_server'], (self.config['ssh_server'] if self.config['smtp_ssh_enable'] else None))
 		if not spf_test_ip:
-			gui_utilities.show_dialog_info('skipping spf policy check because the smtp server address could not be reliably detected', self.parent)
+			gui_utilities.show_dialog_warning('Warning', self.parent, 'Skipping spf policy check because the smtp server address could not be reliably detected')
 			return True
 
 		spf_test_sender, spf_test_domain = sender_email.split('@')
@@ -865,16 +865,16 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			spf_test = spf.SenderPolicyFramework(spf_test_ip, spf_test_domain, spf_test_sender)
 			spf_result = spf_test.check_host()
 		except spf.SPFError as error:
-			gui_utilities.show_dialog_warning("Done, encountered exception: {0}.\n".format(error.__class__.__name__), self.parent)
+			gui_utilities.show_dialog_warning('Warning', self.parent,"Done, encountered exception: {0}.\n".format(error.__class__.__name__))
 			return True
 
 		if not spf_result:
-			gui_utilities.show_dialog_info('No SPF records found.\n', self.parent)
+			gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'No SPF records found.\n')
 		else:
 			if spf_result is 'fail':
-				gui_utilities.show_dialog_info('SPF exists with a hard fail.\nYour messages will probably be blocked.\n', self.parent)
+				gui_utilities.show_dialog_info('SPF Check Results:', self.parent, 'SPF exists with a hard fail.\nYour messages will probably be blocked.\n')
 			elif spf_result is 'softfail':
-				gui_utilities.show_dialog_info('SPF Exists with a soft fail.\nYour messages have strong possiblity of being blocked. Check your logs.\n', self.parent)
+				gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'SPF Exists with a soft fail.\nYour messages have strong possiblity of being blocked. Check your logs.\n')
 			return True
 		return True
 
