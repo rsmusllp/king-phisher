@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 
+<!-- Generated with glade 3.18.3 
 
 Copyright (c) 2013-2016, SecureState LLC
 All rights reserved.
@@ -5585,7 +5585,7 @@ your communications. Please contact the system administrator.</property>
                     <property name="margin_left">5</property>
                     <property name="margin_right">5</property>
                     <property name="margin_top">3</property>
-                    <property name="margin_bottom">3</property>
+                    <property name="margin_bottom">6</property>
                     <property name="row_spacing">3</property>
                     <property name="column_spacing">5</property>
                     <child>
@@ -5611,6 +5611,7 @@ your communications. Please contact the system administrator.</property>
                         <child>
                           <object class="GtkButton" id="MailSenderConfigurationTab.button6">
                             <property name="label" translatable="yes">Verify URL</property>
+                            <property name="width_request">125</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
@@ -5658,6 +5659,7 @@ your communications. Please contact the system administrator.</property>
                         <child>
                           <object class="GtkButton" id="MailSenderConfigurationTab.button1">
                             <property name="label" translatable="yes">Select File</property>
+                            <property name="width_request">125</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
@@ -5709,6 +5711,7 @@ your communications. Please contact the system administrator.</property>
                         <child>
                           <object class="GtkButton" id="MailSenderConfigurationTab.button3">
                             <property name="label" translatable="yes">Select File</property>
+                            <property name="width_request">125</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
@@ -5791,10 +5794,10 @@ your communications. Please contact the system administrator.</property>
                                 <property name="can_focus">False</property>
                                 <property name="margin_bottom">3</property>
                                 <property name="row_spacing">3</property>
-                                <property name="column_spacing">5</property>
+                                <property name="column_spacing">3</property>
                                 <child>
                                   <object class="GtkLabel" id="label28">
-                                    <property name="width_request">133</property>
+                                    <property name="width_request">138</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="label" translatable="yes">CSV File</property>
@@ -5852,7 +5855,7 @@ your communications. Please contact the system administrator.</property>
                                 </child>
                                 <child>
                                   <object class="GtkLabel" id="label1">
-                                    <property name="width_request">133</property>
+                                    <property name="width_request">138</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="label" translatable="yes">Target Name</property>
@@ -5864,7 +5867,7 @@ your communications. Please contact the system administrator.</property>
                                 </child>
                                 <child>
                                   <object class="GtkLabel" id="label38">
-                                    <property name="width_request">133</property>
+                                    <property name="width_request">138</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="label" translatable="yes">Target Email</property>
@@ -5903,6 +5906,7 @@ your communications. Please contact the system administrator.</property>
                                 <child>
                                   <object class="GtkButton" id="MailSenderConfigurationTab.button_target_file_select">
                                     <property name="label" translatable="yes">Select File</property>
+                                    <property name="width_request">125</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
@@ -6147,10 +6151,12 @@ your communications. Please contact the system administrator.</property>
                         </child>
                         <child>
                           <object class="GtkButton" id="MailSenderConfigurationTab.button2">
-                            <property name="label" translatable="yes"> Check SPF </property>
+                            <property name="label" translatable="yes">Check SPF</property>
+                            <property name="width_request">125</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="image_position">bottom</property>
                             <signal name="clicked" handler="signal_button_clicked_verify_spf" swapped="no"/>
                           </object>
                           <packing>
