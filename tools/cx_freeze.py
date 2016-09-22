@@ -39,6 +39,7 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from king_phisher import version
 
 import matplotlib
+import pytz
 from mpl_toolkits import basemap
 from cx_Freeze import setup, Executable
 
@@ -116,6 +117,7 @@ for lib in gtk_libs:
 include_files.append((matplotlib.get_data_path(), 'mpl-data'))
 include_files.append((basemap.basemap_datadir, 'mpl-basemap-data'))
 include_files.append(('data/client/king_phisher', 'king_phisher'))
+include_files.append((pytz.__path__[0], 'pytz'))
 
 exe_base = 'Win32GUI'
 if is_debugging_build:
@@ -135,16 +137,18 @@ build_exe_options = dict(
 	compressed=False,
 	include_files=include_files,
 	packages=[
+		'boltons',
 		'cairo',
-		'cffi',             # cryptography requirement
-		'cryptography',     # paramiko requirement
-		'OpenSSL',          # cryptography backends
+		'cffi',
+		'cryptography',
 		'email',
 		'gi',
+		'icalendar',
 		'jinja2',
 		'matplotlib',
 		'mpl_toolkits',
 		'msgpack',
+		'OpenSSL',
 		'paramiko',
 		'pkg_resources',
 		'pluginbase',
