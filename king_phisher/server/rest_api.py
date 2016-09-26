@@ -33,6 +33,7 @@
 import json
 import logging
 
+from king_phisher import errors
 from king_phisher import geoip
 from king_phisher import ipaddress
 from king_phisher import sms
@@ -106,7 +107,9 @@ def rest_handler(handle_function):
 @rest_handler
 def rest_api_geoip_lookup(handler, params):
 	ip = handler.get_query('ip')
-	assert ip
+	if not ip:
+		logger.error('the required \'ip\' parameter is missing for geoip/lookup')
+		raise errors.KingPhisherAPIError('the required \'ip\' parameter is missing for geoip/lookup')
 	return geoip.lookup(ip)
 
 @advancedhttpserver.RegisterPath(REST_API_BASE + 'sms/send')

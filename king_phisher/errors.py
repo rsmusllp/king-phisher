@@ -58,6 +58,13 @@ class KingPhisherAbortRequestError(KingPhisherAbortError):
 		super(KingPhisherAbortRequestError, self).__init__()
 		self.response_sent = response_sent
 
+class KingPhisherAPIError(KingPhisherAbortError):
+	"""
+	An exception that can be raised to indicate that an error occurred while
+	handling an API related request.
+	"""
+	pass
+
 class KingPhisherDatabaseError(KingPhisherError):
 	"""
 	An exception that can be raised by King Phisher when there is any error

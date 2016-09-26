@@ -145,7 +145,10 @@ def rpc_version(handler):
 	:return: A dictionary with version information.
 	:rtype: dict
 	"""
-	assert ipaddress.ip_address(handler.client_address[0]).is_loopback
+	if not ipaddress.ip_address(handler.client_address[0]).is_loopback:
+		message = "an rpc request to /version was received from non-loopback IP address: {0}".format(handler.client_address[0])
+		rpc_logger.error(message)
+		raise errors.KingPhisherAPIError(message)
 
 	vinfo = {
 		'rpc_api_version': version.rpc_api_version,
@@ -343,11 +346,13 @@ def rpc_database_count_rows(handler, session, table_name, query_filter=None):
 	:rtype: int
 	"""
 	table = database_table_objects.get(table_name)
-	assert table
+	if not table:
+		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	query_filter = query_filter or {}
 	columns = database_tables[table_name]
 	for column in query_filter.keys():
-		assert column in columns
+		if column not in columns:
+			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(column, table_name))
 	query = session.query(table)
 	query = query.filter_by(**query_filter)
 	return query.count()
@@ -365,11 +370,13 @@ def rpc_database_view_rows(handler, session, table_name, page=0, query_filter=No
 	:rtype: dict
 	"""
 	table = database_table_objects.get(table_name)
-	assert table
+	if not table:
+		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	query_filter = query_filter or {}
 	columns = database_tables[table_name]
 	for column in query_filter.keys():
-		assert column in columns
+		if column not in columns:
+			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(column, table_name))
 
 	offset = page * VIEW_ROW_COUNT
 	# it's critical that the columns are in the order that the client is expecting
@@ -396,7 +403,8 @@ def rpc_database_delete_row_by_id(handler, session, table_name, row_id):
 	:param row_id: The id value.
 	"""
 	table = database_table_objects.get(table_name)
-	assert table
+	if not table:
+		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	row = db_manager.get_row_by_id(session, table, row_id)
 	if row is None:
 		logger = logging.getLogger('KingPhisher.Server.API.RPC')
@@ -419,7 +427,8 @@ def rpc_database_delete_rows_by_id(handler, session, table_name, row_ids):
 	:rtype: list
 	"""
 	table = database_table_objects.get(table_name)
-	assert table
+	if not table:
+		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	deleted_rows = []
 	for row_id in row_ids:
 		row = db_manager.get_row_by_id(session, table, row_id)
@@ -444,7 +453,8 @@ def rpc_database_get_row_by_id(handler, session, table_name, row_id):
 	:rtype: dict
 	"""
 	table = database_table_objects.get(table_name)
-	assert table
+	if not table:
+		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	columns = database_tables[table_name]
 	row = db_manager.get_row_by_id(session, table, row_id)
 	if row:
@@ -466,11 +476,14 @@ def rpc_database_insert_row(handler, session, table_name, keys, values):
 		keys = (keys,)
 	if not isinstance(values, (list, tuple)):
 		values = (values,)
-	assert len(keys) == len(values)
-	for key, value in zip(keys, values):
-		assert key in database_tables[table_name]
+	if len(keys) != len(values):
+		raise errors.KingPhisherAPIError('the number of keys does not match the number of values')
 	table = database_table_objects.get(table_name)
-	assert table
+	if not table:
+		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
+	for key, value in zip(keys, values):
+		if key not in database_tables[table_name]:
+			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(key, table_name))
 
 	row = table()
 	for key, value in zip(keys, values):
@@ -493,13 +506,17 @@ def rpc_database_set_row_value(handler, session, table_name, row_id, keys, value
 		keys = (keys,)
 	if not isinstance(values, (list, tuple)):
 		values = (values,)
-	assert len(keys) == len(values)
-	for key, value in zip(keys, values):
-		assert key in database_tables[table_name]
+	if len(keys) != len(values):
+		raise errors.KingPhisherAPIError('the number of keys does not match the number of values')
 	table = database_table_objects.get(table_name)
-	assert table
+	if not table:
+		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
+	for key, value in zip(keys, values):
+		if key not in database_tables[table_name]:
+			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(key, table_name))
 	row = db_manager.get_row_by_id(session, table, row_id)
-	assert row
+	if not row:
+		raise errors.KingPhisherAPIError("failed to get row id: {0} from table: {1}".format(row_id, table_name))
 	for key, value in zip(keys, values):
 		setattr(row, key, value)
 	row.assert_session_has_permissions('u', handler.rpc_session)

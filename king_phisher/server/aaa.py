@@ -426,16 +426,16 @@ class ForkedAuthenticator(object):
 					try:
 						with alarm_set(int(round(self.response_timeout - elapsed_time))):
 							groups = get_groups_for_user(username)
-						assert self.required_group in groups
 					except errors.KingPhisherTimeoutError:
 						self.logger.warning("authentication failed for user: {0} reason: received timeout".format(username))
-					except AssertionError:
-						self.logger.warning("authentication failed for user: {0} reason: lack of group membership".format(username))
 					except KeyError:
 						self.logger.error("encountered a KeyError while looking up group membership for user: {0}".format(username))
 					except Exception:
 						self.logger.error("encountered an Exception while looking up group membership for user: {0}".format(username), exc_info=True)
 					else:
+						if self.required_group not in groups:
+							self.logger.warning("authentication failed for user: {0} reason: lack of group membership".format(username))
+							continue
 						result['result'] = True
 						self.logger.debug("group requirement met for user: {0}".format(username))
 			else:

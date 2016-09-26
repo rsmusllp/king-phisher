@@ -682,7 +682,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
 			signals.safe_send('visit-received', self.logger, self)
 
-		assert visit_id is not None, 'the visit id has not been set'
+		if visit_id is None:
+			self.logger.error('the visit id has not been set')
+			raise RuntimeError('the visit id has not been set')
 		self._handle_page_visit_creds(session, visit_id)
 		trained = self.get_query('trained')
 		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
