@@ -194,7 +194,8 @@ class MessageTemplateEnvironment(TemplateEnvironmentBase):
 
 		:param int mode: The operation mode.
 		"""
-		assert(mode in [self.MODE_PREVIEW, self.MODE_ANALYZE, self.MODE_SEND])
+		if mode not in (self.MODE_PREVIEW, self.MODE_ANALYZE, self.MODE_SEND):
+			raise ValueError('mode must be one of the MODE_* constants')
 		self._mode = mode
 		if mode == self.MODE_ANALYZE:
 			self.attachment_images = {}

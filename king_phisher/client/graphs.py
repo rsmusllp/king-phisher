@@ -655,7 +655,8 @@ class CampaignGraphMessageResults(CampaignPieGraph):
 		visits_count = len(unique(info_cache['visits'], key=lambda visit: visit.message_id))
 		credentials_count = len(unique(info_cache['credentials'], key=lambda cred: cred.message_id))
 
-		assert credentials_count <= visits_count <= messages_count
+		if not (credentials_count <= visits_count <= messages_count):
+			raise ValueError('credential visit and message counts are inconsistent')
 		labels = ['Without Visit', 'With Visit', 'With Credentials']
 		sizes = []
 		sizes.append((float(messages_count - visits_count) / float(messages_count)) * 100)

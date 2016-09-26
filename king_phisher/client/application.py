@@ -528,7 +528,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		connection_failed = True
 		try:
 			server_version_info = rpc('version')
-			assert server_version_info is not None
+			if server_version_info is None:
+				raise RuntimeError('no version information was retrieved from the server')
 		except advancedhttpserver.RPCError as error:
 			self.logger.warning('failed to connect to the remote rpc service due to http status: ' + str(error.status))
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, "The server responded with HTTP status: {0}.".format(str(error.status)))

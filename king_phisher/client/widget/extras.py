@@ -74,7 +74,7 @@ class FileChooserDialog(_Gtk_FileChooserDialog):
 		:param parent: The parent window for the dialog.
 		:type parent: :py:class:`Gtk.Window`
 		"""
-		assert isinstance(parent, Gtk.Window)
+		utilities.assert_arg_type(parent, Gtk.Window, arg_pos=2)
 		super(FileChooserDialog, self).__init__(title, parent, **kwargs)
 		self.parent = self.get_parent_window()
 

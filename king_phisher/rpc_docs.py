@@ -105,7 +105,8 @@ def parse_macro_uri_path(signode, uri_path):
 	if offset < len(uri_path):
 		path = uri_path[offset:len(uri_path)]
 		signode += addnodes.desc_name(path, path)
-	assert path is not None, 'no matches for sig'
+	if path is None:
+		raise RuntimeError('no matches for sig')
 
 def parse_macro(env, sig, signode):
 	m = re.match(r'([a-zA-Z0-9_/\(\):]+)\(([a-zA-Z0-9,\'"_= ]*)\)', sig)

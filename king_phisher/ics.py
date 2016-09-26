@@ -126,11 +126,13 @@ def get_tz_posix_env_var(tz_name):
 	:rtype: str
 	"""
 	buffer_size = 2048
-	assert os.path.isdir(zoneinfo_path)
+	if not os.path.isdir(zoneinfo_path):
+		raise ValueError('zoneinfo_path must be a valid directory')
 	file_path = os.path.join(zoneinfo_path, *tz_name.split('/'))
 	with open(file_path, 'rb') as file_h:
 		magic = file_h.read(4)
-		assert magic == b'TZif'
+		if magic != b'TZif':
+			raise ValueError('the timezone file header is incorrect')
 		version = file_h.read(1)
 		if version != b'2':
 			return ''

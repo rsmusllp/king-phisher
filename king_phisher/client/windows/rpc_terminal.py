@@ -113,7 +113,7 @@ class RPCTerminal(object):
 		:param application: The application instance to which this window belongs.
 		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
-		assert isinstance(application, Gtk.Application)
+		utilities.assert_arg_type(application, Gtk.Application, arg_pos=1)
 		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		if not has_vte:

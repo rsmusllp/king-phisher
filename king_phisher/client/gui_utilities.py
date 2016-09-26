@@ -596,7 +596,7 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 		:param application: The parent application for this object.
 		:type application: :py:class:`Gtk.Application`
 		"""
-		assert isinstance(application, Gtk.Application)
+		utilities.assert_arg_type(application, Gtk.Application, arg_pos=1)
 		self.config = application.config
 		"""A reference to the King Phisher client configuration."""
 		self.application = application

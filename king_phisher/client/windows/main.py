@@ -77,7 +77,8 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	)
 	top_gobject = 'menubar'
 	def __init__(self, application, window):
-		assert isinstance(window, MainAppWindow)
+		utilities.assert_arg_type(application, Gtk.Application, arg_pos=1)
+		utilities.assert_arg_type(window, MainAppWindow, arg_pos=2)
 		super(MainMenuBar, self).__init__(application)
 		self.window = weakref.proxy(window)
 		self._add_accelerators()
@@ -199,7 +200,7 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		:param application: The application instance to which this window belongs.
 		:type application: :py:class:`.KingPhisherClientApplication`
 		"""
-		assert isinstance(application, Gtk.Application)
+		utilities.assert_arg_type(application, Gtk.Application, arg_pos=2)
 		super(MainAppWindow, self).__init__(application=application)
 		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')

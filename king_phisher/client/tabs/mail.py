@@ -246,8 +246,9 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.text_insert('Checking the target URL... ')
 		try:
 			response = test_webserver_url(self.config['mailer.webserver_url'], self.config['server_config']['server.secret_id'])
-			assert response.ok
-		except (AssertionError, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
+			if not response.ok:
+				raise RuntimeError('failed to open the url')
+		except (requests.exceptions.ConnectionError, requests.exceptions.RequestException, RuntimeError):
 			self.text_insert('failed')
 			if not gui_utilities.show_dialog_yes_no('Unable To Open The Web Server URL', self.parent, 'The URL may be invalid, continue sending messages anyways?'):
 				self.text_insert(', sending aborted.\n')
