@@ -353,7 +353,7 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		mkdir $KING_PHISHER_WEB_ROOT
 	fi
 
-	cp data/server/king_phisher/server_config.yml .
+	cp --backup=numbered data/server/king_phisher/server_config.yml .
 	sed -i -re "s|#\\s?data_path:.*$|data_path: $KING_PHISHER_DIR|" ./server_config.yml
 
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
