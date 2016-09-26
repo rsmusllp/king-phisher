@@ -1,30 +1,30 @@
 # these are also hard coded into the respective executable files for checking as
 # part of their startup routine
 advancedhttpserver==2.0.5
-alembic>=0.8.6
+alembic>=0.8.8
 blinker>=1.4
-boltons>=16.2.2
+boltons>=16.5.0
 dnspython>=1.14.0
-geoip2>=2.3.0
-geojson>=1.3.2
-icalendar>=3.9.2
-ipaddress>=1.0.16              ; python_version < '3.3'
+geoip2>=2.4.0
+geojson>=1.3.3
+icalendar>=3.10
+ipaddress>=1.0.17              ; python_version < '3.3'
 Jinja2>=2.8
 markupsafe>=0.23
-matplotlib>=1.5.1
-msgpack-python>=0.4.7
-paramiko>=2.0.0
+matplotlib>=1.5.3
+msgpack-python>=0.4.8
+paramiko>=2.0.2
 pluginbase>=0.4
-psycopg2>=2.6.1
-pyotp>=2.1.1
+psycopg2>=2.6.2
+pyotp>=2.2.1
 python-dateutil>=2.5.3
 python-pam>=1.8.2
-pytz>=2016.4
-PyYAML>=3.11
-requests>=2.10.0
+pytz>=2016.6.1
+PyYAML>=3.12
+requests>=2.11.1
 six>=1.10.0
-smoke-zephyr>=1.0.2
-SQLAlchemy>=1.0.13
+smoke-zephyr>=1.1.0
+SQLAlchemy>=1.0.15
 termcolor>=1.1.0
 tzlocal>=1.2.2
-XlsxWriter>=0.8.7
+XlsxWriter>=0.9.3

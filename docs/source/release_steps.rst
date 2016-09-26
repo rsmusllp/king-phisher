@@ -8,7 +8,7 @@ Pre Release Steps
 -----------------
 
 #. Test and fix any issues with the Windows MSI build
-#. Ensure unit tests pass with Python 2.7 & Python 3.4
+#. Ensure unit tests pass with Python 2.7 & Python 3.5
 #. Remove the version label
 #. Create the final Windows MSI build
 #. Update the change log
@@ -32,4 +32,11 @@ Post Release Steps
 ------------------
 
 #. Increment the version number on the dev branch and re-set the version label
-#. Update Python packages with pip
+#. Update Python packages list for pip in requirements.txt with piprot
+
+.. code-block:: shell
+
+   python3 -m pip install -U piprot
+   sed -e 's/>=/==/g' requirements.txt | \
+   piprot -x - | \
+   awk '/# Latest/ {print substr($1, 0, index($1, "==") + 1) $4 }'

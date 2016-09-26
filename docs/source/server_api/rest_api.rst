@@ -67,7 +67,7 @@ REST Methods
 
    .. sourcecode:: http
 
-      GET /_/api/geoip/lookup?token=SECRET_TOKEN&message=hello+world!&phone_number=1234567890&carrier=Sprint HTTP/1.1 HTTP/1.1
+      GET /_/api/geoip/lookup?token=SECRET_TOKEN&message=hello+world!&phone_number=1234567890&carrier=Sprint HTTP/1.1
       User-Agent: curl/7.40.0
       Host: example.com
       Accept: */*
