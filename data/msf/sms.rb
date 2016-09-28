@@ -34,6 +34,7 @@ module Msf
     include Msf::SessionEvent
 
     CARRIERS = ['AT&T', 'Boost', 'Sprint', 'T-Mobile', 'Verizon', 'Virgin Mobile']
+    private_constant :CARRIERS
 
     def initialize(framework, opts)
       super
@@ -60,30 +61,23 @@ module Msf
     class SMSCommandDispatcher < Plugin::SessionSMS
       include Msf::Ui::Console::CommandDispatcher
 
-      @king_phisher_server = nil
-      @king_phisher_token = nil
-      @sms_number =  nil
-      @sms_carrier =  nil
+      def initialize(framework)
+        super
+        @king_phisher_server = nil
+        @king_phisher_token = nil
+        @sms_number = nil
+        @sms_carrier = nil
+
+        print_status('Loaded previously configured settings') if read_settings
+      end
 
       def on_session_open(session)
         print_status('Session received, sending SMS...')
-        begin
-          http_client = Rex::Proto::Http::Client.new("#{@king_phisher_server}")
-          http_client.connect
-          request = http_client.request_cgi({
-            'uri'    => '/_/api/sms/send',
-            'query'  => "token=#{@king_phisher_token}&message=Shells+On+Deck!!+Session:+#{session.sid}&phone_number=#{@sms_number}&carrier=#{@sms_carrier}"
-          })
-          response = http_client.send_recv(request)
-        rescue Exception => e
-          print_error('Exception occured, you done goofed!')
-        ensure
-          http_client.close
-        end
+        send_sms("Session: #{session.sid} opened")
       end
 
       def name
-        "sms"
+        'sms'
       end
 
       def read_settings
@@ -97,6 +91,26 @@ module Msf
         return true
       end
 
+      def send_sms(message)
+        message = Rex::Text.uri_encode(message)
+        begin
+          http_client = Rex::Proto::Http::Client.new(@king_phisher_server)
+          http_client.connect
+          request = http_client.request_cgi({
+            'uri'    => '/_/api/sms/send',
+            'query'  => "token=#{@king_phisher_token}&message=#{message}&phone_number=#{@sms_number}&carrier=#{@sms_carrier}"
+          })
+          res = http_client.send_recv(request)
+        rescue Exception => e
+          print_error("Error sending SMS: #{e.class} - #{e}")
+          return false
+        ensure
+          http_client.close
+        end
+
+        res and res.code == 200
+      end
+
       def commands
         {
           'sms_start'       => 'Start SMS alerts for new sessions',
@@ -106,27 +120,28 @@ module Msf
           'sms_set_token'   => 'Set King Phisher\'s API token',
           'sms_set_number'  => 'Set number to send SMS alerts to on new session',
           'sms_set_carrier' => 'Set carrier for sending SMS messages',
-          'sms_show_params' => 'Shows currently set or saved parameters'
+          'sms_show_params' => 'Shows currently set or saved parameters',
+          'sms_test'        => 'Send a test SMS message to verify the parameters'
         }
       end
 
       def cmd_sms_start
-        unless read_settings
-          print_error('Could not read SMS settings!')
+        unless @king_phisher_server and @king_phisher_token and @sms_number and @sms_carrier
+          print_error('You have not provided all the parameters!')
           return
         end
 
         self.framework.events.add_session_subscriber(self)
-        print_good('Starting SMS plugin, monitoring sessions...')
+        print_good('Started SMS sessions session notifications')
       end
 
       def cmd_sms_stop
-        print_good('Stopping SMS alerting!')
         self.framework.events.remove_session_subscriber(self)
+        print_good('Stopped SMS sessions session notifications')
       end
 
       def cmd_sms_save
-        unless @king_phisher_server && @king_phisher_token && @sms_number && @sms_carrier
+        unless @king_phisher_server and @king_phisher_token and @sms_number and @sms_carrier
           print_error('You have not provided all the parameters!')
           return
         end
@@ -141,6 +156,22 @@ module Msf
           YAML.dump(config, out)
         end
         print_good("All parameters saved to #{sms_yaml}")
+      end
+
+      def cmd_sms_test(*args)
+        unless @king_phisher_server and @king_phisher_token and @sms_number and @sms_carrier
+          print_error('You have not provided all the parameters!')
+          return
+        end
+
+        message = args.shift
+        message = 'Test SMS message' if message.nil?
+
+        if send_sms(message)
+          print_good('Sent the test SMS message')
+        else
+          print_error('Failed to send the test SMS message')
+        end
       end
 
       def cmd_sms_set_server(*args)
@@ -171,7 +202,7 @@ module Msf
       end
 
       def cmd_sms_set_carrier(*args)
-        if args.length > 0 && CARRIERS.include?(args[0])
+        if args.length > 0 and CARRIERS.include?(args[0])
           print_status("Setting SMS carrier to #{args[0]}")
           @sms_carrier = args[0]
         else
@@ -180,16 +211,11 @@ module Msf
       end
 
       def cmd_sms_show_params
-        unless read_settings
-          print_error("Could not read settings from #{sms_yaml}!")
-          return
-        end
-
         print_status('Parameters:')
-        print_good("  King Phisher Server: #{@king_phisher_server}")
-        print_good("  King Phisher Token: #{@king_phisher_token}")
-        print_good("  SMS Number: #{@sms_number}")
-        print_good("  SMS Carrier: #{@sms_carrier}")
+        print_status("  King Phisher Server: #{@king_phisher_server}")
+        print_status("  King Phisher Token: #{@king_phisher_token}")
+        print_status("  SMS Number: #{@sms_number}")
+        print_status("  SMS Carrier: #{@sms_carrier}")
       end
     end
   end

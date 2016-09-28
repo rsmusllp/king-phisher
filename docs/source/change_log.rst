@@ -7,11 +7,26 @@ Phisher.
 Version 1.x.x
 -------------
 
-Version 1.5.0
+Version 1.5.1
 ^^^^^^^^^^^^^
 
 *In Progress*
 
+* Automated installation script improvements
+
+   * Backup an existing server configuration file
+   * Log warnings when the PostgreSQL user exists
+
+* Improve the Metasploit plugin for session notifications via SMS
+
+Version 1.5.0
+^^^^^^^^^^^^^
+
+Released :release:`1.5.0` on September 22nd, 2016
+
+* Added an SPF button to the client for on demand SPF record checking
+* Fixed missing packages in the Windows build for timezone data
+* Transitioned to the dnspython package for Python 2.x and 3.x
 
 Version 1.4.0
 ^^^^^^^^^^^^^
