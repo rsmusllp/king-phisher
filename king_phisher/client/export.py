@@ -239,8 +239,7 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 			os.mkdir(attachment_dir)
 		for file_name in attachment_member_names:
 			arcfile_h = kpm.get_file(file_name)
-			file_name = os.path.basename(file_name)
-			file_path = os.path.join(attachment_dir, file_name)
+			file_path = os.path.join(attachment_dir, os.path.basename(file_name))
 			with open(file_path, 'wb') as file_h:
 				shutil.copyfileobj(arcfile_h, file_h)
 			attachments.append(file_path)
@@ -256,7 +255,7 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 			logger.warning("the kpm message configuration is missing the {0} setting".format(config_name))
 			raise KingPhisherInputValidationError('data is missing from the message archive')
 		arcfile_h = kpm.get_file(file_name)
-		file_path = os.path.join(dest_dir, message_config[config_name])
+		file_path = os.path.join(dest_dir, os.path.basename(message_config[config_name]))
 		with open(file_path, 'wb') as file_h:
 			shutil.copyfileobj(arcfile_h, file_h)
 		message_config[config_name] = file_path
@@ -266,7 +265,7 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 			logger.warning('the kpm message configuration is missing the html_file setting')
 			raise KingPhisherInputValidationError('data is missing from the message archive')
 		arcfile_h = kpm.get_file('message_content.html')
-		file_path = os.path.join(dest_dir, message_config['html_file'])
+		file_path = os.path.join(dest_dir, os.path.basename(message_config['html_file']))
 		with open(file_path, 'wb') as file_h:
 			file_h.write(message_template_from_kpm(arcfile_h.read().decode(encoding), attachments).encode(encoding))
 		message_config['html_file'] = file_path
