@@ -132,26 +132,26 @@ class MainMenuBar(gui_utilities.GladeGObject):
 	def do_export_campaign_xml(self, _):
 		self.window.export_campaign_xml()
 
-	def do_export_campaign_visit_geojson(self, _):
-		self.window.export_campaign_visit_geojson()
-
 	def do_export_message_data(self, _):
 		self.window.export_message_data()
 
-	def do_export_csv_credentials(self, _):
+	def do_export_credentials_csv(self, _):
 		campaign_tab = self.window.tabs['campaign']
 		credentials_tab = campaign_tab.tabs['credentials']
 		credentials_tab.export_table_to_csv()
 
-	def do_export_csv_messages(self, _):
+	def do_export_messages_csv(self, _):
 		campaign_tab = self.window.tabs['campaign']
 		messages_tab = campaign_tab.tabs['messages']
 		messages_tab.export_table_to_csv()
 
-	def do_export_csv_visits(self, _):
+	def do_export_visits_csv(self, _):
 		campaign_tab = self.window.tabs['campaign']
 		visits_tab = campaign_tab.tabs['visits']
 		visits_tab.export_table_to_csv()
+
+	def do_export_visits_geojson(self, _):
+		self.window.export_campaign_visit_geojson()
 
 	def do_import_message_data(self, _):
 		self.window.import_message_data()

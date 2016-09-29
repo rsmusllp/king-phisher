@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 
+<!-- Generated with glade 3.20.0 
 
 Copyright (c) 2013-2016, SecureState LLC
 All rights reserved.
@@ -4596,6 +4596,7 @@ Spencer McIntyre</property>
                       <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_import_message_configuration">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Import message configuration data.</property>
                         <property name="accel_path">&lt;KingPhisherClient&gt;/Import/Message Configuration</property>
                         <property name="label" translatable="yes">Message Configuration</property>
                         <property name="use_underline">True</property>
@@ -4618,41 +4619,44 @@ Spencer McIntyre</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv">
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_message_configuration">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="tooltip_text" translatable="yes">Export campaign data to a CSV file.</property>
-                        <property name="label" translatable="yes">CSV</property>
+                        <property name="tooltip_text" translatable="yes">Export message configuration data.</property>
+                        <property name="accel_path">&lt;KingPhisherClient&gt;/Export/MessageConfiguration</property>
+                        <property name="label" translatable="yes">Message Configuration</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_export_message_data" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Export campaign data to different formats.</property>
+                        <property name="label" translatable="yes">Campaign</property>
                         <property name="use_underline">True</property>
                         <child type="submenu">
-                          <object class="GtkMenu" id="menu1">
+                          <object class="GtkMenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
-                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv_credentials">
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xlsx">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Credentials</property>
+                                <property name="label" translatable="yes">Excel</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_csv_credentials" swapped="no"/>
+                                <signal name="activate" handler="do_export_campaign_xlsx" swapped="no"/>
                               </object>
                             </child>
                             <child>
-                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv_messages">
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xml">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Messages</property>
+                                <property name="accel_path">&lt;KingPhisherClient&gt;/Export/Campaign XML</property>
+                                <property name="label" translatable="yes">XML</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_csv_messages" swapped="no"/>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_csv_visits">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Visits</property>
-                                <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_csv_visits" swapped="no"/>
+                                <signal name="activate" handler="do_export_campaign_xml" swapped="no"/>
                               </object>
                             </child>
                           </object>
@@ -4660,41 +4664,84 @@ Spencer McIntyre</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xlsx">
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_messages">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Campaign Excel</property>
+                        <property name="tooltip_text" translatable="yes">Export campaign message data to different formats.</property>
+                        <property name="label" translatable="yes">Messages</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_export_campaign_xlsx" swapped="no"/>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="menu1">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_messages_csv">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">CSV</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_messages_csv" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_xml">
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_visits">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="accel_path">&lt;KingPhisherClient&gt;/Export/Campaign XML</property>
-                        <property name="label" translatable="yes">Campaign XML</property>
+                        <property name="tooltip_text" translatable="yes">Export campaign visit data to different formats.</property>
+                        <property name="label" translatable="yes">Visits</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_export_campaign_xml" swapped="no"/>
+                        <child type="submenu">
+                          <object class="GtkMenu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_visits_csv">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">CSV</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_visits_csv" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_visits_geojson">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Locations GeoJSON</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_visits_geojson" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_campaign_visits_geojson">
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_credentials">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Campaign Visits GeoJSON</property>
+                        <property name="tooltip_text" translatable="yes">Export campaign credential data to different formats.</property>
+                        <property name="label" translatable="yes">Credentials</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_export_campaign_visit_geojson" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_message_configuration">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="accel_path">&lt;KingPhisherClient&gt;/Export/MessageConfiguration</property>
-                        <property name="label" translatable="yes">Message Configuration</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_export_message_data" swapped="no"/>
+                        <child type="submenu">
+                          <object class="GtkMenu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_credentials_csv">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">CSV</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_credentials_csv" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>
