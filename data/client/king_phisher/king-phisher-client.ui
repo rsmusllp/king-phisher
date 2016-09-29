@@ -4740,6 +4740,15 @@ Spencer McIntyre</property>
                                 <signal name="activate" handler="do_export_credentials_csv" swapped="no"/>
                               </object>
                             </child>
+                            <child>
+                              <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_export_credentials_msf_txt">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Metasploit USERPASS__FILE</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_export_credentials_msf_txt" swapped="no"/>
+                              </object>
+                            </child>
                           </object>
                         </child>
                       </object>

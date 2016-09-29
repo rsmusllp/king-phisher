@@ -140,6 +140,16 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		credentials_tab = campaign_tab.tabs['credentials']
 		credentials_tab.export_table_to_csv()
 
+	def do_export_credentials_msf_txt(self, _):
+		dialog = extras.FileChooserDialog('Export Credentials', self.application.get_active_window())
+		file_name = self.config['campaign_name'] + '.txt'
+		response = dialog.run_quick_save(file_name)
+		dialog.destroy()
+		if not response:
+			return
+		destination_file = response['target_path']
+		export.campaign_credentials_to_msf_txt(self.application.rpc, self.config['campaign_id'], destination_file)
+
 	def do_export_messages_csv(self, _):
 		campaign_tab = self.window.tabs['campaign']
 		messages_tab = campaign_tab.tabs['messages']

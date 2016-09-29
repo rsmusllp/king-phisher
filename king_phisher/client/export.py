@@ -157,6 +157,20 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	element_tree = ET.ElementTree(root)
 	element_tree.write(xml_file, encoding='utf-8', xml_declaration=True)
 
+def campaign_credentials_to_msf_txt(rpc, campaign_id, target_file):
+	"""
+	Export credentials into a format that can easily be used with Metasploit's
+	USERPASS_FILE option.
+
+	:param rpc: The connected RPC instance to load the information with.
+	:type rpc: :py:class:`.KingPhisherRPCClient`
+	:param campaign_id: The ID of the campaign to load the information for.
+	:param str target_file: The destination file for the credential data.
+	"""
+	with open(target_file, 'w') as file_h:
+		for credential in rpc.remote_table('credentials', query_filter={'campaign_id': campaign_id}):
+			file_h.write("{0} {1}\n".format(credential.username, credential.password))
+
 def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	"""
 	Export the geo location information for all the visits of a campaign into

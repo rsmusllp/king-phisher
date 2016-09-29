@@ -18,6 +18,7 @@ Version 1.5.1
    * Log warnings when the PostgreSQL user exists
 
 * Improve the Metasploit plugin for session notifications via SMS
+* Support exporting credentials for use with Metasploit's USERPASS_FILE option.
 
 Version 1.5.0
 ^^^^^^^^^^^^^
