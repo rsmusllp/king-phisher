@@ -323,7 +323,7 @@ def _split_columns(columns):
 	else:
 		column_names = (columns[c] for c in sorted(columns.keys()))
 		store_columns = sorted(columns.keys())
-	return column_names, store_columns
+	return tuple(column_names), tuple(store_columns)
 
 def liststore_export(store, columns, cb_write, cb_write_args, write_columns=True):
 	"""
@@ -401,6 +401,11 @@ def liststore_to_xlsx_worksheet(store, worksheet, columns, title_format):
 
 	worksheet.set_column(0, len(columns), 30)
 	column_names, _ = _split_columns(columns)
-	_xlsx_write(0, column_names, worksheet, title_format)
+	row_count = liststore_export(store, columns, _xlsx_write, (worksheet,), write_columns=False)
+	options = {
+		'columns': list({'header': column_name} for column_name in column_names),
+		'style': 'Table Style Medium 1'
+	}
+	worksheet.add_table(0, 0, row_count, len(column_names) - 1, options=options)
 	worksheet.freeze_panes(1, 0)
-	return liststore_export(store, columns, _xlsx_write, (worksheet,), write_columns=False)
+	return row_count
