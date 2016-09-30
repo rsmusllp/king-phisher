@@ -71,6 +71,8 @@ KPM_INLINE_IMAGE_REGEXP = re.compile(r"""{{\s*inline_image\(\s*(('(?:[^'\\]|\\.)
 
 logger = logging.getLogger('KingPhisher.Client.export')
 
+XLSXWorksheetOptions = collections.namedtuple('XLSXWorksheetOptions', ('column_widths', 'title'))
+
 def message_template_to_kpm(template):
 	files = []
 	cursor = 0
@@ -325,7 +327,7 @@ def _split_columns(columns):
 		store_columns = sorted(columns.keys())
 	return tuple(column_names), tuple(store_columns)
 
-def liststore_export(store, columns, cb_write, cb_write_args, write_columns=True):
+def liststore_export(store, columns, cb_write, cb_write_args, row_offset=0, write_columns=True):
 	"""
 	A function to facilitate writing values from a list store to an arbitrary
 	callback for exporting to different formats. The callback will be called
@@ -341,6 +343,7 @@ def liststore_export(store, columns, cb_write, cb_write_args, write_columns=True
 	:param dict columns: A dictionary mapping store column ids to the value names.
 	:param function cb_write: The callback function to be called for each row of data.
 	:param tuple cb_write_args: Additional arguments to pass to *cb_write*.
+	:param int row_offset: A modifier value to add to the row numbers passed to *cb_write*.
 	:param bool write_columns: Write the column names to the export.
 	:return: The number of rows that were written.
 	:rtype: int
@@ -352,7 +355,7 @@ def liststore_export(store, columns, cb_write, cb_write_args, write_columns=True
 	store_iter = store.get_iter_first()
 	rows_written = 0
 	while store_iter:
-		cb_write(rows_written + 1, (store.get_value(store_iter, c) for c in store_columns), *cb_write_args)
+		cb_write(rows_written + 1 + row_offset, (store.get_value(store_iter, c) for c in store_columns), *cb_write_args)
 		rows_written += 1
 		store_iter = store.iter_next(store_iter)
 	return rows_written
@@ -381,7 +384,7 @@ def _xlsx_write(row, columns, worksheet, row_format=None):
 	for column, text in enumerate(columns):
 		worksheet.write(row, column, text, row_format)
 
-def liststore_to_xlsx_worksheet(store, worksheet, columns, title_format):
+def liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_options=None):
 	"""
 	Write the contents of a :py:class:`Gtk.ListStore` to an XLSX workseet.
 
@@ -390,22 +393,33 @@ def liststore_to_xlsx_worksheet(store, worksheet, columns, title_format):
 	:param worksheet: The destination sheet for the store's data.
 	:type worksheet: :py:class:`xlsxwriter.worksheet.Worksheet`
 	:param dict columns: A dictionary mapping store column ids to the value names.
-	:param title_format: The formatting to use for the title row.
-	:type title_format: :py:class:`xlsxwriter.format.Format`
+	:param xlsx_options: A collection of additional options for formatting the Excel Worksheet.
+	:type xlsx_options: :py:class:`.XLSXWorksheetOptions`
 	:return: The number of rows that were written.
 	:rtype: int
 	"""
 	utilities.assert_arg_type(worksheet, xlsxwriter.worksheet.Worksheet, 2)
 	utilities.assert_arg_type(columns, dict, 3)
 	utilities.assert_arg_type(title_format, xlsxwriter.format.Format, 4)
+	utilities.assert_arg_type(xlsx_options, XLSXWorksheetOptions, 5)
 
-	worksheet.set_column(0, len(columns), 30)
+	if xlsx_options is None:
+		worksheet.set_column(0, len(columns), 30)
+	else:
+		for column, width in enumerate(xlsx_options.column_widths):
+			worksheet.set_column(column, column, width)
+
 	column_names, _ = _split_columns(columns)
-	row_count = liststore_export(store, columns, _xlsx_write, (worksheet,), write_columns=False)
+	if xlsx_options is None:
+		start_row = 0
+	else:
+		start_row = 2
+		worksheet.merge_range(0, 0, 0, len(column_names) - 1, xlsx_options.title, title_format)
+	row_count = liststore_export(store, columns, _xlsx_write, (worksheet,), row_offset=start_row, write_columns=False)
 	options = {
 		'columns': list({'header': column_name} for column_name in column_names),
 		'style': 'Table Style Medium 1'
 	}
-	worksheet.add_table(0, 0, row_count, len(column_names) - 1, options=options)
-	worksheet.freeze_panes(1, 0)
+	worksheet.add_table(start_row, 0, row_count + start_row, len(column_names) - 1, options=options)
+	worksheet.freeze_panes(1 + start_row, 0)
 	return row_count

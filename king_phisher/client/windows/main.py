@@ -328,7 +328,7 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		destination_file = response['target_path']
 		campaign_tab = self.tabs['campaign']
 		workbook = xlsxwriter.Workbook(destination_file)
-		title_format = workbook.add_format({'bold': True, 'size': 14})
+		title_format = workbook.add_format({'bold': True, 'size': 18})
 		for tab_name, tab in campaign_tab.tabs.items():
 			if not isinstance(tab, CampaignViewGenericTableTab):
 				continue

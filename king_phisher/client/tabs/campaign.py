@@ -139,6 +139,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	"""The database table represented by this tab."""
 	view_columns = ()
 	"""The dictionary map of column numbers to column names starting at column 1."""
+	xlsx_worksheet_options = None
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
@@ -288,7 +289,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			return
 		store = self.gobjects['treeview_campaign'].get_model()
 		columns = dict(enumerate(('UID',) + self.view_columns))
-		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format)
+		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_options=self.xlsx_worksheet_options)
 		self.loader_thread_lock.release()
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
@@ -330,6 +331,10 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		'Username',
 		'Password',
 		'Submitted'
+	)
+	xlsx_worksheet_options = export.XLSXWorksheetOptions(
+		column_widths=(20, 30, 30, 30, 25),
+		title=label_text
 	)
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
@@ -455,6 +460,10 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		'First Visit',
 		'Last Visit'
 	)
+	xlsx_worksheet_options = export.XLSXWorksheetOptions(
+		column_widths=(30, 30, 25, 15, 90, 30, 25, 25),
+		title=label_text
+	)
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewVisitsTab, self).__init__(*args, **kwargs)
 		self._ips_for_georesolution = {}
@@ -510,6 +519,10 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 		'Opened',
 		'Opener IP Address',
 		'Opener User Agent'
+	)
+	xlsx_worksheet_options = export.XLSXWorksheetOptions(
+		column_widths=(30, 30, 30, 15, 20, 20, 25, 90),
+		title=label_text
 	)
 	def format_row_data(self, message):
 		department = message.company_department
