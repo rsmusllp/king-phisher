@@ -10,7 +10,7 @@ Version 1.x.x
 Version 1.5.1
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.5.1` on October 3rd, 2016
 
 * Automated installation script improvements
 
