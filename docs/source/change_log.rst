@@ -7,6 +7,11 @@ Phisher.
 Version 1.x.x
 -------------
 
+Version 1.5.2
+^^^^^^^^^^^^^
+
+*In Progress*
+
 Version 1.5.1
 ^^^^^^^^^^^^^
 
