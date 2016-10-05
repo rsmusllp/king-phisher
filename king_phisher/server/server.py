@@ -109,7 +109,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				self.server.logger.warning("skipping alert because user {0} has missing information".format(user.id))
 				continue
 			self.server.logger.debug("sending alert SMS message to {0} ({1})".format(number, carrier))
-			sms.send_sms(alert_text, number, carrier, 'donotreply@kingphisher.local')
+			sms.send_sms(alert_text, number, carrier)
 		session.close()
 
 	def adjust_path(self):
