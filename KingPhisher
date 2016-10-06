@@ -76,12 +76,14 @@ def main():
 	parser = argparse.ArgumentParser(description='King Phisher Client GUI', conflict_handler='resolve')
 	utilities.argp_add_args(parser, default_root='KingPhisher')
 	parser.add_argument('-c', '--config', dest='config_file', required=False, help='specify a configuration file to use')
+	parser.add_argument('--no-dep-check', dest='dep_check', default=True, action='store_false', help='disable dependency checks')
 	parser.add_argument('--no-plugins', dest='use_plugins', default=True, action='store_false', help='disable all plugins')
 	parser.add_argument('--no-style', dest='use_style', default=True, action='store_false', help='disable interface styling')
 	arguments = parser.parse_args()
 
 	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
 	config_file = arguments.config_file
+	dep_check = arguments.dep_check
 	use_plugins = arguments.use_plugins
 	use_style = arguments.use_style
 	del arguments, parser
@@ -96,7 +98,7 @@ def main():
 		return 0
 
 	# check and configure the environment
-	if not its.frozen:
+	if dep_check and not its.frozen:
 		missing_requirements = check_requirements(__requirements__)
 		if missing_requirements:
 			color.print_error('the following package requirements are missing or incompatible:')

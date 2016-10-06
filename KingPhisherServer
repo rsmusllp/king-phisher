@@ -138,8 +138,9 @@ def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
 	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in the foreground (do not fork)')
-	parser.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
+	parser.add_argument('--no-dep-check', dest='dep_check', default=True, action='store_false', help='disable dependency checks')
 	parser.add_argument('--update-geoip-db', dest='update_geoip_db', action='store_true', default=False, help='update the geoip database and exit')
+	parser.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
 
 	parser.add_argument('config_file', action='store', type=argparse.FileType('r'), help='configuration file to use')
 	arguments = parser.parse_args()
@@ -148,13 +149,14 @@ def main():
 	config_file = arguments.config_file
 	del parser
 
-	missing_requirements = check_requirements(__requirements__)
-	if missing_requirements:
-		color.print_error('the following package requirements are missing or incompatible:')
-		for missing_req in missing_requirements:
-			color.print_error('  - ' + missing_req)
-		color.print_error('please install the missing requirements with pip')
-		return os.EX_SOFTWARE
+	if arguments.dep_check:
+		missing_requirements = check_requirements(__requirements__)
+		if missing_requirements:
+			color.print_error('the following package requirements are missing or incompatible:')
+			for missing_req in missing_requirements:
+				color.print_error('  - ' + missing_req)
+			color.print_error('please install the missing requirements with pip')
+			return os.EX_SOFTWARE
 
 	if os.getuid():
 		color.print_error('the server must be started as root, configure the')
