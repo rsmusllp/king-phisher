@@ -291,6 +291,8 @@ class SenderPolicyFramework(object):
 		record = SPFRecord(directives, domain=domain)
 		self.records[domain] = record
 		for directive_id, directive in enumerate(directives):
+			if not top_level and directive.mechanism == 'all':
+				break
 			if self._evaluate_mechanism(ip, domain, sender, directive.mechanism, directive.rvalue):
 				self.matches.insert(0, SPFMatch(record, directive))
 				self.logger.debug("{0} check found matching spf directive: '{1}'".format(('top' if top_level else 'recursive'), directive))
