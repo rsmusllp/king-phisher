@@ -82,8 +82,7 @@ class SPFTests(testing.KingPhisherTestCase):
 		self.assertIsNone(spf.check_host('1.2.3.4', 'doesnotexist.king-phisher.com'))
 
 	def test_spf_rfc7208_macro_expansion(self):
-		directives = [spf.SPFDirective('all', '-', None)]
-		s = spf.SenderPolicyFramework('192.0.2.3', 'email.example.com', 'strong-bad@email.example.com', directives=directives)
+		s = spf.SenderPolicyFramework('192.0.2.3', 'email.example.com', 'strong-bad@email.example.com')
 		expand_macro = lambda m: s.expand_macros(m, '192.0.2.3', 'email.example.com', 'strong-bad@email.example.com')
 
 		self.assertEqual(expand_macro('%{s}'), 'strong-bad@email.example.com')
@@ -120,7 +119,7 @@ class SPFTests(testing.KingPhisherTestCase):
 
 	def test_spf_record_to_str(self):
 		directive = spf.SPFDirective('all', '+', None)
-		record = spf.SPFRecord('wonderland.com', directives=(directive,))
+		record = spf.SPFRecord((directive,), domain='wonderland.com')
 		record = str(record)
 		self.assertEqual(record[:7], 'v=spf1 ')
 		self.assertEqual(record[7:], str(directive))

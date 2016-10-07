@@ -21,8 +21,6 @@ Functions
 
 .. autofunction:: king_phisher.spf.check_host
 
-.. autofunction:: king_phisher.spf.record_unparse
-
 .. autofunction:: king_phisher.spf.validate_record
 
 Classes
@@ -30,6 +28,18 @@ Classes
 
 .. autoclass:: king_phisher.spf.SenderPolicyFramework
    :members:
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: king_phisher.spf.SPFDirective
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: king_phisher.spf.SPFMatch
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: king_phisher.spf.SPFRecord
    :special-members: __init__
    :undoc-members:
 

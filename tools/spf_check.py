@@ -83,9 +83,20 @@ def main():
 
 	color.print_good("spf policy result: {0}".format(result))
 	color.print_status('top level spf records found:')
-	for rid in range(len(spf_test.spf_records)):
-		record = spf.record_unparse(spf_test.spf_records[rid])
-		color.print_status("  #{0} {1: <10} {2}".format(rid + 1, ('(matched)' if rid == spf_test.spf_record_id else ''), record))
+	match = spf_test.match
+	for record_id, record in enumerate(spf_test.records.values(), 1):
+		color.print_status("  #{0} {1: <10} {2}".format(
+			record_id,
+			('(matched)' if match.record == record else ''),
+			record.domain
+		))
+		for directive_id, directive in enumerate(record.directives, 1):
+			color.print_status("    #{0}.{1} {2: <10} {3}".format(
+				record_id,
+				directive_id,
+				('(matched)' if match.record == record and match.directive == directive else ''),
+				directive
+			))
 
 if __name__ == '__main__':
 	sys.exit(main())

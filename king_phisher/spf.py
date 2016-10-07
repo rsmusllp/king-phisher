@@ -54,10 +54,20 @@ QUALIFIERS = {
 """A dict object keyed with the qualifier symbols to their readable values."""
 
 SPFMatch = collections.namedtuple('SPFMatch', ('record', 'directive'))
+"""A simple container to associate a matched directive with it's record."""
 
 class SPFDirective(object):
+	"""
+	A class representing a single directive within a sender policy framework
+	record.
+	"""
 	__slots__ = ('mechanism', 'qualifier', 'rvalue')
-	def __init__(self, mechanism, qualifier, rvalue):
+	def __init__(self, mechanism, qualifier, rvalue=None):
+		"""
+		:param str mechanism: The SPF mechanism that this directive uses.
+		:param str qualifier: The qualifier value of the directive in it's single character format.
+		:param str rvalue: The optional rvalue for directives which use them.
+		"""
 		if qualifier not in QUALIFIERS:
 			raise ValueError('invalid qualifier: ' + qualifier)
 		self.mechanism = mechanism
@@ -78,6 +88,12 @@ class SPFDirective(object):
 
 	@classmethod
 	def from_string(cls, directive):
+		"""
+		Parse an SPF directive from a string and return it's class
+		representation.
+
+		:param str directive: The SPF directive to parse.
+		"""
 		if ':' in directive:
 			(mechanism, rvalue) = directive.split(':', 1)
 		else:
@@ -91,10 +107,18 @@ class SPFDirective(object):
 		return cls(mechanism, qualifier, rvalue)
 
 class SPFRecord(object):
+	"""
+	A class representing a parsed Sender Policy Framework record with all of
+	its directives.
+	"""
 	__slots__ = ('domain', 'directives')
-	def __init__(self, domain, directives):
-		self.domain = domain
+	def __init__(self, directives, domain=None):
+		"""
+		:param list directives: A list of :py:class:`.SPFDirective` instances.
+		:param str domain: The domain with which this record is associated with.
+		"""
 		self.directives = directives
+		self.domain = domain
 
 	def __repr__(self):
 		return "<{0} '{1}' >".format(self.__class__.__name__, str(self))
@@ -109,7 +133,7 @@ class SPFError(Exception):
 class SPFPermError(SPFError):
 	"""
 	Exception indicating that the domains published records could not be
-	correctly interpreted. Described in section 2.6.7 of RFC 7208.
+	correctly interpreted. Described in section 2.6.7 of :rfc:`7208`.
 	"""
 	pass
 
@@ -117,10 +141,9 @@ class SPFTempError(SPFError):
 	"""
 	Exception indicating that the verification process encountered a transient
 	(generally DNS) error while performing the check. Described in section 2.6.6
-	of RFC 7208.
+	of :rfc:`7208`.
 	"""
 	pass
-
 
 def check_host(ip, domain, sender=None):
 	"""
@@ -159,7 +182,7 @@ class SenderPolicyFramework(object):
 	if an IP address is authorized to send messages on it's behalf. The exp
 	modifier defined in section 6.2 of the RFC is not supported.
 	"""
-	def __init__(self, ip, domain, sender=None, directives=None):
+	def __init__(self, ip, domain, sender=None):
 		"""
 		:param ip: The IP address of the host sending the message.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
@@ -175,18 +198,27 @@ class SenderPolicyFramework(object):
 		if not '@' in sender:
 			sender = sender + '@' + self.domain
 		self.sender = sender
-		self.directives = (directives or [])
 		self.records = collections.OrderedDict()
 		"""
-		An :py:class:`collections.OrderedDict` of all the SPF records that were
+		A :py:class:`collections.OrderedDict` of all the SPF records that were
 		resolved. This would be any records resolved due to an "include"
 		directive in addition to the top level domain.
 		"""
 		self.matches = []
-
+		"""
+		A list of :py:class:`.SPFMatch` instances showing the path traversed to
+		identify a matching directive. Multiple entries in this list are
+		present when include directives are used and a match is found within
+		the body of one. The list is ordered from the top level domain to the
+		matching record.
+		"""
 		# dns lookup limit per https://tools.ietf.org/html/rfc7208#section-4.6.4
 		self.query_limit = 10
 		self.policy = None
+		"""
+		The human readable policy result, one of the
+		:py:class:`.SPFResult` constants`.
+		"""
 		self._policy_checked = False
 		self.logger = logging.getLogger('KingPhisher.SPF.SenderPolicyFramework')
 
@@ -243,7 +275,7 @@ class SenderPolicyFramework(object):
 				directive = directive[9:]
 				domain = self.expand_macros(directive, self.ip_address, domain, self.sender)
 				self.logger.debug("following redirect modifier to: {0}".format(domain))
-				if top_level and len(self.directives) == 0:
+				if top_level and len(directives) == 0:
 					# treat a single redirect as a new top level
 					return self._check_host(ip, domain, sender, top_level=True)
 				else:
@@ -252,11 +284,11 @@ class SenderPolicyFramework(object):
 					return result
 
 			directive = SPFDirective.from_string(directive)
-			if not directive.mechanism in ('a', 'all', 'exists', 'include', 'ip4', 'ip6', 'mx', 'ptr'):
+			if directive.mechanism not in ('a', 'all', 'exists', 'include', 'ip4', 'ip6', 'mx', 'ptr'):
 				raise SPFPermError("unknown mechanism type: '{0}'".format(directive.mechanism))
 			directives.append(directive)
 
-		record = SPFRecord(domain, directives)
+		record = SPFRecord(directives, domain=domain)
 		self.records[domain] = record
 		for directive_id, directive in enumerate(directives):
 			if self._evaluate_mechanism(ip, domain, sender, directive.mechanism, directive.rvalue):
@@ -345,7 +377,7 @@ class SenderPolicyFramework(object):
 	def expand_macros(self, value, ip, domain, sender):
 		"""
 		Expand a string based on the macros it contains as specified by section
-		7 of RFC 7208.
+		7 of :rfc:`7208`.
 
 		:param str value: The string containing macros to expand.
 		:param ip: The IP address to use when expanding macros.
