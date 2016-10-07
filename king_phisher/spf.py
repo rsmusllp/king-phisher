@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import logging
 import re
 
@@ -52,6 +53,55 @@ QUALIFIERS = {
 }
 """A dict object keyed with the qualifier symbols to their readable values."""
 
+SPFMatch = collections.namedtuple('SPFMatch', ('record', 'directive'))
+
+class SPFDirective(object):
+	__slots__ = ('mechanism', 'qualifier', 'rvalue')
+	def __init__(self, mechanism, qualifier, rvalue):
+		if qualifier not in QUALIFIERS:
+			raise ValueError('invalid qualifier: ' + qualifier)
+		self.mechanism = mechanism
+		self.qualifier = qualifier
+		self.rvalue = rvalue
+
+	def __repr__(self):
+		return "<{0} '{1}' >".format(self.__class__.__name__, str(self))
+
+	def __str__(self):
+		directive = ''
+		if self.qualifier != '+':
+			directive += self.qualifier
+		directive += self.mechanism
+		if self.rvalue:
+			directive += ':' + self.rvalue
+		return directive
+
+	@classmethod
+	def from_string(cls, directive):
+		if ':' in directive:
+			(mechanism, rvalue) = directive.split(':', 1)
+		else:
+			(mechanism, rvalue) = (directive, None)
+		mechanism = mechanism.lower()
+
+		qualifier = '+'
+		if mechanism[0] in QUALIFIERS:
+			qualifier = mechanism[0]
+			mechanism = mechanism[1:]
+		return cls(mechanism, qualifier, rvalue)
+
+class SPFRecord(object):
+	__slots__ = ('domain', 'directives')
+	def __init__(self, domain, directives):
+		self.domain = domain
+		self.directives = directives
+
+	def __repr__(self):
+		return "<{0} '{1}' >".format(self.__class__.__name__, str(self))
+
+	def __str__(self):
+		return 'v=spf1 ' + ' '.join(str(d) for d in self.directives)
+
 class SPFError(Exception):
 	"""Base exception for errors raised by this module."""
 	pass
@@ -71,23 +121,6 @@ class SPFTempError(SPFError):
 	"""
 	pass
 
-def record_unparse(record):
-	"""
-	Take a parsed record tuple and unparse it into a string representing the
-	original record.
-
-	:param tuple record: The tuple representing the original parsed record.
-	:return: The string representation of the record.
-	:rtype: str
-	"""
-	mechanism, qualifier, rvalue = record
-	record = ''
-	if qualifier != '+':
-		record += qualifier
-	record += mechanism
-	if rvalue:
-		record += ':' + rvalue
-	return record
 
 def check_host(ip, domain, sender=None):
 	"""
@@ -126,7 +159,7 @@ class SenderPolicyFramework(object):
 	if an IP address is authorized to send messages on it's behalf. The exp
 	modifier defined in section 6.2 of the RFC is not supported.
 	"""
-	def __init__(self, ip, domain, sender=None, spf_records=None):
+	def __init__(self, ip, domain, sender=None, directives=None):
 		"""
 		:param ip: The IP address of the host sending the message.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
@@ -142,8 +175,14 @@ class SenderPolicyFramework(object):
 		if not '@' in sender:
 			sender = sender + '@' + self.domain
 		self.sender = sender
-		self.spf_records = (spf_records or [])
-		self.spf_record_id = -1
+		self.directives = (directives or [])
+		self.records = collections.OrderedDict()
+		"""
+		An :py:class:`collections.OrderedDict` of all the SPF records that were
+		resolved. This would be any records resolved due to an "include"
+		directive in addition to the top level domain.
+		"""
+		self.matches = []
 
 		# dns lookup limit per https://tools.ietf.org/html/rfc7208#section-4.6.4
 		self.query_limit = 10
@@ -187,26 +226,24 @@ class SenderPolicyFramework(object):
 		if not record.startswith('v=spf1 '):
 			raise SPFPermError('failed to parse spf data')
 
-		records = record[7:].split(' ')
-		records = tuple(record for record in records if len(record))
-		self.logger.debug("parsing {0:,} records for domain: {1}".format(len(records), domain))
+		raw_directives = record[7:].split(' ')
+		raw_directives = tuple(directive for directive in raw_directives if len(directive))
+		self.logger.debug("parsing {0:,} directives for domain: {1}".format(len(raw_directives), domain))
 
-		if not len(records):
-			raise SPFPermError('failed to parse spf data')
+		if not len(raw_directives):
+			raise SPFPermError('failed to parse spf record')
 
-		for record_id, record in enumerate(records):
-			if len(self.spf_records) and self.spf_records[-1][0] == 'all':
-				break
-
-			if record.startswith('redirect='):
-				if len([r for r in records if r.endswith('all')]):
+		directives = []
+		for directive_id, directive in enumerate(raw_directives):
+			if directive.startswith('redirect='):
+				if len([r for r in raw_directives if r.endswith('all')]):
 					# ignore redirects when all is present per https://tools.ietf.org/html/rfc7208#section-6.1
 					self.logger.warning("ignoring redirect modifier to: {0} due to an existing 'all' mechanism".format(domain))
 					continue
-				record = record[9:]
-				domain = self.expand_macros(record, self.ip_address, domain, self.sender)
+				directive = directive[9:]
+				domain = self.expand_macros(directive, self.ip_address, domain, self.sender)
 				self.logger.debug("following redirect modifier to: {0}".format(domain))
-				if top_level and len(self.spf_records) == 0:
+				if top_level and len(self.directives) == 0:
 					# treat a single redirect as a new top level
 					return self._check_host(ip, domain, sender, top_level=True)
 				else:
@@ -214,27 +251,20 @@ class SenderPolicyFramework(object):
 					self.logger.debug("top check found matching spf record from redirect to: {0}".format(domain))
 					return result
 
-			if ':' in record:
-				(mechanism, rvalue) = record.split(':', 1)
-			else:
-				(mechanism, rvalue) = (record, None)
-			mechanism = mechanism.lower()
+			directive = SPFDirective.from_string(directive)
+			if not directive.mechanism in ('a', 'all', 'exists', 'include', 'ip4', 'ip6', 'mx', 'ptr'):
+				raise SPFPermError("unknown mechanism type: '{0}'".format(directive.mechanism))
+			directives.append(directive)
 
-			qualifier = '+'
-			if mechanism[0] in QUALIFIERS:
-				qualifier = mechanism[0]
-				mechanism = mechanism[1:]
-			if not mechanism in ('a', 'all', 'exists', 'include', 'ip4', 'ip6', 'mx', 'ptr'):
-				raise SPFPermError("unknown mechanism type: '{0}'".format(mechanism))
+		record = SPFRecord(domain, directives)
+		self.records[domain] = record
+		for directive_id, directive in enumerate(directives):
+			if self._evaluate_mechanism(ip, domain, sender, directive.mechanism, directive.rvalue):
+				self.matches.insert(0, SPFMatch(record, directive))
+				self.logger.debug("{0} check found matching spf directive: '{1}'".format(('top' if top_level else 'recursive'), directive))
+				return QUALIFIERS[directive.qualifier]
 
-			if top_level:
-				self.spf_records.append((mechanism, qualifier, rvalue))
-			if self._evaluate_mechanism(ip, domain, sender, mechanism, rvalue):
-				self.spf_record_id = record_id
-				self.logger.debug("{0} check found matching spf record: '{1}'".format(('top' if top_level else 'recursive'), record))
-				return QUALIFIERS[qualifier]
-
-		self.logger.debug('no records matched, returning default policy of neutral')
+		self.logger.debug('no directives matched, returning default policy of neutral')
 		# default result per https://tools.ietf.org/html/rfc7208#section-4.7
 		return SPFResult.NEUTRAL
 
@@ -364,3 +394,9 @@ class SenderPolicyFramework(object):
 			end = match.end()
 		result += value[end:]
 		return result
+
+	@property
+	def match(self):
+		if not self.matches:
+			return None
+		return self.matches[-1]

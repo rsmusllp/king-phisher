@@ -82,8 +82,8 @@ class SPFTests(testing.KingPhisherTestCase):
 		self.assertIsNone(spf.check_host('1.2.3.4', 'doesnotexist.king-phisher.com'))
 
 	def test_spf_rfc7208_macro_expansion(self):
-		spf_records = [('all', '-', None)]
-		s = spf.SenderPolicyFramework('192.0.2.3', 'email.example.com', 'strong-bad@email.example.com', spf_records=spf_records)
+		directives = [spf.SPFDirective('all', '-', None)]
+		s = spf.SenderPolicyFramework('192.0.2.3', 'email.example.com', 'strong-bad@email.example.com', directives=directives)
 		expand_macro = lambda m: s.expand_macros(m, '192.0.2.3', 'email.example.com', 'strong-bad@email.example.com')
 
 		self.assertEqual(expand_macro('%{s}'), 'strong-bad@email.example.com')
@@ -107,12 +107,23 @@ class SPFTests(testing.KingPhisherTestCase):
 		self.assertEqual(expand_macro('%{ir}.%{v}.%{l1r-}.lp._spf.%{d2}'), '3.2.0.192.in-addr.strong.lp._spf.example.com')
 		self.assertEqual(expand_macro('%{d2}.trusted-domains.example.net'), 'example.com.trusted-domains.example.net')
 
-	def test_spf_record_unparse(self):
-		self.assertEqual(spf.record_unparse(('all', '+', None)), 'all')
-		self.assertEqual(spf.record_unparse(('all', '-', None)), '-all')
+	def test_spf_directive_checks_qualifier(self):
+		with self.assertRaises(ValueError):
+			spf.SPFDirective('all', 'A', None)
 
-		self.assertEqual(spf.record_unparse(('include', '+', '_spf.wonderland.com')), 'include:_spf.wonderland.com')
-		self.assertEqual(spf.record_unparse(('ip4', '+', '10.0.0.0/24')), 'ip4:10.0.0.0/24')
+	def test_spf_directive_to_str(self):
+		self.assertEqual(str(spf.SPFDirective('all', '+', None)), 'all')
+		self.assertEqual(str(spf.SPFDirective('all', '-', None)), '-all')
+
+		self.assertEqual(str(spf.SPFDirective('include', '+', '_spf.wonderland.com')), 'include:_spf.wonderland.com')
+		self.assertEqual(str(spf.SPFDirective('ip4', '+', '10.0.0.0/24')), 'ip4:10.0.0.0/24')
+
+	def test_spf_record_to_str(self):
+		directive = spf.SPFDirective('all', '+', None)
+		record = spf.SPFRecord('wonderland.com', directives=(directive,))
+		record = str(record)
+		self.assertEqual(record[:7], 'v=spf1 ')
+		self.assertEqual(record[7:], str(directive))
 
 if __name__ == '__main__':
 	unittest.main()
