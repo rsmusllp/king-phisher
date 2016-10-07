@@ -612,7 +612,10 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		:return: Whether the contents were saved or not.
 		"""
 		html_file = self.config.get('mailer.html_file')
-		if not html_file or force_prompt:
+		force_prompt = force_prompt or not html_file
+		if html_file and not os.path.isdir(os.path.dirname(html_file)):
+			force_prompt = True
+		if force_prompt:
 			if html_file:
 				current_name = os.path.basename(html_file)
 			else:
