@@ -129,6 +129,12 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		attachment = self.config.get('mailer.attachment_file')
 		if not attachment:
 			return True
+		if not os.path.isfile(attachment):
+			gui_utilities.show_dialog_warning('Invalid Attachment', self.parent, 'The specified attachment file does not exist.')
+			return False
+		if not os.access(attachment, os.R_OK):
+			gui_utilities.show_dialog_warning('Invalid Attachment', self.parent, 'The specified attachment file can not be read.')
+			return False
 		self.text_insert("File '{0}' will be attached to sent messages.\n".format(os.path.basename(attachment)))
 		_, extension = os.path.splitext(attachment)
 		extension = extension[1:]
@@ -150,7 +156,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 	def _sender_precheck_campaign(self):
 		campaign = self.application.rpc.remote_table_row('campaigns', self.config['campaign_id'])
 		if campaign.expiration and campaign.expiration < datetime.datetime.utcnow():
-			gui_utilities.show_dialog_warning('Campaign Is Expired', self.parent, 'The current campaign has already expired')
+			gui_utilities.show_dialog_warning('Campaign Is Expired', self.parent, 'The current campaign has already expired.')
 			return False
 		return True
 
@@ -850,7 +856,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	def signal_button_clicked_verify_spf(self, button):
 		sender_email = self.gobjects['entry_source_email_smtp'].get_text()
-		
+
 		if not utilities.is_valid_email_address(sender_email):
 			gui_utilities.show_dialog_warning('Warning', self.parent, 'Can not check SPF records for an invalid source email address.\n')
 			return True
@@ -865,7 +871,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			spf_test = spf.SenderPolicyFramework(spf_test_ip, spf_test_domain, spf_test_sender)
 			spf_result = spf_test.check_host()
 		except spf.SPFError as error:
-			gui_utilities.show_dialog_warning('Warning', self.parent,"Done, encountered exception: {0}.\n".format(error.__class__.__name__))
+			gui_utilities.show_dialog_warning('Warning', self.parent, "Done, encountered exception: {0}.\n".format(error.__class__.__name__))
 			return True
 
 		if not spf_result:
@@ -1134,4 +1140,3 @@ class MailSenderTab(_GObject_GObject):
 
 	def do_send_precheck(self):
 		return True
-
