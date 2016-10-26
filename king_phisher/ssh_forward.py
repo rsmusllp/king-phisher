@@ -164,10 +164,12 @@ class SSHTCPForwarder(threading.Thread):
 				if not os.access(file_path, os.R_OK):
 					self.logger.warning("the user specified ssh key '{0}' can not be opened".format(file_path))
 					return
+				self.logger.debug('loading the user specified ssh key file: ' + file_path)
 				file_h = open(file_path, 'r')
 				first_line = file_h.readline()
 				file_h.seek(0, os.SEEK_SET)
 			else:
+				self.logger.debug('loading the user specified ssh key string from memory')
 				key_str = private_key[4:]
 				file_h = io.StringIO(key_str)
 				first_line = key_str.split('\n', 1)[0]
@@ -177,13 +179,13 @@ class SSHTCPForwarder(threading.Thread):
 			elif 'BEGIN RSA PRIVATE KEY' in first_line:
 				KeyKlass = paramiko.RSAKey
 			else:
-				self.logger.warning("the user specified ssh key '{0}' does not appear to be a valid dsa or rsa private key".format(file_path))
+				self.logger.warning('the user specified ssh key does not appear to be a valid dsa or rsa private key')
 				file_h.close()
 				return
 			try:
 				private_key = KeyKlass.from_private_key(file_h)
 			except paramiko.PasswordRequiredException:
-				self.logger.warning("the user specified ssh key '{0}' is encrypted and requires a password".format(file_path))
+				self.logger.warning('the user specified ssh key is encrypted and requires a password')
 				raise
 			finally:
 				file_h.close()
