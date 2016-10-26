@@ -423,9 +423,9 @@ class MailSenderThread(threading.Thread):
 		:return: The number of targets that will be sent messages.
 		:rtype: int
 		"""
-		return sum(1 for _ in self.iterate_targets())
+		return sum(1 for _ in self.iterate_targets(counting=True))
 
-	def iterate_targets(self):
+	def iterate_targets(self, counting=False):
 		target_type = self.config['mailer.target_type']
 		mailer_tab = self.application.main_tabs['mailer']
 		if target_type == 'single':
@@ -445,6 +445,14 @@ class MailSenderThread(threading.Thread):
 			target_file_h = open(self.target_file, 'rU')
 			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
 			for line_no, raw_target in enumerate(csv_reader, 1):
+				for required_field in ('first_name', 'last_name', 'email_address'):
+					if raw_target[required_field] is None:
+						raw_target = None
+						if counting:
+							self.tab_notify_status("Target CSV line {0} skipped due to missing field: {1}".format(line_no, required_field.replace('_', ' ')))
+						break
+				if raw_target is None:
+					continue
 				department = raw_target['department']
 				if department is not None:
 					department = department.strip()
