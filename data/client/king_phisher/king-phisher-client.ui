@@ -2531,10 +2531,11 @@ Spencer McIntyre</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <child>
-      <object class="GtkBox" id="PluginManagerWindow.box_main">
+      <object class="GtkPaned" id="PluginManagerWindow.paned_plugins">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can_focus">True</property>
         <property name="orientation">vertical</property>
+        <signal name="button-press-event" handler="signal_paned_button_press_event" swapped="no"/>
         <child>
           <object class="GtkScrolledWindow" id="PluginManagerWindow.scrolledwindow_plugins">
             <property name="visible">True</property>
@@ -2547,26 +2548,27 @@ Spencer McIntyre</property>
                 <property name="activate_on_single_click">True</property>
                 <signal name="row-activated" handler="signal_treeview_row_activated" swapped="no"/>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="PluginManagerWindow.treeview_selection_plugins"/>
+                  <object class="GtkTreeSelection"/>
                 </child>
               </object>
             </child>
           </object>
           <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
+            <property name="resize">True</property>
+            <property name="shrink">False</property>
           </packing>
         </child>
         <child>
           <object class="GtkExpander" id="PluginManagerWindow.expander_plugin_info">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <signal name="activate" handler="signal_expander_activate" swapped="no"/>
             <child>
               <object class="GtkScrolledWindow" id="PluginManagerWindow.scrolledwindow_plugin_info">
                 <property name="height_request">125</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
                 <property name="border_width">3</property>
                 <property name="shadow_type">in</property>
                 <child>
@@ -2577,7 +2579,6 @@ Spencer McIntyre</property>
                       <object class="GtkStack" id="PluginManagerWindow.stack_plugin_info">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="margin_right">12</property>
                         <child>
                           <object class="GtkGrid" id="PluginManagerWindow.grid_plugin_info">
                             <property name="visible">True</property>
@@ -2788,9 +2789,8 @@ Spencer McIntyre</property>
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
+            <property name="resize">False</property>
+            <property name="shrink">False</property>
           </packing>
         </child>
       </object>
