@@ -37,6 +37,7 @@ import hashlib
 import logging
 import os
 import random
+import re
 
 from king_phisher import its
 from king_phisher import ua_parser
@@ -115,6 +116,7 @@ class TemplateEnvironmentBase(jinja2.Environment):
 		if its.py_v3 and isinstance(data, bytes):
 			data = data.decode('utf-8')
 		encoding = encoding.lower()
+		encoding = re.sub(r'^(base|rot)-(\d\d)$', r'\1\2', encoding)
 
 		if encoding == 'base16' or encoding == 'hex':
 			data = base64.b16decode(data)
@@ -122,7 +124,7 @@ class TemplateEnvironmentBase(jinja2.Environment):
 			data = base64.b32decode(data)
 		elif encoding == 'base64':
 			data = base64.b64decode(data)
-		elif encoding == 'rot-13' or encoding == 'rot13':
+		elif encoding == 'rot13':
 			data = codecs.getdecoder('rot-13')(data)[0]
 		else:
 			raise ValueError('Unknown encoding type: ' + encoding)
@@ -134,6 +136,7 @@ class TemplateEnvironmentBase(jinja2.Environment):
 		if its.py_v3 and isinstance(data, str):
 			data = data.encode('utf-8')
 		encoding = encoding.lower()
+		encoding = re.sub(r'^(base|rot)-(\d\d)$', r'\1\2', encoding)
 
 		if encoding == 'base16' or encoding == 'hex':
 			data = base64.b16encode(data)
@@ -141,7 +144,7 @@ class TemplateEnvironmentBase(jinja2.Environment):
 			data = base64.b32encode(data)
 		elif encoding == 'base64':
 			data = base64.b64encode(data)
-		elif encoding == 'rot-13' or encoding == 'rot13':
+		elif encoding == 'rot13':
 			data = codecs.getencoder('rot-13')(data.decode('utf-8'))[0]
 		else:
 			raise ValueError('Unknown encoding type: ' + encoding)
