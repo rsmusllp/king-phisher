@@ -13,3 +13,11 @@ Classes
    :show-inheritance:
    :members:
    :special-members: __init__
+
+Exceptions
+----------
+
+.. autoclass:: king_phisher.ssh_forward.KingPhisherSSHKeyError
+   :show-inheritance:
+   :members:
+   :undoc-members:

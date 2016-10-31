@@ -45,6 +45,7 @@ from king_phisher import find
 from king_phisher import ipaddress
 from king_phisher import its
 from king_phisher import json_ex
+from king_phisher import ssh_forward
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import assistants
@@ -57,7 +58,6 @@ from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.client.windows import main
 from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
-from king_phisher.ssh_forward import SSHTCPForwarder
 
 import advancedhttpserver
 from boltons import typeutils
@@ -205,7 +205,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		server_remote_port = self.config['server_remote_port']
 
 		try:
-			self._ssh_forwarder = SSHTCPForwarder(
+			self._ssh_forwarder = ssh_forward.SSHTCPForwarder(
 				server,
 				username,
 				password,
@@ -214,6 +214,12 @@ class KingPhisherClientApplication(_Gtk_Application):
 				missing_host_key_policy=ssh_host_key.MissingHostKeyPolicy(self)
 			)
 			self._ssh_forwarder.start()
+		except ssh_forward.KingPhisherSSHKeyError as error:
+			gui_utilities.show_dialog_error(
+				'SSH Key Configuration Error',
+				active_window,
+				error.message
+			)
 		except errors.KingPhisherAbortError as error:
 			self.logger.info("ssh connection aborted ({0})".format(error.message))
 		except paramiko.PasswordRequiredException:
