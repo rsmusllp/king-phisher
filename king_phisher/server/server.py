@@ -51,6 +51,7 @@ from king_phisher.server import pages
 from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
 from king_phisher.server import signals
+from king_phisher.server import ws_handler
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
@@ -62,12 +63,14 @@ make_uid = lambda: utilities.random_string(24)
 
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
+	web_socket_handler = ws_handler.dispatcher
 	def __init__(self, *args, **kwargs):
 		# this is for attribute documentation
 		self.config = None
 		"""A reference to the main server instance :py:attr:`.KingPhisherServer.config`."""
 		self.path = None
 		"""The resource path of the current HTTP request."""
+		self.rpc_session = None
 		super(KingPhisherRequestHandler, self).__init__(*args, **kwargs)
 
 	def on_init(self):
@@ -256,7 +259,11 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 	def check_authorization(self):
 		# don't require authentication for non-RPC requests
-		if self.command != 'RPC':
+		cmd = self.command
+		if cmd == 'GET':
+			if 'upgrade' not in self.headers:
+				return True
+		elif cmd != 'RPC':
 			return True
 		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
 			return False
