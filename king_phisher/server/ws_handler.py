@@ -50,12 +50,17 @@ def dispatcher(_, handler):
 class EventPublisher(advancedhttpserver.WebSocketHandler):
 	logger = logging.getLogger('KingPhisher.Server.EventPublisher')
 	def __init__(self, handler):
+		handler.server.throttle_semaphore.release()
 		self.event_subscriptions = collections.defaultdict(set)
 		# signal subscriptions
 		signals.db_session_deleted.connect(self.sig_db_deleted)
 		signals.db_session_inserted.connect(self.sig_db_inserted)
 		signals.db_session_updated.connect(self.sig_db_updated)
 		super(EventPublisher, self).__init__(handler)
+
+	def on_closed(self):
+		self.handler.server.throttle_semaphore.acquire()
+		return
 
 	def on_message_text(self, message):
 		try:
