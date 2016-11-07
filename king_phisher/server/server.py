@@ -389,7 +389,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.server.logger.error("unicode error {0} in template file: {1}:{2}-{3}".format(error.reason, file_path, error.start, error.end))
 			raise errors.KingPhisherAbortRequestError()
 
-		template_data = ''
+		template_data = b''
 		headers = []
 		template_vars = {
 			'client': self.get_template_vars_client(),
@@ -422,6 +422,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				raise errors.KingPhisherAbortRequestError()
 			self.send_response(200)
 			headers.append(('Last-Modified', self.date_time_string(os.stat(template.filename).st_mtime)))
+			template_data = template_data.encode('utf-8', 'ignore')
 
 		if mime_type.startswith('text'):
 			mime_type += '; charset=utf-8'
@@ -436,7 +437,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
 
 		self.end_headers()
-		self.wfile.write(template_data.encode('utf-8', 'ignore'))
+		self.wfile.write(template_data)
 		return
 
 	def _respond_file_raw(self, file_path, attachment):
