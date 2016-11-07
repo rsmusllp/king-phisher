@@ -375,6 +375,15 @@ class MailSenderThread(threading.Thread):
 			self.logger.warning('received an SMTPException while connecting to the SMTP server', exc_info=True)
 			return ConnectionErrorReason.ERROR_UNKNOWN
 
+		if not self.config.get('smtp_ssl_enable', False) and 'starttls' in self.smtp_connection.esmtp_features:
+			self.logger.debug('target SMTP server supports the STARTTLS extension')
+			try:
+				self.smtp_connection.starttls()
+				self.smtp_connection.ehlo()
+			except smtplib.SMTPException:
+				self.logger.warning('received an SMTPException while negotiating STARTTLS with the SMTP server', exc_info=True)
+				return ConnectionErrorReason.ERROR_UNKNOWN
+
 		username = self.config.get('smtp_username', '')
 		if username:
 			password = self.config.get('smtp_password', '')
