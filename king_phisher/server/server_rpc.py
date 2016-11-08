@@ -481,7 +481,7 @@ def rpc_database_insert_row(handler, session, table_name, keys, values):
 	table = database_table_objects.get(table_name)
 	if not table:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
-	for key, value in zip(keys, values):
+	for key in keys:
 		if key not in database_tables[table_name]:
 			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(key, table_name))
 
@@ -517,6 +517,7 @@ def rpc_database_set_row_value(handler, session, table_name, row_id, keys, value
 	row = db_manager.get_row_by_id(session, table, row_id)
 	if not row:
 		raise errors.KingPhisherAPIError("failed to get row id: {0} from table: {1}".format(row_id, table_name))
+	row.assert_session_has_permissions('u', handler.rpc_session)
 	for key, value in zip(keys, values):
 		setattr(row, key, value)
 	row.assert_session_has_permissions('u', handler.rpc_session)
