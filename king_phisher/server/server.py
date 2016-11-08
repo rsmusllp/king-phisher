@@ -51,7 +51,7 @@ from king_phisher.server import pages
 from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
 from king_phisher.server import signals
-from king_phisher.server import ws_handler
+from king_phisher.server import web_sockets
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
@@ -63,7 +63,6 @@ make_uid = lambda: utilities.random_string(24)
 
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
-	web_socket_handler = ws_handler.dispatcher
 	def __init__(self, *args, **kwargs):
 		# this is for attribute documentation
 		self.config = None
@@ -84,6 +83,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 					self.handler_map[regex_prefix + path] = handler
 		self.handler_map[regex_prefix + 'kpdd$'] = self.handle_deaddrop_visit
 		self.handler_map[regex_prefix + 'kp\\.js$'] = self.handle_javascript_hook
+		self.web_socket_handler = self.server.ws_manager.dispatch
 
 		tracking_image = self.config.get('server.tracking_image')
 		tracking_image = tracking_image.replace('.', '\\.')
@@ -772,6 +772,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
 		self.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
+		self.ws_manager = web_sockets.WebSocketsManager(self.job_manager)
 
 		for http_server in self.sub_servers:
 			http_server.config = config
@@ -782,6 +783,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			http_server.job_manager = self.job_manager
 			http_server.template_env = self.template_env
 			http_server.kp_shutdown = self.shutdown
+			http_server.ws_manager = self.ws_manager
 
 		if not config.has_option('server.secret_id'):
 			config.set('server.secret_id', rest_api.generate_token())
@@ -806,9 +808,10 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 				return
 			self.logger.warning('processing shutdown request')
 			super(KingPhisherServer, self).shutdown(*args, **kwargs)
+			self.ws_manager.stop()
+			self.job_manager.stop()
 			self.session_manager.stop()
 			self.forked_authenticator.stop()
 			self.logger.debug('stopped the forked authenticator process')
-			self.job_manager.stop()
 			self.__geoip_db.close()
 			self.__is_shutdown.set()

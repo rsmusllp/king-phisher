@@ -38,6 +38,7 @@ import threading
 from king_phisher import errors
 from king_phisher import geoip
 from king_phisher import ipaddress
+from king_phisher import utilities
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.server import signals
@@ -522,6 +523,41 @@ def rpc_database_set_row_value(handler, session, table_name, row_id, keys, value
 		setattr(row, key, value)
 	row.assert_session_has_permissions('u', handler.rpc_session)
 	session.commit()
+
+@register_rpc('/events/is_subscribed', log_call=True)
+def rpc_events_unsubscribe(handler, event_id, event_type):
+	if not isinstance(event_id, str):
+		raise errors.KingPhisherAPIError('a valid event id must be specified')
+	if not isinstance(event_type, str):
+		raise errors.KingPhisherAPIError('a valid event type must be specified')
+	event_socket = handler.rpc_session.event_socket
+	if event_socket is None:
+		raise errors.KingPhisherAPIError('the event socket is not open for this session')
+	return event_socket.is_subscribed(event_id, event_type)
+
+@register_rpc('/events/subscribe', log_call=True)
+def rpc_events_subscribe(handler, event_id, event_types=None, attributes=None):
+	if not isinstance(event_id, str):
+		raise errors.KingPhisherAPIError('a valid event id must be specified')
+	event_socket = handler.rpc_session.event_socket
+	if event_socket is None:
+		raise errors.KingPhisherAPIError('the event socket is not open for this session')
+	if not event_id.startswith('db:'):
+		raise errors.KingPhisherAPIError('unknown event_id: ' + event_id)
+	table_name = event_id[3:]
+	if table_name not in database_table_objects:
+		raise errors.KingPhisherAPIError("invalid table object: {0}".format(table_name))
+
+	event_socket.subscribe(event_id, event_types=event_types, attributes=attributes)
+
+@register_rpc('/events/unsubscribe', log_call=True)
+def rpc_events_unsubscribe(handler, event_id, event_types=None, attributes=None):
+	if not isinstance(event_id, str):
+		raise errors.KingPhisherAPIError('a valid event id must be specified')
+	event_socket = handler.rpc_session.event_socket
+	if event_socket is None:
+		raise errors.KingPhisherAPIError('the event socket is not open for this session')
+	event_socket.unsubscribe(event_id, event_types=event_types, attributes=attributes)
 
 @register_rpc('/geoip/lookup', log_call=True)
 def rpc_geoip_lookup(handler, ip, lang=None):
