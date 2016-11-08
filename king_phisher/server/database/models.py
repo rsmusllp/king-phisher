@@ -154,15 +154,23 @@ class BaseRowCls(object):
 		return False
 
 	def session_has_create_access(self, session):
+		if self.is_private:
+			return False
 		return True
 
 	def session_has_delete_access(self, session):
+		if self.is_private:
+			return False
 		return True
 
 	def session_has_read_access(self, session):
+		if self.is_private:
+			return False
 		return True
 
 	def session_has_update_access(self, session):
+		if self.is_private:
+			return False
 		return True
 Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
 metadata = Base.metadata

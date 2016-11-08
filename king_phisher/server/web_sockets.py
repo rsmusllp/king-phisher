@@ -81,7 +81,7 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 			return
 		summaries = []
 		for source in event.sources:
-			if isinstance(source, db_models.Base) and not source.session_has_read_access(self.rpc_session):
+			if isinstance(source, db_models.Base) and not source.assert_session_has_permissions('r', self.rpc_session):
 				continue
 			summary = dict((attribute, getattr(source, attribute, None)) for attribute in subscription.attributes)
 			summaries.append(summary)

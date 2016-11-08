@@ -543,12 +543,19 @@ def rpc_events_subscribe(handler, event_id, event_types=None, attributes=None):
 	if event_socket is None:
 		raise errors.KingPhisherAPIError('the event socket is not open for this session')
 	if not event_id.startswith('db:'):
-		raise errors.KingPhisherAPIError('unknown event_id: ' + event_id)
+		# db:<table name> events are the only ones that are valid right now
+		raise errors.KingPhisherAPIError('invalid event_id: ' + event_id)
 	table_name = event_id[3:]
-	if table_name not in database_table_objects:
+	columns = database_tables.get(table_name)
+	if columns is None:
 		raise errors.KingPhisherAPIError("invalid table object: {0}".format(table_name))
-
-	event_socket.subscribe(event_id, event_types=event_types, attributes=attributes)
+	for event_type in event_types:
+		if event_type not in ('created', 'deleted', 'updated'):
+			raise errors.KingPhisherAPIError("event type {0} is invalid for db:* events".format(event_type))
+	for column in attributes:
+		if column not in columns:
+			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(column, table_name))
+	return event_socket.subscribe(event_id, event_types=event_types, attributes=attributes)
 
 @register_rpc('/events/unsubscribe', log_call=True)
 def rpc_events_unsubscribe(handler, event_id, event_types=None, attributes=None):
@@ -557,7 +564,7 @@ def rpc_events_unsubscribe(handler, event_id, event_types=None, attributes=None)
 	event_socket = handler.rpc_session.event_socket
 	if event_socket is None:
 		raise errors.KingPhisherAPIError('the event socket is not open for this session')
-	event_socket.unsubscribe(event_id, event_types=event_types, attributes=attributes)
+	return event_socket.unsubscribe(event_id, event_types=event_types, attributes=attributes)
 
 @register_rpc('/geoip/lookup', log_call=True)
 def rpc_geoip_lookup(handler, ip, lang=None):
