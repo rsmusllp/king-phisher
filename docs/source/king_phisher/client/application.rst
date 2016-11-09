@@ -10,8 +10,6 @@ client application.
 Data
 ----
 
-.. autodata:: king_phisher.client.application.DISABLED
-
 .. autodata:: king_phisher.client.application.GTK3_DEFAULT_THEME
 
 .. autodata:: king_phisher.client.application.USER_DATA_PATH

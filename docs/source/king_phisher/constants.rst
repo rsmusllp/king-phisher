@@ -7,6 +7,11 @@
 This module keeps collections of related constants organized for use in other
 modules.
 
+Data
+----
+
+.. autodata:: king_phisher.client.application.DISABLED
+
 Classes
 -------
 

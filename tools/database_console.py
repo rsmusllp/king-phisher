@@ -37,19 +37,25 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from king_phisher import constants
 from king_phisher import utilities
 from king_phisher.server.database import manager
 from king_phisher.server.database import models
 
 import yaml
 
+history_file = os.path.expanduser('~/.config/king-phisher/database_console.his')
+
 try:
 	import readline
 except ImportError:
-	pass
+	has_readline = False
 else:
+	has_readline = True
 	import rlcompleter
 	readline.parse_and_bind('tab: complete')
+	if os.path.isfile(history_file):
+		readline.read_history_file(history_file)
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Interactive Database Console', conflict_handler='resolve')
@@ -71,8 +77,16 @@ def main():
 
 	engine = manager.init_database(database_connection_url)
 	session = manager.Session()
-	console = code.InteractiveConsole(dict(engine=engine, manager=manager, models=models, session=session))
+	console = code.InteractiveConsole(dict(
+		engine=engine,
+		manager=manager,
+		models=models,
+		session=session
+	))
 	console.interact('starting interactive database console')
+
+	if os.path.isdir(os.path.dirname(history_file)):
+		readline.write_history_file(history_file)
 
 if __name__ == '__main__':
 	sys.exit(main())

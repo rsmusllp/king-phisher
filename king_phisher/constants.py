@@ -34,12 +34,17 @@ import sys
 
 from king_phisher import its
 
+import boltons.typeutils
+
 if its.py_v3:
 	_intern = sys.intern
 else:
 	_intern = intern
 
 __all__ = ('OSArch', 'OSFamily', 'SPFResult')
+
+DISABLED = boltons.typeutils.make_sentinel('DISABLED')
+"""A sentinel value to indicate that a feature is disabled."""
 
 class ConstantGroupMeta(type):
 	def __len__(cls):

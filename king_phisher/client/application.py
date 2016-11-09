@@ -40,6 +40,7 @@ import socket
 import sys
 import uuid
 
+from king_phisher import constants
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
@@ -60,7 +61,6 @@ from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
 
 import advancedhttpserver
-from boltons import typeutils
 from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
@@ -75,14 +75,13 @@ if its.py_v2:
 else:
 	from http.client import BadStatusLine
 
-USER_DATA_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher')
-"""The default folder location of user specific data storage."""
-
-DISABLED = typeutils.make_sentinel('DISABLED')
-"""A sentinel value to indicate that a feature is disabled."""
+DISABLED = constants.DISABLED
 
 GTK3_DEFAULT_THEME = 'Adwaita'
 """The default GTK3 Theme for style information."""
+
+USER_DATA_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher')
+"""The default folder location of user specific data storage."""
 
 if isinstance(Gtk.Widget, utilities.Mock):
 	_Gtk_Application = type('Gtk.Application', (object,), {'__module__': ''})
