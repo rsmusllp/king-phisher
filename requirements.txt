@@ -27,4 +27,5 @@ smoke-zephyr>=1.1.0
 SQLAlchemy>=1.0.15
 termcolor>=1.1.0
 tzlocal>=1.2.2
+websocket-client>=0.37.0
 XlsxWriter>=0.9.3

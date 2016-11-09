@@ -156,6 +156,26 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		store_columns = [str] * (len(self.view_columns) + 1)
 		store = Gtk.ListStore(*store_columns)
 		treeview.set_model(store)
+		self.application.connect('server-connected', self.signal_kp_server_connected)
+
+	def signal_kp_server_connected(self, _):
+		self.application.server_events.connect('db-' + self.remote_table_name.replace('_', '-'), self.signal_server_event_db)
+
+	def signal_server_event_db(self, _, event_type, rows):
+		for row in rows:
+			if row.campaign_id != self.config['campaign_id']:
+				continue
+			model = self.gobjects['treeview_campaign'].get_model()
+			for case in utilities.switch(event_type):
+				if case('created'):
+					break
+				if case('deleted'):
+					model.remove(gui_utilities.gtk_list_store_search(model, row.id))
+					break
+				if case('updated'):
+					self.rpc.resolve(row)
+					# need to sync the changes here
+					break
 
 	def _prompt_to_delete_row(self, treeview, _):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
@@ -172,7 +192,6 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
 		self.application.emit(self.remote_table_name[:-1] + '-delete', row_ids)
-		self.load_campaign_information()
 
 	def format_row_data(self, row):
 		"""

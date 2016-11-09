@@ -525,7 +525,7 @@ def rpc_database_set_row_value(handler, session, table_name, row_id, keys, value
 	session.commit()
 
 @register_rpc('/events/is_subscribed', log_call=True)
-def rpc_events_unsubscribe(handler, event_id, event_type):
+def rpc_events_is_subscribed(handler, event_id, event_type):
 	if not isinstance(event_id, str):
 		raise errors.KingPhisherAPIError('a valid event id must be specified')
 	if not isinstance(event_type, str):
@@ -542,16 +542,17 @@ def rpc_events_subscribe(handler, event_id, event_types=None, attributes=None):
 	event_socket = handler.rpc_session.event_socket
 	if event_socket is None:
 		raise errors.KingPhisherAPIError('the event socket is not open for this session')
-	if not event_id.startswith('db:'):
-		# db:<table name> events are the only ones that are valid right now
+	if not event_id.startswith('db-'):
+		# db-<table name> events are the only ones that are valid right now
 		raise errors.KingPhisherAPIError('invalid event_id: ' + event_id)
 	table_name = event_id[3:]
+	table_name = table_name.replace('-', '_')
 	columns = database_tables.get(table_name)
 	if columns is None:
 		raise errors.KingPhisherAPIError("invalid table object: {0}".format(table_name))
 	for event_type in event_types:
 		if event_type not in ('created', 'deleted', 'updated'):
-			raise errors.KingPhisherAPIError("event type {0} is invalid for db:* events".format(event_type))
+			raise errors.KingPhisherAPIError("event type {0} is invalid for db-* events".format(event_type))
 	for column in attributes:
 		if column not in columns:
 			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(column, table_name))

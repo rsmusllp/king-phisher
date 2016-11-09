@@ -81,10 +81,12 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 			return
 		summaries = []
 		for source in event.sources:
-			if isinstance(source, db_models.Base) and not source.assert_session_has_permissions('r', self.rpc_session):
+			if isinstance(source, db_models.Base) and not source.session_has_permissions('r', self.rpc_session):
 				continue
 			summary = dict((attribute, getattr(source, attribute, None)) for attribute in subscription.attributes)
 			summaries.append(summary)
+		if not summaries:
+			return
 
 		msg = {
 			'event': {
@@ -93,6 +95,7 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 				'objects': summaries
 			}
 		}
+		self.logger.debug("publishing event {0} (type: {1}) with {2} objects".format(event.event_id, event.event_type, len(summaries)))
 		self.send_message_text(json_ex.dumps(msg, pretty=False))
 
 	def subscribe(self, event_id, event_types=None, attributes=None):
@@ -141,7 +144,7 @@ class WebSocketsManager(object):
 
 	def _sig_db(self, event_type, table_name, targets):
 		event = Event(
-			event_id='db:' + table_name,
+			event_id='db-' + table_name,
 			event_type=event_type,
 			sources=targets
 		)
@@ -197,8 +200,12 @@ class WebSocketsManager(object):
 		disconnected = collections.deque()
 		for web_socket in self.web_sockets:
 			if web_socket.connected:
-				web_socket.ping()
-				if web_socket.connected:
+				try:
+					web_socket.ping()
+				except:
+					self.logger.info('error occurred while pinging websocket, closing it')
+					web_socket.close()
+				else:
 					continue
 			disconnected.append(web_socket)
 		for web_socket in disconnected:

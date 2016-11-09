@@ -55,6 +55,7 @@ from king_phisher.client import dialogs
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client import plugins
+from king_phisher.client import server_events
 from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.client.windows import main
 from king_phisher.client.windows import rpc_terminal
@@ -117,7 +118,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'sftp-client-start': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'visit-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
 	}
-
 	def __init__(self, config_file=None, use_plugins=True, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
 		if use_style:
@@ -149,6 +149,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The primary top-level :py:class:`~.MainAppWindow` instance."""
 		self.rpc = None
 		"""The :py:class:`~.KingPhisherRPCClient` instance for the application."""
+		self.server_events = None
+		"""The :py:class:`~.ServerEventsSubscriber` instance for the application to receive server events."""
 		self._ssh_forwarder = None
 		"""The SSH forwarder responsible for tunneling RPC communications."""
 		self.style_provider = None
@@ -386,6 +388,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def do_exit(self):
 		self.plugin_manager.shutdown()
+		self.server_events.shutdown()
 
 		self.main_window.hide()
 		gui_utilities.gtk_widget_destroy_children(self.main_window)
@@ -589,6 +592,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.logger.debug('successfully authenticated to the remote king phisher service')
 
 		self.rpc = rpc
+		self.server_events = server_events.ServerEventsSubscriber(rpc)
+		for table in ('credentials', 'messages', 'visits'):
+			self.server_events.subscribe('db-' + table, ('created', 'deleted', 'updated'), ('id', 'campaign_id'))
 		self.emit('server-connected')
 		return True, ConnectionErrorReason.SUCCESS
 
