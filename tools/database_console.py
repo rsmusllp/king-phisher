@@ -33,14 +33,15 @@
 import argparse
 import code
 import os
+import pprint
 import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from king_phisher import constants
-from king_phisher import utilities
-from king_phisher.server.database import manager
-from king_phisher.server.database import models
+import king_phisher.constants as constants
+import king_phisher.utilities as utilities
+import king_phisher.server.database.manager as manager
+import king_phisher.server.database.models as models
 
 import yaml
 
@@ -81,6 +82,7 @@ def main():
 		engine=engine,
 		manager=manager,
 		models=models,
+		pprint=pprint.pprint,
 		session=session
 	))
 	console.interact('starting interactive database console')

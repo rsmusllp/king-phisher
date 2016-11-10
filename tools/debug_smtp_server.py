@@ -38,9 +38,9 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from king_phisher import color
-from king_phisher import smtp_server
-from king_phisher import utilities
+import king_phisher.color as color
+import king_phisher.smtp_server as smtp_server
+import king_phisher.utilities as utilities
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher SMTP Debug Server', conflict_handler='resolve')

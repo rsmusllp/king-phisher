@@ -36,10 +36,10 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from king_phisher import color
-from king_phisher import ipaddress
-from king_phisher import spf
-from king_phisher import utilities
+import king_phisher.color as color
+import king_phisher.ipaddress as ipaddress
+import king_phisher.spf as spf
+import king_phisher.utilities as utilities
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher SPF Check Utility', conflict_handler='resolve')

@@ -36,10 +36,10 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from king_phisher import color
-from king_phisher import utilities
-from king_phisher.server.database import manager
-from king_phisher.server.database import models
+import king_phisher.color as color
+import king_phisher.utilities as utilities
+import king_phisher.server.database.manager as manager
+import king_phisher.server.database.models as models
 
 import pyotp
 import yaml

@@ -39,8 +39,8 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from king_phisher import color
-from king_phisher import version
+import king_phisher.color as color
+import king_phisher.version as version
 
 PROG_DESCRIPTION = """King Phisher Recon-ng CSV Converter
 
