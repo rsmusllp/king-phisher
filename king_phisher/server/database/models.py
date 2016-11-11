@@ -168,6 +168,9 @@ class BaseRowCls(object):
 			return False
 		return True
 
+	def session_has_read_prop_access(self, session, prop):
+		return self.session_has_read_access(session)
+
 	def session_has_update_access(self, session):
 		if self.is_private:
 			return False
@@ -195,6 +198,9 @@ class AlertSubscription(Base):
 		return session.user == self.user_id
 
 	def session_has_delete_access(self, session):
+		return session.user == self.user_id
+
+	def session_has_read_access(self, session):
 		return session.user == self.user_id
 
 	def session_has_update_access(self, session):
@@ -377,6 +383,11 @@ class User(Base):
 
 	def session_has_read_access(self, session):
 		return session.user == self.id
+
+	def session_has_read_prop_access(self, session, prop):
+		if prop == 'id':  # everyone can read the id
+			return True
+		return self.session_has_read_access(session)
 
 	def session_has_update_access(self, session):
 		return session.user == self.id

@@ -196,7 +196,7 @@ def rpc_config_set(handler, options):
 	return
 
 @register_rpc('/campaign/new', database_access=True, log_call=True)
-def rpc_campaign_new(self, session, name, description=None):
+def rpc_campaign_new(handler, session, name, description=None):
 	"""
 	Create a new King Phisher campaign and initialize the database
 	information.
@@ -208,14 +208,14 @@ def rpc_campaign_new(self, session, name, description=None):
 	"""
 	if session.query(db_models.Campaign).filter_by(name=name).count():
 		raise ValueError('the specified campaign name already exists')
-	campaign = db_models.Campaign(name=name, description=description, user_id=self.rpc_session.user)
-	campaign.assert_session_has_permissions('c', self.rpc_session)
+	campaign = db_models.Campaign(name=name, description=description, user_id=handler.rpc_session.user)
+	campaign.assert_session_has_permissions('c', handler.rpc_session)
 	session.add(campaign)
 	session.commit()
 	return campaign.id
 
 @register_rpc('/campaign/alerts/is_subscribed', database_access=True, log_call=True)
-def rpc_campaign_alerts_is_subscribed(self, session, campaign_id):
+def rpc_campaign_alerts_is_subscribed(handler, session, campaign_id):
 	"""
 	Check if the user is subscribed to alerts for the specified campaign.
 
@@ -223,9 +223,8 @@ def rpc_campaign_alerts_is_subscribed(self, session, campaign_id):
 	:return: The alert subscription status.
 	:rtype: bool
 	"""
-	username = self.rpc_session.user
 	query = session.query(db_models.AlertSubscription)
-	query = query.filter_by(campaign_id=campaign_id, user_id=username)
+	query = query.filter_by(campaign_id=campaign_id, user_id=handler.rpc_session.user)
 	return query.count()
 
 @register_rpc('/campaign/alerts/subscribe', database_access=True, log_call=True)
