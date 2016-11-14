@@ -39,6 +39,7 @@ import sys
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import king_phisher.utilities as utilities
+import king_phisher.server.graphql as graphql
 import king_phisher.server.database.manager as manager
 import king_phisher.server.database.models as models
 
@@ -79,6 +80,7 @@ def main():
 	session = manager.Session()
 	console = code.InteractiveConsole(dict(
 		engine=engine,
+		graphql=graphql,
 		manager=manager,
 		models=models,
 		pprint=pprint.pprint,

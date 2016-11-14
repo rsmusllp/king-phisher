@@ -1,3 +1,35 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#  king_phisher/server/graphql.py
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are
+#  met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following disclaimer
+#    in the documentation and/or other materials provided with the
+#    distribution.
+#  * Neither the name of the project nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+#  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+#  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+#  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+#  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
 import datetime
 import sys
 
@@ -12,17 +44,13 @@ import king_phisher.server.signals as signals
 import king_phisher.utilities as utilities
 import king_phisher.version as version
 
-try:
-	import graphene
-	import graphene.types.datetime
-	import graphene_sqlalchemy
-except ImportError:
-	has_graphene = False
-else:
-	has_graphene = True
+import graphene
+import graphene.types
+import graphene_sqlalchemy
 
 #@register_rpc('/graphql', database_access=True)
-def rpc_graphql(handler, session, query, vars):
+def rpc_graphql(handler, session, query, query_vars=None):
+	query_vars = query_vars or {}
 	result = graphql.schema.execute(
 		query,
 		context_value={
@@ -30,7 +58,7 @@ def rpc_graphql(handler, session, query, vars):
 			'rpc_session': handler.rpc_session,
 			'session': session
 		},
-		variable_values=vars
+		variable_values=query_vars
 	)
 	return {'data': result.data, 'errors': result.errors}
 
@@ -305,7 +333,7 @@ class Database(graphene.ObjectType):
 class Query(graphene.ObjectType):
 	db = graphene.Field(Database)
 	geoloc = graphene.Field(GeoLocation, ip=graphene.String())
-	plugin = graphene.Field(plugin, name=graphene.String())
+	plugin = graphene.Field(Plugin, name=graphene.String())
 	plugins = graphene.List(Plugin)
 	version = graphene.Field(graphene.String)
 
@@ -319,13 +347,13 @@ class Query(graphene.ObjectType):
 		return GeoLocation.from_ip_address(ip_address)
 
 	def resolve_plugin(self, args, context, info):
-		for _, plugin in sorted(context['plugin_manager'], lambda (k, v): k):
+		for _, plugin in sorted(context['plugin_manager'], lambda i: i[0]):
 			if plugin.name != args.get('name'):
 				continue
 			yield Plugin.from_plugin(plugin)
 
 	def resolve_plugins(self, args, context, info):
-		for _, plugin in sorted(context['plugin_manager'], lambda (k, v): k):
+		for _, plugin in sorted(context['plugin_manager'], lambda i: i[0]):
 			yield Plugin.from_plugin(plugin)
 
 	def resolve_version(self, args, context, info):
