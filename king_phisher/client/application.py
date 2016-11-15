@@ -594,7 +594,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.rpc = rpc
 		self.server_events = server_events.ServerEventsSubscriber(rpc)
 		for table in ('credentials', 'messages', 'visits'):
-			self.server_events.subscribe('db-' + table, ('created', 'deleted', 'updated'), ('id', 'campaign_id'))
+			self.server_events.subscribe('db-' + table, ('deleted', 'inserted', 'updated'), ('id', 'campaign_id'))
 		self.emit('server-connected')
 		return True, ConnectionErrorReason.SUCCESS
 

@@ -163,18 +163,25 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 
 	def signal_server_event_db(self, _, event_type, rows):
 		for row in rows:
-			if row.campaign_id != self.config['campaign_id']:
+			if str(row.campaign_id) != self.config['campaign_id']:
 				continue
 			model = self.gobjects['treeview_campaign'].get_model()
 			for case in utilities.switch(event_type):
-				if case('created'):
-					break
+				if case('inserted'):
+					self.rpc.resolve(row)
+					row_data = self.format_row_data(row)
+					row_data = list(map(self.format_cell_data, row_data))
+					row_data.insert(0, str(row.id))
+					gui_utilities.glib_idle_add_wait(model.append, row_data)
 				if case('deleted'):
 					model.remove(gui_utilities.gtk_list_store_search(model, row.id))
 					break
 				if case('updated'):
 					self.rpc.resolve(row)
-					# need to sync the changes here
+					row_data = self.format_row_data(row)
+					ti = gui_utilities.gtk_list_store_search(model, row.id)
+					for idx, cell_data in enumerate(row_data, 1):
+						model[ti][idx] = self.format_cell_data(cell_data)
 					break
 
 	def _prompt_to_delete_row(self, treeview, _):

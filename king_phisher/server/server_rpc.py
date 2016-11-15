@@ -551,7 +551,7 @@ def rpc_events_subscribe(handler, event_id, event_types=None, attributes=None):
 	if columns is None:
 		raise errors.KingPhisherAPIError("invalid table object: {0}".format(table_name))
 	for event_type in event_types:
-		if event_type not in ('created', 'deleted', 'updated'):
+		if event_type not in ('deleted', 'inserted', 'updated'):
 			raise errors.KingPhisherAPIError("event type {0} is invalid for db-* events".format(event_type))
 	for column in attributes:
 		if column not in columns:
