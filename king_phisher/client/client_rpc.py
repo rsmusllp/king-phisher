@@ -37,6 +37,7 @@ import os
 import ssl
 import sys
 
+from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
 from king_phisher import serializers
@@ -180,6 +181,12 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 
 	def __repr__(self):
 		return "<{0} '{1}@{2}:{3}{4}'>".format(self.__class__.__name__, self.username, self.host, self.port, self.uri_base)
+
+	def graphql(self, query, query_vars=None):
+		response = self.call('graphql', query, query_vars=query_vars)
+		if response['errors']:
+			raise errors.KingPhisherGraphQLQueryError('the query failed', errors=response['errors'])
+		return response['data']
 
 	def reconnect(self):
 		"""Reconnect to the remote server."""

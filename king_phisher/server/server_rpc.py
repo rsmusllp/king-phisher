@@ -41,6 +41,7 @@ from king_phisher import ipaddress
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
+from king_phisher.server import graphql
 from king_phisher.server import signals
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
@@ -697,3 +698,17 @@ def rpc_plugins_list(handler):
 			'version': plugin.version
 		}
 	return plugins
+
+@register_rpc('/graphql', database_access=True)
+def rpc_graphql(handler, session, query, query_vars=None):
+	query_vars = query_vars or {}
+	result = graphql.schema.execute(
+		query,
+		context_value={
+			'plugin_manager': handler.server.plugin_manager,
+			'rpc_session': handler.rpc_session,
+			'session': session
+		},
+		variable_values=query_vars
+	)
+	return {'data': result.data, 'errors': result.errors}

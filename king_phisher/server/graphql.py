@@ -31,36 +31,15 @@
 #
 
 import datetime
-import sys
 
 import king_phisher.geoip as geoip
 import king_phisher.ipaddress as ipaddress
-import king_phisher.plugins as plugin_opts
-import king_phisher.server.database.manager as db_manager
 import king_phisher.server.database.models as db_models
-import king_phisher.server.plugins as plugins
-import king_phisher.server.server_rpc as server_rpc
-import king_phisher.server.signals as signals
-import king_phisher.utilities as utilities
 import king_phisher.version as version
 
 import graphene
 import graphene.types
 import graphene_sqlalchemy
-
-#@register_rpc('/graphql', database_access=True)
-def rpc_graphql(handler, session, query, query_vars=None):
-	query_vars = query_vars or {}
-	result = graphql.schema.execute(
-		query,
-		context_value={
-			'plugin_manager': handler.server.plugin_manager,
-			'rpc_session': handler.rpc_session,
-			'session': session
-		},
-		variable_values=query_vars
-	)
-	return {'data': result.data, 'errors': result.errors}
 
 # scalar types
 class DateTime(graphene.types.Scalar):
@@ -347,13 +326,13 @@ class Query(graphene.ObjectType):
 		return GeoLocation.from_ip_address(ip_address)
 
 	def resolve_plugin(self, args, context, info):
-		for _, plugin in sorted(context['plugin_manager'], lambda i: i[0]):
+		for _, plugin in context['plugin_manager']:
 			if plugin.name != args.get('name'):
 				continue
-			yield Plugin.from_plugin(plugin)
+			return Plugin.from_plugin(plugin)
 
 	def resolve_plugins(self, args, context, info):
-		for _, plugin in sorted(context['plugin_manager'], lambda i: i[0]):
+		for _, plugin in sorted(context['plugin_manager'], key=lambda i: i[0]):
 			yield Plugin.from_plugin(plugin)
 
 	def resolve_version(self, args, context, info):
