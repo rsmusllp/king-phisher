@@ -41,7 +41,7 @@ import graphene
 import graphene.types
 import graphene_sqlalchemy
 
-# graphene replacement types
+# replacement types
 class DateTime(graphene.types.Scalar):
 	@staticmethod
 	def serialize(dt):
@@ -104,6 +104,14 @@ class Plugin(graphene.ObjectType):
 			title=plugin.title,
 			version=plugin.version
 		)
+
+class PluginConnection(graphene.relay.Connection):
+	class Meta:
+		node = Plugin
+	total = graphene.Int()
+
+	def resolve_total(self, args, context, info):
+		return len(context.get('plugin_manager', {}))
 
 # database objects
 class AlertSubscription(graphene_sqlalchemy.SQLAlchemyObjectType):
@@ -215,6 +223,7 @@ class User(graphene_sqlalchemy.SQLAlchemyObjectType):
 	campaigns = graphene_sqlalchemy.SQLAlchemyConnectionField(Campaign)
 
 class Database(graphene.ObjectType):
+	alert_subscription = graphene.Field(AlertSubscription, id=graphene.Int())
 	alert_subscriptions = graphene_sqlalchemy.SQLAlchemyConnectionField(AlertSubscription)
 	campaign_type = graphene.Field(CampaignType, id=graphene.Int())
 	campaign_types = graphene_sqlalchemy.SQLAlchemyConnectionField(CampaignType)
@@ -362,7 +371,7 @@ class Query(graphene.ObjectType):
 	db = graphene.Field(Database)
 	geoloc = graphene.Field(GeoLocation, ip=graphene.String())
 	plugin = graphene.Field(Plugin, name=graphene.String())
-	plugins = graphene.relay.ConnectionField(Plugin)
+	plugins = graphene.relay.ConnectionField(PluginConnection)
 	version = graphene.Field(graphene.String)
 
 	def resolve_db(self, args, context, info):
@@ -375,13 +384,15 @@ class Query(graphene.ObjectType):
 		return GeoLocation.from_ip_address(ip_address)
 
 	def resolve_plugin(self, args, context, info):
-		for _, plugin in context['plugin_manager']:
+		plugin_manager = context.get('plugin_manager', {})
+		for _, plugin in plugin_manager:
 			if plugin.name != args.get('name'):
 				continue
 			return Plugin.from_plugin(plugin)
 
 	def resolve_plugins(self, args, context, info):
-		return [Plugin.from_plugin(plugin) for _, plugin in sorted(context['plugin_manager'], key=lambda i: i[0])]
+		plugin_manager = context.get('plugin_manager', {})
+		return [Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
 
 	def resolve_version(self, args, context, info):
 		return version.version

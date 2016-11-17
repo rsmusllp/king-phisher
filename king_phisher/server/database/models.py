@@ -385,7 +385,7 @@ class User(Base):
 		return session.user == self.id
 
 	def session_has_read_prop_access(self, session, prop):
-		if prop == 'id':  # everyone can read the id
+		if prop in ('id', 'campaigns'):  # everyone can read the id
 			return True
 		return self.session_has_read_access(session)
 
