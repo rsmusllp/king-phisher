@@ -79,7 +79,7 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 			connection_type=connection
 		)
 
-# replacement types
+# replacement graphql types
 class DateTime(graphene.types.Scalar):
 	@staticmethod
 	def serialize(dt):
@@ -103,7 +103,7 @@ class RelayNode(graphene.relay.Node):
 	def to_global_id(cls, type, local_id):
 		return local_id
 
-# misc objects
+# misc graphql objects
 class GeoLocation(graphene.ObjectType):
 	city = graphene.Field(graphene.String)
 	continent = graphene.Field(graphene.String)
@@ -151,7 +151,7 @@ class PluginConnection(graphene.relay.Connection):
 	def resolve_total(self, args, context, info):
 		return len(context.get('plugin_manager', {}))
 
-# database objects
+# database graphql objects
 class AlertSubscription(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.AlertSubscription
@@ -405,7 +405,11 @@ class Database(graphene.ObjectType):
 		query = Visit.get_query(context)
 		return query.all()
 
+# top level query object for the schema
 class Query(graphene.ObjectType):
+	"""
+	This is the root query object used for GraphQL queries.
+	"""
 	db = graphene.Field(Database)
 	geoloc = graphene.Field(GeoLocation, ip=graphene.String())
 	plugin = graphene.Field(Plugin, name=graphene.String())
@@ -436,6 +440,13 @@ class Query(graphene.ObjectType):
 		return version.version
 
 class AuthorizationMiddleware(object):
+	"""
+	An authorization provider to ensure that the permissions on the objects
+	that are queried are respected. If no **rpc_session** key is provided in
+	the **context** dictionary then no authorization checks can be performed
+	and all objects and operations will be accessible. The **rpc_session**
+	key's value must be an instance of :py:class:`~.AuthenticatedSession`.
+	"""
 	def resolve(self, next, root, args, context, info):
 		rpc_session = context.get('rpc_session')
 		if isinstance(root, db_models.Base) and rpc_session is not None:
@@ -444,6 +455,12 @@ class AuthorizationMiddleware(object):
 		return next(root, args, context, info)
 
 class Schema(graphene.Schema):
+	"""
+	This is the top level schema object for GraphQL. It automatically sets up
+	sane defaults to be used by the King Phisher server including setting
+	the query to :py:class:`.Query` and adding the
+	:py:class:`.AuthorizationMiddleware` to each execution.
+	"""
 	def __init__(self, **kwargs):
 		kwargs['auto_camelcase'] = True
 		kwargs['query'] = Query

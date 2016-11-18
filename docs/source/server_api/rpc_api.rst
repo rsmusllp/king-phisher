@@ -18,6 +18,9 @@ responsible for using SSH to set up a port forward for requests.
 
 General API
 -----------
+.. rpc:function:: graphql(query, query_vars=None)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_graphql`
 
 .. rpc:function:: login()
 
@@ -33,7 +36,7 @@ General API
 
 .. rpc:function:: plugins/list()
 
-   :handler: :py:func:`~kking_phisher.server.server_rpc.rpc_plugins_list`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_plugins_list`
 
 .. rpc:function:: shutdown()
 

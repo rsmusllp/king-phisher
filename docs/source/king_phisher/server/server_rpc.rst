@@ -67,6 +67,8 @@ Functions
 
 .. autofunction:: king_phisher.server.server_rpc.rpc_geoip_lookup_multi
 
+.. autofunction:: king_phisher.server.server_rpc.rpc_graphql
+
 .. autofunction:: king_phisher.server.server_rpc.rpc_login
 
 .. autofunction:: king_phisher.server.server_rpc.rpc_logout

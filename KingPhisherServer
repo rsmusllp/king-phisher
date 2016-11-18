@@ -63,6 +63,7 @@ __requirements__ = [
 	'geoip2>=2.3.0',
 	'graphene>=1.0.2',
 	'graphene-sqlalchemy>=1.0',
+	'graphql-relay>=0.4.4',
 	'Jinja2>=2.8',
 	'markupsafe>=0.23',
 	'msgpack-python>=0.4.7',

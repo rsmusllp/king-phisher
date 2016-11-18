@@ -701,6 +701,17 @@ def rpc_plugins_list(handler):
 
 @register_rpc('/graphql', database_access=True)
 def rpc_graphql(handler, session, query, query_vars=None):
+	"""
+	Execute a GraphQL query and return the results. If the query fails to
+	execute the errors returned are populated in the **errors** key of the
+	results dictionary. If the query executes successfully the returned data
+	is available in the **data** key of the results dictionary.
+
+	:param str query: The GraphQL query to execute.
+	:param dict query_vars: Any variables needed by the *query*.
+	:return: The results of the query as a dictionary.
+	:rtype: dict
+	"""
 	query_vars = query_vars or {}
 	result = graphql.schema.execute(
 		query,
