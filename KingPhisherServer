@@ -84,8 +84,10 @@ def build_and_run(arguments, config, plugin_manager):
 		should_fork = False
 	elif config.has_option('server.fork'):
 		should_fork = bool(config.get('server.fork'))
-	if should_fork and os.fork():
-		return sys.exit(os.EX_OK)
+	if should_fork:
+		if os.fork():
+			return sys.exit(os.EX_OK)
+		os.setsid()
 
 	try:
 		king_phisher_server = build.server_from_config(config, plugin_manager=plugin_manager)
@@ -111,11 +113,13 @@ def build_and_run(arguments, config, plugin_manager):
 			return os.EX_NOUSER
 		if config.has_option('logging.file') and config.get('logging.file'):
 			os.chown(config.get('logging.file'), user_info.pw_uid, user_info.pw_gid)
-		os.setregid(user_info.pw_gid, user_info.pw_gid)
-		os.setreuid(user_info.pw_uid, user_info.pw_uid)
+		os.setgroups([])
+		os.setresgid(user_info.pw_gid, user_info.pw_gid, user_info.pw_gid)
+		os.setresuid(user_info.pw_uid, user_info.pw_uid, user_info.pw_uid)
 		logger.info("dropped privileges to the {0} account".format(setuid_username))
 	else:
 		logger.warning('running with root privileges is dangerous, drop them by configuring \'server.setuid_username\'')
+	os.umask(0o077)
 
 	db_engine_url = king_phisher_server.database_engine.url
 	if db_engine_url.drivername == 'sqlite':
