@@ -57,6 +57,7 @@ _tag_mixin_slots = ('id', 'name', 'description')
 _tag_mixin_types = (int, str, str)
 database_table_objects = utilities.FreezableDict()
 UNRESOLVED = boltons.typeutils.make_sentinel('UNRESOLVED', var_name='UNRESOLVED')
+"""A sentinel value used for values in rows to indicate that the data has not been loaded from the server."""
 
 class RemoteRowMeta(type):
 	def __new__(mcs, name, bases, dct):
@@ -71,6 +72,10 @@ class RemoteRowMeta(type):
 
 # stylized metaclass definition to be Python 2.7 and 3.x compatible
 class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
+	"""
+	A generic class representing a row of data from the remote King Phisher
+	server.
+	"""
 	__table__ = None
 	__xref_attr__ = None
 	__slots__ = ()
@@ -102,6 +107,7 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 		return dict(zip(self.__slots__[1:], (getattr(self, prop) for prop in self.__slots__[1:])))
 
 	def commit(self):
+		"""Send this object to the server to update the remote instance."""
 		values = tuple(getattr(self, attr) for attr in self.__slots__[1:])
 		values = collections.OrderedDict(((k, v) for (k, v) in zip(self.__slots__[1:], values) if v is not UNRESOLVED))
 		self.__rpc__('db/table/set', self.__table__, self.id, values.keys(), values.values())
@@ -202,6 +208,16 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		self.lock.release()
 
 	def resolve(self, row):
+		"""
+		Take a :py:class:`~.RemoteRow` instance and load all fields which are
+		:py:data:`~.UNRESOLVED`. If all fields are present, no modifications
+		are made.
+
+		:param row: The row who's data is to be resolved.
+		:rtype: :py:class:`~.RemoteRow`
+		:return: The row with all of it's fields fully resolved.
+		:rtype: :py:class:`~.RemoteRow`
+		"""
 		utilities.assert_arg_type(row, RemoteRow)
 		slots = getattr(row, '__slots__')[1:]
 		if not any(prop for prop in slots if getattr(row, prop) is UNRESOLVED):

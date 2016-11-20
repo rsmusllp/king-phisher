@@ -53,6 +53,9 @@ Event = collections.namedtuple('Event', ('event_id', 'event_type', 'sources'))
 EventSubscription = collections.namedtuple('EventSubscription', ('attributes', 'event_types'))
 
 class EventSocket(advancedhttpserver.WebSocketHandler):
+	"""
+	A socket through which server events are published to subscribers.
+	"""
 	logger = logging.getLogger('KingPhisher.Server.WebSocket.EventPublisher')
 	def __init__(self, handler, manager):
 		handler.server.throttle_semaphore.release()
@@ -130,8 +133,15 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 			del self._subscriptions[event_id]
 
 class WebSocketsManager(object):
+	"""
+	An object used to manage connected web sockets.
+	"""
 	logger = logging.getLogger('KingPhisher.Server.WebSocketManager')
 	def __init__(self, job_manager):
+		"""
+		:param job_manager: A job manager instance that can be used to schedule tasks.
+		:type job_manager: :py:class:`smoke_zephyr.job.JobManager`
+		"""
 		self.web_sockets = []
 		self.job_manager = job_manager
 		self._ping_job = job_manager.job_add(self.ping_all, seconds=20)
@@ -184,10 +194,22 @@ class WebSocketsManager(object):
 		return len(self.web_sockets)
 
 	def append(self, web_socket):
+		"""
+		Add a connected web socket to the manager.
+		:param web_socket: The connected web socket.
+		:type web_socket: :py:class:`advancedhttpserver.WebSocketHandler`
+		"""
 		utilities.assert_arg_type(web_socket, advancedhttpserver.WebSocketHandler)
 		self.web_sockets.append(web_socket)
 
 	def dispatch(self, handler):
+		"""
+		A method that is suitable for use as a
+		:py:attr:`~advancedhttpserver.RequestHandler.web_socket_handler`.
+
+		:param handler: The current request handler instance.
+		:type handler: :py:class:`~king_phisher.server.server.KingPhisherRequestHandler`
+		"""
 		if not ipaddress.ip_address(handler.client_address[0]).is_loopback:
 			return
 		if handler.path == '/_/ws/events/json':
@@ -197,13 +219,18 @@ class WebSocketsManager(object):
 		return
 
 	def ping_all(self):
+		"""
+		Ping all of the connected web sockets to ensure they stay alive. This
+		method is automatically executed periodically through a job added when
+		the manager is initialized.
+		"""
 		disconnected = collections.deque()
 		for web_socket in self.web_sockets:
 			if web_socket.connected:
 				try:
 					web_socket.ping()
 				except:
-					self.logger.info('error occurred while pinging websocket, closing it')
+					self.logger.info('error occurred while pinging the web socket, closing it')
 					web_socket.close()
 				else:
 					continue
@@ -212,9 +239,20 @@ class WebSocketsManager(object):
 			self.web_sockets.remove(web_socket)
 
 	def pop(self, index=None):
+		"""
+		Remove a connected web socket from those that are currently being
+		managed.
+
+		:param int index: An optional index of the web socket to remove.
+		:return: The removed web socket.
+		:rtype: :py:class:`advancedhttpserver.WebSocketHandler`
+		"""
 		return self.web_sockets.pop(index)
 
 	def stop(self):
+		"""
+		Shutdown the manager and clean up the resources it has allocated.
+		"""
 		self.job_manager.job_delete(self._ping_job)
 		for web_socket in self.web_sockets:
 			if web_socket.connected:

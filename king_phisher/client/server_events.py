@@ -47,6 +47,12 @@ else:
 	_GObject_GObject = GObject.GObject
 
 class ServerEventsSubscriber(_GObject_GObject):
+	"""
+	An object which provides functionality to subscribe to events that are
+	published by the remote King Phisher server instance. This object manages
+	the subscriptions and forwards the events allowing consumers to connect
+	to the available GObject signals.
+	"""
 	__gsignals__ = {
 		'db-alert-subscriptions': (GObject.SIGNAL_RUN_FIRST, None, (str, object)),
 		'db-campaigns': (GObject.SIGNAL_RUN_FIRST, None, (str, object)),
@@ -64,6 +70,10 @@ class ServerEventsSubscriber(_GObject_GObject):
 	}
 	logger = logging.getLogger('KingPhisher.Client.ServerEventsSubscriber')
 	def __init__(self, rpc):
+		"""
+		:param rpc: The client's connected RPC instance.
+		:py:class:`.KingPhisherRPCClient`
+		"""
 		super(ServerEventsSubscriber, self).__init__()
 		self._encoding = 'utf-8'
 		self.rpc = rpc
@@ -124,14 +134,41 @@ class ServerEventsSubscriber(_GObject_GObject):
 		self._connect_event.wait()
 
 	def is_subscribed(self, event_id, event_type):
+		"""
+		Check if the client is currently subscribed to the remote event.
+
+		:param str event_id: The identifier of the event to subscribe to.
+		:param str event_type: A sub-type for the corresponding event.
+		:return: Whether or not the client is subscribed to the event.
+		:rtype: bool
+		"""
 		return self.rpc('events/is_subscribed', event_id, event_type)
 
 	def shutdown(self):
+		"""
+		Disconnect the event socket from the remote server. After the object is
+		shutdown, remove events will no longer be published.
+		"""
 		self.ws.close()
 		self._worker_thread.join()
 
 	def subscribe(self, event_id, event_types=None, attributes=None):
+		"""
+		Subscribe to an event published by the server.
+
+		:param str event_id: The identifier of the event to subscribe to.
+		:param list event_types: A list of sub-types for the corresponding event.
+		:param list attributes: A list of attributes of the event object to be sent to the client.
+		"""
 		return self.rpc('events/subscribe', event_id, event_types=event_types, attributes=attributes)
 
 	def unsubscribe(self, event_id, event_types=None, attributes=None):
+		"""
+		Unsubscribe from an event published by the server that the client
+		previously subscribed to.
+
+		:param str event_id: The identifier of the event to subscribe to.
+		:param list event_types: A list of sub-types for the corresponding event.
+		:param list attributes: A list of attributes of the event object to be sent to the client.
+		"""
 		return self.rpc('events/unsubscribe', event_id, event_types=event_types, attributes=attributes)

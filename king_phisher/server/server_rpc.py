@@ -537,6 +537,13 @@ def rpc_events_is_subscribed(handler, event_id, event_type):
 
 @register_rpc('/events/subscribe', log_call=True)
 def rpc_events_subscribe(handler, event_id, event_types=None, attributes=None):
+	"""
+	Subscribe to an event published by the server.
+
+	:param str event_id: The identifier of the event to subscribe to.
+	:param list event_types: A list of sub-types for the corresponding event.
+	:param list attributes: A list of attributes of the event object to be sent to the client.
+	"""
 	if not isinstance(event_id, str):
 		raise errors.KingPhisherAPIError('a valid event id must be specified')
 	event_socket = handler.rpc_session.event_socket

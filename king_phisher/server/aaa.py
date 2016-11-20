@@ -99,6 +99,10 @@ class AuthenticatedSession(object):
 
 	@property
 	def event_socket(self):
+		"""
+		An optional :py:class:`~.EventSocket` associated with the client. If
+		the client has not opened an event socket, this is None.
+		"""
 		if self._event_socket is None:
 			return None
 		return self._event_socket()
@@ -111,6 +115,12 @@ class AuthenticatedSession(object):
 
 	@classmethod
 	def from_db_authenticated_session(cls, stored_session):
+		"""
+		Load an instance from a record stored in the database.
+
+		:param stored_session: The authenticated session from the database to load.
+		:return: A new :py:class:`.AuthenticatedSession` instance.
+		"""
 		utilities.assert_arg_type(stored_session, db_models.AuthenticatedSession)
 		session = cls(stored_session.user_id)
 		session.created = stored_session.created
