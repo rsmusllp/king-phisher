@@ -467,6 +467,8 @@ class Schema(graphene.Schema):
 		super(Schema, self).__init__(**kwargs)
 
 	def execute(self, *args, **kwargs):
+		if 'context_value' not in kwargs:
+			kwargs['context_value'] = {}
 		middleware = list(kwargs.pop('middleware', []))
 		middleware.insert(0, AuthorizationMiddleware())
 		kwargs['middleware'] = middleware
