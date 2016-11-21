@@ -261,10 +261,12 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		# don't require authentication for non-RPC requests
 		cmd = self.command
 		if cmd == 'GET':
+			# check if the GET request is to open a web socket
 			if 'upgrade' not in self.headers:
 				return True
 		elif cmd != 'RPC':
 			return True
+
 		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
 			return False
 

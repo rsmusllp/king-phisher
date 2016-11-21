@@ -144,7 +144,7 @@ class WebSocketsManager(object):
 		"""
 		self.web_sockets = []
 		self.job_manager = job_manager
-		self._ping_job = job_manager.job_add(self.ping_all, seconds=20)
+		self._ping_job = job_manager.job_add(self.ping_all, seconds=30)
 		self._work_queue = queue.Queue()
 		self._worker_thread = threading.Thread(target=self._worker_routine)
 		self._worker_thread.start()
@@ -230,12 +230,13 @@ class WebSocketsManager(object):
 				try:
 					web_socket.ping()
 				except:
-					self.logger.info('error occurred while pinging the web socket, closing it')
+					self.logger.error('error occurred while pinging the web socket, closing it', exc_info=True)
 					web_socket.close()
 				else:
 					continue
 			disconnected.append(web_socket)
 		for web_socket in disconnected:
+			self.logger.debug('closing a disconnected web socket')
 			self.web_sockets.remove(web_socket)
 
 	def pop(self, index=None):

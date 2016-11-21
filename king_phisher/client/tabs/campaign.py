@@ -174,12 +174,14 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 					row_data.insert(0, str(row.id))
 					gui_utilities.glib_idle_add_wait(model.append, row_data)
 				if case('deleted'):
-					model.remove(gui_utilities.gtk_list_store_search(model, row.id))
+					ti = gui_utilities.gtk_list_store_search(model, str(row.id))
+					if ti is not None:
+						model.remove(ti)
 					break
 				if case('updated'):
 					self.rpc.resolve(row)
 					row_data = self.format_row_data(row)
-					ti = gui_utilities.gtk_list_store_search(model, row.id)
+					ti = gui_utilities.gtk_list_store_search(model, str(row.id))
 					for idx, cell_data in enumerate(row_data, 1):
 						model[ti][idx] = self.format_cell_data(cell_data)
 					break
