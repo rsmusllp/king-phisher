@@ -69,6 +69,10 @@ def main():
 	spf_test = spf.SenderPolicyFramework(server_ip, spf_domain, spf_sender)
 	try:
 		result = spf_test.check_host()
+	except spf.SPFParseError as error:
+		color.print_error('check_host failed with error: permerror (parsing failed)')
+		color.print_error('error reason: ' + error.message)
+		return
 	except spf.SPFPermError as error:
 		color.print_error('check_host failed with error: permerror')
 		color.print_error('error reason: ' + error.message)

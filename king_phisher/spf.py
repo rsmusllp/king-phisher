@@ -143,6 +143,13 @@ class SPFPermError(SPFError):
 	"""
 	pass
 
+class SPFParseError(SPFPermError):
+	"""
+	Exception indicating that the domains published records could not be
+	correctly parsed.
+	"""
+	pass
+
 class SPFTempError(SPFError):
 	"""
 	Exception indicating that the verification process encountered a transient
@@ -262,14 +269,14 @@ class SenderPolicyFramework(object):
 			return
 		record = ''.join([part.decode('utf-8') for part in answers[0].strings])
 		if not record.startswith('v=spf1 '):
-			raise SPFPermError('failed to parse spf data')
+			raise SPFParseError('invalid record header')
 
 		raw_directives = record[7:].split(' ')
 		raw_directives = tuple(directive for directive in raw_directives if len(directive))
 		self.logger.debug("parsing {0:,} directives for domain: {1}".format(len(raw_directives), domain))
 
 		if not len(raw_directives):
-			raise SPFPermError('failed to parse spf record')
+			raise SPFParseError('no directives were found')
 
 		directives = []
 		for directive_id, directive in enumerate(raw_directives):
@@ -291,7 +298,7 @@ class SenderPolicyFramework(object):
 
 			directive = SPFDirective.from_string(directive)
 			if directive.mechanism not in ('a', 'all', 'exists', 'include', 'ip4', 'ip6', 'mx', 'ptr'):
-				raise SPFPermError("unknown mechanism type: '{0}'".format(directive.mechanism))
+				raise SPFParseError("unknown mechanism type: '{0}'".format(directive.mechanism))
 			directives.append(directive)
 
 		record = SPFRecord(directives, domain=domain)
@@ -312,7 +319,7 @@ class SenderPolicyFramework(object):
 		self.query_limit -= 1
 		if self.query_limit < 0:
 			raise SPFPermError('dns query limit reached')
-		self.logger.debug("resolving {0} record for {1} (remaining queries: {2})".format(qtype, qname, self.query_limit))
+		self.logger.debug("resolving {0:<3} record for {1} (remaining queries: {2})".format(qtype, qname, self.query_limit))
 		try:
 			answers = dns.resolver.query(qname, qtype)
 		except dns.exception.DNSException:
@@ -342,7 +349,7 @@ class SenderPolicyFramework(object):
 					rvalue = rvalue.decode('utf-8')
 				ip_network = ipaddress.IPv4Network(rvalue, strict=False)
 			except ipaddress.AddressValueError:
-				raise SPFPermError('failed to parse spf data')
+				raise SPFParseError('invalid IPv4 network: ' + rvalue)
 			if ip in ip_network:
 				return True
 		elif mechanism == 'ip6':
@@ -351,7 +358,7 @@ class SenderPolicyFramework(object):
 					rvalue = rvalue.decode('utf-8')
 				ip_network = ipaddress.IPv6Network(rvalue, strict=False)
 			except ipaddress.AddressValueError:
-				raise SPFPermError('failed to parse spf data')
+				raise SPFParseError('invalid IPv6 network: ' + rvalue)
 			if ip in ip_network:
 				return True
 		elif mechanism == 'mx':

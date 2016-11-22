@@ -50,12 +50,20 @@ Exceptions
 
 .. autoexception:: king_phisher.spf.SPFError
    :members:
+   :show-inheritance:
    :undoc-members:
 
 .. autoexception:: king_phisher.spf.SPFTempError
    :members:
+   :show-inheritance:
+   :undoc-members:
+
+.. autoexception:: king_phisher.spf.SPFParseError
+   :members:
+   :show-inheritance:
    :undoc-members:
 
 .. autoexception:: king_phisher.spf.SPFPermError
    :members:
+   :show-inheritance:
    :undoc-members:
