@@ -39,6 +39,8 @@ from king_phisher import its
 from king_phisher.constants import SPFResult
 
 import dns.exception
+import dns.name
+import dns.query
 import dns.rdtypes.ANY.TXT
 import dns.resolver
 
@@ -318,12 +320,22 @@ class SenderPolicyFramework(object):
 	def _dns_query(self, qname, qtype):
 		self.query_limit -= 1
 		if self.query_limit < 0:
-			raise SPFPermError('dns query limit reached')
-		self.logger.debug("resolving {0:<3} record for {1} (remaining queries: {2})".format(qtype, qname, self.query_limit))
+			raise SPFPermError('DNS query limit reached')
+		nameservers = dns.resolver.get_default_resolver().nameservers
+
+		self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameservers[0], self.query_limit))
+		query = dns.message.make_query(qname, qtype)
 		try:
-			answers = dns.resolver.query(qname, qtype)
+			response = dns.query.udp(query, nameservers[0])
 		except dns.exception.DNSException:
-			raise SPFTempError("dns resolution error ({0} {1})".format(qname, qtype))
+			raise SPFTempError("DNS resolution error for: {0} {1}".format(qname, qtype))
+		rcode = response.rcode()
+		# check for error codes per https://tools.ietf.org/html/rfc7208#section-5
+		if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
+			raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
+		answers = []
+		for answer in response.answer:
+			answers.extend(answer.items)
 		return answers
 
 	def _evaluate_mechanism(self, ip, domain, sender, mechanism, rvalue):
@@ -362,7 +374,7 @@ class SenderPolicyFramework(object):
 			if ip in ip_network:
 				return True
 		elif mechanism == 'mx':
-			for mx_record in self._dns_query(domain, 'MX'):
+			for mx_record in self._dns_query(rvalue, 'MX'):
 				mx_record = str(mx_record.exchange).rstrip('.')
 				if self._hostname_matches_ip(ip, mx_record):
 					return True

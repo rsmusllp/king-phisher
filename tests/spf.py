@@ -69,12 +69,9 @@ class SPFTests(testing.KingPhisherTestCase):
 	def test_spf_evaluate_mechanism_temperror(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'doesnotexist.king-phisher.com')
 		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip_address, s.domain, s.sender, m, r)
-		with self.assertRaises(spf.SPFTempError):
-			eval_mech('a', None)
-		with self.assertRaises(spf.SPFTempError):
-			eval_mech('exists', None)
-		with self.assertRaises(spf.SPFTempError):
-			eval_mech('mx', None)
+		self.assertFalse(eval_mech('a', None))
+		self.assertFalse(eval_mech('exists', None))
+		self.assertFalse(eval_mech('mx', None))
 
 	def test_spf_nonexistent_domain(self):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'doesnotexist.king-phisher.com')
