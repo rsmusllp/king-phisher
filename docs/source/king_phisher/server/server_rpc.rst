@@ -43,6 +43,12 @@ Functions
 
 .. autofunction:: king_phisher.server.server_rpc.rpc_config_set
 
+.. autofunction:: king_phisher.server.server_rpc.rpc_events_is_subscribed
+
+.. autofunction:: king_phisher.server.server_rpc.rpc_events_subscribe
+
+.. autofunction:: king_phisher.server.server_rpc.rpc_events_unsubscribe
+
 .. autofunction:: king_phisher.server.server_rpc.rpc_database_count_rows
 
 .. autofunction:: king_phisher.server.server_rpc.rpc_database_delete_row_by_id

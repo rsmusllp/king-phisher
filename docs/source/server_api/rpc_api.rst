@@ -89,6 +89,23 @@ Configuration API
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_config_set`
 
+.. _rpc-api-event-api-label:
+
+Event API
+---------
+
+.. rpc:function:: events/is_subscribed(event_id, event_type)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_events_is_subscribed`
+
+.. rpc:function:: events/subscribe(event_id, event_types, attributes)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_events_subscribe`
+
+.. rpc:function:: events/unsubscribe(event_id, event_types, attributes)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_events_unsubscribe`
+
 .. _rpc-api-geoip-api-label:
 
 GeoIP API

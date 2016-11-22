@@ -526,6 +526,14 @@ def rpc_database_set_row_value(handler, session, table_name, row_id, keys, value
 
 @register_rpc('/events/is_subscribed', log_call=True)
 def rpc_events_is_subscribed(handler, event_id, event_type):
+	"""
+	Check if the client is currently subscribed to the specified server event.
+
+	:param str event_id: The identifier of the event to subscribe to.
+	:param str event_type: A sub-type for the corresponding event.
+	:return: Whether or not the client is subscribed to the event.
+	:rtype: bool
+	"""
 	if not isinstance(event_id, str):
 		raise errors.KingPhisherAPIError('a valid event id must be specified')
 	if not isinstance(event_type, str):
@@ -538,7 +546,9 @@ def rpc_events_is_subscribed(handler, event_id, event_type):
 @register_rpc('/events/subscribe', log_call=True)
 def rpc_events_subscribe(handler, event_id, event_types=None, attributes=None):
 	"""
-	Subscribe to an event published by the server.
+	Subscribe the client to the specified event published by the server.
+	When the event is published the specified *attributes* of it and it's
+	corresponding id and type information will be sent to the client.
 
 	:param str event_id: The identifier of the event to subscribe to.
 	:param list event_types: A list of sub-types for the corresponding event.
@@ -567,6 +577,14 @@ def rpc_events_subscribe(handler, event_id, event_types=None, attributes=None):
 
 @register_rpc('/events/unsubscribe', log_call=True)
 def rpc_events_unsubscribe(handler, event_id, event_types=None, attributes=None):
+	"""
+	Unsubscribe from an event published by the server that the client
+	previously subscribed to.
+
+	:param str event_id: The identifier of the event to subscribe to.
+	:param list event_types: A list of sub-types for the corresponding event.
+	:param list attributes: A list of attributes of the event object to be sent to the client.
+	"""
 	if not isinstance(event_id, str):
 		raise errors.KingPhisherAPIError('a valid event id must be specified')
 	event_socket = handler.rpc_session.event_socket

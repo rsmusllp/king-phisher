@@ -135,7 +135,7 @@ class ServerEventsSubscriber(_GObject_GObject):
 
 	def is_subscribed(self, event_id, event_type):
 		"""
-		Check if the client is currently subscribed to the remote event.
+		Check if the client is currently subscribed to the specified server event.
 
 		:param str event_id: The identifier of the event to subscribe to.
 		:param str event_type: A sub-type for the corresponding event.
@@ -154,7 +154,9 @@ class ServerEventsSubscriber(_GObject_GObject):
 
 	def subscribe(self, event_id, event_types=None, attributes=None):
 		"""
-		Subscribe to an event published by the server.
+		Subscribe the client to the specified event published by the server.
+		When the event is published the specified *attributes* of it and it's
+		corresponding id and type information will be sent to the client.
 
 		:param str event_id: The identifier of the event to subscribe to.
 		:param list event_types: A list of sub-types for the corresponding event.
