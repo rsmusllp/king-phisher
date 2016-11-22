@@ -44,6 +44,7 @@ import signal
 import string
 import threading
 import time
+import weakref
 
 from king_phisher import errors
 from king_phisher import its
@@ -83,7 +84,7 @@ def get_groups_for_user(username):
 
 class AuthenticatedSession(object):
 	"""A container to store information associated with an authenticated session."""
-	__slots__ = ('user', 'created', 'last_seen')
+	__slots__ = ('user', 'created', '_event_socket', 'last_seen')
 	def __init__(self, user):
 		"""
 		:param user: The unique identifier for the authenticated user.
@@ -91,12 +92,35 @@ class AuthenticatedSession(object):
 		self.user = user
 		self.created = time.time()
 		self.last_seen = self.created
+		self._event_socket = None
 
 	def __repr__(self):
 		return "<{0} user={1} >".format(self.__class__.__name__, self.user)
 
+	@property
+	def event_socket(self):
+		"""
+		An optional :py:class:`~.EventSocket` associated with the client. If
+		the client has not opened an event socket, this is None.
+		"""
+		if self._event_socket is None:
+			return None
+		return self._event_socket()
+
+	@event_socket.setter
+	def event_socket(self, value):
+		if value is not None:
+			value = weakref.ref(value)
+		self._event_socket = value
+
 	@classmethod
 	def from_db_authenticated_session(cls, stored_session):
+		"""
+		Load an instance from a record stored in the database.
+
+		:param stored_session: The authenticated session from the database to load.
+		:return: A new :py:class:`.AuthenticatedSession` instance.
+		"""
 		utilities.assert_arg_type(stored_session, db_models.AuthenticatedSession)
 		session = cls(stored_session.user_id)
 		session.created = stored_session.created
@@ -233,6 +257,7 @@ class AuthenticatedSessionManager(object):
 			self.logger.info('1 session was stored in the database')
 		else:
 			self.logger.info("{0:,} sessions were stored in the database".format(len(self._sessions)))
+		self._sessions = {}
 
 class CachedPassword(object):
 	"""

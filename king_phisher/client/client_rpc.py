@@ -31,6 +31,7 @@
 #
 
 import code
+import collections
 import logging
 import os
 import ssl
@@ -42,6 +43,7 @@ from king_phisher import json_ex
 from king_phisher import utilities
 
 import advancedhttpserver
+import boltons.typeutils
 from gi.repository import Gtk
 
 try:
@@ -51,9 +53,11 @@ try:
 except ImportError:
 	has_msgpack = False
 
-database_table_objects = utilities.FreezableDict()
 _tag_mixin_slots = ('id', 'name', 'description')
 _tag_mixin_types = (int, str, str)
+database_table_objects = utilities.FreezableDict()
+UNRESOLVED = boltons.typeutils.make_sentinel('UNRESOLVED', var_name='UNRESOLVED')
+"""A sentinel value used for values in rows to indicate that the data has not been loaded from the server."""
 
 class RemoteRowMeta(type):
 	def __new__(mcs, name, bases, dct):
@@ -68,6 +72,10 @@ class RemoteRowMeta(type):
 
 # stylized metaclass definition to be Python 2.7 and 3.x compatible
 class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
+	"""
+	A generic class representing a row of data from the remote King Phisher
+	server.
+	"""
 	__table__ = None
 	__xref_attr__ = None
 	__slots__ = ()
@@ -76,16 +84,13 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 			raise ValueError('rpc is not a KingPhisherRPCClient instance')
 		self.__rpc__ = rpc
 		slots = self.__slots__[1:]
+		values = collections.defaultdict(lambda: UNRESOLVED)
 		if args:
-			if not len(args) == len(slots):
-				raise RuntimeError('all arguments must be specified')
-			kwargs = dict(zip(self.__slots__[1:], args))
-		elif kwargs:
-			if not len(kwargs) == len(kwargs):
-				raise RuntimeError('all key word arguments must be specified')
-		else:
-			raise RuntimeError('all arguments must be specified in either args or kwargs')
-		for key, value in kwargs.items():
+			values.update(dict(zip(slots, args)))
+		if kwargs:
+			values.update(kwargs)
+		for key in slots:
+			value = values[key]
 			if isinstance(value, bytes):
 				value = value.decode('utf-8')
 			setattr(self, key, value)
@@ -102,8 +107,10 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 		return dict(zip(self.__slots__[1:], (getattr(self, prop) for prop in self.__slots__[1:])))
 
 	def commit(self):
+		"""Send this object to the server to update the remote instance."""
 		values = tuple(getattr(self, attr) for attr in self.__slots__[1:])
-		self.__rpc__('db/table/set', self.__table__, self.id, self.__slots__[1:], values)
+		values = collections.OrderedDict(((k, v) for (k, v) in zip(self.__slots__[1:], values) if v is not UNRESOLVED))
+		self.__rpc__('db/table/set', self.__table__, self.id, values.keys(), values.values())
 
 class AlertSubscription(RemoteRow):
 	__table__ = 'alert_subscriptions'
@@ -199,6 +206,25 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		else:
 			self.client = advancedhttpserver.http.client.HTTPConnection(self.host, self.port)
 		self.lock.release()
+
+	def resolve(self, row):
+		"""
+		Take a :py:class:`~.RemoteRow` instance and load all fields which are
+		:py:data:`~.UNRESOLVED`. If all fields are present, no modifications
+		are made.
+
+		:param row: The row who's data is to be resolved.
+		:rtype: :py:class:`~.RemoteRow`
+		:return: The row with all of it's fields fully resolved.
+		:rtype: :py:class:`~.RemoteRow`
+		"""
+		utilities.assert_arg_type(row, RemoteRow)
+		slots = getattr(row, '__slots__')[1:]
+		if not any(prop for prop in slots if getattr(row, prop) is UNRESOLVED):
+			return row
+		for key, value in self.call('db/table/get', getattr(row, '__table__'), row.id).items():
+			setattr(row, key, value)
+		return row
 
 	def remote_table(self, table, query_filter=None):
 		"""

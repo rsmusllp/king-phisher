@@ -63,7 +63,7 @@ def get_revision():
 revision = get_revision()
 """The git revision identifying the latest commit if available."""
 
-version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(1, 5, 2)
+version_info = collections.namedtuple('version_info', ['major', 'minor', 'micro'])(1, 6, 0)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
 
 version_label = 'beta'
@@ -85,7 +85,7 @@ if version_label:
 	else:
 		distutils_version += '0'
 
-rpc_api_version = collections.namedtuple('rpc_api_version', ['major', 'minor'])(5, 1)
+rpc_api_version = collections.namedtuple('rpc_api_version', ['major', 'minor'])(5, 2)
 """
 A tuple representing the local version of the RPC API for use with compatibility
 checks. The major version is incremented when backwards incompatible changes are

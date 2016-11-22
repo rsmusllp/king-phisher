@@ -54,7 +54,7 @@ from smoke_zephyr.configuration import Configuration
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
-	'advancedhttpserver>=2.0.6',
+	'advancedhttpserver>=2.0.9',
 	'alembic>=0.8.6',
 	'blinker>=1.4',
 	'boltons>=16.2.2',

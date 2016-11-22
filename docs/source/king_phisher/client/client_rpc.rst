@@ -12,6 +12,8 @@ Data
 
 .. autodata:: king_phisher.client.client_rpc.has_msgpack
 
+.. autodata:: king_phisher.client.client_rpc.UNRESOLVED
+
 Functions
 ---------
 
@@ -24,3 +26,7 @@ Classes
    :show-inheritance:
    :members:
    :undoc-members:
+
+.. autoclass:: king_phisher.client.client_rpc.RemoteRow
+   :show-inheritance:
+   :members:

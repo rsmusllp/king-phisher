@@ -18,3 +18,4 @@ application.
    server.rst
    server_rpc.rst
    signals.rst
+   web_sockets.rst

@@ -1,6 +1,6 @@
 # these are also hard coded into the respective executable files for checking as
 # part of their startup routine
-advancedhttpserver>=2.0.6
+advancedhttpserver>=2.0.9
 alembic>=0.8.8
 blinker>=1.4
 boltons>=16.5.0
@@ -27,4 +27,5 @@ smoke-zephyr>=1.1.0
 SQLAlchemy>=1.0.15
 termcolor>=1.1.0
 tzlocal>=1.2.2
+websocket-client>=0.37.0
 XlsxWriter>=0.9.3

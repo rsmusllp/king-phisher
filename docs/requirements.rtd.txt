@@ -1,6 +1,6 @@
 # this is a pip requirements file specifically for the ReadTheDocs environment
 # because it can not install certain packages such as matplotlib
-advancedhttpserver>=2.0.6
+advancedhttpserver>=2.0.9
 alembic>=0.8.8
 blinker>=1.4
 boltons>=16.5.0
