@@ -13,6 +13,8 @@ Data
 .. autodata:: king_phisher.spf.MACRO_REGEX
    :annotation:
 
+.. autodata:: king_phisher.spf.MAX_QUERIES
+
 .. autodata:: king_phisher.spf.QUALIFIERS
    :annotation:
 

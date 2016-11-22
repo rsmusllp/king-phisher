@@ -45,6 +45,12 @@ import dns.resolver
 MACRO_REGEX = re.compile(r'%\{([slodipvh])(\d*)([r]?)(.?)\}')
 """A regular expression which matches SPF record macros."""
 
+MAX_QUERIES = 10
+"""
+The maximum number of DNS queries allowed to take place during evaluation as
+defined within section 4.6.4 of :rfc:`7208`.
+"""
+
 QUALIFIERS = {
 	'+': SPFResult.PASS,
 	'-': SPFResult.FAIL,
@@ -213,7 +219,7 @@ class SenderPolicyFramework(object):
 		matching record.
 		"""
 		# dns lookup limit per https://tools.ietf.org/html/rfc7208#section-4.6.4
-		self.query_limit = 10
+		self.query_limit = MAX_QUERIES
 		self.policy = None
 		"""
 		The human readable policy result, one of the
@@ -304,8 +310,9 @@ class SenderPolicyFramework(object):
 
 	def _dns_query(self, qname, qtype):
 		self.query_limit -= 1
-		if not self.query_limit:
+		if self.query_limit < 0:
 			raise SPFPermError('dns query limit reached')
+		self.logger.debug("resolving {0} record for {1} (remaining queries: {2})".format(qtype, qname, self.query_limit))
 		try:
 			answers = dns.resolver.query(qname, qtype)
 		except dns.exception.DNSException:
@@ -313,10 +320,10 @@ class SenderPolicyFramework(object):
 		return answers
 
 	def _evaluate_mechanism(self, ip, domain, sender, mechanism, rvalue):
-		if isinstance(rvalue, str):
-			rvalue = self.expand_macros(rvalue, ip, domain, sender)
-		else:
+		if rvalue is None:
 			rvalue = domain
+		else:
+			rvalue = self.expand_macros(rvalue, ip, domain, sender)
 
 		if mechanism == 'a':
 			if self._hostname_matches_ip(ip, rvalue):
