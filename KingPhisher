@@ -82,7 +82,7 @@ def main():
 	parser.add_argument('--no-style', dest='use_style', default=True, action='store_false', help='disable interface styling')
 	arguments = parser.parse_args()
 
-	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
+	utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 	config_file = arguments.config_file
 	dep_check = arguments.dep_check
 	use_plugins = arguments.use_plugins

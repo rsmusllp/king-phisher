@@ -44,6 +44,7 @@ import subprocess
 import sys
 
 from king_phisher import color
+from king_phisher import constants
 from king_phisher import its
 from king_phisher import version
 
@@ -163,7 +164,7 @@ def argp_add_args(parser, default_root=''):
 	:param str default_root: The default root logger to specify.
 	"""
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='WARNING', help='set the logging level')
+	parser.add_argument('-L', '--log', dest='loglvl', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'], help='set the logging level')
 	parser.add_argument('--logger', default=default_root, help='specify the root logger')
 
 def assert_arg_type(arg, arg_type, arg_pos=1, func_name=None):
@@ -193,17 +194,19 @@ def assert_arg_type(arg, arg_type, arg_pos=1, func_name=None):
 		arg_type = arg_type.__name__
 	raise TypeError("{0}() argument {1} must be {2}, not {3}".format(func_name, arg_pos, arg_type, type(arg).__name__))
 
-def configure_stream_logger(level, logger):
+def configure_stream_logger(logger, level=None):
 	"""
 	Configure the default stream handler for logging messages to the console.
 	This also configures the basic logging environment for the application.
 
-	:param level: The level to set the logger to.
-	:type level: int, str
 	:param str logger: The logger to add the stream handler for.
+	:param level: The level to set the logger to, will default to WARNING if no level is specified.
+	:type level: None, int, str
 	:return: The new configured stream handler.
 	:rtype: :py:class:`logging.StreamHandler`
 	"""
+	if level is None:
+		level = constants.DEFAULT_LOG_LEVEL
 	if isinstance(level, str):
 		level = getattr(logging, level)
 	root_logger = logging.getLogger('')
@@ -214,9 +217,9 @@ def configure_stream_logger(level, logger):
 	console_log_handler = logging.StreamHandler()
 	console_log_handler.setLevel(level)
 	if its.on_linux:
-		console_log_handler.setFormatter(color.ColoredLogFormatter("%(levelname)s %(message)s"))
+		console_log_handler.setFormatter(color.ColoredLogFormatter('%(levelname)s %(message)s'))
 	else:
-		console_log_handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
+		console_log_handler.setFormatter(logging.Formatter('%(levelname)-8s %(message)s'))
 	logging.getLogger(logger).addHandler(console_log_handler)
 	logging.captureWarnings(True)
 	return console_log_handler

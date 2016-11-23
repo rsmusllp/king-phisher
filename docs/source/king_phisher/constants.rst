@@ -10,7 +10,9 @@ modules.
 Data
 ----
 
-.. autodata:: king_phisher.client.application.DISABLED
+.. autodata:: king_phisher.constants.DEFAULT_LOG_LEVEL
+
+.. autodata:: king_phisher.constants.DISABLED
 
 Classes
 -------

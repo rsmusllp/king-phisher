@@ -3,10 +3,18 @@
 #
 
 logging:
-  file: /var/log/king-phisher.log
-  # Available levels: FATAL, ERROR, WARNING, INFO, DEBUG
-  level: warning
-  console: false
+  console:
+    enabled: true
+    # see https://docs.python.org/3/library/logging.html#logrecord-attributes for available attributes
+    format: '%(levelname)s %(message)s'
+    # Available levels: FATAL, ERROR, WARNING, INFO, DEBUG
+    level: warning
+
+  file:
+    enabled: true
+    format: '%(asctime)s %(name)-50s %(levelname)-8s %(message)s'
+    level: warning
+    path: /var/log/king-phisher.log
 
 server:
   # Bind address information, multiple ports can be

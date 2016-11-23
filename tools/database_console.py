@@ -38,7 +38,6 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import king_phisher.constants as constants
 import king_phisher.utilities as utilities
 import king_phisher.server.database.manager as manager
 import king_phisher.server.database.models as models
@@ -66,7 +65,7 @@ def main():
 	config_group.add_argument('-u', '--url', dest='database_url', help='the database connection url')
 	arguments = parser.parse_args()
 
-	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
+	utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 
 	if arguments.database_url:
 		database_connection_url = arguments.database_url

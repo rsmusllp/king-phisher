@@ -251,6 +251,7 @@ class WebSocketsManager(object):
 	def append(self, web_socket):
 		"""
 		Add a connected web socket to the manager.
+
 		:param web_socket: The connected web socket.
 		:type web_socket: :py:class:`advancedhttpserver.WebSocketHandler`
 		"""

@@ -43,6 +43,9 @@ else:
 
 __all__ = ('OSArch', 'OSFamily', 'SPFResult')
 
+DEFAULT_LOG_LEVEL = 'WARNING'
+"""The default log level to use for filtering messages by importance."""
+
 DISABLED = boltons.typeutils.make_sentinel('DISABLED')
 """A sentinel value to indicate that a feature is disabled."""
 

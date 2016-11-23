@@ -39,7 +39,7 @@ from king_phisher import utilities
 
 class UtilitiesTests(testing.KingPhisherTestCase):
 	def test_configure_stream_logger(self):
-		logger = utilities.configure_stream_logger('INFO', 'KingPhisher')
+		logger = utilities.configure_stream_logger('KingPhisher', 'INFO')
 		self.assertEqual(logger.level, logging.INFO)
 
 	def test_is_valid_email_address(self):

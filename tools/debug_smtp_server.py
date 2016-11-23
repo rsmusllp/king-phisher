@@ -32,7 +32,6 @@
 # pylint: disable=superfluous-parens
 
 import argparse
-import logging
 import os
 import sys
 
@@ -51,7 +50,7 @@ def main():
 	arguments = parser.parse_args()
 	del parser
 
-	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
+	utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 
 	if (not arguments.foreground) and os.fork():
 		return
