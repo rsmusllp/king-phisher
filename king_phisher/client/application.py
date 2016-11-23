@@ -388,7 +388,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def do_exit(self):
 		self.plugin_manager.shutdown()
-		self.server_events.shutdown()
+		if self.server_events is not None:
+			self.server_events.shutdown()
+			self.server_events = None
 
 		self.main_window.hide()
 		gui_utilities.gtk_widget_destroy_children(self.main_window)
