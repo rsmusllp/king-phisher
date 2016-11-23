@@ -763,7 +763,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			required_group=config.get_if_exists('server.authentication.group'),
 			pam_service=config.get_if_exists('server.authentication.pam_service', 'sshd')
 		)
-		self.job_manager = job.JobManager()
+		self.job_manager = job.JobManager(logger_name='KingPhisher.Server.JobManager')
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))

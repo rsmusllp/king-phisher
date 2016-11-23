@@ -172,15 +172,17 @@ def _ex_config_logging(arguments, config, console_handler):
 					color.print_error('logging.file.level is invalid, must be one of: ' + ', '.join(log_levels))
 					sys.exit(os.EX_CONFIG)
 				log_level = getattr(logging, options['level'].upper())
+				root = options.get('root', '')
 			elif isinstance(options, str):  # old style
 				file_path = options
 				formatter = logging.Formatter(default_format)
 				log_level = default_log_level
+				root = ''
 			else:
 				break
 			file_handler = logging.FileHandler(file_path)
 			file_handler.setFormatter(formatter)
-			logging.getLogger('').addHandler(file_handler)
+			logging.getLogger(root).addHandler(file_handler)
 			file_handler.setLevel(log_level)
 
 	if config.has_option('logging.console'):

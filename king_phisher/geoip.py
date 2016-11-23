@@ -56,7 +56,7 @@ DB_RESULT_FIELDS = ('city', 'continent', 'coordinates', 'country', 'postal_code'
 AddressNotFoundError = geoip2.errors.AddressNotFoundError
 _geoip_db = None
 _geoip_db_lock = threading.Lock()
-logger = logging.getLogger('KingPhisher.geoip')
+logger = logging.getLogger('KingPhisher.GeoIP')
 
 def _normalize_encoding(word):
 	if sys.version_info[0] == 2 and isinstance(word, unicode):
