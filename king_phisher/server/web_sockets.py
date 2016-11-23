@@ -189,11 +189,14 @@ class WebSocketsManager(object):
 	An object used to manage connected web sockets.
 	"""
 	logger = logging.getLogger('KingPhisher.Server.WebSocketManager')
-	def __init__(self, job_manager):
+	def __init__(self, config, job_manager):
 		"""
+		:param config: Configuration to retrieve settings from.
+		:type config: :py:class:`smoke_zephyr.configuration.Configuration`
 		:param job_manager: A job manager instance that can be used to schedule tasks.
 		:type job_manager: :py:class:`smoke_zephyr.job.JobManager`
 		"""
+		self.config = config
 		self.web_sockets = []
 		self.job_manager = job_manager
 		self._ping_job = job_manager.job_add(self.ping_all, seconds=30)
@@ -264,9 +267,15 @@ class WebSocketsManager(object):
 		"""
 		if not ipaddress.ip_address(handler.client_address[0]).is_loopback:
 			return
-		if handler.path == '/_/ws/events/json':
-			EventSocket(handler, self)
-			return
+		prefix = '/'
+		if self.config.get('server.vhost_directories'):
+			prefix += handler.vhost
+		request_path = handler.path
+		if request_path.startswith(prefix):
+			request_path = request_path[len(prefix):]
+			if request_path == '/_/ws/events/json':
+				EventSocket(handler, self)
+				return
 		handler.respond_not_found()
 		return
 

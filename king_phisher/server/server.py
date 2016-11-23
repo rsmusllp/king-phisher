@@ -774,7 +774,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
 		self.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
-		self.ws_manager = web_sockets.WebSocketsManager(self.job_manager)
+		self.ws_manager = web_sockets.WebSocketsManager(config, self.job_manager)
 
 		for http_server in self.sub_servers:
 			http_server.config = config
