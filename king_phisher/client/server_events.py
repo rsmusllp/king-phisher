@@ -206,6 +206,10 @@ class ServerEventSubscriber(_GObject_GObject):
 		:param list event_types: A list of sub-types for the corresponding event.
 		:param list attributes: A list of attributes of the event object to be sent to the client.
 		"""
+		utilities.assert_arg_type(event_id, str, arg_pos=1)
+		utilities.assert_arg_type(event_types, (list, set, tuple), arg_pos=2)
+		utilities.assert_arg_type(event_types, (list, set, tuple), arg_pos=3)
+
 		new_event_types = set(event_types)
 		new_attributes = set(attributes)
 		subscription_table = self._subscriptions[event_id]
@@ -231,6 +235,10 @@ class ServerEventSubscriber(_GObject_GObject):
 		:param list event_types: A list of sub-types for the corresponding event.
 		:param list attributes: A list of attributes of the event object to be sent to the client.
 		"""
+		utilities.assert_arg_type(event_id, str, arg_pos=1)
+		utilities.assert_arg_type(event_types, (list, set, tuple), arg_pos=2)
+		utilities.assert_arg_type(event_types, (list, set, tuple), arg_pos=3)
+
 		event_types = set(event_types)
 		attributes = set(attributes)
 		freeable_subsriptions = collections.deque()

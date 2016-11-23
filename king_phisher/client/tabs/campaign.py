@@ -159,7 +159,10 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.application.connect('server-connected', self.signal_kp_server_connected)
 
 	def signal_kp_server_connected(self, _):
-		self.application.server_events.connect('db-' + self.remote_table_name.replace('_', '-'), self.signal_server_event_db)
+		event_id = 'db-' + self.remote_table_name.replace('_', '-')
+		server_events = self.application.server_events
+		server_events.subscribe(event_id, ('deleted', 'inserted', 'updated'), ('id', 'campaign_id'))
+		server_events.connect(event_id, self.signal_server_event_db)
 
 	def signal_server_event_db(self, _, event_type, rows):
 		for row in rows:
