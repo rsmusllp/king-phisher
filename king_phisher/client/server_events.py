@@ -30,6 +30,8 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
+import itertools
 import logging
 import ssl
 import threading
@@ -38,6 +40,7 @@ from king_phisher import json_ex
 from king_phisher import utilities
 from king_phisher.client import client_rpc
 
+from gi.repository import GLib
 from gi.repository import GObject
 import websocket
 
@@ -45,6 +48,14 @@ if isinstance(GObject.GObject, utilities.Mock):
 	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
 else:
 	_GObject_GObject = GObject.GObject
+
+class EventSubscription(object):
+	__slots__ = ('event_id', 'event_type', 'attribute', 'ref_count')
+	def __init__(self, event_id, event_type, attribute):
+		self.event_id = event_id
+		self.event_type = event_type
+		self.attribute = attribute
+		self.ref_count = 1
 
 class ServerEventsSubscriber(_GObject_GObject):
 	"""
@@ -76,13 +87,27 @@ class ServerEventsSubscriber(_GObject_GObject):
 		"""
 		super(ServerEventsSubscriber, self).__init__()
 		self._encoding = 'utf-8'
+		self.__is_shutdown = threading.Event()
+		self.__is_shutdown.clear()
+		self._reconnect_event_id = None
 		self.rpc = rpc
 		self._connect_event = threading.Event()
+		self._subscriptions = collections.defaultdict(int)
 		self._worker_thread = None
+		self.logger.info('connecting to the server event socket')
 		self._ws_connect()
 
 	def _on_close(self, _):
+		if self._worker_thread is None:  # the socket was never successfully opened
+			return
+		self.logger.warning('the server event socket has been closed')
 		self._connect_event.clear()
+		if self.__is_shutdown.is_set():
+			return
+		if self._worker_thread != threading.current_thread():
+			return
+		self._worker_thread = None
+		self._reconnect_event_id = GLib.timeout_add_seconds(30, self._ws_reconnect)
 
 	def _on_message(self, _, message):
 		if isinstance(message, bytes):
@@ -129,9 +154,18 @@ class ServerEventsSubscriber(_GObject_GObject):
 			on_message=self._on_message,
 			on_open=self._on_open
 		)
-		self._worker_thread = threading.Thread(target=self.ws.run_forever, kwargs={'sslopt': {'cert_reqs': ssl.CERT_NONE}})
-		self._worker_thread.start()
-		self._connect_event.wait()
+		new_thread = threading.Thread(target=self.ws.run_forever, kwargs={'sslopt': {'cert_reqs': ssl.CERT_NONE}})
+		new_thread.start()
+		if not self._connect_event.wait(10):
+			self.logger.error('failed to connect to the server event socket')
+			return False
+		self._worker_thread = new_thread
+		self.logger.debug('successfully connected to the server event socket')
+		return True
+
+	def _ws_reconnect(self):
+		self.logger.info('attempting to reconnect to the server event socket')
+		return not self._ws_connect()
 
 	def is_subscribed(self, event_id, event_type):
 		"""
@@ -149,9 +183,11 @@ class ServerEventsSubscriber(_GObject_GObject):
 		Disconnect the event socket from the remote server. After the object is
 		shutdown, remove events will no longer be published.
 		"""
+		self.__is_shutdown.set()
 		self.ws.close()
 		self._worker_thread.join()
 
+	# ('db-vists', ('deleted', 'inserted', 'updated'), ('id', 'campaign_id'))
 	def subscribe(self, event_id, event_types=None, attributes=None):
 		"""
 		Subscribe the client to the specified event published by the server.
@@ -162,6 +198,8 @@ class ServerEventsSubscriber(_GObject_GObject):
 		:param list event_types: A list of sub-types for the corresponding event.
 		:param list attributes: A list of attributes of the event object to be sent to the client.
 		"""
+		#for subscription in itertools.product((event_id,), event_types, attributes):
+		#	self._subscriptions[subscription] += 1
 		return self.rpc('events/subscribe', event_id, event_types=event_types, attributes=attributes)
 
 	def unsubscribe(self, event_id, event_types=None, attributes=None):
