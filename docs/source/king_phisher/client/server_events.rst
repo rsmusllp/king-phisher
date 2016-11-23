@@ -7,7 +7,7 @@
 Classes
 -------
 
-.. autoclass:: king_phisher.client.server_events.ServerEventsSubscriber
+.. autoclass:: king_phisher.client.server_events.ServerEventSubscriber
    :show-inheritance:
    :members:
    :inherited-members:

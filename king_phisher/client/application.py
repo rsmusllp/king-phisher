@@ -150,7 +150,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.rpc = None
 		"""The :py:class:`~.KingPhisherRPCClient` instance for the application."""
 		self.server_events = None
-		"""The :py:class:`~.ServerEventsSubscriber` instance for the application to receive server events."""
+		"""The :py:class:`~.ServerEventSubscriber` instance for the application to receive server events."""
 		self._ssh_forwarder = None
 		"""The SSH forwarder responsible for tunneling RPC communications."""
 		self.style_provider = None
@@ -592,7 +592,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.logger.debug('successfully authenticated to the remote king phisher service')
 
 		self.rpc = rpc
-		self.server_events = server_events.ServerEventsSubscriber(rpc)
+		self.server_events = server_events.ServerEventSubscriber(rpc)
 		for table in ('credentials', 'messages', 'visits'):
 			self.server_events.subscribe('db-' + table, ('deleted', 'inserted', 'updated'), ('id', 'campaign_id'))
 		self.emit('server-connected')

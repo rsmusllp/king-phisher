@@ -49,15 +49,9 @@ if isinstance(GObject.GObject, utilities.Mock):
 else:
 	_GObject_GObject = GObject.GObject
 
-class EventSubscription(object):
-	__slots__ = ('event_id', 'event_type', 'attribute', 'ref_count')
-	def __init__(self, event_id, event_type, attribute):
-		self.event_id = event_id
-		self.event_type = event_type
-		self.attribute = attribute
-		self.ref_count = 1
+_SubscriptionStub = collections.namedtuple('_SubscriptionStub', ('event_type', 'attribute'))
 
-class ServerEventsSubscriber(_GObject_GObject):
+class ServerEventSubscriber(_GObject_GObject):
 	"""
 	An object which provides functionality to subscribe to events that are
 	published by the remote King Phisher server instance. This object manages
@@ -79,20 +73,20 @@ class ServerEventsSubscriber(_GObject_GObject):
 		'db-users': (GObject.SIGNAL_RUN_FIRST, None, (str, object)),
 		'db-visits': (GObject.SIGNAL_RUN_FIRST, None, (str, object))
 	}
-	logger = logging.getLogger('KingPhisher.Client.ServerEventsSubscriber')
+	logger = logging.getLogger('KingPhisher.Client.ServerEventSubscriber')
 	def __init__(self, rpc):
 		"""
 		:param rpc: The client's connected RPC instance.
 		:py:class:`.KingPhisherRPCClient`
 		"""
-		super(ServerEventsSubscriber, self).__init__()
+		super(ServerEventSubscriber, self).__init__()
 		self._encoding = 'utf-8'
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
 		self._reconnect_event_id = None
 		self.rpc = rpc
 		self._connect_event = threading.Event()
-		self._subscriptions = collections.defaultdict(int)
+		self._subscriptions = collections.defaultdict(lambda: collections.defaultdict(int))
 		self._worker_thread = None
 		self.logger.info('connecting to the server event socket')
 		self._ws_connect()
@@ -161,6 +155,11 @@ class ServerEventsSubscriber(_GObject_GObject):
 			return False
 		self._worker_thread = new_thread
 		self.logger.debug('successfully connected to the server event socket')
+
+		for event_id, subscription_table in self._subscriptions.items():
+			event_types = set(sub.event_type for sub in subscription_table)
+			attributes = set(sub.attribute for sub in subscription_table)
+			self._subscribe(event_id, event_types, attributes)
 		return True
 
 	def _ws_reconnect(self):
@@ -187,7 +186,10 @@ class ServerEventsSubscriber(_GObject_GObject):
 		self.ws.close()
 		self._worker_thread.join()
 
-	# ('db-vists', ('deleted', 'inserted', 'updated'), ('id', 'campaign_id'))
+	def _subscribe(self, event_id, event_types, attributes):
+		# same as subscribe but without reference counting
+		return self.rpc('events/subscribe', event_id, event_types=list(event_types), attributes=list(attributes))
+
 	def subscribe(self, event_id, event_types=None, attributes=None):
 		"""
 		Subscribe the client to the specified event published by the server.
@@ -198,9 +200,21 @@ class ServerEventsSubscriber(_GObject_GObject):
 		:param list event_types: A list of sub-types for the corresponding event.
 		:param list attributes: A list of attributes of the event object to be sent to the client.
 		"""
-		#for subscription in itertools.product((event_id,), event_types, attributes):
-		#	self._subscriptions[subscription] += 1
-		return self.rpc('events/subscribe', event_id, event_types=event_types, attributes=attributes)
+		new_event_types = set(event_types)
+		new_attributes = set(attributes)
+		subscription_table = self._subscriptions[event_id]
+		for subscription in itertools.product(event_types, attributes):
+			subscription = _SubscriptionStub(*subscription)
+			subscription_table[subscription] += 1
+			if subscription_table[subscription] > 1:
+				new_event_types.discard(subscription.event_type)
+				new_attributes.discard(subscription.attribute)
+		if new_event_types or new_attributes:
+			self._subscribe(event_id, event_types, attributes)
+
+	def _unsubscribe(self, event_id, event_types, attributes):
+		# same as unsubscribe but without reference counting
+		return self.rpc('events/unsubscribe', event_id, event_types=list(event_types), attributes=list(attributes))
 
 	def unsubscribe(self, event_id, event_types=None, attributes=None):
 		"""
@@ -211,4 +225,22 @@ class ServerEventsSubscriber(_GObject_GObject):
 		:param list event_types: A list of sub-types for the corresponding event.
 		:param list attributes: A list of attributes of the event object to be sent to the client.
 		"""
-		return self.rpc('events/unsubscribe', event_id, event_types=event_types, attributes=attributes)
+		event_types = set(event_types)
+		attributes = set(attributes)
+		freeable_subsriptions = collections.deque()
+		subscription_table = self._subscriptions[event_id]
+		for subscription in itertools.product(event_types, attributes):
+			subscription = _SubscriptionStub(*subscription)
+			subscription_table[subscription] -= 1
+			if subscription_table[subscription] < 1:
+				freeable_subsriptions.append(subscription)
+		for subscription in freeable_subsriptions:
+			del subscription_table[subscription]
+		# to do, delete the subscription table from _subscriptions if it's empty
+		remaining_event_types = [sub.event_type for sub in subscription_table]
+		remaining_attributes = [sub.attribute for sub in subscription_table]
+		freeable_event_types = [sub.event_type for sub in freeable_subsriptions if not sub.event_type in remaining_event_types]
+		freeable_attributes = [sub.attribute for sub in freeable_subsriptions if not sub.attribute in remaining_attributes]
+
+		if freeable_event_types or freeable_attributes:
+			self._unsubscribe(event_id, freeable_event_types, freeable_attributes)
