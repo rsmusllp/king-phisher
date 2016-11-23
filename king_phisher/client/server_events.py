@@ -57,6 +57,12 @@ class ServerEventSubscriber(_GObject_GObject):
 	published by the remote King Phisher server instance. This object manages
 	the subscriptions and forwards the events allowing consumers to connect
 	to the available GObject signals.
+
+	.. note::
+		Both the :py:meth:`.subscribe` and :py:meth:`.unsubscribe` methods of
+		this object internally implement reference counting for the server
+		events. This makes it possible for multiple subscriptions to be created
+		and deleted without interfering with each other.
 	"""
 	__gsignals__ = {
 		'db-alert-subscriptions': (GObject.SIGNAL_RUN_FIRST, None, (str, object)),
