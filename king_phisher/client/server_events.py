@@ -59,7 +59,8 @@ class ServerEventSubscriber(_GObject_GObject):
 	to the available GObject signals.
 
 	.. note::
-		Both the :py:meth:`.subscribe` and :py:meth:`.unsubscribe` methods of
+		Both the :py:meth:`.ServerEventSubscriber.subscribe` and
+		:py:meth:`.ServerEventSubscriber.unsubscribe` methods of
 		this object internally implement reference counting for the server
 		events. This makes it possible for multiple subscriptions to be created
 		and deleted without interfering with each other.
@@ -83,7 +84,7 @@ class ServerEventSubscriber(_GObject_GObject):
 	def __init__(self, rpc):
 		"""
 		:param rpc: The client's connected RPC instance.
-		:py:class:`.KingPhisherRPCClient`
+		:type rpc: :py:class:`.KingPhisherRPCClient`
 		"""
 		super(ServerEventSubscriber, self).__init__()
 		self._encoding = 'utf-8'
