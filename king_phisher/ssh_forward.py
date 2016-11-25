@@ -36,6 +36,7 @@ import io
 import logging
 import os
 import select
+import socket
 import sys
 import threading
 import time
@@ -77,26 +78,31 @@ class ForwardHandler(socketserver.BaseRequestHandler):
 
 	def handle(self):
 		try:
-			chan = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
+			channel = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
 		except paramiko.ChannelException:
-			chan = None
-		if chan is None:
+			channel = None
+		if channel is None:
 			return
+		try:
+			self._handle(channel)
+		except socket.error:
+			pass
+		channel.close()
+		self.request.close()
+
+	def _handle(self, channel):
 		while True:
-			read_ready, _, _ = select.select([self.request, chan], [], [])
+			read_ready, _, _ = select.select([self.request, channel], [], [])
 			if self.request in read_ready:
 				data = self.request.recv(1024)
 				if len(data) == 0:
 					break
-				chan.send(data)
-			if chan in read_ready:
-				data = chan.recv(1024)
+				channel.send(data)
+			if channel in read_ready:
+				data = channel.recv(1024)
 				if len(data) == 0:
 					break
 				self.request.send(data)
-
-		chan.close()
-		self.request.close()
 
 class SSHTCPForwarder(threading.Thread):
 	"""
