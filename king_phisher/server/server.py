@@ -180,6 +180,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				basic_auth = base64.b64decode(basic_auth[1])
 			except TypeError:
 				return None, ''
+			basic_auth = basic_auth.decode('utf-8')
 			basic_auth = basic_auth.split(':', 1)
 			if len(basic_auth) == 2 and len(basic_auth[0]):
 				username, password = basic_auth
