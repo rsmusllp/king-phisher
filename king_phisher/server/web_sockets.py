@@ -31,9 +31,9 @@
 #
 
 import collections
-import functools
 import logging
 import threading
+import weakref
 
 from king_phisher import ipaddress
 from king_phisher import its
@@ -67,7 +67,9 @@ class Event(object):
 
 class EventSocket(advancedhttpserver.WebSocketHandler):
 	"""
-	A socket through which server events are published to subscribers.
+	A socket through which server events are published to subscribers. This
+	socket will automatically add and remove itself from the manager that is
+	initialized with.
 	"""
 	logger = logging.getLogger('KingPhisher.Server.WebSocket.EventPublisher')
 	def __init__(self, handler, manager):
@@ -83,7 +85,8 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 		if self.rpc_session.event_socket is not None:
 			self.rpc_session.event_socket.close()
 		self.rpc_session.event_socket = self
-		manager.append(self)
+		manager.add(self)
+		self._manager_ref = weakref.ref(manager)
 		super(EventSocket, self).__init__(handler)
 
 	def is_subscribed(self, event_id, event_type):
@@ -101,6 +104,9 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 
 	def on_closed(self):
 		self.handler.server.throttle_semaphore.acquire()
+		manager = self._manager_ref()
+		if manager is not None:
+			manager.remove(self)
 		return
 
 	def publish(self, event):
@@ -248,7 +254,7 @@ class WebSocketsManager(object):
 	def __len__(self):
 		return len(self.web_sockets)
 
-	def append(self, web_socket):
+	def add(self, web_socket):
 		"""
 		Add a connected web socket to the manager.
 
@@ -301,16 +307,17 @@ class WebSocketsManager(object):
 			self.logger.debug('closing a disconnected web socket')
 			self.web_sockets.remove(web_socket)
 
-	def pop(self, index=None):
+	def remove(self, web_socket):
 		"""
 		Remove a connected web socket from those that are currently being
-		managed.
+		managed. If the web socket is not currently being managed, no changes
+		are made.
 
-		:param int index: An optional index of the web socket to remove.
-		:return: The removed web socket.
-		:rtype: :py:class:`advancedhttpserver.WebSocketHandler`
+		:param web_socket: The connected web socket.
+		:type web_socket: :py:class:`advancedhttpserver.WebSocketHandler`
 		"""
-		return self.web_sockets.pop(index)
+		if web_socket in self.web_sockets:
+			self.web_sockets.remove(web_socket)
 
 	def stop(self):
 		"""

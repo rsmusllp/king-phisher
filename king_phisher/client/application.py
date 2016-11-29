@@ -388,10 +388,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def do_exit(self):
 		self.plugin_manager.shutdown()
-		if self.server_events is not None:
-			self.server_events.shutdown()
-			self.server_events = None
-
 		self.main_window.hide()
 		gui_utilities.gtk_widget_destroy_children(self.main_window)
 		gui_utilities.gtk_sync()
@@ -599,13 +595,24 @@ class KingPhisherClientApplication(_Gtk_Application):
 		return True, ConnectionErrorReason.SUCCESS
 
 	def do_server_disconnected(self):
-		"""Clean up the SSH TCP connections and disconnect from the server."""
+		"""
+		Clean up the connections to the server and disconnect. This logs out
+		of the RPC, shutsdown the server event socket, and stops the SSH
+		forwarder.
+		"""
 		if self.rpc is not None:
+			if self.server_events is not None:
+				self.server_events.reconnect = False
 			try:
 				self.rpc('logout')
 			except advancedhttpserver.RPCError as error:
 				self.logger.warning('failed to logout, rpc error: ' + error.message)
+			else:
+				if self.server_events is not None:
+					self.server_events.shutdown()
+					self.server_events = None
 			self.rpc = None
+
 		if self._ssh_forwarder:
 			self._ssh_forwarder.stop()
 			self._ssh_forwarder = None

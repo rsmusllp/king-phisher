@@ -91,6 +91,8 @@ class ServerEventSubscriber(_GObject_GObject):
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
 		self._reconnect_event_id = None
+		self.reconnect = True
+		"""Whether or not the socket should attempt to reconnect itself when it has been closed."""
 		self.rpc = rpc
 		self._connect_event = threading.Event()
 		self._subscriptions = collections.defaultdict(lambda: collections.defaultdict(int))
@@ -101,13 +103,15 @@ class ServerEventSubscriber(_GObject_GObject):
 	def _on_close(self, _):
 		if self._worker_thread is None:  # the socket was never successfully opened
 			return
-		self.logger.warning('the server event socket has been closed')
+		getattr(self.logger, 'warning' if self.reconnect else 'info')('the server event socket has been closed')
 		self._connect_event.clear()
 		if self.__is_shutdown.is_set():
 			return
 		if self._worker_thread != threading.current_thread():
 			return
 		self._worker_thread = None
+		if not self.reconnect:
+			return
 		self._reconnect_event_id = GLib.timeout_add_seconds(30, self._ws_reconnect)
 
 	def _on_message(self, _, message):
@@ -156,6 +160,7 @@ class ServerEventSubscriber(_GObject_GObject):
 			on_open=self._on_open
 		)
 		new_thread = threading.Thread(target=self.ws.run_forever, kwargs={'sslopt': {'cert_reqs': ssl.CERT_NONE}})
+		new_thread.daemon = True
 		new_thread.start()
 		if not self._connect_event.wait(10):
 			self.logger.error('failed to connect to the server event socket')
@@ -188,10 +193,15 @@ class ServerEventSubscriber(_GObject_GObject):
 		"""
 		Disconnect the event socket from the remote server. After the object is
 		shutdown, remove events will no longer be published.
+
+		:param int timeout: An optional timeout for how long to wait on the worker thread.
 		"""
 		self.__is_shutdown.set()
-		self.ws.close()
-		self._worker_thread.join()
+		self.logger.debug('shutting down the server event socket')
+		worker = self._worker_thread
+		if worker:
+			worker.join()
+			self._worker_thread = None
 
 	def _subscribe(self, event_id, event_types, attributes):
 		# same as subscribe but without reference counting

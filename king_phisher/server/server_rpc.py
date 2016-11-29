@@ -672,11 +672,13 @@ def rpc_login(handler, session, username, password, otp=None):
 
 @register_rpc('/logout', log_call=True)
 def rpc_logout(handler):
-	username = handler.rpc_session.user
+	rpc_session = handler.rpc_session
+	if rpc_session.event_socket is not None:
+		rpc_session.event_socket.close()
 	handler.server.session_manager.remove(handler.rpc_session_id)
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
-	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], username))
-	signals.rpc_user_logged_out.send(handler, session=handler.rpc_session_id, name=username)
+	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], rpc_session.user))
+	signals.rpc_user_logged_out.send(handler, session=handler.rpc_session_id, name=rpc_session.user)
 
 @register_rpc('/plugins/list', log_call=True)
 def rpc_plugins_list(handler):
