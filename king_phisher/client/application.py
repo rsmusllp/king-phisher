@@ -69,6 +69,7 @@ from gi.repository import GObject
 from gi.repository import Gtk
 import paramiko
 from smoke_zephyr.utilities import parse_server
+from smoke_zephyr.utilities import parse_timespan
 from smoke_zephyr.utilities import which
 
 if its.py_v2:
@@ -149,6 +150,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The primary top-level :py:class:`~.MainAppWindow` instance."""
 		self.rpc = None
 		"""The :py:class:`~.KingPhisherRPCClient` instance for the application."""
+		self._rpc_ping_event = None
+		# this will be populated when the RPC object is authenticated to ping
+		# the server periodically and keep the session alive
 		self.server_events = None
 		"""The :py:class:`~.ServerEventSubscriber` instance for the application to receive server events."""
 		self._ssh_forwarder = None
@@ -588,6 +592,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return False, login_reason
 		rpc.username = username
 		self.logger.debug('successfully authenticated to the remote king phisher service')
+		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), rpc.ping)
 
 		self.rpc = rpc
 		self.server_events = server_events.ServerEventSubscriber(rpc)
@@ -603,6 +608,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if self.rpc is not None:
 			if self.server_events is not None:
 				self.server_events.reconnect = False
+			GLib.source_remove(self._rpc_ping_event)
 			try:
 				self.rpc('logout')
 			except advancedhttpserver.RPCError as error:
