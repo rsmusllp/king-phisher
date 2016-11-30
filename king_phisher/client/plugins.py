@@ -267,7 +267,9 @@ class ClientPlugin(plugins.PluginBase):
 			the event types specified, it may also be called for additional
 			unspecified event types if other plugins have subscribed to them.
 			This means that it is important to check the event type within the
-			handler itself and react as necessary.
+			handler itself and react as necessary. To avoid this simply use the
+			:py:func:`~king_phisher.client.server_events.event_type_filter`
+			decorator for the *handler* function.
 
 		:param str name: The name of the signal.
 		:param handler: The function to be invoked with the signal is emitted.

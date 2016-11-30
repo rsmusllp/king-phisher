@@ -4,6 +4,11 @@
 .. module:: client.server_events
    :synopsis:
 
+Functions
+---------
+
+.. autofunction:: king_phisher.client.server_events.event_type_filter
+
 Classes
 -------
 

@@ -31,6 +31,7 @@
 #
 
 import collections
+import functools
 import itertools
 import logging
 import ssl
@@ -50,6 +51,28 @@ else:
 	_GObject_GObject = GObject.GObject
 
 _SubscriptionStub = collections.namedtuple('_SubscriptionStub', ('event_type', 'attribute'))
+
+def event_type_filter(event_types):
+	"""
+	A decorator to filter a signal handler by the specified event types. Using
+	this will ensure that the decorated function is only called for the
+	specified event types and not others which may have been subscribed to
+	elsewhere in the application.
+
+	:param event_types: A single event type as a string or a list of event type strings.
+	:type event_types: list, str
+	"""
+	utilities.assert_arg_type(event_types, (list, set, str, tuple))
+	if isinstance(event_types, str):
+		event_types = (event_types,)
+	def decorator(function):
+		@functools.wraps(function)
+		def wrapper(gobject, event_type, objects):
+			if event_type in event_types:
+				function(gobject, event_type, objects)
+			return
+		return wrapper
+	return decorator
 
 class ServerEventSubscriber(_GObject_GObject):
 	"""
