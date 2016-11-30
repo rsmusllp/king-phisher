@@ -4,16 +4,21 @@
 
 logging:
   console:
+    # Whether or not to enable console-based logging and use the configuration options within this section
     enabled: true
-    # see https://docs.python.org/3/library/logging.html#logrecord-attributes for available attributes
+    # See https://docs.python.org/3/library/logging.html#logrecord-attributes for available attributes
     format: '%(levelname)s %(message)s'
     # Available levels: FATAL, ERROR, WARNING, INFO, DEBUG
     level: warning
 
   file:
+    # Whether or not to enable file-based logging and use the configuration options within this section
     enabled: true
+    # See https://docs.python.org/3/library/logging.html#logrecord-attributes for available attributes
     format: '%(asctime)s %(name)-50s %(levelname)-8s %(message)s'
+    # Available levels: FATAL, ERROR, WARNING, INFO, DEBUG
     level: warning
+    # Location to store the log file
     path: /var/log/king-phisher.log
 
 server:
@@ -31,8 +36,7 @@ server:
     #group: king-phisher
     # The service to use for PAM authentication
     #pam_service: sshd
-    # How long an authenticated RPC session should be valid for after no
-    # requests have been received.
+    # How long an authenticated RPC session should be valid for after no requests have been received.
     #session_timeout: 30m
 
   # A cookie to retrieve the client's IP from, useful when a proxy is in place
