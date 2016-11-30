@@ -207,7 +207,7 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 			self.client = advancedhttpserver.http.client.HTTPConnection(self.host, self.port)
 		self.lock.release()
 
-	def resolve(self, row):
+	def remote_row_resolve(self, row):
 		"""
 		Take a :py:class:`~.RemoteRow` instance and load all fields which are
 		:py:data:`~.UNRESOLVED`. If all fields are present, no modifications
@@ -333,12 +333,33 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		return model
 
 	def login(self, username, password, otp=None):
+		"""
+		Authenticate to the remote server. This is required before calling RPC
+		methods which require an authenticated session.
+
+		:param str username: The username to authenticate with.
+		:param str password: The password to authenticate with.
+		:param str otp: An optional one time password as a 6 digit string to provide if the account requires it.
+		:return: The login result and an accompanying reason.
+		:rtype: tuple
+		"""
 		login_result, login_reason, login_session = self.call('login', username, password, otp)
 		if login_result:
 			if self.headers is None:
 				self.headers = {}
 			self.headers['X-RPC-Auth'] = login_session
 		return login_result, login_reason
+
+	def ping(self):
+		"""
+		Call the ping RPC method on the remote server to ensure that it is
+		responsive. On success this method will always return True, otherwise
+		an exception will be thrown.
+
+		:return: True
+		:rtype: bool
+		"""
+		return self.call('ping')
 
 def vte_child_routine(config):
 	"""

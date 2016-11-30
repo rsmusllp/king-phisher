@@ -171,7 +171,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			model = self.gobjects['treeview_campaign'].get_model()
 			for case in utilities.switch(event_type):
 				if case('inserted'):
-					self.rpc.resolve(row)
+					self.rpc.remote_row_resolve(row)
 					row_data = self.format_row_data(row)
 					row_data = list(map(self.format_cell_data, row_data))
 					row_data.insert(0, str(row.id))
@@ -182,7 +182,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 						model.remove(ti)
 					break
 				if case('updated'):
-					self.rpc.resolve(row)
+					self.rpc.remote_row_resolve(row)
 					row_data = self.format_row_data(row)
 					ti = gui_utilities.gtk_list_store_search(model, str(row.id))
 					for idx, cell_data in enumerate(row_data, 1):

@@ -271,7 +271,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
 			return False
 
-		if self.path in ('/version', '/login'):
+		# the only two RPC methods that do not require authentication
+		if self.path in ('/login', '/version'):
 			return True
 		self.rpc_session = self.server.session_manager.get(self.rpc_session_id)
 		if not isinstance(self.rpc_session, aaa.AuthenticatedSession):
