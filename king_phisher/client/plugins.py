@@ -30,6 +30,8 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
+import functools
 import weakref
 
 from king_phisher import plugins
@@ -169,20 +171,26 @@ class ClientPlugin(plugins.PluginBase):
 		self.application = application
 		"""A reference to the :py:class:`~king_phisher.client.application.KingPhisherClientApplication`."""
 		super(ClientPlugin, self).__init__()
-		self._widgets = []
-		self._signals = []
+		self._server_event_subscriptions = collections.deque()
+		self._signals = collections.deque()
+		self._widgets = collections.deque()
 
 	def _cleanup(self):
-		while self._signals:
-			ref, handler_id = self._signals.pop()
+		# cleanup connected gobject signals
+		for ref, handler_id in self._signals:
 			gobject = ref()
 			if gobject is None:
 				continue
 			gobject.disconnect(handler_id)
-		self._signals = []
+		self._signals.clear()
+		# cleanup server event subscriptions
+		while self._server_event_subscriptions:
+			self.application.server_events.unsubscribe(*self._server_event_subscriptions.pop())
+		self._server_event_subscriptions.clear()
+		# destroy widgets
 		for widget in self._widgets:
 			widget.destroy()
-		self._widgets = []
+		self._widgets.clear()
 
 	@property
 	def config(self):
@@ -244,6 +252,32 @@ class ClientPlugin(plugins.PluginBase):
 		else:
 			handler_id = gobject.connect(name, handler)
 		self._signals.append((weakref.ref(gobject), handler_id))
+
+	def signal_connect_server_event(self, name, handler, event_types, attributes):
+		"""
+		Connect *handler* to the server signal with *name*. This method is
+		similar to :py:meth:`~.signal_connect` but also sets up the necessary
+		event subscriptions to ensure that the handler will be called. These
+		event subscriptions are automatically cleaned up when the plugin is
+		disabled.
+
+		.. warning::
+			Server events are emitted based on the client applications event
+			subscriptions. This means that while *handler* will be called for
+			the event types specified, it may also be called for additional
+			unspecified event types if other plugins have subscribed to them.
+			This means that it is important to check the event type within the
+			handler itself and react as necessary.
+
+		:param str name: The name of the signal.
+		:param handler: The function to be invoked with the signal is emitted.
+		:param list event_types: A list of sub-types for the corresponding event.
+		:param list attributes: A list of attributes of the event object to be sent to the client.
+		"""
+		server_events = self.application.server_events
+		server_events.subscribe(name, event_types, attributes)
+		self._server_event_subscriptions.append((name, event_types, attributes))
+		self.signal_connect(name, handler, gobject=server_events)
 
 class ClientPluginManager(plugins.PluginManagerBase):
 	"""

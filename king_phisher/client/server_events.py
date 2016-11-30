@@ -207,7 +207,7 @@ class ServerEventSubscriber(_GObject_GObject):
 		# same as subscribe but without reference counting
 		return self.rpc('events/subscribe', event_id, event_types=list(event_types), attributes=list(attributes))
 
-	def subscribe(self, event_id, event_types=None, attributes=None):
+	def subscribe(self, event_id, event_types, attributes):
 		"""
 		Subscribe the client to the specified event published by the server.
 		When the event is published the specified *attributes* of it and it's
@@ -237,7 +237,7 @@ class ServerEventSubscriber(_GObject_GObject):
 		# same as unsubscribe but without reference counting
 		return self.rpc('events/unsubscribe', event_id, event_types=list(event_types), attributes=list(attributes))
 
-	def unsubscribe(self, event_id, event_types=None, attributes=None):
+	def unsubscribe(self, event_id, event_types, attributes):
 		"""
 		Unsubscribe from an event published by the server that the client
 		previously subscribed to.
