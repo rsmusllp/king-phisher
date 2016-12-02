@@ -35,7 +35,7 @@ import os
 import re
 
 from king_phisher import find
-from king_phisher import json_ex
+from king_phisher import serializers
 from king_phisher import utilities
 
 from gi.repository import GObject
@@ -102,7 +102,7 @@ class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider
 				raise RuntimeError("failed to find completion data file '{0}'".format(self.data_file))
 			self.logger.debug("loading {0} completion data from: {1}".format(self.name, completion_data))
 			with open(completion_data, 'r') as file_h:
-				completion_data = json_ex.load(file_h)
+				completion_data = serializers.JSON.load(file_h)
 			self.load_data(completion_data)
 
 	def do_get_name(self):

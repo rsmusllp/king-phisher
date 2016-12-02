@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/client/widget/completion_providers.py
+#  tests/serializers.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,44 +30,35 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import glob
-import os
-import unittest
-
-from king_phisher import find
-from king_phisher import serializers
 from king_phisher import testing
-from king_phisher.client.widget import completion_providers
+from king_phisher import serializers
 
-class ClientJinjaComletionProviderTests(testing.KingPhisherTestCase):
-	def test_get_proposal_terms(self):
-		provider = completion_providers.JinjaComletionProvider()
+class _SerializerTests(testing.KingPhisherServerTestCase):
+	def _test_basic_types(self, serializer, output_type):
+		self.assertIsInstance(serializer.dumps('test'), output_type)
+		self.assertIsInstance(serializer.dumps(True), output_type)
+		self.assertIsInstance(serializer.dumps(100), output_type)
 
-		proposal_strings = completion_providers.get_proposal_terms(
-			provider.jinja_tokens,
-			['time']
-		)
-		self.assertIsInstance(proposal_strings, list)
-		self.assertNotIn('local', proposal_strings)
+class JsonSerializerTests(_SerializerTests):
+	def test_json_serializer_dumps(self):
+		return self._test_basic_types(serializers.JSON, str)
 
-		proposal_strings = completion_providers.get_proposal_terms(
-			provider.jinja_tokens,
-			['time', '']
-		)
-		self.assertIsInstance(proposal_strings, list)
-		self.assertIn('local', proposal_strings)
+	def test_json_serializer_loads(self):
+		try:
+			serializers.JSON.loads(serializers.JSON.dumps('test'))
+		except ValueError:
+			self.fail('Invalid data type for serializer.JSON.loads()')
 
-	def test_load_data_files(self):
-		completion_dir = find.find_data_directory('completion')
-		self.assertIsNotNone(completion_dir, 'failed to find the \'completion\' directory')
-		# validate that completion definitions claiming to be json are loadable as json
-		for json_file in glob.glob(os.path.join(completion_dir, '*.json')):
-			json_file = os.path.abspath(json_file)
-			with open(json_file, 'r') as file_h:
-				try:
-					serializers.JSON.load(file_h, strict=True)
-				except Exception:
-					self.fail("failed to load file '{0}' as json data".format(json_file))
+	def test_json_serializer_loads_invalid(self):
+		with self.assertRaises(ValueError):
+			serializers.JSON.loads("'test")
 
-if __name__ == '__main__':
-	unittest.main()
+class MsgPackSerializerTests(_SerializerTests):
+	def test_msgpack_serializer_dumps(self):
+		return self._test_basic_types(serializers.MsgPack, bytes)
+
+	def test_msgpack_serializer_loads(self):
+		try:
+			serializers.MsgPack.loads(serializers.MsgPack.dumps('test'))
+		except ValueError:
+			self.fail('Invalid data type for serializer.MsgPack.loads()')

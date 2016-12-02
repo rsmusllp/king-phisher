@@ -36,7 +36,7 @@ import os
 import tarfile
 
 from king_phisher import its
-from king_phisher import json_ex
+from king_phisher import serializers
 from king_phisher import version
 
 def is_archive(file_path):
@@ -73,7 +73,7 @@ class ArchiveFile(object):
 		self.mtime = (datetime.datetime.utcnow() - epoch).total_seconds()
 		self._tar_h = tarfile.open(file_name, self._mode)
 		if 'r' in mode and self.has_file(self.metadata_file_name):
-			self.metadata = json_ex.loads(self.get_data(self.metadata_file_name).decode(self.encoding))
+			self.metadata = serializers.JSON.loads(self.get_data(self.metadata_file_name).decode(self.encoding))
 		else:
 			self.metadata = {}
 		if 'w' in mode:
@@ -118,7 +118,7 @@ class ArchiveFile(object):
 	def close(self):
 		"""Close the handle to the archive."""
 		if 'w' in self.mode:
-			self.add_data(self.metadata_file_name, json_ex.dumps(self.metadata))
+			self.add_data(self.metadata_file_name, serializers.JSON.dumps(self.metadata, pretty=True))
 		self._tar_h.close()
 
 	@property

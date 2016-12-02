@@ -31,7 +31,6 @@
 #
 
 import collections
-import functools
 import weakref
 
 from king_phisher import plugins

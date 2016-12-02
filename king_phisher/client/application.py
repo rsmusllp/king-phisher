@@ -45,7 +45,7 @@ from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
 from king_phisher import its
-from king_phisher import json_ex
+from king_phisher import serializers
 from king_phisher import ssh_forward
 from king_phisher import utilities
 from king_phisher import version
@@ -388,7 +388,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			if 'password' in key or key == 'server_config':
 				del config[key]
 		with open(os.path.expanduser(self.config_file), 'w') as config_file_h:
-			json_ex.dump(config, config_file_h)
+			serializers.JSON.dump(config, config_file_h, pretty=True)
 
 	def do_exit(self):
 		self.plugin_manager.shutdown()
@@ -458,10 +458,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		client_template = find.find_data_file('client_config.json')
 		config_file = os.path.expanduser(self.config_file)
 		with open(config_file, 'r') as tmp_file:
-			self.config = json_ex.load(tmp_file)
+			self.config = serializers.JSON.load(tmp_file)
 		if load_defaults:
 			with open(client_template, 'r') as tmp_file:
-				client_template = json_ex.load(tmp_file)
+				client_template = serializers.JSON.load(tmp_file)
 			for key, value in client_template.items():
 				if not key in self.config:
 					self.config[key] = value
@@ -477,7 +477,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		:param str config_file: The path to the configuration file to merge.
 		"""
 		with open(config_file, 'r') as tmp_file:
-			config = json_ex.load(tmp_file, strict=strict)
+			config = serializers.JSON.load(tmp_file, strict=strict)
 		if not isinstance(config, dict):
 			self.logger.error("can not merge configuration file: {0} (invalid format)".format(config_file))
 			return

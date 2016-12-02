@@ -39,19 +39,12 @@ import sys
 
 from king_phisher import find
 from king_phisher import geoip
-from king_phisher import json_ex
+from king_phisher import serializers
 from king_phisher import utilities
 
 import advancedhttpserver
 import boltons.typeutils
 from gi.repository import Gtk
-
-try:
-	import msgpack  # pylint: disable=unused-import
-	has_msgpack = True
-	"""Whether the :py:mod:`msgpack` module is available or not."""
-except ImportError:
-	has_msgpack = False
 
 _tag_mixin_slots = ('id', 'name', 'description')
 _tag_mixin_types = (int, str, str)
@@ -183,11 +176,7 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 	def __init__(self, *args, **kwargs):
 		self.logger = logging.getLogger('KingPhisher.Client.RPC')
 		super(KingPhisherRPCClient, self).__init__(*args, **kwargs)
-		if has_msgpack:
-			serializer = 'binary/message-pack'
-		else:
-			serializer = 'binary/json'
-		self.set_serializer(serializer)
+		self.set_serializer('binary/message-pack')
 
 	def __repr__(self):
 		return "<{0} '{1}@{2}:{3}{4}'>".format(self.__class__.__name__, self.username, self.host, self.port, self.uri_base)
@@ -371,7 +360,7 @@ def vte_child_routine(config):
 
 	:param str config: A JSON encoded client configuration.
 	"""
-	config = json_ex.loads(config)
+	config = serializers.JSON.loads(config)
 	try:
 		import readline
 		import rlcompleter  # pylint: disable=unused-variable

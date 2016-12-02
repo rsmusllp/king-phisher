@@ -43,7 +43,7 @@ import xml.etree.ElementTree as ET
 
 from king_phisher import archive
 from king_phisher import ipaddress
-from king_phisher import json_ex
+from king_phisher import serializers
 from king_phisher import utilities
 from king_phisher.errors import KingPhisherInputValidationError
 
@@ -207,7 +207,7 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 		points.append(geojson.Feature(geometry=location, properties={'count': ip_counter[ip], 'ip-address': ip}))
 	feature_collection = geojson.FeatureCollection(points)
 	with open(geojson_file, 'w') as file_h:
-		json_ex.dump(feature_collection, file_h)
+		serializers.JSON.dump(feature_collection, file_h, pretty=True)
 
 def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 	"""
@@ -233,7 +233,7 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 		raise KingPhisherInputValidationError('data is missing from the message archive')
 	message_config = kpm.get_data('message_config.json')
 	message_config = message_config.decode(encoding)
-	message_config = json_ex.loads(message_config)
+	message_config = serializers.JSON.loads(message_config)
 
 	if attachment_member_names:
 		attachment_dir = os.path.join(dest_dir, 'attachments')
@@ -314,7 +314,7 @@ def message_data_to_kpm(message_config, target_file, encoding='utf-8'):
 		if 'html_file' in message_config:
 			del message_config['html_file']
 
-	kpm.add_data('message_config.json', json_ex.dumps(message_config))
+	kpm.add_data('message_config.json', serializers.JSON.dumps(message_config, pretty=True))
 	kpm.close()
 	return
 

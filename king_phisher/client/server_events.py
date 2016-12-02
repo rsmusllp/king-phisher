@@ -37,7 +37,7 @@ import logging
 import ssl
 import threading
 
-from king_phisher import json_ex
+from king_phisher import serializers
 from king_phisher import utilities
 from king_phisher.client import client_rpc
 
@@ -141,7 +141,7 @@ class ServerEventSubscriber(_GObject_GObject):
 		if isinstance(message, bytes):
 			message.decode(self._encoding)
 		try:
-			message = json_ex.loads(message, strict=True)
+			message = serializers.JSON.loads(message, strict=True)
 		except ValueError:
 			self.logger.warning('received invalid data from the server event publisher (invalid JSON)')
 			return

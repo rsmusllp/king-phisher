@@ -37,7 +37,7 @@ import weakref
 
 from king_phisher import ipaddress
 from king_phisher import its
-from king_phisher import json_ex
+from king_phisher import serializers
 from king_phisher import utilities
 from king_phisher.server import signals
 from king_phisher.server.database import models as db_models
@@ -140,7 +140,7 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 			}
 		}
 		self.logger.debug("publishing event {0} (type: {1}) with {2} objects".format(event.event_id, event.event_type, len(summaries)))
-		self.send_message_text(json_ex.dumps(msg, pretty=False))
+		self.send_message_text(serializers.JSON.dumps(msg, pretty=False))
 
 	def subscribe(self, event_id, event_types=None, attributes=None):
 		"""

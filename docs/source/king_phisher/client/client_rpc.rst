@@ -10,8 +10,6 @@ interface.
 Data
 ----
 
-.. autodata:: king_phisher.client.client_rpc.has_msgpack
-
 .. autodata:: king_phisher.client.client_rpc.UNRESOLVED
 
 Functions
