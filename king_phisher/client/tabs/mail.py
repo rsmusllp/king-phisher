@@ -517,6 +517,9 @@ class MailSenderPreviewTab(object):
 		except jinja2.UndefinedError as error:
 			self.info_bar_label.set_text("Template undefined error: {error.message}.".format(error=error))
 			self.info_bar.show()
+		except TypeError as error:
+			self.info_bar_label.set_text("Template type error: {0}.".format(error.args[0]))
+			self.info_bar.show()
 		else:
 			html_file_uri = urllib.parse.urlparse(html_file, 'file').geturl()
 			self.webview.load_html_data(html_data, html_file_uri)
