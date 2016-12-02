@@ -276,11 +276,11 @@ class WebSocketsManager(object):
 			return
 		prefix = '/'
 		if self.config.get('server.vhost_directories'):
-			prefix += handler.vhost
+			prefix += handler.vhost + '/'
 		request_path = handler.path
 		if request_path.startswith(prefix):
 			request_path = request_path[len(prefix):]
-			if request_path == '/_/ws/events/json':
+			if request_path == '_/ws/events/json':
 				EventSocket(handler, self)
 				return
 		handler.respond_not_found()
