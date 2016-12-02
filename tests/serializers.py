@@ -30,35 +30,43 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import datetime
+
 from king_phisher import testing
 from king_phisher import serializers
 
 class _SerializerTests(testing.KingPhisherServerTestCase):
-	def _test_basic_types(self, serializer, output_type):
-		self.assertIsInstance(serializer.dumps('test'), output_type)
-		self.assertIsInstance(serializer.dumps(True), output_type)
-		self.assertIsInstance(serializer.dumps(100), output_type)
+	serializer = None
+	serializer_output_type = None
+	test_objects = ('test', True, 100)
+	def test_dump_basic_types(self):
+		for obj in self.test_objects:
+			self.assertIsInstance(self.serializer.dumps(obj), self.serializer_output_type)
+
+	def test_simple_reload(self):
+		for obj in self.test_objects:
+			try:
+				self.serializer.loads(self.serializer.dumps(obj))
+			except ValueError:
+				self.fail("Invalid data type for serializer.{0}.loads()".format(self.serializer.name))
+
+	def test_special_types(self):
+		now = datetime.datetime.now()
+		serialized = self.serializer.dumps(now)
+		self.assertIsInstance(serialized, self.serializer_output_type)
+		self.assertNotEqual(now, serialized)
+		self.assertNotEqual(type(now), type(serialized))
+		now_loaded = self.serializer.loads(serialized)
+		self.assertEqual(now, now_loaded)
 
 class JsonSerializerTests(_SerializerTests):
-	def test_json_serializer_dumps(self):
-		return self._test_basic_types(serializers.JSON, str)
+	serializer = serializers.JSON
+	serializer_output_type = str
 
-	def test_json_serializer_loads(self):
-		try:
-			serializers.JSON.loads(serializers.JSON.dumps('test'))
-		except ValueError:
-			self.fail('Invalid data type for serializer.JSON.loads()')
-
-	def test_json_serializer_loads_invalid(self):
+	def test_loads_invalid(self):
 		with self.assertRaises(ValueError):
 			serializers.JSON.loads("'test")
 
 class MsgPackSerializerTests(_SerializerTests):
-	def test_msgpack_serializer_dumps(self):
-		return self._test_basic_types(serializers.MsgPack, bytes)
-
-	def test_msgpack_serializer_loads(self):
-		try:
-			serializers.MsgPack.loads(serializers.MsgPack.dumps('test'))
-		except ValueError:
-			self.fail('Invalid data type for serializer.MsgPack.loads()')
+	serializer = serializers.MsgPack
+	serializer_output_type = bytes

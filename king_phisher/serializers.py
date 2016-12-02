@@ -71,7 +71,13 @@ def _serialize_ext_load(obj_type, obj_value, default):
 		return default
 	return value
 
-class Serializer(object):
+class SerializerMeta(type):
+	@property
+	def name(cls):
+		return cls.__name__
+
+# stylized metaclass definition to be Python 2.7 and 3.x compatible
+class Serializer(SerializerMeta('_SerializerMeta', (object,), {})):
 	"""
 	The base class for serializer objects of different formats and protocols.
 	These serializers are extended using a King Phisher-specific protocol for
@@ -106,7 +112,6 @@ class Serializer(object):
 		return cls.loads(file_h.read(), *args, **kwargs)
 
 class JSON(Serializer):
-	name = 'JSON'
 	@classmethod
 	def _json_default(cls, obj):
 		obj_type, obj_value = _serialize_ext_dump(obj)
@@ -147,7 +152,6 @@ class JSON(Serializer):
 		return json.loads(data, object_hook=cls._json_object_hook)
 
 class MsgPack(Serializer):
-	name = 'MsgPack'
 	_ext_types = {10: 'datetime.datetime', 11: 'datetime.date', 12: 'datetime.time'}
 	@classmethod
 	def _msgpack_default(cls, obj):
