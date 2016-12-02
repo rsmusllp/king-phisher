@@ -52,7 +52,7 @@ else:
 
 _SubscriptionStub = collections.namedtuple('_SubscriptionStub', ('event_type', 'attribute'))
 
-def event_type_filter(event_types):
+def event_type_filter(event_types, is_method=False):
 	"""
 	A decorator to filter a signal handler by the specified event types. Using
 	this will ensure that the decorated function is only called for the
@@ -61,15 +61,20 @@ def event_type_filter(event_types):
 
 	:param event_types: A single event type as a string or a list of event type strings.
 	:type event_types: list, str
+	:param bool is_method: Whether or not the function being decorated is a class method.
 	"""
 	utilities.assert_arg_type(event_types, (list, set, str, tuple))
 	if isinstance(event_types, str):
 		event_types = (event_types,)
 	def decorator(function):
 		@functools.wraps(function)
-		def wrapper(gobject, event_type, objects):
+		def wrapper(*args):
+			if is_method:
+				self, gobject, event_type, objects = args
+			else:
+				gobject, event_type, objects = args
 			if event_type in event_types:
-				function(gobject, event_type, objects)
+				function(*args)
 			return
 		return wrapper
 	return decorator
