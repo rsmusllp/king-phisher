@@ -55,6 +55,7 @@ import time
 from king_phisher import errors
 from king_phisher import ics
 from king_phisher import ipaddress
+from king_phisher import its
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
@@ -445,6 +446,10 @@ class MailSenderThread(threading.Thread):
 			target_file_h = open(self.target_file, 'rU')
 			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
 			for line_no, raw_target in enumerate(csv_reader, 1):
+				if its.py_v2:
+					# this intentionally will cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
+					# when csv.DictReader is initialized
+					raw_target = dict((k, (v if v is None else v.decode('utf-8'))) for k, v in raw_target.items())
 				department = raw_target['department']
 				if department is not None:
 					department = department.strip()
@@ -480,6 +485,9 @@ class MailSenderThread(threading.Thread):
 		try:
 			self._prepare_env()
 			emails_done = self._send_messages()
+		except UnicodeDecodeError as error:
+			self.logger.error("a unicode error occurred, {0} at position: {1}-{2}".format(error.reason, error.start, error.end))
+			self.tab_notify_status("A unicode error occurred, {0} at position: {1}-{2}".format(error.reason, error.start, error.end))
 		except Exception:
 			self.logger.error('an error occurred while sending messages', exc_info=True)
 			self.tab_notify_status('An error occurred while sending messages.')
