@@ -309,7 +309,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		exc_info = (exc_type, exc_value, exc_traceback)
 		error_uid = str(uuid.uuid4())
 		self.logger.error("error uid: {0} an unhandled exception was thrown".format(error_uid), exc_info=exc_info)
-		dialogs.ExceptionDialog(self, exc_info=exc_info, error_uid=error_uid).interact()
+		dialogs.ExceptionDialog.interact_on_idle(self, exc_info=exc_info, error_uid=error_uid)
 
 	def quit(self, optional=False):
 		"""

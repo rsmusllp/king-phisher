@@ -42,6 +42,7 @@ from king_phisher import version
 from king_phisher.client import gui_utilities
 
 import advancedhttpserver
+from gi.repository import GLib
 from gi.repository import Gtk
 from gi.repository import Pango
 
@@ -136,3 +137,12 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 		self.dialog.run()
 		self.dialog.destroy()
 		return
+
+	@classmethod
+	def _interact_on_idle(cls, args, kwargs):
+		instance = cls(*args, **kwargs)
+		instance.interact()
+
+	@classmethod
+	def interact_on_idle(cls, *args, **kwargs):
+		GLib.idle_add(cls._interact_on_idle, args, kwargs)
