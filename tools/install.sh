@@ -237,11 +237,21 @@ fi
 
 echo "Installing $LINUX_VERSION dependencies"
 if [ "$LINUX_VERSION" == "CentOS" ]; then
+	if [ ! "$(command -v python3)" ]; then
+		# manually install python3.5 on CentOS 7 and symlink it to python3
+		echo "Installing Python3.5 for CentOS 7"
+		yum install -y https://centos7.iuscommunity.org/ius-release.rpm
+		yum install -y python35u python35u-devel python35u-pip
+		echo "Symlinking $(which python3.5) -> /usr/bin/python3"
+		ln -s $(which python3.5) /usr/bin/python3
+	fi
 	yum install -y epel-release
 	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
-		postgresql-devel python3-devel python3-pip
+		openssl-devel postgresql-devel
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		yum install -y postgresql-server
+		# manually init the database
+		postgresql-setup initdb
 	fi
 elif [ "$LINUX_VERSION" == "Fedora" ]; then
 	dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
@@ -383,6 +393,7 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		if ! grep -E "king_phisher" $PG_CONFIG_LOCATION &> /dev/null; then
 			# put the king_phisher first in the line for localhost connects with md5
 			sed -i '/# IPv4 local connections:/a\host    king_phisher    king_phisher    127.0.0.1/32            md5' $PG_CONFIG_LOCATION
+			sed -i '/# IPv6 local connections:/a\host    king_phisher    king_phisher    ::1/128                 md5' $PG_CONFIG_LOCATION
 		fi
 		sed -i -re "s|database: sqlite://|#database: sqlite://|" ./server_config.yml
 		# generate a random 32 character long password for postgresql
