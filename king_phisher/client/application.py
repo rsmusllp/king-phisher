@@ -118,6 +118,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'server-disconnected': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'sftp-client-start': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'visit-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
+		'unhandled-exception': (GObject.SIGNAL_RUN_FIRST, None, (object, object))
 	}
 	def __init__(self, config_file=None, use_plugins=True, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
@@ -318,9 +319,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('received a KeyboardInterrupt exception')
 			return
 		exc_info = (exc_type, exc_value, exc_traceback)
-		error_uid = str(uuid.uuid4())
-		self.logger.error("error uid: {0} an unhandled exception was thrown".format(error_uid), exc_info=exc_info)
-		dialogs.ExceptionDialog.interact_on_idle(self, exc_info=exc_info, error_uid=error_uid)
+		error_uid = uuid.uuid4()
+		self.logger.error("error uid: {0} an unhandled exception was thrown".format(str(error_uid)), exc_info=exc_info)
+		self.emit('unhandled-exception', exc_info, error_uid)
 
 	def quit(self, optional=False):
 		"""
@@ -440,6 +441,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Gtk.Application.do_shutdown(self)
 		sys.excepthook = sys.__excepthook__
 		self.emit('config-save')
+
+	def do_unhandled_exception(self, exc_info, error_uid):
+		dialogs.ExceptionDialog.interact_on_idle(self, exc_info=exc_info, error_uid=error_uid)
 
 	@property
 	def theme_file(self):

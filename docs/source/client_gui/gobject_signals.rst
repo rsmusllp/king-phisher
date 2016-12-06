@@ -157,6 +157,16 @@ object.
    :param row_ids: The row IDs that are to be deleted.
    :type row_ids: [str, ...]
 
+.. py:function:: unhandled-exception(exc_info, error_uid)
+
+   This signal is emitted when the application encounters an unhandled Python
+   exception.
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param tuple exc_info: A tuple of three objects corresponding to the return value of the :py:func:`sys.exc_info` function representing the exception that was raised.
+   :param error_uid: The unique identifier that has been assigned to this exception for tracking.
+   :type error_uid: :py:class:`uuid.UUID`
+
 Mail Tab Signals
 ----------------
 

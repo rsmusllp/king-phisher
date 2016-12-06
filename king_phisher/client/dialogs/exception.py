@@ -35,6 +35,7 @@ import sys
 import threading
 import traceback
 import tzlocal
+import uuid
 
 from king_phisher import its
 from king_phisher import utilities
@@ -66,6 +67,74 @@ Stack Trace:
 {stack_trace}
 """
 
+def format_exception_details(exc_type, exc_value, exc_traceback, error_uid=None):
+	"""
+	Format exception details to be show to a human. This should include enough
+	information about the type of error that occurred and the system on which
+	it was triggered to allow someone to attempt to debug and fix it. The first
+	three parameters to this function directly correspond to the values
+	returned from the :py:func:`sys.exc_info` function.
+
+	:param exc_type: The type of the exception.
+	:param exc_value: The exception instance.
+	:param exc_traceback: The traceback object corresponding to the exception.
+	:param error_uid: A unique identifier for this exception.
+	:type error_uid: str, :py:class:`uuid.UUID`
+	:return: A formatted message containing the details about the exception and environment.
+	:rtype: str
+	"""
+	if isinstance(error_uid, uuid.UUID):
+		error_uid = str(error_uid)
+	elif error_uid is None:
+		error_uid = 'N/A'
+	elif not isinstance(error_uid, str):
+		raise TypeError('error_uid must be an instance of either str, uuid.UUID or None')
+	pversion = 'UNKNOWN'
+	if its.on_linux:
+		pversion = 'Linux: ' + ' '.join(platform.linux_distribution())
+	elif its.on_windows:
+		pversion = 'Windows: ' + ' '.join(platform.win32_ver())
+		if its.frozen:
+			pversion += ' (Frozen=True)'
+		else:
+			pversion += ' (Frozen=False)'
+	exc_name = format_exception_name(exc_type)
+	rpc_error_details = 'N/A (Not a remote RPC error)'
+	if isinstance(exc_value, advancedhttpserver.RPCError) and exc_value.is_remote_exception:
+		rpc_error_details = "Name: {0}".format(exc_value.remote_exception['name'])
+		if exc_value.remote_exception.get('message'):
+			rpc_error_details += " Message: '{0}'".format(exc_value.remote_exception['message'])
+	current_tid = threading.current_thread().ident
+	thread_info = (
+		"{0: >4}{1} (alive={2} daemon={3})".format(('=> ' if thread.ident == current_tid else ''), thread.name, thread.is_alive(), thread.daemon) for thread in threading.enumerate()
+	)
+	thread_info = '\n'.join(thread_info)
+	details = EXCEPTION_DETAILS_TEMPLATE.format(
+		error_details=repr(exc_value),
+		error_type=exc_name,
+		error_uid=error_uid,
+		rpc_error_details=rpc_error_details,
+		king_phisher_version=version.version,
+		platform_version=pversion,
+		python_version="{0}.{1}.{2}".format(*sys.version_info),
+		gtk_version="{0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()),
+		stack_trace=''.join(traceback.format_exception(exc_type, exc_value, exc_traceback)),
+		thread_info=thread_info,
+		timezone=tzlocal.get_localzone().zone
+	)
+	details = details.strip() + '\n'
+	return details
+
+def format_exception_name(exc_type):
+	"""
+	Format the exception name into a more easily recognizable format.
+
+	:param exc_type: The type of the exception.
+	:return: The formatted exception name.
+	:rtype: str
+	"""
+	return "{0}.{1}".format(exc_type.__module__, exc_type.__name__)
+
 class ExceptionDialog(gui_utilities.GladeGObject):
 	"""
 	Display a dialog which shows an error message for a python exception.
@@ -95,42 +164,9 @@ class ExceptionDialog(gui_utilities.GladeGObject):
 
 	def interact(self):
 		exc_type, exc_value, exc_traceback = self.exc_info
-		pversion = 'UNKNOWN'
-		if its.on_linux:
-			pversion = 'Linux: ' + ' '.join(platform.linux_distribution())
-		elif its.on_windows:
-			pversion = 'Windows: ' + ' '.join(platform.win32_ver())
-			if its.frozen:
-				pversion += ' (Frozen=True)'
-			else:
-				pversion += ' (Frozen=False)'
-		exc_name = "{0}.{1}".format(exc_type.__module__, exc_type.__name__)
-		rpc_error_details = 'N/A (Not a remote RPC error)'
-		if isinstance(exc_value, advancedhttpserver.RPCError) and exc_value.is_remote_exception:
-			rpc_error_details = "Name: {0}".format(exc_value.remote_exception['name'])
-			if exc_value.remote_exception.get('message'):
-				rpc_error_details += " Message: '{0}'".format(exc_value.remote_exception['message'])
-		current_tid = threading.current_thread().ident
-		thread_info = ("{0: >4}{1} (alive={2} daemon={3})".format(('=> ' if thread.ident == current_tid else ''), thread.name, thread.is_alive(), thread.daemon) for thread in threading.enumerate())
-		thread_info = '\n'.join(thread_info)
-		details = EXCEPTION_DETAILS_TEMPLATE.format(
-			error_details=repr(exc_value),
-			error_type=exc_name,
-			error_uid=(self.error_uid or 'N/A'),
-			rpc_error_details=rpc_error_details,
-			king_phisher_version=version.version,
-			platform_version=pversion,
-			python_version="{0}.{1}.{2}".format(*sys.version_info),
-			gtk_version="{0}.{1}.{2}".format(Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()),
-			stack_trace=''.join(traceback.format_exception(exc_type, exc_value, exc_traceback)),
-			thread_info=thread_info,
-			timezone=tzlocal.get_localzone().zone
-		)
-		details = details.strip() + '\n'
+		details = format_exception_details(exc_type, exc_value, exc_traceback, self.error_uid)
 
-		if exc_name.startswith('king_phisher.third_party.'):
-			exc_name = exc_name[25:]
-		self.error_description.set_text("Error type: {0}".format(exc_name))
+		self.error_description.set_text("Error type: {0}".format(format_exception_name(exc_type)))
 		self.error_details.get_buffer().set_text(details)
 
 		self.dialog.show_all()
