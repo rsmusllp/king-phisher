@@ -30,7 +30,6 @@ The following is a commented example of a basic "Hello World" plugin.
        A 'hello world' plugin to serve as a basic template and demonstration.
        """
        homepage = 'https://github.com/securestate/king-phisher-plugins'
-       req_min_version = '1.0'
        options = [  # specify options which need to be set through the configuration file
            plugin_opts.OptionString(
                'name',               # the options name
@@ -38,6 +37,8 @@ The following is a commented example of a basic "Hello World" plugin.
                default=None          # a default value can be specified to
            )
        ]
+       req_min_version = '1.4.0'     # (optional) specify the required minimum version of king phisher
+       version = '1.0'               # (optional) specify this plugin's version
        def initialize(self):
            self.logger.warning('hello ' + self.config['name'] + '!')
            # connect to a signal via it's object in the signals module
