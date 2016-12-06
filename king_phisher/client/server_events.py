@@ -92,6 +92,12 @@ class ServerEventSubscriber(_GObject_GObject):
 		this object internally implement reference counting for the server
 		events. This makes it possible for multiple subscriptions to be created
 		and deleted without interfering with each other.
+
+	The socket is opened automatically when this object is initialized and will
+	automatically attempt to reconnect if the connection is closed if the
+	:py:attr:`.reconnect` attribute is true. After initializing this object,
+	check the :py:attr:`.is_connected` attribute to ensure that it is properly
+	connected to the server.
 	"""
 	__gsignals__ = {
 		'db-alert-subscriptions': (GObject.SIGNAL_RUN_FIRST, None, (str, object)),
@@ -205,6 +211,11 @@ class ServerEventSubscriber(_GObject_GObject):
 	def _ws_reconnect(self):
 		self.logger.info('attempting to reconnect to the server event socket')
 		return not self._ws_connect()
+
+	@property
+	def is_connected(self):
+		"""True if the event socket is connected to the server."""
+		return self._connect_event.is_set()
 
 	def is_subscribed(self, event_id, event_type):
 		"""

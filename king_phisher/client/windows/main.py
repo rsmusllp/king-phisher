@@ -316,6 +316,8 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 			entry.grab_focus()
 		elif reason == ConnectionErrorReason.ERROR_INVALID_CREDENTIALS:
 			gui_utilities.show_dialog_error('Login Failed', self, 'The provided credentials are incorrect.')
+		elif reason == ConnectionErrorReason.ERROR_UNKNOWN:
+			gui_utilities.show_dialog_error('Login Failed', self, 'An unknown error has occurred.')
 
 	def export_campaign_xlsx(self):
 		"""Export the current campaign to an Excel compatible XLSX workbook."""

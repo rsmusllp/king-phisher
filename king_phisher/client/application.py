@@ -595,14 +595,20 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), rpc.ping)
 
 		self.rpc = rpc
-		self.server_events = server_events.ServerEventSubscriber(rpc)
+		event_subscriber = server_events.ServerEventSubscriber(rpc)
+		if not event_subscriber.is_connected:
+			self.logger.error('failed to connect the server event socket')
+			event_subscriber.reconnect = False
+			event_subscriber.shutdown()
+			return False, ConnectionErrorReason.ERROR_UNKNOWN
+		self.server_events = event_subscriber
 		self.emit('server-connected')
 		return True, ConnectionErrorReason.SUCCESS
 
 	def do_server_disconnected(self):
 		"""
 		Clean up the connections to the server and disconnect. This logs out
-		of the RPC, shutsdown the server event socket, and stops the SSH
+		of the RPC, closes the server event socket, and stops the SSH
 		forwarder.
 		"""
 		if self.rpc is not None:
