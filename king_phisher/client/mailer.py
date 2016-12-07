@@ -699,27 +699,38 @@ class MailSenderThread(threading.Thread):
 
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)
-				sleep_time = (60.0 / float(self.max_messages_per_minute)) - iteration_time
-				while sleep_time > 0:
-					sleep_chunk = min(sleep_time, 0.5)
-					time.sleep(sleep_chunk)
-					if self.should_stop.is_set():
-						break
-					sleep_time -= sleep_chunk
+				self._sleep((60.0 / float(self.max_messages_per_minute)) - iteration_time)
 		return emails_done
+
+	def _sleep(self, duration):
+		while duration > 0:
+			sleep_chunk = min(duration, 0.5)
+			time.sleep(sleep_chunk)
+			if self.should_stop.is_set():
+				break
+			duration -= sleep_chunk
+		return self.should_stop.is_set()
 
 	def _try_send_message(self, *args, **kwargs):
 		message_sent = False
-		while not message_sent:
-			for _ in range(0, 3):
+		while not message_sent and not self.should_stop.is_set():
+			for i in range(0, 3):
 				try:
 					self.send_message(*args, **kwargs)
 					message_sent = True
 					break
+				except smtplib.SMTPServerDisconnected:
+					self.logger.warning('failed to send message, the server has been disconnected')
+					self.tab_notify_status('Failed to send message, the server has been disconnected')
+					self.tab_notify_status('Sleeping for 5 seconds before attempting to reconnect')
+					if self._sleep(5):
+						break
+					self.smtp_connection = None
+					self.server_smtp_reconnect()
 				except smtplib.SMTPException as error:
 					self.tab_notify_status("Failed to send message (exception: {0})".format(error.__class__.__name__))
 					self.logger.warning("failed to send message (exception: smtplib.{0})".format(error.__class__.__name__))
-					time.sleep(1)
+					self._sleep((i + 1) ** 2)
 			if not message_sent:
 				self.server_smtp_disconnect()
 				if not self.process_pause(True):
