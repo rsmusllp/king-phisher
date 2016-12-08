@@ -7,3 +7,4 @@
 
    manager.rst
    models.rst
+   storage.rst

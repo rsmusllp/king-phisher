@@ -112,7 +112,7 @@ class BaseRowCls(object):
 	def __repr__(self):
 		description = "<{0} id={1} ".format(self.__class__.__name__, repr(self.id))
 		for repr_attr in self.__repr_attributes__:
-			description += "{0}={1} ".format(repr_attr, repr(getattr(self, repr_attr)))
+			description += "{0}={1!r} ".format(repr_attr, getattr(self, repr_attr))
 		description += '>'
 		return description
 
