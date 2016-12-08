@@ -366,6 +366,7 @@ class MailSenderThread(threading.Thread):
 			SmtpClass = smtplib.SMTP_SSL
 		else:
 			SmtpClass = smtplib.SMTP
+		self.logger.debug('opening a new connection to the SMTP server')
 		try:
 			self.smtp_connection = SmtpClass(*self.smtp_server, timeout=15)
 			self.smtp_connection.ehlo()
@@ -390,6 +391,7 @@ class MailSenderThread(threading.Thread):
 	def server_smtp_disconnect(self):
 		"""Clean up and close the connection to the remote SMTP server."""
 		if self.smtp_connection:
+			self.logger.debug('closing the connection to the SMTP server')
 			try:
 				self.smtp_connection.quit()
 			except smtplib.SMTPServerDisconnected:
@@ -492,7 +494,7 @@ class MailSenderThread(threading.Thread):
 			self.logger.error('an error occurred while sending messages', exc_info=True)
 			self.tab_notify_status('An error occurred while sending messages.')
 		else:
-			self.tab_notify_status("Finished sending, successfully sent {0:,} messages.".format(emails_done))
+			self.tab_notify_status("Finished sending, successfully sent {0:,} messages".format(emails_done))
 
 		self.server_smtp_disconnect()
 		if self._ssh_forwarder:
@@ -666,7 +668,7 @@ class MailSenderThread(threading.Thread):
 				break
 			if not self.process_pause():
 				break
-			if emails_done > 0 and max_messages_per_connection > 0 and (emails_done % max_messages_per_connection):
+			if emails_done > 0 and max_messages_per_connection > 0 and (emails_done % max_messages_per_connection == 0):
 				self.server_smtp_reconnect()
 
 			emails_done += 1
