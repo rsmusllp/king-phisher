@@ -250,14 +250,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if not os.path.isdir(config_dir):
 			self.logger.debug('creating the user configuration directory')
 			os.makedirs(config_dir)
-		# move the pre 1.0.0 config file if it exists
-		old_path = os.path.expanduser('~/.king_phisher.json')
-		if os.path.isfile(old_path) and os.access(old_path, os.R_OK):
-			self.logger.debug('moving the old config file to the new location')
-			os.rename(old_path, self.config_file)
-		else:
-			client_template = find.find_data_file('client_config.json')
-			shutil.copy(client_template, self.config_file)
+		client_template = find.find_data_file('client_config.json')
+		shutil.copy(client_template, self.config_file)
 
 	def campaign_configure(self):
 		assistant = assistants.CampaignAssistant(self, campaign_id=self.config['campaign_id'])
@@ -383,12 +377,12 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.emit('rpc-cache-clear')
 
 	def do_config_save(self):
-		self.logger.info('writing the client configuration to disk')
 		config = copy.copy(self.config)
 		for key in self.config.keys():
 			if 'password' in key or key == 'server_config':
 				del config[key]
-		with open(os.path.expanduser(self.config_file), 'w') as config_file_h:
+		self.logger.info('writing the config to: ' + self.config_file)
+		with open(self.config_file, 'w') as config_file_h:
 			serializers.JSON.dump(config, config_file_h, pretty=True)
 
 	def do_exit(self):
@@ -458,10 +452,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		:param bool load_defaults: Load missing options from the template configuration file.
 		"""
-		self.logger.info('loading the config from disk')
 		client_template = find.find_data_file('client_config.json')
-		config_file = os.path.expanduser(self.config_file)
-		with open(config_file, 'r') as tmp_file:
+		self.logger.info('loading the config from: ' + self.config_file)
+		with open(self.config_file, 'r') as tmp_file:
 			self.config = serializers.JSON.load(tmp_file)
 		if load_defaults:
 			with open(client_template, 'r') as tmp_file:

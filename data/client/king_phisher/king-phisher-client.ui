@@ -3609,7 +3609,6 @@ Spencer McIntyre</property>
                             <property name="tooltip_text" translatable="yes">Connect to the SMTP server over an SSH tunnel.</property>
                             <property name="halign">start</property>
                             <property name="valign">center</property>
-                            <signal name="notify" handler="signal_switch_smtp_ssh" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
