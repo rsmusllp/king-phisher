@@ -89,6 +89,7 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 			'landing_pages',
 			'messages',
 			'meta_data',
+			'storage_data',
 			'users',
 			'visits'
 		])

@@ -45,7 +45,7 @@ import sqlalchemy.orm
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 """The schema version of the database, used for compatibility checks."""
 
 database_tables = {}
@@ -317,6 +317,17 @@ class LandingPage(Base):
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 	hostname = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 	page = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+
+@register_table
+class StorageData(Base):
+	__repr_attributes__ = ('namespace', 'key', 'value')
+	__tablename__ = 'storage_data'
+	is_private = True
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	namespace = sqlalchemy.Column(sqlalchemy.String)
+	key = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+	value = sqlalchemy.Column(sqlalchemy.Binary)
 
 @register_table
 class Message(Base):
