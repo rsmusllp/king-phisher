@@ -162,7 +162,7 @@ def render_message_template(template, config, target=None, analyze=False):
 
 	template_vars['message'] = dict(
 		attachment=config.get('mailer.attachment_file'),
-		improtance=config.get('mailer.importance'),
+		importance=config.get('mailer.importance'),
 		sensitivity=config.get('mailer.sensitivity'),
 		subject=config.get('mailer.subject'),
 		template=config.get('mailer.html_file'),
