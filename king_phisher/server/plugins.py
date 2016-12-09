@@ -35,6 +35,8 @@ import os
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import plugins
+from king_phisher.server import signals
+from king_phisher.server.database import storage
 
 class ServerPlugin(plugins.PluginBase):
 	"""
@@ -52,6 +54,7 @@ class ServerPlugin(plugins.PluginBase):
 		for option in self.options:
 			if self.config[option.name] is None:
 				raise errors.KingPhisherPluginError(self.name, 'missing required option: ' + option.name)
+		self.storage = None
 
 	@property
 	def config(self):
@@ -100,6 +103,7 @@ class ServerPluginManager(plugins.PluginManagerBase):
 			except Exception:
 				self.logger.critical('failed to enable plugin: ' + plugin, exc_info=True)
 				raise errors.KingPhisherPluginError(plugin, 'failed to enable')
+		signals.db_initialized.connect(self._sig_db_initialized)
 
 	def _get_path(self):
 		path = [find.find_data_directory('plugins')]
@@ -113,6 +117,10 @@ class ServerPluginManager(plugins.PluginManagerBase):
 				continue
 			path.append(directory)
 		return path
+
+	def _sig_db_initialized(self, _):
+		for _, plugin in self:
+			plugin.storage = storage.KeyValueStorage('plugins.' + plugin.name)
 
 	@property
 	def server(self):

@@ -15,6 +15,7 @@ Version 1.6.0
 * Support negotiating STARTTLS with SMTP servers that support it
 * Support for real time event publishing to the client
 * More flexibility in configuring server logging
+* Add persistent storage for server plugin data
 
 Version 1.5.1
 ^^^^^^^^^^^^^
