@@ -37,6 +37,8 @@ from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 from king_phisher.utilities import random_string
 
+import sqlalchemy
+
 get_tables_with_column_id = db_models.get_tables_with_column_id
 
 class ServerDatabaseTests(testing.KingPhisherTestCase):
@@ -94,6 +96,19 @@ class ServerDatabaseTests(testing.KingPhisherTestCase):
 			'visits'
 		])
 		self.assertSetEqual(get_tables_with_column_id('id'), tables)
+
+	def test_public_table_column_types(self):
+		# this test is to ensure that the data types of public tables are
+		# suitable for serialization, i.e. not binary
+		for table_name, table in db_models.database_table_objects.items():
+			if table.is_private:
+				continue
+			for column in table.__table__.columns:
+				self.assertIsInstance(
+					column.type,
+					(sqlalchemy.Boolean, sqlalchemy.DateTime, sqlalchemy.Integer, sqlalchemy.String),
+					msg="{0}.{1} is not an acceptable data type for a public table".format(table_name, column.name)
+				)
 
 	def test_table_names(self):
 		for table_name in db_models.database_tables.keys():

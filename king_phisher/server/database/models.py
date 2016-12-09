@@ -49,7 +49,7 @@ SCHEMA_VERSION = 7
 """The schema version of the database, used for compatibility checks."""
 
 database_tables = {}
-"""A dictionary which contains all the database tables and their columns."""
+"""A dictionary which contains all the database tables and their column names."""
 database_table_objects = {}
 """A dictionary which contains all the database tables and their primitive objects."""
 logger = logging.getLogger('KingPhisher.Server.Database.Models')
