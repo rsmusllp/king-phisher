@@ -84,7 +84,7 @@ def get_groups_for_user(username):
 
 class AuthenticatedSession(object):
 	"""A container to store information associated with an authenticated session."""
-	__slots__ = ('user', 'created', 'last_seen')
+	__slots__ = ('_event_socket', 'user', 'created', 'last_seen')
 	# also used in tools/database_console for mocking a live session
 	def __init__(self, user):
 		"""
