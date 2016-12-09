@@ -160,6 +160,15 @@ def render_message_template(template, config, target=None, analyze=False):
 			summary=config.get('mailer.calendar_invite_summary')
 		)
 
+	template_vars['message'] = dict(
+		attachment=config.get('mailer.attachment_file'),
+		improtance=config.get('mailer.importance'),
+		sensitivity=config.get('mailer.sensitivity'),
+		subject=config.get('mailer.subject'),
+		template=config.get('mailer.html_file'),
+		type=message_type
+	)
+
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urllib.parse.urlparse(webserver_url)
 	tracking_image = config['server_config']['server.tracking_image']
