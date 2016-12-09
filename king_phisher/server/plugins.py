@@ -55,6 +55,11 @@ class ServerPlugin(plugins.PluginBase):
 			if self.config[option.name] is None:
 				raise errors.KingPhisherPluginError(self.name, 'missing required option: ' + option.name)
 		self.storage = None
+		"""
+		An instance of :py:class:`~.storage.KeyValueStorage` for this plugin to
+		use for persistent data storage. This attribute is None until the
+		:py:obj:`~.signals.db_initialized` signal is emitted.
+		"""
 
 	@property
 	def config(self):
