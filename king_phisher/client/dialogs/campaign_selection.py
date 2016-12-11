@@ -70,19 +70,22 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
 		self.treeview_manager = managers.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
-		self.treeview_manager.set_column_titles(('Campaign Name', 'Company', 'Type', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
-		self.treeview_manager.set_column_color(background=7, foreground=8)
-		treeview.set_tooltip_column(9)
+		self.treeview_manager.set_column_titles(('Campaign Name', 'Company', 'Type', 'Messages', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
+		self.treeview_manager.set_column_color(background=8, foreground=9)
+		treeview.set_tooltip_column(10)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		self._creation_assistant = None
 
-		self._tv_model = Gtk.ListStore(str, str, str, str, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
+		self._tv_model = Gtk.ListStore(str, str, str, str, str, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
 		# default sort is descending by campaign creation date
-		self._tv_model.set_sort_column_id(5, Gtk.SortType.DESCENDING)
+		self._tv_model.set_sort_column_id(6, Gtk.SortType.DESCENDING)
+
 		# create and set the filter for expired campaigns
 		self._tv_model_filter = self._tv_model.filter_new()
 		self._tv_model_filter.set_visible_func(self._filter_campaigns)
-		treeview.set_model(Gtk.TreeModelSort(model=self._tv_model_filter))
+		tv_model = Gtk.TreeModelSort(model=self._tv_model_filter)
+		tv_model.set_sort_func(4, gui_utilities.gtk_treesortable_sort_func_numeric, 4)
+		treeview.set_model(tv_model)
 
 		# setup menus for filtering campaigns and load campaigns
 		self.get_popup_filter_menu()
@@ -116,8 +119,8 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.config['filter.campaign.other_users'] = self.filter_menu_items['other_campaigns'].get_active()
 
 	def _filter_campaigns(self, model, tree_iter, _):
-		expiration_ts = model[tree_iter][6]
-		campaign_owner = model[tree_iter][4]
+		expiration_ts = model[tree_iter][7]
+		campaign_owner = model[tree_iter][5]
 		username = self.config['server_username']
 		if not self.filter_menu_items['your_campaigns'].get_active():
 			if username == campaign_owner:
@@ -165,33 +168,59 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
 		hlfg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlfg', default=ColorHexCode.BLACK)
 		now = datetime.datetime.now()
-		for campaign in self.application.rpc.remote_table('campaigns'):
-			company = campaign.company
-			if company:
-				company = company.name
-			created_ts = utilities.datetime_utc_to_local(campaign.created)
+		campaigns_query = """\
+		{
+			db {
+				campaigns {
+					edges {
+						node {
+							id,
+							name,
+							description,
+							company {
+								name
+							},
+							campaignType {
+								name
+							},
+							messages {
+								total
+							},
+							user {
+								id
+							},
+							created,
+							expiration
+						}
+					}
+				}
+			}
+		}
+		"""
+		campaigns = self.application.rpc.graphql(campaigns_query)
+		for campaign in campaigns['db']['campaigns']['edges']:
+			campaign = campaign['node']
+			created_ts = utilities.datetime_utc_to_local(campaign['created'])
 			created_ts = utilities.format_datetime(created_ts)
-			campaign_type = campaign.campaign_type
-			if campaign_type:
-				campaign_type = campaign_type.name
-			expiration_ts = campaign.expiration
+			expiration_ts = campaign['expiration']
 			is_expired = False
 			if expiration_ts is not None:
-				expiration_ts = utilities.datetime_utc_to_local(campaign.expiration)
+				expiration_ts = utilities.datetime_utc_to_local(expiration_ts)
 				if expiration_ts < now:
 					is_expired = True
 				expiration_ts = utilities.format_datetime(expiration_ts)
 			store.append((
-				str(campaign.id),
-				campaign.name,
-				company,
-				campaign_type,
-				campaign.user_id,
+				str(campaign['id']),
+				campaign['name'],
+				(campaign['company']['name'] if campaign['company'] is not None else None),
+				(campaign['campaignType']['name'] if campaign['campaignType'] is not None else None),
+				"{0:,}".format(campaign['messages']['total']),
+				campaign['user']['id'],
 				created_ts,
 				expiration_ts,
 				(hlbg_color if is_expired else bg_color),
 				(hlfg_color if is_expired else fg_color),
-				(html.escape(campaign.description, quote=True) if campaign.description else None)
+				(html.escape(campaign['description'], quote=True) if campaign['description'] else None)
 			))
 		self.gobjects['label_campaign_info'].set_text("Showing {0} of {1:,} Campaign{2}".format(
 			len(self._tv_model_filter),

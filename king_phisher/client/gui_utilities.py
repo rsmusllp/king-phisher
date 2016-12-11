@@ -74,6 +74,9 @@ parameters, the object and the value and the get function will just be
 provided the object.
 """
 
+# official python3 work-around per https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
+_cmp = lambda i1, i2: (i1 > i2) - (i1 < i2)
+
 def which_glade():
 	"""
 	Locate the glade data file which stores the UI information in a Gtk Builder
@@ -315,14 +318,14 @@ def gtk_treesortable_sort_func_numeric(model, iter1, iter2, column_id):
 	item1 = model.get_value(iter1, column_id).replace(',', '')
 	item2 = model.get_value(iter2, column_id).replace(',', '')
 	if item1.isdigit() and item2.isdigit():
-		return cmp(int(item1), int(item2))
+		return _cmp(int(item1), int(item2))
 	if item1.isdigit():
 		return -1
 	elif item2.isdigit():
 		return 1
 	item1 = model.get_value(iter1, column_id)
 	item2 = model.get_value(iter2, column_id)
-	return cmp(item1, item2)
+	return _cmp(item1, item2)
 
 def gtk_treeview_selection_iterate(treeview):
 	"""
