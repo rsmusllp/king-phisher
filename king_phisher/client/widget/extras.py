@@ -205,6 +205,8 @@ class WebKitHTMLView(_WebKitX_WebView):
 		if has_webkit2:
 			self.load_html(html_data, html_file_uri)
 		else:
+			if html_file_uri is None:
+				html_file_uri = 'file://' + os.getcwd()
 			self.load_string(html_data, 'text/html', 'UTF-8', html_file_uri)
 
 	def load_html_file(self, html_file):
