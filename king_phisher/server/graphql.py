@@ -44,20 +44,25 @@ import graphql_relay.connection.arrayconnection
 import graphene_sqlalchemy
 
 class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
+	__connection_types = {}
 	def __init__(self, node, *args, **kwargs):
 		node = self.connection_factory(node)
 		super(SQLAlchemyConnectionField, self).__init__(node, *args, **kwargs)
 
 	@classmethod
 	def connection_factory(cls, node):
+		name = node.__name__ + 'Connection'
+		if name in cls.__connection_types:
+			return cls.__connection_types[name]
 		connection_type = type(
 			node.__name__ + 'Connection',
 			(graphene.relay.Connection,),
 			{
 				'Meta': type('Meta', (), {'node': node}),
-				'total': graphene.Int(),
+				'total': graphene.Int()
 			}
 		)
+		cls.__connection_types[name] = connection_type
 		return connection_type
 
 	@classmethod
