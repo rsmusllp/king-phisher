@@ -39,6 +39,7 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import king_phisher.color as color
 import king_phisher.utilities as utilities
 import king_phisher.server.aaa as aaa
 import king_phisher.server.graphql as graphql
@@ -59,6 +60,28 @@ else:
 	readline.parse_and_bind('tab: complete')
 	if os.path.isfile(history_file):
 		readline.read_history_file(history_file)
+
+def graphql_query(query, query_vars=None, context=None):
+	session = None
+	if context is None:
+		context = {}
+	if 'session' not in context:
+		session = manager.Session()
+		context['session'] = session
+	result = graphql.schema.execute(query, context_value=context, variable_values=query_vars)
+	if session is not None:
+		session.close()
+	if result.errors:
+		color.print_error('GraphQL Exception:')
+		for error in result.errors:
+			if hasattr(error, 'message'):
+				print('  ' + error.message)
+			elif hasattr(error, 'args'):
+				print('  ' + str(error.args[0]))
+			else:
+				print('  ' + repr(error))
+	else:
+		pprint.pprint(result.data)
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Interactive Database Console', conflict_handler='resolve')
@@ -84,6 +107,7 @@ def main():
 	console = code.InteractiveConsole(dict(
 		engine=engine,
 		graphql=graphql,
+		graphql_query=graphql_query,
 		manager=manager,
 		models=models,
 		pprint=pprint.pprint,
