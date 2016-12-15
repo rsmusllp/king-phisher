@@ -118,7 +118,6 @@ class GeoLocation(graphene.ObjectType):
 	country = graphene.Field(graphene.String)
 	postal_code = graphene.Field(graphene.String)
 	time_zone = graphene.Field(graphene.String)
-
 	@classmethod
 	def from_ip_address(cls, ip_address):
 		ip_address = ipaddress.ip_address(ip_address)
@@ -138,7 +137,6 @@ class Plugin(graphene.ObjectType):
 	homepage = graphene.Field(graphene.String)
 	name = graphene.Field(graphene.String)
 	version = graphene.Field(graphene.String)
-
 	@classmethod
 	def from_plugin(cls, plugin):
 		return cls(
@@ -154,7 +152,6 @@ class PluginConnection(graphene.relay.Connection):
 	class Meta:
 		node = Plugin
 	total = graphene.Int()
-
 	def resolve_total(self, args, context, info):
 		return len(context.get('plugin_manager', {}))
 
@@ -177,6 +174,12 @@ class DeaddropConnection(graphene_sqlalchemy.SQLAlchemyObjectType):
 		interfaces = (RelayNode,)
 	first_visit = DateTime()
 	last_visit = DateTime()
+	visitor_geoloc = graphene.Field(GeoLocation)
+	def resolve_visitor_geoloc(self, args, context, info):
+		visitor_ip = self.visitor_ip
+		if not visitor_ip:
+			return
+		return GeoLocation.from_ip_address(visitor_ip)
 
 class DeaddropDeployment(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
@@ -199,7 +202,6 @@ class Visit(graphene_sqlalchemy.SQLAlchemyObjectType):
 	visitor_geoloc = graphene.Field(GeoLocation)
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
-
 	def resolve_visitor_geoloc(self, args, context, info):
 		visitor_ip = self.visitor_ip
 		if not visitor_ip:
@@ -211,10 +213,16 @@ class Message(graphene_sqlalchemy.SQLAlchemyObjectType):
 		model = db_models.Message
 		interfaces = (RelayNode,)
 	opened = DateTime()
+	opener_geoloc = graphene.Field(GeoLocation)
 	sent = DateTime()
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
 	visits = SQLAlchemyConnectionField(Visit)
+	def resolve_opener_geoloc(self, args, context, info):
+		opener_ip = self.opener_ip
+		if not opener_ip:
+			return
+		return GeoLocation.from_ip_address(opener_ip)
 
 class Campaign(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
@@ -268,25 +276,25 @@ class User(graphene_sqlalchemy.SQLAlchemyObjectType):
 	campaigns = SQLAlchemyConnectionField(Campaign)
 
 class Database(graphene.ObjectType):
-	alert_subscription = graphene.Field(AlertSubscription, id=graphene.Int())
+	alert_subscription = graphene.Field(AlertSubscription, id=graphene.String())
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
-	campaign_type = graphene.Field(CampaignType, id=graphene.Int())
+	campaign_type = graphene.Field(CampaignType, id=graphene.String())
 	campaign_types = SQLAlchemyConnectionField(CampaignType)
-	campaign = graphene.Field(Campaign, id=graphene.Int())
+	campaign = graphene.Field(Campaign, id=graphene.String())
 	campaigns = SQLAlchemyConnectionField(Campaign)
-	company = graphene.Field(Company, id=graphene.Int())
+	company = graphene.Field(Company, id=graphene.String())
 	companies = SQLAlchemyConnectionField(Company)
-	company_department = graphene.Field(CompanyDepartment, id=graphene.Int())
+	company_department = graphene.Field(CompanyDepartment, id=graphene.String())
 	company_departments = SQLAlchemyConnectionField(CompanyDepartment)
-	credential = graphene.Field(Credential, id=graphene.Int())
+	credential = graphene.Field(Credential, id=graphene.String())
 	credentials = SQLAlchemyConnectionField(Credential)
-	deaddrop_connection = graphene.Field(DeaddropConnection, id=graphene.Int())
+	deaddrop_connection = graphene.Field(DeaddropConnection, id=graphene.String())
 	deaddrop_connections = SQLAlchemyConnectionField(DeaddropConnection)
 	deaddrop_deployment = graphene.Field(DeaddropDeployment, id=graphene.String())
 	deaddrop_deployments = SQLAlchemyConnectionField(DeaddropDeployment)
-	industry = graphene.Field(Industry, id=graphene.Int())
+	industry = graphene.Field(Industry, id=graphene.String())
 	industries = SQLAlchemyConnectionField(Industry)
-	landing_page = graphene.Field(LandingPage, id=graphene.Int())
+	landing_page = graphene.Field(LandingPage, id=graphene.String())
 	landing_pages = SQLAlchemyConnectionField(LandingPage)
 	message = graphene.Field(Message, id=graphene.String())
 	messages = SQLAlchemyConnectionField(Message)
@@ -294,7 +302,6 @@ class Database(graphene.ObjectType):
 	users = SQLAlchemyConnectionField(User)
 	visit = graphene.Field(Visit, id=graphene.String())
 	visits = SQLAlchemyConnectionField(Visit)
-
 	def resolve_alert_subscription(self, args, context, info):
 		query = AlertSubscription.get_query(context)
 		query = query.filter_by(**args)
@@ -422,7 +429,6 @@ class Query(graphene.ObjectType):
 	plugin = graphene.Field(Plugin, name=graphene.String())
 	plugins = graphene.relay.ConnectionField(PluginConnection)
 	version = graphene.Field(graphene.String)
-
 	def resolve_db(self, args, context, info):
 		return Database()
 
