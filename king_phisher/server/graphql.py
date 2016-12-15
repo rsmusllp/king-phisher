@@ -39,6 +39,7 @@ import king_phisher.server.database.models as db_models
 import king_phisher.version as version
 
 import graphene
+import graphene.relay.connection
 import graphene.types
 import graphql_relay.connection.arrayconnection
 import graphene_sqlalchemy
@@ -74,14 +75,15 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 			_len = iterable.count()
 		else:
 			_len = len(iterable)
-		connection = functools.partial(connection, total=_len)
 		return graphql_relay.connection.arrayconnection.connection_from_list_slice(
 			iterable,
 			args,
 			slice_start=0,
 			list_length=_len,
 			list_slice_length=_len,
-			connection_type=connection
+			connection_type=functools.partial(connection, total=_len),
+			pageinfo_type=graphene.relay.connection.PageInfo,
+			edge_type=connection.Edge
 		)
 
 # replacement graphql types
