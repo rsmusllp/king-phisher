@@ -21,10 +21,10 @@ be found in the King Phisher `GitHub wiki`_.
    :numbered:
    :maxdepth: 1
 
-   king_phisher_api.rst
-   client_gui.rst
+   king_phisher/index.rst
+   client_gui/index.rst
    server_api/index.rst
-   plugins.rst
+   plugins/index.rst
    environment_vars.rst
    change_log.rst
    release_steps.rst

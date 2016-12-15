@@ -3,7 +3,6 @@ Server API
 
 .. toctree::
    :maxdepth: 1
-   :numbered:
    :titlesonly:
 
    published_events.rst
