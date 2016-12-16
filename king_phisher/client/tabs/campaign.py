@@ -278,12 +278,11 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
 		campaign_id = self.config['campaign_id']
 		count = 500
-		cursor = None
-		has_next_page = True
-		while has_next_page:
+		page_info = {'endCursor': None, 'hasNextPage': True}
+		while page_info['hasNextPage']:
 			if self.rpc is None:
 				break
-			results = self.rpc.graphql(self.table_query, {'campaign': campaign_id, 'count': count, 'cursor': cursor})
+			results = self.rpc.graphql(self.table_query, {'campaign': campaign_id, 'count': count, 'cursor': page_info['endCursor']})
 			if self.loader_thread_stop.is_set():
 				break
 			if self.is_destroyed.is_set():
@@ -293,8 +292,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 				row_data = list(map(self.format_cell_data, row_data))
 				row_data.insert(0, str(edge['node']['id']))
 				gui_utilities.glib_idle_add_wait(store.append, row_data)
-				cursor = edge['cursor']
-			has_next_page = results['db']['campaign'][self.table_name]['pageInfo']['hasNextPage']
+			page_info = results['db']['campaign'][self.table_name]['pageInfo']
 		if self.is_destroyed.is_set():
 			return
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', True))
@@ -366,7 +364,6 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 				deaddropConnections(first: $count, after: $cursor) {
 					total
 					edges {
-						cursor
 						node {
 							id
 							deaddropDeployment { destination }
@@ -379,7 +376,10 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 							lastVisit
 						}
 					}
-					pageInfo { hasNextPage }
+					pageInfo {
+						endCursor
+						hasNextPage
+					}
 				}
 			}
 		}
@@ -435,7 +435,6 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 				credentials(first: $count, after: $cursor) {
 					total
 					edges {
-						cursor
 						node {
 							id
 							message { targetEmail }
@@ -444,7 +443,10 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 							submitted
 						}
 					}
-					pageInfo { hasNextPage }
+					pageInfo {
+						endCursor
+						hasNextPage
+					}
 				}
 			}
 		}
@@ -595,7 +597,6 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 				visits(first: $count, after: $cursor) {
 					total
 					edges {
-						cursor
 						node {
 							id
 							message { targetEmail }
@@ -607,7 +608,10 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 							lastVisit
 						}
 					}
-					pageInfo { hasNextPage }
+					pageInfo {
+						endCursor
+						hasNextPage
+					}
 				}
 			}
 		}
@@ -675,7 +679,6 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 				messages(first: $count, after: $cursor) {
 					total
 					edges {
-						cursor
 						node {
 							id
 							targetEmail
@@ -687,7 +690,10 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 							openerUserAgent
 						}
 					}
-					pageInfo { hasNextPage }
+					pageInfo {
+						endCursor
+						hasNextPage
+					}
 				}
 			}
 		}
