@@ -14,6 +14,7 @@ Version 1.6.0
 
 * Support negotiating STARTTLS with SMTP servers that support it
 * Support for real time event publishing to the client
+* Support for a new GraphQL API for more efficient data queries
 * More flexibility in configuring server logging
 * Add persistent storage for server plugin data
 

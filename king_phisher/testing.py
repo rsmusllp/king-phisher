@@ -130,7 +130,13 @@ class KingPhisherTestCase(smoke_zephyr.utilities.TestCase):
 	:py:class:`unittest.TestCase` object, including better compatibility for
 	methods across Python 2.x and Python 3.x.
 	"""
-	pass
+	def assertIsEmpty(self, obj, msg=None):
+		if len(obj):
+			self.fail(msg or 'the object is not empty')
+
+	def assertIsNotEmpty(self, obj, msg=None):
+		if not len(obj):
+			self.fail(msg or 'the object is empty')
 
 class KingPhisherServerTestCase(KingPhisherTestCase):
 	"""

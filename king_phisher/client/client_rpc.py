@@ -185,7 +185,12 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 	def graphql(self, query, query_vars=None):
 		response = self.call('graphql', query, query_vars=query_vars)
 		if response['errors']:
-			raise errors.KingPhisherGraphQLQueryError('the query failed', errors=response['errors'])
+			raise errors.KingPhisherGraphQLQueryError(
+				'the query failed',
+				errors=response['errors'],
+				query=query,
+				query_vars=query_vars
+			)
 		return response['data']
 
 	def reconnect(self):
