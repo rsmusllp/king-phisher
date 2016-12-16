@@ -78,6 +78,23 @@ class ServerGraphQLTests(KingPhisherTestCase):
 		self.assertEquals(users[0]['node']['otpSecret'], 'secret')
 		self.assertIsNone(users[1]['node']['otpSecret'])
 
+	def test_query_get_node(self):
+		self._init_db()
+		session = db_manager.Session()
+		result = graphql.schema.execute(
+			"{ db { users(first: 1) { total edges { cursor node { id } } } } }",
+			context_value={'session': session}
+		)
+		users = result.data['db']['users']
+		self.assertEquals(users['total'], 2)
+		self.assertIn('edges', users)
+		self.assertEqual(len(users['edges']), 1)
+		edge = users['edges'][0]
+		self.assertIn('cursor', edge)
+		self.assertIsInstance(edge['cursor'], str)
+		self.assertIn('node', edge)
+		self.assertIsInstance(edge['node'], dict)
+
 	def test_query_get_total(self):
 		self._init_db()
 		session = db_manager.Session()
@@ -86,6 +103,18 @@ class ServerGraphQLTests(KingPhisherTestCase):
 			context_value={'session': session}
 		)
 		self.assertEquals(result.data['db']['users']['total'], 2)
+
+	def test_query_get_pageinfo(self):
+		self._init_db()
+		session = db_manager.Session()
+		result = graphql.schema.execute(
+			"{ db { users(first: 1) { total pageInfo { hasNextPage } } } }",
+			context_value={'session': session}
+		)
+		users = result.data['db']['users']
+		self.assertEquals(users['total'], 2)
+		self.assertIn('pageInfo', users)
+		self.assertTrue(users['pageInfo'].get('hasNextPage', False))
 
 	def test_query_plugins(self):
 		result = graphql.schema.execute("{ plugins { edges { node { name } } } }")

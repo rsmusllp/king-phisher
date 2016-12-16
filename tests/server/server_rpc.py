@@ -82,11 +82,25 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.assertRPCPermissionDenied('config/set', {config_key: config_value})
 
 	def test_rpc_graphql(self):
-		response = self.rpc('graphql', """{ version }""")
+		response = self.rpc('graphql', "{ version }")
 		self.assertIn('data', response)
 		self.assertIn('errors', response)
+		self.assertIsNotNone(response['data'])
+		self.assertIsNone(response['errors'])
+
 		response = response['data'].get('version')
 		self.assertEquals(response, version.version)
+
+	def test_rpc_graphql_errors(self):
+		response = self.rpc('graphql', "{ foobar }")
+		self.assertIn('data', response)
+		self.assertIn('errors', response)
+		self.assertIsNone(response['data'])
+		self.assertIsNotNone(response['errors'])
+
+		self.assertNotEquals(len(response['errors']), 0)
+		for error in response['errors']:
+			self.assertIsInstance(error, str)
 
 	def test_rpc_is_unauthorized(self):
 		http_response = self.http_request('/ping', method='RPC')

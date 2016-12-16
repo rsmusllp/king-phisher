@@ -721,4 +721,14 @@ def rpc_graphql(handler, session, query, query_vars=None):
 		},
 		variable_values=query_vars
 	)
-	return {'data': result.data, 'errors': result.errors}
+	errors = None
+	if result.errors:
+		errors = []
+		for error in result.errors:
+			if hasattr(error, 'message'):
+				errors.append(error.message)
+			elif hasattr(error, 'args') and error.args:
+				errors.append(str(error.args[0]))
+			else:
+				errors.append(repr(error))
+	return {'data': result.data, 'errors': errors}
