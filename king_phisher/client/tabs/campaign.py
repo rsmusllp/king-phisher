@@ -44,7 +44,6 @@ from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
 from king_phisher.client.widget import managers
 
-from boltons import iterutils
 from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -135,8 +134,19 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			'treeview_campaign'
 		)
 	)
-	remote_table_name = ''
+	node_query = None
+	"""
+	The GraphQL query used to load a particular node from the remote table.
+	This query is provided with a single parameter of the node's id.
+	"""
+	table_name = ''
 	"""The database table represented by this tab."""
+	table_query = None
+	"""
+	The GraphQL query used to load the desired information from the remote
+	table. This query is provided with the following three parameters:
+	campaign, count and cursor.
+	"""
 	view_columns = ()
 	"""The dictionary map of column numbers to column names starting at column 1."""
 	xlsx_worksheet_options = None
@@ -159,20 +169,20 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.application.connect('server-connected', self.signal_kp_server_connected)
 
 	def signal_kp_server_connected(self, _):
-		event_id = 'db-' + self.remote_table_name.replace('_', '-')
+		event_id = 'db-' + self.table_name.replace('_', '-')
 		server_events = self.application.server_events
 		server_events.subscribe(event_id, ('deleted', 'inserted', 'updated'), ('id', 'campaign_id'))
 		server_events.connect(event_id, self.signal_server_event_db)
 
 	def signal_server_event_db(self, _, event_type, rows):
+		get_node = lambda id: self.rpc.graphql(self.node_query, {'id': str(id)})['db']['node']
 		for row in rows:
 			if str(row.campaign_id) != self.config['campaign_id']:
 				continue
 			model = self.gobjects['treeview_campaign'].get_model()
 			for case in utilities.switch(event_type):
 				if case('inserted'):
-					self.rpc.remote_row_resolve(row)
-					row_data = self.format_row_data(row)
+					row_data = self.format_node_data(get_node(row.id))
 					row_data = list(map(self.format_cell_data, row_data))
 					row_data.insert(0, str(row.id))
 					gui_utilities.glib_idle_add_wait(model.append, row_data)
@@ -182,8 +192,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 						model.remove(ti)
 					break
 				if case('updated'):
-					self.rpc.remote_row_resolve(row)
-					row_data = self.format_row_data(row)
+					row_data = self.format_node_data(get_node(row.id))
 					ti = gui_utilities.gtk_list_store_search(model, str(row.id))
 					for idx, cell_data in enumerate(row_data, 1):
 						model[ti][idx] = self.format_cell_data(cell_data)
@@ -203,16 +212,17 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			message = "Delete These {0:,} Rows?".format(len(row_ids))
 		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
-		self.application.emit(self.remote_table_name[:-1] + '-delete', row_ids)
+		self.application.emit(self.table_name[:-1] + '-delete', row_ids)
 
-	def format_row_data(self, row):
+	def format_node_data(self, node):
 		"""
-		This method is overridden by subclasses to format the raw row
+		This method is overridden by subclasses to format the raw node
 		data returned from the server. The length of the list must equal
 		the number of columns in the table. This method is called for
-		each row in the remote table by the loader thread.
+		each node in the remote table by the loader thread.
 
-		:return: The formated row data.
+		:param dict node: The node from a GraphQL query representing data for this table.
+		:return: The formatted row data.
 		:rtype: list
 		"""
 		raise NotImplementedError()
@@ -266,20 +276,25 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		:type store: :py:class:`Gtk.ListStore`
 		"""
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', False))
-		for row in self.rpc.remote_table(self.remote_table_name, query_filter={'campaign_id': self.config['campaign_id']}):
+		campaign_id = self.config['campaign_id']
+		count = 500
+		cursor = None
+		has_next_page = True
+		while has_next_page:
+			if self.rpc is None:
+				break
+			results = self.rpc.graphql(self.table_query, {'campaign': campaign_id, 'count': count, 'cursor': cursor})
 			if self.loader_thread_stop.is_set():
 				break
 			if self.is_destroyed.is_set():
 				break
-			if self.rpc is None:
-				break
-			row_data = self.format_row_data(row)
-			if row_data is None:
-				self.rpc('db/table/delete', self.remote_table_name, row.id)
-				continue
-			row_data = list(map(self.format_cell_data, row_data))
-			row_data.insert(0, str(row.id))
-			gui_utilities.glib_idle_add_wait(store.append, row_data)
+			for edge in results['db']['campaign'][self.table_name]['edges']:
+				row_data = self.format_node_data(edge['node'])
+				row_data = list(map(self.format_cell_data, row_data))
+				row_data.insert(0, str(edge['node']['id']))
+				gui_utilities.glib_idle_add_wait(store.append, row_data)
+				cursor = edge['cursor']
+			has_next_page = results['db']['campaign'][self.table_name]['pageInfo']['hasNextPage']
 		if self.is_destroyed.is_set():
 			return
 		gui_utilities.glib_idle_add_wait(lambda: self.gobjects['treeview_campaign'].set_property('sensitive', True))
@@ -325,8 +340,51 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""
-	remote_table_name = 'deaddrop_connections'
+	table_name = 'deaddrop_connections'
 	label_text = 'Deaddrop'
+	node_query = """\
+	query getDeaddropConnection($id: String!) {
+		db {
+			node: credential(id: $id) {
+				id
+				deaddropDeployment { destination }
+				visitCount
+				visitorIp
+				localUsername
+				localHostname
+				localIpAddresses
+				firstVisit
+				lastVisit
+			}
+		}
+	}
+	"""
+	table_query = """\
+	query getDeaddropConnections($campaign: String!, $count: Int!, $cursor: String) {
+		db {
+			campaign(id: $campaign) {
+				deaddropConnections(first: $count, after: $cursor) {
+					total
+					edges {
+						cursor
+						node {
+							id
+							deaddropDeployment { destination }
+							visitCount
+							visitorIp
+							localUsername
+							localHostname
+							localIpAddresses
+							firstVisit
+							lastVisit
+						}
+					}
+					pageInfo { hasNextPage }
+				}
+			}
+		}
+	}
+	"""
 	view_columns = (
 		'Destination',
 		'Visit Count',
@@ -337,7 +395,7 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 		'First Hit',
 		'Last Hit'
 	)
-	def format_row_data(self, connection):
+	def format_node_data(self, connection):
 		deploy_details = self.rpc.remote_table_row('deaddrop_deployments', connection.deployment_id, cache=True)
 		if not deploy_details:
 			return None
@@ -355,8 +413,43 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 
 class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding submitted credentials."""
-	remote_table_name = 'credentials'
+	table_name = 'credentials'
 	label_text = 'Credentials'
+	node_query = """\
+	query getCredential($id: String!) {
+		db {
+			node: credential(id: $id) {
+				id
+				message { targetEmail }
+				username
+				password
+				submitted
+			}
+		}
+	}
+	"""
+	table_query = """\
+	query getCredentials($campaign: String!, $count: Int!, $cursor: String) {
+		db {
+			campaign(id: $campaign) {
+				credentials(first: $count, after: $cursor) {
+					total
+					edges {
+						cursor
+						node {
+							id
+							message { targetEmail }
+							username
+							password
+							submitted
+						}
+					}
+					pageInfo { hasNextPage }
+				}
+			}
+		}
+	}
+	"""
 	view_columns = (
 		'Email Address',
 		'Username',
@@ -373,15 +466,12 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		pwd_column_id = self.view_columns.index('Password')
 		treeview.get_column(pwd_column_id).set_property('visible', False)
 
-	def format_row_data(self, credential):
-		msg_details = self.rpc.remote_table_row('messages', credential.message_id, cache=True)
-		if not msg_details:
-			return None
+	def format_node_data(self, node):
 		row = (
-			msg_details.target_email,
-			credential.username,
-			credential.password,
-			credential.submitted
+			node['message']['targetEmail'],
+			node['username'],
+			node['password'],
+			node['submitted']
 		)
 		return row
 
@@ -480,8 +570,49 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 
 class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding incoming visitors."""
-	remote_table_name = 'visits'
+	table_name = 'visits'
 	label_text = 'Visits'
+	node_query = """\
+	query getVisit($id: String!) {
+		db {
+			node: visit(id: $id) {
+				id
+				message { targetEmail }
+				visitorIp
+				visitCount
+				visitorDetails
+				visitorGeoloc { city }
+				firstVisit
+				lastVisit
+			}
+		}
+	}
+	"""
+	table_query = """\
+	query getVisits($campaign: String!, $count: Int!, $cursor: String) {
+		db {
+			campaign(id: $campaign) {
+				visits(first: $count, after: $cursor) {
+					total
+					edges {
+						cursor
+						node {
+							id
+							message { targetEmail }
+							visitorIp
+							visitCount
+							visitorDetails
+							visitorGeoloc { city }
+							firstVisit
+							lastVisit
+						}
+					}
+					pageInfo { hasNextPage }
+				}
+			}
+		}
+	}
+	"""
 	view_columns = (
 		'Email Address',
 		'IP Address',
@@ -495,15 +626,8 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		column_widths=(30, 30, 25, 15, 90, 30, 25, 25),
 		title=label_text
 	)
-	def __init__(self, *args, **kwargs):
-		super(CampaignViewVisitsTab, self).__init__(*args, **kwargs)
-		self._ips_for_georesolution = {}
-
-	def format_row_data(self, visit):
-		msg_details = self.rpc.remote_table_row('messages', visit.message_id, cache=True)
-		if not msg_details:
-			return None
-		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
+	def format_node_data(self, node):
+		visitor_ip = ipaddress.ip_address(node['visitorIp'])
 		geo_location = UNKNOWN_LOCATION_STRING
 		if visitor_ip.is_loopback:
 			geo_location = 'N/A (Loopback)'
@@ -511,37 +635,64 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 			geo_location = 'N/A (Private)'
 		elif isinstance(visitor_ip, ipaddress.IPv6Address):
 			geo_location = 'N/A (IPv6 Address)'
-		else:
-			if not visitor_ip in self._ips_for_georesolution:
-				self._ips_for_georesolution[visitor_ip] = visit.first_visit
-			elif self._ips_for_georesolution[visitor_ip] > visit.first_visit:
-				self._ips_for_georesolution[visitor_ip] = visit.first_visit
+		elif node['visitorGeoloc']:
+			geo_location = node['visitorGeoloc']['city']
 		row = (
-			msg_details.target_email,
-			str(visitor_ip),
-			visit.visit_count,
-			visit.visitor_details,
+			node['message']['targetEmail'],
+			node['visitorIp'],
+			node['visitCount'],
+			node['visitorDetails'],
 			geo_location,
-			visit.first_visit,
-			visit.last_visit
+			node['firstVisit'],
+			node['lastVisit']
 		)
 		return row
 
-	def loader_thread_routine(self, store):
-		self._ips_for_georesolution = {}
-		super(CampaignViewVisitsTab, self).loader_thread_routine(store)
-		ips_for_geores = [ip for (ip, _) in sorted(self._ips_for_georesolution.items(), key=lambda x: x[1])]
-		locations = {}
-		for ip_addresses in iterutils.chunked(ips_for_geores, 50):
-			locations.update(self.rpc.geoip_lookup_multi(ip_addresses))
-		for row in store:
-			if row[2] in locations:
-				row[5] = str(locations[row[2]])
-
 class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding sent messages."""
-	remote_table_name = 'messages'
+	table_name = 'messages'
 	label_text = 'Messages'
+	node_query = """\
+	query getMessage($id: String!) {
+		db {
+			node: messages(id: $id) {
+				id
+				targetEmail
+				sent
+				trained
+				companyDepartment { name }
+				opened
+				openerIp
+				openerUserAgent
+			}
+		}
+	}
+	"""
+	table_query = """\
+	query getMessages($campaign: String!, $count: Int!, $cursor: String) {
+		db {
+			campaign(id: $campaign) {
+				messages(first: $count, after: $cursor) {
+					total
+					edges {
+						cursor
+						node {
+							id
+							targetEmail
+							sent
+							trained
+							companyDepartment { name }
+							opened
+							openerIp
+							openerUserAgent
+						}
+					}
+					pageInfo { hasNextPage }
+				}
+			}
+		}
+	}
+	"""
 	view_columns = (
 		'Email Address',
 		'Sent',
@@ -555,18 +706,18 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 		column_widths=(30, 30, 30, 15, 20, 20, 25, 90),
 		title=label_text
 	)
-	def format_row_data(self, message):
-		department = message.company_department
+	def format_node_data(self, node):
+		department = node['companyDepartment']
 		if department:
-			department = department.name
+			department = department['name']
 		row = (
-			message.target_email,
-			message.sent,
-			('Yes' if message.trained else ''),
+			node['targetEmail'],
+			node['sent'],
+			('Yes' if node['trained'] else ''),
 			department,
-			message.opened,
-			message.opener_ip,
-			message.opener_user_agent
+			node['opened'],
+			node['openerIp'],
+			node['openerUserAgent']
 		)
 		return row
 
