@@ -36,6 +36,7 @@ import hashlib
 import logging
 import os
 
+from king_phisher import its
 from king_phisher import errors
 from king_phisher.client import gui_utilities
 
@@ -157,10 +158,13 @@ class MissingHostKeyPolicy(paramiko.MissingHostKeyPolicy):
 		else:
 			dialog = HostKeyAcceptDialog(self.application, hostname, key)
 			if dialog.interact() != Gtk.ResponseType.ACCEPT:
-				raise errors.KingPhisherAbortError('unknown ssh host key for ' + hostname)
+				raise errors.KingPhisherAbortError('unknown ssh host key not accepted by the user for ' + hostname)
 			host_keys.add(hostname, key.get_name(), key)
 			host_keys_modified = True
 
 		if host_keys_modified:
-			host_keys.save(known_hosts_file)
-			os.chmod(known_hosts_file, 0o600)
+			try:
+				host_keys.save(known_hosts_file)
+				os.chmod(known_hosts_file, 0o600)
+			except (IOError if its.py_v2 else PermissionError):
+				self.logger.warning('failed to save the known_hosts file and set its permissions')
