@@ -343,7 +343,7 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	node_query = """\
 	query getDeaddropConnection($id: String!) {
 		db {
-			node: credential(id: $id) {
+			node: deaddropConnection(id: $id) {
 				id
 				deaddropDeployment { destination }
 				visitCount
@@ -659,7 +659,7 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	node_query = """\
 	query getMessage($id: String!) {
 		db {
-			node: messages(id: $id) {
+			node: message(id: $id) {
 				id
 				targetEmail
 				sent
