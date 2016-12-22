@@ -544,6 +544,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('failed to connect to the remote rpc service due to http bad status line: ' + error.line)
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, generic_message)
 		except socket.error as error:
+			self.logger.debug('failed to connect to the remote rpc service due to a socket error', exc_info=True)
 			gui_utilities.show_dialog_exc_socket_error(error, active_window)
 		except ssl.CertificateError as error:
 			self.logger.warning('failed to connect to the remote rpc service with a https certificate error: ' + error.message)
