@@ -10,7 +10,21 @@ Version 1.x.x
 Version 1.5.2
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.5.2` on December 23rd, 2016
+
+* Minor bug fixes
+
+   * Use Default SMS sender to fix SMS subscription with T-Mobile
+   * Upgrade AHS to v2.0.6 to fix select polling
+   * Corrected issue when attachment file is inaccessible
+   * Fixed issue when message file directory is gone
+   * Fixed server side encoding error with basic auth
+   * Fixed TypeError handling while rendering templates
+   * Fixed a unicode bug when processing targets csv
+   * Fixed install.sh script for CentOS7 and python3
+   * Fixed show exception dialog with Glib idle_add
+   * Fixed a logic bug causing premature SMTP reconnects
+   * Fixed Webkit-1 load_string Null error
 
 Version 1.5.1
 ^^^^^^^^^^^^^
