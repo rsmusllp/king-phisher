@@ -136,6 +136,10 @@ def render_message_template(template, config, target=None, analyze=False):
 
 	template = template_environment.from_string(template)
 	template_vars = {}
+	template_vars['campaign'] = dict(
+		id=str(config['campaign_id']),
+		name=config['campaign_name']
+	)
 	template_vars['client'] = dict(
 		first_name=target.first_name,
 		last_name=target.last_name,

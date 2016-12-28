@@ -213,6 +213,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			if message:
 				campaign = message.campaign
 				client_vars['campaign'] = {
+					'id': str(campaign.id),
 					'name': campaign.name,
 					'created': campaign.created,
 					'expiration': campaign.expiration,

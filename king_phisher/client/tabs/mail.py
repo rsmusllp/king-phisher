@@ -1067,27 +1067,37 @@ class MailSenderTab(_GObject_GObject):
 		elif preview_tab and current_page == preview_tab.box:
 			preview_tab.show_tab()
 
-	def export_message_data(self):
+	def export_message_data(self, path=None):
 		"""
 		Gather and prepare the components of the mailer tab to be exported into
-		a message archive file suitable for restoring at a later point in time.
+		a King Phisher message (KPM) archive file suitable for restoring at a
+		later point in time. If *path* is not specified, the user will be
+		prompted to select one and failure to do so will prevent the message
+		data from being exported.
+
+		:param str path: An optional path of where to save the archive file to.
+		:return: Whether or not the message archive file was written to disk.
+		:rtype: bool
 		"""
 		config_tab = self.tabs.get('config')
 		if not config_tab:
 			self.logger.warning('attempted to export message data while the config tab was unavailable')
-			return
+			return False
+		if path is None:
+			dialog = extras.FileChooserDialog('Export Message Configuration', self.parent)
+			response = dialog.run_quick_save('message.kpm')
+			dialog.destroy()
+			if not response:
+				return False
+			path = response['target_path']
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
-		dialog = extras.FileChooserDialog('Export Message Configuration', self.parent)
-		response = dialog.run_quick_save('message.kpm')
-		dialog.destroy()
-		if not response:
-			return
 		message_config = {}
 		config_keys = (key for key in self.config.keys() if key.startswith(config_prefix))
 		for config_key in config_keys:
 			message_config[config_key[7:]] = self.config[config_key]
-		export.message_data_to_kpm(message_config, response['target_path'])
+		export.message_data_to_kpm(message_config, path)
+		return True
 
 	def import_message_data(self):
 		"""
