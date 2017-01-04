@@ -17,6 +17,7 @@ Version 1.6.0
 * Support for a new GraphQL API for more efficient data queries
 * More flexibility in configuring server logging
 * Add persistent storage for server plugin data
+* Add a Jinja function to check if a password is complex
 
 Version 1.5.1
 ^^^^^^^^^^^^^
@@ -194,5 +195,5 @@ Version 0.1.3
 
 Released :release:`0.1.3` on June 4th, 2014
 
-* Jinja2 templates for both the client and server
+* Jinja templates for both the client and server
 * API version checking to warn when the client and server versions are incompatible

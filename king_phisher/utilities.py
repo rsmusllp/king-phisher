@@ -315,6 +315,32 @@ def parse_datetime(ts):
 	assert_arg_type(ts, str)
 	return datetime.datetime.strptime(ts, TIMESTAMP_FORMAT)
 
+def password_is_complex(password, min_len=12):
+	"""
+	Check that the specified string meets standard password complexity
+	requirements.
+	
+	:param str password: The password to validate.
+	:param int min_len: The mininum length the password should be.
+	:return: Whether the strings appears to be complex or not.
+	:rtype: bool
+	"""
+	has_upper = False
+	has_lower = False
+	has_digit = False
+	if len(password) < min_len:
+		return False
+	for char in password:
+		if char.isupper():
+			has_upper = True
+		if char.islower():
+			has_lower = True
+		if char.isdigit():
+			has_digit = True
+		if has_upper and has_lower and has_digit:
+			return True
+	return False
+
 def random_string(size):
 	"""
 	Generate a random string consisting of uppercase letters, lowercase letters
