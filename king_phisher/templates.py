@@ -95,6 +95,7 @@ class TemplateEnvironmentBase(jinja2.Environment):
 		# global functions
 		self.globals['random_integer'] = random.randint
 		self.globals['parse_user_agent'] = ua_parser.parse_user_agent
+		self.globals['password_is_complex'] = utilities.password_is_complex
 
 		# additional globals
 		if global_vars:

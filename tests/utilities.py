@@ -81,5 +81,25 @@ class UtilitiesTests(testing.KingPhisherTestCase):
 		self.assertEqual(mock.__file__, os.devnull)
 		self.assertEqual(mock.__path__, os.devnull)
 
+	def test_password_is_complex(self):
+		valid_passwords = [
+			'Thisisatestf00l',
+			'Welcome2SS!!!!!',
+			'HelloAndGoodbyeW0rld'
+		]
+		invalid_passwords = [
+			'THISISATESTFOOL',
+			'THISISATESTF00L',
+			'Thisisatestfool',
+			'i know this is spam',
+			'123456789101112',
+			'Fo0',
+			''
+		]
+		for password in valid_passwords:
+			self.assertTrue(utilities.password_is_complex(password))
+		for password in invalid_passwords:
+			self.assertFalse(utilities.password_is_complex(password))
+
 if __name__ == '__main__':
 	unittest.main()
