@@ -19,11 +19,26 @@ the effective equivalent of importing the module in Python. When the module is
 enabled, an instance of the Plugin class created allowing it to fulfill its
 intended purpose.
 
+Reloading Plugins
+~~~~~~~~~~~~~~~~~
+
 Plugin modules and classes can be "reloaded" to allow changes made to the plugin
 on disk to take effect. This can be accomplished by right clicking the plugin
 and selecting the "Reload" option from the manager window. If an enabled plugin
 is reloaded, it will first be disabled before being re-enabled causing it to
 lose any state information it may have been storing.
+
+Plugin Compatibility
+~~~~~~~~~~~~~~~~~~~~
+
+Plugin modules that have requirements can have their compatibility checked by
+viewing the plugin information pane. This includes a simple yes or no regarding
+whether all of the plugin's requirements are met and the plugin is thus
+compatible. Additional information regarding the specific requirements a
+particular plugin has can be accessed by clicking the ``Compatible`` link which
+will show each of the requirements, their values and whether or not they are
+met. This allows users to easily determine why a particular plugin may not be
+compatible.
 
 Plugin Options
 --------------

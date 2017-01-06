@@ -6,7 +6,11 @@ Server plugins need to inherit from the
 basic outline. Server plugins have access to their respective configurations
 from the :py:attr:`~king_phisher.server.plugins.ServerPlugin.config` attribute.
 This configuration can be changed at runtime, but changes will not be kept after
-the server has stopped.
+the server has stopped. A plugin that needs to store data persistently can use
+the :py:attr:`~king_phisher.server.plugins.ServerPlugin.storage` attribute which
+acts a simple key value store and is backed by the database. Values stored in
+this must be able to be serialized making it impossible to directly store custom
+objects.
 
 Server plugins can hook functionality by utilizing the :py:mod:`~server.signals`
 module. This allows plugins to provide functionality for specific events.
