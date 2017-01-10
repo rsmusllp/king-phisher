@@ -201,7 +201,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			return utilities.format_datetime(cell_data)
 		elif cell_data is None:
 			return ''
-		return str(cell_data)
+
+		return cell_data
 
 	def load_campaign_information(self, force=True):
 		"""

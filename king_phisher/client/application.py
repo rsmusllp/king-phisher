@@ -367,7 +367,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 				)
 
 	def do_campaign_set(self, campaign_id):
-		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
+		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'].encode('utf-8'), self.config['campaign_id']))
 		self.emit('rpc-cache-clear')
 
 	def do_config_save(self):
