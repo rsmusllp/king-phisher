@@ -202,8 +202,6 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		elif cell_data is None:
 			return ''
 
-		if isinstance(cell_data, bytes):
-			cell_data = cell_data.decode('utf-8')
 		return cell_data
 
 	def load_campaign_information(self, force=True):
