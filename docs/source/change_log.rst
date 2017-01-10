@@ -19,6 +19,25 @@ Version 1.6.0
 * Add persistent storage for server plugin data
 * Add a Jinja function to check if a password is complex
 
+Version 1.5.2
+^^^^^^^^^^^^^
+
+Released :release:`1.5.2` on December 23rd, 2016
+
+* Minor bug fixes
+
+   * Use Default SMS sender to fix SMS subscription with T-Mobile
+   * Upgrade AdvancedHTTPServer to v2.0.6 to fix select polling
+   * Corrected issue when attachment file is inaccessible
+   * Fixed issue when message file directory is gone
+   * Fixed server side encoding error with basic auth
+   * Fixed TypeError handling while rendering templates
+   * Fixed a unicode bug when processing targets csv
+   * Fixed install.sh script for CentOS7 and python3
+   * Fixed show exception dialog with Glib idle_add
+   * Fixed a logic bug causing premature SMTP reconnects
+   * Fixed Webkit-1 load_string Null error
+
 Version 1.5.1
 ^^^^^^^^^^^^^
 
@@ -195,5 +214,5 @@ Version 0.1.3
 
 Released :release:`0.1.3` on June 4th, 2014
 
-* Jinja templates for both the client and server
+* Jinja2 templates for both the client and server
 * API version checking to warn when the client and server versions are incompatible

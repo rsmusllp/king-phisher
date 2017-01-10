@@ -377,6 +377,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.emit('rpc-cache-clear')
 
 	def do_config_save(self):
+		self.logger.info('writing the client configuration to disk')
 		config = copy.copy(self.config)
 		for key in self.config.keys():
 			if 'password' in key or key == 'server_config':
@@ -452,6 +453,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		:param bool load_defaults: Load missing options from the template configuration file.
 		"""
+		self.logger.info('loading the config from disk')
 		client_template = find.find_data_file('client_config.json')
 		self.logger.info('loading the config from: ' + self.config_file)
 		with open(self.config_file, 'r') as tmp_file:
