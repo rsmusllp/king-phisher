@@ -95,7 +95,7 @@
   color: white; }
   .sidebar .highlight {
     background-image: linear-gradient(to bottom, shade(#00203a, 1.25), shade(#00203a, 1.5));
-    font: bold; }
+    font-weight: bold; }
 
 .titlebar {
   background-color: #5d84a8;

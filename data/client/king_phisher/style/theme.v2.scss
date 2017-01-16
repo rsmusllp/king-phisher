@@ -71,7 +71,7 @@
   color: white;
   .highlight {
     background-image: linear-gradient(to bottom, shade($theme_color_0, 1.25), shade($theme_color_0, 1.50));
-    font: bold;
+    font-weight: bold;
   }
 }
 
