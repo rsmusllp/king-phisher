@@ -227,21 +227,29 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""
 		raise NotImplementedError()
 
-	def format_cell_data(self, cell_data):
+	def format_cell_data(self, cell_data, encoding='utf-8'):
 		"""
 		This method provides formatting to the individual cell values returned
 		from the :py:meth:`.format_row_data` function. Values are converted into
 		a format suitable for reading.
 
 		:param cell: The value to format.
+		:param str encoding: The encoding to use to coerce the return value into a unicode string.
 		:return: The formatted cell value.
 		:rtype: str
 		"""
 		if isinstance(cell_data, datetime.datetime):
 			cell_data = utilities.datetime_utc_to_local(cell_data)
-			return utilities.format_datetime(cell_data)
-		elif cell_data is None:
-			return ''
+			return utilities.format_datetime(cell_data, encoding=encoding)
+
+		if cell_data is None:
+			cell_data = ''
+		elif isinstance(cell_data, int):
+			cell_data = str(cell_data)
+
+		# ensure that the return value is a unicode string
+		if isinstance(cell_data, bytes):
+			cell_data = cell_data.decode(encoding)
 		return cell_data
 
 	def load_campaign_information(self, force=True):
