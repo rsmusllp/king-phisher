@@ -249,7 +249,7 @@ def datetime_utc_to_local(dt):
 	dt = dt.astimezone(tz.tzlocal())
 	return dt.replace(tzinfo=None)
 
-def format_datetime(dt):
+def format_datetime(dt, encoding='utf-8'):
 	"""
 	Format a date time object into a string. If the object *dt* is not an
 	instance of :py:class:`datetime.datetime` then an empty string will be
@@ -257,12 +257,17 @@ def format_datetime(dt):
 
 	:param dt: The object to format.
 	:type dt: :py:class:`datetime.datetime`
+	:param str encoding: The encoding to use to coerce the return value into a unicode string.
 	:return: The string representing the formatted time.
 	:rtype: str
 	"""
-	if not isinstance(dt, datetime.datetime):
-		return ''
-	return dt.strftime(TIMESTAMP_FORMAT)
+	if isinstance(dt, datetime.datetime):
+		formatted = dt.strftime(TIMESTAMP_FORMAT)
+	else:
+		formatted = ''
+	if isinstance(formatted, bytes):
+		formatted = formatted.decode(encoding)
+	return formatted
 
 def is_valid_email_address(email_address):
 	"""
