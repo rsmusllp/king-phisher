@@ -36,9 +36,12 @@ import io
 import logging
 import os
 import select
+import socket
 import sys
 import threading
 import time
+
+from king_phisher import errors
 
 import paramiko
 
@@ -47,7 +50,15 @@ if sys.version_info[0] < 3:
 else:
 	import socketserver
 
-__all__ = ('SSHTCPForwarder',)
+__all__ = ('KingPhisherSSHKeyError', 'SSHTCPForwarder',)
+
+class KingPhisherSSHKeyError(errors.KingPhisherError):
+	"""
+	An exception that is thrown when there is a problem resolving a users SSH
+	key file. The *message* attribute is formatted to be displayed to the user
+	via a dialog.
+	"""
+	pass
 
 class ForwardServer(socketserver.ThreadingTCPServer):
 	daemon_threads = True
@@ -67,26 +78,31 @@ class ForwardHandler(socketserver.BaseRequestHandler):
 
 	def handle(self):
 		try:
-			chan = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
+			channel = self.ssh_transport.open_channel('direct-tcpip', (self.chain_host, self.chain_port), self.request.getpeername())
 		except paramiko.ChannelException:
-			chan = None
-		if chan is None:
+			channel = None
+		if channel is None:
 			return
+		try:
+			self._handle(channel)
+		except socket.error:
+			pass
+		channel.close()
+		self.request.close()
+
+	def _handle(self, channel):
 		while True:
-			read_ready, _, _ = select.select([self.request, chan], [], [])
+			read_ready, _, _ = select.select([self.request, channel], [], [])
 			if self.request in read_ready:
 				data = self.request.recv(1024)
 				if len(data) == 0:
 					break
-				chan.send(data)
-			if chan in read_ready:
-				data = chan.recv(1024)
+				channel.send(data)
+			if channel in read_ready:
+				data = channel.recv(1024)
 				if len(data) == 0:
 					break
 				self.request.send(data)
-
-		chan.close()
-		self.request.close()
 
 class SSHTCPForwarder(threading.Thread):
 	"""
@@ -162,12 +178,14 @@ class SSHTCPForwarder(threading.Thread):
 			if pkey_type == 'file':
 				file_path = os.path.expandvars(private_key[5:])
 				if not os.access(file_path, os.R_OK):
-					self.logger.warning("the user specified ssh key '{0}' can not be opened".format(file_path))
-					return
+					self.logger.warning("the user specified ssh key file '{0}' can not be opened".format(file_path))
+					raise KingPhisherSSHKeyError('The SSH key file can not be opened.')
+				self.logger.debug('loading the user specified ssh key file: ' + file_path)
 				file_h = open(file_path, 'r')
 				first_line = file_h.readline()
 				file_h.seek(0, os.SEEK_SET)
 			else:
+				self.logger.debug('loading the user specified ssh key string from memory')
 				key_str = private_key[4:]
 				file_h = io.StringIO(key_str)
 				first_line = key_str.split('\n', 1)[0]
@@ -177,19 +195,19 @@ class SSHTCPForwarder(threading.Thread):
 			elif 'BEGIN RSA PRIVATE KEY' in first_line:
 				KeyKlass = paramiko.RSAKey
 			else:
-				self.logger.warning("the user specified ssh key '{0}' does not appear to be a valid dsa or rsa private key".format(file_path))
 				file_h.close()
-				return
+				self.logger.warning('the user specified ssh key does not appear to be a valid dsa or rsa private key')
+				raise KingPhisherSSHKeyError('The SSH key file is not a DSA or RSA private key.')
 			try:
 				private_key = KeyKlass.from_private_key(file_h)
 			except paramiko.PasswordRequiredException:
-				self.logger.warning("the user specified ssh key '{0}' is encrypted and requires a password".format(file_path))
+				self.logger.warning('the user specified ssh key is encrypted and requires a password')
 				raise
 			finally:
 				file_h.close()
 			return private_key
 
-		#  if it's not one of the above, treat it like it's a fingerprint
+		# if it's not one of the above, treat it like it's a fingerprint
 		if pkey_type == 'sha256':
 			# OpenSSH 6.8 started to use sha256 & base64 for keys
 			algorithm = pkey_type
@@ -200,11 +218,10 @@ class SSHTCPForwarder(threading.Thread):
 			private_key = private_key.replace(':', '')
 			private_key = binascii.a2b_hex(private_key)
 		private_key = tuple(key for key in agent_keys if hashlib.new(algorithm, key.blob).digest() == private_key)
-		if len(private_key) == 1:
-			private_key = private_key[0]
-		else:
-			private_key = None
-		return private_key
+		if len(private_key) != 1:
+			self.logger.warning('the user specified ssh key could not be loaded from the ssh agent')
+			raise KingPhisherSSHKeyError('The SSH key could not be loaded from the SSH agent.')
+		return private_key[0]
 
 	def __try_connect(self, *args, **kwargs):
 		raise_error = kwargs.pop('raise_error', False)

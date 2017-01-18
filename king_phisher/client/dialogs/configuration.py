@@ -57,6 +57,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			# SMTP Server Tab
 			'entry_smtp_server',
 			'entry_smtp_username',
+			'frame_smtp_ssh',
 			'spinbutton_smtp_max_send_rate',
 			'switch_smtp_ssl_enable',
 			'switch_smtp_ssh_enable',
@@ -78,7 +79,11 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
 		super(ConfigurationDialog, self).__init__(*args, **kwargs)
-		self.gobjects['entry_smtp_server'].set_sensitive(not self.gobjects['switch_smtp_ssh_enable'].get_active())
+		smtp_ssh_enabled = self.gobjects['switch_smtp_ssh_enable'].get_active()
+		self.gobjects['entry_smtp_server'].set_sensitive(not smtp_ssh_enabled)
+		self.gobjects['frame_smtp_ssh'].set_sensitive(smtp_ssh_enabled)
+		# connect to the signal here so the settings can be loaded with modifications
+		self.gobjects['switch_smtp_ssh_enable'].connect('notify::active', self.signal_switch_smtp_ssh)
 		self._plugin_option_widgets = collections.defaultdict(list)
 
 	def signal_switch_smtp_ssh(self, switch, _):
@@ -87,7 +92,11 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		self.gtk_builder_get('frame_smtp_ssh').set_sensitive(active)
 		if active:
 			entry.set_sensitive(False)
-			entry.set_text('localhost:25')
+			current_text = entry.get_text()
+			if current_text.startswith('!'):
+				entry.set_text(current_text[1:])
+			else:
+				entry.set_text('localhost:25')
 		else:
 			entry.set_sensitive(True)
 

@@ -41,7 +41,7 @@ import textwrap
 
 import king_phisher.color as color
 import king_phisher.its as its
-import king_phisher.json_ex as json_ex
+import king_phisher.serializers as serializers
 import king_phisher.version as version
 import king_phisher.client.plugins as plugins
 import king_phisher.client.gui_utilities as gui_utilities
@@ -60,7 +60,7 @@ def generate_hash(data, algorithm='sha256'):
 def generate_signature(data):
 	data = copy.deepcopy(data)
 	data['hash'] = None
-	return generate_hash(json_ex.dumps(data))
+	return generate_hash(serializers.JSON.dumps(data, pretty=True))
 
 def verify_signature(data):
 	if not data.get('hash'):
@@ -158,7 +158,7 @@ class StatsGenerator(object):
 		for campaign in rpc.remote_table('campaigns'):
 			stats['campaigns'].append(self._campaign_stats(campaign))
 		stats['hash'] = generate_signature(stats)
-		return json_ex.dumps(stats)
+		return serializers.JSON.dumps(stats, pretty=True)
 
 	def _campaign_stats(self, campaign):
 		rpc = self.rpc
@@ -200,7 +200,7 @@ def main():
 	arguments = parser.parse_args()
 
 	try:
-		data = json_ex.load(arguments.data_file)
+		data = serializers.JSON.load(arguments.data_file)
 	except Exception:
 		color.print_error('failed to load the data')
 		return 1

@@ -12,9 +12,11 @@ application.
 
    aaa.rst
    build.rst
+   graphql.rst
    pages.rst
    plugins.rst
    rest_api.rst
    server.rst
    server_rpc.rst
    signals.rst
+   web_sockets.rst

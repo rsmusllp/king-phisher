@@ -73,6 +73,16 @@ class KingPhisherDatabaseError(KingPhisherError):
 	"""
 	pass
 
+class KingPhisherGraphQLQueryError(KingPhisherError):
+	"""
+	An exception raised when a GraphQL query fails to execute correctly.
+	"""
+	def __init__(self, message='', errors=None, query=None, query_vars=None):
+		super(KingPhisherError, self).__init__(message)
+		self.errors = errors
+		self.query = query
+		self.query_vars = query_vars
+
 class KingPhisherInputValidationError(KingPhisherError):
 	"""
 	An exception that is raised when any kind of input into King Phisher fails

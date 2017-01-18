@@ -33,6 +33,7 @@
 import types
 import unittest
 
+from king_phisher import errors
 from king_phisher import version
 from king_phisher.server import server_rpc
 from king_phisher.server.database import models as db_models
@@ -80,6 +81,37 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		config_key = random_string(10)
 		config_value = random_string(10)
 		self.assertRPCPermissionDenied('config/set', {config_key: config_value})
+
+	def test_rpc_graphql(self):
+		response = self.rpc('graphql', '{ version }')
+		self.assertIn('data', response)
+		self.assertIn('errors', response)
+		self.assertIsNotNone(response['data'])
+		self.assertIsNone(response['errors'])
+
+		response = response['data'].get('version')
+		self.assertEquals(response, version.version)
+
+	def test_rpc_graphql_rpc_errors(self):
+		bad_query = '{ foobar }'
+		with self.assertRaises(errors.KingPhisherGraphQLQueryError) as context:
+			self.rpc.graphql(bad_query)
+		error = context.exception
+		self.assertIsInstance(error.errors, list)
+		self.assertIsNotEmpty(error.errors)
+		self.assertIsInstance(error.query, str)
+		self.assertEqual(error.query, bad_query)
+
+	def test_rpc_graphql_raw_errors(self):
+		response = self.rpc('graphql', '{ foobar }')
+		self.assertIn('data', response)
+		self.assertIn('errors', response)
+		self.assertIsNone(response['data'])
+		self.assertIsNotNone(response['errors'])
+
+		self.assertIsNotEmpty(response['errors'])
+		for error in response['errors']:
+			self.assertIsInstance(error, str)
 
 	def test_rpc_is_unauthorized(self):
 		http_response = self.http_request('/ping', method='RPC')

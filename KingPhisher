@@ -54,7 +54,7 @@ from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
 
 __requirements__ = [
-	'advancedhttpserver>=2.0.6',
+	'advancedhttpserver>=2.0.9',
 	'boltons>=16.2.2',
 	'dnspython>=1.14.0',
 	'geojson>=1.3.2',
@@ -67,6 +67,7 @@ __requirements__ = [
 	'requests>=2.10.0',
 	'termcolor>=1.1.0',
 	'tzlocal>=1.2.2',
+	'websocket-client>=0.37.0',
 	'XlsxWriter>=0.8.7'
 ]
 if its.py_v2:
@@ -81,7 +82,7 @@ def main():
 	parser.add_argument('--no-style', dest='use_style', default=True, action='store_false', help='disable interface styling')
 	arguments = parser.parse_args()
 
-	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
+	utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 	config_file = arguments.config_file
 	dep_check = arguments.dep_check
 	use_plugins = arguments.use_plugins

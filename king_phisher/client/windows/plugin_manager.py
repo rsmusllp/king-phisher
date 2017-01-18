@@ -59,6 +59,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			'label_plugin_info_homepage',
 			'label_plugin_info_title',
 			'label_plugin_info_version',
+			'paned_plugins',
 			'scrolledwindow_plugins',
 			'stack_plugin_info',
 			'treeview_plugins',
@@ -99,6 +100,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.window.show()
 		selection = treeview.get_selection()
 		selection.unselect_all()
+		paned = self.gobjects['paned_plugins']
+		self._paned_offset = paned.get_allocation().height - paned.get_position()
 
 	def _on_plugin_load_error(self, name, error):
 		self._module_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
@@ -167,6 +170,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			popover.destroy()
 			return
 		popover.show_all()
+
+	def signal_expander_activate(self, expander):
+		paned = self.gobjects['paned_plugins']
+		if expander.get_property('expanded'):  # collapsing
+			paned.set_position(paned.get_allocation().height + self._paned_offset)
+
+	def signal_paned_button_press_event(self, paned, event):
+		return not self.gobjects['expander_plugin_info'].get_property('expanded')
 
 	def signal_popup_menu_activate_reload(self, _):
 		treeview = self.gobjects['treeview_plugins']

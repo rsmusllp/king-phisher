@@ -45,11 +45,11 @@ import sqlalchemy.orm
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 """The schema version of the database, used for compatibility checks."""
 
 database_tables = {}
-"""A dictionary which contains all the database tables and their columns."""
+"""A dictionary which contains all the database tables and their column names."""
 database_table_objects = {}
 """A dictionary which contains all the database tables and their primitive objects."""
 logger = logging.getLogger('KingPhisher.Server.Database.Models')
@@ -112,7 +112,7 @@ class BaseRowCls(object):
 	def __repr__(self):
 		description = "<{0} id={1} ".format(self.__class__.__name__, repr(self.id))
 		for repr_attr in self.__repr_attributes__:
-			description += "{0}={1} ".format(repr_attr, repr(getattr(self, repr_attr)))
+			description += "{0}={1!r} ".format(repr_attr, getattr(self, repr_attr))
 		description += '>'
 		return description
 
@@ -154,15 +154,26 @@ class BaseRowCls(object):
 		return False
 
 	def session_has_create_access(self, session):
+		if self.is_private:
+			return False
 		return True
 
 	def session_has_delete_access(self, session):
+		if self.is_private:
+			return False
 		return True
 
 	def session_has_read_access(self, session):
+		if self.is_private:
+			return False
 		return True
 
+	def session_has_read_prop_access(self, session, prop):
+		return self.session_has_read_access(session)
+
 	def session_has_update_access(self, session):
+		if self.is_private:
+			return False
 		return True
 Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
 metadata = Base.metadata
@@ -187,6 +198,9 @@ class AlertSubscription(Base):
 		return session.user == self.user_id
 
 	def session_has_delete_access(self, session):
+		return session.user == self.user_id
+
+	def session_has_read_access(self, session):
 		return session.user == self.user_id
 
 	def session_has_update_access(self, session):
@@ -311,6 +325,17 @@ class LandingPage(Base):
 	page = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 
 @register_table
+class StorageData(Base):
+	__repr_attributes__ = ('namespace', 'key', 'value')
+	__tablename__ = 'storage_data'
+	is_private = True
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	namespace = sqlalchemy.Column(sqlalchemy.String)
+	key = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+	value = sqlalchemy.Column(sqlalchemy.Binary)
+
+@register_table
 class Message(Base):
 	__repr_attributes__ = ('campaign_id', 'target_email')
 	__tablename__ = 'messages'
@@ -358,6 +383,11 @@ class User(Base):
 
 	def session_has_read_access(self, session):
 		return session.user == self.id
+
+	def session_has_read_prop_access(self, session, prop):
+		if prop in ('id', 'campaigns'):  # everyone can read the id
+			return True
+		return self.session_has_read_access(session)
 
 	def session_has_update_access(self, session):
 		return session.user == self.id

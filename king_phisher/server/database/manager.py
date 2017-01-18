@@ -287,12 +287,13 @@ def init_database(connection_url, extra_init=False):
 		config.set_main_option('skip_logger_config', 'True')
 		config.set_main_option('sqlalchemy.url', str(connection_url))
 
-		logger.warning("automatically updating the database schema to version {0}".format(models.SCHEMA_VERSION))
+		logger.warning("automatically updating the database schema from version {0} to {1}".format(schema_version, models.SCHEMA_VERSION))
 		try:
 			alembic.command.upgrade(config, 'head')
 		except Exception as error:
 			logger.critical("database schema upgrade failed with exception: {0}.{1} {2}".format(error.__class__.__module__, error.__class__.__name__, getattr(error, 'message', '')).rstrip(), exc_info=True)
 			raise errors.KingPhisherDatabaseError('failed to upgrade to the latest database schema')
+		logger.info("successfully updated the database schema from version {0} to {1}".format(schema_version, models.SCHEMA_VERSION))
 		# reset it because it may have been altered by alembic
 		Session.remove()
 		Session.configure(bind=engine)

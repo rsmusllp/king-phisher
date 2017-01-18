@@ -141,6 +141,7 @@ build_exe_options = dict(
 		'cairo',
 		'cffi',
 		'cryptography',
+		'dns',
 		'email',
 		'gi',
 		'icalendar',

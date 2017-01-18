@@ -40,6 +40,7 @@ from king_phisher import geoip
 from king_phisher import ipaddress
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
+from king_phisher.server import graphql
 from king_phisher.server import signals
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
@@ -195,7 +196,7 @@ def rpc_config_set(handler, options):
 	return
 
 @register_rpc('/campaign/new', database_access=True, log_call=True)
-def rpc_campaign_new(self, session, name, description=None):
+def rpc_campaign_new(handler, session, name, description=None):
 	"""
 	Create a new King Phisher campaign and initialize the database
 	information.
@@ -207,14 +208,14 @@ def rpc_campaign_new(self, session, name, description=None):
 	"""
 	if session.query(db_models.Campaign).filter_by(name=name).count():
 		raise ValueError('the specified campaign name already exists')
-	campaign = db_models.Campaign(name=name, description=description, user_id=self.rpc_session.user)
-	campaign.assert_session_has_permissions('c', self.rpc_session)
+	campaign = db_models.Campaign(name=name, description=description, user_id=handler.rpc_session.user)
+	campaign.assert_session_has_permissions('c', handler.rpc_session)
 	session.add(campaign)
 	session.commit()
 	return campaign.id
 
 @register_rpc('/campaign/alerts/is_subscribed', database_access=True, log_call=True)
-def rpc_campaign_alerts_is_subscribed(self, session, campaign_id):
+def rpc_campaign_alerts_is_subscribed(handler, session, campaign_id):
 	"""
 	Check if the user is subscribed to alerts for the specified campaign.
 
@@ -222,9 +223,8 @@ def rpc_campaign_alerts_is_subscribed(self, session, campaign_id):
 	:return: The alert subscription status.
 	:rtype: bool
 	"""
-	username = self.rpc_session.user
 	query = session.query(db_models.AlertSubscription)
-	query = query.filter_by(campaign_id=campaign_id, user_id=username)
+	query = query.filter_by(campaign_id=campaign_id, user_id=handler.rpc_session.user)
 	return query.count()
 
 @register_rpc('/campaign/alerts/subscribe', database_access=True, log_call=True)
@@ -481,7 +481,7 @@ def rpc_database_insert_row(handler, session, table_name, keys, values):
 	table = database_table_objects.get(table_name)
 	if not table:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
-	for key, value in zip(keys, values):
+	for key in keys:
 		if key not in database_tables[table_name]:
 			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(key, table_name))
 
@@ -517,10 +517,79 @@ def rpc_database_set_row_value(handler, session, table_name, row_id, keys, value
 	row = db_manager.get_row_by_id(session, table, row_id)
 	if not row:
 		raise errors.KingPhisherAPIError("failed to get row id: {0} from table: {1}".format(row_id, table_name))
+	row.assert_session_has_permissions('u', handler.rpc_session)
 	for key, value in zip(keys, values):
 		setattr(row, key, value)
 	row.assert_session_has_permissions('u', handler.rpc_session)
 	session.commit()
+
+@register_rpc('/events/is_subscribed', log_call=True)
+def rpc_events_is_subscribed(handler, event_id, event_type):
+	"""
+	Check if the client is currently subscribed to the specified server event.
+
+	:param str event_id: The identifier of the event to subscribe to.
+	:param str event_type: A sub-type for the corresponding event.
+	:return: Whether or not the client is subscribed to the event.
+	:rtype: bool
+	"""
+	if not isinstance(event_id, str):
+		raise errors.KingPhisherAPIError('a valid event id must be specified')
+	if not isinstance(event_type, str):
+		raise errors.KingPhisherAPIError('a valid event type must be specified')
+	event_socket = handler.rpc_session.event_socket
+	if event_socket is None:
+		raise errors.KingPhisherAPIError('the event socket is not open for this session')
+	return event_socket.is_subscribed(event_id, event_type)
+
+@register_rpc('/events/subscribe', log_call=True)
+def rpc_events_subscribe(handler, event_id, event_types=None, attributes=None):
+	"""
+	Subscribe the client to the specified event published by the server.
+	When the event is published the specified *attributes* of it and it's
+	corresponding id and type information will be sent to the client.
+
+	:param str event_id: The identifier of the event to subscribe to.
+	:param list event_types: A list of sub-types for the corresponding event.
+	:param list attributes: A list of attributes of the event object to be sent to the client.
+	"""
+	if not isinstance(event_id, str):
+		raise errors.KingPhisherAPIError('a valid event id must be specified')
+	event_socket = handler.rpc_session.event_socket
+	if event_socket is None:
+		raise errors.KingPhisherAPIError('the event socket is not open for this session')
+	if not event_id.startswith('db-'):
+		# db-<table name> events are the only ones that are valid right now
+		raise errors.KingPhisherAPIError('invalid event_id: ' + event_id)
+	table_name = event_id[3:]
+	table_name = table_name.replace('-', '_')
+	columns = database_tables.get(table_name)
+	if columns is None:
+		raise errors.KingPhisherAPIError("invalid table object: {0}".format(table_name))
+	for event_type in event_types:
+		if event_type not in ('deleted', 'inserted', 'updated'):
+			raise errors.KingPhisherAPIError("event type {0} is invalid for db-* events".format(event_type))
+	for column in attributes:
+		if column not in columns:
+			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(column, table_name))
+	return event_socket.subscribe(event_id, event_types=event_types, attributes=attributes)
+
+@register_rpc('/events/unsubscribe', log_call=True)
+def rpc_events_unsubscribe(handler, event_id, event_types=None, attributes=None):
+	"""
+	Unsubscribe from an event published by the server that the client
+	previously subscribed to.
+
+	:param str event_id: The identifier of the event to subscribe to.
+	:param list event_types: A list of sub-types for the corresponding event.
+	:param list attributes: A list of attributes of the event object to be sent to the client.
+	"""
+	if not isinstance(event_id, str):
+		raise errors.KingPhisherAPIError('a valid event id must be specified')
+	event_socket = handler.rpc_session.event_socket
+	if event_socket is None:
+		raise errors.KingPhisherAPIError('the event socket is not open for this session')
+	return event_socket.unsubscribe(event_id, event_types=event_types, attributes=attributes)
 
 @register_rpc('/geoip/lookup', log_call=True)
 def rpc_geoip_lookup(handler, ip, lang=None):
@@ -602,11 +671,13 @@ def rpc_login(handler, session, username, password, otp=None):
 
 @register_rpc('/logout', log_call=True)
 def rpc_logout(handler):
-	username = handler.rpc_session.user
+	rpc_session = handler.rpc_session
+	if rpc_session.event_socket is not None:
+		rpc_session.event_socket.close()
 	handler.server.session_manager.remove(handler.rpc_session_id)
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
-	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], username))
-	signals.rpc_user_logged_out.send(handler, session=handler.rpc_session_id, name=username)
+	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], rpc_session.user))
+	signals.rpc_user_logged_out.send(handler, session=handler.rpc_session_id, name=rpc_session.user)
 
 @register_rpc('/plugins/list', log_call=True)
 def rpc_plugins_list(handler):
@@ -626,3 +697,38 @@ def rpc_plugins_list(handler):
 			'version': plugin.version
 		}
 	return plugins
+
+@register_rpc('/graphql', database_access=True)
+def rpc_graphql(handler, session, query, query_vars=None):
+	"""
+	Execute a GraphQL query and return the results. If the query fails to
+	execute the errors returned are populated in the **errors** key of the
+	results dictionary. If the query executes successfully the returned data
+	is available in the **data** key of the results dictionary.
+
+	:param str query: The GraphQL query to execute.
+	:param dict query_vars: Any variables needed by the *query*.
+	:return: The results of the query as a dictionary.
+	:rtype: dict
+	"""
+	query_vars = query_vars or {}
+	result = graphql.schema.execute(
+		query,
+		context_value={
+			'plugin_manager': handler.server.plugin_manager,
+			'rpc_session': handler.rpc_session,
+			'session': session
+		},
+		variable_values=query_vars
+	)
+	errors = None
+	if result.errors:
+		errors = []
+		for error in result.errors:
+			if hasattr(error, 'message'):
+				errors.append(error.message)
+			elif hasattr(error, 'args') and error.args:
+				errors.append(str(error.args[0]))
+			else:
+				errors.append(repr(error))
+	return {'data': result.data, 'errors': errors}

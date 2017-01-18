@@ -25,4 +25,5 @@ application.
    gui_utilities.rst
    mailer.rst
    plugins.rst
+   server_events.rst
    web_cloner.rst

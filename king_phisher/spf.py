@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import logging
 import re
 
@@ -38,11 +39,19 @@ from king_phisher import its
 from king_phisher.constants import SPFResult
 
 import dns.exception
+import dns.name
+import dns.query
 import dns.rdtypes.ANY.TXT
 import dns.resolver
 
 MACRO_REGEX = re.compile(r'%\{([slodipvh])(\d*)([r]?)(.?)\}')
 """A regular expression which matches SPF record macros."""
+
+MAX_QUERIES = 10
+"""
+The maximum number of DNS queries allowed to take place during evaluation as
+defined within section 4.6.4 of :rfc:`7208`.
+"""
 
 QUALIFIERS = {
 	'+': SPFResult.PASS,
@@ -52,6 +61,79 @@ QUALIFIERS = {
 }
 """A dict object keyed with the qualifier symbols to their readable values."""
 
+SPFMatch = collections.namedtuple('SPFMatch', ('record', 'directive'))
+"""A simple container to associate a matched directive with it's record."""
+
+class SPFDirective(object):
+	"""
+	A class representing a single directive within a sender policy framework
+	record.
+	"""
+	__slots__ = ('mechanism', 'qualifier', 'rvalue')
+	def __init__(self, mechanism, qualifier, rvalue=None):
+		"""
+		:param str mechanism: The SPF mechanism that this directive uses.
+		:param str qualifier: The qualifier value of the directive in it's single character format.
+		:param str rvalue: The optional rvalue for directives which use them.
+		"""
+		if qualifier not in QUALIFIERS:
+			raise ValueError('invalid qualifier: ' + qualifier)
+		self.mechanism = mechanism
+		self.qualifier = qualifier
+		self.rvalue = rvalue
+
+	def __repr__(self):
+		return "<{0} '{1}' >".format(self.__class__.__name__, str(self))
+
+	def __str__(self):
+		directive = ''
+		if self.qualifier != '+':
+			directive += self.qualifier
+		directive += self.mechanism
+		if self.rvalue:
+			directive += ':' + self.rvalue
+		return directive
+
+	@classmethod
+	def from_string(cls, directive):
+		"""
+		Parse an SPF directive from a string and return it's class
+		representation.
+
+		:param str directive: The SPF directive to parse.
+		"""
+		if ':' in directive:
+			(mechanism, rvalue) = directive.split(':', 1)
+		else:
+			(mechanism, rvalue) = (directive, None)
+		mechanism = mechanism.lower()
+
+		qualifier = '+'
+		if mechanism[0] in QUALIFIERS:
+			qualifier = mechanism[0]
+			mechanism = mechanism[1:]
+		return cls(mechanism, qualifier, rvalue)
+
+class SPFRecord(object):
+	"""
+	A class representing a parsed Sender Policy Framework record with all of
+	its directives.
+	"""
+	__slots__ = ('domain', 'directives')
+	def __init__(self, directives, domain=None):
+		"""
+		:param list directives: A list of :py:class:`.SPFDirective` instances.
+		:param str domain: The domain with which this record is associated with.
+		"""
+		self.directives = directives
+		self.domain = domain
+
+	def __repr__(self):
+		return "<{0} '{1}' >".format(self.__class__.__name__, str(self))
+
+	def __str__(self):
+		return 'v=spf1 ' + ' '.join(str(d) for d in self.directives)
+
 class SPFError(Exception):
 	"""Base exception for errors raised by this module."""
 	pass
@@ -59,7 +141,14 @@ class SPFError(Exception):
 class SPFPermError(SPFError):
 	"""
 	Exception indicating that the domains published records could not be
-	correctly interpreted. Described in section 2.6.7 of RFC 7208.
+	correctly interpreted. Described in section 2.6.7 of :rfc:`7208`.
+	"""
+	pass
+
+class SPFParseError(SPFPermError):
+	"""
+	Exception indicating that the domains published records could not be
+	correctly parsed.
 	"""
 	pass
 
@@ -67,27 +156,9 @@ class SPFTempError(SPFError):
 	"""
 	Exception indicating that the verification process encountered a transient
 	(generally DNS) error while performing the check. Described in section 2.6.6
-	of RFC 7208.
+	of :rfc:`7208`.
 	"""
 	pass
-
-def record_unparse(record):
-	"""
-	Take a parsed record tuple and unparse it into a string representing the
-	original record.
-
-	:param tuple record: The tuple representing the original parsed record.
-	:return: The string representation of the record.
-	:rtype: str
-	"""
-	mechanism, qualifier, rvalue = record
-	record = ''
-	if qualifier != '+':
-		record += qualifier
-	record += mechanism
-	if rvalue:
-		record += ':' + rvalue
-	return record
 
 def check_host(ip, domain, sender=None):
 	"""
@@ -126,7 +197,7 @@ class SenderPolicyFramework(object):
 	if an IP address is authorized to send messages on it's behalf. The exp
 	modifier defined in section 6.2 of the RFC is not supported.
 	"""
-	def __init__(self, ip, domain, sender=None, spf_records=None):
+	def __init__(self, ip, domain, sender=None):
 		"""
 		:param ip: The IP address of the host sending the message.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
@@ -142,12 +213,27 @@ class SenderPolicyFramework(object):
 		if not '@' in sender:
 			sender = sender + '@' + self.domain
 		self.sender = sender
-		self.spf_records = (spf_records or [])
-		self.spf_record_id = -1
-
+		self.records = collections.OrderedDict()
+		"""
+		A :py:class:`collections.OrderedDict` of all the SPF records that were
+		resolved. This would be any records resolved due to an "include"
+		directive in addition to the top level domain.
+		"""
+		self.matches = []
+		"""
+		A list of :py:class:`.SPFMatch` instances showing the path traversed to
+		identify a matching directive. Multiple entries in this list are
+		present when include directives are used and a match is found within
+		the body of one. The list is ordered from the top level domain to the
+		matching record.
+		"""
 		# dns lookup limit per https://tools.ietf.org/html/rfc7208#section-4.6.4
-		self.query_limit = 10
+		self.query_limit = MAX_QUERIES
 		self.policy = None
+		"""
+		The human readable policy result, one of the
+		:py:class:`.SPFResult` constants`.
+		"""
 		self._policy_checked = False
 		self.logger = logging.getLogger('KingPhisher.SPF.SenderPolicyFramework')
 
@@ -185,28 +271,26 @@ class SenderPolicyFramework(object):
 			return
 		record = ''.join([part.decode('utf-8') for part in answers[0].strings])
 		if not record.startswith('v=spf1 '):
-			raise SPFPermError('failed to parse spf data')
+			raise SPFParseError('invalid record header')
 
-		records = record[7:].split(' ')
-		records = tuple(record for record in records if len(record))
-		self.logger.debug("parsing {0:,} records for domain: {1}".format(len(records), domain))
+		raw_directives = record[7:].split(' ')
+		raw_directives = tuple(directive for directive in raw_directives if len(directive))
+		self.logger.debug("parsing {0:,} directives for domain: {1}".format(len(raw_directives), domain))
 
-		if not len(records):
-			raise SPFPermError('failed to parse spf data')
+		if not len(raw_directives):
+			raise SPFParseError('no directives were found')
 
-		for record_id, record in enumerate(records):
-			if len(self.spf_records) and self.spf_records[-1][0] == 'all':
-				break
-
-			if record.startswith('redirect='):
-				if len([r for r in records if r.endswith('all')]):
+		directives = []
+		for directive_id, directive in enumerate(raw_directives):
+			if directive.startswith('redirect='):
+				if len([r for r in raw_directives if r.endswith('all')]):
 					# ignore redirects when all is present per https://tools.ietf.org/html/rfc7208#section-6.1
 					self.logger.warning("ignoring redirect modifier to: {0} due to an existing 'all' mechanism".format(domain))
 					continue
-				record = record[9:]
-				domain = self.expand_macros(record, self.ip_address, domain, self.sender)
+				directive = directive[9:]
+				domain = self.expand_macros(directive, self.ip_address, domain, self.sender)
 				self.logger.debug("following redirect modifier to: {0}".format(domain))
-				if top_level and len(self.spf_records) == 0:
+				if top_level and len(directives) == 0:
 					# treat a single redirect as a new top level
 					return self._check_host(ip, domain, sender, top_level=True)
 				else:
@@ -214,45 +298,51 @@ class SenderPolicyFramework(object):
 					self.logger.debug("top check found matching spf record from redirect to: {0}".format(domain))
 					return result
 
-			if ':' in record:
-				(mechanism, rvalue) = record.split(':', 1)
-			else:
-				(mechanism, rvalue) = (record, None)
-			mechanism = mechanism.lower()
+			directive = SPFDirective.from_string(directive)
+			if directive.mechanism not in ('a', 'all', 'exists', 'include', 'ip4', 'ip6', 'mx', 'ptr'):
+				raise SPFParseError("unknown mechanism type: '{0}'".format(directive.mechanism))
+			directives.append(directive)
 
-			qualifier = '+'
-			if mechanism[0] in QUALIFIERS:
-				qualifier = mechanism[0]
-				mechanism = mechanism[1:]
-			if not mechanism in ('a', 'all', 'exists', 'include', 'ip4', 'ip6', 'mx', 'ptr'):
-				raise SPFPermError("unknown mechanism type: '{0}'".format(mechanism))
+		record = SPFRecord(directives, domain=domain)
+		self.records[domain] = record
+		for directive_id, directive in enumerate(directives):
+			if not top_level and directive.mechanism == 'all':
+				break
+			if self._evaluate_mechanism(ip, domain, sender, directive.mechanism, directive.rvalue):
+				self.matches.insert(0, SPFMatch(record, directive))
+				self.logger.debug("{0} check found matching spf directive: '{1}'".format(('top' if top_level else 'recursive'), directive))
+				return QUALIFIERS[directive.qualifier]
 
-			if top_level:
-				self.spf_records.append((mechanism, qualifier, rvalue))
-			if self._evaluate_mechanism(ip, domain, sender, mechanism, rvalue):
-				self.spf_record_id = record_id
-				self.logger.debug("{0} check found matching spf record: '{1}'".format(('top' if top_level else 'recursive'), record))
-				return QUALIFIERS[qualifier]
-
-		self.logger.debug('no records matched, returning default policy of neutral')
+		self.logger.debug('no directives matched, returning default policy of neutral')
 		# default result per https://tools.ietf.org/html/rfc7208#section-4.7
 		return SPFResult.NEUTRAL
 
 	def _dns_query(self, qname, qtype):
 		self.query_limit -= 1
-		if not self.query_limit:
-			raise SPFPermError('dns query limit reached')
+		if self.query_limit < 0:
+			raise SPFPermError('DNS query limit reached')
+		nameservers = dns.resolver.get_default_resolver().nameservers
+
+		self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameservers[0], self.query_limit))
+		query = dns.message.make_query(qname, qtype)
 		try:
-			answers = dns.resolver.query(qname, qtype)
+			response = dns.query.udp(query, nameservers[0])
 		except dns.exception.DNSException:
-			raise SPFTempError("dns resolution error ({0} {1})".format(qname, qtype))
+			raise SPFTempError("DNS resolution error for: {0} {1}".format(qname, qtype))
+		rcode = response.rcode()
+		# check for error codes per https://tools.ietf.org/html/rfc7208#section-5
+		if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
+			raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
+		answers = []
+		for answer in response.answer:
+			answers.extend(answer.items)
 		return answers
 
 	def _evaluate_mechanism(self, ip, domain, sender, mechanism, rvalue):
-		if isinstance(rvalue, str):
-			rvalue = self.expand_macros(rvalue, ip, domain, sender)
-		else:
+		if rvalue is None:
 			rvalue = domain
+		else:
+			rvalue = self.expand_macros(rvalue, ip, domain, sender)
 
 		if mechanism == 'a':
 			if self._hostname_matches_ip(ip, rvalue):
@@ -271,7 +361,7 @@ class SenderPolicyFramework(object):
 					rvalue = rvalue.decode('utf-8')
 				ip_network = ipaddress.IPv4Network(rvalue, strict=False)
 			except ipaddress.AddressValueError:
-				raise SPFPermError('failed to parse spf data')
+				raise SPFParseError('invalid IPv4 network: ' + rvalue)
 			if ip in ip_network:
 				return True
 		elif mechanism == 'ip6':
@@ -280,11 +370,11 @@ class SenderPolicyFramework(object):
 					rvalue = rvalue.decode('utf-8')
 				ip_network = ipaddress.IPv6Network(rvalue, strict=False)
 			except ipaddress.AddressValueError:
-				raise SPFPermError('failed to parse spf data')
+				raise SPFParseError('invalid IPv6 network: ' + rvalue)
 			if ip in ip_network:
 				return True
 		elif mechanism == 'mx':
-			for mx_record in self._dns_query(domain, 'MX'):
+			for mx_record in self._dns_query(rvalue, 'MX'):
 				mx_record = str(mx_record.exchange).rstrip('.')
 				if self._hostname_matches_ip(ip, mx_record):
 					return True
@@ -315,7 +405,7 @@ class SenderPolicyFramework(object):
 	def expand_macros(self, value, ip, domain, sender):
 		"""
 		Expand a string based on the macros it contains as specified by section
-		7 of RFC 7208.
+		7 of :rfc:`7208`.
 
 		:param str value: The string containing macros to expand.
 		:param ip: The IP address to use when expanding macros.
@@ -364,3 +454,9 @@ class SenderPolicyFramework(object):
 			end = match.end()
 		result += value[end:]
 		return result
+
+	@property
+	def match(self):
+		if not self.matches:
+			return None
+		return self.matches[-1]

@@ -8,6 +8,7 @@ I get a stack trace when I...
 ## Environment Details
 <!-- DO NOT SKIP THIS -->
 Host OS: Ubuntu 15.10 GNOME, Kali 2, etc.
+King Phisher Version: x.y.z
 
 ## Error Details / Stack Trace
 <!-- DO NOT SKIP THIS -->

@@ -18,6 +18,9 @@ responsible for using SSH to set up a port forward for requests.
 
 General API
 -----------
+.. rpc:function:: graphql(query, query_vars=None)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_graphql`
 
 .. rpc:function:: login()
 
@@ -33,7 +36,7 @@ General API
 
 .. rpc:function:: plugins/list()
 
-   :handler: :py:func:`~kking_phisher.server.server_rpc.rpc_plugins_list`
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_plugins_list`
 
 .. rpc:function:: shutdown()
 
@@ -88,6 +91,23 @@ Configuration API
 .. rpc:function:: config/set(options)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_config_set`
+
+.. _rpc-api-event-api-label:
+
+Event API
+---------
+
+.. rpc:function:: events/is_subscribed(event_id, event_type)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_events_is_subscribed`
+
+.. rpc:function:: events/subscribe(event_id, event_types, attributes)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_events_subscribe`
+
+.. rpc:function:: events/unsubscribe(event_id, event_types, attributes)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_events_unsubscribe`
 
 .. _rpc-api-geoip-api-label:
 

@@ -51,6 +51,7 @@ from king_phisher.server import pages
 from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
 from king_phisher.server import signals
+from king_phisher.server import web_sockets
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
@@ -68,6 +69,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		"""A reference to the main server instance :py:attr:`.KingPhisherServer.config`."""
 		self.path = None
 		"""The resource path of the current HTTP request."""
+		self.rpc_session = None
 		super(KingPhisherRequestHandler, self).__init__(*args, **kwargs)
 
 	def on_init(self):
@@ -81,6 +83,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 					self.handler_map[regex_prefix + path] = handler
 		self.handler_map[regex_prefix + 'kpdd$'] = self.handle_deaddrop_visit
 		self.handler_map[regex_prefix + 'kp\\.js$'] = self.handle_javascript_hook
+		self.web_socket_handler = self.server.ws_manager.dispatch
 
 		tracking_image = self.config.get('server.tracking_image')
 		tracking_image = tracking_image.replace('.', '\\.')
@@ -210,6 +213,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			if message:
 				campaign = message.campaign
 				client_vars['campaign'] = {
+					'id': str(campaign.id),
 					'name': campaign.name,
 					'created': campaign.created,
 					'expiration': campaign.expiration,
@@ -257,12 +261,19 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 	def check_authorization(self):
 		# don't require authentication for non-RPC requests
-		if self.command != 'RPC':
+		cmd = self.command
+		if cmd == 'GET':
+			# check if the GET request is to open a web socket
+			if 'upgrade' not in self.headers:
+				return True
+		elif cmd != 'RPC':
 			return True
+
 		if not ipaddress.ip_address(self.client_address[0]).is_loopback:
 			return False
 
-		if self.path in ('/version', '/login'):
+		# the only two RPC methods that do not require authentication
+		if self.path in ('/login', '/version'):
 			return True
 		self.rpc_session = self.server.session_manager.get(self.rpc_session_id)
 		if not isinstance(self.rpc_session, aaa.AuthenticatedSession):
@@ -390,7 +401,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.server.logger.error("unicode error {0} in template file: {1}:{2}-{3}".format(error.reason, file_path, error.start, error.end))
 			raise errors.KingPhisherAbortRequestError()
 
-		template_data = ''
+		template_data = b''
 		headers = []
 		template_vars = {
 			'client': self.get_template_vars_client(),
@@ -423,6 +434,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				raise errors.KingPhisherAbortRequestError()
 			self.send_response(200)
 			headers.append(('Last-Modified', self.date_time_string(os.stat(template.filename).st_mtime)))
+			template_data = template_data.encode('utf-8', 'ignore')
 
 		if mime_type.startswith('text'):
 			mime_type += '; charset=utf-8'
@@ -437,7 +449,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
 
 		self.end_headers()
-		self.wfile.write(template_data.encode('utf-8', 'ignore'))
+		self.wfile.write(template_data)
 		return
 
 	def _respond_file_raw(self, file_path, attachment):
@@ -754,7 +766,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			required_group=config.get_if_exists('server.authentication.group'),
 			pam_service=config.get_if_exists('server.authentication.pam_service', 'sshd')
 		)
-		self.job_manager = job.JobManager()
+		self.job_manager = job.JobManager(logger_name='KingPhisher.Server.JobManager')
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
@@ -765,6 +777,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		global_vars['make_csrf_page'] = pages.make_csrf_page
 		global_vars['make_redirect_page'] = pages.make_redirect_page
 		self.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
+		self.ws_manager = web_sockets.WebSocketsManager(config, self.job_manager)
 
 		for http_server in self.sub_servers:
 			http_server.config = config
@@ -775,6 +788,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			http_server.job_manager = self.job_manager
 			http_server.template_env = self.template_env
 			http_server.kp_shutdown = self.shutdown
+			http_server.ws_manager = self.ws_manager
 
 		if not config.has_option('server.secret_id'):
 			config.set('server.secret_id', rest_api.generate_token())
@@ -799,9 +813,10 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 				return
 			self.logger.warning('processing shutdown request')
 			super(KingPhisherServer, self).shutdown(*args, **kwargs)
+			self.ws_manager.stop()
+			self.job_manager.stop()
 			self.session_manager.stop()
 			self.forked_authenticator.stop()
 			self.logger.debug('stopped the forked authenticator process')
-			self.job_manager.stop()
 			self.__geoip_db.close()
 			self.__is_shutdown.set()

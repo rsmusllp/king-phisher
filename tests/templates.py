@@ -63,7 +63,9 @@ class TemplatesTests(testing.KingPhisherTestCase):
 			'base16': '6B696E672D70686973686572',
 			'base32': 'NNUW4ZZNOBUGS43IMVZA====',
 			'base64': 'a2luZy1waGlzaGVy',
-			'rot13': 'xvat-cuvfure'
+			'rot-13': 'xvat-cuvfure',
+			'rot13': 'xvat-cuvfure',
+			'hex': '6B696E672D70686973686572'
 		}
 		for encoding, value in tests.items():
 			test_string = '{{ value | decode(encoding) }}'
@@ -76,12 +78,26 @@ class TemplatesTests(testing.KingPhisherTestCase):
 			'base16': '6B696E672D70686973686572',
 			'base32': 'NNUW4ZZNOBUGS43IMVZA====',
 			'base64': 'a2luZy1waGlzaGVy',
-			'rot13': 'xvat-cuvfure'
+			'rot-13': 'xvat-cuvfure',
+			'rot13': 'xvat-cuvfure',
+			'hex': '6B696E672D70686973686572'
 		}
 		for encoding, value in tests.items():
 			test_string = '{{ value | encode(encoding) }}'
 			template = env.from_string(test_string)
 			self.assertEqual(template.render(encoding=encoding, value='king-phisher'), value)
+
+	def test_hash_filters(self):
+		env = TemplateEnvironmentBase()
+		tests = {
+			'md5': 'C16B310ED4DF16EFE6FC788B3ED20F0A',
+			'sha1': '2946F7BDE8D99F2B1B1C61D91EE8735F4D8F1B8F',
+			'sha256': '214D38858B9816404C1465E77E0576D9DC1C8543D433D6581E91394D965F2CD2'
+		}
+		for algorithm, value in tests.items():
+			test_string = '{{ value | hash(algorithm) | encode(\'hex\')}}'
+			template = env.from_string(test_string)
+			self.assertEqual(template.render(algorithm=algorithm, value='king-phisher'), value)
 
 if __name__ == '__main__':
 	unittest.main()

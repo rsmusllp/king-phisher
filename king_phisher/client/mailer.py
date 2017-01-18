@@ -136,6 +136,10 @@ def render_message_template(template, config, target=None, analyze=False):
 
 	template = template_environment.from_string(template)
 	template_vars = {}
+	template_vars['campaign'] = dict(
+		id=str(config['campaign_id']),
+		name=config['campaign_name']
+	)
 	template_vars['client'] = dict(
 		first_name=target.first_name,
 		last_name=target.last_name,
@@ -159,6 +163,15 @@ def render_message_template(template, config, target=None, analyze=False):
 			start=get_invite_start_from_config(config),
 			summary=config.get('mailer.calendar_invite_summary')
 		)
+
+	template_vars['message'] = dict(
+		attachment=config.get('mailer.attachment_file'),
+		importance=config.get('mailer.importance'),
+		sensitivity=config.get('mailer.sensitivity'),
+		subject=config.get('mailer.subject'),
+		template=config.get('mailer.html_file'),
+		type=message_type
+	)
 
 	webserver_url = config.get('mailer.webserver_url', '')
 	webserver_url = urllib.parse.urlparse(webserver_url)
@@ -377,6 +390,15 @@ class MailSenderThread(threading.Thread):
 			self.logger.warning('received an SMTPException while connecting to the SMTP server', exc_info=True)
 			return ConnectionErrorReason.ERROR_UNKNOWN
 
+		if not self.config.get('smtp_ssl_enable', False) and 'starttls' in self.smtp_connection.esmtp_features:
+			self.logger.debug('target SMTP server supports the STARTTLS extension')
+			try:
+				self.smtp_connection.starttls()
+				self.smtp_connection.ehlo()
+			except smtplib.SMTPException:
+				self.logger.warning('received an SMTPException while negotiating STARTTLS with the SMTP server', exc_info=True)
+				return ConnectionErrorReason.ERROR_UNKNOWN
+
 		username = self.config.get('smtp_username', '')
 		if username:
 			password = self.config.get('smtp_password', '')
@@ -426,9 +448,9 @@ class MailSenderThread(threading.Thread):
 		:return: The number of targets that will be sent messages.
 		:rtype: int
 		"""
-		return sum(1 for _ in self.iterate_targets())
+		return sum(1 for _ in self.iterate_targets(counting=True))
 
-	def iterate_targets(self):
+	def iterate_targets(self, counting=False):
 		target_type = self.config['mailer.target_type']
 		mailer_tab = self.application.main_tabs['mailer']
 		if target_type == 'single':
@@ -452,6 +474,14 @@ class MailSenderThread(threading.Thread):
 					# this intentionally will cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
 					# when csv.DictReader is initialized
 					raw_target = dict((k, (v if v is None else v.decode('utf-8'))) for k, v in raw_target.items())
+				for required_field in ('first_name', 'last_name', 'email_address'):
+					if raw_target[required_field] is None:
+						raw_target = None
+						if counting:
+							self.tab_notify_status("Target CSV line {0} skipped due to missing field: {1}".format(line_no, required_field.replace('_', ' ')))
+						break
+				if raw_target is None:
+					continue
 				department = raw_target['department']
 				if department is not None:
 					department = department.strip()
@@ -684,27 +714,38 @@ class MailSenderThread(threading.Thread):
 
 			if self.max_messages_per_minute:
 				iteration_time = (time.time() - iteration_time)
-				sleep_time = (60.0 / float(self.max_messages_per_minute)) - iteration_time
-				while sleep_time > 0:
-					sleep_chunk = min(sleep_time, 0.5)
-					time.sleep(sleep_chunk)
-					if self.should_stop.is_set():
-						break
-					sleep_time -= sleep_chunk
+				self._sleep((60.0 / float(self.max_messages_per_minute)) - iteration_time)
 		return emails_done
+
+	def _sleep(self, duration):
+		while duration > 0:
+			sleep_chunk = min(duration, 0.5)
+			time.sleep(sleep_chunk)
+			if self.should_stop.is_set():
+				break
+			duration -= sleep_chunk
+		return self.should_stop.is_set()
 
 	def _try_send_message(self, *args, **kwargs):
 		message_sent = False
-		while not message_sent:
-			for _ in range(0, 3):
+		while not message_sent and not self.should_stop.is_set():
+			for i in range(0, 3):
 				try:
 					self.send_message(*args, **kwargs)
 					message_sent = True
 					break
+				except smtplib.SMTPServerDisconnected:
+					self.logger.warning('failed to send message, the server has been disconnected')
+					self.tab_notify_status('Failed to send message, the server has been disconnected')
+					self.tab_notify_status('Sleeping for 5 seconds before attempting to reconnect')
+					if self._sleep(5):
+						break
+					self.smtp_connection = None
+					self.server_smtp_reconnect()
 				except smtplib.SMTPException as error:
 					self.tab_notify_status("Failed to send message (exception: {0})".format(error.__class__.__name__))
 					self.logger.warning("failed to send message (exception: smtplib.{0})".format(error.__class__.__name__))
-					time.sleep(1)
+					self._sleep((i + 1) ** 2)
 			if not message_sent:
 				self.server_smtp_disconnect()
 				if not self.process_pause(True):

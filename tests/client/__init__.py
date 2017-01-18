@@ -44,3 +44,4 @@ from .graphs import ClientGraphsTests
 from .gtk_builder import ClientGtkBuilderLint
 from .gui_utilities import ClientGUIUtilityTests
 from .mailer import ClientMailerTests
+from .server_events import ServerEventSubscriberTests

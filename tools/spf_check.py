@@ -36,10 +36,10 @@ import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from king_phisher import color
-from king_phisher import ipaddress
-from king_phisher import spf
-from king_phisher import utilities
+import king_phisher.color as color
+import king_phisher.ipaddress as ipaddress
+import king_phisher.spf as spf
+import king_phisher.utilities as utilities
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher SPF Check Utility', conflict_handler='resolve')
@@ -48,7 +48,7 @@ def main():
 	parser.add_argument('target_email', help='the email address that messages are from')
 	arguments = parser.parse_args()
 
-	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
+	utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 
 	server_ip = arguments.smtp_server_ip
 	target_email = arguments.target_email
@@ -69,6 +69,10 @@ def main():
 	spf_test = spf.SenderPolicyFramework(server_ip, spf_domain, spf_sender)
 	try:
 		result = spf_test.check_host()
+	except spf.SPFParseError as error:
+		color.print_error('check_host failed with error: permerror (parsing failed)')
+		color.print_error('error reason: ' + error.message)
+		return
 	except spf.SPFPermError as error:
 		color.print_error('check_host failed with error: permerror')
 		color.print_error('error reason: ' + error.message)
@@ -83,9 +87,20 @@ def main():
 
 	color.print_good("spf policy result: {0}".format(result))
 	color.print_status('top level spf records found:')
-	for rid in range(len(spf_test.spf_records)):
-		record = spf.record_unparse(spf_test.spf_records[rid])
-		color.print_status("  #{0} {1: <10} {2}".format(rid + 1, ('(matched)' if rid == spf_test.spf_record_id else ''), record))
+	match = spf_test.match
+	for record_id, record in enumerate(spf_test.records.values(), 1):
+		color.print_status("  #{0} {1: <10} {2}".format(
+			record_id,
+			('(matched)' if match.record == record else ''),
+			record.domain
+		))
+		for directive_id, directive in enumerate(record.directives, 1):
+			color.print_status("    #{0}.{1} {2: <10} {3}".format(
+				record_id,
+				directive_id,
+				('(matched)' if match.record == record and match.directive == directive else ''),
+				directive
+			))
 
 if __name__ == '__main__':
 	sys.exit(main())

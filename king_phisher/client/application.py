@@ -40,11 +40,13 @@ import socket
 import sys
 import uuid
 
+from king_phisher import constants
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
 from king_phisher import its
-from king_phisher import json_ex
+from king_phisher import serializers
+from king_phisher import ssh_forward
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import assistants
@@ -53,14 +55,13 @@ from king_phisher.client import dialogs
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 from king_phisher.client import plugins
+from king_phisher.client import server_events
 from king_phisher.client.dialogs import ssh_host_key
 from king_phisher.client.windows import main
 from king_phisher.client.windows import rpc_terminal
 from king_phisher.constants import ConnectionErrorReason
-from king_phisher.ssh_forward import SSHTCPForwarder
 
 import advancedhttpserver
-from boltons import typeutils
 from gi.repository import Gdk
 from gi.repository import Gio
 from gi.repository import GLib
@@ -68,6 +69,7 @@ from gi.repository import GObject
 from gi.repository import Gtk
 import paramiko
 from smoke_zephyr.utilities import parse_server
+from smoke_zephyr.utilities import parse_timespan
 from smoke_zephyr.utilities import which
 
 if its.py_v2:
@@ -75,14 +77,13 @@ if its.py_v2:
 else:
 	from http.client import BadStatusLine
 
-USER_DATA_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher')
-"""The default folder location of user specific data storage."""
-
-DISABLED = typeutils.make_sentinel('DISABLED')
-"""A sentinel value to indicate that a feature is disabled."""
+DISABLED = constants.DISABLED
 
 GTK3_DEFAULT_THEME = 'Adwaita'
 """The default GTK3 Theme for style information."""
+
+USER_DATA_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher')
+"""The default folder location of user specific data storage."""
 
 if isinstance(Gtk.Widget, utilities.Mock):
 	_Gtk_Application = type('Gtk.Application', (object,), {'__module__': ''})
@@ -117,8 +118,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'server-disconnected': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'sftp-client-start': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'visit-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
+		'unhandled-exception': (GObject.SIGNAL_RUN_FIRST, None, (object, object))
 	}
-
 	def __init__(self, config_file=None, use_plugins=True, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
 		if use_style:
@@ -150,6 +151,11 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The primary top-level :py:class:`~.MainAppWindow` instance."""
 		self.rpc = None
 		"""The :py:class:`~.KingPhisherRPCClient` instance for the application."""
+		self._rpc_ping_event = None
+		# this will be populated when the RPC object is authenticated to ping
+		# the server periodically and keep the session alive
+		self.server_events = None
+		"""The :py:class:`~.ServerEventSubscriber` instance for the application to receive server events."""
 		self._ssh_forwarder = None
 		"""The SSH forwarder responsible for tunneling RPC communications."""
 		self.style_provider = None
@@ -205,7 +211,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		server_remote_port = self.config['server_remote_port']
 
 		try:
-			self._ssh_forwarder = SSHTCPForwarder(
+			self._ssh_forwarder = ssh_forward.SSHTCPForwarder(
 				server,
 				username,
 				password,
@@ -214,6 +220,12 @@ class KingPhisherClientApplication(_Gtk_Application):
 				missing_host_key_policy=ssh_host_key.MissingHostKeyPolicy(self)
 			)
 			self._ssh_forwarder.start()
+		except ssh_forward.KingPhisherSSHKeyError as error:
+			gui_utilities.show_dialog_error(
+				'SSH Key Configuration Error',
+				active_window,
+				error.message
+			)
 		except errors.KingPhisherAbortError as error:
 			self.logger.info("ssh connection aborted ({0})".format(error.message))
 		except paramiko.PasswordRequiredException:
@@ -238,14 +250,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if not os.path.isdir(config_dir):
 			self.logger.debug('creating the user configuration directory')
 			os.makedirs(config_dir)
-		# move the pre 1.0.0 config file if it exists
-		old_path = os.path.expanduser('~/.king_phisher.json')
-		if os.path.isfile(old_path) and os.access(old_path, os.R_OK):
-			self.logger.debug('moving the old config file to the new location')
-			os.rename(old_path, self.config_file)
-		else:
-			client_template = find.find_data_file('client_config.json')
-			shutil.copy(client_template, self.config_file)
+		client_template = find.find_data_file('client_config.json')
+		shutil.copy(client_template, self.config_file)
 
 	def campaign_configure(self):
 		assistant = assistants.CampaignAssistant(self, campaign_id=self.config['campaign_id'])
@@ -307,9 +313,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('received a KeyboardInterrupt exception')
 			return
 		exc_info = (exc_type, exc_value, exc_traceback)
-		error_uid = str(uuid.uuid4())
-		self.logger.error("error uid: {0} an unhandled exception was thrown".format(error_uid), exc_info=exc_info)
-		dialogs.ExceptionDialog.interact_on_idle(self, exc_info=exc_info, error_uid=error_uid)
+		error_uid = uuid.uuid4()
+		self.logger.error("error uid: {0} an unhandled exception was thrown".format(str(error_uid)), exc_info=exc_info)
+		self.emit('unhandled-exception', exc_info, error_uid)
 
 	def quit(self, optional=False):
 		"""
@@ -376,12 +382,12 @@ class KingPhisherClientApplication(_Gtk_Application):
 		for key in self.config.keys():
 			if 'password' in key or key == 'server_config':
 				del config[key]
-		with open(os.path.expanduser(self.config_file), 'w') as config_file_h:
-			json_ex.dump(config, config_file_h)
+		self.logger.info('writing the config to: ' + self.config_file)
+		with open(self.config_file, 'w') as config_file_h:
+			serializers.JSON.dump(config, config_file_h, pretty=True)
 
 	def do_exit(self):
 		self.plugin_manager.shutdown()
-
 		self.main_window.hide()
 		gui_utilities.gtk_widget_destroy_children(self.main_window)
 		gui_utilities.gtk_sync()
@@ -431,6 +437,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 		sys.excepthook = sys.__excepthook__
 		self.emit('config-save')
 
+	def do_unhandled_exception(self, exc_info, error_uid):
+		dialogs.ExceptionDialog.interact_on_idle(self, exc_info=exc_info, error_uid=error_uid)
+
 	@property
 	def theme_file(self):
 		if not self._theme_file:
@@ -446,12 +455,12 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""
 		self.logger.info('loading the config from disk')
 		client_template = find.find_data_file('client_config.json')
-		config_file = os.path.expanduser(self.config_file)
-		with open(config_file, 'r') as tmp_file:
-			self.config = json_ex.load(tmp_file)
+		self.logger.info('loading the config from: ' + self.config_file)
+		with open(self.config_file, 'r') as tmp_file:
+			self.config = serializers.JSON.load(tmp_file)
 		if load_defaults:
 			with open(client_template, 'r') as tmp_file:
-				client_template = json_ex.load(tmp_file)
+				client_template = serializers.JSON.load(tmp_file)
 			for key, value in client_template.items():
 				if not key in self.config:
 					self.config[key] = value
@@ -467,7 +476,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		:param str config_file: The path to the configuration file to merge.
 		"""
 		with open(config_file, 'r') as tmp_file:
-			config = json_ex.load(tmp_file, strict=strict)
+			config = serializers.JSON.load(tmp_file, strict=strict)
 		if not isinstance(config, dict):
 			self.logger.error("can not merge configuration file: {0} (invalid format)".format(config_file))
 			return
@@ -537,6 +546,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.warning('failed to connect to the remote rpc service due to http bad status line: ' + error.line)
 			gui_utilities.show_dialog_error(title_rpc_error, active_window, generic_message)
 		except socket.error as error:
+			self.logger.debug('failed to connect to the remote rpc service due to a socket error', exc_info=True)
 			gui_utilities.show_dialog_exc_socket_error(error, active_window)
 		except ssl.CertificateError as error:
 			self.logger.warning('failed to connect to the remote rpc service with a https certificate error: ' + error.message)
@@ -582,19 +592,39 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return False, login_reason
 		rpc.username = username
 		self.logger.debug('successfully authenticated to the remote king phisher service')
+		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), rpc.ping)
 
 		self.rpc = rpc
+		event_subscriber = server_events.ServerEventSubscriber(rpc)
+		if not event_subscriber.is_connected:
+			self.logger.error('failed to connect the server event socket')
+			event_subscriber.reconnect = False
+			event_subscriber.shutdown()
+			return False, ConnectionErrorReason.ERROR_UNKNOWN
+		self.server_events = event_subscriber
 		self.emit('server-connected')
 		return True, ConnectionErrorReason.SUCCESS
 
 	def do_server_disconnected(self):
-		"""Clean up the SSH TCP connections and disconnect from the server."""
+		"""
+		Clean up the connections to the server and disconnect. This logs out
+		of the RPC, closes the server event socket, and stops the SSH
+		forwarder.
+		"""
 		if self.rpc is not None:
+			if self.server_events is not None:
+				self.server_events.reconnect = False
+			GLib.source_remove(self._rpc_ping_event)
 			try:
 				self.rpc('logout')
 			except advancedhttpserver.RPCError as error:
 				self.logger.warning('failed to logout, rpc error: ' + error.message)
+			else:
+				if self.server_events is not None:
+					self.server_events.shutdown()
+					self.server_events = None
 			self.rpc = None
+
 		if self._ssh_forwarder:
 			self._ssh_forwarder.stop()
 			self._ssh_forwarder = None

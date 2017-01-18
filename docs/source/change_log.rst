@@ -7,10 +7,17 @@ Phisher.
 Version 1.x.x
 -------------
 
-Version 1.5.3
+Version 1.6.0
 ^^^^^^^^^^^^^
 
 *In Progress*
+
+* Support negotiating STARTTLS with SMTP servers that support it
+* Support for real time event publishing to the client
+* Support for a new GraphQL API for more efficient data queries
+* More flexibility in configuring server logging
+* Add persistent storage for server plugin data
+* Add a Jinja function to check if a password is complex
 
 Version 1.5.2
 ^^^^^^^^^^^^^
@@ -20,7 +27,7 @@ Released :release:`1.5.2` on December 23rd, 2016
 * Minor bug fixes
 
    * Use Default SMS sender to fix SMS subscription with T-Mobile
-   * Upgrade AHS to v2.0.6 to fix select polling
+   * Upgrade AdvancedHTTPServer to v2.0.6 to fix select polling
    * Corrected issue when attachment file is inaccessible
    * Fixed issue when message file directory is gone
    * Fixed server side encoding error with basic auth
@@ -42,7 +49,7 @@ Released :release:`1.5.1` on October 3rd, 2016
    * Log warnings when the PostgreSQL user exists
 
 * Improve the Metasploit plugin for session notifications via SMS
-* Support exporting credentials for use with Metasploit's USERPASS_FILE option.
+* Support exporting credentials for use with Metasploit's USERPASS_FILE option
 
 Version 1.5.0
 ^^^^^^^^^^^^^

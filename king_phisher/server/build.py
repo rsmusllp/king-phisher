@@ -77,9 +77,9 @@ def get_bind_addresses(config):
 
 	for host, port, use_ssl in addresses:
 		if port in (443, 8443) and not use_ssl:
-			logger.warning("running on port {0} without ssl, specify server.ssl_cert to enable ssl".format(port))
+			logger.warning("running on port {0} without ssl, this is generally unintended behaviour".format(port))
 		elif port in (80, 8080) and use_ssl:
-			logger.warning("running on port {0} with ssl, remove server.ssl_cert to disable ssl".format(port))
+			logger.warning("running on port {0} with ssl, this is generally unintended behaviour".format(port))
 	return addresses
 
 def get_ssl_hostnames(config):

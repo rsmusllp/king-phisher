@@ -3,9 +3,10 @@ Server API
 
 .. toctree::
    :maxdepth: 1
-   :numbered:
    :titlesonly:
 
+   graphql.rst
+   published_events.rst
    rest_api.rst
    rpc_api.rst
    signals.rst

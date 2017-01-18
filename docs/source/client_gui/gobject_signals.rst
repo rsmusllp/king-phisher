@@ -8,8 +8,8 @@ value to be returned by their handlers as noted.
 
 .. _gobject-signals-application-label:
 
-KingPhisherClientApplication Signals
-------------------------------------
+Application Signals
+-------------------
 
 The following are the signals for the
 :py:class:`~king_phisher.client.application.KingPhisherClientApplication`
@@ -157,8 +157,18 @@ object.
    :param row_ids: The row IDs that are to be deleted.
    :type row_ids: [str, ...]
 
-MailSenderTab Signals
----------------------
+.. py:function:: unhandled-exception(exc_info, error_uid)
+
+   This signal is emitted when the application encounters an unhandled Python
+   exception.
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param tuple exc_info: A tuple of three objects corresponding to the return value of the :py:func:`sys.exc_info` function representing the exception that was raised.
+   :param error_uid: The unique identifier that has been assigned to this exception for tracking.
+   :type error_uid: :py:class:`uuid.UUID`
+
+Mail Tab Signals
+----------------
 
 The following are the signals for the
 :py:class:`~king_phisher.client.tabs.mail.MailSenderTab` object.
@@ -189,3 +199,91 @@ The following are the signals for the
    :signal flags: ``SIGNAL_RUN_FIRST``
    :param target: The target for the message.
    :type target: :py:class:`~king_phisher.client.mailer.MessageTarget`
+
+Server Event Signals
+--------------------
+
+The following are the signals for the
+:py:class:`~king_phisher.client.server_events.ServerEventSubscriber` object.
+These events are published by the server forwarded to the client based on the
+active subscriptions. When an event is forwarded to a client the corresponding
+GObject signal is emitted for consumption by the client. See the section on
+:ref:`server-published-events-label` for more details.
+
+.. py:function:: db-alert-subscriptions(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-campaigns(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-campaign-types(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-companies(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-company-departments(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-credentials(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-deaddrop-connections(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-deaddrop-deployments(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-industries(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-landing-pages(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-messages(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-users(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. py:function:: db-visits(event_type, objects)
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param str event_type: The type of event, one of either deleted, inserted or updated.
+   :param list objects: The objects from the server. The available attributes depend on the subscription.

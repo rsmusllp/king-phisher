@@ -32,24 +32,56 @@
 
 import argparse
 import code
+import getpass
 import os
+import pprint
 import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from king_phisher import utilities
-from king_phisher.server.database import manager
-from king_phisher.server.database import models
+import king_phisher.color as color
+import king_phisher.utilities as utilities
+import king_phisher.server.aaa as aaa
+import king_phisher.server.graphql as graphql
+import king_phisher.server.database.manager as manager
+import king_phisher.server.database.models as models
 
 import yaml
+
+history_file = os.path.expanduser('~/.config/king-phisher/database_console.his')
 
 try:
 	import readline
 except ImportError:
-	pass
+	has_readline = False
 else:
+	has_readline = True
 	import rlcompleter
 	readline.parse_and_bind('tab: complete')
+	if os.path.isfile(history_file):
+		readline.read_history_file(history_file)
+
+def graphql_query(query, query_vars=None, context=None):
+	session = None
+	if context is None:
+		context = {}
+	if 'session' not in context:
+		session = manager.Session()
+		context['session'] = session
+	result = graphql.schema.execute(query, context_value=context, variable_values=query_vars)
+	if session is not None:
+		session.close()
+	if result.errors:
+		color.print_error('GraphQL Exception:')
+		for error in result.errors:
+			if hasattr(error, 'message'):
+				print('  ' + error.message)
+			elif hasattr(error, 'args'):
+				print('  ' + str(error.args[0]))
+			else:
+				print('  ' + repr(error))
+	else:
+		pprint.pprint(result.data)
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Interactive Database Console', conflict_handler='resolve')
@@ -59,7 +91,7 @@ def main():
 	config_group.add_argument('-u', '--url', dest='database_url', help='the database connection url')
 	arguments = parser.parse_args()
 
-	utilities.configure_stream_logger(arguments.loglvl, arguments.logger)
+	utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 
 	if arguments.database_url:
 		database_connection_url = arguments.database_url
@@ -71,8 +103,21 @@ def main():
 
 	engine = manager.init_database(database_connection_url)
 	session = manager.Session()
-	console = code.InteractiveConsole(dict(engine=engine, manager=manager, models=models, session=session))
+	rpc_session = aaa.AuthenticatedSession(user=getpass.getuser())
+	console = code.InteractiveConsole(dict(
+		engine=engine,
+		graphql=graphql,
+		graphql_query=graphql_query,
+		manager=manager,
+		models=models,
+		pprint=pprint.pprint,
+		rpc_session=rpc_session,
+		session=session
+	))
 	console.interact('starting interactive database console')
+
+	if os.path.isdir(os.path.dirname(history_file)):
+		readline.write_history_file(history_file)
 
 if __name__ == '__main__':
 	sys.exit(main())

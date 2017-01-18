@@ -42,6 +42,8 @@ from king_phisher.utilities import random_string
 class ClientMailerTests(testing.KingPhisherTestCase):
 	def setUp(self):
 		self.config = {
+			'campaign_id': '1',
+			'campaign_name': 'Unit Test Campaign',
 			'mailer.webserver_url': 'http://king-phisher.local/foobar',
 			'server_config': {
 				'server.secret_id': random_string(24),

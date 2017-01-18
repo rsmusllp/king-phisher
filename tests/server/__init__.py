@@ -37,8 +37,11 @@ logging.getLogger('').setLevel(logging.CRITICAL)
 from .aaa import ServerAuthenticatedSessionManagerTests
 from .aaa import ServerAuthenticationTests
 from .aaa import ServerCachedPasswordTests
-from .database import ServerDatabaseTests
-from .database import ServerDatabaseRPCTests
+from .database import DatabaseRPCTests
+from .database import DatabaseSchemaTests
+from .database import DatabaseStorageTests
+from .database import DatabaseTests
+from .graphql import ServerGraphQLTests
 from .rest_api import ServerRESTAPITests
 from .server import CampaignWorkflowTests
 from .server import ServerTests

@@ -35,7 +35,7 @@ import os
 import unittest
 
 from king_phisher import find
-from king_phisher import json_ex
+from king_phisher import serializers
 from king_phisher import testing
 from king_phisher.client.widget import completion_providers
 
@@ -65,7 +65,7 @@ class ClientJinjaComletionProviderTests(testing.KingPhisherTestCase):
 			json_file = os.path.abspath(json_file)
 			with open(json_file, 'r') as file_h:
 				try:
-					json_ex.load(file_h, strict=True)
+					serializers.JSON.load(file_h, strict=True)
 				except Exception:
 					self.fail("failed to load file '{0}' as json data".format(json_file))
 

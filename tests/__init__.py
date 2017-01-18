@@ -44,7 +44,8 @@ from .geoip import GeoIPTests
 from .geoip import GeoIPRPCTests
 from .ics import ICSTests
 from .ipaddress import IPAddressTests
-from .json_ex import JsonExTests
+from .serializers import JsonSerializerTests
+from .serializers import MsgPackSerializerTests
 from .sms import SMSTests
 from .spf import SPFTests
 from .templates import TemplatesTests

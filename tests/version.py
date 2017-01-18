@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import distutils.version
 import unittest
 
 from king_phisher import testing
@@ -38,12 +39,20 @@ from king_phisher.version import *
 import requests
 
 class VersionTests(testing.KingPhisherTestCase):
+	def test_distutils_version(self):
+		try:
+			distutils.version.StrictVersion(distutils_version)
+		except ValueError:
+			self.fail('the distutils version lable is not compatible with StrictVersion')
+
 	def test_version_info(self):
 		if version_label:
-			self.assertIn(version_label, ('alpha', 'beta'), msg='the version label is invalid')
-		version_regex = r'^\d+\.\d+\.\d+(-(alpha|beta))?( \(rev: [a-f0-9]{8}\))?$'
+			self.assertRegex(version_label, r'^(alpha|beta)\d*$', 'the version label is invalid')
+
+		version_regex = r'^\d+\.\d+\.\d+(-(alpha|beta)\d*)?( \(rev: [a-f0-9]{8,}\))?$'
 		self.assertRegex(version, version_regex, msg='the version format is invalid')
-		version_regex = r'^\d+\.\d+\.\d+((a|b)\d)?$'
+
+		version_regex = r'^\d+\.\d+\.\d+((a|b)\d*)?$'
 		self.assertRegex(distutils_version, version_regex, msg='the distutils version format is invalid')
 
 	@testing.skip_if_offline

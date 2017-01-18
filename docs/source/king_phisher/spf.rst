@@ -13,6 +13,8 @@ Data
 .. autodata:: king_phisher.spf.MACRO_REGEX
    :annotation:
 
+.. autodata:: king_phisher.spf.MAX_QUERIES
+
 .. autodata:: king_phisher.spf.QUALIFIERS
    :annotation:
 
@@ -20,8 +22,6 @@ Functions
 ---------
 
 .. autofunction:: king_phisher.spf.check_host
-
-.. autofunction:: king_phisher.spf.record_unparse
 
 .. autofunction:: king_phisher.spf.validate_record
 
@@ -33,17 +33,37 @@ Classes
    :special-members: __init__
    :undoc-members:
 
+.. autoclass:: king_phisher.spf.SPFDirective
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: king_phisher.spf.SPFMatch
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: king_phisher.spf.SPFRecord
+   :special-members: __init__
+   :undoc-members:
+
 Exceptions
 ----------
 
 .. autoexception:: king_phisher.spf.SPFError
    :members:
+   :show-inheritance:
    :undoc-members:
 
 .. autoexception:: king_phisher.spf.SPFTempError
    :members:
+   :show-inheritance:
+   :undoc-members:
+
+.. autoexception:: king_phisher.spf.SPFParseError
+   :members:
+   :show-inheritance:
    :undoc-members:
 
 .. autoexception:: king_phisher.spf.SPFPermError
    :members:
+   :show-inheritance:
    :undoc-members:

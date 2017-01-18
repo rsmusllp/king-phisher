@@ -13,9 +13,8 @@ the respective plugins entry point.
 
 .. toctree::
    :maxdepth: 1
-   :numbered:
    :titlesonly:
 
-   plugins/compatibility.rst
-   plugins/client.rst
-   plugins/server.rst
+   compatibility.rst
+   client.rst
+   server.rst

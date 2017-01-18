@@ -19,11 +19,26 @@ the effective equivalent of importing the module in Python. When the module is
 enabled, an instance of the Plugin class created allowing it to fulfill its
 intended purpose.
 
+Reloading Plugins
+~~~~~~~~~~~~~~~~~
+
 Plugin modules and classes can be "reloaded" to allow changes made to the plugin
 on disk to take effect. This can be accomplished by right clicking the plugin
 and selecting the "Reload" option from the manager window. If an enabled plugin
 is reloaded, it will first be disabled before being re-enabled causing it to
 lose any state information it may have been storing.
+
+Plugin Compatibility
+~~~~~~~~~~~~~~~~~~~~
+
+Plugin modules that have requirements can have their compatibility checked by
+viewing the plugin information pane. This includes a simple yes or no regarding
+whether all of the plugin's requirements are met and the plugin is thus
+compatible. Additional information regarding the specific requirements a
+particular plugin has can be accessed by clicking the ``Compatible`` link which
+will show each of the requirements, their values and whether or not they are
+met. This allows users to easily determine why a particular plugin may not be
+compatible.
 
 Plugin Options
 --------------
@@ -73,8 +88,22 @@ The following is a commented example of a basic "Hello World" plugin.
                'Whether or not this plugin say good bye.',
                default=True,
                display_name='Say Good Bye'
+           ),
+           plugins.ClientOptionInteger(
+               'some_number',
+               'An example number option.',
+               default=1337,
+               display_name='A Number'
+           ),
+           plugins.ClientOptionPort(
+               'tcp_port',
+               'The TCP port to connect to.',
+               default=80,
+               display_name='Connection Port'
            )
        ]
+       req_min_version = '1.4.0'  # (optional) specify the required minimum version of king phisher
+       version = '1.0'            # (optional) specify this plugin's version
        # this is the primary plugin entry point which is executed when the plugin is enabled
        def initialize(self):
            print('Hello World!')
@@ -87,8 +116,8 @@ The following is a commented example of a basic "Hello World" plugin.
        def finalize(self):
            print('Good Bye World!')
 
-      # the plugin connects this handler to the applications 'exit' signal
-      def signal_exit(self, app):
+       # the plugin connects this handler to the applications 'exit' signal
+       def signal_exit(self, app):
            # check the 'validiction' option in the configuration
            if not self.config['validiction']:
                return
