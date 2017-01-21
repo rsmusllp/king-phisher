@@ -68,7 +68,7 @@ if sys.version_info[0] < 3:
 	urllib.parse = urlparse
 	urllib.parse.urlencode = urllib.urlencode
 else:
-	import urllib.parse # pylint: disable=ungrouped-imports
+	import urllib.parse  # pylint: disable=ungrouped-imports
 
 if isinstance(Gtk.Widget, utilities.Mock):
 	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
@@ -967,6 +967,8 @@ class MailSenderTab(_GObject_GObject):
 	configuring, previewing and sending messages as part of a campaign.
 	"""
 	__gsignals__ = {
+		'message-data-export': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, bool, (str,)),
+		'message-data-import': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, bool, (str, str)),
 		'send-finished': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'send-precheck': (GObject.SIGNAL_RUN_LAST, object, (), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r)),
 		'send-target': (GObject.SIGNAL_RUN_FIRST, None, (object,))
@@ -1090,6 +1092,46 @@ class MailSenderTab(_GObject_GObject):
 			if not response:
 				return False
 			path = response['target_path']
+		if not self.emit('message-data-export', path):
+			return False
+		gui_utilities.show_dialog_info('Success', self.parent, 'Successfully exported the message.')
+		return True
+
+	def import_message_data(self):
+		"""
+		Process a previously exported message archive file and restore the
+		message data, settings, and applicable files from it.
+
+		:return: Whether or not the message archive file was loaded from disk.
+		:rtype: bool
+		"""
+		config_tab = self.tabs.get('config')
+		if not config_tab:
+			self.logger.warning('attempted to import message data while the config tab was unavailable')
+			return False
+		config_tab.objects_save_to_config()
+		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
+		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
+		dialog.quick_add_filter('All Files', '*')
+		response = dialog.run_quick_open()
+		dialog.destroy()
+		if not response:
+			return False
+		target_file = response['target_path']
+
+		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
+		response = dialog.run_quick_select_directory()
+		dialog.destroy()
+		if not response:
+			return False
+		dest_dir = response['target_path']
+		if not self.emit('message-data-import', target_file, dest_dir):
+			return False
+		gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message.')
+		return True
+
+	def do_message_data_export(self, path):
+		config_tab = self.tabs.get('config')
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
 		message_config = {}
@@ -1099,37 +1141,14 @@ class MailSenderTab(_GObject_GObject):
 		export.message_data_to_kpm(message_config, path)
 		return True
 
-	def import_message_data(self):
-		"""
-		Process a previously exported message archive file and restore the
-		message data, settings, and applicable files from it.
-		"""
+	def do_message_data_import(self, target_file, dest_dir):
 		config_tab = self.tabs.get('config')
-		if not config_tab:
-			self.logger.warning('attempted to import message data while the config tab was unavailable')
-			return
 		config_prefix = config_tab.config_prefix
-		config_tab.objects_save_to_config()
-		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
-		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
-		dialog.quick_add_filter('All Files', '*')
-		response = dialog.run_quick_open()
-		dialog.destroy()
-		if not response:
-			return
-		target_file = response['target_path']
-
-		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
-		response = dialog.run_quick_select_directory()
-		dialog.destroy()
-		if not response:
-			return
-		dest_dir = response['target_path']
 		try:
 			message_data = export.message_data_from_kpm(target_file, dest_dir)
 		except KingPhisherInputValidationError as error:
 			gui_utilities.show_dialog_error('Import Error', self.parent, error.message.capitalize() + '.')
-			return
+			return False
 
 		config_keys = set(key for key in self.config.keys() if key.startswith(config_prefix))
 		config_types = dict(zip(config_keys, [type(self.config[key]) for key in config_keys]))
@@ -1152,7 +1171,7 @@ class MailSenderTab(_GObject_GObject):
 			self.config['mailer.target_type'] = 'file'
 
 		config_tab.objects_load_from_config()
-		gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message.')
+		return True
 
 	def do_send_precheck(self):
 		return True
