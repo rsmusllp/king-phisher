@@ -167,11 +167,34 @@ object.
    :param error_uid: The unique identifier that has been assigned to this exception for tracking.
    :type error_uid: :py:class:`uuid.UUID`
 
+.. _gobject-signals-mail-tab-label:
+
 Mail Tab Signals
 ----------------
 
 The following are the signals for the
 :py:class:`~king_phisher.client.tabs.mail.MailSenderTab` object.
+
+.. py:function:: message-data-export(str)
+
+   This signal is emitted when the client is going to export the message
+   configuration to a King Phisher Message (KPM) archive file.
+
+   :signal flags: ``SIGNAL_ACTION | SIGNAL_RUN_LAST``
+   :param str path: The path to write the archive file to.
+   :return: Whether or not the message archive was successfully imported.
+   :rtype: bool
+
+.. py:function:: message-data-import(str, str)
+
+   This signal is emitted when the client is going to import the message
+   configuration from a King Phisher Message (KPM) archive file.
+
+   :signal flags: ``SIGNAL_ACTION | SIGNAL_RUN_LAST``
+   :param str target_file: The source archive file to import.
+   :param str dest_dir: The destination directory to unpack the archive into.
+   :return: Whether or not the message archive was successfully imported.
+   :rtype: bool
 
 .. py:function:: send-finished()
 

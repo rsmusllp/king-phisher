@@ -18,6 +18,7 @@ Version 1.6.0
 * More flexibility in configuring server logging
 * Add persistent storage for server plugin data
 * Add a Jinja function to check if a password is complex
+* Add client ``message-data-export`` and ``message-data-import`` signals
 
 Version 1.5.2
 ^^^^^^^^^^^^^
@@ -49,7 +50,7 @@ Released :release:`1.5.1` on October 3rd, 2016
    * Log warnings when the PostgreSQL user exists
 
 * Improve the Metasploit plugin for session notifications via SMS
-* Support exporting credentials for use with Metasploit's USERPASS_FILE option
+* Support exporting credentials for use with Metasploit's ``USERPASS_FILE`` option
 
 Version 1.5.0
 ^^^^^^^^^^^^^

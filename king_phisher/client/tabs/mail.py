@@ -965,6 +965,8 @@ class MailSenderTab(_GObject_GObject):
 	The King Phisher client top-level 'Send Messages' tab. This object
 	manages the sub-tabs which display useful information for
 	configuring, previewing and sending messages as part of a campaign.
+
+	:GObject Signals: :ref:`gobject-signals-mail-tab-label`
 	"""
 	__gsignals__ = {
 		'message-data-export': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, bool, (str,)),
@@ -1075,7 +1077,8 @@ class MailSenderTab(_GObject_GObject):
 		a King Phisher message (KPM) archive file suitable for restoring at a
 		later point in time. If *path* is not specified, the user will be
 		prompted to select one and failure to do so will prevent the message
-		data from being exported.
+		data from being exported. This function wraps the emission of the
+		``message-data-export`` signal.
 
 		:param str path: An optional path of where to save the archive file to.
 		:return: Whether or not the message archive file was written to disk.
@@ -1100,7 +1103,8 @@ class MailSenderTab(_GObject_GObject):
 	def import_message_data(self):
 		"""
 		Process a previously exported message archive file and restore the
-		message data, settings, and applicable files from it.
+		message data, settings, and applicable files from it. This function
+		wraps the emission of the ``message-data-import`` signal.
 
 		:return: Whether or not the message archive file was loaded from disk.
 		:rtype: bool
