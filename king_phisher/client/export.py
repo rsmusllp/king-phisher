@@ -40,6 +40,7 @@ import os
 import re
 import shutil
 import xml.etree.ElementTree as ET
+import xml.dom.minidom as minidom
 
 from king_phisher import archive
 from king_phisher import ipaddress
@@ -127,7 +128,7 @@ def convert_value(table_name, key, value):
 		value = str(value)
 	return value
 
-def campaign_to_xml(rpc, campaign_id, xml_file):
+def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 	"""
 	Load all information for a particular campaign and dump it to an XML file.
 
@@ -135,6 +136,7 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 	:type rpc: :py:class:`.KingPhisherRPCClient`
 	:param campaign_id: The ID of the campaign to load the information for.
 	:param str xml_file: The destination file for the XML data.
+	:param str encoding: The encoding to use for strings.
 	"""
 	root = ET.Element('king_phisher')
 	# Generate export metadata
@@ -155,8 +157,9 @@ def campaign_to_xml(rpc, campaign_id, xml_file):
 			for key, value in table_row._asdict().items():
 				ET.SubElement(table_row_element, key).text = convert_value(table_name, key, value)
 
-	element_tree = ET.ElementTree(root)
-	element_tree.write(xml_file, encoding='utf-8', xml_declaration=True)
+	document = minidom.parseString(ET.tostring(root))
+	with open(xml_file, 'wb') as file_h:
+		file_h.write(document.toprettyxml(indent='  ', encoding=encoding))
 
 def campaign_credentials_to_msf_txt(rpc, campaign_id, target_file):
 	"""
