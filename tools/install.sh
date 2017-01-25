@@ -443,18 +443,18 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	else
 		echo "-----------------------------------------------------------------------------------------------"
 		echo "Start the King Phisher server with the following command prior to starting the client:"
-		echo "sudo python3 $KING_PHISHER_DIR/KingPhisherServer -L INFO -f $KING_PHISHER_DIR/server_config.yml"
+		echo "sudo $KING_PHISHER_DIR/KingPhisherServer -L INFO -f $KING_PHISHER_DIR/server_config.yml"
 	fi
 fi
 if [ "$BACKUP" == "true" ]; then
 	echo "-----------------------------------------------------------------------------------------------"
-	echo "WARNING: If this is not a fresh install of King Phisher You will need to restore your server_config.yml"
-	echo "WARNING: the server_config.yml gets backup in numbered backups please cp the version you wish to restore"
+	echo "WARNING: If this is not a fresh install of King Phisher, you will need to restore your server_config.yml"
+	echo "WARNING: the server_config.yml gets backup in numbered backups. Please cp the version you wish to restore"
 	echo "EXAMPLE: cp server_config.yml.bck ./server_config.yml"
 fi
 
 if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 	echo "-----------------------------------------------------------------------------------------------"
 	echo "You can start the King Phisher client with the following command:"
-	echo "python3 $KING_PHISHER_DIR/KingPhisher"
+	echo "$KING_PHISHER_DIR/KingPhisher"
 fi
