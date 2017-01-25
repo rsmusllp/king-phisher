@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.20.0 
 
-Copyright (c) 2013-2016, SecureState LLC
+Copyright (c) 2013-2017, SecureState LLC
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ Spencer McIntyre
   <!-- interface-license-type bsd3c -->
   <!-- interface-name King Phisher -->
   <!-- interface-description Social Engineering Phishing Toolkit -->
-  <!-- interface-copyright 2013-2016, SecureState LLC -->
+  <!-- interface-copyright 2013-2017, SecureState LLC -->
   <!-- interface-authors Erik Daguerre\nBrandan Geise\nJeff McCutchan\nSpencer McIntyre -->
   <object class="GtkAboutDialog" id="AboutDialog">
     <property name="width_request">550</property>
@@ -48,11 +48,11 @@ Spencer McIntyre
     <property name="type">popup</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">King Phisher</property>
-    <property name="copyright" translatable="yes">Copyright (c) 2013-2016, SecureState LLC</property>
+    <property name="copyright" translatable="yes">Copyright (c) 2013-2017, SecureState LLC</property>
     <property name="comments" translatable="yes">Phishing Campaign Toolkit</property>
     <property name="website">https://github.com/securestate/king-phisher</property>
     <property name="website_label" translatable="yes">GitHub Home Page</property>
-    <property name="license" translatable="yes">Copyright (c) 2013-2016, SecureState LLC
+    <property name="license" translatable="yes">Copyright (c) 2013-2017, SecureState LLC
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
