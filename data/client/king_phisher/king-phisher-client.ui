@@ -2548,7 +2548,7 @@ Spencer McIntyre</property>
                 <property name="activate_on_single_click">True</property>
                 <signal name="row-activated" handler="signal_treeview_row_activated" swapped="no"/>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection"/>
+                  <object class="GtkTreeSelection" id="PluginManagerWindow.treeview_plugins.treeselection_campaigns"/>
                 </child>
               </object>
             </child>
@@ -4636,7 +4636,7 @@ Spencer McIntyre</property>
                         <property name="label" translatable="yes">Campaign</property>
                         <property name="use_underline">True</property>
                         <child type="submenu">
-                          <object class="GtkMenu">
+                          <object class="GtkMenu" id="MainMenuBar.menuitems_file_export_campaign_submenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
@@ -4694,7 +4694,7 @@ Spencer McIntyre</property>
                         <property name="label" translatable="yes">Visits</property>
                         <property name="use_underline">True</property>
                         <child type="submenu">
-                          <object class="GtkMenu">
+                          <object class="GtkMenu" id="MainMenuBar.menuitem_file_export_visits_menusubmenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
@@ -4727,7 +4727,7 @@ Spencer McIntyre</property>
                         <property name="label" translatable="yes">Credentials</property>
                         <property name="use_underline">True</property>
                         <child type="submenu">
-                          <object class="GtkMenu">
+                          <object class="GtkMenu" id="MainMenuBar.menuitem_file_export_credentails_submenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>

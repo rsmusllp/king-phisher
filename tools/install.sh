@@ -124,7 +124,7 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "BackBox Linux 4\.[4-6]" /etc/issue &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "BackBox Linux 4\.[5-9]" /etc/issue &> /dev/null; then
 	LINUX_VERSION="BackBox"
 fi
 
@@ -133,15 +133,15 @@ if [[ ! $LINUX_VERSION ]] && grep -E "CentOS Linux release 7(\.[0-9]{1,4}){2}" /
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[3-4]" /etc/redhat-release &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[4-9]" /etc/redhat-release &> /dev/null; then
 	LINUX_VERSION="Fedora"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Debian GNU\/Linux [8] " /etc/issue &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Debian GNU\/Linux [8-9] " /etc/issue &> /dev/null; then
 	LINUX_VERSION="Debian"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep 'Kali Linux 2\.[0-9]\|Kali Linux Rolling' /etc/debian_version &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep 'Kali Linux Rolling' /etc/debian_version &> /dev/null; then
 	LINUX_VERSION="Kali"
 fi
 
