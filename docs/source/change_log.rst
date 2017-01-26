@@ -19,6 +19,13 @@ Version 1.6.0
 * Add persistent storage for server plugin data
 * Add a Jinja function to check if a password is complex
 * Add client ``message-data-export`` and ``message-data-import`` signals
+* King Phisher now starts with Python3 by default
+* ``tools/install.sh`` now creates a backup  of server_config.yml when present
+
+* Minor bug fixes
+
+   * Minor CSS fixes
+   * Special characters now display in the UI correctly
 
 Version 1.5.2
 ^^^^^^^^^^^^^
