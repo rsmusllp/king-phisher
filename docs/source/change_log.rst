@@ -10,7 +10,7 @@ Version 1.x.x
 Version 1.6.0
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.6.0` on January 31st, 2017
 
 * Support negotiating STARTTLS with SMTP servers that support it
 * Support for real time event publishing to the client
