@@ -166,6 +166,10 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			'mailer.subject': 'Subject',
 			'mailer.html_file': 'Message HTML File'
 		}
+		target_field = self.config.get('mailer.target_field')
+		if not target_field in ('to', 'cc', 'bcc'):
+			gui_utilities.show_dialog_warning('Invalid Target Field', self.parent, 'Please select a valid target field.')
+			return False
 		target_type = self.config.get('mailer.target_type')
 		if target_type == 'file':
 			required_settings['mailer.target_file'] = 'Target CSV File'
@@ -179,6 +183,8 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		if not message_type in ('email', 'calendar_invite'):
 			gui_utilities.show_dialog_warning('Invalid Message Type', self.parent, 'Please select a valid message type.')
 			return False
+		if message_type == 'email' and target_field != 'to':
+			required_settings['mailer.recipient_email_to'] = 'Recipient \'To\' Email Address'
 		for setting, setting_name in required_settings.items():
 			if not self.config.get(setting):
 				gui_utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
@@ -766,6 +772,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			'entry_calendar_invite_location',
 			'entry_calendar_invite_summary',
 			'entry_company_name',
+			'entry_recipient_email_cc',
+			'entry_recipient_email_to',
 			'entry_source_email',
 			'entry_source_email_smtp',
 			'entry_source_email_alias',
@@ -780,6 +788,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			'expander_email_settings',
 			'radiobutton_message_type_calendar_invite',
 			'radiobutton_message_type_email',
+			'radiobutton_target_field_bcc',
+			'radiobutton_target_field_cc',
+			'radiobutton_target_field_to',
 			'radiobutton_target_type_file',
 			'radiobutton_target_type_single',
 			'spinbutton_calendar_invite_duration',
@@ -807,6 +818,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 		self.message_type = managers.RadioButtonGroupManager(self, 'message_type')
 		self.message_type.set_active(self.config['mailer.message_type'])
+		self.target_field = managers.RadioButtonGroupManager(self, 'target_field')
+		self.target_field.set_active(self.config['mailer.target_field'])
 		self.target_type = managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
 
@@ -815,12 +828,15 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		# these are called in the super class's __init__ method so they may not exist yet
 		if hasattr(self, 'message_type'):
 			self.message_type.set_active(self.config['mailer.message_type'])
+		if hasattr(self, 'target_field'):
+			self.target_field.set_active(self.config['mailer.target_field'])
 		if hasattr(self, 'target_type'):
 			self.target_type.set_active(self.config['mailer.target_type'])
 
 	def objects_save_to_config(self):
 		super(MailSenderConfigurationTab, self).objects_save_to_config()
 		self.config['mailer.message_type'] = self.message_type.get_active()
+		self.config['mailer.target_field'] = self.target_field.get_active()
 		self.config['mailer.target_type'] = self.target_type.get_active()
 
 	def signal_button_clicked_verify(self, button):
@@ -950,6 +966,13 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		message_type = self.message_type.get_active()
 		self.gobjects['expander_calendar_invite_settings'].set_expanded(message_type == 'calendar_invite')
 		self.gobjects['expander_email_settings'].set_expanded(message_type == 'email')
+
+	def signal_radiobutton_toggled_target_field(self, radiobutton):
+		if not radiobutton.get_active():
+			return
+		target_field = self.target_field.get_active()
+		for field in ('to', 'cc'):
+			self.gobjects['entry_recipient_email_' + field].set_sensitive(target_field != field)
 
 	def signal_radiobutton_toggled_target_type(self, radiobutton):
 		if not radiobutton.get_active():
