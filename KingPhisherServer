@@ -52,32 +52,6 @@ from king_phisher.server import plugins
 
 from boltons import strutils
 from smoke_zephyr.configuration import Configuration
-from smoke_zephyr.requirements import check_requirements
-
-__requirements__ = [
-	'advancedhttpserver>=2.0.9',
-	'alembic>=0.8.6',
-	'blinker>=1.4',
-	'boltons>=16.2.2',
-	'dnspython>=1.14.0',
-	'geoip2>=2.3.0',
-	'graphene>=1.0.2',
-	'graphene-sqlalchemy>=1.0',
-	'graphql-relay>=0.4.4',
-	'Jinja2>=2.8',
-	'markupsafe>=0.23',
-	'msgpack-python>=0.4.7',
-	'pluginbase>=0.4',
-	'psycopg2>=2.6.1',
-	'pyotp>=2.1.1',
-	'python-dateutil>=2.5.3',
-	'PyYAML>=3.11',
-	'requests>=2.10.0',
-	'SQLAlchemy>=1.0.13',
-	'termcolor>=1.1.0'
-]
-if its.py_v2:
-	__requirements__.append('ipaddress>=1.0.16')
 
 logger = logging.getLogger('KingPhisher.Server.CLI')
 
@@ -211,25 +185,14 @@ def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
 	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in the foreground (do not fork)')
-	parser.add_argument('--no-dep-check', dest='dep_check', default=True, action='store_false', help='disable dependency checks')
 	parser.add_argument('--update-geoip-db', dest='update_geoip_db', action='store_true', default=False, help='update the geoip database and exit')
 	parser.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
-
 	parser.add_argument('config_file', action='store', type=argparse.FileType('r'), help='configuration file to use')
 	arguments = parser.parse_args()
 
 	console_log_handler = utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 	config_file = arguments.config_file
 	del parser
-
-	if arguments.dep_check:
-		missing_requirements = check_requirements(__requirements__)
-		if missing_requirements:
-			color.print_error('the following package requirements are missing or incompatible:')
-			for missing_req in missing_requirements:
-				color.print_error('  - ' + missing_req)
-			color.print_error('please install the missing requirements with pip')
-			return os.EX_SOFTWARE
 
 	if os.getuid():
 		color.print_error('the server must be started as root, configure the')
