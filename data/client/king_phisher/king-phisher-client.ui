@@ -6018,6 +6018,7 @@ your communications. Please contact the system administrator.</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Send a typical email.</property>
                         <property name="active">True</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="signal_radiobutton_toggled_message_type" swapped="no"/>
@@ -6034,6 +6035,7 @@ your communications. Please contact the system administrator.</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Send a calendar invite request.</property>
                         <property name="draw_indicator">True</property>
                         <property name="group">MailSenderConfigurationTab.radiobutton_message_type_email</property>
                         <signal name="toggled" handler="signal_radiobutton_toggled_message_type" swapped="no"/>
@@ -6163,6 +6165,7 @@ your communications. Please contact the system administrator.</property>
                     <property name="width_request">150</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Select the type of message to be sent.</property>
                     <property name="label" translatable="yes">Message Type</property>
                   </object>
                   <packing>
@@ -6338,6 +6341,7 @@ your communications. Please contact the system administrator.</property>
                                     <property name="width_request">138</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">Select which field to use for the target recipient.</property>
                                     <property name="label" translatable="yes">Target Field</property>
                                   </object>
                                   <packing>
@@ -6350,7 +6354,7 @@ your communications. Please contact the system administrator.</property>
                                     <property name="width_request">138</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="label" translatable="yes">TO Email</property>
+                                    <property name="label" translatable="yes">To Email</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -6373,9 +6377,9 @@ your communications. Please contact the system administrator.</property>
                                   <object class="GtkEntry" id="MailSenderConfigurationTab.entry_recipient_email_to">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="tooltip_text" translatable="yes">The targets email address.</property>
+                                    <property name="tooltip_text" translatable="yes">The email address to place in the message's To field.</property>
                                     <property name="hexpand">True</property>
-                                    <property name="placeholder_text" translatable="yes">aliddle@king-phisher.com</property>
+                                    <property name="placeholder_text" translatable="yes">to.aliddle@king-phisher.com</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -6386,9 +6390,9 @@ your communications. Please contact the system administrator.</property>
                                   <object class="GtkEntry" id="MailSenderConfigurationTab.entry_recipient_email_cc">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="tooltip_text" translatable="yes">The targets email address.</property>
+                                    <property name="tooltip_text" translatable="yes">The email address to place in the message's CC field.</property>
                                     <property name="hexpand">True</property>
-                                    <property name="placeholder_text" translatable="yes">aliddle@king-phisher.com</property>
+                                    <property name="placeholder_text" translatable="yes">cc.aliddle@king-phisher.com</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -6409,6 +6413,7 @@ your communications. Please contact the system administrator.</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">False</property>
+                                        <property name="tooltip_text" translatable="yes">Place the target in the To field.</property>
                                         <property name="active">True</property>
                                         <property name="draw_indicator">True</property>
                                         <signal name="toggled" handler="signal_radiobutton_toggled_target_field" swapped="no"/>
@@ -6425,6 +6430,7 @@ your communications. Please contact the system administrator.</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">False</property>
+                                        <property name="tooltip_text" translatable="yes">Place the target in the CC field.</property>
                                         <property name="active">True</property>
                                         <property name="draw_indicator">True</property>
                                         <property name="group">MailSenderConfigurationTab.radiobutton_target_field_to</property>
@@ -6442,6 +6448,7 @@ your communications. Please contact the system administrator.</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">False</property>
+                                        <property name="tooltip_text" translatable="yes">Place the target in the BCC field.</property>
                                         <property name="active">True</property>
                                         <property name="draw_indicator">True</property>
                                         <property name="group">MailSenderConfigurationTab.radiobutton_target_field_to</property>
