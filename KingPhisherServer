@@ -52,6 +52,7 @@ from king_phisher.server import plugins
 
 from boltons import strutils
 from smoke_zephyr.configuration import Configuration
+import yaml
 
 logger = logging.getLogger('KingPhisher.Server.CLI')
 
@@ -203,11 +204,17 @@ def main():
 		config = Configuration(config_file.name)
 	except Exception as error:
 		color.print_error('an error occurred while parsing the server configuration file')
-		error_name = "{0}.{1}".format(error.__module__, error.__class__.__name__)
-		if error_name != 'yaml.parser.ParserError':
-			raise
-		for line in str(error).split('\n'):
-			color.print_error(line.rstrip())
+		if isinstance(error, yaml.error.YAMLError):
+			problem = getattr(error, 'problem', 'unknown yaml error')
+			if hasattr(error, 'problem_mark'):
+				prob_lineno = error.problem_mark.line + 1
+				color.print_error("{0} - {1}:{2} {3}".format(error.__class__.__name__, config_file.name, prob_lineno, problem))
+				lines = open(config_file.name, 'rU').readlines()
+				for lineno, line in enumerate(lines[max(prob_lineno - 3, 0):(prob_lineno + 2)], max(prob_lineno - 3, 0) + 1):
+					color.print_error("  {0} {1: <3}: {2}".format(('=>' if lineno == prob_lineno else '  '), lineno, line.rstrip()))
+			else:
+				color.print_error("{0} - {1}: {2}".format(error.__class__.__name__, config_file.name, problem))
+		color.print_error('fix the errors in the configuration file and restart the server')
 		return os.EX_CONFIG
 
 	# configure environment variables
