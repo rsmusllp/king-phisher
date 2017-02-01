@@ -30,7 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
+from king_phisher import its
 from king_phisher import version
 from king_phisher.server import aaa
 from king_phisher.server import graphql
@@ -91,7 +91,7 @@ class ServerGraphQLTests(KingPhisherTestCase):
 		self.assertEqual(len(users['edges']), 1)
 		edge = users['edges'][0]
 		self.assertIn('cursor', edge)
-		self.assertIsInstance(edge['cursor'], str)
+		self.assertIsInstance(edge['cursor'], (unicode if its.py_v2 else str))
 		self.assertIn('node', edge)
 		self.assertIsInstance(edge['node'], dict)
 
