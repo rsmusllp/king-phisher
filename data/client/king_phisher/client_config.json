@@ -4,6 +4,7 @@
   "dashboard.top_right": "VisitorInfo",
   "mailer.max_messages_per_connection": 5,
   "mailer.message_type": "email",
+  "mailer.target_field": "to",
   "mailer.target_type": "file",
   "filter.campaign.expired": false,
   "filter.campaign.user": true,

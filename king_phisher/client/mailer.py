@@ -264,7 +264,6 @@ class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 			self['From'] = "\"{0}\" <{1}>".format(config['mailer.source_email_alias'], config['mailer.source_email'])
 		else:
 			self['From'] = config['mailer.source_email']
-		self['To'] = target.email_address
 		self.preamble = 'This is a multi-part message in MIME format.'
 
 class MailSenderThread(threading.Thread):
@@ -571,6 +570,7 @@ class MailSenderThread(threading.Thread):
 		:rtype: :py:class:`email.mime.multipart.MIMEMultipart`
 		"""
 		top_msg = TopMIMEMultipart('mixed', self.config, target)
+		top_msg['To'] = target.email_address
 
 		related_msg = mime.multipart.MIMEMultipart('related')
 		top_msg.attach(related_msg)
@@ -628,6 +628,15 @@ class MailSenderThread(threading.Thread):
 		:rtype: :py:class:`email.mime.multipart.MIMEMultipart`
 		"""
 		msg = TopMIMEMultipart('related', self.config, target)
+		target_field = self.config.get('mailer.target_field', 'to').lower()
+		for header in ('To', 'CC', 'BCC'):
+			if header.lower() == target_field:
+				msg[header] = target.email_address
+				continue
+			value = self.config.get('mailer.recipient_email_' + header.lower())
+			if value:
+				msg[header] = value
+
 		importance = self.config.get('mailer.importance', 'Normal')
 		if importance != 'Normal':
 			msg['Importance'] = importance
