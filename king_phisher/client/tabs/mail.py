@@ -1157,7 +1157,7 @@ class MailSenderTab(_GObject_GObject):
 		gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message.')
 		return True
 
-	def do_message_data_export(self, path):
+	def do_message_data_export(self, target_file):
 		config_tab = self.tabs.get('config')
 		config_prefix = config_tab.config_prefix
 		config_tab.objects_save_to_config()
@@ -1165,7 +1165,7 @@ class MailSenderTab(_GObject_GObject):
 		config_keys = (key for key in self.config.keys() if key.startswith(config_prefix))
 		for config_key in config_keys:
 			message_config[config_key[7:]] = self.config[config_key]
-		export.message_data_to_kpm(message_config, path)
+		export.message_data_to_kpm(message_config, target_file)
 		return True
 
 	def do_message_data_import(self, target_file, dest_dir):

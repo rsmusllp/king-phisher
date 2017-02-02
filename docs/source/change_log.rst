@@ -12,6 +12,9 @@ Version 1.7.0
 
 *In Progress*
 
+* Better error messages for malformed server configuration files
+* Support for sending to targets via To / CC / BCC fields
+
 Version 1.6.0
 ^^^^^^^^^^^^^
 
