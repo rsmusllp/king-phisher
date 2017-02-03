@@ -451,7 +451,6 @@ class MailSenderThread(threading.Thread):
 
 	def iterate_targets(self, counting=False):
 		target_type = self.config['mailer.target_type']
-		mailer_tab = self.application.main_tabs['mailer']
 		if target_type == 'single':
 			target_name = self.config['mailer.target_name'].split(' ')
 			while len(target_name) < 2:
@@ -463,7 +462,6 @@ class MailSenderThread(threading.Thread):
 				department=None,
 				uid=make_uid()
 			)
-			mailer_tab.emit('send-target', target)
 			yield target
 		elif target_type == 'file':
 			target_file_h = open(self.target_file, 'rU')
@@ -496,7 +494,6 @@ class MailSenderThread(threading.Thread):
 					uid=make_uid(),
 					line=line_no
 				)
-				mailer_tab.emit('send-target', target)
 				if not target.email_address:
 					self.logger.warning("skipping line {0} in target csv file due to missing email address".format(line_no))
 					continue
@@ -692,13 +689,12 @@ class MailSenderThread(threading.Thread):
 
 	def _send_messages(self):
 		emails_done = 0
+		mailer_tab = self.application.main_tabs['mailer']
 		max_messages_per_connection = self.config.get('mailer.max_messages_per_connection', 5)
 
 		emails_total = "{0:,}".format(self.count_messages())
 		sending_line = "Sending email {{0: >{0},}} of {1} with UID: {{1}} to {{2}}".format(len(emails_total), emails_total)
 		emails_total = int(emails_total.replace(',', ''))
-		attachments = self.get_mime_attachments()
-		self.logger.debug("loaded {0:,} MIME attachments".format(sum((len(attachments.files), len(attachments.images)))))
 
 		for target in self.iterate_targets():
 			iteration_time = time.time()
@@ -712,6 +708,8 @@ class MailSenderThread(threading.Thread):
 
 			emails_done += 1
 			self.tab_notify_status(sending_line.format(emails_done, target.uid, target.email_address))
+			mailer_tab.emit('send-target', target)
+			attachments = self.get_mime_attachments()
 			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, attachments)
 			if not self._try_send_message(target.email_address, msg):
 				break
