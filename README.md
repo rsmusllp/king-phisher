@@ -1,11 +1,17 @@
 ![alt text](https://github.com/securestate/king-phisher/raw/master/data/king-phisher-logo.png "King Phisher")
 
-# King Phisher
-Phishing Campaign Toolkit
+# King Phisher [![Documentation Status][doc-status]][doc-link] [![GitHub Issues][issue-status]][issue-link] ![GitHub Downloads][downloads-status]
+*Phishing Campaign Toolkit*
 
-[![Documentation Status](https://readthedocs.org/projects/king-phisher/badge/?version=latest&style=flat-square)](http://king-phisher.readthedocs.io/en/latest)
-[![Github Issues](http://img.shields.io/github/issues/securestate/king-phisher.svg?style=flat-square)](https://github.com/securestate/king-phisher/issues)
+![alt text](https://raw.githubusercontent.com/securestate/king-phisher/screenshots/dashboard.png "Campaign Dashboard")
 
+## Installation
+For instructions on how to install, please see the
+[INSTALL.md](https://github.com/securestate/king-phisher/blob/master/INSTALL.md)
+file. After installing, for instructions on how to get started please see the
+[wiki](https://github.com/securestate/king-phisher/wiki).
+
+## Overview
 King Phisher is a tool for testing and promoting user awareness by simulating
 real world phishing attacks. It features an easy to use, yet very flexible
 architecture allowing full control over both emails and server content.
@@ -19,13 +25,6 @@ permission of the targeted organization has been obtained.
 Get the latest stable version from the
 [GitHub Releases Page](https://github.com/securestate/king-phisher/releases) or
 use git to checkout the project from source.
-
-For instructions on how to install, please see the
-[INSTALL.md](https://github.com/securestate/king-phisher/blob/master/INSTALL.md)
-file. After installing, for instructions on how to get started please see the
-[wiki](https://github.com/securestate/king-phisher/wiki).
-
-![alt text](https://raw.githubusercontent.com/securestate/king-phisher/screenshots/dashboard.png "Campaign Dashboard")
 
 ## Feature Overview
  * Run multiple phishing campaigns simultaneously
@@ -48,6 +47,20 @@ Template files for both messages and server pages can be found in the separate
 King Phisher [Templates repository](https://github.com/securestate/king-phisher-templates).
 Any contributions regarding templates should also be submitted via a pull
 request to the templates repository.
+
+## Documentation
+Documentation for users of the application is provided on the project's
+[wiki page](https://github.com/securestate/king-phisher/wiki). This includes
+steps to help new users get started with their first campaigns. Additional
+technical documentation intended for developers is kept seperate as outlined
+in section below.
+
+### Code Documentation
+King Phisher uses Sphinx for internal technical documentation. This
+documentation can be generated from source with the command
+```sphinx-build -b html docs/source docs/html```. The latest documentation is
+kindly hosted on [ReadTheDocs](https://readthedocs.org/) at
+[king-phisher.readthedocs.io][doc-link].
 
 ### Message Template Variables
 The client message templates are formatted using the Jinja2 templating engine
@@ -74,20 +87,6 @@ uid                        | The unique tracking identifier (this is the same as
 The uid is the most important, and must be present in links that the messages
 contain.
 
-## Documentation
-Documentation for users of the application is provided on the project's
-[wiki page](https://github.com/securestate/king-phisher/wiki). This includes
-steps to help new users get started with their first campaigns. Additional
-technical documentation intended for developers is kept seperate as outlined
-in section below.
-
-### Code Documentation
-King Phisher uses Sphinx for internal technical documentation. This
-documentation can be generated from source with the command
-```sphinx-build -b html docs/source docs/html```. The latest documentation is
-kindly hosted on [ReadTheDocs](https://readthedocs.org/) at
-[king-phisher.readthedocs.io](https://king-phisher.readthedocs.io/en/latest/).
-
 ## License
 King Phisher is released under the BSD 3-clause license, for more details see
 the [LICENSE](https://github.com/securestate/king-phisher/blob/master/LICENSE) file.
@@ -106,3 +105,9 @@ King Phisher Development Team:
  - Brandan Geise - coldfusion ([@coldfusion39](https://twitter.com/coldfusion39))
  - Jeff McCutchan - jamcut ([@jamcut](https://twitter.com/jamcut))
  - Spencer McIntyre - zeroSteiner ([@zeroSteiner](https://twitter.com/zeroSteiner))
+
+[doc-link]: http://king-phisher.readthedocs.io/en/latest
+[doc-status]: https://readthedocs.org/projects/king-phisher/badge/?version=latest&style=flat-square
+[downloads-status]: https://img.shields.io/github/downloads/securestate/king-phisher/total.svg?style=flat-square
+[issue-link]: https://github.com/securestate/king-phisher/issues
+[issue-status]: http://img.shields.io/github/issues/securestate/king-phisher.svg?style=flat-square
