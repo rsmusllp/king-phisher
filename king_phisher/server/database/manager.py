@@ -68,6 +68,14 @@ _flush_signal_map = (
 _meta_data_type_map = {'int': int, 'str': str}
 _popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 
+ALEMBIC_VERSIONS = {
+	3: '24a4a626ff7c',
+	4: '7c315088952',
+	5: '83e4121b299',
+	6: 'a695de64338',
+	7: 'b76eab0a059'
+}
+
 @sqlalchemy.event.listens_for(Session, 'after_flush')
 def on_session_after_flush(session, flush_context):
 	for signal, session_attribute in _flush_signal_map:
@@ -280,6 +288,16 @@ def init_database(connection_url, extra_init=False):
 		alembic_directory = find.find_data_directory('alembic')
 		if not alembic_directory:
 			raise errors.KingPhisherDatabaseError('cannot find the alembic data directory')
+
+		if not 'alembic_version' in inspector.get_table_names():
+			alembic_metadata = sqlalchemy.MetaData(engine)
+			alembic_table = sqlalchemy.Table('alembic_version', alembic_metadata,
+								sqlalchemy.Column('version_num', sqlalchemy.String, primary_key=True, nullable=False)
+							)
+			alembic_metadata.create_all()
+			alembic_version_entry = alembic_table.insert().values(version_num=ALEMBIC_VERSIONS[schema_version])
+			engine.connect().execute(alembic_version_entry)
+			logger.info('alembic version set to {}'.format(ALEMBIC_VERSIONS[schema_version]))
 
 		config = alembic.config.Config(alembic_config_file)
 		config.config_file_name = alembic_config_file
