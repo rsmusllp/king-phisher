@@ -31,8 +31,10 @@
 #
 
 import datetime
+import os
 import unittest
 
+from king_phisher import find
 from king_phisher import testing
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
@@ -120,6 +122,14 @@ class DatabaseSchemaTests(testing.KingPhisherTestCase):
 			'visits'
 		])
 		self.assertSetEqual(get_tables_with_column_id('message_id'), tables)
+
+	def test_schema_file_names(self):
+		alembic_directory = find.find_data_directory('alembic')
+		versions = os.listdir(os.path.join(alembic_directory, 'versions'))
+		for schema_file in versions:
+			if not schema_file.endswith('.py'):
+				continue
+			self.assertRegex(schema_file, r'[a-f0-9]{10,16}_schema_v\d+\.py', schema_file)
 
 class DatabaseStorageTests(DatabaseTestBase):
 	def test_storage_keys_must_be_strings(self):
