@@ -39,6 +39,8 @@ from king_phisher.server import server_rpc
 from king_phisher.server import signals
 from king_phisher.server.database import storage
 
+import advancedhttpserver
+
 class ServerPlugin(plugins.PluginBase):
 	"""
 	The base object to be inherited by plugins that are loaded into the King
@@ -75,13 +77,36 @@ class ServerPlugin(plugins.PluginBase):
 			self.root_config.get('server.plugins')[self.name] = config
 		return config
 
+	def register_http(self, path, method):
+		"""
+		Register a new HTTP request handler at *path* that is handled by
+		*method*. Two parameters are passed to the method. The first parameter
+		is a :py:class:`~king_phisher.server.server.KingPhisherRequestHandler`
+		instance and the second is a dictionary of the HTTP query parameters.
+		The specified path is added within the plugins private HTTP handler
+		namespace at ``_/plugins/$PLUGIN_NAME/$PATH``
+
+		.. warning::
+			This resource can be reached by any user whether or not they
+			are authenticated and or associated with a campaign.
+
+		:param str path: The path to register the method at.
+		:param method: The handler for the HTTP method.
+		"""
+		if path.startswith('/'):
+			path = path[1:]
+		path = "_/plugins/{0}/{1}".format(self.name, path)
+		advancedhttpserver.RegisterPath(path)(method)
+
 	def register_rpc(self, path, method):
 		"""
 		Register a new RPC function at *path* that is handled by *method*. This
 		RPC function can only be called by authenticated users. A single
-		parameter of the :py:class:`~advancedhttpserver.RequestHandler`
+		parameter of the
+		:py:class:`~king_phisher.server.server.KingPhisherRequestHandler`
 		instance is passed to *method* when the RPC function is invoked. The
-		specified path exists within the plugins private RPC namespace.
+		specified path is added within the plugins private RPC handler
+		namespace at ``plugins/$PLUGIN_NAME/$PATH``.
 
 		:param str path: The path to register the method at.
 		:param method: The handler for the RPC method.
