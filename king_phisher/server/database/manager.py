@@ -232,15 +232,15 @@ def normalize_connection_url(connection_url):
 
 def init_alembic(engine, schema_version):
 	"""
-	Creates the alembic_version table.
-	Sets the value of the table according to the current MetaData schema version.
+	Creates the alembic_version table and sets the value of the table according
+	to the specified schema version.
 
-	:param sqlalchemy.create_engine engine: The engine used to connect to the database
+	:param engine: The engine used to connect to the database.
+	:type engine: :py:class:`sqlalchemy.engine.Engine`
 	:param int schema_version: The MetaData schema_version to set the alembic version to.
 	"""
-	logger.debug('alembic version table not found, attempting to create and set version')
 	pattern = re.compile('[a-f0-9]{10,16}_schema_v\d+\.py')
-	alembic_version = False
+	alembic_revision = None
 	alembic_directory = find.find_data_directory('alembic')
 	if not alembic_directory:
 		raise errors.KingPhisherDatabaseError('cannot find the alembic data directory')
@@ -248,11 +248,12 @@ def init_alembic(engine, schema_version):
 	for file in alembic_versions_files:
 		if not pattern.match(file):
 			continue
-		if not file.endswith('v' + str(schema_version) + '.py'):
+		if not file.endswith('_schema_v' + str(schema_version) + '.py'):
 			continue
-		alembic_version = file.split('_')[0]
-	if not alembic_version:
-		raise errors.KingPhisherDatabaseError('cannot find current alembic version for schema version {}'.format(str(schema_version)))
+		alembic_revision = file.split('_', 1)[0]
+		break
+	if not alembic_revision:
+		raise errors.KingPhisherDatabaseError("cannot find current alembic version for schema version {0}".format(schema_version))
 
 	alembic_metadata = sqlalchemy.MetaData(engine)
 	alembic_table = sqlalchemy.Table(
@@ -266,9 +267,9 @@ def init_alembic(engine, schema_version):
 		)
 	)
 	alembic_metadata.create_all()
-	alembic_version_entry = alembic_table.insert().values(version_num=alembic_version)
+	alembic_version_entry = alembic_table.insert().values(version_num=alembic_revision)
 	engine.connect().execute(alembic_version_entry)
-	logger.info('alembic version set to {}'.format(alembic_version))
+	logger.info("alembic_version table initialized to {0}".format(alembic_revision))
 
 def init_database(connection_url, extra_init=False):
 	"""
@@ -312,6 +313,7 @@ def init_database(connection_url, extra_init=False):
 
 	logger.debug("current database schema version: {0} ({1})".format(schema_version, ('latest' if schema_version == models.SCHEMA_VERSION else 'obsolete')))
 	if not 'alembic_version' in inspector.get_table_names():
+		logger.debug('alembic version table not found, attempting to create and set version')
 		init_alembic(engine, schema_version)
 	if schema_version > models.SCHEMA_VERSION:
 		raise errors.KingPhisherDatabaseError('the database schema is for a newer version, automatic downgrades are not supported')
