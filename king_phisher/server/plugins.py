@@ -35,6 +35,7 @@ import os
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import plugins
+from king_phisher.server import server_rpc
 from king_phisher.server import signals
 from king_phisher.server.database import storage
 
@@ -73,6 +74,22 @@ class ServerPlugin(plugins.PluginBase):
 			config = {}
 			self.root_config.get('server.plugins')[self.name] = config
 		return config
+
+	def register_rpc(self, path, method):
+		"""
+		Register a new RPC function at *path* that is handled by *method*. This
+		RPC function can only be called by authenticated users. A single
+		parameter of the :py:class:`~advancedhttpserver.RequestHandler`
+		instance is passed to *method* when the RPC function is invoked. The
+		specified path exists within the plugins private RPC namespace.
+
+		:param str path: The path to register the method at.
+		:param method: The handler for the RPC method.
+		"""
+		if path.startswith('/'):
+			path = path[1:]
+		path = "/plugins/{0}/{1}".format(self.name, path)
+		server_rpc.register_rpc(path, database_access=False, log_call=True)(method)
 
 class ServerPluginManager(plugins.PluginManagerBase):
 	"""
