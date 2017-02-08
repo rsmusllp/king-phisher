@@ -97,7 +97,7 @@ class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider
 		super(CustomCompletionProviderBase, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		if self.data_file is not None:
-			completion_data = find.find_data_file(os.path.join('completion', self.data_file))
+			completion_data = find.data_file(os.path.join('completion', self.data_file))
 			if completion_data is None:
 				raise RuntimeError("failed to find completion data file '{0}'".format(self.data_file))
 			self.logger.debug("loading {0} completion data from: {1}".format(self.name, completion_data))

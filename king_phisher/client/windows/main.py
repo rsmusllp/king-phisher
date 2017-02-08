@@ -222,7 +222,7 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		vbox.show()
 		self.add(vbox)
 
-		default_icon_file = find.find_data_file('king-phisher-icon.svg')
+		default_icon_file = find.data_file('king-phisher-icon.svg')
 		if default_icon_file:
 			icon_pixbuf = GdkPixbuf.Pixbuf.new_from_file(default_icon_file)
 			self.set_default_icon(icon_pixbuf)

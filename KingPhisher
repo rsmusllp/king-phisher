@@ -78,7 +78,7 @@ def main():
 	if sys.platform.startswith('linux') and not os.getuid():
 		logger.warning('it is not necessary to run the king phisher client as root')
 
-	find.data_path_init('client')
+	find.init_data_path('client')
 
 	if not gui_utilities.which_glade():
 		color.print_error('unable to locate the glade ui data file')

@@ -46,7 +46,7 @@ os.environ[ENV_VAR] = os.getenv(ENV_VAR, ('/usr/share:/usr/local/share' if its.o
 def data_path_append(path):
 	"""
 	Add a directory to the data search path. The directory will be used
-	by the :py:func:`.find_data_file` and :py:func:`.find_data_directory`
+	by the :py:func:`.data_file` and :py:func:`.data_directory`
 	functions.
 
 	:param str path: The path to add for searching.
@@ -56,7 +56,7 @@ def data_path_append(path):
 		path_var.append(path)
 		os.environ[ENV_VAR] = os.pathsep.join(path_var)
 
-def data_path_init(directory):
+def init_data_path(directory):
 	"""
 	Add a directory to the data search path for either client or server data
 	files.
@@ -80,7 +80,7 @@ def data_path_init(directory):
 	if not found:
 		raise RuntimeError('failed to initialize the specified data directory')
 
-def find_data_file(data_file, access_mode=os.R_OK):
+def data_file(data_file, access_mode=os.R_OK):
 	"""
 	Locate a data file by searching the directories specified in
 	:py:data:`.ENV_VAR`. If *access_mode* is specified, it needs to be a
@@ -101,7 +101,7 @@ def find_data_file(data_file, access_mode=os.R_OK):
 		return test_file_path
 	return None
 
-def find_data_directory(data_directory):
+def data_directory(data_directory):
 	"""
 	Locate a subdirectory in the data search path.
 

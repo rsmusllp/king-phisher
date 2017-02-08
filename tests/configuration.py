@@ -43,7 +43,7 @@ class ServerConfigurationTests(testing.KingPhisherTestCase):
 		find.data_path_append('data/server')
 
 	def test_server_config(self):
-		config_file = find.find_data_file('server_config.yml')
+		config_file = find.data_file('server_config.yml')
 		self.assertIsNotNone(config_file)
 		self.assertTrue(os.path.isfile(config_file))
 		config = configuration.Configuration(config_file)
@@ -54,8 +54,8 @@ class ServerConfigurationTests(testing.KingPhisherTestCase):
 		self.assertGreater(len(addresses), 0)
 
 	def test_server_config_verification(self):
-		config_file = find.find_data_file('server_config.yml')
-		verify_config_file = find.find_data_file('server_config_verification.yml')
+		config_file = find.data_file('server_config.yml')
+		verify_config_file = find.data_file('server_config_verification.yml')
 		self.assertIsNotNone(config_file)
 		config = configuration.Configuration(config_file)
 		bad_options = config.get_missing(verify_config_file)

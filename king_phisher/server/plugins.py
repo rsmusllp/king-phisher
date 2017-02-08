@@ -111,7 +111,7 @@ class ServerPluginManager(plugins.PluginManagerBase):
 		signals.db_initialized.connect(self._sig_db_initialized)
 
 	def _get_path(self):
-		path = [find.find_data_directory('plugins')]
+		path = [find.data_directory('plugins')]
 		extra_dirs = self.config.get_if_exists('server.plugin_directories', [])
 		if isinstance(extra_dirs, str):
 			extra_dirs = [extra_dirs]

@@ -85,7 +85,7 @@ def which_glade():
 	:return: The path to the glade data file.
 	:rtype: str
 	"""
-	return find.find_data_file(os.environ.get('KING_PHISHER_GLADE_FILE', 'king-phisher-client.ui'))
+	return find.data_file(os.environ.get('KING_PHISHER_GLADE_FILE', 'king-phisher-client.ui'))
 
 def glib_idle_add_wait(function, *args):
 	"""

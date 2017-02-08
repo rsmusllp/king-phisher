@@ -58,7 +58,7 @@ class ClientJinjaComletionProviderTests(testing.KingPhisherTestCase):
 		self.assertIn('local', proposal_strings)
 
 	def test_load_data_files(self):
-		completion_dir = find.find_data_directory('completion')
+		completion_dir = find.data_directory('completion')
 		self.assertIsNotNone(completion_dir, 'failed to find the \'completion\' directory')
 		# validate that completion definitions claiming to be json are loadable as json
 		for json_file in glob.glob(os.path.join(completion_dir, '*.json')):

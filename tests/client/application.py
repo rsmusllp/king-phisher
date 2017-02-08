@@ -44,7 +44,7 @@ class ClientApplicationTests(testing.KingPhisherTestCase):
 
 	def test_client_template_config(self):
 		find.data_path_append('data/client')
-		config_h = open(find.find_data_file('client_config.json'))
+		config_h = open(find.data_file('client_config.json'))
 		try:
 			json.load(config_h)
 		except Exceptiongit:

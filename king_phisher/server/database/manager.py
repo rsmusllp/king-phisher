@@ -241,7 +241,7 @@ def init_alembic(engine, schema_version):
 	"""
 	pattern = re.compile('[a-f0-9]{10,16}_schema_v\d+\.py')
 	alembic_revision = None
-	alembic_directory = find.find_data_directory('alembic')
+	alembic_directory = find.data_directory('alembic')
 	if not alembic_directory:
 		raise errors.KingPhisherDatabaseError('cannot find the alembic data directory')
 	alembic_versions_files = os.listdir(os.path.join(alembic_directory, 'versions'))
@@ -318,10 +318,10 @@ def init_database(connection_url, extra_init=False):
 	if schema_version > models.SCHEMA_VERSION:
 		raise errors.KingPhisherDatabaseError('the database schema is for a newer version, automatic downgrades are not supported')
 	elif schema_version < models.SCHEMA_VERSION:
-		alembic_config_file = find.find_data_file('alembic.ini')
+		alembic_config_file = find.data_file('alembic.ini')
 		if not alembic_config_file:
 			raise errors.KingPhisherDatabaseError('cannot find the alembic.ini configuration file')
-		alembic_directory = find.find_data_directory('alembic')
+		alembic_directory = find.data_directory('alembic')
 		if not alembic_directory:
 			raise errors.KingPhisherDatabaseError('cannot find the alembic data directory')
 

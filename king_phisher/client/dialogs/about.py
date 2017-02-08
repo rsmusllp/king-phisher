@@ -47,7 +47,7 @@ class AboutDialog(gui_utilities.GladeGObject):
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
 		super(AboutDialog, self).__init__(*args, **kwargs)
-		logo_file_path = find.find_data_file('king-phisher-icon.svg')
+		logo_file_path = find.data_file('king-phisher-icon.svg')
 		if logo_file_path:
 			logo_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(logo_file_path, 128, 128)
 			self.dialog.set_property('logo', logo_pixbuf)

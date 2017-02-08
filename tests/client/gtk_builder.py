@@ -41,7 +41,7 @@ GOBJECT_TOP_REGEX = r'^[A-Z][a-zA-Z0-9]+$'
 class ClientGtkBuilderLint(testing.KingPhisherTestCase):
 	def setUp(self):
 		find.data_path_append('data/client')
-		builder_xml = find.find_data_file('king-phisher-client.ui')
+		builder_xml = find.data_file('king-phisher-client.ui')
 		self.xml_tree = ElementTree.parse(builder_xml)
 		self.xml_root = self.xml_tree.getroot()
 

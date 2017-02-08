@@ -520,7 +520,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			cls = graphs.get_graph(graph_name)
 			if not cls:
 				self.logger.warning('could not get graph: ' + graph_name)
-				logo_file_path = find.find_data_file('king-phisher-icon.svg')
+				logo_file_path = find.data_file('king-phisher-icon.svg')
 				if logo_file_path:
 					image = Gtk.Image.new_from_pixbuf(GdkPixbuf.Pixbuf.new_from_file_at_size(logo_file_path, 128, 128))
 					image.show()

@@ -20,6 +20,8 @@ Functions
 
 .. autofunction:: king_phisher.find.data_path_append
 
-.. autofunction:: king_phisher.find.find_data_directory
+.. autofunction:: king_phisher.find.data_directory
 
-.. autofunction:: king_phisher.find.find_data_file
+.. autofunction:: king_phisher.find.data_file
+
+.. autofunction:: king_phisher.find.init_data_path

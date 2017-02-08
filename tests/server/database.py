@@ -124,7 +124,7 @@ class DatabaseSchemaTests(testing.KingPhisherTestCase):
 		self.assertSetEqual(get_tables_with_column_id('message_id'), tables)
 
 	def test_schema_file_names(self):
-		alembic_directory = find.find_data_directory('alembic')
+		alembic_directory = find.data_directory('alembic')
 		versions = os.listdir(os.path.join(alembic_directory, 'versions'))
 		for schema_file in versions:
 			if not schema_file.endswith('.py'):

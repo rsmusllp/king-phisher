@@ -505,7 +505,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	def respond_not_found(self):
 		self.send_response(404, 'Not Found')
 		self.send_header('Content-Type', 'text/html')
-		page_404 = find.find_data_file('error_404.html')
+		page_404 = find.data_file('error_404.html')
 		if page_404:
 			with open(page_404, 'rb') as file_h:
 				message = file_h.read()
@@ -617,7 +617,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		signals.safe_send('email-opened', self.logger, self)
 
 	def handle_javascript_hook(self, query):
-		kp_hook_js = find.find_data_file('javascript_hook.js')
+		kp_hook_js = find.data_file('javascript_hook.js')
 		if not kp_hook_js:
 			self.respond_not_found()
 			return

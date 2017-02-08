@@ -381,7 +381,7 @@ def vte_child_routine(config):
 	else:
 		readline.parse_and_bind('tab: complete')
 	for plugins_directory in ('rpc_plugins', 'rpc-plugins'):
-		plugins_directory = find.find_data_directory(plugins_directory)
+		plugins_directory = find.data_directory(plugins_directory)
 		if not plugins_directory:
 			continue
 		sys.path.append(plugins_directory)

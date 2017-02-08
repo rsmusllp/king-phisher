@@ -218,12 +218,12 @@ def main():
 		return os.EX_CONFIG
 
 	# configure environment variables
-	find.data_path_init('server')
+	find.init_data_path('server')
 	if config.has_option('server.data_path'):
 		find.data_path_append(config.get('server.data_path'))
 
 	# check the configuration for missing and incompatible options
-	verify_config = find.find_data_file('server_config_verification.yml')
+	verify_config = find.data_file('server_config_verification.yml')
 	if not verify_config:
 		color.print_error('could not load server config verification data')
 		return os.EX_NOINPUT

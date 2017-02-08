@@ -173,7 +173,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.info('disabling all plugins')
 			self.config['plugins.enabled'] = []
 		self.plugin_manager = plugins.ClientPluginManager(
-			[os.path.join(USER_DATA_PATH, 'plugins'), find.find_data_directory('plugins')],
+			[os.path.join(USER_DATA_PATH, 'plugins'), find.data_directory('plugins')],
 			self
 		)
 		if use_plugins:
@@ -250,7 +250,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if not os.path.isdir(config_dir):
 			self.logger.debug('creating the user configuration directory')
 			os.makedirs(config_dir)
-		client_template = find.find_data_file('client_config.json')
+		client_template = find.data_file('client_config.json')
 		shutil.copy(client_template, self.config_file)
 
 	def campaign_configure(self):
@@ -444,7 +444,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def theme_file(self):
 		if not self._theme_file:
 			return DISABLED
-		return find.find_data_file(os.path.join('style', self._theme_file))
+		return find.data_file(os.path.join('style', self._theme_file))
 
 	def do_config_load(self, load_defaults):
 		"""
@@ -454,7 +454,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		:param bool load_defaults: Load missing options from the template configuration file.
 		"""
 		self.logger.info('loading the config from disk')
-		client_template = find.find_data_file('client_config.json')
+		client_template = find.data_file('client_config.json')
 		self.logger.info('loading the config from: ' + self.config_file)
 		with open(self.config_file, 'r') as tmp_file:
 			self.config = serializers.JSON.load(tmp_file)

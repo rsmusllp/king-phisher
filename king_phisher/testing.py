@@ -146,7 +146,7 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 	def setUp(self):
 		find.data_path_append('data/server')
 		web_root = os.path.join(os.getcwd(), 'data', 'server', 'king_phisher')
-		config = smoke_zephyr.configuration.Configuration(find.find_data_file('server_config.yml'))
+		config = smoke_zephyr.configuration.Configuration(find.data_file('server_config.yml'))
 		config.set('server.address.host', '127.0.0.1')
 		config.set('server.address.port', 0)
 		config.set('server.addresses', [])
