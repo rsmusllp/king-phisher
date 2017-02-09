@@ -38,6 +38,13 @@ from king_phisher.client import gui_utilities
 
 from gi.repository import Gtk
 
+def _split_menu_path(menu_path):
+	menu_path = [path_item.strip() for path_item in menu_path.split('>')]
+	menu_path = [path_item for path_item in menu_path if path_item]
+	if menu_path[0][0] != '_':
+		menu_path[0] = '_' + menu_path[0]
+	return menu_path
+
 class ClientOptionMixin(object):
 	"""
 	A mixin for options used by plugins for the client application. It provides
@@ -187,9 +194,16 @@ class ClientPlugin(plugins.PluginBase):
 			self.application.server_events.unsubscribe(*self._server_event_subscriptions.pop())
 		self._server_event_subscriptions.clear()
 		# destroy widgets
-		for widget in self._widgets:
+		for widget in reversed(self._widgets):
 			widget.destroy()
 		self._widgets.clear()
+
+	def _insert_menu_item(self, menu_path, menu_item):
+		menu_bar = self.application.main_window.menu_bar.menubar
+		gui_utilities.gtk_menu_insert_by_path(menu_bar, menu_path, menu_item)
+		menu_item.show()
+		self._widgets.append(menu_item)
+		return menu_item
 
 	@property
 	def config(self):
@@ -203,29 +217,41 @@ class ClientPlugin(plugins.PluginBase):
 			self.application.config['plugins'][self.name] = config
 		return config
 
-	def add_menu_item(self, menu_path, handler):
+	def add_menu_item(self, menu_path, handler=None):
 		"""
 		Add a new item into the main menu bar of the application. Menu items
-		created through this method are automatically removed when the plugin is
-		disabled.
+		created through this method are automatically removed when the plugin
+		is disabled. If no *handler* is specified, the menu item will be a
+		separator, otherwise *handler* will automatically be connected to the
+		menu item's ``activate`` signal.
 
 		:param str menu_path: The path to the menu item, delimited with > characters.
-		:param handler: The callback function to be connected to the new :py:class:`Gtk.MenuItem` instance's activate signal.
+		:param handler: The optional callback function to be connected to the new :py:class:`Gtk.MenuItem` instance's activate signal.
 		:return: The newly created and added menu item.
 		:rtype: :py:class:`Gtk.MenuItem`
 		"""
-		menu_path = [path_item.strip() for path_item in menu_path.split('>')]
-		menu_path = [path_item for path_item in menu_path if path_item]
-		if menu_path[0][0] != '_':
-			menu_path[0] = '_' + menu_path[0]
-		menu_item = Gtk.MenuItem.new_with_label(menu_path.pop())
-		self.signal_connect('activate', handler, gobject=menu_item)
+		menu_path = _split_menu_path(menu_path)
+		if handler is None:
+			menu_item = Gtk.SeparatorMenuItem()
+		else:
+			menu_item = Gtk.MenuItem.new_with_label(menu_path.pop())
+			self.signal_connect('activate', handler, gobject=menu_item)
+		return self._insert_menu_item(menu_path, menu_item)
 
-		menu_bar = self.application.main_window.menu_bar.menubar
-		gui_utilities.gtk_menu_insert_by_path(menu_bar, menu_path, menu_item)
-		menu_item.show()
-		self._widgets.append(menu_item)
-		return menu_item
+	def add_submenu(self, menu_path):
+		"""
+		Add a submenu into the main menu bar of the application. Submenus
+		created through this method are automatically removed when the plugin
+		is disabled.
+
+		:param str menu_path: The path to the submenu, delimited with > characters.
+		:return: The newly created and added menu item.
+		:rtype: :py:class:`Gtk.MenuItem`
+		"""
+		menu_path = _split_menu_path(menu_path)
+		menu_item = Gtk.MenuItem.new_with_label(menu_path.pop())
+		menu_item.set_submenu(Gtk.Menu.new())
+		return self._insert_menu_item(menu_path, menu_item)
 
 	def signal_connect(self, name, handler, gobject=None, after=False):
 		"""

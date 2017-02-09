@@ -169,9 +169,9 @@ def argp_add_args(parser, default_root=''):
 
 def assert_arg_type(arg, arg_type, arg_pos=1, func_name=None):
 	"""
-	Check that an argument is an instance of the specified type and if not raise
-	a :py:exc:`TypeError` exception with a meaningful message. If *func_name* is
-	not specified, it will be determined by examining the stack.
+	Check that an argument is an instance of the specified type and if not
+	raise a :py:exc:`TypeError` exception with a meaningful message. If
+	*func_name* is not specified, it will be determined by examining the stack.
 
 	:param arg: The argument to check.
 	:param arg_type: The type or sequence of types that *arg* can be.

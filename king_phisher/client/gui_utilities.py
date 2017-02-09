@@ -240,11 +240,14 @@ def gtk_menu_insert_by_path(menu, menu_path, menu_item):
 	*menu_path*.
 
 	:param menu: The existing menu to add the new item to.
-	:type menu: :py:class:`Gtk.Menu`
+	:type menu: :py:class:`Gtk.Menu` :py:class:`Gtk.MenuBar`
 	:param list menu_path: The labels of submenus to traverse to insert the new item.
 	:param menu_item: The new menu item to insert.
 	:type menu_item: :py:class:`Gtk.MenuItem`
 	"""
+	utilities.assert_arg_type(menu, (Gtk.Menu, Gtk.MenuBar), 1)
+	utilities.assert_arg_type(menu_path, list, 2)
+	utilities.assert_arg_type(menu_item, Gtk.MenuItem, 3)
 	while len(menu_path):
 		label = menu_path.pop(0)
 		menu_cursor = gtk_menu_get_item_by_label(menu, label)
