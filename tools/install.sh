@@ -281,6 +281,10 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 				exit
 		fi
 
+		if [ "$LINUX_VERSION" == "Ubuntu" ]; then
+			apt-get install -y adwaita-icon-theme-full
+		fi
+
 		if apt-cache search gir1.2-vte-2.91 &> /dev/null; then
 			if ! apt-get -y install gir1.2-vte-2.91; then
 				echo "Failed to install gir1.2-vte-2.91"
