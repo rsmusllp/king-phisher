@@ -76,7 +76,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 			renderers=(toggle_renderer, b, b, b, b, b, b)
 		)
 		self._model = Gtk.ListStore(str, bool, str, str, str, str, str, str)
-		self._model.set_sort_column_id(2, Gtk.SortType.DESCENDING)
+		self._model.set_sort_column_id(2, Gtk.SortType.ASCENDING)
 		treeview.set_model(self._model)
 		self.load_campaigns()
 		self.window.show()

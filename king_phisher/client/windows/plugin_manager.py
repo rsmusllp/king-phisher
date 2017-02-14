@@ -86,7 +86,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		)
 		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer, self._toggle_cell_data_func)
 		self._model = Gtk.ListStore(str, bool, str)
-		self._model.set_sort_column_id(2, Gtk.SortType.DESCENDING)
+		self._model.set_sort_column_id(2, Gtk.SortType.ASCENDING)
 		treeview.set_model(self._model)
 		self.load_plugins()
 
