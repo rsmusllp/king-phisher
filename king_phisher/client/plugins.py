@@ -31,10 +31,12 @@
 #
 
 import collections
+import os
 import weakref
 
 from king_phisher import plugins
 from king_phisher.client import gui_utilities
+from king_phisher.client.widget import extras
 
 from gi.repository import Gtk
 
@@ -61,11 +63,13 @@ class ClientOptionMixin(object):
 		self.display_name = kwargs.pop('display_name', name)
 		super(ClientOptionMixin, self).__init__(name, *args, **kwargs)
 
-	def get_widget(self, value):
+	def get_widget(self, application, value):
 		"""
 		Create a widget suitable for configuring this option. This is meant to
 		allow subclasses to specify and create an appropriate widget type.
 
+		:param application: The parent application for this object.
+		:type application: :py:class:`Gtk.Application`
 		:param value: The initial value to set for this widget.
 		:return: The widget for the user to set the option with.
 		:rtype: :py:class:`Gtk.Widget`
@@ -85,7 +89,7 @@ class ClientOptionMixin(object):
 
 # base option types
 class ClientOptionBoolean(ClientOptionMixin, plugins.OptionBoolean):
-	def get_widget(self, value):
+	def get_widget(self, _, value):
 		widget = Gtk.Switch()
 		widget.set_active(bool(value))
 		widget.set_property('halign', Gtk.Align.START)
@@ -102,7 +106,7 @@ class ClientOptionEnum(ClientOptionMixin, plugins.OptionEnum):
 	:param default: The default value of this option.
 	:param str display_name: The name to display in the UI to the user for this option
 	"""
-	def get_widget(self, value):
+	def get_widget(self, _, value):
 		widget = Gtk.ComboBoxText()
 		widget.set_hexpand(True)
 		for choice in self.choices:
@@ -132,7 +136,7 @@ class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
 		self.adjustment = kwargs.pop('adjustment', Gtk.Adjustment(0, -0x7fffffff, 0x7fffffff, 1, 10, 0))
 		super(ClientOptionInteger, self).__init__(name, *args, **kwargs)
 
-	def get_widget(self, value):
+	def get_widget(self, _, value):
 		self.adjustment.set_value(int(round(value)))
 		widget = Gtk.SpinButton()
 		widget.set_hexpand(True)
@@ -145,7 +149,7 @@ class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
 		return widget.get_value_as_int()
 
 class ClientOptionString(ClientOptionMixin, plugins.OptionString):
-	def get_widget(self, value):
+	def get_widget(self, _, value):
 		widget = Gtk.Entry()
 		widget.set_hexpand(True)
 		widget.set_text((value if value else ''))
@@ -155,6 +159,70 @@ class ClientOptionString(ClientOptionMixin, plugins.OptionString):
 		return widget.get_text()
 
 # extended option types
+class ClientOptionPath(ClientOptionString):
+	def __init__(self, name, *args, **kwargs):
+		"""
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param default: The default value of this option.
+		:param str display_name: The name to display in the UI to the user for this option.
+		:param str path_type: The type of the path to select, either 'directory', 'file-open' or 'file-save'.
+		"""
+		self.path_type = kwargs.pop('path_type', 'file-open').lower()
+		if self.path_type not in ('directory', 'file-open', 'file-save'):
+			raise ValueError('path_type must be either \'directory\', \'file-open\', or \'file-save\'')
+		self.file_filters = kwargs.pop('file_filters', None)
+		super(ClientOptionString, self).__init__(name, *args, **kwargs)
+
+	def get_widget(self, application, value):
+		entry_widget = super(ClientOptionPath, self).get_widget(application, value)
+		entry_widget.set_property('editable', False)
+		entry_widget.set_property('primary-icon-stock', 'gtk-file')
+		entry_widget.connect('activate', self.signal_entry_activate, application)
+		entry_widget.connect('backspace', self.signal_entry_backspace)
+
+		button_widget = Gtk.Button.new_from_icon_name('document-open', Gtk.IconSize.BUTTON)
+		button_widget.connect('clicked', self.signal_button_clicked, application, entry_widget)
+
+		widget = Gtk.Box(Gtk.Orientation.HORIZONTAL, 3)
+		widget.pack_start(entry_widget, True, True, 0)
+		widget.pack_start(button_widget, False, False, 0)
+		return widget
+
+	def signal_button_clicked(self, _, application, entry_widget):
+		self.select_path(application, entry_widget)
+
+	def signal_entry_activate(self, entry_widget, application):
+		self.select_path(application, entry_widget)
+
+	def signal_entry_backspace(self, entry_widget):
+		entry_widget.set_text('')
+
+	def select_path(self, application, entry_widget):
+		dialog = extras.FileChooserDialog('Select ' + self.path_type.capitalize(), application.get_active_window())
+		if self.path_type.startswith('file-') and self.file_filters:
+			for name, patterns in self.file_filters:
+				dialog.quick_add_filter(name, patterns)
+			dialog.quick_add_filter('All Files', '*')
+
+		if self.path_type == 'directory':
+			result = dialog.run_quick_select_directory()
+		elif self.path_type == 'file-open':
+			result = dialog.run_quick_open()
+		elif self.path_type == 'file-save':
+			result = dialog.run_quick_save()
+		else:
+			dialog.destroy()
+			raise ValueError('path_type must be either \'directory\', \'file-open\', or \'file-save\'')
+		dialog.destroy()
+		if result is None:
+			return
+		entry_widget.set_text(result['target_path'])
+
+	def get_widget_value(self, widget):
+		entry_widget = widget.get_children()[0]
+		return entry_widget.get_text()
+
 class ClientOptionPort(ClientOptionInteger):
 	def __init__(self, *args, **kwargs):
 		"""

@@ -54,6 +54,7 @@ The following are the different option classes available for client plugins:
 - :py:class:`~king_phisher.client.plugins.ClientOptionBoolean`
 - :py:class:`~king_phisher.client.plugins.ClientOptionEnum`
 - :py:class:`~king_phisher.client.plugins.ClientOptionInteger`
+- :py:class:`~king_phisher.client.plugins.ClientOptionPath`
 - :py:class:`~king_phisher.client.plugins.ClientOptionPort`
 - :py:class:`~king_phisher.client.plugins.ClientOptionString`
 

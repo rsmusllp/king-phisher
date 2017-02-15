@@ -159,7 +159,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			name_label.set_text(opt.display_name)
 			grid.attach(name_label, 0, row, 1, 1)
 
-			widget = opt.get_widget(plugin_config.get(opt.name, opt.default))
+			widget = opt.get_widget(self.application, plugin_config.get(opt.name, opt.default))
 			widget.set_property('tooltip-text', opt.description)
 			grid.attach(widget, 1, row, 1, 1)
 			self._plugin_option_widgets[plugin_klass.name].append((opt, widget))

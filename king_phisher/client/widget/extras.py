@@ -112,7 +112,7 @@ class FileChooserDialog(_Gtk_FileChooserDialog):
 			return None
 		target_path = self.get_filename()
 		if not os.access(target_path, os.R_OK):
-			gui_utilities.show_dialog_error('Can not read the selected file', self.parent)
+			gui_utilities.show_dialog_error('Permissions Error', self.parent, 'Can not read the selected file.')
 			return None
 		target_uri = self.get_uri()
 		return {'target_uri': target_uri, 'target_path': target_path}
@@ -139,10 +139,10 @@ class FileChooserDialog(_Gtk_FileChooserDialog):
 		target_path = self.get_filename()
 		if os.path.isfile(target_path):
 			if not os.access(target_path, os.W_OK):
-				gui_utilities.show_dialog_error('Can not write to the selected file', self.parent)
+				gui_utilities.show_dialog_error('Permissions Error', self.parent, 'Can not write to the selected file.')
 				return None
 		elif not os.access(os.path.dirname(target_path), os.W_OK):
-			gui_utilities.show_dialog_error('Can not create the selected file', self.parent)
+			gui_utilities.show_dialog_error('Permissions Error', self.parent, 'Can not write to the selected path.')
 			return None
 		target_uri = self.get_uri()
 		return {'target_uri': target_uri, 'target_path': target_path}
