@@ -159,13 +159,16 @@ def server_from_config(config, handler_klass=None, plugin_manager=None):
 		server = KingPhisherServer(config, plugin_manager, handler_klass, addresses=addresses, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 	except socket.error as error:
 		error_number, error_message = error.args
+		error_message = "socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message)
 		if error_number == 98:
-			logger.critical('failed to bind server to address (socket error #98)')
-		raise errors.KingPhisherError("socket error #{0} ({1})".format((error_number or 'NOT-SET'), error_message))
+			logger.error('failed to bind server to address (socket error #98)')
+		logger.error(error_message, exc_info=True)
+		raise errors.KingPhisherError(error_message)
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
+		logger.info("setting the server version to the custom header: '{0}'".format(config.get('server.server_header')))
 	for hostname, ssl_certfile, ssl_keyfile in ssl_hostnames:
-		logger.info("adding configuration for ssl hostname: {0} with cert: {1}".format(hostname, ssl_certfile))
+		logger.info("setting configuration for ssl hostname: {0} with cert: {1}".format(hostname, ssl_certfile))
 		server.add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 	signals.server_initialized.send(server)

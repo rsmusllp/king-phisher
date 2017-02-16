@@ -71,7 +71,7 @@ def build_and_run(arguments, config, plugin_manager, log_file=None):
 	try:
 		king_phisher_server = build.server_from_config(config, plugin_manager=plugin_manager)
 	except errors.KingPhisherError as error:
-		logger.critical(error.message)
+		logger.critical('server failed to build with error: ' + error.message)
 		return os.EX_SOFTWARE
 
 	server_pid = os.getpid()
