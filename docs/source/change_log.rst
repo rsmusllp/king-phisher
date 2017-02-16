@@ -14,6 +14,7 @@ Version 1.7.0
 
 * Better error messages for malformed server configuration files
 * Support for sending to targets via To / CC / BCC fields
+* New features for client and server plugins
 
 Version 1.6.0
 ^^^^^^^^^^^^^
