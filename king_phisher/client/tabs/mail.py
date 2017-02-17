@@ -37,6 +37,7 @@ import os
 import re
 import sys
 import urllib
+import zipfile
 
 from king_phisher import its
 from king_phisher import scrubber
@@ -139,8 +140,13 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		_, extension = os.path.splitext(attachment)
 		extension = extension[1:]
 		if self.config['remove_attachment_metadata'] and extension in ('docm', 'docx', 'pptm', 'pptx', 'xlsm', 'xlsx'):
-			scrubber.remove_office_metadata(attachment)
-			self.text_insert("Attachment file detected as MS Office 2007+, metadata has been removed.\n")
+			self.text_insert('Attachment file detected as MS Office 2007+, ')
+			try:
+				scrubber.remove_office_metadata(attachment)
+			except zipfile.BadZipfile:
+				self.text_insert('failed to remove metadata.\n')
+			else:
+				self.text_insert('metadata has been removed.\n')
 		md5 = hashlib.new('md5')
 		sha1 = hashlib.new('sha1')
 		with open(attachment, 'rb') as file_h:
