@@ -1200,6 +1200,8 @@ class MailSenderTab(_GObject_GObject):
 		# set missing defaults for backwards compatibility
 		if not self.config.get('mailer.message_type'):
 			self.config['mailer.message_type'] = 'email'
+		if not self.config.get('mailer.target_field'):
+			self.config['mailer.target_field'] = 'to'
 		if not self.config.get('mailer.target_type'):
 			self.config['mailer.target_type'] = 'file'
 
