@@ -53,6 +53,8 @@ from smoke_zephyr.utilities import which
 
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,7}$', flags=re.IGNORECASE)
 TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
+make_message_uid = lambda: random_string(16)
+make_visit_uid = lambda: random_string(24)
 
 class FreezableDict(collections.OrderedDict):
 	"""
@@ -324,7 +326,6 @@ def password_is_complex(password, min_len=12):
 	"""
 	Check that the specified string meets standard password complexity
 	requirements.
-	
 	:param str password: The password to validate.
 	:param int min_len: The mininum length the password should be.
 	:return: Whether the strings appears to be complex or not.

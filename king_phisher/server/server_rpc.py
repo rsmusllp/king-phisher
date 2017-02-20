@@ -39,6 +39,7 @@ from king_phisher import errors
 from king_phisher import geoip
 from king_phisher import ipaddress
 from king_phisher import version
+from king_phisher import utilities
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.server import graphql
 from king_phisher.server import signals
@@ -492,6 +493,63 @@ def rpc_database_insert_row(handler, session, table_name, keys, values):
 	session.add(row)
 	session.commit()
 	return row.id
+
+@register_rpc('/db/table/insert/multi', database_access=True)
+def rpc_database_insert_row_multi(handler, session, table_name, keys, rows, deconflict_ids=False):
+	"""
+	Insert multiple new rows into the specified table. If deconflict_ids is true, new id values will be assigned
+	to merge the data into the database. This function will fail if contrasts for the table are not meet.
+
+	:param str table_name: The name of the database table to insert data into.
+	:param list keys: A list of keys of the column names in order of values to be inserted *values*
+	:param list(tuples) rows: A list of tuples, the tuple is the values to be inserted into the row.
+	:return: List of ids of the new rows inserted
+	:rtype: list
+	"""
+	inserted_ids = []
+	if not isinstance(keys, list):
+		keys = list(keys)
+	if not isinstance(rows, list):
+		rows = list(rows)
+
+	table = database_table_objects.get(table_name)
+	if not table:
+		raise errors.KingPhisherAPIError('failed to get table object for: {0}'.format(table_name))
+	for key in keys:
+		if key not in database_tables[table_name]:
+			raise errors.KingPhisherAPIError('column {0} is invalid for table {1}'.format(keys, table_name))
+
+	for row in rows:
+		if len(row) != len(keys):
+			errors.KingPhisherAPIError('row is not the same as number of values defined')
+		if deconflict_ids and 'id' in keys:
+			row_id = row[keys.index('id')]
+			check_id = db_manager.get_row_by_id(session, database_table_objects[table_name], row_id)
+			while check_id is not None:
+				row = list(row)
+				row_id = row[keys.index('id')]
+				if table_name == 'visits':
+					row_id = utilities.make_visit_uid()
+				elif table_name == 'messages':
+					row_id = utilities.make_message_uid()
+				elif table_name in ('landing_pages', 'credentials'):
+					if isinstance(row_id, str):
+						row_id = int(row_id)
+					row_id += 1
+				else:
+					break
+				row[keys.index('id')] = row_id
+				row = tuple(row)
+				check_id = db_manager.get_row_by_id(session, database_table_objects[table_name], row_id)
+
+		table_row = table()
+		for key, value in zip(keys, row):
+			setattr(table_row, key, value)
+		table_row.assert_session_has_permissions('c', handler.rpc_session)
+		session.add(table_row)
+		inserted_ids.append(table_row.id)
+	session.commit()
+	return inserted_ids
 
 @register_rpc('/db/table/set', database_access=True)
 def rpc_database_set_row_value(handler, session, table_name, row_id, keys, values):
