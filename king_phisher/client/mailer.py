@@ -147,6 +147,7 @@ def render_message_template(template, config, target=None, analyze=False):
 		company_name=config.get('mailer.company_name'),
 		message_id=target.uid
 	)
+
 	template_vars['sender'] = dict(
 		email=config.get('mailer.source_email'),
 		friendly_alias=config.get('mailer.source_email_alias'),
@@ -167,6 +168,12 @@ def render_message_template(template, config, target=None, analyze=False):
 	template_vars['message'] = dict(
 		attachment=config.get('mailer.attachment_file'),
 		importance=config.get('mailer.importance'),
+		recipient=dict(
+			field=config.get('mailer.target_field', 'to'),
+			to=(target.email_address if config.get('mailer.target_field') == 'to' else config.get('mailer.recipient_email_to', '')),
+			cc=(target.email_address if config.get('mailer.target_field') == 'cc' else config.get('mailer.recipient_email_cc', '')),
+			bcc=(target.email_address if config.get('mailer.target_field') == 'bcc' else '')
+		),
 		sensitivity=config.get('mailer.sensitivity'),
 		subject=config.get('mailer.subject'),
 		template=config.get('mailer.html_file'),
