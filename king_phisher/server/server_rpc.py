@@ -501,8 +501,8 @@ def rpc_database_insert_row_multi(handler, session, table_name, keys, rows, deco
 	to merge the data into the database. This function will fail if contrasts for the table are not meet.
 
 	:param str table_name: The name of the database table to insert data into.
-	:param list keys: A list of keys of the column names in order of values to be inserted *values*
-	:param list(tuples) rows: A list of tuples, the tuple is the values to be inserted into the row.
+	:param list keys: The column names of associated with row values
+	:param list rows: A list of rows, a row is a list of values to be inserted.
 	:return: List of ids of the new rows inserted
 	:rtype: list
 	"""
@@ -521,30 +521,23 @@ def rpc_database_insert_row_multi(handler, session, table_name, keys, rows, deco
 
 	for row in rows:
 		if len(row) != len(keys):
-			errors.KingPhisherAPIError('row is not the same as number of values defined')
-		if deconflict_ids and 'id' in keys:
-			row_id = row[keys.index('id')]
-			check_id = db_manager.get_row_by_id(session, database_table_objects[table_name], row_id)
+			errors.KingPhisherAPIError('row is not the same as length as the number of values defined')
+		row = dict(zip(keys, rows))
+		if deconflict_ids and 'id' in row:
+			check_id = db_manager.get_row_by_id(session, table, row['id'])
 			while check_id is not None:
-				row = list(row)
-				row_id = row[keys.index('id')]
 				if table_name == 'visits':
-					row_id = utilities.make_visit_uid()
-				elif table_name == 'messages':
-					row_id = utilities.make_message_uid()
-				elif table_name in ('landing_pages', 'credentials'):
-					if isinstance(row_id, str):
-						row_id = int(row_id)
-					row_id += 1
-				else:
+					row['id'] = utilities.make_visit_uid()
+				elif table_name in ('messages', 'deaddrop_deployments'):
+					row['id'] = utilities.make_message_uid()
+				elif table_name not in ('users', 'meta_data', 'authenticated_sessions'):
+					del row['id']
 					break
-				row[keys.index('id')] = row_id
-				row = tuple(row)
-				check_id = db_manager.get_row_by_id(session, database_table_objects[table_name], row_id)
+				else:
+					errors.KingPhisherAPIError('cannot de-conflict ids on table {0}'.format(table_name))
+				check_id = db_manager.get_row_by_id(session, table, row['id'])
 
-		table_row = table()
-		for key, value in zip(keys, row):
-			setattr(table_row, key, value)
+		table_row = table(**row)
 		table_row.assert_session_has_permissions('c', handler.rpc_session)
 		session.add(table_row)
 		inserted_ids.append(table_row.id)

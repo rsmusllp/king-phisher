@@ -678,7 +678,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 					visit_id = None
 
 		if visit_id is None:
-			visit_id = make_visit_uid()
+			visit_id = utilities.make_visit_uid()
 
 		if set_new_visit:
 			kp_cookie_name = self.config.get('server.cookie_name')
