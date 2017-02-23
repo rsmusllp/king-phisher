@@ -102,6 +102,22 @@ class TemplateEnvironmentBase(jinja2.Environment):
 			for key, value in global_vars.items():
 				self.globals[key] = value
 
+	def join_path(self, template, parent):
+		"""
+		Over ride the default :py:meth:`jinja2.Environment.join_path` method to
+		explicitly specifying relative paths by prefixing the path with either
+		"./" or "../".
+
+		:param str template: The path of the requested template file.
+		:param str parent: The path of the template file which requested the load.
+		:return: The new path to the template.
+		:rtype: str
+		"""
+		if re.match(r'\.\.?/', template) is None:
+			return template
+		template = os.path.join(os.path.dirname(parent), template)
+		return os.path.normpath(template)
+
 	@property
 	def standard_variables(self):
 		"""Additional standard variables that can optionally be used for templates."""
