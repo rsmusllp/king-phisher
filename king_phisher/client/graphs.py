@@ -423,7 +423,8 @@ class CampaignBarGraph(CampaignGraph):
 
 		yticks = [float(y) + (height / 2) for y in range(len(bars))]
 
-		ax1.set_ybound(0, max(len(bars), max_bars))
+		# this makes the top bar shorter than the rest
+		# ax1.set_ybound(0, max(len(bars), max_bars))
 		ax1.set_yticks(yticks)
 		ax1.set_yticklabels(yticklabels, color=color_fg, size=10)
 
