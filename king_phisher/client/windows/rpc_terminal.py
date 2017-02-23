@@ -161,6 +161,7 @@ class RPCTerminal(object):
 			working_directory=os.getcwd(),
 			argv=[sys.executable, '-c', python_command],
 			envp=[
+				'DISPLAY=' + os.environ['DISPLAY'],
 				'PATH=' + os.environ['PATH'],
 				'PYTHONPATH=' + module_path, find.ENV_VAR + '=' + os.environ[find.ENV_VAR]
 			],
