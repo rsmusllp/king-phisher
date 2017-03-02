@@ -59,7 +59,6 @@ import advancedhttpserver
 import jinja2
 from smoke_zephyr import job
 
-make_uid = lambda: utilities.random_string(24)
 
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
@@ -679,7 +678,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 					visit_id = None
 
 		if visit_id is None:
-			visit_id = make_uid()
+			visit_id = utilities.make_visit_uid()
 
 		if set_new_visit:
 			kp_cookie_name = self.config.get('server.cookie_name')

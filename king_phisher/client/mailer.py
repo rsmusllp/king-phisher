@@ -80,7 +80,6 @@ __all__ = (
 	'render_message_template'
 )
 
-make_uid = lambda: utilities.random_string(16)
 template_environment = templates.MessageTemplateEnvironment()
 
 MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
@@ -127,7 +126,7 @@ def render_message_template(template, config, target=None, analyze=False):
 			last_name='Liddle',
 			email_address='aliddle@wonderland.com',
 			department=None,
-			uid=(config['server_config'].get('server.secret_id') or make_uid())
+			uid=(config['server_config'].get('server.secret_id') or utilities.make_message_uid())
 		)
 		template_environment.set_mode(template_environment.MODE_PREVIEW)
 
@@ -467,7 +466,7 @@ class MailSenderThread(threading.Thread):
 				last_name=target_name[1].strip(),
 				email_address=self.config['mailer.target_email_address'],
 				department=None,
-				uid=make_uid()
+				uid=utilities.make_message_uid()
 			)
 			yield target
 		elif target_type == 'file':
@@ -498,7 +497,7 @@ class MailSenderThread(threading.Thread):
 					last_name=raw_target['last_name'].strip(),
 					email_address=email_address,
 					department=department,
-					uid=make_uid(),
+					uid=utilities.make_message_uid(),
 					line=line_no
 				)
 				if not target.email_address:

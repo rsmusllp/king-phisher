@@ -324,7 +324,6 @@ def password_is_complex(password, min_len=12):
 	"""
 	Check that the specified string meets standard password complexity
 	requirements.
-	
 	:param str password: The password to validate.
 	:param int min_len: The mininum length the password should be.
 	:return: Whether the strings appears to be complex or not.
@@ -345,6 +344,24 @@ def password_is_complex(password, min_len=12):
 		if has_upper and has_lower and has_digit:
 			return True
 	return False
+
+def make_message_uid():
+	"""
+	Creates a random string of characters and numbers to be used as a message id.
+
+	:return: String of characters from the random_string function.
+	:rtype: str
+	"""
+	return random_string(16)
+
+def make_visit_uid():
+	"""
+	Creates a random string of characters and numbers to be used as a visit id.
+
+	:return: String of characters from the random_string function.
+	:rtype: str
+	"""
+	return random_string(24)
 
 def random_string(size):
 	"""
