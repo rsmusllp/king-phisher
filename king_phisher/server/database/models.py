@@ -35,8 +35,8 @@ import logging
 import operator
 
 from king_phisher import errors
+from king_phisher import utilities
 from king_phisher.server import signals
-from king_phisher.utilities import switch
 
 import sqlalchemy
 import sqlalchemy.event
@@ -140,7 +140,7 @@ class BaseRowCls(object):
 		if self.is_private:
 			return False
 		access = access.lower()
-		for case in switch(access, comp=operator.contains, swapped=True):
+		for case in utilities.switch(access, comp=operator.contains, swapped=True):
 			if case('c') and not self.session_has_create_access(session):
 				break
 			if case('r') and not self.session_has_read_access(session):
@@ -288,7 +288,7 @@ class Credential(Base):
 class DeaddropDeployment(Base):
 	__repr_attributes__ = ('campaign_id', 'destination')
 	__tablename__ = 'deaddrop_deployments'
-	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
+	id = sqlalchemy.Column(sqlalchemy.String, default=lambda: utilities.random_string(16), primary_key=True)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 	destination = sqlalchemy.Column(sqlalchemy.String)
 	# relationships
@@ -339,7 +339,7 @@ class StorageData(Base):
 class Message(Base):
 	__repr_attributes__ = ('campaign_id', 'target_email')
 	__tablename__ = 'messages'
-	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
+	id = sqlalchemy.Column(sqlalchemy.String, default=utilities.make_message_uid, primary_key=True)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 	target_email = sqlalchemy.Column(sqlalchemy.String)
 	first_name = sqlalchemy.Column(sqlalchemy.String)
@@ -366,7 +366,7 @@ class MetaData(Base):
 @register_table
 class User(Base):
 	__tablename__ = 'users'
-	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
+	id = sqlalchemy.Column(sqlalchemy.String, default=lambda: utilities.random_string(16), primary_key=True)
 	phone_carrier = sqlalchemy.Column(sqlalchemy.String)
 	phone_number = sqlalchemy.Column(sqlalchemy.String)
 	email_address = sqlalchemy.Column(sqlalchemy.String)
@@ -396,7 +396,7 @@ class User(Base):
 class Visit(Base):
 	__repr_attributes__ = ('campaign_id', 'message_id')
 	__tablename__ = 'visits'
-	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
+	id = sqlalchemy.Column(sqlalchemy.String, default=utilities.make_visit_uid, primary_key=True)
 	message_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('messages.id'), nullable=False)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 	visit_count = sqlalchemy.Column(sqlalchemy.Integer, default=1)
