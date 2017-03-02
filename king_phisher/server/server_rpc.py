@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import datetime
 import functools
 import logging
@@ -39,7 +40,6 @@ from king_phisher import errors
 from king_phisher import geoip
 from king_phisher import ipaddress
 from king_phisher import version
-from king_phisher import utilities
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.server import graphql
 from king_phisher.server import signals
@@ -469,8 +469,8 @@ def rpc_database_insert_row(handler, session, table_name, keys, values):
 	Insert a new row into the specified table.
 
 	:param str table_name: The name of the database table to insert a new row into.
-	:param tuple keys: The column names of *values*.
-	:param tuple values: The values to be inserted in the row.
+	:param list keys: The column names of *values*.
+	:param list values: The values to be inserted in the row.
 	:return: The id of the new row that has been added.
 	"""
 	if not isinstance(keys, (list, tuple)):
@@ -497,16 +497,18 @@ def rpc_database_insert_row(handler, session, table_name, keys, values):
 @register_rpc('/db/table/insert/multi', database_access=True)
 def rpc_database_insert_row_multi(handler, session, table_name, keys, rows, deconflict_ids=False):
 	"""
-	Insert multiple new rows into the specified table. If deconflict_ids is true, new id values will be assigned
-	to merge the data into the database. This function will fail if contrasts for the table are not meet.
+	Insert multiple new rows into the specified table. If *deconflict_ids* is
+	true, new id values will be assigned as necessary to merge the data into
+	the database. This function will fail if constraints for the table are
+	not met.
 
 	:param str table_name: The name of the database table to insert data into.
-	:param list keys: The column names of associated with row values
-	:param list rows: A list of rows, a row is a list of values to be inserted.
-	:return: List of ids of the new rows inserted
+	:param list keys: The column names of the values in *rows*.
+	:param list rows: A list of rows, each row is a list of values ordered and identified by *keys* to be inserted.
+	:return: List of ids of the newly inserted rows.
 	:rtype: list
 	"""
-	inserted_ids = []
+	inserted_rows = collections.deque()
 	if not isinstance(keys, list):
 		keys = list(keys)
 	if not isinstance(rows, list):
@@ -521,28 +523,20 @@ def rpc_database_insert_row_multi(handler, session, table_name, keys, rows, deco
 
 	for row in rows:
 		if len(row) != len(keys):
-			errors.KingPhisherAPIError('row is not the same as length as the number of values defined')
-		row = dict(zip(keys, rows))
-		if deconflict_ids and 'id' in row:
-			check_id = db_manager.get_row_by_id(session, table, row['id'])
-			while check_id is not None:
-				if table_name == 'visits':
-					row['id'] = utilities.make_visit_uid()
-				elif table_name in ('messages', 'deaddrop_deployments'):
-					row['id'] = utilities.make_message_uid()
-				elif table_name not in ('users', 'meta_data', 'authenticated_sessions'):
-					del row['id']
-					break
-				else:
-					errors.KingPhisherAPIError('cannot de-conflict ids on table {0}'.format(table_name))
-				check_id = db_manager.get_row_by_id(session, table, row['id'])
+			raise errors.KingPhisherAPIError('row is not the same length as the number of values defined')
+		row = dict(zip(keys, row))
+		if 'id' in row and db_manager.get_row_by_id(session, table, row['id']) is not None:
+			if deconflict_ids:
+				row['id'] = None
+			else:
+				raise errors.KingPhisherAPIError('row id conflicts with an existing value')
 
 		table_row = table(**row)
 		table_row.assert_session_has_permissions('c', handler.rpc_session)
 		session.add(table_row)
-		inserted_ids.append(table_row.id)
+		inserted_rows.append(table_row)
 	session.commit()
-	return inserted_ids
+	return [row.id for row in inserted_rows]
 
 @register_rpc('/db/table/set', database_access=True)
 def rpc_database_set_row_value(handler, session, table_name, row_id, keys, values):

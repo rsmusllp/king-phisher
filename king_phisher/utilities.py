@@ -347,18 +347,18 @@ def password_is_complex(password, min_len=12):
 
 def make_message_uid():
 	"""
-	Creates a random string of 16 characters and numbers to be used as a message id.
+	Creates a random string of characters and numbers to be used as a message id.
 
-	:return: String of 16 characters from the random_string function
+	:return: String of characters from the random_string function.
 	:rtype: str
 	"""
 	return random_string(16)
 
 def make_visit_uid():
 	"""
-	Creates a random string of 24 characters and number to be used as a visit id.
+	Creates a random string of characters and numbers to be used as a visit id.
 
-	:return: String of 24 characters
+	:return: String of characters from the random_string function.
 	:rtype: str
 	"""
 	return random_string(24)

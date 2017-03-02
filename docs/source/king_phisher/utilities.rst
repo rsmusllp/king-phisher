@@ -24,6 +24,10 @@ Functions
 
 .. autofunction:: king_phisher.utilities.is_valid_email_address
 
+.. autofunction:: king_phisher.utilities.make_message_uid
+
+.. autofunction:: king_phisher.utilities.make_visit_uid
+
 .. autofunction:: king_phisher.utilities.open_uri
 
 .. autofunction:: king_phisher.utilities.parse_datetime
