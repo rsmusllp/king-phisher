@@ -320,8 +320,9 @@ def rpc_campaign_stats(handler, session, campaign_id):
 	"""
 	Generate statistics regarding the specified campaign and return them in a
 	dictionary. The dictionary will contain the keys credentials,
-	credentials-unique, messages, visits, visits-unique. Values with unique in
-	the key are counted unique by the message id for which they are associated.
+	credentials-unique, messages, messages-trained, visits, visits-unique.
+	Values with unique in the key are counted unique by the message id for
+	which they are associated.
 
 	:param campaign_id: The unique ID of the campaign to generate statistics for.
 	:return: The statistics for the specified campaign.
@@ -331,6 +332,7 @@ def rpc_campaign_stats(handler, session, campaign_id):
 	stats['credentials'] = session.query(db_models.Credential).filter_by(campaign_id=campaign_id).count()
 	stats['credentials-unique'] = session.query(db_models.Credential).filter_by(campaign_id=campaign_id).distinct(db_models.Credential.message_id).count()
 	stats['messages'] = session.query(db_models.Message).filter_by(campaign_id=campaign_id).count()
+	stats['messages-trained'] = session.query(db_models.Message).filter_by(campaign_id=campaign_id, trained=True).count()
 	stats['visits'] = session.query(db_models.Visit).filter_by(campaign_id=campaign_id).count()
 	stats['visits-unique'] = session.query(db_models.Visit).filter_by(campaign_id=campaign_id).distinct(db_models.Visit.message_id).count()
 	return stats
