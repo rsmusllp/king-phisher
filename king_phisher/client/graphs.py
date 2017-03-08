@@ -350,7 +350,6 @@ class CampaignGraph(GraphBase):
 		self.canvas.draw()
 		return info_cache
 
-
 class CampaignBarGraph(CampaignGraph):
 	yticklabel_fmt = "{0:,}"
 	def __init__(self, *args, **kwargs):

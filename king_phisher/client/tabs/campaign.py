@@ -639,19 +639,23 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		title=label_text
 	)
 	def format_node_data(self, node):
-		visitor_ip = ipaddress.ip_address(node['visitorIp'])
 		geo_location = UNKNOWN_LOCATION_STRING
-		if visitor_ip.is_loopback:
-			geo_location = 'N/A (Loopback)'
-		elif visitor_ip.is_private:
-			geo_location = 'N/A (Private)'
-		elif isinstance(visitor_ip, ipaddress.IPv6Address):
-			geo_location = 'N/A (IPv6 Address)'
-		elif node['visitorGeoloc']:
-			geo_location = node['visitorGeoloc']['city']
+		visitor_ip = node['visitorIp']
+		if visitor_ip is None:
+			visitor_ip = ''
+		else:
+			visitor_ip = ipaddress.ip_address(visitor_ip)
+			if visitor_ip.is_loopback:
+				geo_location = 'N/A (Loopback)'
+			elif visitor_ip.is_private:
+				geo_location = 'N/A (Private)'
+			elif isinstance(visitor_ip, ipaddress.IPv6Address):
+				geo_location = 'N/A (IPv6 Address)'
+			elif node['visitorGeoloc']:
+				geo_location = node['visitorGeoloc']['city']
 		row = (
 			node['message']['targetEmail'],
-			node['visitorIp'],
+			str(visitor_ip),
 			node['visitCount'],
 			node['visitorDetails'],
 			geo_location,
