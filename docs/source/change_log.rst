@@ -15,6 +15,8 @@ Version 1.7.0
 * Better error messages for malformed server configuration files
 * Support for sending to targets via To / CC / BCC fields
 * New features for client and server plugins
+* Add comparison of "trained" statistics to the campaign comparison
+* Support for including and importing Jinja templates from relative paths
 
 Version 1.6.0
 ^^^^^^^^^^^^^

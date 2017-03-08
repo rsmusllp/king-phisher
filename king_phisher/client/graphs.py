@@ -829,6 +829,9 @@ class CampaignCompGraph(GraphBase):
 		self._config_axes(ax, ax2)
 		self._campaigns = []
 
+	def _calc(self, stats, key, comp_key='messages'):
+		return (0 if stats[comp_key] == 0 else (float(stats[key]) / stats[comp_key]) * 100)
+
 	def _config_axes(self, ax, ax2):
 		# define the necessary colors
 		color_bg = self.get_color('bg', ColorHexCode.WHITE)
@@ -877,11 +880,11 @@ class CampaignCompGraph(GraphBase):
 		self._config_axes(ax, ax2)
 
 		rpc = self.rpc
-		calc = lambda stats, key: (0 if stats['messages'] == 0 else (float(stats[key]) / stats['messages']) * 100)
 		ellipsize = lambda text: (text if len(text) < 20 else text[:17] + '...')
 		visits_line_color = self.get_color('line_fg', ColorHexCode.RED)
 		creds_line_color = self.get_color('map_marker1', ColorHexCode.BLACK)
 		messages_color = '#046D8B'
+		trained_color = '#77c67f'
 
 		ax.grid(True)
 		ax.set_xticks(range(len(campaigns)))
@@ -894,18 +897,36 @@ class CampaignCompGraph(GraphBase):
 
 		campaigns = [rpc('/campaign/stats', cid) for cid in campaigns]
 		ax2.plot([stats['messages'] for stats in campaigns], label='Messages', color=messages_color, lw=3)
-		ax.plot([calc(stats, 'visits') for stats in campaigns], label='Visits', color=visits_line_color, lw=3)
-		ax.plot([calc(stats, 'visits-unique') for stats in campaigns], label=' Unique Visits', color=visits_line_color, lw=3, ls='dashed')
-		ax.plot([calc(stats, 'credentials') for stats in campaigns], label='Credentials', color=creds_line_color, lw=3)
-		ax.plot([calc(stats, 'credentials-unique') for stats in campaigns], label='Unique Credentials', color=creds_line_color, lw=3, ls='dashed')
+		if sum(stats['messages-trained'] for stats in campaigns):
+			ax.plot([self._calc(stats, 'messages-trained', 'visits-unique') for stats in campaigns], label='Trained (Visited)', color=trained_color, lw=3)
+			ax.plot([self._calc(stats, 'messages-trained') for stats in campaigns], label='Trained (All)', color=trained_color, lw=3, ls='dashed')
+		ax.plot([self._calc(stats, 'visits') for stats in campaigns], label='Visits', color=visits_line_color, lw=3)
+		ax.plot([self._calc(stats, 'visits-unique') for stats in campaigns], label='Unique Visits', color=visits_line_color, lw=3, ls='dashed')
+		if sum(stats['credentials'] for stats in campaigns):
+			ax.plot([self._calc(stats, 'credentials') for stats in campaigns], label='Credentials', color=creds_line_color, lw=3)
+			ax.plot([self._calc(stats, 'credentials-unique') for stats in campaigns], label='Unique Credentials', color=creds_line_color, lw=3, ls='dashed')
 		ax.set_ylim((0, 100))
 		ax2.set_ylim(bottom=0)
 		self.canvas.set_size_request(500 + 50 * (len(campaigns) - 1), 500)
-		self.add_legend_patch(tuple(zip(
-			[visits_line_color, visits_line_color, creds_line_color, creds_line_color, messages_color],
-			['dotted', 'solid', 'solid', 'dotted', 'solid'],
-			['Unique Visits', 'Visits', 'Credentials', 'Unique Credentials', 'Messages']
-		)))
+
+		legend_patch = [
+			(visits_line_color, 'solid', 'Visits'),
+			(visits_line_color, 'dotted', 'Unique Visits')
+		]
+		if sum(stats['credentials'] for stats in campaigns):
+			legend_patch.extend([
+				(creds_line_color, 'solid', 'Credentials'),
+				(creds_line_color, 'dotted', 'Unique Credentials')
+			])
+		if sum(stats['messages-trained'] for stats in campaigns):
+			legend_patch.extend([
+				(trained_color, 'solid', 'Trained (Visited)'),
+				(trained_color, 'dotted', 'Trained (All)')
+			])
+		legend_patch.append(
+			(messages_color, 'solid', 'Messages')
+		)
+		self.add_legend_patch(legend_patch)
 		pyplot.tight_layout()
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
