@@ -33,6 +33,7 @@
 import datetime
 import json
 import re
+import xml.etree.ElementTree as ET
 
 from king_phisher import its
 from king_phisher.utilities import switch
@@ -190,3 +191,48 @@ class MsgPack(Serializer):
 		:return: The Python object represented by the encoded data.
 		"""
 		return msgpack.loads(data, encoding=cls.encoding, ext_hook=cls._msgpack_ext_hook)
+
+def to_elementtree_subelement(parent, tag, value, attrib=None):
+	"""
+	Serialize *value* to an :py:class:`xml.etree.ElementTree.SubElement`
+	with appropriate information describing it's type.
+
+	:param parent: The parent element to associate this subelement with.
+	:type parent: :py:class:`xml.etree.ElementTree.Element`
+	:param str tag: The name of the XML tag.
+	:param value: The value to serialize to an XML element.
+	:param dict attrib: Optional attributes to include in the element.
+	:return: The newly created XML element, representing *value*.
+	:rtype: :py:class:`xml.etree.ElementTree.Element`
+	"""
+	attrib = attrib or {}
+	for case in switch(type(value)):
+		if case(type(None)):
+			value = ''
+			type_ = 'null'
+			break
+		if case(bool):
+			value = str(value).lower()
+			type_ = 'boolean'
+			break
+		if case(datetime.datetime):
+			value = value.isoformat()
+			type_ = 'datetime'
+			break
+		if case(float):
+			value = str(value)
+			type_ = 'float'
+			break
+		if case(int):
+			value = str(value)
+			type_ = 'integer'
+			break
+		if case(str):
+			type_ = 'string'
+			break
+	else:
+		raise TypeError('can not serialize value to an xml subelement')
+	attrib['type'] = type_
+	sub_element = ET.SubElement(parent, tag, attrib=attrib)
+	sub_element.text = value
+	return sub_element

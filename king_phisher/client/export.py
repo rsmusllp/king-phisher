@@ -49,6 +49,7 @@ from king_phisher import utilities
 from king_phisher.errors import KingPhisherInputValidationError
 
 from boltons import iterutils
+import dateutil.tz
 import geojson
 from smoke_zephyr.utilities import escape_single_quote
 from smoke_zephyr.utilities import unescape_single_quote
@@ -138,16 +139,24 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 	:param str xml_file: The destination file for the XML data.
 	:param str encoding: The encoding to use for strings.
 	"""
+	tzutc = dateutil.tz.tzutc()
 	root = ET.Element('king_phisher')
 	# Generate export metadata
 	metadata = ET.SubElement(root, 'metadata')
-	ET.SubElement(metadata, 'timestamp', attrib={'utc': 'True'}).text = datetime.datetime.utcnow().isoformat()
-	ET.SubElement(metadata, 'version').text = '1.2'
+	serializers.to_elementtree_subelement(
+		metadata,
+		'timestamp',
+		datetime.datetime.utcnow().replace(tzinfo=tzutc),
+		attrib={'utc': 'true'}
+	)
+	serializers.to_elementtree_subelement(metadata, 'version', '1.3')
 
 	campaign = ET.SubElement(root, 'campaign')
 	campaign_info = rpc.remote_table_row('campaigns', campaign_id)
 	for key, value in campaign_info._asdict().items():
-		ET.SubElement(campaign, key).text = convert_value('campaigns', key, value)
+		if isinstance(value, datetime.datetime):
+			value = value.replace(tzinfo=tzutc)
+		serializers.to_elementtree_subelement(campaign, key, value)
 
 	# Tables with a campaign_id field
 	for table_name in ('landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections'):
@@ -155,7 +164,9 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 		for table_row in rpc.remote_table(table_name, query_filter={'campaign_id': campaign_id}):
 			table_row_element = ET.SubElement(table_element, table_name[:-1])
 			for key, value in table_row._asdict().items():
-				ET.SubElement(table_row_element, key).text = convert_value(table_name, key, value)
+				if isinstance(value, datetime.datetime):
+					value = value.replace(tzinfo=tzutc)
+				serializers.to_elementtree_subelement(table_row_element, key, value)
 
 	document = minidom.parseString(ET.tostring(root))
 	with open(xml_file, 'wb') as file_h:

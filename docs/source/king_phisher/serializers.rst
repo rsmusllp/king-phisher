@@ -10,6 +10,11 @@ their format into different classes. The necessary methods for utilizing them
 are all ``classmethod``'s making it unnecessary to create an instance of any
 of them.
 
+Functions
+---------
+
+.. autofunction:: king_phisher.serializers.to_elementtree_subelement
+
 Classes
 -------
 
