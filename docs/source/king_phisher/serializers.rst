@@ -13,6 +13,8 @@ of them.
 Functions
 ---------
 
+.. autofunction:: king_phisher.serializers.from_elementtree_element
+
 .. autofunction:: king_phisher.serializers.to_elementtree_subelement
 
 Classes

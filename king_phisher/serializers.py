@@ -38,6 +38,7 @@ import xml.etree.ElementTree as ET
 from king_phisher import its
 from king_phisher.utilities import switch
 
+import dateutil.parser
 import msgpack
 
 CLEAN_JSON_REGEX = re.compile(r',(\s+[}\]])')
@@ -60,13 +61,13 @@ def _serialize_ext_dump(obj):
 def _serialize_ext_load(obj_type, obj_value, default):
 	for case in switch(obj_type):
 		if case('datetime.date'):
-			value = datetime.datetime.strptime(obj_value, '%Y-%m-%d').date()
+			value = dateutil.parser.parse(obj_value).date()
 			break
 		if case('datetime.datetime'):
-			value = datetime.datetime.strptime(obj_value, '%Y-%m-%dT%H:%M:%S' + ('.%f' if '.' in obj_value else ''))
+			value = dateutil.parser.parse(obj_value)
 			break
 		if case('datetime.time'):
-			value = datetime.datetime.strptime(obj_value, '%H:%M:%S' + ('.%f' if '.' in obj_value else '')).time()
+			value = dateutil.parser.parse(obj_value).time()
 			break
 	else:
 		return default
@@ -192,10 +193,57 @@ class MsgPack(Serializer):
 		"""
 		return msgpack.loads(data, encoding=cls.encoding, ext_hook=cls._msgpack_ext_hook)
 
+def from_elementtree_element(element, require_type=True):
+	"""
+	Load a value from an :py:class:`xml.etree.ElementTree.SubElement` instance.
+	If *require_type* is True, then the element must specify an acceptable
+	value via the "type" attribute. If *require_type* is False and no type
+	attribute is specified, the value is returned as a string.
+
+	:param element: The element to load a value from.
+	:type element: :py:class:`xml.etree.ElementTree.Element`
+	:param bool require_type: Whether or not to require type information.
+	:return: The deserialized value from the element.
+	"""
+	if require_type and not 'type' in element.attrib:
+		raise TypeError('type is not specified in the element attributes')
+	type_ = element.attrib.get('type', 'string')
+	value = element.text
+	for case in switch(type_):
+		if case('boolean'):
+			value = value.lower()
+			if not value in ('true', 'false'):
+				raise ValueError('unknown boolean value: ' + value)
+			value = value == 'true'
+			break
+		if case('date'):
+			value = dateutil.parser.parse(value).date()
+			break
+		if case('datetime'):
+			value = dateutil.parser.parse(value)
+			break
+		if case('float'):
+			value = float(value)
+			break
+		if case('integer'):
+			value = int(value)
+			break
+		if case('null'):
+			value = None
+			break
+		if case('string'):
+			break
+		if case('time'):
+			value = dateutil.parser.parse(value).time()
+	else:
+		raise TypeError('can not serialize value to an xml subelement')
+	return value
+
 def to_elementtree_subelement(parent, tag, value, attrib=None):
 	"""
-	Serialize *value* to an :py:class:`xml.etree.ElementTree.SubElement`
-	with appropriate information describing it's type.
+	Serialize *value* to an :py:class:`xml.etree.ElementTree.SubElement` with
+	appropriate information describing it's type. If *value* is not of a
+	supported type, a :py:exc:`TypeError` will be raised.
 
 	:param parent: The parent element to associate this subelement with.
 	:type parent: :py:class:`xml.etree.ElementTree.Element`
@@ -215,6 +263,10 @@ def to_elementtree_subelement(parent, tag, value, attrib=None):
 			value = str(value).lower()
 			type_ = 'boolean'
 			break
+		if case(datetime.date):
+			value = value.isoformat()
+			type_ = 'date'
+			break
 		if case(datetime.datetime):
 			value = value.isoformat()
 			type_ = 'datetime'
@@ -229,6 +281,10 @@ def to_elementtree_subelement(parent, tag, value, attrib=None):
 			break
 		if case(str):
 			type_ = 'string'
+			break
+		if case(datetime.time):
+			value = value.isoformat()
+			type_ = 'time'
 			break
 	else:
 		raise TypeError('can not serialize value to an xml subelement')
