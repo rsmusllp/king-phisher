@@ -31,6 +31,7 @@
 #
 
 import datetime
+import xml.etree.ElementTree as ET
 
 from king_phisher import testing
 from king_phisher import serializers
@@ -58,6 +59,20 @@ class _SerializerTests(testing.KingPhisherServerTestCase):
 		self.assertNotEqual(type(now), type(serialized))
 		now_loaded = self.serializer.loads(serialized)
 		self.assertEqual(now, now_loaded)
+
+class _ElementTreeSerializer(object):
+	# this class defines a pseudo serializer that allows the functions to be
+	# tested in the same way as the serializers that are implemented as classes
+	def dumps(self, value):
+		parent = ET.Element('parent')
+		return serializers.to_elementtree_subelement(parent, 'child', value)
+
+	def loads(self, element):
+		return serializers.from_elementtree_element(element)
+
+class ElementTreeTests(_SerializerTests):
+	serializer = _ElementTreeSerializer()
+	serializer_output_type = ET.Element
 
 class JsonSerializerTests(_SerializerTests):
 	serializer = serializers.JSON
