@@ -31,7 +31,6 @@
 #
 
 import collections
-import os
 import weakref
 
 from king_phisher import plugins
@@ -172,7 +171,7 @@ class ClientOptionPath(ClientOptionString):
 		if self.path_type not in ('directory', 'file-open', 'file-save'):
 			raise ValueError('path_type must be either \'directory\', \'file-open\', or \'file-save\'')
 		self.file_filters = kwargs.pop('file_filters', None)
-		super(ClientOptionString, self).__init__(name, *args, **kwargs)
+		super(ClientOptionPath, self).__init__(name, *args, **kwargs)
 
 	def get_widget(self, application, value):
 		entry_widget = super(ClientOptionPath, self).get_widget(application, value)

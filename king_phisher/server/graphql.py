@@ -107,7 +107,7 @@ class RelayNode(graphene.relay.Node):
 		return global_id
 
 	@classmethod
-	def to_global_id(cls, type, local_id):
+	def to_global_id(cls, _, local_id):
 		return local_id
 
 # misc graphql objects
@@ -460,12 +460,12 @@ class AuthorizationMiddleware(object):
 	and all objects and operations will be accessible. The **rpc_session**
 	key's value must be an instance of :py:class:`~.AuthenticatedSession`.
 	"""
-	def resolve(self, next, root, args, context, info):
+	def resolve(self, next_, root, args, context, info):
 		rpc_session = context.get('rpc_session')
 		if isinstance(root, db_models.Base) and rpc_session is not None:
 			if not root.session_has_read_prop_access(rpc_session, info.field_name):
 				return
-		return next(root, args, context, info)
+		return next_(root, args, context, info)
 
 class Schema(graphene.Schema):
 	"""

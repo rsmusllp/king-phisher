@@ -239,7 +239,7 @@ def init_alembic(engine, schema_version):
 	:type engine: :py:class:`sqlalchemy.engine.Engine`
 	:param int schema_version: The MetaData schema_version to set the alembic version to.
 	"""
-	pattern = re.compile('[a-f0-9]{10,16}_schema_v\d+\.py')
+	pattern = re.compile(r'[a-f0-9]{10,16}_schema_v\d+\.py')
 	alembic_revision = None
 	alembic_directory = find.data_directory('alembic')
 	if not alembic_directory:

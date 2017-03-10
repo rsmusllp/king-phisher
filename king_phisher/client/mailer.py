@@ -388,12 +388,12 @@ class MailSenderThread(threading.Thread):
 		try:
 			self.smtp_connection = SmtpClass(*self.smtp_server, timeout=15)
 			self.smtp_connection.ehlo()
-		except socket.error:
-			self.logger.warning('received a socket.error while connecting to the SMTP server')
-			return ConnectionErrorReason.ERROR_CONNECTION
 		except smtplib.SMTPException:
 			self.logger.warning('received an SMTPException while connecting to the SMTP server', exc_info=True)
 			return ConnectionErrorReason.ERROR_UNKNOWN
+		except socket.error:
+			self.logger.warning('received a socket.error while connecting to the SMTP server')
+			return ConnectionErrorReason.ERROR_CONNECTION
 
 		if not self.config.get('smtp_ssl_enable', False) and 'starttls' in self.smtp_connection.esmtp_features:
 			self.logger.debug('target SMTP server supports the STARTTLS extension')

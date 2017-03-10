@@ -166,5 +166,5 @@ class MissingHostKeyPolicy(paramiko.MissingHostKeyPolicy):
 			try:
 				host_keys.save(known_hosts_file)
 				os.chmod(known_hosts_file, 0o600)
-			except (IOError if its.py_v2 else PermissionError):
+			except IOError if its.py_v2 else PermissionError:
 				self.logger.warning('failed to save the known_hosts file and set its permissions')

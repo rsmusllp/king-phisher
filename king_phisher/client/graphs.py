@@ -655,7 +655,7 @@ class CampaignGraphMessageResults(CampaignPieGraph):
 		visits_count = len(unique(info_cache['visits'], key=lambda visit: visit.message_id))
 		credentials_count = len(unique(info_cache['credentials'], key=lambda cred: cred.message_id))
 
-		if not (credentials_count <= visits_count <= messages_count):
+		if not credentials_count <= visits_count <= messages_count:
 			raise ValueError('credential visit and message counts are inconsistent')
 		labels = ['Without Visit', 'With Visit', 'With Credentials']
 		sizes = []
@@ -830,7 +830,7 @@ class CampaignCompGraph(GraphBase):
 		self._campaigns = []
 
 	def _calc(self, stats, key, comp_key='messages'):
-		return (0 if stats[comp_key] == 0 else (float(stats[key]) / stats[comp_key]) * 100)
+		return 0 if stats[comp_key] == 0 else (float(stats[key]) / stats[comp_key]) * 100
 
 	def _config_axes(self, ax, ax2):
 		# define the necessary colors

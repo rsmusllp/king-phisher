@@ -80,20 +80,20 @@ def init_data_path(directory):
 	if not found:
 		raise RuntimeError('failed to initialize the specified data directory')
 
-def data_file(data_file, access_mode=os.R_OK):
+def data_file(name, access_mode=os.R_OK):
 	"""
 	Locate a data file by searching the directories specified in
 	:py:data:`.ENV_VAR`. If *access_mode* is specified, it needs to be a
 	value suitable for use with :py:func:`os.access`.
 
-	:param str data_file: The name of the file to locate.
+	:param str name: The name of the file to locate.
 	:param int access_mode: The access that is required for the file.
 	:return: The path to the located file.
 	:rtype: str
 	"""
 	search_path = os.environ[ENV_VAR]
 	for directory in search_path.split(os.pathsep):
-		test_file_path = os.path.join(directory, DATA_DIRECTORY_NAME, data_file)
+		test_file_path = os.path.join(directory, DATA_DIRECTORY_NAME, name)
 		if not os.path.isfile(test_file_path):
 			continue
 		if not os.access(test_file_path, access_mode):
@@ -101,17 +101,17 @@ def data_file(data_file, access_mode=os.R_OK):
 		return test_file_path
 	return None
 
-def data_directory(data_directory):
+def data_directory(name):
 	"""
 	Locate a subdirectory in the data search path.
 
-	:param str data_directory: The directory name to locate.
+	:param str name: The directory name to locate.
 	:return: The path to the located directory.
 	:rtype: str
 	"""
 	search_path = os.environ[ENV_VAR]
 	for directory in search_path.split(os.pathsep):
-		test_path = os.path.join(directory, DATA_DIRECTORY_NAME, data_directory)
+		test_path = os.path.join(directory, DATA_DIRECTORY_NAME, name)
 		if not os.path.isdir(test_path):
 			continue
 		return test_path

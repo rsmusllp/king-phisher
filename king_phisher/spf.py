@@ -281,7 +281,7 @@ class SenderPolicyFramework(object):
 			raise SPFParseError('no directives were found')
 
 		directives = []
-		for directive_id, directive in enumerate(raw_directives):
+		for directive in raw_directives:
 			if directive.startswith('redirect='):
 				if len([r for r in raw_directives if r.endswith('all')]):
 					# ignore redirects when all is present per https://tools.ietf.org/html/rfc7208#section-6.1
@@ -305,7 +305,7 @@ class SenderPolicyFramework(object):
 
 		record = SPFRecord(directives, domain=domain)
 		self.records[domain] = record
-		for directive_id, directive in enumerate(directives):
+		for directive in directives:
 			if not top_level and directive.mechanism == 'all':
 				break
 			if self._evaluate_mechanism(ip, domain, sender, directive.mechanism, directive.rvalue):

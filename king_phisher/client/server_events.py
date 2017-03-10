@@ -70,9 +70,9 @@ def event_type_filter(event_types, is_method=False):
 		@functools.wraps(function)
 		def wrapper(*args):
 			if is_method:
-				self, gobject, event_type, objects = args
+				_, _, event_type, _ = args
 			else:
-				gobject, event_type, objects = args
+				_, event_type, _ = args
 			if event_type in event_types:
 				function(*args)
 			return

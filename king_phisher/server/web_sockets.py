@@ -297,7 +297,7 @@ class WebSocketsManager(object):
 			if web_socket.connected:
 				try:
 					web_socket.ping()
-				except:
+				except Exception:
 					self.logger.error('error occurred while pinging the web socket, closing it', exc_info=True)
 					web_socket.close()
 				else:
