@@ -104,7 +104,7 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 		"""Send this object to the server to update the remote instance."""
 		values = tuple(getattr(self, attr) for attr in self.__slots__[1:])
 		values = collections.OrderedDict(((k, v) for (k, v) in zip(self.__slots__[1:], values) if v is not UNRESOLVED))
-		self.__rpc__('db/table/set', self.__table__, self.id, values.keys(), values.values())
+		self.__rpc__('db/table/set', self.__table__, self.id, tuple(values.keys()), tuple(values.values()))
 
 class AlertSubscription(RemoteRow):
 	__table__ = 'alert_subscriptions'

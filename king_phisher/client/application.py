@@ -360,7 +360,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.main_window = main.MainAppWindow(self.config, self)
 		self.main_tabs = self.main_window.tabs
 
-		for name in list(self.config['plugins.enabled']):
+		enabled_plugins = sorted(set(self.config['plugins.enabled']))
+		for name in enabled_plugins:
 			try:
 				self.plugin_manager.load(name)
 				self.plugin_manager.enable(name)
@@ -371,6 +372,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 					self.main_window,
 					"Plugin '{0}' could not be enabled.".format(name)
 				)
+		self.config['plugins.enabled'] = enabled_plugins
 
 	def do_campaign_set(self, campaign_id):
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
