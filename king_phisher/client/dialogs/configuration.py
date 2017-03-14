@@ -137,7 +137,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 	def _configure_settings_plugin_options(self, plugin_klass):
 		plugin_config = self.config['plugins'].get(plugin_klass.name) or {}  # use or instead of get incase the value is actually None
 		frame = Gtk.Frame()
-		self.gobjects['box_plugin_options'].pack_end(frame, True, True, 0)
+		self.gobjects['box_plugin_options'].pack_start(frame, True, True, 0)
 		frame.set_label(plugin_klass.title)
 
 		grid = Gtk.Grid()
