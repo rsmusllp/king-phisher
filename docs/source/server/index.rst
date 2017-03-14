@@ -1,5 +1,5 @@
-Server API
-==========
+The King Phisher Server
+=======================
 
 .. toctree::
    :maxdepth: 1

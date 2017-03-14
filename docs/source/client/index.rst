@@ -1,5 +1,5 @@
-Client GUI
-==========
+The King Phisher Client
+=======================
 
 .. toctree::
    :maxdepth: 1
