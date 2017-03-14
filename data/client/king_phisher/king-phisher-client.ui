@@ -1646,6 +1646,7 @@ Spencer McIntyre</property>
     <property name="width_request">500</property>
     <property name="height_request">350</property>
     <property name="can_focus">False</property>
+    <property name="title" translatable="yes">King Phisher Company Editor</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox13">
@@ -4578,7 +4579,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">False</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/File/Open Campaign</property>
                 <property name="label" translatable="yes">Open Campaign</property>
-                <signal name="activate" handler="do_show_campaign_selection" swapped="no"/>
+                <signal name="activate" handler="signal_activate_show_campaign_selection" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4600,7 +4601,7 @@ Spencer McIntyre</property>
                         <property name="accel_path">&lt;KingPhisherClient&gt;/Import/Message Configuration</property>
                         <property name="label" translatable="yes">Message Configuration</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_import_message_data" swapped="no"/>
+                        <signal name="activate" handler="signal_activate_import_message_data" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -4626,7 +4627,7 @@ Spencer McIntyre</property>
                         <property name="accel_path">&lt;KingPhisherClient&gt;/Export/MessageConfiguration</property>
                         <property name="label" translatable="yes">Message Configuration</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_export_message_data" swapped="no"/>
+                        <signal name="activate" handler="signal_activate_export_message_data" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -4646,7 +4647,7 @@ Spencer McIntyre</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Excel</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_campaign_xlsx" swapped="no"/>
+                                <signal name="activate" handler="signal_activate_export_campaign_xlsx" swapped="no"/>
                               </object>
                             </child>
                             <child>
@@ -4656,7 +4657,7 @@ Spencer McIntyre</property>
                                 <property name="accel_path">&lt;KingPhisherClient&gt;/Export/Campaign XML</property>
                                 <property name="label" translatable="yes">XML</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_campaign_xml" swapped="no"/>
+                                <signal name="activate" handler="signal_activate_export_campaign_xml" swapped="no"/>
                               </object>
                             </child>
                           </object>
@@ -4680,7 +4681,7 @@ Spencer McIntyre</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">CSV</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_messages_csv" swapped="no"/>
+                                <signal name="activate" handler="signal_activate_export_messages_csv" swapped="no"/>
                               </object>
                             </child>
                           </object>
@@ -4704,7 +4705,7 @@ Spencer McIntyre</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">CSV</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_visits_csv" swapped="no"/>
+                                <signal name="activate" handler="signal_activate_export_visits_csv" swapped="no"/>
                               </object>
                             </child>
                             <child>
@@ -4713,7 +4714,7 @@ Spencer McIntyre</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Locations GeoJSON</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_visits_geojson" swapped="no"/>
+                                <signal name="activate" handler="signal_activate_export_visits_geojson" swapped="no"/>
                               </object>
                             </child>
                           </object>
@@ -4737,7 +4738,7 @@ Spencer McIntyre</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">CSV</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_credentials_csv" swapped="no"/>
+                                <signal name="activate" handler="signal_activate_export_credentials_csv" swapped="no"/>
                               </object>
                             </child>
                             <child>
@@ -4746,7 +4747,7 @@ Spencer McIntyre</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Metasploit USERPASS__FILE</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_export_credentials_msf_txt" swapped="no"/>
+                                <signal name="activate" handler="signal_activate_export_credentials_msf_txt" swapped="no"/>
                               </object>
                             </child>
                           </object>
@@ -4771,7 +4772,7 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/File/Quit</property>
                 <property name="use_underline">True</property>
                 <property name="use_stock">True</property>
-                <signal name="activate" handler="do_quit" swapped="no"/>
+                <signal name="activate" handler="signal_activate_quit" swapped="no"/>
               </object>
             </child>
           </object>
@@ -4797,7 +4798,7 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Edit/Preferences</property>
                 <property name="use_underline">True</property>
                 <property name="use_stock">True</property>
-                <signal name="activate" handler="do_edit_preferences" swapped="no"/>
+                <signal name="activate" handler="signal_activate_edit_preferences" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4806,7 +4807,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Companies</property>
                 <property name="use_underline">True</property>
-                <signal name="activate" handler="do_edit_companies" swapped="no"/>
+                <signal name="activate" handler="signal_activate_edit_companies" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4815,7 +4816,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Tags</property>
                 <property name="use_underline">True</property>
-                <signal name="activate" handler="do_edit_tags" swapped="no"/>
+                <signal name="activate" handler="signal_activate_edit_tags" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4832,7 +4833,7 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Edit/Configure Campaign</property>
                 <property name="image">StockPropertiesImage</property>
                 <property name="use_stock">False</property>
-                <signal name="activate" handler="do_edit_configure_campaign" swapped="no"/>
+                <signal name="activate" handler="signal_activate_edit_configure_campaign" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4842,7 +4843,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">False</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Edit/Delete Campaign</property>
                 <property name="use_stock">False</property>
-                <signal name="activate" handler="do_edit_delete_campaign" swapped="no"/>
+                <signal name="activate" handler="signal_activate_edit_delete_campaign" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4852,7 +4853,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">False</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Edit/Stop Service</property>
                 <property name="use_stock">False</property>
-                <signal name="activate" handler="do_edit_stop_service" swapped="no"/>
+                <signal name="activate" handler="signal_activate_edit_stop_service" swapped="no"/>
               </object>
             </child>
           </object>
@@ -4877,7 +4878,7 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Tools/RPC Terminal</property>
                 <property name="label" translatable="yes">RPC Terminal</property>
                 <property name="use_underline">True</property>
-                <signal name="activate" handler="do_tools_rpc_terminal" swapped="no"/>
+                <signal name="activate" handler="signal_activate_tools_rpc_terminal" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4887,7 +4888,7 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Tools/SFTP Client</property>
                 <property name="label" translatable="yes">SFTP Client</property>
                 <property name="use_underline">True</property>
-                <signal name="activate" handler="do_tools_sftp_client" swapped="no"/>
+                <signal name="activate" handler="signal_activate_tools_sftp_client" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4897,7 +4898,7 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Tools/Clone Web Page</property>
                 <property name="label" translatable="yes">Clone Web Page</property>
                 <property name="use_underline">True</property>
-                <signal name="activate" handler="do_tools_clone_page" swapped="no"/>
+                <signal name="activate" handler="signal_activate_tools_clone_page" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4907,7 +4908,7 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Tools/Manage Plugins</property>
                 <property name="label" translatable="yes">Manage Plugins</property>
                 <property name="use_underline">True</property>
-                <signal name="activate" handler="do_tools_manage_plugins" swapped="no"/>
+                <signal name="activate" handler="signal_activate_tools_manage_plugins" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4925,7 +4926,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Compare Campaigns</property>
                 <property name="use_underline">True</property>
-                <signal name="activate" handler="do_tools_compare_campaigns" swapped="no"/>
+                <signal name="activate" handler="signal_activate_tools_compare_campaigns" swapped="no"/>
               </object>
             </child>
           </object>
@@ -4951,7 +4952,7 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Help/About</property>
                 <property name="use_underline">True</property>
                 <property name="use_stock">True</property>
-                <signal name="activate" handler="do_help_about" swapped="no"/>
+                <signal name="activate" handler="signal_activate_help_about" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4960,7 +4961,7 @@ Spencer McIntyre</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Templates</property>
                 <property name="use_underline">True</property>
-                <signal name="activate" handler="do_help_templates" swapped="no"/>
+                <signal name="activate" handler="signal_activate_help_templates" swapped="no"/>
               </object>
             </child>
             <child>
@@ -4971,7 +4972,7 @@ Spencer McIntyre</property>
                 <property name="accel_path">&lt;KingPhisherClient&gt;/Help/Wiki</property>
                 <property name="image">StockHelpImage</property>
                 <property name="use_stock">False</property>
-                <signal name="activate" handler="do_help_wiki" swapped="no"/>
+                <signal name="activate" handler="signal_activate_help_wiki" swapped="no"/>
               </object>
             </child>
           </object>
@@ -5363,9 +5364,10 @@ your communications. Please contact the system administrator.</property>
     </action-widgets>
   </object>
   <object class="GtkDialog" id="TagEditorDialog">
-    <property name="width_request">400</property>
-    <property name="height_request">300</property>
+    <property name="width_request">450</property>
+    <property name="height_request">325</property>
     <property name="can_focus">False</property>
+    <property name="title" translatable="yes">King Phisher Tag Editor</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox10">
@@ -5402,6 +5404,9 @@ your communications. Please contact the system administrator.</property>
           <object class="GtkNotebook" id="TagEditorDialog.notebook">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="margin_top">3</property>
             <child>
               <object class="GtkScrolledWindow" id="TagEditorDialog.scrolledwindow_campaign_types">
                 <property name="visible">True</property>

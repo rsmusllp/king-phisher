@@ -88,7 +88,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 			for graph_name in graphs.get_graphs():
 				graph = graphs.get_graph(graph_name)
 				menu_item = Gtk.MenuItem.new_with_label(graph.name_human)
-				menu_item.connect('activate', self.do_tools_show_campaign_graph, graph_name)
+				menu_item.connect('activate', self.signal_activate_tools_show_campaign_graph, graph_name)
 				graphs_submenu.append(menu_item)
 			graphs_menu_item.set_submenu(graphs_submenu)
 			graphs_menu_item.show_all()
@@ -106,41 +106,41 @@ class MainMenuBar(gui_utilities.GladeGObject):
 			menu_item = self.gtk_builder_get('menuitem_' + menu_name)
 			menu_item.add_accelerator('activate', self.window.accel_group, key, modifier, Gtk.AccelFlags.VISIBLE)
 
-	def do_edit_configure_campaign(self, _):
+	def signal_activate_edit_configure_campaign(self, _):
 		self.application.campaign_configure()
 
-	def do_edit_delete_campaign(self, _):
+	def signal_activate_edit_delete_campaign(self, _):
 		if not gui_utilities.show_dialog_yes_no('Delete This Campaign?', self.application.get_active_window(), 'This action is irreversible, all campaign data will be lost.'):
 			return
 		self.application.emit('campaign-delete', self.config['campaign_id'])
 
-	def do_edit_preferences(self, _):
+	def signal_activate_edit_preferences(self, _):
 		self.application.show_preferences()
 
-	def do_edit_stop_service(self, _):
+	def signal_activate_edit_stop_service(self, _):
 		self.application.stop_remote_service()
 
-	def do_edit_companies(self, _):
+	def signal_activate_edit_companies(self, _):
 		dialogs.CompanyEditorDialog(self.application).interact()
 
-	def do_edit_tags(self, _):
+	def signal_activate_edit_tags(self, _):
 		dialogs.TagEditorDialog(self.application).interact()
 
-	def do_export_campaign_xlsx(self, _):
+	def signal_activate_export_campaign_xlsx(self, _):
 		self.window.export_campaign_xlsx()
 
-	def do_export_campaign_xml(self, _):
+	def signal_activate_export_campaign_xml(self, _):
 		self.window.export_campaign_xml()
 
-	def do_export_message_data(self, _):
+	def signal_activate_export_message_data(self, _):
 		self.window.export_message_data()
 
-	def do_export_credentials_csv(self, _):
+	def signal_activate_export_credentials_csv(self, _):
 		campaign_tab = self.window.tabs['campaign']
 		credentials_tab = campaign_tab.tabs['credentials']
 		credentials_tab.export_table_to_csv()
 
-	def do_export_credentials_msf_txt(self, _):
+	def signal_activate_export_credentials_msf_txt(self, _):
 		dialog = extras.FileChooserDialog('Export Credentials', self.application.get_active_window())
 		file_name = self.config['campaign_name'] + '.txt'
 		response = dialog.run_quick_save(file_name)
@@ -150,53 +150,53 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		destination_file = response['target_path']
 		export.campaign_credentials_to_msf_txt(self.application.rpc, self.config['campaign_id'], destination_file)
 
-	def do_export_messages_csv(self, _):
+	def signal_activate_export_messages_csv(self, _):
 		campaign_tab = self.window.tabs['campaign']
 		messages_tab = campaign_tab.tabs['messages']
 		messages_tab.export_table_to_csv()
 
-	def do_export_visits_csv(self, _):
+	def signal_activate_export_visits_csv(self, _):
 		campaign_tab = self.window.tabs['campaign']
 		visits_tab = campaign_tab.tabs['visits']
 		visits_tab.export_table_to_csv()
 
-	def do_export_visits_geojson(self, _):
+	def signal_activate_export_visits_geojson(self, _):
 		self.window.export_campaign_visit_geojson()
 
-	def do_import_message_data(self, _):
+	def signal_activate_import_message_data(self, _):
 		self.window.import_message_data()
 
-	def do_show_campaign_selection(self, _):
+	def signal_activate_show_campaign_selection(self, _):
 		self.application.show_campaign_selection()
 
-	def do_quit(self, _):
+	def signal_activate_quit(self, _):
 		self.application.quit(optional=True)
 
-	def do_tools_rpc_terminal(self, _):
+	def signal_activate_tools_rpc_terminal(self, _):
 		rpc_terminal.RPCTerminal(self.application)
 
-	def do_tools_clone_page(self, _):
+	def signal_activate_tools_clone_page(self, _):
 		dialogs.ClonePageDialog(self.application).interact()
 
-	def do_tools_compare_campaigns(self, _):
+	def signal_activate_tools_compare_campaigns(self, _):
 		compare_campaigns.CampaignCompWindow(self.application)
 
-	def do_tools_manage_plugins(self, _):
+	def signal_activate_tools_manage_plugins(self, _):
 		plugin_manager.PluginManagerWindow(self.application)
 
-	def do_tools_sftp_client(self, _):
+	def signal_activate_tools_sftp_client(self, _):
 		self.application.emit('sftp-client-start')
 
-	def do_tools_show_campaign_graph(self, _, graph_name):
+	def signal_activate_tools_show_campaign_graph(self, _, graph_name):
 		self.application.show_campaign_graph(graph_name)
 
-	def do_help_about(self, _):
+	def signal_activate_help_about(self, _):
 		dialogs.AboutDialog(self.application).interact()
 
-	def do_help_templates(self, _):
+	def signal_activate_help_templates(self, _):
 		utilities.open_uri('https://github.com/securestate/king-phisher-templates')
 
-	def do_help_wiki(self, _):
+	def signal_activate_help_wiki(self, _):
 		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
 
 class MainAppWindow(_Gtk_ApplicationWindow):
