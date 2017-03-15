@@ -39,8 +39,8 @@ server:
     # How long an authenticated RPC session should be valid for after no requests have been received.
     #session_timeout: 30m
 
-  # A cookie to retrieve the client's IP from, useful when a proxy is in place
-  #client_ip_cookie: X-Real-IP
+  # A header to retrieve the client's IP from, useful when a proxy is in place
+  #client_ip_header: X-Real-IP
 
   # The name of the cookie used to track users
   cookie_name: KPID

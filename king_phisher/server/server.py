@@ -362,20 +362,23 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		:rtype: str
 		"""
 		address = self.client_address[0]
-		cookie_name = self.config.get_if_exists('server.client_ip_cookie')
-		if not cookie_name:
+		header_name = self.config.get_if_exists('server.client_ip_header')                 # new style
+		header_name = header_name or self.config.get_if_exists('server.client_ip_cookie')  # old style
+		if not header_name:
 			return address
-		cookie_value = self.headers.get(cookie_name, '')
-		if not cookie_value:
+		header_value = self.headers.get(header_name, '')
+		if not header_value:
 			return address
-		if cookie_value.startswith('['):
-			# cookie_value looks like an IPv6 address
-			cookie_value = cookie_value.split(']:', 1)[0]
+		header_value = header_value.split(',')[0]
+		header_value = header_value.strip()
+		if header_value.startswith('['):
+			# header_value looks like an IPv6 address
+			header_value = header_value.split(']:', 1)[0]
 		else:
-			# treat cookie_value ad an IPv4 address
-			cookie_value = cookie_value.split(':', 1)[0]
-		if ipaddress.is_valid(cookie_value):
-			address = cookie_value
+			# treat header_value as an IPv4 address
+			header_value = header_value.split(':', 1)[0]
+		if ipaddress.is_valid(header_value):
+			address = header_value
 		return address
 
 	def send_response(self, code, message=None):
