@@ -65,14 +65,14 @@ from king_phisher.ssh_forward import SSHTCPForwarder
 
 from gi.repository import GLib
 import paramiko
-from smoke_zephyr.utilities import parse_server
+import smoke_zephyr.utilities
 
 if sys.version_info[0] < 3:
 	import urllib
 	import urlparse
 	urllib.parse = urlparse
 else:
-	import urllib.parse # pylint: disable=ungrouped-imports
+	import urllib.parse  # pylint: disable=ungrouped-imports
 
 __all__ = (
 	'guess_smtp_server_address',
@@ -212,6 +212,7 @@ def get_invite_start_from_config(config):
 		)
 	return start_time
 
+@smoke_zephyr.utilities.Cache('3m')
 def guess_smtp_server_address(host, forward_host=None):
 	"""
 	Guess the IP address of the SMTP server that will be connected to given the
@@ -304,7 +305,7 @@ class MailSenderThread(threading.Thread):
 		self._ssh_forwarder = None
 		self.smtp_connection = None
 		"""The :py:class:`smtplib.SMTP` connection instance."""
-		self.smtp_server = parse_server(self.config['smtp_server'], 25)
+		self.smtp_server = smoke_zephyr.utilities.parse_server(self.config['smtp_server'], 25)
 		self.running = threading.Event()
 		"""A :py:class:`threading.Event` object indicating if emails are being sent."""
 		self.paused = threading.Event()
@@ -346,10 +347,10 @@ class MailSenderThread(threading.Thread):
 
 		:return: The connection status as one of the :py:class:`.ConnectionErrorReason` constants.
 		"""
-		server = parse_server(self.config['ssh_server'], 22)
+		server = smoke_zephyr.utilities.parse_server(self.config['ssh_server'], 22)
 		username = self.config['ssh_username']
 		password = self.config['ssh_password']
-		remote_server = parse_server(self.config['smtp_server'], 25)
+		remote_server = smoke_zephyr.utilities.parse_server(self.config['smtp_server'], 25)
 		try:
 			self._ssh_forwarder = SSHTCPForwarder(
 				server,

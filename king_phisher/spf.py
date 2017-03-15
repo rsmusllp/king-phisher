@@ -43,6 +43,7 @@ import dns.name
 import dns.query
 import dns.rdtypes.ANY.TXT
 import dns.resolver
+import smoke_zephyr.utilities
 
 MACRO_REGEX = re.compile(r'%\{([slodipvh])(\d*)([r]?)(.?)\}')
 """A regular expression which matches SPF record macros."""
@@ -160,6 +161,7 @@ class SPFTempError(SPFError):
 	"""
 	pass
 
+@smoke_zephyr.utilities.Cache('3m')
 def check_host(ip, domain, sender=None):
 	"""
 	Analyze the Sender Policy Framework of a domain by creating a

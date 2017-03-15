@@ -22,6 +22,7 @@ of a pull request.
 Some things that will increase the chance that your pull request is accepted
 and generally speed things along:
 
+* Write documentation for functions that are not event or signal handlers
 * Write unit tests
 * Follow our [style guide][style]
 * Write a [good commit message][commit]
