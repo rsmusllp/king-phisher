@@ -2163,6 +2163,241 @@ Spencer McIntyre</property>
       <action-widget response="-5">button1</action-widget>
     </action-widgets>
   </object>
+    <object class="GtkWindow" id="ImportCampaignWindow">
+    <property name="can_focus">False</property>
+    <signal name="destroy" handler="close_import_campaign" swapped="no"/>
+    <signal name="destroy-event" handler="close_import_campaign" swapped="no"/>
+    <child>
+      <object class="GtkBox" id="ImportCampaignWindow.box">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">5</property>
+        <property name="baseline_position">top</property>
+        <child>
+          <object class="GtkLabel" id="ImportCampaignWindow.label_top">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">3</property>
+            <property name="margin_right">3</property>
+            <property name="margin_top">3</property>
+            <property name="margin_bottom">3</property>
+            <property name="label" translatable="yes">Importing Campaign</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">2</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="ImportCampaignWindow.grid_holder">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="column_homogeneous">True</property>
+            <child>
+              <object class="GtkGrid" id="ImportCampaignWindow.grid_labels">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="row_homogeneous">True</property>
+                <property name="column_homogeneous">True</property>
+                <child>
+                  <object class="GtkLabel" id="ImportCampaignWindow.label_file">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">center</property>
+                    <property name="margin_left">3</property>
+                    <property name="margin_right">3</property>
+                    <property name="margin_top">3</property>
+                    <property name="margin_bottom">3</property>
+                    <property name="label" translatable="yes">File Path</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="ImportCampaignWindow.label_campaign">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">center</property>
+                    <property name="margin_left">3</property>
+                    <property name="margin_right">3</property>
+                    <property name="margin_top">3</property>
+                    <property name="margin_bottom">3</property>
+                    <property name="label" translatable="yes">Campaign Name</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="ImportCampaignWindow.grid_entry">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="row_homogeneous">True</property>
+                <property name="column_homogeneous">True</property>
+                <child>
+                  <object class="GtkEntry" id="ImportCampaignWindow.entry_file">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_left">3</property>
+                    <property name="margin_right">3</property>
+                    <property name="margin_top">3</property>
+                    <property name="margin_bottom">3</property>
+                    <property name="editable">False</property>
+                    <property name="primary_icon_stock">gtk-file</property>
+                    <property name="placeholder_text" translatable="yes">XML Campaign File</property>
+                    <signal name="activate" handler="open_xml_file" swapped="no"/>
+                    <signal name="backspace" handler="open_xml_file" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="ImportCampaignWindow.entry_campaign">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_left">3</property>
+                    <property name="margin_right">3</property>
+                    <property name="margin_top">3</property>
+                    <property name="margin_bottom">3</property>
+                    <property name="primary_icon_tooltip_text" translatable="yes">Name of Campaign to import</property>
+                    <property name="placeholder_text" translatable="yes">Campaign Name</property>
+                    <signal name="changed" handler="entry_change" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">0</property>
+                <property name="width">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid" id="ImportCampaignWindow.button_grid">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="row_homogeneous">True</property>
+                <property name="column_homogeneous">True</property>
+                <child>
+                  <object class="GtkButton" id="ImportCampaignWindow.button_select">
+                    <property name="label">gtk-open</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Select XML Campaign file to import.</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
+                    <property name="use_stock">True</property>
+                    <property name="image_position">right</property>
+                    <signal name="clicked" handler="open_xml_file" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="ImportCampaignWindow.button_import">
+                    <property name="label" translatable="yes">Import Campaign</property>
+                    <property name="visible">True</property>
+                    <property name="sensitive">False</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Import loaded XML Campaign.</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
+                    <property name="image_position">right</property>
+                    <signal name="clicked" handler="import_button" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">4</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkProgressBar" id="ImportCampaignWindow.progressbar">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">5</property>
+            <property name="show_text">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">3</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkExpander" id="ImportCampaignWindow.expander">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">5</property>
+            <property name="expanded">True</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkTextView" id="ImportCampaignWindow.textview">
+                <property name="visible">True</property>
+                <property name="sensitive">False</property>
+                <property name="can_focus">True</property>
+                <property name="editable">False</property>
+                <property name="cursor_visible">False</property>
+                <property name="accepts_tab">False</property>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkSpinner" id="ImportCampaignWindow.spinner">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="padding">3</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkDialog" id="LoginDialogBase">
     <property name="can_focus">False</property>
     <property name="default_width">350</property>
@@ -4602,6 +4837,16 @@ Spencer McIntyre</property>
                         <property name="label" translatable="yes">Message Configuration</property>
                         <property name="use_underline">True</property>
                         <signal name="activate" handler="signal_activate_import_message_data" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_import_campaign">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Import Campaign from XML.</property>
+                        <property name="accel_path">&lt;KingPhisherClient&gt;/Import/Campaign from XML</property>
+                        <property name="label" translatable="yes">XML Campaign </property>
+                        <signal name="activate" handler="signal_activate_import_campaign_xml" swapped="no"/>
                       </object>
                     </child>
                   </object>

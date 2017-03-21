@@ -232,6 +232,7 @@ def from_elementtree_element(element, require_type=True):
 			value = None
 			break
 		if case('string'):
+			value = value or ''
 			break
 		if case('time'):
 			value = dateutil.parser.parse(value).time()
