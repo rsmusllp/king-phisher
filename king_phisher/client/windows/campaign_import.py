@@ -105,8 +105,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 
 	def _update_id(self, element, id_fields, old_id, new_id):
 		"""
-		Will final all specificed ID fields in element with the
-		old ID and update it to the new one.
+		Iterates through the element and replaces the specified old ID to the new ID in the requested ID fields.
 
 		:param element: Element to iterate over where the old id values can be found.
 		:type element: :py:class:`xml.etree.ElementTree.Element`
@@ -118,7 +117,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 			if nods.tag in id_fields and nods.text == old_id:
 				nods.text = new_id
 				# if new_id is none set type to null
-				if not new_id:
+				if new_id is None:
 					nods.attrib['type'] = 'null'
 
 	def _get_keys_values(self, element):
@@ -128,8 +127,8 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 			values = []
 			for node in subelements:
 				keys.append(node.tag) if node.tag not in keys else None
-				if node.attrib['type'] in ('datetime', 'datetime.date', 'datetime.datetime', 'datetime.time'):
-					values.append(serializers.from_elementtree_element(node).isoformat())
+				if node.attrib['type'] in ('datetime', 'date', 'time'):
+					values.append(serializers.from_elementtree_element(node).replace(tzinfo=None))
 				else:
 					values.append(serializers.from_elementtree_element(node))
 			rows.append(tuple(values))
@@ -154,12 +153,16 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		return
 
 	def open_xml_file(self, _):
+		if not self.select_button.get_property('sensitive'):
+			return
 		self.select_xml_campaign()
 
 	def close_import_campaign(self, _):
 		"""
 		Checks to make sure the import campaign thread is closed before closing.
 		"""
+		if not self.campaign_info:
+			return
 		if not self.thread_import_campaign:
 			return
 		if not self.thread_import_campaign.isAlive():
@@ -245,6 +248,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 
 		self.db_campaigns = self.rpc.graphql("{ db { campaigns { edges { node { id, name } } } } }")['db']['campaigns']['edges']
 		self.entry_campaign_name.set_text(self.campaign_info.find('name').text)
+		self.thread_import_campaign = None
 		if not self._check_campaign_name(self.campaign_info.find('name').text, verbose=True):
 			self.button_import_campaign.set_sensitive(False)
 			return
@@ -328,17 +332,18 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 
 	def import_campaign(self):
 		"""
-		Used by the import thread to import the Campaign into the database.
+		Used by the import thread to import the campaign into the database.
 		Through this process after every major process, the thread will check to see if it has been stopped.
 		"""
 		if not self.campaign_info:
 			return
 		# prevent user from changing campaign info during import
 		start_time = datetime.datetime.now()
+		GLib.idle_add(self.button_import_campaign.set_sensitive, False)
 		GLib.idle_add(self.select_button.set_sensitive, False)
 		GLib.idle_add(self.spinner.start)
 
-		batch_size = 50
+		batch_size = 100
 		if self.thread_import_campaign.stopped():
 			return
 		self.prepep_xml_data()
@@ -377,6 +382,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 			return
 
 		for tables in ('landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections'):
+			inserted_ids = []
 			if self.thread_import_campaign.stopped():
 				return
 			GLib.idle_add(self._update_text_view, 'Serializing table {} data for import'.format(tables))
@@ -395,7 +401,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 				if self.thread_import_campaign.stopped():
 					return
 				try:
-					inserted_ids = self.rpc('/db/table/insert/multi', tables, keys, rows[:batch_size], deconflict_ids=True)
+					inserted_ids = inserted_ids + self.rpc('/db/table/insert/multi', tables, keys, rows[:batch_size], deconflict_ids=True)
 				except advancedhttpserver.RPCError:
 					response = gui_utilities.glib_idle_add_wait(self.failed_import_action)
 					if response:
@@ -406,22 +412,26 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 						return
 
 				rows = rows[batch_size:]
-				# update id fields to maintain relationships
-				for id_ in inserted_ids:
-					if id_ != table_rows[inserted_ids.index(id_)]['id']:
-						self._update_id(
-							self.campaign_info, ['id', '{}_id'.format(tables[:-1])],
-							table_rows[inserted_ids.index(id_)]['id'], id_
-						)
 				nodes_completed += float(batch_size * len(keys))
-				percentage_completed = nodes_completed/node_count
+				percentage_completed = nodes_completed / node_count
 				GLib.idle_add(self.import_progress.set_fraction, percentage_completed)
 				if self.thread_import_campaign.stopped():
 					return
 
+			# update id fields to maintain relationships
+			GLib.idle_add(self._update_text_view, 'Updating dependencies for table: {}'.format(tables))
+			for id_ in inserted_ids:
+				if id_ != table_rows[inserted_ids.index(id_)]['id']:
+					self._update_id(
+						self.campaign_info, ['id', '{}_id'.format(tables[:-1])],
+						table_rows[inserted_ids.index(id_)]['id'], id_
+					)
+
 		GLib.idle_add(self.import_progress.set_fraction, 1.0)
 		GLib.idle_add(self.button_import_campaign.set_sensitive, False)
 		self.campaign_info = None
+		GLib.idle_add(self.entry_campaign_name.set_text, '')
+		GLib.idle_add(self.entry_path.set_text, '')
 		GLib.idle_add(self.select_button.set_sensitive, True)
 		GLib.idle_add(self.spinner.stop)
 		done_string = 'Done importing campaign it took {}'.format(datetime.datetime.now() - start_time)
