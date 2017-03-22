@@ -32,6 +32,7 @@
 
 import base64
 import binascii
+import collections
 import json
 import logging
 import os
@@ -58,7 +59,6 @@ from king_phisher.server.database import models as db_models
 import advancedhttpserver
 import jinja2
 from smoke_zephyr import job
-
 
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
@@ -88,6 +88,12 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		tracking_image = tracking_image.replace('.', '\\.')
 		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
 		signals.safe_send('request-received', self.logger, self)
+
+	def end_headers(self, *args, **kwargs):
+		if self.command != 'RPC':
+			for header, value in self.server.headers.items():
+				self.send_header(header, value)
+		return super(KingPhisherRequestHandler, self).end_headers(*args, **kwargs)
 
 	def issue_alert(self, alert_text, campaign_id):
 		"""
@@ -752,6 +758,8 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self.logger = logging.getLogger('KingPhisher.Server')
 		self.config = config
 		"""A :py:class:`~smoke_zephyr.configuration.Configuration` instance used as the main King Phisher server configuration."""
+		self.headers = collections.OrderedDict()
+		"""A :py:class:`~collections.OrderedDict` containing additional headers specified from the server configuration to include in responses."""
 		self.plugin_manager = plugin_manager
 		self.serve_files = True
 		self.serve_files_root = config.get('server.web_root')
@@ -791,6 +799,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			http_server.template_env = self.template_env
 			http_server.kp_shutdown = self.shutdown
 			http_server.ws_manager = self.ws_manager
+			http_server.headers = self.headers
 
 		if not config.has_option('server.secret_id'):
 			config.set('server.secret_id', rest_api.generate_token())
@@ -804,6 +813,16 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self.__is_shutdown.clear()
 		self.__shutdown_lock = threading.Lock()
 		plugin_manager.server = self
+
+		headers = self.config.get_if_exists('server.headers', [])
+		for header in headers:
+			if ': ' not in header:
+				self.logger.warning("header '{0}' is invalid and will not be included".format(header))
+				continue
+			header, value = header.split(': ', 1)
+			header = header.strip()
+			self.headers[header] = value
+		self.logger.info("including {0} custom http headers".format(len(self.headers)))
 
 	def shutdown(self, *args, **kwargs):
 		"""

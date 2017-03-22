@@ -64,6 +64,13 @@ server:
     # The location of the GeoLite2 City database
     database: /var/king-phisher/geoip.mmdb
 
+  # Additional headers to include in HTTP responses
+  headers:
+    - "Referrer-Policy: no-referrer"
+    - "X-Content-Type-Options: nosniff"
+    - "X-Frame-Options: DENY"
+    - "X-XSS-Protection: 1; mode=block"
+
   # Set a file to write the PID to
   pid_file: /var/run/king-phisher.pid
 
