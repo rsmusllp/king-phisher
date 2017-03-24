@@ -35,7 +35,6 @@ import logging
 import threading
 import xml.etree.ElementTree as ET
 
-from king_phisher import utilities
 from king_phisher import serializers
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
@@ -97,11 +96,18 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		self.thread_import_campaign = None
 
 	def _set_text_view(self, string_to_set):
-		self.text_buffer.set_text(string_to_set + "\n")
+		GLib.idle_add(self.text_buffer.set_text, string_to_set + "\n")
 
-	def _update_text_view(self, string_to_add):
+	def __update_text_view(self, string_to_add):
 		end_iter = self.text_buffer.get_end_iter()
 		self.text_buffer.insert(end_iter, string_to_add + "\n")
+
+	def _update_text_view(self, string_to_add, idle=False):
+		if idle:
+			GLib.idle_add(self.__update_text_view, string_to_add)
+		else:
+			end_iter = self.text_buffer.get_end_iter()
+			self.text_buffer.insert(end_iter, string_to_add + "\n")
 
 	def _update_id(self, element, id_fields, old_id, new_id):
 		"""
@@ -138,7 +144,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		self.window.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
 		self.window.show_all()
 
-	def entry_change(self, _):
+	def signal_entry_change(self, _):
 		"""
 		When there is a change in the campaign entry field it will check to see if the name is already in use.
 		If it is not in use it will change the Sensitivity of the Import Campaign Button to allow the user to
@@ -152,29 +158,30 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		self.button_import_campaign.set_sensitive(True)
 		return
 
-	def open_xml_file(self, _):
+	def signal_multi_open_xml_file(self, _):
 		if not self.select_button.get_property('sensitive'):
 			return
 		self.select_xml_campaign()
 
-	def close_import_campaign(self, _):
+	def signal_multi_close_import_campaign(self, _, __):
 		"""
 		Checks to make sure the import campaign thread is closed before closing.
 		"""
 		if not self.campaign_info:
-			return
+			return False
 		if not self.thread_import_campaign:
-			return
-		if not self.thread_import_campaign.isAlive():
-			return
+			return False
+		if not self.thread_import_campaign.is_alive():
+			return False
 		response = gui_utilities.show_dialog(
 			Gtk.MessageType.QUESTION,
 			'Do you want to cancel importing the campaign?',
 			self.window,
 			message_buttons=Gtk.ButtonsType.YES_NO
 		)
-		if not response:
-			return
+		print(response)
+		if not response or response == -9:
+			return True
 
 		self.thread_import_campaign.stop()
 		self.thread_import_campaign.join()
@@ -203,16 +210,16 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 			self.rpc('db/table/delete', 'campaigns', campaign_id)
 			self.logger.info('Deleted Campaign {}'.format(campaign_id))
 
-	def import_button(self, _):
+	def signal_import_button(self, _):
 		"""
 		Function called when the user starts the import campaign process, It will create a new thread,
 		to have the campaign run in the background freeing up the GUI for the user to conduct other functions.
 		"""
 		if not self.campaign_info:
-			GLib.idle_add(self._update_text_view, 'No campaign information to import')
+			self._update_text_view('No campaign information to import')
 			self.button_import_campaign.set_sensitive(False)
 			return
-		self.thread_import_campaign = ImportThread(target=self.import_campaign)
+		self.thread_import_campaign = ImportThread(target=self._import_campaign)
 		self.thread_import_campaign.start()
 
 	def select_xml_campaign(self):
@@ -269,14 +276,11 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 
 		if next((nodes for nodes in self.db_campaigns if nodes['node']['name'] == campaign_name), None):
 			if verbose:
-				GLib.idle_add(
-					self._update_text_view,
-					'Campaign name {} is already in use by another campaign.'.format(campaign_name)
-				)
+				self._update_text_view('Campaign name {} is already in use by another campaign.'.format(campaign_name), idle=True)
 			return False
 
 		if verbose:
-			GLib.idle_add(self._update_text_view, 'Campaign Name {} is not in use, ready to import'.format(campaign_name))
+			self._update_text_view('Campaign Name {} is not in use, ready to import'.format(campaign_name), idle=True)
 		return True
 
 	def prepep_xml_data(self):
@@ -286,17 +290,14 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		If the element is required it will set it to a default value.
 		This will normalize the data and ready it for import into the database.
 		"""
-		GLib.idle_add(
-			self._set_text_view,
-			'{}: Normalizing Campaign Data'.format(utilities.format_datetime(datetime.datetime.now()))
-		)
+		self._set_text_view('Normalizing Campaign Data')
 		self.campaign_info.find('name').text = self.entry_campaign_name.get_text()
 
 		campaign_type_check = self.rpc('db/table/get', 'campaign_types', self.campaign_info.find('campaign_type_id').text)
 		if not campaign_type_check:
 			temp_string = 'Campaign type not found, removing'
 			self.logger.info(temp_string)
-			GLib.idle_add(self._set_text_view, temp_string)
+			self._update_text_view(temp_string, idle=True)
 			reset_node = self.campaign_info.find('campaign_type_id')
 			reset_node.clear()
 			reset_node.attrib['type'] = 'null'
@@ -305,14 +306,14 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		if not user_id_check:
 			temp_string = 'User {0} not found, setting created by to current user'.format(self.campaign_info.find('user_id').text)
 			self.logger.info(temp_string)
-			GLib.idle_add(self._set_text_view, temp_string)
+			self._update_text_view(temp_string, idle=True)
 			self.campaign_info.find('user_id').text = self.config['server_username']
 
 		company_id_check = self.rpc('db/table/get', 'companies', int(self.campaign_info.find('company_id').text))
 		if not company_id_check:
 			temp_string = 'Company id not found, removing'
 			self.logger.info(temp_string)
-			GLib.idle_add(self._set_text_view, temp_string)
+			self._update_text_view(temp_string, idle=True)
 			reset_node = self.campaign_info.find('company_id')
 			reset_node.clear()
 			reset_node.attrib['type'] = 'null'
@@ -325,12 +326,12 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 			self.logger.info('checking company_department_id {}'.format(message.text))
 			company_department_id_check = self.rpc('db/table/get', 'company_departments', message.text)
 			if not company_department_id_check:
-				temp_string = 'Company department id not found, removing it from campaign'
+				temp_string = 'Company department id {} not found, removing it from campaign'.format(message.text)
 				self.logger.info(temp_string)
-				GLib.idle_add(self._set_text_view, temp_string)
+				self._update_text_view(temp_string, idle=True)
 				self._update_id(self.campaign_info, ['company_department_id'], message.text, None)
 
-	def import_campaign(self):
+	def _import_campaign(self):
 		"""
 		Used by the import thread to import the campaign into the database.
 		Through this process after every major process, the thread will check to see if it has been stopped.
@@ -362,7 +363,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		for nods in self.campaign_info.getiterator():
 			if nods.tag == 'campaign_id':
 				nods.text = self.campaign_info.find('id').text
-		GLib.idle_add(self._update_text_view, 'Campaign created, ID set to {}'.format(self.campaign_info.find('id').text))
+		self._update_text_view('Campaign created, ID set to {}'.format(self.campaign_info.find('id').text), idle=True)
 
 		keys = []
 		values = []
@@ -385,9 +386,9 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 			inserted_ids = []
 			if self.thread_import_campaign.stopped():
 				return
-			GLib.idle_add(self._update_text_view, 'Serializing table {} data for import'.format(tables))
+			self._update_text_view('Serializing table {} data for import'.format(tables), idle=True)
 			keys, rows = self._get_keys_values(self.campaign_info.find(tables))
-			GLib.idle_add(self._update_text_view, 'Working on table {} adding {} rows'.format(tables, len(rows)))
+			self._update_text_view('Working on table {} adding {} rows'.format(tables, len(rows)), idle=True)
 			if self.thread_import_campaign.stopped():
 				return
 
@@ -404,11 +405,12 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 					inserted_ids = inserted_ids + self.rpc('/db/table/insert/multi', tables, keys, rows[:batch_size], deconflict_ids=True)
 				except advancedhttpserver.RPCError:
 					response = gui_utilities.glib_idle_add_wait(self.failed_import_action)
-					if response:
+					if response == -8:
 						self.remove_import_campaign()
 						GLib.idle_add(self.button_import_campaign.set_sensitive, False)
 						GLib.idle_add(self.select_button.set_sensitive, True)
 						GLib.idle_add(self.spinner.stop)
+						self._update_text_view('Failed to import campaign, all partial data has been removed', idle=True)
 						return
 
 				rows = rows[batch_size:]
@@ -419,7 +421,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 					return
 
 			# update id fields to maintain relationships
-			GLib.idle_add(self._update_text_view, 'Updating dependencies for table: {}'.format(tables))
+			self._update_text_view('Updating dependencies for table: {}'.format(tables), idle=True)
 			for id_ in inserted_ids:
 				if id_ != table_rows[inserted_ids.index(id_)]['id']:
 					self._update_id(
@@ -430,10 +432,8 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		GLib.idle_add(self.import_progress.set_fraction, 1.0)
 		GLib.idle_add(self.button_import_campaign.set_sensitive, False)
 		self.campaign_info = None
-		GLib.idle_add(self.entry_campaign_name.set_text, '')
-		GLib.idle_add(self.entry_path.set_text, '')
 		GLib.idle_add(self.select_button.set_sensitive, True)
 		GLib.idle_add(self.spinner.stop)
 		done_string = 'Done importing campaign it took {}'.format(datetime.datetime.now() - start_time)
-		GLib.idle_add(self._update_text_view, done_string)
+		self._update_text_view(done_string, idle=True)
 		self.logger.info(done_string)
