@@ -470,9 +470,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def merge_config(self, config_file, strict=True):
 		"""
 		Merge the configuration information from the specified configuration
-		file. Only keys which exist in the currently loaded configuration are
-		copied over while non-existent keys are skipped. The contents of the new
-		configuration overwrites the existing.
+		file. All keys and values will overwrite or be added to the existing
+		configuration settings.
 
 		:param bool strict: Do not try remove trailing commas from the JSON data.
 		:param str config_file: The path to the configuration file to merge.
@@ -484,9 +483,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return
 		self.logger.debug('merging configuration information from source file: ' + config_file)
 		for key, value in config.items():
-			if not key in self.config:
-				self.logger.warning("skipped merging non-existent configuration key {0}".format(key))
-				continue
 			self.config[key] = value
 		return
 
