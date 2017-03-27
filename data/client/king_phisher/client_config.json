@@ -16,13 +16,17 @@
   "server": "localhost:22",
   "server_remote_port": 80,
   "server_use_ssl": false,
+  "server_username": "",
   "sftp_client": "filezilla --logontype=interactive sftp://{username}@{server}{web_root}",
   "ssh_preferred_key": null,
   "smtp_max_send_rate": 45.0,
   "smtp_server": "localhost:25",
   "smtp_ssh_enable": false,
   "smtp_ssl_enable": false,
+  "smtp_username": "",
   "spf_check_level": 1,
+  "ssh_server": "localhost:22",
+  "ssh_username": "",
   "text_font": "monospace 11",
   "text_source_theme": "cobalt"
 }
