@@ -14,6 +14,8 @@ of a pull request.
   * Push the topic branch up to your repository on GitHub
   * Submit a Pull Request to the `dev` branch
     * Explain what the changes do (why they are useful, what they fix etc.)
+      * When fixing a bug, include instructions to reproduce it and error
+        message details if applicable
     * Include steps to test the changes
   * Work with the repository owners by answering questions and making changes
   * Wait for the pull request to be merged
@@ -25,6 +27,8 @@ and generally speed things along:
 * Write documentation for functions that are not event or signal handlers
 * Write unit tests
 * Follow our [style guide][style]
+  * Run style checks with `pylint --rcfile=data/pylintrc path/to/changed/files`
+    and ensure no warnings or errors are present
 * Write a [good commit message][commit]
 
 [style]: http://king-phisher.readthedocs.io/en/latest/development/style_guide.html

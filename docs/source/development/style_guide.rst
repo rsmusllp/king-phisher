@@ -5,9 +5,15 @@ It's important for a project to have a standardized style for it's code. The
 King Phisher project, being a Python project follows the PEP-8_ style guide.
 With the following notable exceptions:
 
-* Do use hard tabs instead of spaces
-* Do not use more than one consecutive blank line
-* Do limit lines to 120 characters long instead of 79
+* Do use hard tabs instead of spaces.
+* Do not use more than one consecutive blank line, ever.
+* Do limit lines of code to 120 characters long instead of 79.
+
+   * Do limit documentation lines to 80 characters long.
+
+* Do use single quotes for strings with the exception of template strings (such
+  as those used by ``str.format``) and documentation strings which should use
+  triple double-quotes.
 
 Multi Line Indentation
 ----------------------
@@ -39,5 +45,16 @@ Example:
 This same style is applied to multi-line list, tuple and dictionary
 definitions with the bracket, or curly-brace taking the place of the
 opening and closing parenthesis as appropriate.
+
+English Verbiage
+----------------
+
+Use full, complete and grammatically correct sentences for all documentation
+purposes. This includes class, function, attribute, and parameter
+documentation. Additionally, proper sentences should be used for any messages
+that are displayed to end users with the notable exception of log messages. Log
+messages are to be entirely lowercase with the exception of acronyms which are
+currently inconsistently cased. Either all capital letters or all lower case
+letters are acceptable for acronyms within log messages.
 
 .. _PEP-8: https://www.python.org/dev/peps/pep-0008/
