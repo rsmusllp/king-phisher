@@ -2167,6 +2167,7 @@ Spencer McIntyre</property>
     <property name="width_request">600</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Import Campaign</property>
+    <property name="window_position">center-on-parent</property>
     <signal name="delete-event" handler="signal_multi_close_import_campaign" swapped="no"/>
     <signal name="destroy-event" handler="signal_multi_close_import_campaign" swapped="no"/>
     <child>
