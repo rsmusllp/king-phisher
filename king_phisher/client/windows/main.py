@@ -168,7 +168,7 @@ class MainMenuBar(gui_utilities.GladeGObject):
 		self.window.import_message_data()
 
 	def signal_activate_import_campaign_xml(self, _):
-		campaign_import.ImportCampaignWindow(self.application).interact()
+		campaign_import.ImportCampaignWindow(self.application)
 
 	def signal_activate_show_campaign_selection(self, _):
 		self.application.show_campaign_selection()

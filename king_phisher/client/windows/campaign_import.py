@@ -76,7 +76,6 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		top_level=('ImportCampaignWindow',)
 	)
 	top_gobject = 'window'
-
 	def __init__(self, *args, **kwargs):
 		super(ImportCampaignWindow, self).__init__(*args, **kwargs)
 		self.logger = logging.getLogger('KingPhisher.Client.ImportCampaignWindow')
@@ -94,6 +93,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		self.campaign_info = None
 		self.db_campaigns = None
 		self.thread_import_campaign = None
+		self.window.show_all()
 
 	def _set_text_view(self, string_to_set):
 		GLib.idle_add(self.text_buffer.set_text, string_to_set + '\n')
@@ -139,9 +139,6 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 				values.append(value)
 			rows.append(tuple(values))
 		return keys, rows
-
-	def interact(self):
-		self.window.show_all()
 
 	def signal_entry_change(self, _):
 		"""
