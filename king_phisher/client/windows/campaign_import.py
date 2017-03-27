@@ -160,9 +160,10 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 			return
 		self.select_xml_campaign()
 
-	def signal_multi_close_import_campaign(self, _, __):
+	def signal_window_delete_event(self, _, event):
 		"""
-		Checks to make sure the import campaign thread is closed before closing.
+		Checks to make sure the import campaign thread is closed before
+		closing the window.
 		"""
 		if not self.campaign_info:
 			return False
@@ -180,7 +181,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 
 		self.thread_import_campaign.stop()
 		self.thread_import_campaign.join()
-		self.remove_import_campaign()
+		self._import_cleanup(remove_campaign=True)
 
 	def failed_import_action(self):
 		response = gui_utilities.show_dialog_yes_no(
@@ -299,9 +300,8 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 			reset_node.clear()
 			reset_node.attrib['type'] = 'null'
 
-		user_id_check = self.rpc('db/table/get', 'users', self.campaign_info.find('user_id').text)
-		if not user_id_check:
-			temp_string = "User {0} not found, setting created by to current user".format(self.campaign_info.find('user_id').text)
+		if self.campaign_info.find('user_id').text != self.config['server_username']:
+			temp_string = 'Setting the campaign owner to the current user'
 			self.logger.info(temp_string.lower())
 			self._update_text_view(temp_string, idle=True)
 			self.campaign_info.find('user_id').text = self.config['server_username']
@@ -331,10 +331,10 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 	def _import_cleanup(self, remove_campaign=False):
 		if remove_campaign:
 			self.remove_import_campaign()
-		self.campaign_info = None
 		GLib.idle_add(self.button_import_campaign.set_sensitive, False)
 		GLib.idle_add(self.button_select.set_sensitive, True)
 		GLib.idle_add(self.spinner.stop)
+		self.campaign_info = None
 
 	def _import_campaign(self):
 		"""
@@ -343,7 +343,6 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		to see if it has been requested to stop.
 		"""
 		if not self.campaign_info:
-			self._import_cleanup()
 			return
 		# prevent user from changing campaign info during import
 		start_time = datetime.datetime.now()
@@ -353,7 +352,6 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 
 		batch_size = 100
 		if self.thread_import_campaign.stopped():
-			self._import_cleanup()
 			return
 		self.preprep_xml_data()
 
@@ -367,7 +365,6 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		nodes_completed = 0
 		node_count = float(len(self.campaign_info.findall('.//*')))
 		if self.thread_import_campaign.stopped():
-			self._import_cleanup()
 			return
 		for nods in self.campaign_info.getiterator():
 			if nods.tag == 'campaign_id':
@@ -377,7 +374,6 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		keys = []
 		values = []
 		if self.thread_import_campaign.stopped():
-			self._import_cleanup()
 			return
 		for elements in self.campaign_info:
 			if elements.tag in ('id', 'landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections'):
@@ -390,19 +386,16 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		percentage_completed = nodes_completed / node_count
 		GLib.idle_add(self.import_progress.set_fraction, percentage_completed)
 		if self.thread_import_campaign.stopped():
-			self._import_cleanup()
 			return
 
 		for tables in ('landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections'):
 			inserted_ids = []
 			if self.thread_import_campaign.stopped():
-				self._import_cleanup()
 				return
 			self._update_text_view("Serializing table {} data for import".format(tables), idle=True)
 			keys, rows = self._get_keys_values(self.campaign_info.find(tables))
 			self._update_text_view("Working on table {} adding {} rows".format(tables, len(rows)), idle=True)
 			if self.thread_import_campaign.stopped():
-				self._import_cleanup()
 				return
 
 			# make table rows easy to manage for updating new ids returned
@@ -411,27 +404,24 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 				row = dict(zip(keys, row))
 				table_rows.append(row)
 
-			while rows:
-				if self.thread_import_campaign.stopped():
-					self._import_cleanup()
-					return
+			while rows and not self.thread_import_campaign.stopped():
 				try:
 					inserted_ids = inserted_ids + self.rpc('/db/table/insert/multi', tables, keys, rows[:batch_size], deconflict_ids=True)
 				except advancedhttpserver.RPCError:
 					response = gui_utilities.glib_idle_add_wait(self.failed_import_action)
-					if response:
-						self._import_cleanup(remove_campaign=True)
-						failed_string = 'Failed to import campaign, all partial campaign data has been removed'
-						self.logger.warning(failed_string.lower())
-						self._update_text_view(failed_string, idle=True)
-						return
+					self._import_cleanup(remove_campaign=response)
+					failed_string = 'Failed to import campaign, all partial campaign data ' + ('has been removed' if response else 'was left in place')
+					self.logger.warning(failed_string.lower())
+					self._update_text_view(failed_string, idle=True)
+					return
 
 				rows = rows[batch_size:]
 				nodes_completed += float(batch_size * len(keys))
 				percentage_completed = nodes_completed / node_count
 				GLib.idle_add(self.import_progress.set_fraction, percentage_completed)
-				if self.thread_import_campaign.stopped():
-					return
+
+			if self.thread_import_campaign.stopped():
+				return
 
 			# update id fields to maintain relationships
 			self._update_text_view("Updating dependencies for table: {}".format(tables), idle=True)

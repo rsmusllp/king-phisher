@@ -2168,6 +2168,7 @@ Spencer McIntyre</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Import Campaign</property>
     <property name="window_position">center-on-parent</property>
+    <signal name="delete-event" handler="signal_window_delete_event" swapped="no"/>
     <child>
       <object class="GtkBox" id="ImportCampaignWindow.box">
         <property name="visible">True</property>
@@ -2204,7 +2205,7 @@ Spencer McIntyre</property>
                 <property name="hexpand">True</property>
                 <property name="editable">False</property>
                 <property name="primary_icon_stock">gtk-file</property>
-                <property name="placeholder_text" translatable="yes">XML Campaign File</property>
+                <property name="placeholder_text" translatable="yes">Campaign XML File</property>
                 <signal name="activate" handler="signal_multi_open_xml_file" swapped="no"/>
                 <signal name="backspace" handler="signal_multi_open_xml_file" swapped="no"/>
               </object>
@@ -4802,9 +4803,9 @@ Spencer McIntyre</property>
                       <object class="GtkMenuItem" id="MainMenuBar.menuitem_file_import_campaign">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="tooltip_text" translatable="yes">Import Campaign from XML.</property>
+                        <property name="tooltip_text" translatable="yes">Import a Campaign from XML.</property>
                         <property name="accel_path">&lt;KingPhisherClient&gt;/Import/Campaign from XML</property>
-                        <property name="label" translatable="yes">XML Campaign </property>
+                        <property name="label" translatable="yes">Campaign XML</property>
                         <signal name="activate" handler="signal_activate_import_campaign_xml" swapped="no"/>
                       </object>
                     </child>
