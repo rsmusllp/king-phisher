@@ -18,6 +18,7 @@ Version 1.7.0
 * Add comparison of "trained" statistics to the campaign comparison
 * Support for including and importing Jinja templates from relative paths
 * Support for including custom HTTP headers in server responses
+* New feature to import Campaigns from XML files
 
 Version 1.6.0
 ^^^^^^^^^^^^^

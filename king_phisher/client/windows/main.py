@@ -42,6 +42,7 @@ from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
 from king_phisher.client.windows import plugin_manager
 from king_phisher.client.windows import rpc_terminal
+from king_phisher.client.windows import campaign_import
 from king_phisher.client.windows import compare_campaigns
 from king_phisher.client.tabs.campaign import CampaignViewTab
 from king_phisher.client.tabs.campaign import CampaignViewGenericTableTab
@@ -165,6 +166,9 @@ class MainMenuBar(gui_utilities.GladeGObject):
 
 	def signal_activate_import_message_data(self, _):
 		self.window.import_message_data()
+
+	def signal_activate_import_campaign_xml(self, _):
+		campaign_import.ImportCampaignWindow(self.application)
 
 	def signal_activate_show_campaign_selection(self, _):
 		self.application.show_campaign_selection()
