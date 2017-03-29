@@ -541,15 +541,18 @@ class CampaignGraphOverview(CampaignBarGraph):
 		rpc = self.rpc
 		visits = info_cache['visits']
 		creds = info_cache['credentials']
+		messages_count = rpc('db/table/count', 'messages', query_filter={'campaign_id': self.config['campaign_id']})
+		messages_not_opened = rpc('db/table/count', 'messages', query_filter={'campaign_id': self.config['campaign_id'], 'opened': None})
 
 		bars = []
-		bars.append(rpc('db/table/count', 'messages', query_filter={'campaign_id': self.config['campaign_id']}))
+		bars.append(messages_count)
+		bars.append(messages_count - messages_not_opened)
 		bars.append(len(visits))
 		bars.append(len(unique(visits, key=lambda visit: visit.message_id)))
 		if len(creds):
 			bars.append(len(creds))
 			bars.append(len(unique(creds, key=lambda cred: cred.message_id)))
-		yticklabels = ('Messages', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')
+		yticklabels = ('Messages', 'Opened', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')
 		self.graph_bar(bars, len(yticklabels), yticklabels[:len(bars)])
 		return
 
