@@ -149,6 +149,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The primary King Phisher client configuration."""
 		self.main_window = None
 		"""The primary top-level :py:class:`~.MainAppWindow` instance."""
+		self.references = []
+		"""A list to store references to arbitrary objects in for avoiding garbage collection."""
 		self.rpc = None
 		"""The :py:class:`~.KingPhisherRPCClient` instance for the application."""
 		self._rpc_ping_event = None
@@ -253,16 +255,30 @@ class KingPhisherClientApplication(_Gtk_Application):
 		client_template = find.data_file('client_config.json')
 		shutil.copy(client_template, self.config_file)
 
+	def add_reference(self, ref_object):
+		"""
+		Add *ref_object* to the :py:attr:`.references` so the object won't be
+		garbage collected. The object must either be a
+		:py:class:`.GladeGObject` or :py:class:`Gtk.Widget` instance so a
+		cleanup function can be attached to a ``destroy`` signal to remove the
+		reference automatically.
+
+		:param ref_object: The object to store a reference to.
+		:type ref_object: :py:class:`.GladeGObject`, :py:class:`Gtk.Widget`
+		"""
+		utilities.assert_arg_type(ref_object, (gui_utilities.GladeGObject, Gtk.Widget))
+		self.references.append(ref_object)
+		if isinstance(ref_object, gui_utilities.GladeGObject):
+			widget = getattr(ref_object, ref_object.top_gobject)
+		else:
+			widget = ref_object
+		widget.connect('destroy', self.signal_multi_destroy_remove_reference, ref_object)
+
 	def campaign_configure(self):
 		assistant = assistants.CampaignAssistant(self, campaign_id=self.config['campaign_id'])
 		assistant.assistant.set_transient_for(self.get_active_window())
 		assistant.assistant.set_modal(True)
-
-		# do this to keep a reference to prevent garbage collection
-		attr_name = '_tmpref_campaign_assistant'
-		setattr(self, attr_name, assistant)
-		assistant.assistant.connect('destroy', lambda widget: delattr(self, attr_name))
-
+		self.add_reference(assistant)
 		assistant.interact()
 
 	def do_campaign_delete(self, campaign_id):
@@ -675,6 +691,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 			file_path = '[ unknown file ]'
 		self.logger.error("css parser error ({0}) in {1}:{2}".format(gerror.message, file_path, css_section.get_start_line() + 1))
 		return
+
+	def signal_multi_destroy_remove_reference(self, widget, ref_object):
+		self.references.remove(ref_object)
 
 	def signal_window_added(self, _, window):
 		for action in self.actions.values():

@@ -620,13 +620,14 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 		builder.add_objects_from_file(which_glade(), top_level_dependencies)
 		builder.connect_signals(self)
 		gobject = builder.get_object(self.dependencies.name)
+		setattr(self, self.top_gobject, gobject)
 		if isinstance(gobject, Gtk.Window):
 			gobject.set_transient_for(self.application.get_active_window())
+			self.application.add_reference(self)
 			if isinstance(gobject, Gtk.ApplicationWindow):
 				application.add_window(gobject)
 			if isinstance(gobject, Gtk.Dialog):
 				gobject.set_modal(True)
-		setattr(self, self.top_gobject, gobject)
 
 		self.gobjects = utilities.FreezableDict()
 		"""A :py:class:`~king_phisher.utilities.FreezableDict` which maps gobjects to their unique GTK Builder id."""
