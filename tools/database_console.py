@@ -91,8 +91,6 @@ def main():
 	config_group.add_argument('-u', '--url', dest='database_url', help='the database connection url')
 	arguments = parser.parse_args()
 
-	utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
-
 	if arguments.database_url:
 		database_connection_url = arguments.database_url
 	elif arguments.server_config:

@@ -30,8 +30,10 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import argparse
 import collections
 import datetime
+import functools
 import inspect
 import logging
 import operator
@@ -159,13 +161,26 @@ def argp_add_args(parser, default_root=''):
 	for configuring logging options from the command line and displaying the
 	version information.
 
+	.. note::
+		This function installs a hook to *parser.parse_args* to automatically
+		handle options which it adds. This includes setting up a stream logger
+		based on the added options.
+
 	:param parser: The parser to add arguments to.
 	:type parser: :py:class:`argparse.ArgumentParser`
 	:param str default_root: The default root logger to specify.
 	"""
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'], help='set the logging level')
+	parser.add_argument('-L', '--log', dest='loglvl', choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'), help='set the logging level')
 	parser.add_argument('--logger', default=default_root, help='specify the root logger')
+	@functools.wraps(parser.parse_args)
+	def parse_args_hook(*args, **kwargs):
+		arguments = parser._parse_args(*args, **kwargs)
+		configure_stream_logger(arguments.logger, arguments.loglvl)
+		return arguments
+	parser._parse_args = parser.parse_args
+	parser.parse_args = parse_args_hook
+	return parser
 
 def assert_arg_type(arg, arg_type, arg_pos=1, func_name=None):
 	"""

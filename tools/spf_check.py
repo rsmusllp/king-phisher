@@ -48,8 +48,6 @@ def main():
 	parser.add_argument('target_email', help='the email address that messages are from')
 	arguments = parser.parse_args()
 
-	utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
-
 	server_ip = arguments.smtp_server_ip
 	target_email = arguments.target_email
 

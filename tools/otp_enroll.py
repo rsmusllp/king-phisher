@@ -75,8 +75,6 @@ def main():
 	parser.epilog = PARSER_EPILOG
 	arguments = parser.parse_args()
 
-	utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
-
 	if arguments.database_url:
 		database_connection_url = arguments.database_url
 	elif arguments.server_config:
