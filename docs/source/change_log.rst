@@ -19,6 +19,7 @@ Version 1.7.0
 * Support for including and importing Jinja templates from relative paths
 * Support for including custom HTTP headers in server responses
 * New feature to import Campaigns from XML files
+* Support for emails address with longer top level domain names
 
 Version 1.6.0
 ^^^^^^^^^^^^^
