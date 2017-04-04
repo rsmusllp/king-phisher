@@ -7,10 +7,15 @@ Phisher.
 Version 1.x.x
 -------------
 
+Version 1.8.0
+^^^^^^^^^^^^^
+
+*In Progress*
+
 Version 1.7.0
 ^^^^^^^^^^^^^
 
-Released :release:`1.6.0` on April 4th, 2017
+Released :release:`1.7.0` on April 4th, 2017
 
 * Better error messages for malformed server configuration files
 * Support for sending to targets via To / CC / BCC fields
