@@ -20,6 +20,7 @@
 #   Debian          | yes    | yes    |
 #   Fedora          | yes    | yes    |
 #   Kali            | yes    | yes    |
+#   Red Hat         | no     | yes    |
 #   Ubuntu          | yes    | yes    |
 #
 ###############################################################################
@@ -133,6 +134,11 @@ if [[ ! $LINUX_VERSION ]] && grep -E "CentOS Linux release 7(\.[0-9]{1,4}){2}" /
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
+if [[ ! $LINUX_VERSION ]] && grep -E "Red Hat Enterprise Linux Server release 7(\.[0-9])" /etc/redhat-release &> /dev/null; then
+	LINUX_VERSION="RedHat"
+	KING_PHISHER_SKIP_CLIENT="x"
+fi
+
 if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[4-9]" /etc/redhat-release &> /dev/null; then
 	LINUX_VERSION="Fedora"
 fi
@@ -161,6 +167,7 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo "  - Debian"
 	echo "  - Fedora"
 	echo "  - Kali"
+	echo "  - Red Hat"
 	echo "  - Ubuntu"
 	echo ""
 	echo "If the current version of Linux is one of these flavors but it is"
@@ -192,7 +199,7 @@ fi
 
 # install git if necessary
 if [ ! "$(command -v git)" ]; then
-	if [ "$LINUX_VERSION" == "CentOS" ]; then
+	if [ "$LINUX_VERSION" == "CentOS" ] || [ "$LINUX_VERSION" == "RedHat" ]; then
 		yum install -y -q git
 	elif [ "$LINUX_VERSION" == "Fedora" ]; then
 		dnf install -y -q git
@@ -237,6 +244,26 @@ if [ "$LINUX_VERSION" == "Kali" ]; then
 fi
 
 echo "Installing $LINUX_VERSION dependencies"
+if [ "$LINUX_VERSION" == "RedHat" ]; then
+	if [ ! "$(command -v python3)" ]; then
+		echo "Installing Python3.5 for Red Hat 7"
+		# manually add rpms for easy python35 install
+		yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+		rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+		yum -y install https://rhel7.iuscommunity.org/ius-release.rpm
+		rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
+		yum install -y python35u python35u-devel python35u-pip
+		echo "Symlinking $(which python3.5) -> /usr/bin/python3"
+		ln -s $(which python3.5) /usr/bin/python3
+	fi
+	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
+		openssl-devel postgresql-devel
+	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
+		yum install -y postgresql-server
+		# manually init the database
+		postgresql-setup initdb
+	fi
+fi
 if [ "$LINUX_VERSION" == "CentOS" ]; then
 	if [ ! "$(command -v python3)" ]; then
 		# manually install python3.5 on CentOS 7 and symlink it to python3

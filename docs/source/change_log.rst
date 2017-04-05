@@ -12,6 +12,8 @@ Version 1.8.0
 
 *In Progress*
 
+* Install script now supports Red Hat Server 7
+
 Version 1.7.0
 ^^^^^^^^^^^^^
 
