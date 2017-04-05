@@ -85,7 +85,7 @@ def main():
 
 	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
 	if its.py_v2:
-		logger.warning('python 2.7 support is deprecated, see https://github.com/securestate/king-phisher/wiki/Python-3 for details')
+		logger.warning('this is the last release that will support python 2.7, see https://github.com/securestate/king-phisher/wiki/Python-3 for details')
 	logger.debug("client running in process: {0} main tid: 0x{1:x}".format(os.getpid(), threading.current_thread().ident))
 
 	start_time = time.time()
