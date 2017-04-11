@@ -53,6 +53,11 @@ Classes
    :show-inheritance:
    :members:
 
+.. autoclass:: king_phisher.client.plugins.ClientPluginMailerAttachment
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
 .. autoclass:: king_phisher.client.plugins.ClientPluginManager
    :show-inheritance:
    :members:
