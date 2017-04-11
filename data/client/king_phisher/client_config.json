@@ -2,6 +2,8 @@
   "dashboard.bottom": "VisitsTimeline",
   "dashboard.top_left": "Overview",
   "dashboard.top_right": "VisitorInfo",
+  "mailer.attachment_file": null,
+  "mailer.attachment_file.post_processing": null,
   "mailer.max_messages_per_connection": 5,
   "mailer.message_type": "email",
   "mailer.target_field": "to",

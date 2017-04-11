@@ -672,13 +672,28 @@ class MailSenderThread(threading.Thread):
 		:rtype: :py:class:`.MessageAttachments`
 		"""
 		files = []
-		if self.config.get('mailer.attachment_file'):
-			attachment = self.config['mailer.attachment_file']
-			attachfile = mime.base.MIMEBase(*mimetypes.guess_type(attachment))
-			attachfile.set_payload(open(attachment, 'rb').read())
+		# allow the attachment_file.post_processing to be attached instead of
+		# attachment_file so attachment_file can be used as an input for
+		# arbitrary operations to modify without over writing the original
+		attachment_file = self.config.get('mailer.attachment_file.post_processing')
+		delete_attachment_file = False
+		if attachment_file is not None:
+			if not isinstance(attachment_file, str):
+				raise TypeError('config option mailer.attachment_file.post_processing is not a readable file')
+			if not os.path.isfile(attachment_file) and os.access(attachment_file, os.R_OK):
+				raise ValueError('config option mailer.attachment_file.post_processing is not a readable file')
+			self.config['mailer.attachment_file.post_processing'] = None
+			delete_attachment_file = True
+		else:
+			attachment_file = self.config.get('mailer.attachment_file')
+		if attachment_file:
+			attachfile = mime.base.MIMEBase(*mimetypes.guess_type(attachment_file))
+			attachfile.set_payload(open(attachment_file, 'rb').read())
 			encoders.encode_base64(attachfile)
-			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
+			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment_file)))
 			files.append(attachfile)
+			if delete_attachment_file and os.access(attachment_file, os.W_OK):
+				os.remove(attachment_file)
 
 		images = []
 		for attachment_file, attachment_name in template_environment.attachment_images.items():
