@@ -430,7 +430,11 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		except (TypeError, jinja2.TemplateError) as error:
 			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
 			raise errors.KingPhisherAbortRequestError()
-		if getattr(template_module, 'require_basic_auth', False) and not all(self.get_query_creds(check_query=False)):
+
+		require_basic_auth = getattr(template_module, 'require_basic_auth', False)
+		require_basic_auth &= not all(self.get_query_creds(check_query=False))
+		require_basic_auth &= self.message_id != self.config.get('server.secret_id')
+		if require_basic_auth:
 			mime_type = 'text/html'
 			self.send_response(401)
 			headers.append(('WWW-Authenticate', "Basic realm=\"{0}\"".format(getattr(template_module, 'basic_auth_realm', 'Authentication Required'))))
