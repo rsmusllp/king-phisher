@@ -160,7 +160,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.text_insert("  SHA1: {0}\n".format(sha1.hexdigest()))
 
 		enabled_plugins = self.application.plugin_manager.enabled_plugins.values()
-		attachment_plugins = [plugin for plugin in enabled_plugins if isinstance(plugin, plugins.ClientMailerAttachmentPlugin)]
+		attachment_plugins = [plugin for plugin in enabled_plugins if isinstance(plugin, plugins.ClientPluginMailerAttachment)]
 		if attachment_plugins:
 			self.text_insert("The following {0:,} attachment-modifying plugin{1} enabled:\n".format(len(attachment_plugins), ' is' if len(attachment_plugins) == 1 else 's  are'))
 			for plugin in attachment_plugins:
