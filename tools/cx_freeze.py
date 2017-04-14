@@ -40,6 +40,7 @@ from king_phisher import version
 
 import matplotlib
 import pytz
+import requests
 from mpl_toolkits import basemap
 from cx_Freeze import setup, Executable
 
@@ -118,6 +119,7 @@ include_files.append((matplotlib.get_data_path(), 'mpl-data'))
 include_files.append((basemap.basemap_datadir, 'mpl-basemap-data'))
 include_files.append(('data/client/king_phisher', 'king_phisher'))
 include_files.append((pytz.__path__[0], 'pytz'))
+include_files.append((requests.__path__[0], 'requests'))
 
 exe_base = 'Win32GUI'
 if is_debugging_build:
