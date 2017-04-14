@@ -14,6 +14,13 @@ Version 1.8.0
 
 * Install script now supports Red Hat Server 7
 
+Version 1.7.1
+^^^^^^^^^^^^^
+
+Released :release:`1.7.1` on April 14th, 2017
+
+* Bug fix in the Windows build for HTTPS connections from the requests package
+
 Version 1.7.0
 ^^^^^^^^^^^^^
 
