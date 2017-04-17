@@ -26,9 +26,9 @@ In Terminal.app, run
     ```
     docker build -t king-phisher .
     ```
-3. Run the docker container. The mounted volumes are for connecting to the X11 display and saving the King-Phisher preferences to your home directory.
+3. Run the docker container. The mounted volumes are for connecting to the X11 display and saving the King-Phisher preferences to your home directory and a shared volume for importing and exporting.
     ```
-    docker run -d -e DISPLAY=$ip:0 -v /tmp/.X11-unix:/tmp/.X11-unix -v ~/.config:/root/.config king-phisher
+    docker run -d -e DISPLAY=$ip:0 -v /tmp/.X11-unix:/tmp/.X11-unix -v ~/.config:/root/.config -v ~/Documents/king-phisher:/root/Documents king-phisher
     ```
 
 _Note: You can remove the `-d` from the docker command above to see King-Phisher logs for troubleshooting._
