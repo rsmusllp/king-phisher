@@ -32,3 +32,23 @@ In Terminal.app, run
     ```
 
 _Note: You can remove the `-d` from the docker command above to see King-Phisher logs for troubleshooting._
+
+## Troubleshooting
+### King-Phisher won't start and shows an error about not being able to connect to DISPLAY
+Make sure that XQuartz is running, and your external IP is authorized to connect. You should see similar to the following when running xhost in a terminal:
+```
+$ xhost
+access control enabled, only authorized clients can connect
+INET:[YOUR.EXTERNAL.IP.HERE]
+```
+You can test that XQuartz is working by running `xcalc` from the terminal using the external display connection.
+```
+DISPLAY=$ip:0 xcalc
+```
+
+### XQuartz is closed but the app icon is still present in the Dock
+This is a bug in the Dock and Finder services in Mac OS. To fix run the following in a terminal:
+```
+sudo killall Finder
+sudo killall Dock
+```
