@@ -94,7 +94,7 @@ def glib_idle_add_wait(function, *args):
 	to update GUI data.
 
 	:param function function: The function to call.
-	:param args: The arguments to *functoin*.
+	:param args: The arguments to *function*.
 	:return: The result of the function call.
 	"""
 	gsource_completed = threading.Event()
