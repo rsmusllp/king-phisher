@@ -145,7 +145,7 @@ if [[ ! $LINUX_VERSION ]] && grep 'Kali Linux Rolling' /etc/debian_version &> /d
 	LINUX_VERSION="Kali"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu 1[456]\.(04|10)" /etc/issue &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu 1[45678]\.(04|10)" /etc/issue &> /dev/null; then
 	LINUX_VERSION="Ubuntu"
 fi
 
