@@ -8,6 +8,10 @@
           "start": null,
           "summary": null
         },
+        "campaign": {
+          "id": null,
+          "name": null
+        },
         "client": {
           "company_name": null,
           "email_address": null,
@@ -16,6 +20,20 @@
           "message_id": null
         },
         "inline_image(": null,
+        "message": {
+          "attachment": null,
+          "importance": null,
+          "recipient": {
+            "bcc": null,
+            "cc": null,
+            "field": null,
+            "to": null
+          },
+          "sensitivity": null,
+          "subject": null,
+          "template": null,
+          "type": null
+        },
         "message_type": null,
         "sender": {
           "email": null,
@@ -40,7 +58,9 @@
             "credential_count": null,
             "expiration": null,
             "has_expired": null,
+            "id": null,
             "message_count": null,
+            "name": null,
             "visit_count": null
           },
           "credential_count": null,
