@@ -618,6 +618,9 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		self.toolbutton_save_html_file.set_sensitive(True)
 		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
+		current_text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
+		if html_data == current_text:
+			return
 		self.textbuffer.begin_not_undoable_action()
 		self.textbuffer.set_text(html_data)
 		self.textbuffer.end_not_undoable_action()
