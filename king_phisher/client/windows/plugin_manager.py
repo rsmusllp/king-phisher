@@ -153,8 +153,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		grid.insert_column(0)
 		grid.insert_column(0)
 		grid.set_column_spacing(3)
+
+		compatibility_details = list(klass.compatibility)
+		compatibility_details.insert(0, ('Type', 'Value', 'Met'))
 		row = 0
-		for req in klass.compatibility:
+		for row, req in enumerate(compatibility_details):
 			grid.insert_row(row)
 			label = Gtk.Label(req[0])
 			label.set_property('halign', Gtk.Align.START)
@@ -162,10 +165,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			label = Gtk.Label(req[1])
 			label.set_property('halign', Gtk.Align.START)
 			grid.attach(label, 1, row, 1, 1)
-			label = Gtk.Label('Yes' if req[2] else 'No')
+			label = Gtk.Label(('Yes' if req[2] else 'No') if row else req[2])
 			label.set_property('halign', Gtk.Align.END)
 			grid.attach(label, 2, row, 1, 1)
-			row += 1
 		if not row:
 			popover.destroy()
 			return
@@ -202,7 +204,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				continue
 			if name in self._module_errors:
 				del self._module_errors[name]
-				self._model[tree_iter][2] = klass.title  # pylint: disable=unsubscriptable-object
+			self._model[tree_iter][2] = klass.title  # pylint: disable=unsubscriptable-object
 			if name == selected_plugin:
 				self._set_plugin_info(name)
 			if enabled:
@@ -210,11 +212,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def signal_renderer_toggled(self, _, path):
 		pm = self.application.plugin_manager
-		name = self._model[path][0] # pylint: disable=unsubscriptable-object
+		name = self._model[path][0]  # pylint: disable=unsubscriptable-object
 		if name in self._module_errors:
 			gui_utilities.show_dialog_error('Can Not Enable Plugin', self.window, 'Can not enable a plugin which failed to load.')
 			return
-		if self._model[path][1]: # pylint: disable=unsubscriptable-object
+		if self._model[path][1]:  # pylint: disable=unsubscriptable-object
 			pm.disable(name)
 			self._model[path][1] = False # pylint: disable=unsubscriptable-object
 			self.config['plugins.enabled'].remove(name)
