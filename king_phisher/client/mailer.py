@@ -465,7 +465,7 @@ class MailSenderThread(threading.Thread):
 			target = MessageTarget(
 				first_name=target_name[0].strip(),
 				last_name=target_name[1].strip(),
-				email_address=self.config['mailer.target_email_address'],
+				email_address=self.config['mailer.target_email_address'].strip(),
 				department=None,
 				uid=utilities.make_message_uid()
 			)
@@ -475,7 +475,7 @@ class MailSenderThread(threading.Thread):
 			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
 			for line_no, raw_target in enumerate(csv_reader, 1):
 				if its.py_v2:
-					# this intentionally will cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
+					# this will intentionally cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
 					# when csv.DictReader is initialized
 					raw_target = dict((k, (v if v is None else v.decode('utf-8'))) for k, v in raw_target.items())
 				for required_field in ('first_name', 'last_name', 'email_address'):
