@@ -117,7 +117,7 @@ class CampaignViewGenericTab(gui_utilities.GladeGObject):
 				gui_utilities.gtk_sync()
 			self.logger.debug("joined thread: {0}.loader_thread (tid: 0x{1:x})".format(self.__class__.__name__, self.loader_thread.ident))
 
-	def signal_kpc_campaign_set(self, kpc, cid):
+	def signal_kpc_campaign_set(self, *_):
 		self.load_campaign_information()
 
 class CampaignViewGenericTableTab(CampaignViewGenericTab):

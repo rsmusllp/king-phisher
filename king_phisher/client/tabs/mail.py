@@ -828,8 +828,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.label = Gtk.Label(label='Configuration')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderConfigurationTab, self).__init__(*args, **kwargs)
-		self.application.connect('campaign-changed', self.signal_kpc_campaign_load)
-		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
+		self.application.connect('campaign-changed', self.signal_kpc_campaign_changed)
+		self.application.connect('campaign-set', self.signal_kpc_campaign_set)
 		self.application.connect('exit', self.signal_kpc_exit)
 
 		self.message_type = managers.RadioButtonGroupManager(self, 'message_type')
@@ -838,6 +838,14 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.target_field.set_active(self.config['mailer.target_field'])
 		self.target_type = managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
+
+	def _campaign_load(self, campaign_id):
+		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
+		if campaign.company_id is None:
+			self.config['mailer.company_name'] = None
+		else:
+			self.config['mailer.company_name'] = campaign.company.name
+		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
 
 	def objects_load_from_config(self):
 		super(MailSenderConfigurationTab, self).objects_load_from_config()
@@ -964,13 +972,11 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		if expander.get_expanded():
 			self.gobjects['viewport'].queue_draw()
 
-	def signal_kpc_campaign_load(self, _, campaign_id):
-		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
-		if campaign.company_id is None:
-			self.config['mailer.company_name'] = None
-		else:
-			self.config['mailer.company_name'] = campaign.company.name
-		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
+	def signal_kpc_campaign_changed(self, _, campaign_id):
+		self._campaign_load(campaign_id)
+
+	def signal_kpc_campaign_set(self, _, old_campaign_id, new_campaign_id):
+		self._campaign_load(new_campaign_id)
 
 	def signal_kpc_exit(self, kpc):
 		self.objects_save_to_config()
@@ -1066,9 +1072,9 @@ class MailSenderTab(_GObject_GObject):
 			tab.box.show()
 		self.notebook.show()
 
-		self.application.connect('campaign-set', self.signal_kp_campaign_set)
+		self.application.connect('campaign-set', self.signal_kpc_campaign_set)
 
-	def signal_kp_campaign_set(self, _, campaign_id):
+	def signal_kpc_campaign_set(self, *_):
 		context_id = self.status_bar.get_context_id('campaign name')
 		self.status_bar.pop(context_id)
 		self.status_bar.push(context_id, self.config['campaign_name'])

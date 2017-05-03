@@ -104,7 +104,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'campaign-changed': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'campaign-created': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
 		'campaign-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (str,)),
-		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+		'campaign-set': (GObject.SIGNAL_RUN_FIRST, None, (str, str)),
 		'config-load': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (bool,)),
 		'config-save': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'credential-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
@@ -390,7 +390,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 				)
 		self.config['plugins.enabled'] = enabled_plugins
 
-	def do_campaign_set(self, campaign_id):
+	def do_campaign_set(self, *_):
 		self.logger.info("campaign set to {0} (id: {1})".format(self.config['campaign_name'], self.config['campaign_id']))
 		self.emit('rpc-cache-clear')
 
@@ -428,8 +428,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.style_provider = self.load_style_css(theme_file)
 
 	def do_rpc_cache_clear(self):
-		if self.rpc:
-			self.rpc.cache_clear()
+		if not self.rpc:
+			return
+		self.rpc.cache_clear()
+		self.logger.debug('the rpc cache has been cleared')
 
 	def do_server_connected(self):
 		self.load_server_config()
@@ -447,7 +449,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 				return True
 			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True, refresh=True)
 		self.config['campaign_name'] = campaign_info.name
-		self.emit('campaign-set', self.config['campaign_id'])
+		self.emit('campaign-set', None, self.config['campaign_id'])
 		return
 
 	def do_shutdown(self):
