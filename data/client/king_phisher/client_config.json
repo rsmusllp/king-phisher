@@ -30,5 +30,5 @@
   "ssh_server": "localhost:22",
   "ssh_username": "",
   "text_font": "monospace 11",
-  "text_source_theme": "cobalt"
+  "text_source.theme": "cobalt"
 }

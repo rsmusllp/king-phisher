@@ -581,16 +581,22 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		self.textbuffer = GtkSource.Buffer()
 		"""The :py:class:`Gtk.TextBuffer` used by the :py:attr:textview` attribute."""
 		self.textview.set_buffer(self.textbuffer)
-		self.textview.modify_font(Pango.FontDescription(self.config['text_font']))
 		self.language_manager = GtkSource.LanguageManager()
 		self.textbuffer.set_language(self.language_manager.get_language('html'))
 		self.textbuffer.set_highlight_syntax(True)
+
+		self.textview.modify_font(Pango.FontDescription(self.config['text_font']))
+		self.textview.set_property('highlight-current-line', self.config.get('text_source.highlight_line', True))
+		self.textview.set_property('indent-width', self.config.get('text_source.tab_width', 4))
+		self.textview.set_property('insert-spaces-instead-of-tabs', not self.config.get('text_source.hardtabs', False))
+		self.textview.set_property('tab-width', self.config.get('text_source.tab_width', 4))
+
 		self.toolbutton_save_html_file = self.gobjects['toolbutton_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 		self.textview.connect('key-press-event', self.signal_textview_key_pressed)
 
 		scheme_manager = GtkSource.StyleSchemeManager()
-		style_scheme_name = self.config['text_source_theme']
+		style_scheme_name = self.config['text_source.theme']
 		style_scheme = scheme_manager.get_scheme(style_scheme_name)
 		if style_scheme:
 			self.textbuffer.set_style_scheme(style_scheme)
