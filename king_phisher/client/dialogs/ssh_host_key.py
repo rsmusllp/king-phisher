@@ -94,8 +94,8 @@ class BaseHostKeyDialog(gui_utilities.GladeGObject):
 		if key_type.startswith('ssh-'):
 			key_type = key_type[4:]
 		key_type = key_type.split('-', 1)[0].upper()
-		details += "{0} key fingerprint is SHA256:{1}.\n".format(key_type, base64.b64encode(hashlib.new('sha256', self.key.asbytes()).digest()).decode('utf-8'))
-		details += "{0} key fingerprint is MD5:{1}.\n".format(key_type, binascii.b2a_hex(hashlib.new('md5', self.key.asbytes()).digest()).decode('utf-8'))
+		details += "{0} key fingerprint is SHA256:{1}\n".format(key_type, base64.b64encode(hashlib.new('sha256', self.key.asbytes()).digest()).decode('utf-8'))
+		details += "{0} key fingerprint is MD5:{1}\n".format(key_type, binascii.b2a_hex(hashlib.new('md5', self.key.asbytes()).digest()).decode('utf-8'))
 		return details
 
 	def interact(self):
@@ -119,6 +119,17 @@ class HostKeyWarnDialog(BaseHostKeyDialog):
 	default_button = Gtk.ResponseType.REJECT
 	def signal_checkbutton_toggled(self, button):
 		self.gobjects['button_accept'].set_sensitive(button.get_property('active'))
+		cb_accept_permanently = self.gtk_builder_get('checkbutton_accept_permanently')
+		cb_accept_permanently.set_sensitive(button.get_property('active'))
+		cb_accept_permanently.set_property('active', False)
+		cb_accept_permanently.set_property('inconsistent', not button.get_property('active'))
+
+	@property
+	def accept_permanently(self):
+		cb_accept_permanently = self.gtk_builder_get('checkbutton_accept_permanently')
+		permanent = not cb_accept_permanently.get_property('inconsistent')
+		permanent &= cb_accept_permanently.get_property('active')
+		return permanent
 
 class MissingHostKeyPolicy(paramiko.MissingHostKeyPolicy):
 	"""
@@ -141,12 +152,15 @@ class MissingHostKeyPolicy(paramiko.MissingHostKeyPolicy):
 	def missing_host_key(self, client, hostname, key):
 		host_key_fingerprint = 'sha256:' + base64.b64encode(hashlib.new('sha256', key.asbytes()).digest()).decode('utf-8')
 		host_keys = paramiko.hostkeys.HostKeys()
-		host_keys_modified = False
 		known_hosts_file = self.application.config.get('ssh_known_hosts_file', os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'known_hosts'))
 
 		if os.access(known_hosts_file, os.R_OK):
+			self.logger.debug('loading known ssh host keys from: ' + known_hosts_file)
 			host_keys.load(known_hosts_file)
+		else:
+			self.logger.warning('can not read known ssh host keys from: ' + known_hosts_file)
 
+		add_host_key = False
 		if host_keys.lookup(hostname):
 			if host_keys.check(hostname, key):
 				self.logger.debug("accepting known ssh host key {0} {1} {2}".format(hostname, key.get_name(), host_key_fingerprint))
@@ -155,14 +169,17 @@ class MissingHostKeyPolicy(paramiko.MissingHostKeyPolicy):
 			dialog = HostKeyWarnDialog(self.application, hostname, key)
 			if dialog.interact() != Gtk.ResponseType.ACCEPT:
 				raise errors.KingPhisherAbortError('bad ssh host key for ' + hostname)
+			add_host_key = dialog.accept_permanently
 		else:
 			dialog = HostKeyAcceptDialog(self.application, hostname, key)
 			if dialog.interact() != Gtk.ResponseType.ACCEPT:
 				raise errors.KingPhisherAbortError('unknown ssh host key not accepted by the user for ' + hostname)
-			host_keys.add(hostname, key.get_name(), key)
-			host_keys_modified = True
+			add_host_key = True
 
-		if host_keys_modified:
+		if add_host_key:
+			self.logger.debug("setting ssh host key {0} for {1}".format(key.get_name(), hostname))
+			host_keys.pop(hostname)
+			host_keys.add(hostname, key.get_name(), key)
 			try:
 				host_keys.save(known_hosts_file)
 				os.chmod(known_hosts_file, 0o600)
