@@ -523,7 +523,7 @@ class CampaignGraphDepartmentComparison(CampaignBarGraph):
 		department_totals = collections.Counter()
 		department_totals.update(message_departments[message.id] for message in messages)
 
-		department_scores = dict((department, (department_visits[department] / total) * 100) for department, total in department_totals.items())
+		department_scores = dict((department, (float(department_visits[department]) / float(total)) * 100) for department, total in department_totals.items())
 		department_scores = sorted(department_scores.items(), key=lambda x: (x[1], x[0]), reverse=True)
 		department_scores = collections.OrderedDict(department_scores)
 
