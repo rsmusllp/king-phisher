@@ -139,6 +139,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.debug("gi.repository VTE version: {0}".format(rpc_terminal.Vte._version))
 		if graphs.has_matplotlib:
 			self.logger.debug("matplotlib version: {0}".format(graphs.matplotlib.__version__))
+		# do not negotiate a single instance application
+		# https://developer.gnome.org/gio/unstable/GApplication.html#G-APPLICATION-NON-UNIQUE:CAPS
+		self.set_flags(Gio.ApplicationFlags.NON_UNIQUE)
 		self.set_property('application-id', 'org.king-phisher.client')
 		self.set_property('register-session', True)
 		self.config_file = config_file or os.path.join(USER_DATA_PATH, 'config.json')
