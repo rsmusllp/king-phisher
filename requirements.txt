@@ -5,6 +5,7 @@ alembic>=0.9.1
 blinker>=1.4
 boltons>=17.1.0
 dnspython>=1.15.0
+email-validator>=1.0.2
 geoip2>=2.4.2
 geojson>=1.3.4
 graphene>=1.2
