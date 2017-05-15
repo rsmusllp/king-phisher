@@ -160,14 +160,14 @@ class MsgPack(Serializer):
 		obj_type, obj_value = _serialize_ext_dump(obj)
 		obj_type = next(i[0] for i in cls._ext_types.items() if i[1] == obj_type)
 		if its.py_v3 and isinstance(obj_value, str):
-			obj_value = obj_value.encode('utf-8')
+			obj_value = obj_value.encode(cls.encoding)
 		return msgpack.ExtType(obj_type, obj_value)
 
 	@classmethod
 	def _msgpack_ext_hook(cls, code, obj_value):
 		default = msgpack.ExtType(code, obj_value)
 		if its.py_v3 and isinstance(obj_value, bytes):
-			obj_value = obj_value.decode('utf-8')
+			obj_value = obj_value.decode(cls.encoding)
 		obj_type = cls._ext_types.get(code)
 		return _serialize_ext_load(obj_type, obj_value, default)
 
@@ -280,7 +280,7 @@ def to_elementtree_subelement(parent, tag, value, attrib=None):
 			value = str(value)
 			type_ = 'integer'
 			break
-		if case(str):
+		if case(str) or (its.py_v2 and case(unicode)):
 			type_ = 'string'
 			break
 		if case(datetime.time):
