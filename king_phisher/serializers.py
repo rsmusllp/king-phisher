@@ -255,6 +255,7 @@ def to_elementtree_subelement(parent, tag, value, attrib=None):
 	:rtype: :py:class:`xml.etree.ElementTree.Element`
 	"""
 	attrib = attrib or {}
+	print("serializing to xml {}, type of {}".format(value, type(value)))
 	for case in switch(type(value)):
 		if case(type(None)):
 			value = ''
@@ -283,12 +284,15 @@ def to_elementtree_subelement(parent, tag, value, attrib=None):
 		if case(str):
 			type_ = 'string'
 			break
+		if case(unicode):
+			type_ = 'string'
+			break
 		if case(datetime.time):
 			value = value.isoformat()
 			type_ = 'time'
 			break
 	else:
-		raise TypeError('can not serialize value to an xml subelement')
+		raise TypeError("can not serialize value of {} with {} to an xml subelement".format(value, type(value)))
 	attrib['type'] = type_
 	sub_element = ET.SubElement(parent, tag, attrib=attrib)
 	sub_element.text = value
