@@ -137,7 +137,11 @@ class SPFRecord(object):
 
 class SPFError(Exception):
 	"""Base exception for errors raised by this module."""
-	pass
+	def __init__(self, message):
+		self.message = message
+
+	def __repr__(self):
+		return "<{0} message='{1}' >".format(self.__class__.__name__, self.message)
 
 class SPFPermError(SPFError):
 	"""
