@@ -513,6 +513,7 @@ class MailSenderThread(threading.Thread):
 			self.logger.error("the configured target type '{0}' is unsupported".format(target_type))
 
 	def run(self):
+		self.logger.debug("mailer routine running in tid: 0x{0:x}".format(threading.current_thread().ident))
 		self.running.set()
 		self.should_stop.clear()
 		self.paused.clear()

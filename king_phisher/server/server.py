@@ -63,6 +63,7 @@ from smoke_zephyr import job
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 	def __init__(self, *args, **kwargs):
+		self.logger.debug("request handler running in tid: 0x{0:x}".format(threading.current_thread().ident))
 		# this is for attribute documentation
 		self.config = None
 		"""A reference to the main server instance :py:attr:`.KingPhisherServer.config`."""

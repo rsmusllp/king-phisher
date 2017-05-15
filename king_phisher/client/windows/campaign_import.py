@@ -41,7 +41,6 @@ from king_phisher.client.widget import extras
 from king_phisher.errors import KingPhisherInputValidationError
 
 import advancedhttpserver
-from gi.repository import Gtk
 from gi.repository import GLib
 
 __all__ = ('ImportCampaignWindow',)
@@ -342,6 +341,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		Through this process after every major action, the thread will check
 		to see if it has been requested to stop.
 		"""
+		self.logger.debug("import campaign running in tid: 0x{0:x}".format(threading.current_thread().ident))
 		if not self.campaign_info:
 			return
 		# prevent user from changing campaign info during import
