@@ -237,7 +237,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 		try:
 			campaign_xml = ET.parse(target_file)
 		except ET.ParseError as error:
-			self.logger.error("cannot import campaign file: {0} not a valid xml file".format(target_file), error)
+			self.logger.error("cannot import campaign file: {0} (not a valid xml file)".format(target_file))
 			gui_utilities.show_dialog_error(
 				'Improper Format',
 				self.window,
@@ -247,7 +247,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 
 		root = campaign_xml.getroot()
 		if root.tag != 'king_phisher':
-			self.logger.error("cannot import campaign file: {0} not a valid King Phisher campaign XML file".format(target_file))
+			self.logger.error("cannot import campaign file: {0} (invalid root xml tag)".format(target_file))
 			gui_utilities.show_dialog_error(
 				'Improper Format',
 				self.window,
@@ -257,7 +257,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 
 		meta_data = root.find('metadata')
 		if meta_data.find('version').text < '1.3':
-			self.logger.error("cannot import campaign file: {0} version less then 1.3, file version is {}".format(target_file, meta_data.find('version').text))
+			self.logger.error("cannot import campaign file: {0} (incompatible version)".format(target_file))
 			gui_utilities.show_dialog_error(
 				'Invalid Version',
 				self.window,
@@ -267,7 +267,7 @@ class ImportCampaignWindow(gui_utilities.GladeGObject):
 
 		self.campaign_info = root.find('campaign')
 		if not self.campaign_info:
-			self.logger.error("cannot import campaign file: {0} no campaign data found".format(target_file))
+			self.logger.error("cannot import campaign file: {0} (no campaign data found)".format(target_file))
 			gui_utilities.show_dialog_error(
 				'No Campaign Data',
 				self.window,
