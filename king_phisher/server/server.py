@@ -36,6 +36,7 @@ import collections
 import json
 import logging
 import os
+import re
 import shutil
 import threading
 
@@ -484,6 +485,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		return
 
 	def _respond_file_check_id(self):
+		if re.match(r'^/\.well-known/acme-challenge/[a-zA-Z0-9\-_]{40,50}$', self.request_path):
+			self.server.logger.info('received request for .well-known/acme-challenge')
+			return
 		if not self.config.get('server.require_id'):
 			return
 		if self.message_id == self.config.get('server.secret_id'):
