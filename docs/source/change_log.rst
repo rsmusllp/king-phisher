@@ -14,6 +14,8 @@ Version 1.8.0
 
 * Install script now supports Red Hat Server 7
 * Support the client on OS X by using Docker
+* Support for issuing certificates  with acme while the server is running
+* Add a wrapping tool for certbot to make the process easier
 
 Version 1.7.1
 ^^^^^^^^^^^^^
