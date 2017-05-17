@@ -53,6 +53,11 @@ MAX_QUERIES = 10
 The maximum number of DNS queries allowed to take place during evaluation as
 defined within section 4.6.4 of :rfc:`7208`.
 """
+MAX_QUERIES_VOID = float('inf')
+"""
+The maximum number of DNS queries allowed to either return with rcode 0 and no
+answers or rcode 3 (Name Error) as defined within section 4.6.4 of :rfc:`7208`.
+"""
 
 QUALIFIERS = {
 	'+': SPFResult.PASS,
@@ -235,6 +240,7 @@ class SenderPolicyFramework(object):
 		"""
 		# dns lookup limit per https://tools.ietf.org/html/rfc7208#section-4.6.4
 		self.query_limit = MAX_QUERIES
+		self.query_limit_void = MAX_QUERIES_VOID
 		self.policy = None
 		"""
 		The human readable policy result, one of the
@@ -341,6 +347,11 @@ class SenderPolicyFramework(object):
 		if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
 			raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
 		answers = []
+		if len(response.answer) == 0 or rcode == dns.rcode.NXDOMAIN:
+			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameservers[0]))
+			self.query_limit_void -= 1
+			if self.query_limit_void < 0:
+				raise SPFPermError('DNS query void lookup limit reached')
 		for answer in response.answer:
 			answers.extend(answer.items)
 		return answers, response.additional
