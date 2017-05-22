@@ -31,6 +31,7 @@
 #
 
 import distutils.version
+import inspect
 import logging
 import textwrap
 import threading
@@ -48,6 +49,31 @@ else:
 	_reload = importlib.reload
 
 StrictVersion = distutils.version.StrictVersion
+
+def _recursive_reload(package, package_name, completed):
+	_reload(package)
+	completed.append(package)
+	for module in dir(package):
+		module = getattr(package, module)
+		if not inspect.ismodule(module):
+			continue
+		if not getattr(module, '__package__', '').startswith(package_name):
+			continue
+		if module in completed:
+			continue
+		_recursive_reload(module, package_name, completed)
+
+def recursive_reload(module):
+	"""
+	Reload *module* and if it is a package, recursively find and reload it's
+	imported sub-modules.
+
+	:param module: The module to reload.
+	:type module: module
+	:return: The reloaded module.
+	"""
+	_recursive_reload(module, module.__package__, [])
+	return module
 
 class OptionBase(object):
 	"""
@@ -335,7 +361,7 @@ class PluginManagerBase(object):
 			self._lock.release()
 			raise error
 		if reload_module:
-			_reload(module)
+			recursive_reload(module)
 		klass = getattr(module, 'Plugin', None)
 		if klass is None:
 			self._lock.release()

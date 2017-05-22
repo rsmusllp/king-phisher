@@ -31,6 +31,8 @@
 #
 
 import collections
+import os
+import tempfile
 import weakref
 
 from king_phisher import plugins
@@ -233,6 +235,7 @@ class ClientOptionPort(ClientOptionInteger):
 		kwargs['adjustment'] = Gtk.Adjustment(1, 1, 0xffff, 1, 10, 0)
 		super(ClientOptionPort, self).__init__(*args, **kwargs)
 
+# plugin base class
 class ClientPlugin(plugins.PluginBase):
 	"""
 	The base object to be inherited by plugins that are loaded into the King
@@ -373,6 +376,70 @@ class ClientPlugin(plugins.PluginBase):
 		self._server_event_subscriptions.append((name, event_types, attributes))
 		self.signal_connect(name, handler, gobject=server_events)
 
+# extended plugin classes
+class ClientPluginMailerAttachment(ClientPlugin):
+	"""
+	The base object to be inherited by plugins that intend to modify attachment
+	files such as for inserting the tracking URL into them. Plugins which
+	inherit from this base class must override the
+	:py:meth:`.process_attachment_file` method which will automatically be
+	called for each target a user is sending messages to.
+	"""
+	def __init__(self, *args, **kwargs):
+		super(ClientPluginMailerAttachment, self).__init__(*args, **kwargs)
+		mailer_tab = self.application.main_tabs['mailer']
+		self.signal_connect('send-target', self._signal_send_target, gobject=mailer_tab)
+
+	def _signal_send_target(self, _, target):
+		config = self.application.config
+		input_path = config.get('mailer.attachment_file.post_processing')
+		output_path = input_path
+		if not input_path:
+			input_path = config.get('mailer.attachment_file')
+			if not input_path:
+				return
+			output_path = os.path.join(tempfile.gettempdir(), os.path.basename(input_path))
+
+		try:
+			new_output_path = self.process_attachment_file(input_path, output_path, target) or output_path
+		except Exception as error:
+			# delete the output file if process_attachment_file failed
+			if os.access(output_path, os.W_OK):
+				os.remove(output_path)
+			raise error
+
+		if new_output_path != output_path:
+			if os.access(output_path, os.W_OK):
+				os.remove(output_path)
+			if not os.path.isfile(new_output_path):
+				self.logger.warning('plugin returned a new output path, but the file does not exist')
+		output_path = new_output_path
+
+		# set the config option if the output file was created
+		if os.path.isfile(output_path):
+			config['mailer.attachment_file.post_processing'] = output_path
+
+	def process_attachment_file(self, input_path, output_path, target):
+		"""
+		This function is automatically called for each target that a user is
+		sending messages to. This method is intended to process the specified
+		attachment file. This method removes the need to manually cleanup the
+		*output_path* because it is handled automatically as necessary.
+
+		:param str input_path: The path to the input file to process. This path
+			is guaranteed to be an existing file that is readable.
+		:param str output_path: The path to optionally write the output file
+			to. This path may or may not be the same as *input_path*. If the
+			plugin needs to rename the file, to for example change the
+			extension, then the new output_path must be returned.
+		:param target: The target information for the messages intended recipient.
+		:type target: :py:class:`.MessageTarget`
+		:return: None or an updated value for *output_path* in the case that
+			the plugin renames it.
+		"""
+		raise NotImplementedError('the process_attachment_file method must be defined by the plugin')
+
+# plugin manager class
 class ClientPluginManager(plugins.PluginManagerBase):
 	"""
 	The manager for plugins loaded into the King Phisher client application.

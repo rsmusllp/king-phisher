@@ -245,6 +245,7 @@ class SSHTCPForwarder(threading.Thread):
 		return self._forward_server.server_address
 
 	def run(self):
+		self.logger.debug("ssh port forwarding running in tid: 0x{0:x}".format(threading.current_thread().ident))
 		self._forward_server.serve_forever()
 
 	def start(self):

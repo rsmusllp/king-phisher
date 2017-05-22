@@ -31,6 +31,7 @@
 #
 
 import os
+import sys
 import tempfile
 import xml.etree.ElementTree as ElementTree
 import zipfile
@@ -67,3 +68,21 @@ def remove_office_metadata(file_name):
 				zout.writestr(item, data)
 	os.remove(file_name)
 	os.rename(tmpname, file_name)
+
+def main():
+	if len(sys.argv) < 2:
+		print("usage: {0} [path to document]".format(os.path.basename(sys.argv[0])))
+		return 0
+
+	file_path = sys.argv[1]
+	if not os.path.isfile(file_path):
+		print('[-] the specified path is not a file')
+		return 1
+	if not os.access(file_path, os.R_OK | os.W_OK):
+		print('[-] insufficient permissions to the specified file')
+		return 1
+	remove_office_metadata(file_path)
+	return 0
+
+if __name__ == '__main__':
+	sys.exit(main())

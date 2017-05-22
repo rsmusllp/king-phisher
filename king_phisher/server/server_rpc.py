@@ -134,6 +134,7 @@ def rpc_shutdown(handler):
 	"""
 	shutdown_thread = threading.Thread(target=handler.server.kp_shutdown)
 	shutdown_thread.start()
+	rpc_logger.debug("shutdown routine running in tid: 0x{0:x}".format(shutdown_thread.ident))
 	return
 
 @register_rpc('/version', log_call=True)

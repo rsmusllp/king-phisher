@@ -53,6 +53,11 @@ MAX_QUERIES = 10
 The maximum number of DNS queries allowed to take place during evaluation as
 defined within section 4.6.4 of :rfc:`7208`.
 """
+MAX_QUERIES_VOID = float('inf')
+"""
+The maximum number of DNS queries allowed to either return with rcode 0 and no
+answers or rcode 3 (Name Error) as defined within section 4.6.4 of :rfc:`7208`.
+"""
 
 QUALIFIERS = {
 	'+': SPFResult.PASS,
@@ -137,7 +142,11 @@ class SPFRecord(object):
 
 class SPFError(Exception):
 	"""Base exception for errors raised by this module."""
-	pass
+	def __init__(self, message):
+		self.message = message
+
+	def __repr__(self):
+		return "<{0} message='{1}' >".format(self.__class__.__name__, self.message)
 
 class SPFPermError(SPFError):
 	"""
@@ -231,6 +240,7 @@ class SenderPolicyFramework(object):
 		"""
 		# dns lookup limit per https://tools.ietf.org/html/rfc7208#section-4.6.4
 		self.query_limit = MAX_QUERIES
+		self.query_limit_void = MAX_QUERIES_VOID
 		self.policy = None
 		"""
 		The human readable policy result, one of the
@@ -261,7 +271,7 @@ class SenderPolicyFramework(object):
 
 	def _check_host(self, ip, domain, sender, top_level=True):
 		try:
-			answers = self._dns_query(domain, 'TXT')
+			answers, _ = self._dns_query(domain, 'TXT')
 		except SPFTempError:
 			if not top_level:
 				raise
@@ -320,6 +330,7 @@ class SenderPolicyFramework(object):
 		return SPFResult.NEUTRAL
 
 	def _dns_query(self, qname, qtype):
+		# returns answers, additional
 		self.query_limit -= 1
 		if self.query_limit < 0:
 			raise SPFPermError('DNS query limit reached')
@@ -336,9 +347,14 @@ class SenderPolicyFramework(object):
 		if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
 			raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
 		answers = []
+		if len(response.answer) == 0 or rcode == dns.rcode.NXDOMAIN:
+			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameservers[0]))
+			self.query_limit_void -= 1
+			if self.query_limit_void < 0:
+				raise SPFPermError('DNS query void lookup limit reached')
 		for answer in response.answer:
 			answers.extend(answer.items)
-		return answers
+		return answers, response.additional
 
 	def _evaluate_mechanism(self, ip, domain, sender, mechanism, rvalue):
 		if rvalue is None:
@@ -352,7 +368,8 @@ class SenderPolicyFramework(object):
 		elif mechanism == 'all':
 			return True
 		elif mechanism == 'exists':
-			if len(self._dns_query(rvalue, 'A')):
+			answers, _ = self._dns_query(rvalue, 'A')
+			if len(answers):
 				return True
 		elif mechanism == 'include':
 			# pass results in match per https://tools.ietf.org/html/rfc7208#section-5.2
@@ -376,9 +393,13 @@ class SenderPolicyFramework(object):
 			if ip in ip_network:
 				return True
 		elif mechanism == 'mx':
-			for mx_record in self._dns_query(rvalue, 'MX'):
+			answers, additional = self._dns_query(rvalue, 'MX')
+			for mx_record in answers:
 				mx_record = str(mx_record.exchange).rstrip('.')
-				if self._hostname_matches_ip(ip, mx_record):
+				found, matches = self._hostname_matches_additional(ip, mx_record, additional)
+				if matches:
+					return True
+				if not found and self._hostname_matches_ip(ip, mx_record):
 					return True
 		elif mechanism == 'ptr':
 			if isinstance(ip, ipaddress.IPv4Address):
@@ -391,7 +412,8 @@ class SenderPolicyFramework(object):
 			ip = ip.split('.')
 			ip.reverse()
 			ip = '.'.join(ip)
-			for ptr_record in self._dns_query(ip + '.' + suffix + '.arpa', 'PTR'):
+			answers, _ = self._dns_query(ip + '.' + suffix + '.arpa', 'PTR')
+			for ptr_record in answers:
 				ptr_record = str(ptr_record.target).rstrip('.')
 				if ptr_domain == ptr_record or ptr_domain.endswith('.' + ptr_record):
 					return True
@@ -399,9 +421,30 @@ class SenderPolicyFramework(object):
 			raise SPFPermError("unsupported mechanism type: '{0}'".format(mechanism))
 		return False
 
+	def _hostname_matches_additional(self, ip, name, additional):
+		"""
+		Search for *name* in *additional* and if it is found, check that it
+		includes *ip*.
+
+		:param ip: The IP address to search for.
+		:type ip: :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
+		:param str name: The name to search for.
+		:param tuple additional: The additional data returned from a dns query to search in.
+		:return: The first value is whether or not *name* was found in *additional*, the second is if *ip* was also found.
+		:rtype: tuple
+		"""
+		rdtype = (1 if isinstance(ip, ipaddress.IPv4Address) else 28)
+		ip = str(ip)
+		additional = (entry for entry in additional if entry.rdtype == rdtype)
+		entry = next((entry for entry in additional if str(entry.name)[:-1] == name), None)
+		if entry is None:
+			return False, None
+		item = next((item for item in entry.items if item.address == ip), None)
+		return True, item is not None
+
 	def _hostname_matches_ip(self, ip, name):
 		qtype = ('A' if isinstance(ip, ipaddress.IPv4Address) else 'AAAA')
-		answers = self._dns_query(name, qtype)
+		answers, _ = self._dns_query(name, qtype)
 		return str(ip) in tuple(a.address for a in answers)
 
 	def expand_macros(self, value, ip, domain, sender):

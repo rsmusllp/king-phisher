@@ -7,7 +7,9 @@
 *.mmdb
 *.py[cod]
 *.yml
+
 .pylintrc
+.python-version
 build/*
 dist/*
 docs/build/*

@@ -282,11 +282,11 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			gui_utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one.')
 			response = self.dialog.run()
 		if response == Gtk.ResponseType.APPLY:
-			campaign_id = model.get_value(tree_iter, 0)
-			self.config['campaign_id'] = campaign_id
+			new_campaign_id = model.get_value(tree_iter, 0)
+			self.config['campaign_id'] = new_campaign_id
 			campaign_name = model.get_value(tree_iter, 1)
 			self.config['campaign_name'] = campaign_name
-			if not (campaign_id == old_campaign_id and campaign_name == old_campaign_name):
-				self.application.emit('campaign-set', campaign_id)
+			if not (new_campaign_id == old_campaign_id and campaign_name == old_campaign_name):
+				self.application.emit('campaign-set', old_campaign_id, new_campaign_id)
 		self.dialog.destroy()
 		return response

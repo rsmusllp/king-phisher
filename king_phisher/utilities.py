@@ -51,8 +51,9 @@ from king_phisher import constants
 from king_phisher import its
 from king_phisher import version
 
-from dateutil import tz
-from smoke_zephyr.utilities import which
+import dateutil
+import email_validator
+import smoke_zephyr.utilities
 
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,9}$', flags=re.IGNORECASE)
 TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -254,8 +255,8 @@ def datetime_local_to_utc(dt):
 	:return: The time converted to the UTC timezone.
 	:rtype: :py:class:`datetime.datetime`
 	"""
-	dt = dt.replace(tzinfo=tz.tzlocal())
-	dt = dt.astimezone(tz.tzutc())
+	dt = dt.replace(tzinfo=dateutil.tz.tzlocal())
+	dt = dt.astimezone(dateutil.tz.tzutc())
 	return dt.replace(tzinfo=None)
 
 def datetime_utc_to_local(dt):
@@ -268,8 +269,8 @@ def datetime_utc_to_local(dt):
 	:return: The time converted to the local timezone.
 	:rtype: :py:class:`datetime.datetime`
 	"""
-	dt = dt.replace(tzinfo=tz.tzutc())
-	dt = dt.astimezone(tz.tzlocal())
+	dt = dt.replace(tzinfo=dateutil.tz.tzutc())
+	dt = dt.astimezone(dateutil.tz.tzlocal())
 	return dt.replace(tzinfo=None)
 
 def format_datetime(dt, encoding='utf-8'):
@@ -302,7 +303,11 @@ def is_valid_email_address(email_address):
 	"""
 	if email_address is None:
 		return False
-	return EMAIL_REGEX.match(email_address) != None
+	try:
+		email_validator.validate_email(email_address, allow_empty_local=False, check_deliverability=False)
+	except email_validator.EmailNotValidError:
+		return False
+	return True
 
 def open_uri(uri):
 	"""
@@ -315,13 +320,13 @@ def open_uri(uri):
 	"""
 	proc_args = []
 	if sys.platform.startswith('win'):
-		proc_args.append(which('cmd.exe'))
+		proc_args.append(smoke_zephyr.utilities.which('cmd.exe'))
 		proc_args.append('/c')
 		proc_args.append('start')
-	elif which('gvfs-open'):
-		proc_args.append(which('gvfs-open'))
-	elif which('xdg-open'):
-		proc_args.append(which('xdg-open'))
+	elif smoke_zephyr.utilities.which('gvfs-open'):
+		proc_args.append(smoke_zephyr.utilities.which('gvfs-open'))
+	elif smoke_zephyr.utilities.which('xdg-open'):
+		proc_args.append(smoke_zephyr.utilities.which('xdg-open'))
 	else:
 		raise RuntimeError('could not find suitable application to open uri')
 	proc_args.append(uri)

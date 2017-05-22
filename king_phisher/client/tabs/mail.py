@@ -47,6 +47,7 @@ from king_phisher.client import dialogs
 from king_phisher.client import export
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
+from king_phisher.client import plugins
 from king_phisher.client.widget import completion_providers
 from king_phisher.client.widget import extras
 from king_phisher.client.widget import managers
@@ -157,6 +158,13 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 				sha1.update(data)
 		self.text_insert("  MD5:  {0}\n".format(md5.hexdigest()))
 		self.text_insert("  SHA1: {0}\n".format(sha1.hexdigest()))
+
+		enabled_plugins = self.application.plugin_manager.enabled_plugins.values()
+		attachment_plugins = [plugin for plugin in enabled_plugins if isinstance(plugin, plugins.ClientPluginMailerAttachment)]
+		if attachment_plugins:
+			self.text_insert("The following {0:,} attachment-modifying plugin{1} enabled:\n".format(len(attachment_plugins), ' is' if len(attachment_plugins) == 1 else 's  are'))
+			for plugin in attachment_plugins:
+				self.text_insert("  - {0}\n".format(plugin.title))
 		return True
 
 	def _sender_precheck_campaign(self):
@@ -573,16 +581,22 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		self.textbuffer = GtkSource.Buffer()
 		"""The :py:class:`Gtk.TextBuffer` used by the :py:attr:textview` attribute."""
 		self.textview.set_buffer(self.textbuffer)
-		self.textview.modify_font(Pango.FontDescription(self.config['text_font']))
 		self.language_manager = GtkSource.LanguageManager()
 		self.textbuffer.set_language(self.language_manager.get_language('html'))
 		self.textbuffer.set_highlight_syntax(True)
+
+		self.textview.modify_font(Pango.FontDescription(self.config['text_font']))
+		self.textview.set_property('highlight-current-line', self.config.get('text_source.highlight_line', True))
+		self.textview.set_property('indent-width', self.config.get('text_source.tab_width', 4))
+		self.textview.set_property('insert-spaces-instead-of-tabs', not self.config.get('text_source.hardtabs', False))
+		self.textview.set_property('tab-width', self.config.get('text_source.tab_width', 4))
+
 		self.toolbutton_save_html_file = self.gobjects['toolbutton_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
 		self.textview.connect('key-press-event', self.signal_textview_key_pressed)
 
 		scheme_manager = GtkSource.StyleSchemeManager()
-		style_scheme_name = self.config['text_source_theme']
+		style_scheme_name = self.config['text_source.theme']
 		style_scheme = scheme_manager.get_scheme(style_scheme_name)
 		if style_scheme:
 			self.textbuffer.set_style_scheme(style_scheme)
@@ -610,6 +624,9 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		self.toolbutton_save_html_file.set_sensitive(True)
 		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
+		current_text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
+		if html_data == current_text:
+			return
 		self.textbuffer.begin_not_undoable_action()
 		self.textbuffer.set_text(html_data)
 		self.textbuffer.end_not_undoable_action()
@@ -817,8 +834,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.label = Gtk.Label(label='Configuration')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
 		super(MailSenderConfigurationTab, self).__init__(*args, **kwargs)
-		self.application.connect('campaign-changed', self.signal_kpc_campaign_load)
-		self.application.connect('campaign-set', self.signal_kpc_campaign_load)
+		self.application.connect('campaign-changed', self.signal_kpc_campaign_changed)
+		self.application.connect('campaign-set', self.signal_kpc_campaign_set)
 		self.application.connect('exit', self.signal_kpc_exit)
 
 		self.message_type = managers.RadioButtonGroupManager(self, 'message_type')
@@ -827,6 +844,14 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.target_field.set_active(self.config['mailer.target_field'])
 		self.target_type = managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
+
+	def _campaign_load(self, campaign_id):
+		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
+		if campaign.company_id is None:
+			self.config['mailer.company_name'] = None
+		else:
+			self.config['mailer.company_name'] = campaign.company.name
+		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
 
 	def objects_load_from_config(self):
 		super(MailSenderConfigurationTab, self).objects_load_from_config()
@@ -953,13 +978,11 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		if expander.get_expanded():
 			self.gobjects['viewport'].queue_draw()
 
-	def signal_kpc_campaign_load(self, _, campaign_id):
-		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
-		if campaign.company_id is None:
-			self.config['mailer.company_name'] = None
-		else:
-			self.config['mailer.company_name'] = campaign.company.name
-		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
+	def signal_kpc_campaign_changed(self, _, campaign_id):
+		self._campaign_load(campaign_id)
+
+	def signal_kpc_campaign_set(self, _, old_campaign_id, new_campaign_id):
+		self._campaign_load(new_campaign_id)
 
 	def signal_kpc_exit(self, kpc):
 		self.objects_save_to_config()
@@ -1055,9 +1078,9 @@ class MailSenderTab(_GObject_GObject):
 			tab.box.show()
 		self.notebook.show()
 
-		self.application.connect('campaign-set', self.signal_kp_campaign_set)
+		self.application.connect('campaign-set', self.signal_kpc_campaign_set)
 
-	def signal_kp_campaign_set(self, _, campaign_id):
+	def signal_kpc_campaign_set(self, *_):
 		context_id = self.status_bar.get_context_id('campaign name')
 		self.status_bar.pop(context_id)
 		self.status_bar.push(context_id, self.config['campaign_name'])

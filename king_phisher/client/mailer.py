@@ -465,7 +465,7 @@ class MailSenderThread(threading.Thread):
 			target = MessageTarget(
 				first_name=target_name[0].strip(),
 				last_name=target_name[1].strip(),
-				email_address=self.config['mailer.target_email_address'],
+				email_address=self.config['mailer.target_email_address'].strip(),
 				department=None,
 				uid=utilities.make_message_uid()
 			)
@@ -475,7 +475,7 @@ class MailSenderThread(threading.Thread):
 			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
 			for line_no, raw_target in enumerate(csv_reader, 1):
 				if its.py_v2:
-					# this intentionally will cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
+					# this will intentionally cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
 					# when csv.DictReader is initialized
 					raw_target = dict((k, (v if v is None else v.decode('utf-8'))) for k, v in raw_target.items())
 				for required_field in ('first_name', 'last_name', 'email_address'):
@@ -513,6 +513,7 @@ class MailSenderThread(threading.Thread):
 			self.logger.error("the configured target type '{0}' is unsupported".format(target_type))
 
 	def run(self):
+		self.logger.debug("mailer routine running in tid: 0x{0:x}".format(threading.current_thread().ident))
 		self.running.set()
 		self.should_stop.clear()
 		self.paused.clear()
@@ -672,13 +673,28 @@ class MailSenderThread(threading.Thread):
 		:rtype: :py:class:`.MessageAttachments`
 		"""
 		files = []
-		if self.config.get('mailer.attachment_file'):
-			attachment = self.config['mailer.attachment_file']
-			attachfile = mime.base.MIMEBase(*mimetypes.guess_type(attachment))
-			attachfile.set_payload(open(attachment, 'rb').read())
+		# allow the attachment_file.post_processing to be attached instead of
+		# attachment_file so attachment_file can be used as an input for
+		# arbitrary operations to modify without over writing the original
+		attachment_file = self.config.get('mailer.attachment_file.post_processing')
+		delete_attachment_file = False
+		if attachment_file is not None:
+			if not isinstance(attachment_file, str):
+				raise TypeError('config option mailer.attachment_file.post_processing is not a readable file')
+			if not os.path.isfile(attachment_file) and os.access(attachment_file, os.R_OK):
+				raise ValueError('config option mailer.attachment_file.post_processing is not a readable file')
+			self.config['mailer.attachment_file.post_processing'] = None
+			delete_attachment_file = True
+		else:
+			attachment_file = self.config.get('mailer.attachment_file')
+		if attachment_file:
+			attachfile = mime.base.MIMEBase(*mimetypes.guess_type(attachment_file))
+			attachfile.set_payload(open(attachment_file, 'rb').read())
 			encoders.encode_base64(attachfile)
-			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment)))
+			attachfile.add_header('Content-Disposition', "attachment; filename=\"{0}\"".format(os.path.basename(attachment_file)))
 			files.append(attachfile)
+			if delete_attachment_file and os.access(attachment_file, os.W_OK):
+				os.remove(attachment_file)
 
 		images = []
 		for attachment_file, attachment_name in template_environment.attachment_images.items():

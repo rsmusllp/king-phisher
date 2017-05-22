@@ -15,6 +15,8 @@ Data
 
 .. autodata:: king_phisher.spf.MAX_QUERIES
 
+.. autodata:: king_phisher.spf.MAX_QUERIES_VOID
+
 .. autodata:: king_phisher.spf.QUALIFIERS
    :annotation:
 

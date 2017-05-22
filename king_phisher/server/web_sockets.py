@@ -237,6 +237,7 @@ class WebSocketsManager(object):
 			web_socket.publish(event)
 
 	def _worker_routine(self):
+		self.logger.debug("web socket manager worker running in tid: 0x{0:x}".format(threading.current_thread().ident))
 		while True:
 			job = self._work_queue.get()
 			if job is None:

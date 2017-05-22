@@ -2,6 +2,8 @@
   "dashboard.bottom": "VisitsTimeline",
   "dashboard.top_left": "Overview",
   "dashboard.top_right": "VisitorInfo",
+  "mailer.attachment_file": null,
+  "mailer.attachment_file.post_processing": null,
   "mailer.max_messages_per_connection": 5,
   "mailer.message_type": "email",
   "mailer.target_field": "to",
@@ -28,5 +30,5 @@
   "ssh_server": "localhost:22",
   "ssh_username": "",
   "text_font": "monospace 11",
-  "text_source_theme": "cobalt"
+  "text_source.theme": "cobalt"
 }

@@ -40,14 +40,17 @@ object.
    :signal flags: ``SIGNAL_ACTION | SIGNAL_RUN_LAST``
    :param str campaign_id: The ID of the campaign.
 
-.. py:function:: campaign-set(campaign_id)
+.. py:function:: campaign-set(old_campaign_id, new_campaign_id)
 
    This signal is emitted when the user sets the current campaign. Subscribers
    to this signal can use it to update and refresh information for the current
-   campaign.
+   campaign. The :py:attr:`~KingPhisherClientApplication.config` "campaign_id"
+   and "campaign_name" keys have already been updated with the new values when
+   this signal is emitted.
 
    :signal flags: ``SIGNAL_RUN_FIRST``
-   :param str campaign_id: The ID of the campaign.
+   :param str old_campaign_id: The ID of the old campaign or None if the client is selecting one for the first time.
+   :param str new_campaign_id: The ID of the new campaign.
 
 .. py:function:: config-load(load_defaults)
 

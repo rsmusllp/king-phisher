@@ -36,6 +36,7 @@ import collections
 import json
 import logging
 import os
+import re
 import shutil
 import threading
 
@@ -63,6 +64,7 @@ from smoke_zephyr import job
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 	def __init__(self, *args, **kwargs):
+		self.logger.debug("request handler running in tid: 0x{0:x}".format(threading.current_thread().ident))
 		# this is for attribute documentation
 		self.config = None
 		"""A reference to the main server instance :py:attr:`.KingPhisherServer.config`."""
@@ -430,7 +432,11 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		except (TypeError, jinja2.TemplateError) as error:
 			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
 			raise errors.KingPhisherAbortRequestError()
-		if getattr(template_module, 'require_basic_auth', False) and not all(self.get_query_creds(check_query=False)):
+
+		require_basic_auth = getattr(template_module, 'require_basic_auth', False)
+		require_basic_auth &= not all(self.get_query_creds(check_query=False))
+		require_basic_auth &= self.message_id != self.config.get('server.secret_id')
+		if require_basic_auth:
 			mime_type = 'text/html'
 			self.send_response(401)
 			headers.append(('WWW-Authenticate', "Basic realm=\"{0}\"".format(getattr(template_module, 'basic_auth_realm', 'Authentication Required'))))
@@ -479,6 +485,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		return
 
 	def _respond_file_check_id(self):
+		if re.match(r'^/\.well-known/acme-challenge/[a-zA-Z0-9\-_]{40,50}$', self.request_path):
+			self.server.logger.info('received request for .well-known/acme-challenge')
+			return
 		if not self.config.get('server.require_id'):
 			return
 		if self.message_id == self.config.get('server.secret_id'):

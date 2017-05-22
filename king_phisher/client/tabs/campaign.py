@@ -117,7 +117,7 @@ class CampaignViewGenericTab(gui_utilities.GladeGObject):
 				gui_utilities.gtk_sync()
 			self.logger.debug("joined thread: {0}.loader_thread (tid: 0x{1:x})".format(self.__class__.__name__, self.loader_thread.ident))
 
-	def signal_kpc_campaign_set(self, kpc, cid):
+	def signal_kpc_campaign_set(self, *_):
 		self.load_campaign_information()
 
 class CampaignViewGenericTableTab(CampaignViewGenericTab):
@@ -186,14 +186,15 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 					row_data = list(map(self.format_cell_data, row_data))
 					row_data.insert(0, str(row.id))
 					gui_utilities.glib_idle_add_wait(model.append, row_data)
+				ti = gui_utilities.gtk_list_store_search(model, str(row.id))
+				if ti is None:
+					self.logger.warning("received server db event: {0} for non-existent row {1}:{2}".format(event_type, self.table_name, str(row.id)))
+					break
 				if case('deleted'):
-					ti = gui_utilities.gtk_list_store_search(model, str(row.id))
-					if ti is not None:
-						model.remove(ti)
+					model.remove(ti)
 					break
 				if case('updated'):
 					row_data = self.format_node_data(get_node(row.id))
-					ti = gui_utilities.gtk_list_store_search(model, str(row.id))
 					for idx, cell_data in enumerate(row_data, 1):
 						model[ti][idx] = self.format_cell_data(cell_data)
 					break

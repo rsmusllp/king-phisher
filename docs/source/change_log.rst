@@ -7,10 +7,27 @@ Phisher.
 Version 1.x.x
 -------------
 
+Version 1.8.0
+^^^^^^^^^^^^^
+
+*In Progress*
+
+* Install script now supports Red Hat Server 7
+* Support the client on OS X by using Docker
+* Support for issuing certificates  with acme while the server is running
+* Add a wrapping tool for certbot to make the process easier
+
+Version 1.7.1
+^^^^^^^^^^^^^
+
+Released :release:`1.7.1` on April 14th, 2017
+
+* Bug fix in the Windows build for HTTPS connections from the requests package
+
 Version 1.7.0
 ^^^^^^^^^^^^^
 
-Released :release:`1.6.0` on April 4th, 2017
+Released :release:`1.7.0` on April 4th, 2017
 
 * Better error messages for malformed server configuration files
 * Support for sending to targets via To / CC / BCC fields
