@@ -7,6 +7,7 @@
 # Project Home Page: https://github.com/securestate/king-phisher/
 # Authors:
 #   Erik Daguerre
+#   Hunter DeMeyer
 #
 ###############################################################################
 
@@ -57,11 +58,12 @@ function show_help {
 	echo "King Phisher uninstall Script"
 	echo ""
 	echo "optional arguments"
-	echo "  -h, --help            show this help message and exit"
-	echo "  -n, --no              answer no to all questions"
-	echo "  -y, --yes             answer yes to all questions"
-	echo "  --delete-database     delete the King Phisher database"
-	echo "  --delete-directory    delete the King Phisher directory"
+	echo "  -h, --help              show this help message and exit"
+	echo "  -n, --no                answer no to all questions"
+	echo "  -y, --yes               answer yes to all questions"
+	echo "  --delete-database       delete the King Phisher database"
+	echo "  --delete-directory      delete the King Phisher directory"
+	echo "  --delete-config [USER]  delete the King Phisher configuration, optionally for USER" 
 	return 0;
 }
 
@@ -91,6 +93,20 @@ while :; do
 		--delete-directory)
 			KING_PHISHER_DELETE_DIRECTORY="x"
 			;;
+		--delete-config)
+			KING_PHISHER_DELETE_CONFIG="x"
+			user="$(logname)"
+			if [ ! -z $2 ]; then
+				if [ ! "$(echo $2 | cut -c1)" == "-" ]; then
+					if [ ! "$(id -u $2)" == "" ]; then
+						user="$2"
+					else
+						exit $E_USAGE
+					fi
+				fi
+			fi
+			;;
+
 		--)
 			shift
 			break
@@ -137,6 +153,15 @@ if [ ! -z $KING_PHISHER_DELETE_DIRECTORY ]; then
 	if [ $KING_PHISHER_DELETE_CONFIRM == "yes" ]; then
 		rm -rf $KING_PHISHER_DIR
 		echo "The King Phisher directory has been removed"
+	fi
+fi
+
+if [ ! -z $KING_PHISHER_DELETE_CONFIG ]; then
+	echo "Warning: The configuration for $user will be removed"
+	prompt_yes_or_no "Are you sure you want to continue?" "no" KING_PHISHER_DELETE_CONFIRM
+	if [ "$KING_PHISHER_DELETE_CONFIRM" == "yes" ]; then
+		rm -rf "/home/$user/.config/king-phisher"
+		echo "The King Phisher configuration for $user has been removed"
 	fi
 fi
 
