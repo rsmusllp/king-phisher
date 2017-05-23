@@ -178,7 +178,8 @@ class MissingHostKeyPolicy(paramiko.MissingHostKeyPolicy):
 
 		if add_host_key:
 			self.logger.debug("setting ssh host key {0} for {1}".format(key.get_name(), hostname))
-			host_keys.pop(hostname)
+			if hostname in host_keys:
+				host_keys.pop(hostname)
 			host_keys.add(hostname, key.get_name(), key)
 			try:
 				host_keys.save(known_hosts_file)
