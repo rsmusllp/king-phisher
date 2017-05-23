@@ -80,6 +80,7 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 		:type manager: :py:class:`.WebSocketsManager`
 		"""
 		handler.server.throttle_semaphore.release()
+		handler.connection.settimeout(None)
 		self._subscriptions = {}
 		self.rpc_session = handler.rpc_session
 		if self.rpc_session.event_socket is not None:

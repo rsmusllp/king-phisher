@@ -59,7 +59,8 @@ from king_phisher.server.database import models as db_models
 
 import advancedhttpserver
 import jinja2
-from smoke_zephyr import job
+import smoke_zephyr.job
+import smoke_zephyr.utilities
 
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
@@ -134,6 +135,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		self.path = '/' + self.vhost + self.path
 
 	def _do_http_method(self, *args, **kwargs):
+		# set a timeout on the request handler socket as a fail safe
+		self.connection.settimeout(smoke_zephyr.utilities.parse_timespan('20s'))
 		if self.command != 'RPC':
 			self.adjust_path()
 		http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
@@ -145,6 +148,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				self.respond_not_found()
 		finally:
 			self.server.throttle_semaphore.release()
+			self.connection.settimeout(None)
 	do_GET = _do_http_method
 	do_HEAD = _do_http_method
 	do_POST = _do_http_method
@@ -785,7 +789,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			required_group=config.get_if_exists('server.authentication.group'),
 			pam_service=config.get_if_exists('server.authentication.pam_service', 'sshd')
 		)
-		self.job_manager = job.JobManager(logger_name='KingPhisher.Server.JobManager')
+		self.job_manager = smoke_zephyr.job.JobManager(logger_name='KingPhisher.Server.JobManager')
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
