@@ -72,6 +72,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		self.path = None
 		"""The resource path of the current HTTP request."""
 		self.rpc_session = None
+		self.semaphore_acquired = False
 		super(KingPhisherRequestHandler, self).__init__(*args, **kwargs)
 
 	def on_init(self):
@@ -134,21 +135,35 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			raise errors.KingPhisherAbortRequestError()
 		self.path = '/' + self.vhost + self.path
 
+	def semaphore_acquire(self):
+		if self.semaphore_acquired:
+			raise RuntimeError('the request semaphore has already been acquired')
+		self.server.throttle_semaphore.acquire()
+		self.semaphore_acquired = True
+
+	def semaphore_release(self):
+		if not self.semaphore_acquired:
+			raise RuntimeError('the request semaphore has not been acquired')
+		self.server.throttle_semaphore.release()
+		self.semaphore_acquired = False
+
 	def _do_http_method(self, *args, **kwargs):
 		# set a timeout on the request handler socket as a fail safe
 		self.connection.settimeout(smoke_zephyr.utilities.parse_timespan('20s'))
-		if self.command != 'RPC':
+		if self.command == 'RPC':
+			self.semaphore_acquire()
+		else:
 			self.adjust_path()
 		http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
-		self.server.throttle_semaphore.acquire()
 		try:
 			http_method_handler(*args, **kwargs)
 		except errors.KingPhisherAbortRequestError as error:
 			if not error.response_sent:
 				self.respond_not_found()
 		finally:
-			self.server.throttle_semaphore.release()
-			self.connection.settimeout(None)
+			if self.semaphore_acquired:
+				self.semaphore_release()
+		self.connection.settimeout(None)
 	do_GET = _do_http_method
 	do_HEAD = _do_http_method
 	do_POST = _do_http_method
@@ -398,7 +413,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		signals.safe_send('response-sent', self.logger, self, code=code, message=message)
 
 	def respond_file(self, file_path, attachment=False, query=None):
+		self.semaphore_acquire()
 		self._respond_file_check_id()
+		self.semaphore_release()
 		file_path = os.path.abspath(file_path)
 		mime_type = self.guess_mime_type(file_path)
 		if attachment or (mime_type != 'text/html' and mime_type != 'text/plain'):
@@ -415,6 +432,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.server.logger.error("unicode error {0} in template file: {1}:{2}-{3}".format(error.reason, file_path, error.start, error.end))
 			raise errors.KingPhisherAbortRequestError()
 
+		self.semaphore_acquire()
 		template_data = b''
 		headers = []
 		template_vars = {
@@ -434,6 +452,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		try:
 			template_module = template.make_module(template_vars)
 		except (TypeError, jinja2.TemplateError) as error:
+			self.semaphore_release()
 			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
 			raise errors.KingPhisherAbortRequestError()
 
@@ -448,6 +467,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			try:
 				template_data = template.render(template_vars)
 			except (TypeError, jinja2.TemplateError) as error:
+				self.semaphore_release()
 				self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
 				raise errors.KingPhisherAbortRequestError()
 			self.send_response(200)
@@ -465,6 +485,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.handle_page_visit()
 		except Exception as error:
 			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
+		self.semaphore_release()
 
 		self.end_headers()
 		self.wfile.write(template_data)
@@ -565,14 +586,17 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.logger.error('dead drop request received with invalid \'token\' data')
 			return
 
+		self.semaphore_acquire()
 		session = db_manager.Session()
 		deployment = db_manager.get_row_by_id(session, db_models.DeaddropDeployment, data.get('deaddrop_id'))
 		if not deployment:
 			session.close()
+			self.semaphore_release()
 			self.logger.error('dead drop request received for an unknown campaign')
 			return
 		if deployment.campaign.has_expired:
 			session.close()
+			self.semaphore_release()
 			self.logger.info('dead drop request received for an expired campaign')
 			return
 
@@ -580,6 +604,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		local_hostname = data.get('local_hostname')
 		if local_username is None or local_hostname is None:
 			session.close()
+			self.semaphore_release()
 			self.logger.error('dead drop request received with missing data')
 			return
 		local_ip_addresses = data.get('local_ip_addresses')
@@ -606,6 +631,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		query = query.filter_by(campaign_id=deployment.campaign_id)
 		visit_count = query.count()
 		session.close()
+		self.semaphore_release()
 		if new_connection and visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
 			alert_text = "{0} deaddrop connections reached for campaign: {{campaign_name}}".format(visit_count)
 			self.server.job_manager.job_run(self.issue_alert, (alert_text, deployment.campaign_id))
@@ -625,6 +651,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		msg_id = self.get_query('id')
 		if not msg_id:
 			return
+		self.semaphore_acquire()
 		session = db_manager.Session()
 		query = session.query(db_models.Message)
 		query = query.filter_by(id=msg_id, opened=None)
@@ -636,6 +663,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			session.commit()
 		session.close()
 		signals.safe_send('email-opened', self.logger, self)
+		self.semaphore_release()
 
 	def handle_javascript_hook(self, query):
 		kp_hook_js = find.data_file('javascript_hook.js')

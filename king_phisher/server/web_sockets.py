@@ -79,7 +79,6 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 		:param manager: The manager that this event socket should register with.
 		:type manager: :py:class:`.WebSocketsManager`
 		"""
-		handler.server.throttle_semaphore.release()
 		handler.connection.settimeout(None)
 		self._subscriptions = {}
 		self.rpc_session = handler.rpc_session
