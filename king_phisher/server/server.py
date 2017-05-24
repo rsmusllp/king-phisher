@@ -148,8 +148,14 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		self.semaphore_acquired = False
 
 	def _do_http_method(self, *args, **kwargs):
-		# set a timeout on the request handler socket as a fail safe
-		self.connection.settimeout(smoke_zephyr.utilities.parse_timespan('20s'))
+		# This method wraps all of the default do_* HTTP verb handlers to
+		# provide error handling and (for non-RPC requests) path adjustments.
+		# This also is also a high level location where the throttle semaphore
+		# is managed which is acquired for all RPC requests. Non-RPC requests
+		# can acquire it as necessary and *should* release it when they are
+		# finished with it, however if they fail to do so or encounter an error
+		# the semaphore will be released here as a fail safe.
+		self.connection.settimeout(smoke_zephyr.utilities.parse_timespan('20s'))  # set a timeout as a fail safe
 		if self.command == 'RPC':
 			self.semaphore_acquire()
 		else:
@@ -162,8 +168,11 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				self.respond_not_found()
 		finally:
 			if self.semaphore_acquired:
+				if self.command != 'RPC':
+					self.logger.warning('http request failed to cleanly release resources')
 				self.semaphore_release()
 		self.connection.settimeout(None)
+
 	do_GET = _do_http_method
 	do_HEAD = _do_http_method
 	do_POST = _do_http_method
@@ -485,7 +494,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.handle_page_visit()
 		except Exception as error:
 			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
-		self.semaphore_release()
+		finally:
+			self.semaphore_release()
 
 		self.end_headers()
 		self.wfile.write(template_data)
