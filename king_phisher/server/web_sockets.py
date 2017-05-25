@@ -103,7 +103,6 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 		return event_type in self._subscriptions[event_id].event_types
 
 	def on_closed(self):
-		self.handler.server.throttle_semaphore.acquire()
 		manager = self._manager_ref()
 		if manager is not None:
 			manager.remove(self)

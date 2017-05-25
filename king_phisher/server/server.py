@@ -65,7 +65,7 @@ import smoke_zephyr.utilities
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 	def __init__(self, *args, **kwargs):
-		self.logger.debug("request handler running in tid: 0x{0:x}".format(threading.current_thread().ident))
+		self.logger.debug("tid: 0x{0:x} running http request handler".format(threading.current_thread().ident))
 		# this is for attribute documentation
 		self.config = None
 		"""A reference to the main server instance :py:attr:`.KingPhisherServer.config`."""
@@ -164,6 +164,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		try:
 			http_method_handler(*args, **kwargs)
 		except errors.KingPhisherAbortRequestError as error:
+			self.logger.info('http request aborted')
 			if not error.response_sent:
 				self.respond_not_found()
 		finally:
@@ -818,7 +819,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self.serve_robots_txt = True
 		self.database_engine = db_manager.init_database(config.get('server.database'), extra_init=True)
 
-		self.throttle_semaphore = threading.Semaphore()
+		self.throttle_semaphore = threading.BoundedSemaphore()
 		self.session_manager = aaa.AuthenticatedSessionManager(
 			timeout=config.get_if_exists('server.authentication.cache_timeout', '30m')
 		)
