@@ -50,24 +50,27 @@ include_dll_path = os.path.join(site.getsitepackages()[1], 'gnome')
 
 # DLLs from site-packages\gnome\ last updated for pygi-aio 3.14.0 rev22
 missing_dlls = [
+	'lib\enchant\libenchant_aspell.dll',
+	'lib\enchant\libenchant_hspell.dll',
+	'lib\enchant\libenchant_ispell.dll',
+	'lib\enchant\libenchant_myspell.dll',
+	'lib\enchant\libenchant_voikko.dll',
+	'lib\gio\modules\libgiognomeproxy.dll',
+	'lib\gio\modules\libgiolibproxy.dll',
 	'libaspell-15.dll',
 	'libatk-1.0-0.dll',
 	'libcairo-gobject-2.dll',
 	'libdbus-1-3.dll',
 	'libdbus-glib-1-2.dll',
 	'libenchant-1.dll',
-	'lib\enchant\libenchant_myspell.dll',
-	'lib\enchant\libenchant_voikko.dll',
-	'lib\enchant\libenchant_ispell.dll',
 	'libffi-6.dll',
 	'libfontconfig-1.dll',
 	'libfreetype-6.dll',
 	'libgailutil-3-0.dll',
-	'libgdk-3-0.dll',
 	'libgdk_pixbuf-2.0-0.dll',
+	'libgdk-3-0.dll',
 	'libgeoclue-0.dll',
 	'libgio-2.0-0.dll',
-	'lib\gio\modules\libgiolibproxy.dll',
 	'libgirepository-1.0-1.dll',
 	'libglib-2.0-0.dll',
 	'libgmodule-2.0-0.dll',
@@ -81,10 +84,9 @@ missing_dlls = [
 	'libgstvideo-1.0-0.dll',
 	'libgtk-3-0.dll',
 	'libgtksourceview-3.0-1.dll',
-	'libgnutls-26.dll',
-	'libgconf-2-4.dll',
-	'libharfbuzz-gobject-0.dll',
+	'libharfbuzz-0.dll',
 	'libintl-8.dll',
+	'libjasper-1.dll',
 	'libjavascriptcoregtk-3.0-0.dll',
 	'libjpeg-8.dll',
 	'liborc-0.4-0.dll',
@@ -115,6 +117,14 @@ gtk_libs = ['etc', 'lib', 'share']
 for lib in gtk_libs:
 	include_files.append((os.path.join(include_dll_path, lib), lib))
 
+# include windows complied version of geos for basemaps
+include_files.append((os.path.join(site.getsitepackages()[1], 'geos.dll'), 'geos.dll'))
+include_files.append((os.path.join(site.getsitepackages()[1], 'geos_c.dll'), 'geos_c.dll'))
+include_files.append((os.path.join(site.getsitepackages()[1], '_geoslib.pyd'), '_geoslib.pyd'))
+include_files.append((os.path.join(site.getsitepackages()[0], 'libs\geos_c.lib'), 'libs\geos_c.lib'))
+include_files.append((os.path.join(site.getsitepackages()[0], 'libs\geos.lib'), 'libs\geos.lib'))
+
+
 include_files.append((matplotlib.get_data_path(), 'mpl-data'))
 include_files.append((basemap.basemap_datadir, 'mpl-basemap-data'))
 include_files.append(('data/client/king_phisher', 'king_phisher'))
@@ -136,9 +146,9 @@ executables = [
 ]
 
 build_exe_options = dict(
-	compressed=False,
 	include_files=include_files,
 	packages=[
+		'_geoslib',
 		'boltons',
 		'cairo',
 		'cffi',
@@ -147,17 +157,23 @@ build_exe_options = dict(
 		'email',
 		'gi',
 		'icalendar',
+		'idna',
 		'jinja2',
+		'king_phisher.client',
 		'matplotlib',
 		'mpl_toolkits',
 		'msgpack',
-		'OpenSSL',
+		'numpy',
+		'requests',
 		'paramiko',
 		'pkg_resources',
 		'pluginbase',
 		'smoke_zephyr',
+		'win32api',
+		'websocket',
+		'xlsxwriter',
 	],
-	excludes=['collections.abc']
+	excludes=['jinja2.asyncfilters', 'jinja2.asyncsupport'], # not supported with python 3.4
 )
 
 setup(
