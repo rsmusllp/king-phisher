@@ -16,8 +16,8 @@ Version 1.8.0
 * Support the client on OS X by using Docker
 * Support for issuing certificates  with acme while the server is running
 * Add a wrapping tool for certbot to make the process easier
-* Updated `tools/cx_freeze.py` to build KingPhisher client in Python 3.4
-* Updated documentation for windows build.
+* Updated `tools/cx_freeze.py` to build the King Phisher client in Python 3.4
+* Updated documentation for the Windows build
 
 Version 1.7.1
 ^^^^^^^^^^^^^

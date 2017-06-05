@@ -121,8 +121,8 @@ for lib in gtk_libs:
 include_files.append((os.path.join(site.getsitepackages()[1], 'geos.dll'), 'geos.dll'))
 include_files.append((os.path.join(site.getsitepackages()[1], 'geos_c.dll'), 'geos_c.dll'))
 include_files.append((os.path.join(site.getsitepackages()[1], '_geoslib.pyd'), '_geoslib.pyd'))
-include_files.append((os.path.join(site.getsitepackages()[0], 'libs\geos_c.lib'), 'libs\geos_c.lib'))
-include_files.append((os.path.join(site.getsitepackages()[0], 'libs\geos.lib'), 'libs\geos.lib'))
+include_files.append((os.path.join(site.getsitepackages()[0], 'libs', 'geos_c.lib'), os.path.join('libs', 'geos_c.lib')))
+include_files.append((os.path.join(site.getsitepackages()[0], 'libs', 'geos.lib'), os.path.join('libs', 'geos.lib')))
 
 
 include_files.append((matplotlib.get_data_path(), 'mpl-data'))
