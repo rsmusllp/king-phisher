@@ -191,6 +191,11 @@ def main():
 	parser.add_argument('config_file', action='store', type=argparse.FileType('r'), help='configuration file to use')
 	arguments = parser.parse_args()
 
+	if its.py_v2:
+		color.print_error('king phisher no longer supports python 2.7')
+		color.print_error('see https://github.com/securestate/king-phisher/wiki/Python-3 for details')
+		return 0
+
 	console_log_handler = utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 	config_file = arguments.config_file
 	del parser
@@ -252,8 +257,6 @@ def main():
 	if config.has_section('logging'):
 		log_file = _ex_config_logging(arguments, config, console_log_handler)
 	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-	if its.py_v2:
-		logger.warning('this is the last release that will support python 2.7, see https://github.com/securestate/king-phisher/wiki/Python-3 for details')
 
 	# initialize the plugin manager
 	try:

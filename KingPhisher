@@ -60,6 +60,11 @@ def main():
 	parser.add_argument('--no-style', dest='use_style', default=True, action='store_false', help='disable interface styling')
 	arguments = parser.parse_args()
 
+	if its.py_v2:
+		color.print_error('king phisher no longer supports python 2.7')
+		color.print_error('see https://github.com/securestate/king-phisher/wiki/Python-3 for details')
+		return 0
+
 	config_file = arguments.config_file
 	use_plugins = arguments.use_plugins
 	use_style = arguments.use_style
@@ -84,8 +89,6 @@ def main():
 		return 0
 
 	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-	if its.py_v2:
-		logger.warning('this is the last release that will support python 2.7, see https://github.com/securestate/king-phisher/wiki/Python-3 for details')
 	logger.debug("client running in process: {0} main tid: 0x{1:x}".format(os.getpid(), threading.current_thread().ident))
 
 	start_time = time.time()
