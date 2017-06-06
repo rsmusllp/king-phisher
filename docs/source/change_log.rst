@@ -10,7 +10,7 @@ Version 1.x.x
 Version 1.8.0
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.8.0` on June 6th, 2017
 
 * Install script now supports Red Hat Server 7
 * Support the client on OS X by using Docker
