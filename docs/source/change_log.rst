@@ -10,12 +10,14 @@ Version 1.x.x
 Version 1.8.0
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.8.0` on June 6th, 2017
 
 * Install script now supports Red Hat Server 7
 * Support the client on OS X by using Docker
 * Support for issuing certificates  with acme while the server is running
 * Add a wrapping tool for certbot to make the process easier
+* Updated `tools/cx_freeze.py` to build the King Phisher client in Python 3.4
+* Updated documentation for the Windows build
 
 Version 1.7.1
 ^^^^^^^^^^^^^

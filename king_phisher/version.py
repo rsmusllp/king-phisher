@@ -66,7 +66,7 @@ revision = get_revision()
 version_info = collections.namedtuple('version_info', ('major', 'minor', 'micro'))(1, 8, 0)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
 
-version_label = 'beta'
+version_label = ''
 """A version label such as alpha or beta."""
 
 version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)

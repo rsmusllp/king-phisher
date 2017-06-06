@@ -79,7 +79,7 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 		:param manager: The manager that this event socket should register with.
 		:type manager: :py:class:`.WebSocketsManager`
 		"""
-		handler.server.throttle_semaphore.release()
+		handler.connection.settimeout(None)
 		self._subscriptions = {}
 		self.rpc_session = handler.rpc_session
 		if self.rpc_session.event_socket is not None:
@@ -103,7 +103,6 @@ class EventSocket(advancedhttpserver.WebSocketHandler):
 		return event_type in self._subscriptions[event_id].event_types
 
 	def on_closed(self):
-		self.handler.server.throttle_semaphore.acquire()
 		manager = self._manager_ref()
 		if manager is not None:
 			manager.remove(self)
