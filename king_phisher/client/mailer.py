@@ -263,7 +263,7 @@ class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 		:param target: The target information for the messages intended recipient.
 		:type target: :py:class:`.MessageTarget`
 		"""
-		mime.multipart.MIMEMultipart.__init__(self, mime_type)
+		mime.multipart.MIMEMultipart.__init__(self, mime_type, charset='utf-8')
 		self['Subject'] = render_message_template(config['mailer.subject'], config, target)
 		if config.get('mailer.reply_to_email'):
 			self.add_header('reply-to', config['mailer.reply_to_email'])

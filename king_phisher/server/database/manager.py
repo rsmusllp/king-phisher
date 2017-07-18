@@ -290,7 +290,7 @@ def init_database(connection_url, extra_init=False):
 	elif connection_url.drivername == 'postgresql':
 		if extra_init:
 			init_database_postgresql(connection_url)
-		engine = sqlalchemy.create_engine(connection_url)
+		engine = sqlalchemy.create_engine(connection_url, connect_args={'client_encoding': 'utf8'})
 	else:
 		raise errors.KingPhisherDatabaseError('only sqlite and postgresql database drivers are supported')
 
