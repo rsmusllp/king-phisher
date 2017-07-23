@@ -2,6 +2,10 @@ language: python
 python:
     # - 2.7.13  # no longer supported
     - 3.6.2
+branches:
+    only:
+        - dev
+        - master
 install:
     - pip install flake8  # pytest  # add other testing frameworks later
 before_script:
