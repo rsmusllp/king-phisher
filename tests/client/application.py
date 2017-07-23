@@ -47,7 +47,7 @@ class ClientApplicationTests(testing.KingPhisherTestCase):
 		config_h = open(find.data_file('client_config.json'))
 		try:
 			json.load(config_h)
-		except Exceptiongit:
+		except Exception:
 			self.fail("failed to parse the client JSON configuration file")
 		finally:
 			config_h.close()
