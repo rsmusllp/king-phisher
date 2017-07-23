@@ -1,6 +1,6 @@
 # Install ![GitHub Downloads][downloads-status]
 The King Phisher client is supported on Windows and Linux, while the King Phisher
-server is only supported on Linux.
+server is only supported on Linux.  Python 3.5 or later is required so start by doing: `python3 -V`
 
 ## Linux (Client & Server)
 For installation on [supported Linux][operating-systems] distros:
