@@ -87,21 +87,38 @@ def which_glade():
 	"""
 	return find.data_file(os.environ.get('KING_PHISHER_GLADE_FILE', 'king-phisher-client.ui'))
 
-def glib_idle_add_wait(function, *args):
+def glib_idle_add_once(function, *args, **kwargs):
+	"""
+	Execute *function* in the main GTK loop using :py:func:`GLib.idle_add`
+	one time. This is useful for threads that need to update GUI data.
+
+	:param function function: The function to call.
+	:param args: The positional arguments to *function*.
+	:param kwargs: The key word arguments to *function*.
+	:return: The result of the function call.
+	"""
+	@functools.wraps(function)
+	def wrapper():
+		function(*args, **kwargs)
+		return False
+	return GLib.idle_add(wrapper)
+
+def glib_idle_add_wait(function, *args, **kwargs):
 	"""
 	Execute *function* in the main GTK loop using :py:func:`GLib.idle_add`
 	and block until it has completed. This is useful for threads that need
 	to update GUI data.
 
 	:param function function: The function to call.
-	:param args: The arguments to *function*.
+	:param args: The positional arguments to *function*.
+	:param kwargs: The key word arguments to *function*.
 	:return: The result of the function call.
 	"""
 	gsource_completed = threading.Event()
 	results = []
 	@functools.wraps(function)
 	def wrapper():
-		results.append(function(*args))
+		results.append(function(*args, **kwargs))
 		gsource_completed.set()
 		return False
 	GLib.idle_add(wrapper)

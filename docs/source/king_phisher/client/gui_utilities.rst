@@ -16,6 +16,8 @@ Data
 Functions
 ---------
 
+.. autofunction:: king_phisher.client.gui_utilities.glib_idle_add_once
+
 .. autofunction:: king_phisher.client.gui_utilities.glib_idle_add_wait
 
 .. autofunction:: king_phisher.client.gui_utilities.gobject_get_value
