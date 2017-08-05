@@ -50,7 +50,7 @@ class SPFTests(testing.KingPhisherTestCase):
 		s = spf.SenderPolicyFramework('1.2.3.4', 'doesnotexist.king-phisher.com')
 		eval_mech = lambda m, r: s._evaluate_mechanism(s.ip_address, s.domain, s.sender, m, r)
 		self.assertTrue(eval_mech('all', None))
-		self.assertTrue(eval_mech('exists', '%{d2}'))
+		self.assertFalse(eval_mech('exists', '%{d2}'))
 		self.assertTrue(eval_mech('ip4', '1.2.3.0/24'))
 		self.assertTrue(eval_mech('ip4', '1.2.3.4'))
 		self.assertFalse(eval_mech('ip4', '1.1.1.0/24'))
