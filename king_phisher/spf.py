@@ -59,6 +59,11 @@ The maximum number of DNS queries allowed to either return with rcode 0 and no
 answers or rcode 3 (Name Error) as defined within section 4.6.4 of :rfc:`7208`.
 """
 
+DEFAULT_DNS_TIMEOUT = 10
+"""
+The default number of seconds to wait for a query response from the DNS server.
+"""
+
 QUALIFIERS = {
 	'+': SPFResult.PASS,
 	'-': SPFResult.FAIL,
@@ -170,15 +175,15 @@ class SPFTempError(SPFError):
 	"""
 	pass
 
-class SPFTimeOutError(SPFError):
+class SPFTimeOutError(SPFTempError):
 		"""
-		Exception indicating that a timeout occurred querying the DNS server.
-		This is normally caused when the client communicate with the DNS server.
+		Exception indicating that a timeout occurred while querying the DNS server.
+		This is normally caused when the client can't communicate with the DNS server.
 		"""
 		pass
 
 @smoke_zephyr.utilities.Cache('3m')
-def check_host(ip, domain, timeout=10, sender=None):
+def check_host(ip, domain, timeout=DEFAULT_DNS_TIMEOUT, sender=None):
 	"""
 	Analyze the Sender Policy Framework of a domain by creating a
 	:py:class:`.SenderPolicyFramework` instance and returning the result of
@@ -216,7 +221,7 @@ class SenderPolicyFramework(object):
 	if an IP address is authorized to send messages on it's behalf. The exp
 	modifier defined in section 6.2 of the RFC is not supported.
 	"""
-	def __init__(self, ip, domain, timeout, sender=None):
+	def __init__(self, ip, domain, timeout=DEFAULT_DNS_TIMEOUT, sender=None):
 		"""
 		:param ip: The IP address of the host sending the message.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
@@ -251,7 +256,6 @@ class SenderPolicyFramework(object):
 		self.query_limit = MAX_QUERIES
 		self.query_limit_void = MAX_QUERIES_VOID
 		self.policy = None
-		self.nameservers = None
 		self.timeout = timeout
 		"""
 		The human readable policy result, one of the
@@ -276,7 +280,7 @@ class SenderPolicyFramework(object):
 		:rtype: None, str
 		"""
 		if not self._policy_checked:
-			self.policy = self._check_host(self.ip_address, self.domain, self.sender, self.timeout)
+			self.policy = self._check_host(self.ip_address, self.domain, self.sender)
 			self._policy_checked = True
 		return self.policy
 
@@ -348,42 +352,31 @@ class SenderPolicyFramework(object):
 		self.query_limit -= 1
 		if self.query_limit < 0:
 			raise SPFPermError('DNS query limit reached')
-		if not self.nameservers:
-			self.nameservers = dns.resolver.get_default_resolver().nameservers
+		nameservers = dns.resolver.get_default_resolver().nameservers
 		query = dns.message.make_query(qname, qtype)
+		# Only query first DNS server https://www.rfc-editor.org/rfc/rfc7208.txt (page 19 last paragraph)
+		self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameservers[0], self.query_limit))
+		try:
+			response = dns.query.udp(query, nameservers[0], self.timeout)
+		except dns.exception.Timeout:
+			self.logger.warning("timeout reached, unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameservers[0]))
+			raise SPFTimeOutError("Timeout reached, was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameservers[0]))
+		except dns.exception.DNSException:
+			raise SPFTimeOutError("Was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameservers[0]))
 
-		for nameserver in self.nameservers:
-			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameserver, self.query_limit))
-			try:
-				response = dns.query.udp(query, nameserver, self.timeout)
-			except dns.exception.Timeout:
-				self.logger.warning("was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameserver))
-				if self.nameservers.index(nameserver) == len(self.nameservers)-1:
-					raise SPFTimeOutError("Was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameserver))
-				continue
-			except dns.exception.DNSException:
-				if self.nameservers.index(nameserver) == len(self.nameservers)-1:
-					raise SPFTimeOutError("Was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameserver))
-				continue
-
-			rcode = response.rcode()
-			# check for error codes per https://tools.ietf.org/html/rfc7208#section-5
-			if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
-				raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
-			answers = []
-			if len(response.answer) == 0 or rcode == dns.rcode.NXDOMAIN:
-				self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameserver))
-				self.query_limit_void -= 1
-				if self.query_limit_void < 0:
-					raise SPFPermError('DNS query void lookup limit reached')
-			for answer in response.answer:
-				answers.extend(answer.items)
-
-			if self.nameservers.index(nameserver) != 0:
-				self.logger.info("using alternate DNS server {}, others are timing out".format(nameserver))
-				for server_index in range(0, self.nameservers.index(nameserver)):
-					self.nameservers.pop(server_index)
-			return answers, response.additional
+		rcode = response.rcode()
+		# check for error codes per https://tools.ietf.org/html/rfc7208#section-5
+		if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
+			raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
+		answers = []
+		if len(response.answer) == 0 or rcode == dns.rcode.NXDOMAIN:
+			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameservers[0]))
+			self.query_limit_void -= 1
+			if self.query_limit_void < 0:
+				raise SPFPermError('DNS query void lookup limit reached')
+		for answer in response.answer:
+			answers.extend(answer.items)
+		return answers, response.additional
 
 	def _evaluate_mechanism(self, ip, domain, sender, mechanism, rvalue):
 		if rvalue is None:
