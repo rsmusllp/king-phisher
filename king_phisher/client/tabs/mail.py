@@ -243,7 +243,13 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		spf_test_sender, spf_test_domain = self.config['mailer.source_email_smtp'].split('@')
 		self.text_insert("Checking the SPF policy of target domain '{0}'... ".format(spf_test_domain))
 		try:
-			spf_result = spf.check_host(spf_test_ip, spf_test_domain, sender=spf_test_sender)
+			spf_result = spf.check_host(spf_test_ip, spf_test_domain, timeout=self.config['spf_check_timeout'], sender=spf_test_sender)
+		except spf.SPFTimeOutError:
+			dialog_title = 'Sender Policy Framework Failure'
+			dialog_message = 'Timeout on DNS query, unable to confirm SPF Records.\n\nContinue sending messages anyways?'
+			if not gui_utilities.show_dialog_yes_no(dialog_title, self.parent, dialog_message):
+				self.text_insert('\nSending aborted due to the DNS query timeout during policy check.\n')
+				return False
 		except spf.SPFError as error:
 			self.text_insert("done, encountered exception: {0}.\n".format(error.__class__.__name__))
 			return True

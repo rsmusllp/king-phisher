@@ -170,8 +170,15 @@ class SPFTempError(SPFError):
 	"""
 	pass
 
+class SPFTimeOutError(SPFError):
+		"""
+		Exception indicating that a timeout occurred querying the DNS server.
+		This is normally caused when the client communicate with the DNS server.
+		"""
+		pass
+
 @smoke_zephyr.utilities.Cache('3m')
-def check_host(ip, domain, sender=None):
+def check_host(ip, domain, timeout=10, sender=None):
 	"""
 	Analyze the Sender Policy Framework of a domain by creating a
 	:py:class:`.SenderPolicyFramework` instance and returning the result of
@@ -180,11 +187,12 @@ def check_host(ip, domain, sender=None):
 	:param ip: The IP address of the host sending the message.
 	:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	:param str domain: The domain to check the SPF policy of.
+	:param int timeout: The timeout for DNS queries.
 	:param str sender: The "MAIL FROM" identity of the message being sent.
 	:return: The result of the SPF policy if one can be found or None.
 	:rtype: None, str
 	"""
-	s = SenderPolicyFramework(ip, domain, sender)
+	s = SenderPolicyFramework(ip, domain, timeout, sender)
 	return s.check_host()
 
 def validate_record(ip, domain, sender=None):
@@ -208,11 +216,12 @@ class SenderPolicyFramework(object):
 	if an IP address is authorized to send messages on it's behalf. The exp
 	modifier defined in section 6.2 of the RFC is not supported.
 	"""
-	def __init__(self, ip, domain, sender=None):
+	def __init__(self, ip, domain, timeout, sender=None):
 		"""
 		:param ip: The IP address of the host sending the message.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 		:param str domain: The domain to check the SPF policy of.
+		:param int domain: The timout for DNS queries.
 		:param str sender: The "MAIL FROM" identity of the message being sent.
 		"""
 		if isinstance(ip, str):
@@ -242,6 +251,8 @@ class SenderPolicyFramework(object):
 		self.query_limit = MAX_QUERIES
 		self.query_limit_void = MAX_QUERIES_VOID
 		self.policy = None
+		self.nameservers = None
+		self.timeout = timeout
 		"""
 		The human readable policy result, one of the
 		:py:class:`.SPFResult` constants`.
@@ -265,13 +276,15 @@ class SenderPolicyFramework(object):
 		:rtype: None, str
 		"""
 		if not self._policy_checked:
-			self.policy = self._check_host(self.ip_address, self.domain, self.sender)
+			self.policy = self._check_host(self.ip_address, self.domain, self.sender, self.timeout)
 			self._policy_checked = True
 		return self.policy
 
 	def _check_host(self, ip, domain, sender, top_level=True):
 		try:
 			answers, _ = self._dns_query(domain, 'TXT')
+		except SPFTimeOutError:
+			raise
 		except SPFTempError:
 			if not top_level:
 				raise
@@ -330,31 +343,47 @@ class SenderPolicyFramework(object):
 		return SPFResult.NEUTRAL
 
 	def _dns_query(self, qname, qtype):
+		# querys all system dns servers
 		# returns answers, additional
 		self.query_limit -= 1
 		if self.query_limit < 0:
 			raise SPFPermError('DNS query limit reached')
-		nameservers = dns.resolver.get_default_resolver().nameservers
-
-		self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameservers[0], self.query_limit))
+		if not self.nameservers:
+			self.nameservers = dns.resolver.get_default_resolver().nameservers
 		query = dns.message.make_query(qname, qtype)
-		try:
-			response = dns.query.udp(query, nameservers[0])
-		except dns.exception.DNSException:
-			raise SPFTempError("DNS resolution error for: {0} {1}".format(qname, qtype))
-		rcode = response.rcode()
-		# check for error codes per https://tools.ietf.org/html/rfc7208#section-5
-		if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
-			raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
-		answers = []
-		if len(response.answer) == 0 or rcode == dns.rcode.NXDOMAIN:
-			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameservers[0]))
-			self.query_limit_void -= 1
-			if self.query_limit_void < 0:
-				raise SPFPermError('DNS query void lookup limit reached')
-		for answer in response.answer:
-			answers.extend(answer.items)
-		return answers, response.additional
+
+		for nameserver in self.nameservers:
+			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameserver, self.query_limit))
+			try:
+				response = dns.query.udp(query, nameserver, self.timeout)
+			except dns.exception.Timeout:
+				self.logger.warning("was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameserver))
+				if self.nameservers.index(nameserver) == len(self.nameservers)-1:
+					raise SPFTimeOutError("Was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameserver))
+				continue
+			except dns.exception.DNSException:
+				if self.nameservers.index(nameserver) == len(self.nameservers)-1:
+					raise SPFTimeOutError("Was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameserver))
+				continue
+
+			rcode = response.rcode()
+			# check for error codes per https://tools.ietf.org/html/rfc7208#section-5
+			if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
+				raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
+			answers = []
+			if len(response.answer) == 0 or rcode == dns.rcode.NXDOMAIN:
+				self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameserver))
+				self.query_limit_void -= 1
+				if self.query_limit_void < 0:
+					raise SPFPermError('DNS query void lookup limit reached')
+			for answer in response.answer:
+				answers.extend(answer.items)
+
+			if self.nameservers.index(nameserver) != 0:
+				self.logger.info("using alternate DNS server {}, others are timing out".format(nameserver))
+				for server_index in range(0, self.nameservers.index(nameserver)):
+					self.nameservers.pop(server_index)
+			return answers, response.additional
 
 	def _evaluate_mechanism(self, ip, domain, sender, mechanism, rvalue):
 		if rvalue is None:
