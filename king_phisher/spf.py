@@ -184,7 +184,7 @@ class SPFTimeOutError(SPFTempError):
 	pass
 
 @smoke_zephyr.utilities.Cache('3m')
-def check_host(ip, domain, timeout=DEFAULT_DNS_TIMEOUT, sender=None):
+def check_host(ip, domain, sender=None, timeout=DEFAULT_DNS_TIMEOUT):
 	"""
 	Analyze the Sender Policy Framework of a domain by creating a
 	:py:class:`.SenderPolicyFramework` instance and returning the result of
@@ -193,12 +193,12 @@ def check_host(ip, domain, timeout=DEFAULT_DNS_TIMEOUT, sender=None):
 	:param ip: The IP address of the host sending the message.
 	:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	:param str domain: The domain to check the SPF policy of.
-	:param int timeout: The timeout for DNS queries.
 	:param str sender: The "MAIL FROM" identity of the message being sent.
+	:param int timeout: The timeout for DNS queries.
 	:return: The result of the SPF policy if one can be found or None.
 	:rtype: None, str
 	"""
-	s = SenderPolicyFramework(ip, domain, timeout, sender)
+	s = SenderPolicyFramework(ip, domain, sender=sender, timeout=timeout)
 	return s.check_host()
 
 def validate_record(ip, domain, sender=None):
@@ -222,13 +222,13 @@ class SenderPolicyFramework(object):
 	if an IP address is authorized to send messages on it's behalf. The exp
 	modifier defined in section 6.2 of the RFC is not supported.
 	"""
-	def __init__(self, ip, domain, timeout=DEFAULT_DNS_TIMEOUT, sender=None):
+	def __init__(self, ip, domain, sender=None, timeout=DEFAULT_DNS_TIMEOUT):
 		"""
 		:param ip: The IP address of the host sending the message.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 		:param str domain: The domain to check the SPF policy of.
-		:param int timeout: The timout for DNS queries.
 		:param str sender: The "MAIL FROM" identity of the message being sent.
+		:param int timeout: The timeout for DNS queries.
 		"""
 		if isinstance(ip, str):
 			ip = ipaddress.ip_address(ip)
