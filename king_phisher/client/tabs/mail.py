@@ -243,7 +243,14 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		spf_test_sender, spf_test_domain = self.config['mailer.source_email_smtp'].split('@')
 		self.text_insert("Checking the SPF policy of target domain '{0}'... ".format(spf_test_domain))
 		try:
-			spf_result = spf.check_host(spf_test_ip, spf_test_domain, sender=spf_test_sender)
+			spf_result = spf.check_host(spf_test_ip, spf_test_domain, sender=spf_test_sender, timeout=self.config['spf_check_timeout'])
+		except spf.SPFTimeOutError:
+			self.text_insert('done, failed due to DNS timeout.\n')
+			dialog_title = 'Sender Policy Framework Failure'
+			dialog_message = 'Timeout on DNS query, unable to check SPF records.\n\nContinue sending messages anyways?'
+			if not gui_utilities.show_dialog_yes_no(dialog_title, self.parent, dialog_message):
+				self.text_insert('Sending aborted due to a DNS query timeout during the record check.\n')
+				return False
 		except spf.SPFError as error:
 			self.text_insert("done, encountered exception: {0}.\n".format(error.__class__.__name__))
 			return True
@@ -920,7 +927,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 		spf_test_sender, spf_test_domain = sender_email.split('@')
 		try:
-			spf_result = spf.check_host(spf_test_ip, spf_test_domain, spf_test_sender)
+			spf_result = spf.check_host(spf_test_ip, spf_test_domain, sender=spf_test_sender, timeout=self.config['spf_check_timeout'])
 		except spf.SPFError as error:
 			gui_utilities.show_dialog_warning('Warning', self.parent, "Done, encountered exception: {0}.\n".format(error.__class__.__name__))
 			return True

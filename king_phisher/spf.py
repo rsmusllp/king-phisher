@@ -59,6 +59,11 @@ The maximum number of DNS queries allowed to either return with rcode 0 and no
 answers or rcode 3 (Name Error) as defined within section 4.6.4 of :rfc:`7208`.
 """
 
+DEFAULT_DNS_TIMEOUT = 10
+"""
+The default number of seconds to wait for a query response from the DNS server.
+"""
+
 QUALIFIERS = {
 	'+': SPFResult.PASS,
 	'-': SPFResult.FAIL,
@@ -170,8 +175,16 @@ class SPFTempError(SPFError):
 	"""
 	pass
 
+class SPFTimeOutError(SPFTempError):
+	"""
+	Exception indicating that a timeout occurred while querying the DNS server.
+	This is normally caused when the client can't communicate with the DNS
+	server.
+	"""
+	pass
+
 @smoke_zephyr.utilities.Cache('3m')
-def check_host(ip, domain, sender=None):
+def check_host(ip, domain, sender=None, timeout=DEFAULT_DNS_TIMEOUT):
 	"""
 	Analyze the Sender Policy Framework of a domain by creating a
 	:py:class:`.SenderPolicyFramework` instance and returning the result of
@@ -181,10 +194,11 @@ def check_host(ip, domain, sender=None):
 	:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	:param str domain: The domain to check the SPF policy of.
 	:param str sender: The "MAIL FROM" identity of the message being sent.
+	:param int timeout: The timeout for DNS queries.
 	:return: The result of the SPF policy if one can be found or None.
 	:rtype: None, str
 	"""
-	s = SenderPolicyFramework(ip, domain, sender)
+	s = SenderPolicyFramework(ip, domain, sender=sender, timeout=timeout)
 	return s.check_host()
 
 def validate_record(ip, domain, sender=None):
@@ -208,12 +222,13 @@ class SenderPolicyFramework(object):
 	if an IP address is authorized to send messages on it's behalf. The exp
 	modifier defined in section 6.2 of the RFC is not supported.
 	"""
-	def __init__(self, ip, domain, sender=None):
+	def __init__(self, ip, domain, sender=None, timeout=DEFAULT_DNS_TIMEOUT):
 		"""
 		:param ip: The IP address of the host sending the message.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 		:param str domain: The domain to check the SPF policy of.
 		:param str sender: The "MAIL FROM" identity of the message being sent.
+		:param int timeout: The timeout for DNS queries.
 		"""
 		if isinstance(ip, str):
 			ip = ipaddress.ip_address(ip)
@@ -242,6 +257,7 @@ class SenderPolicyFramework(object):
 		self.query_limit = MAX_QUERIES
 		self.query_limit_void = MAX_QUERIES_VOID
 		self.policy = None
+		self.timeout = timeout
 		"""
 		The human readable policy result, one of the
 		:py:class:`.SPFResult` constants`.
@@ -272,6 +288,8 @@ class SenderPolicyFramework(object):
 	def _check_host(self, ip, domain, sender, top_level=True):
 		try:
 			answers, _ = self._dns_query(domain, 'TXT')
+		except SPFTimeOutError:
+			raise
 		except SPFTempError:
 			if not top_level:
 				raise
@@ -330,25 +348,32 @@ class SenderPolicyFramework(object):
 		return SPFResult.NEUTRAL
 
 	def _dns_query(self, qname, qtype):
+		# querys all system dns servers
 		# returns answers, additional
 		self.query_limit -= 1
 		if self.query_limit < 0:
 			raise SPFPermError('DNS query limit reached')
-		nameservers = dns.resolver.get_default_resolver().nameservers
-
-		self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameservers[0], self.query_limit))
+		nameserver = dns.resolver.get_default_resolver().nameservers[0]
 		query = dns.message.make_query(qname, qtype)
+		# Only query first DNS server https://www.rfc-editor.org/rfc/rfc7208.txt (page 19 last paragraph)
+		self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameserver, self.query_limit))
 		try:
-			response = dns.query.udp(query, nameservers[0])
+			response = dns.query.udp(query, nameserver, self.timeout)
+		except dns.exception.Timeout:
+			self.logger.warning("dns timeout reached, unable to query: {0} (type: {1}, nameserver: {2})".format(qname, qtype, nameserver))
+			raise SPFTimeOutError("DNS timeout reached, unable to query: {0} (type: {1}, nameserver: {2})".format(qname, qtype, nameserver))
 		except dns.exception.DNSException:
-			raise SPFTempError("DNS resolution error for: {0} {1}".format(qname, qtype))
+			self.logger.warning("dns resolution error for: {0} (type: {1}, nameserver: {2})".format(qname, qtype, nameserver))
+			raise SPFTempError("DNS resolution error for: {0} (type: {1}, nameserver: {2})".format(qname, qtype, nameserver))
+
 		rcode = response.rcode()
 		# check for error codes per https://tools.ietf.org/html/rfc7208#section-5
 		if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
-			raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
+			self.logger.warning("dns resolution error for: {0} (type: {1} rcode: {2})".format(qname, qtype, rcode))
+			raise SPFTempError("DNS resolution error for: {0} (type: {1} rcode: {2})".format(qname, qtype, rcode))
 		answers = []
 		if len(response.answer) == 0 or rcode == dns.rcode.NXDOMAIN:
-			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameservers[0]))
+			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameserver))
 			self.query_limit_void -= 1
 			if self.query_limit_void < 0:
 				raise SPFPermError('DNS query void lookup limit reached')
