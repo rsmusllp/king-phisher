@@ -10,6 +10,8 @@ Framework (SPF) records. SPF is defined in :rfc:`7208`.
 Data
 ----
 
+.. autodata:: king_phisher.spf.DEFAULT_DNS_TIMEOUT
+
 .. autodata:: king_phisher.spf.MACRO_REGEX
    :annotation:
 
@@ -56,6 +58,11 @@ Exceptions
    :undoc-members:
 
 .. autoexception:: king_phisher.spf.SPFTempError
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+.. autoexception:: king_phisher.spf.SPFTimeOutError
    :members:
    :show-inheritance:
    :undoc-members:

@@ -176,11 +176,12 @@ class SPFTempError(SPFError):
 	pass
 
 class SPFTimeOutError(SPFTempError):
-		"""
-		Exception indicating that a timeout occurred while querying the DNS server.
-		This is normally caused when the client can't communicate with the DNS server.
-		"""
-		pass
+	"""
+	Exception indicating that a timeout occurred while querying the DNS server.
+	This is normally caused when the client can't communicate with the DNS
+	server.
+	"""
+	pass
 
 @smoke_zephyr.utilities.Cache('3m')
 def check_host(ip, domain, timeout=DEFAULT_DNS_TIMEOUT, sender=None):
@@ -226,7 +227,7 @@ class SenderPolicyFramework(object):
 		:param ip: The IP address of the host sending the message.
 		:type ip: str, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 		:param str domain: The domain to check the SPF policy of.
-		:param int domain: The timout for DNS queries.
+		:param int timeout: The timout for DNS queries.
 		:param str sender: The "MAIL FROM" identity of the message being sent.
 		"""
 		if isinstance(ip, str):
@@ -352,25 +353,27 @@ class SenderPolicyFramework(object):
 		self.query_limit -= 1
 		if self.query_limit < 0:
 			raise SPFPermError('DNS query limit reached')
-		nameservers = dns.resolver.get_default_resolver().nameservers
+		nameserver = dns.resolver.get_default_resolver().nameservers[0]
 		query = dns.message.make_query(qname, qtype)
 		# Only query first DNS server https://www.rfc-editor.org/rfc/rfc7208.txt (page 19 last paragraph)
-		self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameservers[0], self.query_limit))
+		self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} (remaining queries: {3})".format(qtype, qname, nameserver, self.query_limit))
 		try:
-			response = dns.query.udp(query, nameservers[0], self.timeout)
+			response = dns.query.udp(query, nameserver, self.timeout)
 		except dns.exception.Timeout:
-			self.logger.warning("timeout reached, unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameservers[0]))
-			raise SPFTimeOutError("Timeout reached, was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameservers[0]))
+			self.logger.warning("dns timeout reached, unable to query: {0} (type: {1}, nameserver: {2})".format(qname, qtype, nameserver))
+			raise SPFTimeOutError("DNS timeout reached, unable to query: {0} (type: {1}, nameserver: {2})".format(qname, qtype, nameserver))
 		except dns.exception.DNSException:
-			raise SPFTimeOutError("Was unable to query {0} {1} from nameserver {2}".format(qname, qtype, nameservers[0]))
+			self.logger.warning("dns resolution error for: {0} (type: {1}, nameserver: {2})".format(qname, qtype, nameserver))
+			raise SPFTempError("DNS resolution error for: {0} (type: {1}, nameserver: {2})".format(qname, qtype, nameserver))
 
 		rcode = response.rcode()
 		# check for error codes per https://tools.ietf.org/html/rfc7208#section-5
 		if rcode not in (dns.rcode.NOERROR, dns.rcode.NXDOMAIN):
-			raise SPFTempError("DNS resolution error for: {0} {1} (rcode: {2})".format(qname, qtype, rcode))
+			self.logger.warning("dns resolution error for: {0} (type: {1} rcode: {2})".format(qname, qtype, rcode))
+			raise SPFTempError("DNS resolution error for: {0} (type: {1} rcode: {2})".format(qname, qtype, rcode))
 		answers = []
 		if len(response.answer) == 0 or rcode == dns.rcode.NXDOMAIN:
-			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameservers[0]))
+			self.logger.debug("resolving {0:<3} record for {1} using nameserver {2} resulted in a void lookup".format(qtype, qname, nameserver))
 			self.query_limit_void -= 1
 			if self.query_limit_void < 0:
 				raise SPFPermError('DNS query void lookup limit reached')
