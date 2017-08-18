@@ -22,6 +22,7 @@
 #   Kali            | yes    | yes    |
 #   Red Hat         | no     | yes    |
 #   Ubuntu          | yes    | yes    |
+#   Arch            | yes    | yes    |
 #
 ###############################################################################
 
@@ -159,6 +160,10 @@ if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu Xenial Xerus" /etc/issue &> /dev/nu
 	LINUX_VERSION="Ubuntu"
 fi
 
+if [[ ! $LINUX_VERSION ]] && grep -E "Arch Linux" /etc/issue &> /dev/null; then
+	LINUX_VERSION="Arch"
+fi
+
 if [ -z "$LINUX_VERSION" ]; then
 	echo "Failed to detect the version of Linux"
 	echo "This installer only supports the following Linux distributions:"
@@ -169,6 +174,7 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo "  - Kali"
 	echo "  - Red Hat"
 	echo "  - Ubuntu"
+	echo "  - Arch"
 	echo ""
 	echo "If the current version of Linux is one of these flavors but it is"
 	echo "not recognized, please open a support ticket and include the version."
@@ -203,6 +209,8 @@ if [ ! "$(command -v git)" ]; then
 		yum install -y -q git
 	elif [ "$LINUX_VERSION" == "Fedora" ]; then
 		dnf install -y -q git
+	elif [ "$LINUX_VERSION" == "Arch" ]; then
+		pacman --noconfirm -S git
 	else
 		apt-get install -y -qq git
 	fi
@@ -336,6 +344,18 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 		easy_install -U distribute
 		apt-get install -y postgresql-server-dev-all &> /dev/null
 	fi
+elif [ "$LINUX_VERSION" == "Arch" ]; then
+	pacman --noconfirm -S freetype2 python python-pip pkg-config
+	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
+		if ! pacman --noconfirm -S gobject-introspection python-cairo geos gtk3 \
+			gtksourceview3 webkit2gtk vte3 postgresql-libs python-gobject; then
+			echo -e "\nFailed to install dependencies with pacman\n"
+			exit
+		fi
+		if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
+			pacman --noconfirm -S postgresql &> /dev/null
+		fi
+	fi
 fi
 
 echo "Installing Python package dependencies from PyPi"
@@ -418,7 +438,11 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 		if [ -f "/usr/lib/systemd/system/postgresql.service" ]; then
 			systemctl start postgresql &> /dev/null
 			if ! systemctl is-active &> /dev/null; then
-				postgresql-setup --initdb &> /dev/null
+				if [ "$LINUX_VERSION" == "Arch" ]; then
+					su - postgres -c "initdb --locale $(grep 'LANG=' /etc/locale.conf | sed 's/LANG=//') -D /var/lib/postgres/data"
+				else
+					postgresql-setup --initdb &> /dev/null
+				fi
 				if ! systemctl start postgresql &> /dev/null; then
 					echo "ERROR: Could not start postgresql"
 					exit
