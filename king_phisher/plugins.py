@@ -122,6 +122,17 @@ class PluginBaseMeta(type):
 	"""
 	req_min_version = None
 	req_packages = None
+	def __new__(mcs, name, bases, dct):
+		description = dct.get('description', '')
+		if description:
+			if description[0] == '\n':
+				description = description[1:]
+			description = textwrap.dedent(description)
+			description = description.split('\n\n')
+			description = [chunk.replace('\n', ' ').strip() for chunk in description]
+			dct['description'] = '\n\n'.join(description)
+		return super(PluginBaseMeta, mcs).__new__(mcs, name, bases, dct)
+
 	@property
 	def compatibility(cls):
 		"""
@@ -137,21 +148,6 @@ class PluginBaseMeta(type):
 		if cls.req_packages is not None:
 			for name, available in cls.req_packages.items():
 				yield ('Required Package', name, available)
-
-	@property
-	def formatted_description(cls):
-		"""
-		Format the text description by removing leading whitespace caused by the
-		definition within the class.
-		"""
-		description = cls.description
-		if description[0] == '\n':
-			description = description[1:]
-		description = textwrap.dedent(description)
-		description = description.split('\n\n')
-		description = [chunk.replace('\n', ' ').strip() for chunk in
-			description]
-		return '\n\n'.join(description)
 
 	@property
 	def is_compatible(cls):
@@ -175,6 +171,22 @@ class PluginBaseMeta(type):
 	@property
 	def name(cls):
 		return cls.__module__.split('.')[-1]
+
+	@property
+	def metadata(cls):
+		metadata = {
+			'authors': cls.authors,
+			'title': cls.title,
+			'description': cls.description,
+			'homepage': cls.homepage,
+			'name': cls.name,
+			'requirements': {
+				'minimum-version': cls.req_min_version,
+				'packages': tuple(cls.req_packages.keys())
+			},
+			'version': cls.version
+		}
+		return metadata
 
 # stylized metaclass definition to be Python 2.7 and 3.x compatible
 class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
