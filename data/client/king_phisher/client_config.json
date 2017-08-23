@@ -27,6 +27,7 @@
   "smtp_ssl_enable": false,
   "smtp_username": "",
   "spf_check_level": 1,
+  "spf_check_timeout": 10,
   "ssh_server": "localhost:22",
   "ssh_username": "",
   "text_font": "monospace 11",

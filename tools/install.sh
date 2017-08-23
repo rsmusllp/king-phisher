@@ -147,7 +147,7 @@ if [[ ! $LINUX_VERSION ]] && grep -E "Debian GNU\/Linux [8-9] " /etc/issue &> /d
 	LINUX_VERSION="Debian"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep 'Kali Linux Rolling' /etc/debian_version &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -Ei "kali( linux |-)rolling" /etc/debian_version &> /dev/null; then
 	LINUX_VERSION="Kali"
 fi
 
@@ -232,7 +232,7 @@ if [ -n "$KING_PHISHER_DEV" ] && [ -d ".git" ]; then
 fi
 
 if [ "$LINUX_VERSION" == "Kali" ]; then
-	if ! grep 'Kali Linux Rolling' /etc/debian_version &> /dev/null; then
+	if ! grep -i 'rolling' /etc/debian_version &> /dev/null; then
 		echo "Checking Kali 2 apt sources"
 		if ! grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null; then
 			echo "Standard Kali 2 apt sources are missing, now adding them"

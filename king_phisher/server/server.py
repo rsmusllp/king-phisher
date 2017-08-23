@@ -450,6 +450,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			'request': {
 				'command': self.command,
 				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
+				'headers': dict(self.headers),
 				'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys()))),
 				'user_agent': self.headers.get('user-agent')
 			},

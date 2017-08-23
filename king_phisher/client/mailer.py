@@ -263,7 +263,7 @@ class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 		:param target: The target information for the messages intended recipient.
 		:type target: :py:class:`.MessageTarget`
 		"""
-		mime.multipart.MIMEMultipart.__init__(self, mime_type)
+		mime.multipart.MIMEMultipart.__init__(self, mime_type, charset='utf-8')
 		self['Subject'] = render_message_template(config['mailer.subject'], config, target)
 		if config.get('mailer.reply_to_email'):
 			self.add_header('reply-to', config['mailer.reply_to_email'])
@@ -312,6 +312,7 @@ class MailSenderThread(threading.Thread):
 		"""A :py:class:`threading.Event` object indicating if the email sending operation is or should be paused."""
 		self.should_stop = threading.Event()
 		self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
+		self.mail_options = []
 
 	def tab_notify_sent(self, emails_done, emails_total):
 		"""
@@ -414,6 +415,10 @@ class MailSenderThread(threading.Thread):
 				self.logger.warning('received an {0} while authenticating to the SMTP server'.format(error.__class__.__name__))
 				self.smtp_connection.quit()
 				return ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED
+
+		if self.smtp_connection.has_extn('SMTPUTF8'):
+			self.logger.debug('target SMTP server supports the SMTPUTF8 extension')
+			self.mail_options.append('SMTPUTF8')
 		return ConnectionErrorReason.SUCCESS
 
 	def server_smtp_disconnect(self):
@@ -792,7 +797,7 @@ class MailSenderThread(threading.Thread):
 		:type msg: :py:class:`.mime.multipart.MIMEMultipart`
 		"""
 		source_email = self.config['mailer.source_email_smtp']
-		self.smtp_connection.sendmail(source_email, target_email, msg.as_string())
+		self.smtp_connection.sendmail(source_email, target_email, msg.as_string(), self.mail_options)
 
 	def pause(self):
 		"""

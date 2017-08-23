@@ -167,7 +167,7 @@ class WebPageCloner(object):
 		# see http://webkitgtk.org/reference/webkit2gtk/stable/WebKitURIResponse.html#webkit-uri-response-get-http-headers
 		if response and hasattr(response, 'get_http_headers'):
 			mime_type = response.get_http_headers().get('content-type')
-			if ';' in mime_type:
+			if mime_type and ';' in mime_type:
 				mime_type, charset = mime_type.split(';', 1)
 				charset = charset.strip()
 				if charset.startswith('charset='):

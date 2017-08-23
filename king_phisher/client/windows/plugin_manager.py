@@ -260,7 +260,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(klass.homepage))
 			label_homepage.set_property('tooltip-text', klass.homepage)
 			label_homepage.set_property('visible', True)
-		self.gobjects['label_plugin_info_description'].set_text(klass.formatted_description)
+		self.gobjects['label_plugin_info_description'].set_text(klass.description)
 
 	def _set_plugin_info_error(self, name):
 		textview = self.gobjects['textview_plugin_info']

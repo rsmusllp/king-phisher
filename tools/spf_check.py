@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #  tools/spf_check.py
@@ -46,6 +46,7 @@ def main():
 	utilities.argp_add_args(parser)
 	parser.add_argument('smtp_server_ip', help='the ip address of the sending smtp server')
 	parser.add_argument('target_email', help='the email address that messages are from')
+	parser.add_argument('--dns-timeout', dest='dns_timeout', default=spf.DEFAULT_DNS_TIMEOUT, type=int, help='the timeout for dns queries')
 	arguments = parser.parse_args()
 
 	server_ip = arguments.smtp_server_ip
@@ -64,7 +65,7 @@ def main():
 		return
 
 	spf_sender, spf_domain = target_email.split('@')
-	spf_test = spf.SenderPolicyFramework(server_ip, spf_domain, spf_sender)
+	spf_test = spf.SenderPolicyFramework(server_ip, spf_domain, sender=spf_sender, timeout=arguments.dns_timeout)
 	try:
 		result = spf_test.check_host()
 	except spf.SPFParseError as error:

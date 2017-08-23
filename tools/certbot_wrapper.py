@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #  tools/certbot_wrapper.py
@@ -74,7 +74,7 @@ def main():
 	if certbot_bin is None:
 		color.print_error('could not identify the path to the certbot binary, make sure that it is')
 		color.print_error('installed and see: https://certbot.eff.org/ for more details')
-		return os.EX_NOTFOUND
+		return os.EX_UNAVAILABLE
 	if not os.access(certbot_bin, os.R_OK | os.X_OK):
 		color.print_error('found insufficient permissions on the certbot binary')
 		return os.EX_NOPERM
@@ -122,7 +122,7 @@ def main():
 		proc_h = subprocess.Popen(certbot_args, shell=False)
 		status = proc_h.wait()
 		if status != os.EX_OK:
-			color.print_error('certbot exited with exit status: ' + int(status))
+			color.print_error('certbot exited with exit status: ' + str(status))
 			break
 		color.print_good('certbot exited with successful status code')
 		if not os.path.isdir(os.path.join(LETS_ENCRYPT_LIVE_PATH, hostname)):

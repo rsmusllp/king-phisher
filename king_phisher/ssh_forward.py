@@ -218,7 +218,7 @@ class SSHTCPForwarder(threading.Thread):
 			private_key = private_key.replace(':', '')
 			private_key = binascii.a2b_hex(private_key)
 		private_key = tuple(key for key in agent_keys if hashlib.new(algorithm, key.blob).digest() == private_key)
-		if len(private_key) != 1:
+		if not private_key:
 			self.logger.warning('the user specified ssh key could not be loaded from the ssh agent')
 			raise KingPhisherSSHKeyError('The SSH key could not be loaded from the SSH agent.')
 		return private_key[0]
