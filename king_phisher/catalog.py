@@ -123,9 +123,15 @@ class CatalogRepository(object):
 			# include-files is reversed so the dictionary can get .update()'ed and the first seen will be the value kept
 			for include in reversed(data['collections-include']):
 				include_data = serializers.JSON.loads(self._fetch(include, encoding='utf-8', verify=False))
-				for collection_type in include['types']:
+				if 'collections' not in include_data:
+					self.logger.warning("included file {0} missing 'collections' entry".format(include['path']))
+					continue
+				include_data = include_data['collections']
+				for collection_type in include.get('types', self.collection_types):
 					if collection_type not in self.collection_types:
 						self.logger.warning('unknown repository collection type: ' + collection_type)
+						continue
+					if collection_type not in include_data:
 						continue
 					self._add_collections(collection_type, include_data[collection_type])
 		if 'collections' in data:
