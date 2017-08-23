@@ -52,11 +52,12 @@ def data_path_append(path):
 	:param str path: The path to add for searching.
 	"""
 	path_var = os.environ[ENV_VAR].split(os.pathsep)
-	if not path in path_var:
-		path_var.append(path)
-		os.environ[ENV_VAR] = os.pathsep.join(path_var)
+	if path in path_var:
+		return
+	path_var.append(path)
+	os.environ[ENV_VAR] = os.pathsep.join(path_var)
 
-def init_data_path(directory):
+def init_data_path(directory=None):
 	"""
 	Add a directory to the data search path for either client or server data
 	files.
@@ -64,13 +65,16 @@ def init_data_path(directory):
 	:param str directory: The directory to add, either 'client' or 'server'.
 	"""
 	found = False
-	possible_data_paths = set()
+	possible_data_paths = []
 	if its.frozen:
-		possible_data_paths.add(os.path.dirname(sys.executable))
+		possible_data_paths.append(os.path.dirname(sys.executable))
 	else:
 		data_path = os.path.dirname(__file__)
-		possible_data_paths.add(os.path.abspath(os.path.join(data_path, '..', 'data', directory)))
-		possible_data_paths.add(os.path.join(os.getcwd(), 'data', directory))
+		if directory is not None:
+			possible_data_paths.append(os.path.abspath(os.path.join(data_path, '..', 'data', directory)))
+			possible_data_paths.append(os.path.join(os.getcwd(), 'data', directory))
+		possible_data_paths.append(os.path.abspath(os.path.join(data_path, '..', 'data')))
+		possible_data_paths.append(os.path.join(os.getcwd(), 'data'))
 
 	for data_path in possible_data_paths:
 		if not os.path.isdir(data_path):
