@@ -36,6 +36,7 @@ import os
 
 from king_phisher import find
 from king_phisher import serializers
+from king_phisher import utilities
 
 import dateutil.parser
 import ecdsa
@@ -65,12 +66,13 @@ class VerifyingKey(ecdsa.VerifyingKey):
 		return cls.from_string(value['data'], curve=value['type'])
 
 class SecurityKeys(object):
-	logger = logging.getLogger('KingPhisher.Catalog.Security')
+	logger = logging.getLogger('KingPhisher.Catalog.SecurityKeys')
 	def __init__(self):
-		self.keys = {}
+		self.keys = utilities.FreezableDict()
 		if not self._load_key_store('security.json'):
 			raise RuntimeError('failed to load any keys from the primary store')
 		self._load_key_store('security.local.json')
+		self.keys.freeze()
 
 	def _load_key_store(self, file_name):
 		file_path = find.data_file(file_name)
@@ -94,7 +96,7 @@ class SecurityKeys(object):
 				key['verifying-key'] = VerifyingKey.from_dict(verifying_key)
 			self.keys[identifier] = key
 			loaded += 1
-		self.logger.debug("loaded {0} keys from the {1} store".format(loaded, file_path))
+		self.logger.debug("loaded {0} key{1} from: {2}".format(loaded, ('' if loaded == 1 else 's'), file_path))
 		return loaded
 
 	def verify(self, key_id, data, signature):
@@ -108,17 +110,27 @@ class SecurityKeys(object):
 			raise ecdsa.keys.BadSignatureError('unknown key for signature')
 		return verifying_key.verify(signature, data)
 
-class CatalogRepository(object):
+class Repository(object):
+	__slots__ = ('_req_sess', 'collections', 'created', 'security_keys', 'homepage', 'title', 'url_base')
 	logger = logging.getLogger('KingPhisher.Catalog.Repository')
 	collection_types = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
 	def __init__(self, data, keys=None):
 		self.security_keys = keys or SecurityKeys()
+		created = data.get('created')
+		if isinstance(created, str):
+			self.created = dateutil.parser.parse(created)
+		else:
+			self.created = None
 		self._req_sess = requests.Session()
 		self._req_sess.mount('file://', requests_file.FileAdapter())
 		self.homepage = data.get('homepage')
+		for key in ('title', 'url-base'):
+			if isinstance(data.get(key), str) and data[key]:
+				continue
+			raise KeyError('data is missing string key: ' + key)
 		self.title = data['title']
 		self.url_base = data['url-base']
-		self.collections = {}
+		self.collections = utilities.FreezableDict()
 		if 'collections-include' in data:
 			# include-files is reversed so the dictionary can get .update()'ed and the first seen will be the value kept
 			for include in reversed(data['collections-include']):
@@ -128,36 +140,42 @@ class CatalogRepository(object):
 					continue
 				include_data = include_data['collections']
 				for collection_type in include.get('types', self.collection_types):
-					if collection_type not in self.collection_types:
-						self.logger.warning('unknown repository collection type: ' + collection_type)
-						continue
 					if collection_type not in include_data:
 						continue
-					self._add_collections(collection_type, include_data[collection_type])
+					self._add_collection_data(collection_type, include_data[collection_type])
 		if 'collections' in data:
 			for collection_type in self.collection_types:
 				collection = data['collections'].get(collection_type)
-				if not collection:
-					continue
-				self._add_collections(collection_type, collection)
+				self._add_collection_data(collection_type, collection)
+		item_count = sum(len(collection) for collection in self.collections.values())
+		self.logger.debug("initialized catalog repository with {0} collection types and {1} total items".format(len(self.collections), item_count))
+		self.collections.freeze()
 
 	def __repr__(self):
 		return "<{0} title={1!r} >".format(self.__class__.__name__, self.title)
 
-	def _add_collections(self, collection_type, collection):
+	def _add_collection_data(self, collection_type, collection):
+		if collection_type not in self.collection_types:
+			self.logger.warning('unknown repository collection type: ' + collection_type)
+			return
+		if not collection:
+			return
+		if not isinstance(collection, list):
+			self.logger.warning('invalid repository collection information for type: ' + collection_type)
+			return
 		existing = self.collections.get(collection_type, {})
 		existing.update(dict((item['name'], item) for item in collection))
 		self.collections[collection_type] = existing
 
 	def _fetch(self, obj, encoding=None, verify=True):
 		url = self.url_base + '/' + obj['path']
-		self.logger.debug('retrieving: ' + url)
+		self.logger.debug("fetching repository item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
 		resp = self._req_sess.get(url)
 		if not resp.ok:
-			self.logger.warning("request failed with status {0} {1}".format(resp.status_code, resp.reason))
+			self.logger.warning("request to {0} failed with status {1} {2}".format(url, resp.status_code, resp.reason))
 		data = resp.content
 		if verify:
-			self.logger.debug('verifying data signature from ' + obj['signed-by'])
+			self.logger.debug("verifying signature from {0} for {1}".format(obj['signed-by'], url))
 			self.security_keys.verify(obj['signed-by'], data, binascii.a2b_base64(obj['signature']))
 		if encoding:
 			data = data.decode(encoding)
@@ -194,23 +212,21 @@ class Catalog(object):
 	logger = logging.getLogger('KingPhisher.Catalog')
 	def __init__(self, data, keys=None):
 		self.security_keys = keys or SecurityKeys()
-		self._data = data
-		self.maintainers = tuple(m['id'] for m in data.get('maintainers', []))
-		self.repositories = tuple(CatalogRepository(repo, keys=self.security_keys) for repo in data['repositories'])
-
-	@property
-	def generated(self):
-		generated = self._data.get('generated')
-		if generated:
-			generated = dateutil.parser.parse(generated)
-		return generated
+		created = data.get('created')
+		if isinstance(created, str):
+			self.created = dateutil.parser.parse(created)
+		else:
+			self.created = None
+		self.maintainers = tuple(maintainer['id'] for maintainer in data.get('maintainers', []))
+		self.repositories = tuple(Repository(repo, keys=self.security_keys) for repo in data['repositories'])
+		self.logger.info("initialized catalog with {0:,} repositories".format(len(self.repositories)))
 
 	@classmethod
 	def from_url(cls, url, *args, encoding='utf-8', **kwargs):
 		req_sess = requests.Session()
 		req_sess.mount('file://', requests_file.FileAdapter())
+		cls.logger.debug('fetching catalog from: ' + url)
 		resp = req_sess.get(url)
 		data = resp.content.decode(encoding)
 		data = serializers.JSON.loads(data)
-
 		return cls(data, *args, **kwargs)

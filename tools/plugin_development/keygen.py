@@ -57,7 +57,7 @@ def main():
 	verifying_key = verifying_key.decode('utf-8').strip()
 
 	arguments.file.write(signing_key.to_pem())
-	print(serializers.JSON.dumps({'id': arguments.id, 'verifying-key': verifying_key}))
+	print(serializers.JSON.dumps({'id': arguments.id, 'verifying-key': {'type': ecdsa.NIST521p.openssl_name, 'data': verifying_key}}))
 
 if __name__ == '__main__':
 	sys.exit(main())
