@@ -31,9 +31,11 @@
 #
 
 import binascii
-import collections.abc
+import collections
 import logging
 import os
+import sys
+import weakref
 
 from king_phisher import find
 from king_phisher import serializers
@@ -44,6 +46,11 @@ import ecdsa
 import ecdsa.curves
 import requests
 import requests_file
+
+if sys.version_info[:3] >= (3, 3, 0):
+	_MutableMapping = collections.abc.MutableMapping
+else:
+	_MutableMapping = collections.MutableMapping
 
 COLLECTION_TYPES = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
 ecdsa_curves = dict((c.name, c) for c in ecdsa.curves.curves)
@@ -68,9 +75,20 @@ class VerifyingKey(ecdsa.VerifyingKey):
 		return cls.from_string(value['data'], curve=value['type'])
 
 class SecurityKeys(object):
+	"""
+	The security keys that are installed on the system. These are then used to
+	validate the signatures of downloaded files to ensure they have not been
+	corrupted or tampered with.
+
+	Keys are first loaded from the security.json file included with the
+	application source code and then from an optional security.local.json file.
+	Keys loaded from the optional file can not over write keys loaded from the
+	system file.
+	"""
 	logger = logging.getLogger('KingPhisher.Catalog.SecurityKeys')
 	def __init__(self):
 		self.keys = utilities.FreezableDict()
+		"""The dictionary of the loaded security keys, keyed by their id."""
 		if not self._load_key_store('security.json'):
 			raise RuntimeError('failed to load any keys from the primary store')
 		self._load_key_store('security.local.json')
@@ -102,6 +120,15 @@ class SecurityKeys(object):
 		return loaded
 
 	def verify(self, key_id, data, signature):
+		"""
+		Verify the data with the specified signature as signed by the specified
+		key. This function will raise an exception if the verification fails
+		for any reason, including if the key can not be found.
+
+		:param str key_id: The key's identifier.
+		:param bytes data: The data to verify against the signature.
+		:param bytes signature: The signature of the data to verify.
+		"""
 		key = self.keys.get(key_id)
 		if key is None:
 			self.logger.warning("verification of data with key {0} failed (unknown key)".format(key_id))
@@ -112,11 +139,27 @@ class SecurityKeys(object):
 			raise ecdsa.keys.BadSignatureError('unknown key for signature')
 		return verifying_key.verify(signature, data)
 
-CollectionItemFile = collections.namedtuple('ItemFile', ('path', 'signed_by', 'signature'))
-class Collection(collections.abc.Mapping):
-	__slots__ = ('_storage', 'type')
+CollectionItemFile = collections.namedtuple('CollectionItemFile', ('path', 'signed_by', 'signature'))
+"""
+An object representing a single remote file and the necessary data to validate
+it's integrity.
+"""
+class Collection(_MutableMapping):
+	"""
+	An object representing a set of individual pieces of add on data that are
+	all of the same type.
+	"""
+	# this breaks the docs which must run on Python 2.7 due to the sphinxcontrib-domaintools package
+	#__slots__ = ('__weakref__', '__repo_ref', '_storage', 'type')
 	logger = logging.getLogger('KingPhisher.Catalog.Collection')
-	def __init__(self, type, items):
+	def __init__(self, repo, type, items):
+		"""
+		:param repo: The repository this collection is associated with.
+		:type repo: :py:class:`.Repository`
+		:param str type: The collection type of these items.
+		:param dict items: The items that are members of this collection, keyed by their name.
+		"""
+		self.__repo_ref = weakref.ref(repo)
 		self.type = type
 		self._storage = items
 
@@ -132,11 +175,36 @@ class Collection(collections.abc.Mapping):
 	def __len__(self):
 		return len(self._storage)
 
+	@property
+	def _repo_ref(self):
+		repo = self.__repo_ref()
+		if repo is None:
+			raise RuntimeError('the repository reference is invalid')
+		return repo
+
+	def get_file(self, *args, **kwargs):
+		return self._repo_ref.get_file(*args, **kwargs)
+
+	def get_item(self, *args, **kwargs):
+		return self._repo_ref.get_item(self.type, *args, **kwargs)
+
+	def get_item_files(self, *args, **kwargs):
+		return self._repo_ref.get_item_files(self.type, *args, **kwargs)
+
 class Repository(object):
-	__slots__ = ('_req_sess', 'collections', 'created', 'security_keys', 'homepage', 'title', 'url_base')
+	"""
+	An object representing a single logical source of add on data.
+	"""
+	__slots__ = ('__weakref__', '_req_sess', 'collections', 'created', 'security_keys', 'homepage', 'title', 'url_base')
 	logger = logging.getLogger('KingPhisher.Catalog.Repository')
 	def __init__(self, data, keys=None):
+		"""
+		:param dict data: The formatted repository data.
+		:param keys: The keys to use for verifying remote data.
+		:type keys: :py:class:`.SecurityKeys`
+		"""
 		self.security_keys = keys or SecurityKeys()
+		"""The :py:class:`.SecurityKeys` used for verifying remote data."""
 		created = data.get('created')
 		if isinstance(created, str):
 			self.created = dateutil.parser.parse(created)
@@ -145,13 +213,17 @@ class Repository(object):
 		self._req_sess = requests.Session()
 		self._req_sess.mount('file://', requests_file.FileAdapter())
 		self.homepage = data.get('homepage')
+		"""The URL of the homepage for this repository if it was specified."""
 		for key in ('title', 'url-base'):
 			if isinstance(data.get(key), str) and data[key]:
 				continue
 			raise KeyError('repository data is missing non-empty string key: ' + key)
 		self.title = data['title']
+		"""The title string of this repository."""
 		self.url_base = data['url-base']
+		"""The base URL string of files included in this repository."""
 		self.collections = utilities.FreezableDict()
+		"""The dictionary of the different collection types included in this repository."""
 		if 'collections-include' in data:
 			# include-files is reversed so the dictionary can get .update()'ed and the first seen will be the value kept
 			for include in reversed(data['collections-include']):
@@ -177,7 +249,7 @@ class Repository(object):
 		self.logger.debug("initialized catalog repository with {0} collection types and {1} total items".format(len(self.collections), item_count))
 		for collection_type, collection in self.collections.items():
 			collection.freeze()
-			self.collections[collection_type] = Collection(collection_type, collection)
+			self.collections[collection_type] = Collection(self, collection_type, collection)
 		self.collections.freeze()
 
 	def __repr__(self):
@@ -257,6 +329,19 @@ class Repository(object):
 		return data
 
 	def get_file(self, item_file, encoding=None):
+		"""
+		Download and return the file data from the repository. If no encoding
+		is specified, the data is return as bytes, otherwise it is decoded to a
+		string using the specified encoding. The file's contents are verified
+		using the signature that must be specified by the *item_file*
+		information.
+
+		:param item_file: The information for the file to download.
+		:type item_file: :py:class:`.CollectionItemFile`
+		:param str encoding: An optional encoding of the remote data.
+		:return: The files contents.
+		:rtype: bytes, str
+		"""
 		if not isinstance(item_file, CollectionItemFile):
 			raise TypeError('the file object must be a CollectionItemFile instance')
 		if not all(isinstance(item_file.get(key), str) for key in ('path', 'signature', 'signed-by')):
@@ -264,10 +349,25 @@ class Repository(object):
 		return self._fetch(item_file, encoding=encoding)
 
 	def get_item(self, collection_type, name):
+		"""
+		Get the item by it's name from the specified collection type. If the
+		repository does not provide the named item, None is returned.
+
+		:param str collection_type: The type of collection the specified item is in.
+		:param str name: The name of the item to retrieve.
+		:return: The item if the repository provides it, otherwise None.
+		"""
 		collection = self.collections.get(collection_type, {})
 		return collection.get(name)
 
 	def get_item_files(self, collection_type, name, destination):
+		"""
+		Download all of the file references from the named item.
+
+		:param str collection_type: The type of collection the specified item is in.
+		:param str name: The name of the item to retrieve.
+		:param str destination: The path of where to save the downloaded files to.
+		"""
 		item = self.get_item(collection_type, name)
 		destination = os.path.abspath(destination)
 		self.logger.debug("fetching catalog item: {0}/{1} to {2}".format(collection_type, name, destination))
@@ -284,24 +384,53 @@ class Repository(object):
 				file_h.write(data)
 
 class Catalog(object):
+	"""
+	An object representing a set of :py:class:`.Repositories` containing add on
+	data for the application. This information can then be loaded from an
+	arbitrary source.
+	"""
+	__slots__ = ('__weakref__', 'created', 'maintainers', 'repositories', 'security_keys')
 	logger = logging.getLogger('KingPhisher.Catalog')
 	def __init__(self, data, keys=None):
+		"""
+		:param dict data: The formatted catalog data.
+		:param keys: The keys to use for verifying remote data.
+		:type keys: :py:class:`.SecurityKeys`
+		"""
 		self.security_keys = keys or SecurityKeys()
+		"""The :py:class:`.SecurityKeys` used for verifying remote data."""
+		self.created = None
+		"""The timestamp of when the remote data was generated."""
 		created = data.get('created')
 		if isinstance(created, str):
 			self.created = dateutil.parser.parse(created)
-		else:
-			self.created = None
 		self.maintainers = tuple(maintainer['id'] for maintainer in data.get('maintainers', []))
+		"""
+		A tuple containing the maintainers of the catalog and repositories.
+		These are also the key ids that should be present for verifying
+		the remote data.
+		"""
 		self.repositories = tuple(Repository(repo, keys=self.security_keys) for repo in data['repositories'])
+		"""A tuple of the :py:class:`.Repository` objects included in this catalog."""
 		self.logger.info("initialized catalog with {0:,} repositories".format(len(self.repositories)))
 
 	@classmethod
-	def from_url(cls, url, *args, encoding='utf-8', **kwargs):
+	def from_url(cls, url, keys=None, encoding='utf-8'):
+		"""
+		Initialize a new :py:class:`.Catalog` object from a resource at the
+		specified URL.
+
+		:param str url: The URL to the catalog data to load.
+		:param keys: The keys to use for verifying remote data.
+		:type keys: :py:class:`.SecurityKeys`
+		:param str encoding: The encoding of the catalog data.
+		:return: The new catalog instance.
+		:rtype: :py:class:`.Catalog`
+		"""
 		req_sess = requests.Session()
 		req_sess.mount('file://', requests_file.FileAdapter())
 		cls.logger.debug('fetching catalog from: ' + url)
 		resp = req_sess.get(url)
 		data = resp.content.decode(encoding)
 		data = serializers.JSON.loads(data)
-		return cls(data, *args, **kwargs)
+		return cls(data, keys=keys)

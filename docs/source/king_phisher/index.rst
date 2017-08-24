@@ -10,6 +10,7 @@ The King Phisher Package
    server/index.rst
 
    archive.rst
+   catalog.rst
    color.rst
    constants.rst
    errors.rst
