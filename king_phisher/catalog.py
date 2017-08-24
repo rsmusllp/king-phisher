@@ -31,6 +31,7 @@
 #
 
 import binascii
+import collections.abc
 import logging
 import os
 
@@ -44,6 +45,7 @@ import ecdsa.curves
 import requests
 import requests_file
 
+COLLECTION_TYPES = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
 ecdsa_curves = dict((c.name, c) for c in ecdsa.curves.curves)
 ecdsa_curves.update((c.openssl_name, c) for c in ecdsa.curves.curves)
 
@@ -110,10 +112,29 @@ class SecurityKeys(object):
 			raise ecdsa.keys.BadSignatureError('unknown key for signature')
 		return verifying_key.verify(signature, data)
 
+CollectionItemFile = collections.namedtuple('ItemFile', ('path', 'signed_by', 'signature'))
+class Collection(collections.abc.Mapping):
+	__slots__ = ('_storage', 'type')
+	logger = logging.getLogger('KingPhisher.Catalog.Collection')
+	def __init__(self, type, items):
+		self.type = type
+		self._storage = items
+
+	def __repr__(self):
+		return "<{0} type={1!r} >".format(self.__class__.__name__, self.type)
+
+	def __getitem__(self, key):
+		return self._storage[key]
+
+	def __iter__(self):
+		return iter(self._storage)
+
+	def __len__(self):
+		return len(self._storage)
+
 class Repository(object):
 	__slots__ = ('_req_sess', 'collections', 'created', 'security_keys', 'homepage', 'title', 'url_base')
 	logger = logging.getLogger('KingPhisher.Catalog.Repository')
-	collection_types = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
 	def __init__(self, data, keys=None):
 		self.security_keys = keys or SecurityKeys()
 		created = data.get('created')
@@ -127,7 +148,7 @@ class Repository(object):
 		for key in ('title', 'url-base'):
 			if isinstance(data.get(key), str) and data[key]:
 				continue
-			raise KeyError('data is missing string key: ' + key)
+			raise KeyError('repository data is missing non-empty string key: ' + key)
 		self.title = data['title']
 		self.url_base = data['url-base']
 		self.collections = utilities.FreezableDict()
@@ -139,54 +160,108 @@ class Repository(object):
 					self.logger.warning("included file {0} missing 'collections' entry".format(include['path']))
 					continue
 				include_data = include_data['collections']
-				for collection_type in include.get('types', self.collection_types):
+				for collection_type in include.get('types', COLLECTION_TYPES):
 					if collection_type not in include_data:
 						continue
-					self._add_collection_data(collection_type, include_data[collection_type])
+					collection = include_data.get(collection_type)
+					if collection is None:
+						continue
+					self._add_collection_data(collection_type, collection)
 		if 'collections' in data:
-			for collection_type in self.collection_types:
+			for collection_type in COLLECTION_TYPES:
 				collection = data['collections'].get(collection_type)
+				if collection is None:
+					continue
 				self._add_collection_data(collection_type, collection)
 		item_count = sum(len(collection) for collection in self.collections.values())
 		self.logger.debug("initialized catalog repository with {0} collection types and {1} total items".format(len(self.collections), item_count))
+		for collection_type, collection in self.collections.items():
+			collection.freeze()
+			self.collections[collection_type] = Collection(collection_type, collection)
 		self.collections.freeze()
 
 	def __repr__(self):
 		return "<{0} title={1!r} >".format(self.__class__.__name__, self.title)
 
-	def _add_collection_data(self, collection_type, collection):
-		if collection_type not in self.collection_types:
+	def _add_collection_data(self, collection_type, collection_items):
+		if collection_type not in COLLECTION_TYPES:
 			self.logger.warning('unknown repository collection type: ' + collection_type)
 			return
-		if not collection:
-			return
-		if not isinstance(collection, list):
+		if not isinstance(collection_items, list):
 			self.logger.warning('invalid repository collection information for type: ' + collection_type)
 			return
-		existing = self.collections.get(collection_type, {})
-		existing.update(dict((item['name'], item) for item in collection))
-		self.collections[collection_type] = existing
+		if not collection_items:
+			return
+		collection = self.collections.get(collection_type)
+		if collection is None:
+			collection = utilities.FreezableDict()
+		# validate each of the items so we know that the basic keys we expect
+		# to be present are set to with the correct value types
+		for item in collection_items:
+			if not isinstance(item, dict):
+				raise TypeError('collection item is not a dict')
+			for key in ('authors', 'files'):
+				if isinstance(item.get(key), list) and item[key]:
+					continue
+				raise KeyError('collection item is missing non-empty list key: ' + key)
+			for key in ('description', 'name', 'title', 'version'):
+				if isinstance(item.get(key), str) and item[key]:
+					continue
+				raise KeyError('collection item is missing non-empty string key: ' + key)
 
-	def _fetch(self, obj, encoding=None, verify=True):
-		url = self.url_base + '/' + obj['path']
+			if not all(isinstance(value, str) for value in item['authors']):
+				raise TypeError('collection item has non-string item in list: authors')
+			item['authors'] = tuple(item['authors'])
+
+			if not all(isinstance(value, dict) for value in item['files']):
+				raise TypeError('collection item has non-dict item in list: files')
+
+			item_files = []
+			for item_file in item['files']:
+				if not (isinstance(item_file.get('path'), str) and item_file['path']):
+					raise KeyError('collection item file is missing non-empty string key: path')
+				if not isinstance(item_file.get('signed-by'), (str, type(None))):
+					raise TypeError('collection item file has invalid item: signed-by')
+				if not isinstance(item_file.get('signature'), (str, type(None))):
+					raise TypeError('collection item file has invalid item: signed-by')
+				# normalize empty strings to None for signed-by and signature
+				if not item_file.get('signature'):
+					item_file['signature'] = None
+				if not item_file.get('signed-by'):
+					item_file['signed-by'] = None
+				# make sure both keys are present or neither are present
+				if bool(item_file['signature']) ^ bool(item_file['signed-by']):
+					raise ValueError('collection item file must either have both signature and signed-by keys or neither')
+				item_file['signed_by'] = item_file.pop('signed-by')
+				item_files.append(CollectionItemFile(**item_file))
+			item['files'] = tuple(item_files)
+			item = utilities.FreezableDict(sorted(item.items(), key=lambda i: i[0]))
+			item.freeze()
+			collection[item['name']] = item
+		self.collections[collection_type] = collection
+
+	def _fetch(self, item_file, encoding=None, verify=True):
+		if isinstance(item_file, dict):
+			item_file = CollectionItemFile(path=item_file['path'], signature=item_file.get('signature'), signed_by=item_file.get('signed-by'))
+		url = self.url_base + '/' + item_file.path
 		self.logger.debug("fetching repository item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
 		resp = self._req_sess.get(url)
 		if not resp.ok:
 			self.logger.warning("request to {0} failed with status {1} {2}".format(url, resp.status_code, resp.reason))
 		data = resp.content
 		if verify:
-			self.logger.debug("verifying signature from {0} for {1}".format(obj['signed-by'], url))
-			self.security_keys.verify(obj['signed-by'], data, binascii.a2b_base64(obj['signature']))
+			self.logger.debug("verifying signature from {0} for {1}".format(item_file.signed_by, url))
+			self.security_keys.verify(item_file.signed_by, data, binascii.a2b_base64(item_file.signature))
 		if encoding:
 			data = data.decode(encoding)
 		return data
 
-	def get_file(self, file_obj, encoding=None):
-		if not isinstance(file_obj, dict):
-			raise TypeError('the file object must be a dict instance')
-		if not all(isinstance(file_obj.get(key), str) for key in ('path', 'signature', 'signed-by')):
+	def get_file(self, item_file, encoding=None):
+		if not isinstance(item_file, CollectionItemFile):
+			raise TypeError('the file object must be a CollectionItemFile instance')
+		if not all(isinstance(item_file.get(key), str) for key in ('path', 'signature', 'signed-by')):
 			raise ValueError('the file object is missing a required key')
-		return self._fetch(file_obj, encoding=encoding)
+		return self._fetch(item_file, encoding=encoding)
 
 	def get_item(self, collection_type, name):
 		collection = self.collections.get(collection_type, {})
@@ -198,9 +273,9 @@ class Repository(object):
 		self.logger.debug("fetching catalog item: {0}/{1} to {2}".format(collection_type, name, destination))
 		if not os.path.isdir(destination):
 			os.makedirs(destination)
-		for file_ref in item['files']:
-			data = self._fetch(file_ref)
-			file_destination = os.path.abspath(os.path.join(destination, file_ref['path']))
+		for item_file in item['files']:
+			data = self._fetch(item_file)
+			file_destination = os.path.abspath(os.path.join(destination, item_file.path))
 			if not file_destination.startswith(destination + os.path.sep):
 				raise RuntimeError('file destination is outside of the specified path')
 			dir_name = os.path.dirname(file_destination)

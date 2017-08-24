@@ -66,8 +66,8 @@ class FreezableDict(collections.OrderedDict):
 	"""
 	__slots__ = ('_frozen',)
 	def __init__(self, *args, **kwargs):
-		super(FreezableDict, self).__init__(*args, **kwargs)
 		self._frozen = False
+		super(FreezableDict, self).__init__(*args, **kwargs)
 
 	def __repr__(self):
 		return "<{0} frozen={1} {2}>".format(self.__class__.__name__, self._frozen, super(FreezableDict, self).__repr__())
