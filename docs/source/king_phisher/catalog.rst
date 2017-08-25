@@ -13,6 +13,11 @@ Data
 .. autodata:: king_phisher.catalog.COLLECTION_TYPES
    :annotation:
 
+Functions
+---------
+
+.. autofunction:: king_phisher.catalog.make_files_tuple
+
 Classes
 -------
 
@@ -28,7 +33,6 @@ Classes
    :special-members: __init__
 
 .. autoclass:: king_phisher.catalog.CollectionItemFile
-   :show-inheritance:
    :members:
    :special-members: __init__
 

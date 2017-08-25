@@ -26,6 +26,7 @@ python-pam>=1.8.2
 pytz>=2017.2
 PyYAML>=3.12
 requests>=2.17.3
+requests-file>=1.4.2
 six>=1.10.0
 smoke-zephyr>=1.1.0
 SQLAlchemy>=1.1.10
