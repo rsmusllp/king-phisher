@@ -307,3 +307,14 @@ MOCK_MODULES = [
 	'matplotlib.figure'
 ]
 sys.modules.update((mod_name, king_phisher.utilities.Mock()) for mod_name in MOCK_MODULES)
+
+class PatchedDocsCache(object):
+	def __init__(self, *args, **kwargs):
+		pass
+
+	def __call__(self, function):
+		return function
+
+# monkey-patch this in so the docs build correct for cached functions
+import smoke_zephyr.utilities
+smoke_zephyr.utilities.Cache = PatchedDocsCache
