@@ -196,7 +196,7 @@ class Repository(object):
 	"""
 	An object representing a single logical source of add on data.
 	"""
-	__slots__ = ('__weakref__', '_req_sess', 'collections', 'created', 'security_keys', 'homepage', 'title', 'url_base')
+	__slots__ = ('__weakref__', '_req_sess', 'collections', 'created', 'description', 'security_keys', 'homepage', 'title', 'url_base')
 	logger = logging.getLogger('KingPhisher.Catalog.Repository')
 	def __init__(self, data, keys=None):
 		"""
@@ -213,6 +213,7 @@ class Repository(object):
 			self.created = None
 		self._req_sess = requests.Session()
 		self._req_sess.mount('file://', requests_file.FileAdapter())
+		self.description = data.get('description')
 		self.homepage = data.get('homepage')
 		"""The URL of the homepage for this repository if it was specified."""
 		for key in ('title', 'url-base'):
@@ -438,11 +439,11 @@ class Catalog(object):
 		data = serializers.JSON.loads(data)
 		return cls(data, keys=keys)
 
-def make_files_tuple(source_path, signing_key, signing_key_id, repo_path=None):
+def sign_item_files(source_path, signing_key, signing_key_id, repo_path=None):
 	"""
 	This utility function is used to create a :py:class:`.CollectionItemFile`
-	tuple from the specified source to be included in either a catalog file or
-	one of it's included files.
+	iterator from the specified source to be included in either a catalog file
+	or one of it's included files.
 
 	:param str source_path: The real location of where the files exist on disk.
 	:param signing_key: The key with which to sign the files for verification.
@@ -465,7 +466,10 @@ def make_files_tuple(source_path, signing_key, signing_key_id, repo_path=None):
 		# data is done in reverse, meaning our source file as it exists on disk
 		# will be the destination when the client fetches it
 		source_file_path = os.path.relpath(destination_file_path, repo_path)
-		destination_file_path = os.path.relpath(destination_file_path, source_path)
+		destination_file_path = os.path.relpath(
+			destination_file_path,
+			source_path if os.path.isdir(source_path) else os.path.dirname(source_path)
+		)
 
 		signature = binascii.b2a_base64(signature).decode('utf-8').rstrip()
 		item_file = CollectionItemFile(

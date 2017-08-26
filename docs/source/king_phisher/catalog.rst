@@ -16,7 +16,7 @@ Data
 Functions
 ---------
 
-.. autofunction:: king_phisher.catalog.make_files_tuple
+.. autofunction:: king_phisher.catalog.sign_item_files
 
 Classes
 -------
