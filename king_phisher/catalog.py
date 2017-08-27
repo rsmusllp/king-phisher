@@ -439,37 +439,37 @@ class Catalog(object):
 		data = serializers.JSON.loads(data)
 		return cls(data, keys=keys)
 
-def sign_item_files(source_path, signing_key, signing_key_id, repo_path=None):
+def sign_item_files(local_path, signing_key, signing_key_id, repo_path=None):
 	"""
 	This utility function is used to create a :py:class:`.CollectionItemFile`
 	iterator from the specified source to be included in either a catalog file
 	or one of it's included files.
 
-	:param str source_path: The real location of where the files exist on disk.
+	:param str local_path: The real location of where the files exist on disk.
 	:param signing_key: The key with which to sign the files for verification.
 	:param str signing_key_id: The unique identifier for *signing_key*.
 	:param str repo_path: The path of the repository as it exists on disk.
 	"""
-	source_path = os.path.abspath(source_path)
+	local_path = os.path.abspath(local_path)
 	if repo_path is None:
-		repo_path = source_path
+		repo_path = local_path
 	else:
 		repo_path = os.path.abspath(repo_path)
-		if not source_path.startswith(repo_path + os.path.sep):
-			raise ValueError('source_path must be a sub-directory of repo_path')
-	walker = smoke_zephyr.utilities.FileWalker(source_path, absolute_path=True, skip_dirs=True)
-	for destination_file_path in walker:
-		with open(destination_file_path, 'rb') as file_h:
+		if not local_path.startswith(repo_path + os.path.sep):
+			raise ValueError('local_path must be a sub-directory of repo_path')
+	walker = smoke_zephyr.utilities.FileWalker(local_path, absolute_path=True, skip_dirs=True)
+	for local_file_path in walker:
+		with open(local_file_path, 'rb') as file_h:
 			signature = signing_key.sign(file_h.read())
 
 		# source and destination are flipped here because the processing of the
 		# data is done in reverse, meaning our source file as it exists on disk
 		# will be the destination when the client fetches it
-		source_file_path = os.path.relpath(destination_file_path, repo_path)
-		destination_file_path = os.path.relpath(
-			destination_file_path,
-			source_path if os.path.isdir(source_path) else os.path.dirname(source_path)
-		)
+		source_file_path = os.path.relpath(local_file_path, repo_path)
+		if os.path.isdir(local_path):
+			destination_file_path = os.path.relpath(local_file_path, os.path.relpath(os.path.dirname(local_path), repo_path))
+		else:
+			destination_file_path = os.path.relpath(local_file_path, os.path.dirname(local_path))
 
 		signature = binascii.b2a_base64(signature).decode('utf-8').rstrip()
 		item_file = CollectionItemFile(
