@@ -47,6 +47,18 @@ A dictionary of :py:class:`ecdsa.curves.Curve` objects keyed by their
 """
 ecdsa_curves.update((c.openssl_name, c) for c in ecdsa.curves.curves)
 
+def _key_cls_from_dict(cls, value, encoding=None):
+	key_data = value['data']
+	if isinstance(encoding, str):
+		encoding = encoding.lower()
+	if encoding == 'base64':
+		key_data = binascii.a2b_base64(key_data)
+	elif encoding == 'hex':
+		key_data = binascii.a2b_hex(key_data)
+	elif encoding is not None:
+		raise ValueError('unknown key data encoding')
+	return cls.from_string(key_data, curve=value['type'])
+
 def _kwarg_curve(kwargs):
 	if 'curve' not in kwargs:
 		return kwargs
@@ -67,8 +79,8 @@ class SigningKey(ecdsa.SigningKey):
 		return super(SigningKey, cls).from_string(string, **kwargs)
 
 	@classmethod
-	def from_dict(cls, value):
-		return cls.from_string(value['data'], curve=value['type'])
+	def from_dict(cls, value, encoding=None):
+		return _key_cls_from_dict(cls, value, encoding=encoding)
 
 class VerifyingKey(ecdsa.VerifyingKey):
 	@classmethod
@@ -77,8 +89,8 @@ class VerifyingKey(ecdsa.VerifyingKey):
 		return super(VerifyingKey, cls).from_string(string, **kwargs)
 
 	@classmethod
-	def from_dict(cls, value):
-		return cls.from_string(value['data'], curve=value['type'])
+	def from_dict(cls, value, encoding=None):
+		return _key_cls_from_dict(cls, value, encoding=encoding)
 
 class SecurityKeys(object):
 	"""
@@ -118,8 +130,7 @@ class SecurityKeys(object):
 				continue
 			if 'verifying-key' in key:
 				verifying_key = key['verifying-key']
-				verifying_key['data'] = binascii.a2b_base64(verifying_key['data'])
-				key['verifying-key'] = VerifyingKey.from_dict(verifying_key)
+				key['verifying-key'] = VerifyingKey.from_dict(verifying_key, encoding=verifying_key.pop('encoding', 'base64'))
 			self.keys[identifier] = key
 			loaded += 1
 		self.logger.debug("loaded {0} key{1} from: {2}".format(loaded, ('' if loaded == 1 else 's'), file_path))

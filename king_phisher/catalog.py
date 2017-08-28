@@ -47,9 +47,9 @@ import requests_file
 import smoke_zephyr.utilities
 
 if sys.version_info[:3] >= (3, 3, 0):
-	_MutableMapping = collections.abc.MutableMapping
+	_Mapping = collections.abc.Mapping
 else:
-	_MutableMapping = collections.MutableMapping
+	_Mapping = collections.Mapping
 
 COLLECTION_TYPES = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
 
@@ -58,7 +58,7 @@ CollectionItemFile = collections.namedtuple('CollectionItemFile', ('path_destina
 An object representing a single remote file and the necessary data to validate
 it's integrity.
 """
-class Collection(_MutableMapping):
+class Collection(_Mapping):
 	"""
 	An object representing a set of individual pieces of add on data that are
 	all of the same type.
@@ -233,8 +233,13 @@ class Repository(object):
 
 	def _fetch(self, item_file, encoding=None, verify=True):
 		if isinstance(item_file, dict):
-			item_file = CollectionItemFile(path=item_file['path'], signature=item_file.get('signature'), signed_by=item_file.get('signed-by'))
-		url = self.url_base + '/' + item_file.path
+			item_file = CollectionItemFile(
+				path_destination=item_file.get('path-destination', item_file['path-source']),
+				path_source=item_file['path-source'],
+				signature=item_file.get('signature'),
+				signed_by=item_file.get('signed-by')
+			)
+		url = self.url_base + '/' + item_file.path_source
 		self.logger.debug("fetching repository item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
 		resp = self._req_sess.get(url)
 		if not resp.ok:
@@ -289,14 +294,14 @@ class Repository(object):
 		destination = os.path.abspath(destination)
 		self.logger.debug("fetching catalog item: {0}/{1} to {2}".format(collection_type, name, destination))
 		if not os.path.isdir(destination):
-			os.makedirs(destination)
+			os.makedirs(destination, exist_ok=True)
 		for item_file in item['files']:
 			data = self._fetch(item_file)
-			file_destination = os.path.abspath(os.path.join(destination, item_file.path))
+			file_destination = os.path.abspath(os.path.join(destination, item_file.path_destination))
 			if not file_destination.startswith(destination + os.path.sep):
 				raise RuntimeError('file destination is outside of the specified path')
 			dir_name = os.path.dirname(file_destination)
-			os.makedirs(dir_name)
+			os.makedirs(dir_name, exist_ok=True)
 			with open(file_destination, 'wb') as file_h:
 				file_h.write(data)
 
