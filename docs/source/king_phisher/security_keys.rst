@@ -4,8 +4,8 @@
 .. module:: security_keys
    :synopsis:
 
-This module provides functionality for processing and working with data
-published on the available add ons for the application.
+This module provides functionality for working with security keys that are
+used for data integrity checks. Verification is performed using ECDSA keys.
 
 Data
 ----

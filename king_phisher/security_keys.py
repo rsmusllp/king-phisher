@@ -98,15 +98,16 @@ class SecurityKeys(object):
 	validate the signatures of downloaded files to ensure they have not been
 	corrupted or tampered with.
 
-	Keys are first loaded from the security.json file included with the
-	application source code and then from an optional security.local.json file.
-	Keys loaded from the optional file can not over write keys loaded from the
-	system file.
+	.. note::
+		Keys are first loaded from the security.json file included with the
+		application source code and then from an optional security.local.json
+		file. Keys loaded from the optional file can not over write keys loaded
+		from the system file.
 	"""
 	logger = logging.getLogger('KingPhisher.SecurityKeys')
 	def __init__(self):
 		self.keys = utilities.FreezableDict()
-		"""The dictionary of the loaded security keys, keyed by their id."""
+		"""The dictionary of the loaded security keys, keyed by their identity string."""
 		if not self._load_key_store('security.json'):
 			raise RuntimeError('failed to load any keys from the primary store')
 		self._load_key_store('security.local.json')

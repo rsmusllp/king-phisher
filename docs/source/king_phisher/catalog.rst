@@ -11,7 +11,6 @@ Data
 ----
 
 .. autodata:: king_phisher.catalog.COLLECTION_TYPES
-   :annotation:
 
 Functions
 ---------

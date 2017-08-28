@@ -52,6 +52,12 @@ else:
 	_Mapping = collections.Mapping
 
 COLLECTION_TYPES = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
+"""
+A tuple of the known collection type identity strings. Collection types are
+logical groupings of published data types. These type identifiers provide some
+context as to how the data is intended to be used and what parts of the
+application may be interested in using it.
+"""
 
 CollectionItemFile = collections.namedtuple('CollectionItemFile', ('path_destination', 'path_source', 'signed_by', 'signature'))
 """
@@ -61,7 +67,9 @@ it's integrity.
 class Collection(_Mapping):
 	"""
 	An object representing a set of individual pieces of add on data that are
-	all of the same type.
+	all of the same type. A collection is also a logical domain where the items
+	contained within it must each have a unique identity in the form of it's
+	name attribute.
 	"""
 	# this breaks the docs which must run on Python 2.7 due to the sphinxcontrib-domaintools package
 	#__slots__ = ('__weakref__', '__repo_ref', '_storage', 'type')
@@ -329,7 +337,7 @@ class Catalog(object):
 		self.maintainers = tuple(maintainer['id'] for maintainer in data.get('maintainers', []))
 		"""
 		A tuple containing the maintainers of the catalog and repositories.
-		These are also the key ids that should be present for verifying
+		These are also the key identities that should be present for verifying
 		the remote data.
 		"""
 		self.repositories = tuple(Repository(repo, keys=self.security_keys) for repo in data['repositories'])
