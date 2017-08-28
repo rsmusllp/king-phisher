@@ -47,17 +47,32 @@ def main():
 	parser = argparse.ArgumentParser(description='King Phisher Signing-Key Generation Utility', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
 	parser.add_argument('id', help='this key\'s identifier')
-	parser.add_argument('file', type=argparse.FileType('wb'), help='the destination to write the PEM file to')
+	parser.add_argument('file', type=argparse.FileType('w'), help='the destination to write the PEM file to')
 	arguments = parser.parse_args()
 
+	curve = ecdsa.NIST521p
 	color.print_status('generating a new ecdsa singing key')
-	signing_key = ecdsa.SigningKey.generate(curve=ecdsa.NIST521p)
+	signing_key = ecdsa.SigningKey.generate(curve=curve)
 	verifying_key = signing_key.get_verifying_key()
-	verifying_key = binascii.b2a_base64(verifying_key.to_string())
-	verifying_key = verifying_key.decode('utf-8').strip()
 
-	arguments.file.write(signing_key.to_pem())
-	print(serializers.JSON.dumps({'id': arguments.id, 'verifying-key': {'type': ecdsa.NIST521p.openssl_name, 'data': verifying_key}}))
+	signing_key = binascii.b2a_base64(signing_key.to_string()).decode('utf-8').strip()
+	verifying_key = binascii.b2a_base64(verifying_key.to_string()).decode('utf-8').strip()
+
+	print('public key information for inclusion in security.json:')
+	key_info = {
+		'id': arguments.id,
+		'verifying-key': {
+			'data': verifying_key,
+			'type': curve.openssl_name
+		}
+	}
+	print(serializers.JSON.dumps(key_info))
+
+	key_info['signing-key'] = {
+		'data': signing_key,
+		'type': curve.openssl_name
+	}
+	serializers.JSON.dump(key_info, arguments.file)
 
 if __name__ == '__main__':
 	sys.exit(main())
