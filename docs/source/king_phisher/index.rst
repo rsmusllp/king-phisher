@@ -20,6 +20,7 @@ The King Phisher Package
    ipaddress.rst
    plugins.rst
    scrubber.rst
+   security_keys.rst
    serializers.rst
    sms.rst
    smtp_server.rst

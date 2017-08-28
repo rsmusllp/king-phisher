@@ -37,13 +37,11 @@ import os
 import sys
 import weakref
 
-from king_phisher import find
+from king_phisher import security_keys
 from king_phisher import serializers
 from king_phisher import utilities
 
 import dateutil.parser
-import ecdsa
-import ecdsa.curves
 import requests
 import requests_file
 import smoke_zephyr.utilities
@@ -54,91 +52,6 @@ else:
 	_MutableMapping = collections.MutableMapping
 
 COLLECTION_TYPES = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
-ecdsa_curves = dict((c.name, c) for c in ecdsa.curves.curves)
-ecdsa_curves.update((c.openssl_name, c) for c in ecdsa.curves.curves)
-
-class VerifyingKey(ecdsa.VerifyingKey):
-	@classmethod
-	def from_string(cls, string, **kwargs):
-		if 'curve' in kwargs:
-			curve = kwargs.pop('curve')
-			if isinstance(curve, str):
-				if not curve in ecdsa_curves:
-					raise ValueError('unknown curve: ' + curve)
-				curve = ecdsa_curves[curve]
-			elif not isinstance(curve, ecdsa.curves.Curve):
-				raise TypeError('curve must either be a curve name or ecdsa.curves.Curve instance')
-			kwargs['curve'] = curve
-		return super(VerifyingKey, cls).from_string(string, **kwargs)
-
-	@classmethod
-	def from_dict(cls, value):
-		return cls.from_string(value['data'], curve=value['type'])
-
-class SecurityKeys(object):
-	"""
-	The security keys that are installed on the system. These are then used to
-	validate the signatures of downloaded files to ensure they have not been
-	corrupted or tampered with.
-
-	Keys are first loaded from the security.json file included with the
-	application source code and then from an optional security.local.json file.
-	Keys loaded from the optional file can not over write keys loaded from the
-	system file.
-	"""
-	logger = logging.getLogger('KingPhisher.Catalog.SecurityKeys')
-	def __init__(self):
-		self.keys = utilities.FreezableDict()
-		"""The dictionary of the loaded security keys, keyed by their id."""
-		if not self._load_key_store('security.json'):
-			raise RuntimeError('failed to load any keys from the primary store')
-		self._load_key_store('security.local.json')
-		self.keys.freeze()
-
-	def _load_key_store(self, file_name):
-		file_path = find.data_file(file_name)
-		if not file_path:
-			return 0
-		with open(file_path, 'r') as file_h:
-			key_store = serializers.JSON.load(file_h)
-		key_store = key_store.get('keys', [])
-		loaded = 0
-		for key_idx, key in enumerate(key_store, 1):
-			identifier = key.get('id')
-			if not identifier:
-				self.logger.warning("skipping loading {0}:{1} due to missing id".format(file_name, key_idx))
-				continue
-			if identifier in self.keys:
-				self.logger.warning("skipping loading {0}:{1} due to a duplicate id".format(file_name, key_idx))
-				continue
-			if 'verifying-key' in key:
-				verifying_key = key['verifying-key']
-				verifying_key['data'] = binascii.a2b_base64(verifying_key['data'])
-				key['verifying-key'] = VerifyingKey.from_dict(verifying_key)
-			self.keys[identifier] = key
-			loaded += 1
-		self.logger.debug("loaded {0} key{1} from: {2}".format(loaded, ('' if loaded == 1 else 's'), file_path))
-		return loaded
-
-	def verify(self, key_id, data, signature):
-		"""
-		Verify the data with the specified signature as signed by the specified
-		key. This function will raise an exception if the verification fails
-		for any reason, including if the key can not be found.
-
-		:param str key_id: The key's identifier.
-		:param bytes data: The data to verify against the signature.
-		:param bytes signature: The signature of the data to verify.
-		"""
-		key = self.keys.get(key_id)
-		if key is None:
-			self.logger.warning("verification of data with key {0} failed (unknown key)".format(key_id))
-			raise ecdsa.keys.BadSignatureError('unknown key for signature')
-		verifying_key = key.get('verifying-key')
-		if verifying_key is None:
-			self.logger.warning("verification of data with key {0} failed (missing verifying-key)".format(key_id))
-			raise ecdsa.keys.BadSignatureError('unknown key for signature')
-		return verifying_key.verify(signature, data)
 
 CollectionItemFile = collections.namedtuple('CollectionItemFile', ('path_destination', 'path_source', 'signed_by', 'signature'))
 """
@@ -202,10 +115,10 @@ class Repository(object):
 		"""
 		:param dict data: The formatted repository data.
 		:param keys: The keys to use for verifying remote data.
-		:type keys: :py:class:`.SecurityKeys`
+		:type keys: :py:class:`~king_phisher.security_keys.SecurityKeys`
 		"""
-		self.security_keys = keys or SecurityKeys()
-		"""The :py:class:`.SecurityKeys` used for verifying remote data."""
+		self.security_keys = keys or security_keys.SecurityKeys()
+		"""The :py:class:`~king_phisher.security_keys.SecurityKeys` used for verifying remote data."""
 		created = data.get('created')
 		if isinstance(created, str):
 			self.created = dateutil.parser.parse(created)
@@ -399,10 +312,10 @@ class Catalog(object):
 		"""
 		:param dict data: The formatted catalog data.
 		:param keys: The keys to use for verifying remote data.
-		:type keys: :py:class:`.SecurityKeys`
+		:type keys: :py:class:`~king_phisher.security_keys.SecurityKeys`
 		"""
-		self.security_keys = keys or SecurityKeys()
-		"""The :py:class:`.SecurityKeys` used for verifying remote data."""
+		self.security_keys = keys or security_keys.SecurityKeys()
+		"""The :py:class:`~king_phisher.security_keys.SecurityKeys` used for verifying remote data."""
 		self.created = None
 		"""The timestamp of when the remote data was generated."""
 		created = data.get('created')
@@ -426,7 +339,7 @@ class Catalog(object):
 
 		:param str url: The URL to the catalog data to load.
 		:param keys: The keys to use for verifying remote data.
-		:type keys: :py:class:`.SecurityKeys`
+		:type keys: :py:class:`~king_phisher.security_keys.SecurityKeys`
 		:param str encoding: The encoding of the catalog data.
 		:return: The new catalog instance.
 		:rtype: :py:class:`.Catalog`

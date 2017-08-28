@@ -41,9 +41,3 @@ Classes
    :members:
    :inherited-members:
    :special-members: __init__
-
-.. autoclass:: king_phisher.catalog.SecurityKeys
-   :show-inheritance:
-   :members:
-   :inherited-members:
-   :special-members: __init__
