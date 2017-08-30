@@ -150,14 +150,17 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 				self.text_insert('metadata has been removed.\n')
 		md5 = hashlib.new('md5')
 		sha1 = hashlib.new('sha1')
+		sha256 = hashlib.new('sha256')
 		with open(attachment, 'rb') as file_h:
 			data = True
 			while data:
 				data = file_h.read(1024)
 				md5.update(data)
 				sha1.update(data)
-		self.text_insert("  MD5:  {0}\n".format(md5.hexdigest()))
-		self.text_insert("  SHA1: {0}\n".format(sha1.hexdigest()))
+				sha256.update(data)
+		self.text_insert("  MD5:     {0}\n".format(md5.hexdigest()))
+		self.text_insert("  SHA-1:   {0}\n".format(sha1.hexdigest()))
+		self.text_insert("  SHA-256: {0}\n".format(sha256.hexdigest()))
 
 		enabled_plugins = self.application.plugin_manager.enabled_plugins.values()
 		attachment_plugins = [plugin for plugin in enabled_plugins if isinstance(plugin, plugins.ClientPluginMailerAttachment)]
