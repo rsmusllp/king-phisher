@@ -12,6 +12,8 @@ Functions
 
 .. autofunction:: king_phisher.archive.is_archive
 
+.. autofunction:: king_phisher.archive.patch_zipfile
+
 Classes
 -------
 
