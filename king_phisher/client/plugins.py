@@ -150,7 +150,6 @@ class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
 		:param adjustment: The adjustment details of the options value.
 		:type adjustment: :py:class:`Gtk.Adjustment`
 		"""
-		self.display_name = kwargs.pop('display_name', name)
 		self.adjustment = kwargs.pop('adjustment', Gtk.Adjustment(0, -0x7fffffff, 0x7fffffff, 1, 10, 0))
 		super(ClientOptionInteger, self).__init__(name, *args, **kwargs)
 
