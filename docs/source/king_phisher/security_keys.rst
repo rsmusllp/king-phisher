@@ -21,3 +21,11 @@ Classes
    :members:
    :inherited-members:
    :special-members: __init__
+
+.. autoclass:: king_phisher.security_keys.SigningKey
+   :show-inheritance:
+   :members:
+
+.. autoclass:: king_phisher.security_keys.VerifyingKey
+   :show-inheritance:
+   :members:
