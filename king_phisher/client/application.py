@@ -385,7 +385,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self.plugin_manager.load(name)
 				self.plugin_manager.enable(name)
 			except Exception:
+				enabled_plugins.remove(name)
 				self.config['plugins.enabled'].remove(name)
+				self.logger.info("plugin '{0}' has been disabled".format(name))
 				gui_utilities.show_dialog_error(
 					'Failed To Enable Plugin',
 					self.main_window,
