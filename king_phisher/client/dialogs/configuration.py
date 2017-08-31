@@ -48,13 +48,15 @@ if isinstance(Gtk.Frame, utilities.Mock):
 else:
 	_Gtk_Frame = Gtk.Frame
 
+OptionWidget = collections.namedtuple('OptionWidget', ('option', 'widget'))
+
 class PluginsConfigurationFrame(_Gtk_Frame):
 	def __init__(self, application, plugin_klass):
 		super(PluginsConfigurationFrame, self).__init__()
 		self.application = application
 		self.config = application.config
 		self.plugin_klass = plugin_klass
-		self.option_widgets = []
+		self.option_widgets = {}
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
 		plugin_config = self.config['plugins'].get(plugin_klass.name) or {}  # use or instead of get incase the value is actually None
 
@@ -81,7 +83,7 @@ class PluginsConfigurationFrame(_Gtk_Frame):
 			widget = opt.get_widget(self.application, plugin_config.get(opt.name, opt.default))
 			widget.set_property('tooltip-text', opt.description)
 			grid.attach(widget, 1, row, 1, 1)
-			self.option_widgets.append((opt, widget))
+			self.option_widgets[opt.name] = OptionWidget(opt, widget)
 		self.show_all()
 
 	def _get_title_box(self):
@@ -104,6 +106,13 @@ class PluginsConfigurationFrame(_Gtk_Frame):
 
 	def signal_activate_plugin_reset(self, _, plugin_klass):
 		self.logger.info("restoring the default options for plugin: {0}".format(plugin_klass.name))
+		default_config = {}
+		for option_widget in self.option_widgets.values():
+			option = option_widget.option
+			widget = option_widget.widget
+			default_config[option.name] = option.default
+			option.set_widget_value(widget, option.default)
+		self.application.config['plugins'][plugin_klass.name] = default_config
 
 class ConfigurationDialog(gui_utilities.GladeGObject):
 	"""
@@ -148,7 +157,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		self.gobjects['frame_smtp_ssh'].set_sensitive(smtp_ssh_enabled)
 		# connect to the signal here so the settings can be loaded with modifications
 		self.gobjects['switch_smtp_ssh_enable'].connect('notify::active', self.signal_switch_smtp_ssh)
-		self._plugin_option_widgets = collections.defaultdict(list)
+		self._plugin_option_widgets = collections.defaultdict(dict)
 
 	def signal_switch_smtp_ssh(self, switch, _):
 		active = switch.get_property('active')
@@ -264,12 +273,12 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		return response
 
 	def save_plugin_options(self):
-		for name, options in self._plugin_option_widgets.items():
+		for name, option_widgets in self._plugin_option_widgets.items():
 			if name not in self.config['plugins']:
 				self.config['plugins'][name] = {}
 			plugin_config = self.config['plugins'][name]  # use or instead of get incase the value is actually None
-			for opt, widget in options:
-				plugin_config[opt.name] = opt.get_widget_value(widget)
+			for option_name, option_widget in option_widgets.items():
+				plugin_config[option_name] = option_widget.option.get_widget_value(option_widget.widget)
 
 	def verify_sms_settings(self):
 		phone_number = gui_utilities.gobject_get_value(self.gobjects['entry_sms_phone_number'])
