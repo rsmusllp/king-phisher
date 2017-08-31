@@ -106,7 +106,7 @@ class LoginDialog(LoginDialogBase):
 		self.popup_menu.append(menu_item)
 
 		menu_item = Gtk.MenuItem.new_with_label('Import Configuration')
-		menu_item.connect('activate', self.signal_menuitem_activate_config)
+		menu_item.connect('activate', self.signal_menuitem_activate_import_config)
 		self.popup_menu.append(menu_item)
 
 		self.popup_menu.show_all()
@@ -117,14 +117,20 @@ class LoginDialog(LoginDialogBase):
 		self.popup_menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
 		return True
 
-	def signal_menuitem_activate_config(self, _):
+	def signal_menuitem_activate_import_config(self, _):
 		dialog = extras.FileChooserDialog('Import Configuration File', self.dialog)
 		response = dialog.run_quick_open()
 		dialog.destroy()
 		if response is None:
 			return
-		self.application.merge_config(response['target_path'], strict=False)
-		self.objects_load_from_config()
+		config_path = response['target_path']
+		try:
+			self.application.merge_config(config_path, strict=False)
+		except Exception:
+			self.logger.warning('failed to merge configuration file: ' + config_path, exc_info=True)
+			gui_utilities.show_dialog_error('Invalid Configuration File', self.dialog, 'Could not import the configuration file.')
+		else:
+			self.objects_load_from_config()
 
 	def signal_switch_ssl(self, switch, _):
 		if switch.get_property('active'):
