@@ -36,6 +36,5 @@ XlsxWriter>=0.9.6
 
 # additional sphinx-specific requirements
 docutils>=0.12
-sphinx>=1.4.3
-sphinxcontrib-domaintools>=0.1
+sphinx>=1.6.0
 sphinxcontrib-httpdomain>=1.5.0
