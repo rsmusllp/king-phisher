@@ -1,0 +1,18 @@
+{
+  "keys": [
+    {
+      "id": "github.com/wolfthefallen",
+      "verifying-key": {
+        "data": "AeFgSLT7Rk0iK954S4/ejCWH2/gN0E8Y2hdchKESYKVbn2CbeZTHVEKCts5B7KsOa/7s6bTK7BVwQMBmVCBCZJvdALNgmyglIfxfgTHf19vVq/Wq2SxYwxwZOE/nxAQxwbd2mVURlE4Dglcq6Ij12sqoLQTcov8S3t9NODmxo/Krud6b",
+        "type": "secp521r1"
+      }
+    },
+    {
+      "id": "github.com/zeroSteiner",
+      "verifying-key": {
+        "data": "ADcVhmRWMoPyyqE+gv9a7l/+d+BzXcjqid+QkAAMlHBCvnJLatHfHK4aRo4lqwr4nV2hcQSJ4U4ss4sKc2GoIE7jADzJEstGPkuzN7uRZ1Q3odo002hw0OpW9mUBiUqeMYI+aBcH2qpov0pjRJjNW4KJtSxIqF0eXDavz38aMztjmQDB",
+        "type": "secp521r1"
+      }
+    }
+  ]
+}
