@@ -65,9 +65,9 @@ def _encoding_data(value, encoding=None):
 	if isinstance(encoding, str):
 		encoding = encoding.lower()
 	if encoding == 'base64':
-		value = binascii.b2a_base64(value)
+		value = binascii.b2a_base64(value).decode('utf-8').strip()
 	elif encoding == 'hex':
-		value = binascii.b2a_hex(value)
+		value = binascii.b2a_hex(value).decode('utf-8').strip()
 	elif encoding is not None:
 		raise ValueError('unknown encoding: ' + encoding)
 	return value
@@ -103,10 +103,10 @@ class SigningKey(ecdsa.SigningKey, object):
 		return super(SigningKey, cls).from_string(string, **kwargs)
 
 	@classmethod
-	def from_dict(cls, value, encoding=None):
+	def from_dict(cls, value, encoding='base64'):
 		return _key_cls_from_dict(cls, value, encoding=encoding)
 
-	def sign_dict(self, data, signature_encoding=None):
+	def sign_dict(self, data, signature_encoding='base64'):
 		"""
 		Sign a dictionary object. The dictionary will have a 'signature' key
 		added is required by the :py:meth:`.VerifyingKey.verify_dict` method.
@@ -130,10 +130,10 @@ class VerifyingKey(ecdsa.VerifyingKey, object):
 		return super(VerifyingKey, cls).from_string(string, **kwargs)
 
 	@classmethod
-	def from_dict(cls, value, encoding=None):
+	def from_dict(cls, value, encoding='base64'):
 		return _key_cls_from_dict(cls, value, encoding=encoding)
 
-	def verify_dict(self, data, signature_encoding=None):
+	def verify_dict(self, data, signature_encoding='base64'):
 		"""
 		Verify a signed dictionary object. The dictionary must have a
 		'signature' key as added by the :py:meth:`.SigningKey.sign_dict`
@@ -219,7 +219,7 @@ class SecurityKeys(object):
 		verifying_key = self._get_verifying_key(key_id)
 		return verifying_key.verify(signature, data)
 
-	def verify_dict(self, data, signature_encoding=None):
+	def verify_dict(self, data, signature_encoding='base64'):
 		"""
 		Verify the signed dictionary, using the key specified within the
 		'signed-by' key. This function will raise an exception if the

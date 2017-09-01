@@ -12,6 +12,8 @@ Version 1.9.x
 
 *In Progress*
 
+* Support resetting plugins options to their respective defaults
+
 Version 1.8.0
 ^^^^^^^^^^^^^
 
