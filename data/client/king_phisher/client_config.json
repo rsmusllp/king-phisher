@@ -13,7 +13,6 @@
   "filter.campaign.other_users": false,
   "plugins": {},
   "plugins.enabled": [],
-  "remove_attachment_metadata": true,
   "rpc.serializer": null,
   "server": "localhost:22",
   "server_remote_port": 80,

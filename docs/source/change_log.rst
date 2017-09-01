@@ -13,6 +13,7 @@ Version 1.9.x
 *In Progress*
 
 * Support resetting plugins options to their respective defaults
+* Moved Office 2007+ metadata removal to a new plugin
 
 Version 1.8.0
 ^^^^^^^^^^^^^

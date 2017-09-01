@@ -19,7 +19,6 @@ The King Phisher Package
    ics.rst
    ipaddress.rst
    plugins.rst
-   scrubber.rst
    security_keys.rst
    serializers.rst
    sms.rst
