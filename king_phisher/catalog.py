@@ -150,7 +150,7 @@ class Repository(object):
 		if 'collections-include' in data:
 			# include-files is reversed so the dictionary can get .update()'ed and the first seen will be the value kept
 			for include in reversed(data['collections-include']):
-				include_data = serializers.JSON.loads(self._fetch(include, encoding='utf-8', verify=False))
+				include_data = self._fetch_json(include)
 				if 'collections' not in include_data:
 					self.logger.warning("included file {0} missing 'collections' entry".format(include['path']))
 					continue
@@ -248,17 +248,37 @@ class Repository(object):
 				signed_by=item_file.get('signed-by')
 			)
 		url = self.url_base + '/' + item_file.path_source
-		self.logger.debug("fetching repository item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
-		resp = self._req_sess.get(url)
-		if not resp.ok:
-			self.logger.warning("request to {0} failed with status {1} {2}".format(url, resp.status_code, resp.reason))
-		data = resp.content
+		self.logger.debug("fetching repository data item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
+		data = self._fetch_url(url)
 		if verify:
-			self.logger.debug("verifying signature from {0} for {1}".format(item_file.signed_by, url))
+			self.logger.debug("verifying detached signature from {0} for {1}".format(item_file.signed_by, url))
 			self.security_keys.verify(item_file.signed_by, data, binascii.a2b_base64(item_file.signature))
 		if encoding:
 			data = data.decode(encoding)
 		return data
+
+	def _fetch_json(self, item_file, encoding='utf-8', verify=True):
+		url = self.url_base + '/'
+		if isinstance(item_file, dict):
+			url += item_file['path-source']
+		else:
+			url += item_file.path_source
+		self.logger.debug("fetching repository json item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
+		data = self._fetch_url(url)
+		if encoding:
+			data = data.decode(encoding)
+		data = serializers.JSON.loads(data)
+		if verify:
+			self.logger.debug("verifying inline signature from {0} for {1}".format(data['signed-by'], url))
+			self.security_keys.verify_dict(data, signature_encoding='base64')
+		return data
+
+	def _fetch_url(self, url):
+		resp = self._req_sess.get(url)
+		if not resp.ok:
+			self.logger.warning("request to {0} failed with status {1} {2}".format(url, resp.status_code, resp.reason))
+			raise RuntimeError('failed to fetch data from: ' + url)
+		return resp.content
 
 	def get_file(self, item_file, encoding=None):
 		"""
@@ -357,12 +377,14 @@ class Catalog(object):
 		:return: The new catalog instance.
 		:rtype: :py:class:`.Catalog`
 		"""
+		keys = keys or security_keys.SecurityKeys()
 		req_sess = requests.Session()
 		req_sess.mount('file://', requests_file.FileAdapter())
 		cls.logger.debug('fetching catalog from: ' + url)
 		resp = req_sess.get(url)
 		data = resp.content.decode(encoding)
 		data = serializers.JSON.loads(data)
+		keys.verify_dict(data, signature_encoding='base64')
 		return cls(data, keys=keys)
 
 def sign_item_files(local_path, signing_key, signing_key_id, repo_path=None):
