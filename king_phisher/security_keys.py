@@ -170,6 +170,7 @@ class SecurityKeys(object):
 			raise RuntimeError('failed to load any keys from the primary store')
 		self._load_key_store('security.local.json')
 		self.keys.freeze()
+		self.logger.info("security key store initialized with {0:,} keys".format(len(self.keys)))
 
 	def _get_verifying_key(self, key_id):
 		key = self.keys.get(key_id)
@@ -202,8 +203,8 @@ class SecurityKeys(object):
 				verifying_key = key['verifying-key']
 				key['verifying-key'] = VerifyingKey.from_dict(verifying_key, encoding=verifying_key.pop('encoding', 'base64'))
 			self.keys[identifier] = key
+			self.logger.debug("loaded key id: {0} from: {1}".format(identifier, file_path))
 			loaded += 1
-		self.logger.debug("loaded {0} key{1} from: {2}".format(loaded, ('' if loaded == 1 else 's'), file_path))
 		return loaded
 
 	def verify(self, key_id, data, signature):
