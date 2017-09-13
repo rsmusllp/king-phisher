@@ -51,13 +51,14 @@ def safe_send(signal, logger, *args, **kwargs):
 	:param kwargs: The key word arguments to be forward to the signal as it is sent.
 	"""
 	utilities.assert_arg_type(signal, str, 1)
-	utilities.assert_arg_type(logger, logging.Logger, 2)
+	utilities.assert_arg_type(logger, (logging.Logger, logging.LoggerAdapter), 2)
 	try:
 		blinker.signal(signal).send(*args, **kwargs)
 	except Exception:
 		calling_frame = inspect.stack()[1]
 		logger.error("an error occurred while emitting signal '{0}' from {1}:{2}".format(signal, calling_frame[1], calling_frame[2]), exc_info=True)
 	return
+
 
 # database signals
 db_initialized = blinker.signal(

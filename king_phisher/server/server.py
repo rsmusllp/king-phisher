@@ -62,9 +62,18 @@ import jinja2
 import smoke_zephyr.job
 import smoke_zephyr.utilities
 
+class LoggerAdapter(logging.LoggerAdapter):
+	def process(self, message, kwargs):
+		message = "{0} {message}".format(self.extra['client_address'], message=message)
+		return message, kwargs
+
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
-	logger = logging.getLogger('KingPhisher.Server.RequestHandler')
-	def __init__(self, *args, **kwargs):
+	_logger = logging.getLogger('KingPhisher.Server.RequestHandler')
+	def __init__(self, request, client_address, server, **kwargs):
+		self.logger = LoggerAdapter(
+			self._logger,
+			{'client_address': client_address[0]}
+		)
 		self.logger.debug("tid: 0x{0:x} running http request handler".format(threading.current_thread().ident))
 		# this is for attribute documentation
 		self.config = None
@@ -73,7 +82,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		"""The resource path of the current HTTP request."""
 		self.rpc_session = None
 		self.semaphore_acquired = False
-		super(KingPhisherRequestHandler, self).__init__(*args, **kwargs)
+		super(KingPhisherRequestHandler, self).__init__(request, client_address, server, **kwargs)
 
 	def on_init(self):
 		self.config = self.server.config
@@ -178,6 +187,17 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	do_HEAD = _do_http_method
 	do_POST = _do_http_method
 	do_RPC = _do_http_method
+
+	def do_OPTIONS(self):
+		available_methods = list(x[3:] for x in dir(self) if x.startswith('do_'))
+		if 'RPC' in available_methods:
+			if not len(self.rpc_handler_map) or not ipaddress.ip_address(self.client_address[0]).is_loopback:
+				self.logger.debug('removed RPC method from Allow header in OPTIONS reply')
+				available_methods.remove('RPC')
+		self.send_response(200)
+		self.send_header('Content-Length', 0)
+		self.send_header('Allow', ', '.join(available_methods))
+		self.end_headers()
 
 	def get_query_creds(self, check_query=True):
 		"""
