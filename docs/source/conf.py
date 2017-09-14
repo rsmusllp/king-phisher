@@ -63,6 +63,7 @@ def linkcode_resolve(domain, info):
 	file_name = info['module'].replace('.', '/') + '.py'
 	return "https://github.com/{0}/blob/{1}/{2}".format(GITHUB_REPO, GITHUB_BRANCH, file_name)
 
+
 intersphinx_mapping = {
 	'advancedhttpserver': ('https://advancedhttpserver.readthedocs.io/en/latest/', None),
 	'blinker': ('https://pythonhosted.org/blinker/', None),
@@ -307,3 +308,15 @@ MOCK_MODULES = [
 	'matplotlib.figure'
 ]
 sys.modules.update((mod_name, king_phisher.utilities.Mock()) for mod_name in MOCK_MODULES)
+
+class PatchedDocsCache(object):
+	def __init__(self, *args, **kwargs):
+		pass
+
+	def __call__(self, function):
+		return function
+
+
+# monkey-patch this in so the docs build correct for cached functions
+import smoke_zephyr.utilities
+smoke_zephyr.utilities.Cache = PatchedDocsCache

@@ -88,16 +88,29 @@ class ClientOptionMixin(object):
 		"""
 		raise NotImplementedError()
 
+	def set_widget_value(self, widget, value):
+		"""
+		Set the value of a widget.
+
+		:param widget: The widget whose value is to set for this option.
+		:type widget: :py:class:`Gtk.Widget`
+		"""
+		raise NotImplementedError()
+
 # base option types
 class ClientOptionBoolean(ClientOptionMixin, plugins.OptionBoolean):
 	def get_widget(self, _, value):
 		widget = Gtk.Switch()
-		widget.set_active(bool(value))
 		widget.set_property('halign', Gtk.Align.START)
+		self.set_widget_value(widget, value)
 		return widget
 
 	def get_widget_value(self, widget):
 		return widget.get_active()
+
+	def set_widget_value(self, widget, value):
+		widget.set_active(bool(value))
+		return widget
 
 class ClientOptionEnum(ClientOptionMixin, plugins.OptionEnum):
 	"""
@@ -112,6 +125,13 @@ class ClientOptionEnum(ClientOptionMixin, plugins.OptionEnum):
 		widget.set_hexpand(True)
 		for choice in self.choices:
 			widget.append_text(choice)
+		self.set_widget_value(widget, value)
+		return widget
+
+	def get_widget_value(self, widget):
+		return widget.get_active_text()
+
+	def set_widget_value(self, widget, value):
 		if value in self.choices:
 			widget.set_active(self.choices.index(value))
 		elif self.default is not None:
@@ -119,9 +139,6 @@ class ClientOptionEnum(ClientOptionMixin, plugins.OptionEnum):
 		else:
 			widget.set_active(0)
 		return widget
-
-	def get_widget_value(self, widget):
-		return widget.get_active_text()
 
 class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
 	def __init__(self, name, *args, **kwargs):
@@ -133,31 +150,37 @@ class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
 		:param adjustment: The adjustment details of the options value.
 		:type adjustment: :py:class:`Gtk.Adjustment`
 		"""
-		self.display_name = kwargs.pop('display_name', name)
 		self.adjustment = kwargs.pop('adjustment', Gtk.Adjustment(0, -0x7fffffff, 0x7fffffff, 1, 10, 0))
 		super(ClientOptionInteger, self).__init__(name, *args, **kwargs)
 
 	def get_widget(self, _, value):
-		self.adjustment.set_value(int(round(value)))
 		widget = Gtk.SpinButton()
 		widget.set_hexpand(True)
 		widget.set_adjustment(self.adjustment)
 		widget.set_numeric(True)
 		widget.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
+		self.set_widget_value(widget, value)
 		return widget
 
 	def get_widget_value(self, widget):
 		return widget.get_value_as_int()
 
+	def set_widget_value(self, _, value):
+		self.adjustment.set_value(int(round(value)))
+
 class ClientOptionString(ClientOptionMixin, plugins.OptionString):
 	def get_widget(self, _, value):
 		widget = Gtk.Entry()
 		widget.set_hexpand(True)
-		widget.set_text((value if value else ''))
+		self.set_widget_value(widget, value)
 		return widget
 
 	def get_widget_value(self, widget):
 		return widget.get_text()
+
+	def set_widget_value(self, widget, value):
+		widget.set_text((value if value else ''))
+		return widget
 
 # extended option types
 class ClientOptionPath(ClientOptionString):

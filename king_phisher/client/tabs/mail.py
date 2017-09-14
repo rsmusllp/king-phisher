@@ -37,10 +37,8 @@ import os
 import re
 import sys
 import urllib
-import zipfile
 
 from king_phisher import its
-from king_phisher import scrubber
 from king_phisher import spf
 from king_phisher import utilities
 from king_phisher.client import dialogs
@@ -138,26 +136,20 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			gui_utilities.show_dialog_warning('Invalid Attachment', self.parent, 'The specified attachment file can not be read.')
 			return False
 		self.text_insert("File '{0}' will be attached to sent messages.\n".format(os.path.basename(attachment)))
-		_, extension = os.path.splitext(attachment)
-		extension = extension[1:]
-		if self.config['remove_attachment_metadata'] and extension in ('docm', 'docx', 'pptm', 'pptx', 'xlsm', 'xlsx'):
-			self.text_insert('Attachment file detected as MS Office 2007+, ')
-			try:
-				scrubber.remove_office_metadata(attachment)
-			except zipfile.BadZipfile:
-				self.text_insert('failed to remove metadata.\n')
-			else:
-				self.text_insert('metadata has been removed.\n')
+
 		md5 = hashlib.new('md5')
 		sha1 = hashlib.new('sha1')
+		sha256 = hashlib.new('sha256')
 		with open(attachment, 'rb') as file_h:
 			data = True
 			while data:
 				data = file_h.read(1024)
 				md5.update(data)
 				sha1.update(data)
-		self.text_insert("  MD5:  {0}\n".format(md5.hexdigest()))
-		self.text_insert("  SHA1: {0}\n".format(sha1.hexdigest()))
+				sha256.update(data)
+		self.text_insert("  MD5:     {0}\n".format(md5.hexdigest()))
+		self.text_insert("  SHA-1:   {0}\n".format(sha1.hexdigest()))
+		self.text_insert("  SHA-256: {0}\n".format(sha256.hexdigest()))
 
 		enabled_plugins = self.application.plugin_manager.enabled_plugins.values()
 		attachment_plugins = [plugin for plugin in enabled_plugins if isinstance(plugin, plugins.ClientPluginMailerAttachment)]

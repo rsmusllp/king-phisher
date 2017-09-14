@@ -23,10 +23,10 @@ included. When the prompt appears the following packages should be selected.
 - WebkitGTK
 
 Once all packages have been installed and the King Phisher client is running
-with Python, the "tools/build_msi.bat" script can be executed to create the
-build. The build process will take a few minutes, but once completed an MSI
-installer file will be created in a new "dist" directory in the projects root
-folder.
+with Python, the "tools/development/build_msi.bat" script can be executed to
+create the build. The build process will take a few minutes, but once completed
+an MSI installer file will be created in a new "dist" directory in the projects
+root folder.
 
 Version Information
 -------------------

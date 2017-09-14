@@ -4,8 +4,8 @@
 set start=%time%
 
 :: perform the build
-python tools\cx_freeze.py build
-python tools\cx_freeze.py bdist_msi
+python tools\development\cx_freeze.py build
+python tools\development\cx_freeze.py bdist_msi
 
 :: build complete, calculate the time elapsed
 set end=%time%

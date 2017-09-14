@@ -35,7 +35,7 @@ import re
 from docutils import nodes
 from sphinx import addnodes
 from sphinx.util import docfields
-from sphinxcontrib.domaintools import custom_domain
+from king_phisher.third_party.domaintools import custom_domain
 
 http_sig_param_re = re.compile(r'\((?:(?P<type>[^:)]+):)?(?P<name>[\w_]+)\)', re.VERBOSE)
 

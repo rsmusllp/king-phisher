@@ -31,8 +31,10 @@
 #
 
 import collections
+import logging
 import string
 
+from king_phisher import utilities
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 
@@ -40,6 +42,77 @@ from gi.repository import GObject
 from gi.repository import Gtk
 
 __all__ = ('ConfigurationDialog',)
+
+if isinstance(Gtk.Frame, utilities.Mock):
+	_Gtk_Frame = type('Gtk.Frame', (object,), {'__module__': ''})
+else:
+	_Gtk_Frame = Gtk.Frame
+
+OptionWidget = collections.namedtuple('OptionWidget', ('option', 'widget'))
+
+class PluginsConfigurationFrame(_Gtk_Frame):
+	def __init__(self, application, plugin_klass):
+		super(PluginsConfigurationFrame, self).__init__()
+		self.application = application
+		self.config = application.config
+		self.plugin_klass = plugin_klass
+		self.option_widgets = {}
+		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
+		plugin_config = self.config['plugins'].get(plugin_klass.name) or {}  # use or instead of get incase the value is actually None
+
+		grid = Gtk.Grid()
+		self.add(grid)
+		if Gtk.check_version(3, 12, 0):
+			grid.set_property('margin-left', 12)
+		else:
+			grid.set_property('margin-start', 12)
+		grid.set_property('column-spacing', 3)
+		grid.set_property('row-spacing', 3)
+		grid.insert_column(0)
+		grid.insert_column(0)
+		grid.attach(self._get_title_box(), 0, 0, 2, 1)
+		for row, opt in enumerate(plugin_klass.options, 1):
+			grid.insert_row(row)
+
+			name_label = Gtk.Label()
+			name_label.set_property('tooltip-text', opt.description)
+			name_label.set_property('width-request', 175)
+			name_label.set_text(opt.display_name)
+			grid.attach(name_label, 0, row, 1, 1)
+
+			widget = opt.get_widget(self.application, plugin_config.get(opt.name, opt.default))
+			widget.set_property('tooltip-text', opt.description)
+			grid.attach(widget, 1, row, 1, 1)
+			self.option_widgets[opt.name] = OptionWidget(opt, widget)
+		self.show_all()
+
+	def _get_title_box(self):
+		menu = Gtk.Menu()
+		menu.set_property('valign', Gtk.Align.START)
+		menu_item = Gtk.MenuItem.new_with_label('Restore Default Options')
+		menu_item.connect('activate', self.signal_activate_plugin_reset, self.plugin_klass)
+		menu.append(menu_item)
+		menu.show_all()
+		self.menu = menu
+
+		plugin_menu_button = Gtk.MenuButton()
+		plugin_menu_button.set_property('direction', Gtk.ArrowType.LEFT)
+		plugin_menu_button.set_popup(menu)
+
+		title_box = Gtk.Box(Gtk.Orientation.HORIZONTAL, 3)
+		title_box.pack_start(Gtk.Label(label=self.plugin_klass.title), False, True, 0)
+		title_box.pack_end(plugin_menu_button, False, False, 0)
+		return title_box
+
+	def signal_activate_plugin_reset(self, _, plugin_klass):
+		self.logger.info("restoring the default options for plugin: {0}".format(plugin_klass.name))
+		default_config = {}
+		for option_widget in self.option_widgets.values():
+			option = option_widget.option
+			widget = option_widget.widget
+			default_config[option.name] = option.default
+			option.set_widget_value(widget, option.default)
+		self.application.config['plugins'][plugin_klass.name] = default_config
 
 class ConfigurationDialog(gui_utilities.GladeGObject):
 	"""
@@ -65,7 +138,6 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			'entry_ssh_server',
 			'entry_ssh_username',
 			# Client Tab
-			'checkbutton_remove_attachment_metadata',
 			'combobox_spf_check_level',
 			# Plugins Tab
 			'box_plugin_options'
@@ -84,7 +156,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		self.gobjects['frame_smtp_ssh'].set_sensitive(smtp_ssh_enabled)
 		# connect to the signal here so the settings can be loaded with modifications
 		self.gobjects['switch_smtp_ssh_enable'].connect('notify::active', self.signal_switch_smtp_ssh)
-		self._plugin_option_widgets = collections.defaultdict(list)
+		self._plugin_option_widgets = collections.defaultdict(dict)
 
 	def signal_switch_smtp_ssh(self, switch, _):
 		active = switch.get_property('active')
@@ -135,36 +207,9 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			combobox.set_active_iter(ti)
 
 	def _configure_settings_plugin_options(self, plugin_klass):
-		plugin_config = self.config['plugins'].get(plugin_klass.name) or {}  # use or instead of get incase the value is actually None
-		frame = Gtk.Frame()
+		frame = PluginsConfigurationFrame(self.application, plugin_klass)
 		self.gobjects['box_plugin_options'].pack_start(frame, True, True, 0)
-		frame.set_label(plugin_klass.title)
-
-		grid = Gtk.Grid()
-		frame.add(grid)
-		if Gtk.check_version(3, 12, 0):
-			grid.set_property('margin-left', 12)
-		else:
-			grid.set_property('margin-start', 12)
-		grid.set_property('column-spacing', 3)
-		grid.set_property('row-spacing', 3)
-		grid.insert_column(0)
-		grid.insert_column(0)
-		for row, opt in enumerate(plugin_klass.options):
-			grid.insert_row(row)
-
-			name_label = Gtk.Label()
-			name_label.set_property('tooltip-text', opt.description)
-			name_label.set_property('width-request', 175)
-			name_label.set_text(opt.display_name)
-			grid.attach(name_label, 0, row, 1, 1)
-
-			widget = opt.get_widget(self.application, plugin_config.get(opt.name, opt.default))
-			widget.set_property('tooltip-text', opt.description)
-			grid.attach(widget, 1, row, 1, 1)
-			self._plugin_option_widgets[plugin_klass.name].append((opt, widget))
-
-		frame.show_all()
+		self._plugin_option_widgets[plugin_klass.name] = frame.option_widgets
 
 	def _configure_settings_plugins(self):
 		pm = self.application.plugin_manager
@@ -227,12 +272,12 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		return response
 
 	def save_plugin_options(self):
-		for name, options in self._plugin_option_widgets.items():
+		for name, option_widgets in self._plugin_option_widgets.items():
 			if name not in self.config['plugins']:
 				self.config['plugins'][name] = {}
 			plugin_config = self.config['plugins'][name]  # use or instead of get incase the value is actually None
-			for opt, widget in options:
-				plugin_config[opt.name] = opt.get_widget_value(widget)
+			for option_name, option_widget in option_widgets.items():
+				plugin_config[option_name] = option_widget.option.get_widget_value(option_widget.widget)
 
 	def verify_sms_settings(self):
 		phone_number = gui_utilities.gobject_get_value(self.gobjects['entry_sms_phone_number'])

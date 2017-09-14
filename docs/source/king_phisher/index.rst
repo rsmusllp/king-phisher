@@ -10,6 +10,7 @@ The King Phisher Package
    server/index.rst
 
    archive.rst
+   catalog.rst
    color.rst
    constants.rst
    errors.rst
@@ -18,7 +19,7 @@ The King Phisher Package
    ics.rst
    ipaddress.rst
    plugins.rst
-   scrubber.rst
+   security_keys.rst
    serializers.rst
    sms.rst
    smtp_server.rst

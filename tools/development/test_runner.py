@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tools/development/test_runner.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,28 +30,13 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
-logging.captureWarnings(True)
+import os
+import sys
+import unittest
 
-from .client import *
-from .server import *
+sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from .color import ColorConversionTests
-from .configuration import ServerConfigurationTests
-from .geoip import GeoIPTests
-from .geoip import GeoIPRPCTests
-from .ics import ICSTests
-from .ipaddress import IPAddressTests
-from .security_keys import SigningKeyTests
-from .serializers import ElementTreeTests
-from .serializers import JsonSerializerTests
-from .serializers import MsgPackSerializerTests
-from .sms import SMSTests
-from .spf import SPFTests
-from .templates import TemplatesTests
-from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
-from .version import VersionTests
-from .xor import XORTests
+from tests import *
+
+if __name__ == '__main__':
+	unittest.main()

@@ -66,8 +66,8 @@ class FreezableDict(collections.OrderedDict):
 	"""
 	__slots__ = ('_frozen',)
 	def __init__(self, *args, **kwargs):
-		super(FreezableDict, self).__init__(*args, **kwargs)
 		self._frozen = False
+		super(FreezableDict, self).__init__(*args, **kwargs)
 
 	def __repr__(self):
 		return "<{0} frozen={1} {2}>".format(self.__class__.__name__, self._frozen, super(FreezableDict, self).__repr__())
@@ -178,6 +178,7 @@ def argp_add_args(parser, default_root=''):
 	gc_group = parser.add_argument_group('garbage collector options')
 	gc_group.add_argument('--gc-debug-leak', action='store_const', const=gc.DEBUG_LEAK, default=0, help='set the DEBUG_LEAK flag')
 	gc_group.add_argument('--gc-debug-stats', action='store_const', const=gc.DEBUG_STATS, default=0, help='set the DEBUG_STATS flag')
+
 	@functools.wraps(parser.parse_args)
 	def parse_args_hook(*args, **kwargs):
 		arguments = parser._parse_args(*args, **kwargs)

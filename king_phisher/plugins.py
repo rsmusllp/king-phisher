@@ -361,19 +361,13 @@ class PluginManagerBase(object):
 
 		:param str name: The name of the plugin to load.
 		:param bool reload_module: Reload the module to allow changes to take affect.
-		:return:
+		:return: The plugin class.
 		"""
 		self._lock.acquire()
 		if not reload_module and name in self.loaded_plugins:
 			self._lock.release()
 			return
-		try:
-			module = self.plugin_source.load_plugin(name)
-		except Exception as error:
-			self._lock.release()
-			raise error
-		if reload_module:
-			recursive_reload(module)
+		module = self.load_module(name, reload_module=reload_module)
 		klass = getattr(module, 'Plugin', None)
 		if klass is None:
 			self._lock.release()
@@ -409,6 +403,24 @@ class PluginManagerBase(object):
 				if on_error:
 					on_error(name, error)
 		self._lock.release()
+
+	def load_module(self, name, reload_module=False):
+		"""
+		Load the module which contains a plugin into memory and return the
+		entire module object.
+
+		:param str name: The name of the plugin module to load.
+		:param bool reload_module: Reload the module to allow changes to take affect.
+		:return: The plugin module.
+		"""
+		try:
+			module = self.plugin_source.load_plugin(name)
+		except Exception as error:
+			self._lock.release()
+			raise error
+		if reload_module:
+			recursive_reload(module)
+		return module
 
 	def unload(self, name):
 		"""

@@ -82,13 +82,14 @@ DISABLED = constants.DISABLED
 GTK3_DEFAULT_THEME = 'Adwaita'
 """The default GTK3 Theme for style information."""
 
-USER_DATA_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher')
+USER_DATA_PATH = 'king-phisher'
 """The default folder location of user specific data storage."""
 
 if isinstance(Gtk.Widget, utilities.Mock):
 	_Gtk_Application = type('Gtk.Application', (object,), {'__module__': ''})
 else:
 	_Gtk_Application = Gtk.Application
+	USER_DATA_PATH = os.path.join(GLib.get_user_config_dir(), USER_DATA_PATH)
 
 class KingPhisherClientApplication(_Gtk_Application):
 	"""
@@ -385,7 +386,9 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self.plugin_manager.load(name)
 				self.plugin_manager.enable(name)
 			except Exception:
+				enabled_plugins.remove(name)
 				self.config['plugins.enabled'].remove(name)
+				self.logger.info("plugin '{0}' has been disabled".format(name))
 				gui_utilities.show_dialog_error(
 					'Failed To Enable Plugin',
 					self.main_window,

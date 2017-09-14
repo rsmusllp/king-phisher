@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/security_keys.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,28 +30,47 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
-logging.captureWarnings(True)
+import binascii
+import unittest
 
-from .client import *
-from .server import *
+from king_phisher import security_keys
+from king_phisher import testing
+from king_phisher.utilities import random_string
 
-from .color import ColorConversionTests
-from .configuration import ServerConfigurationTests
-from .geoip import GeoIPTests
-from .geoip import GeoIPRPCTests
-from .ics import ICSTests
-from .ipaddress import IPAddressTests
-from .security_keys import SigningKeyTests
-from .serializers import ElementTreeTests
-from .serializers import JsonSerializerTests
-from .serializers import MsgPackSerializerTests
-from .sms import SMSTests
-from .spf import SPFTests
-from .templates import TemplatesTests
-from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
-from .version import VersionTests
-from .xor import XORTests
+import ecdsa
+import ecdsa.keys
+
+class SigningKeyTests(testing.KingPhisherTestCase):
+	def setUp(self):
+		self.sk = security_keys.SigningKey.generate(curve=ecdsa.NIST521p)
+
+	def test_verifying_key(self):
+		vk = self.sk.get_verifying_key()
+		self.assertIsInstance(vk, security_keys.VerifyingKey)
+
+	def test_dictionary_verification(self):
+		test_data = {}
+		for _ in range(5):
+			test_data['_' + random_string(10)] = random_string(10)
+		self.sk = security_keys.SigningKey.generate(curve=ecdsa.NIST521p)
+		test_data = self.sk.sign_dict(test_data, signature_encoding='base64')
+		self.assertIsInstance(test_data, dict)
+		# make sure the 'signature' key was added
+		self.assertIn('signature', test_data)
+		self.assertEqual(len(test_data), 6)
+
+		try:
+			binascii.a2b_base64(test_data['signature'])
+		except ValueError:
+			self.fail('signature could not be decoded as base64')
+
+		vk = self.sk.get_verifying_key()
+		vk.verify_dict(test_data, signature_encoding='base64')
+
+		test_data['_' + random_string(10)] = random_string(10)
+		with self.assertRaises(ecdsa.keys.BadSignatureError):
+			vk.verify_dict(test_data, signature_encoding='base64')
+
+
+if __name__ == '__main__':
+	unittest.main()

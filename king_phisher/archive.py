@@ -30,10 +30,15 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
+import copy
 import datetime
 import io
 import os
+import shutil
 import tarfile
+import tempfile
+import zipfile
 
 from king_phisher import its
 from king_phisher import serializers
@@ -49,6 +54,75 @@ def is_archive(file_path):
 	:rtype: bool
 	"""
 	return tarfile.is_tarfile(file_path)
+
+def patch_zipfile(input_file, patches, output_file=None):
+	"""
+	Path content into the specified input Zip file. The *input_file* must be
+	either an input path string to the file to patch or a
+	:py:class:`zipfile.ZipFile` instance. Patch data is supplied in the *patch*
+	argument which is a dictionary keyed by the paths to modify, values are
+	then used in place of the specified path. If the value of a path is
+	``None``, then that file is removed from the archive. The *output_file* is
+	either a string to the path of where to place the patched archive, a
+	:py:class:`~zipfile.ZipFile` instance or ``None``. If ``None`` is specified
+	then *input_file* is modified in place.
+
+	.. note::
+		If a :py:class:`~zipfile.ZipFile` instance is specified as *input_file*
+		then *output_file* can not be ``None``.
+
+	:param input_file: The Zip file archive to modify.
+	:type input_file: str, :py:class:`~zipfile.ZipFile`
+	:param dict patches: The data to modify from the original archive.
+	:param output_file: The destination of the modified archive
+	:type output_file: None, str, :py:class:`~zipfile.ZipFile`
+	"""
+	ZipMeta = collections.namedtuple('ZipMeta', ('close', 'delete', 'obj', 'path'))
+	copy_out_to_in = False
+	if isinstance(input_file, str):
+		zin_meta = ZipMeta(close=True, delete=False, obj=zipfile.ZipFile(input_file, 'r'), path=os.path.abspath(input_file))
+	elif isinstance(input_file, zipfile.ZipFile):
+		zin_meta = ZipMeta(close=False, delete=False, obj=input_file, path=os.path.abspath(input_file.filename))
+	else:
+		raise TypeError('arg 1 (input_file) must either be a path or zipfile.ZipFile instance')
+
+	if output_file is None:
+		if not zin_meta.close:
+			raise ValueError('input_file must be a path when output_file is None')
+		tmp_fd, output_file = tempfile.mkstemp(suffix=os.path.splitext(input_file)[1])
+		os.close(tmp_fd)
+		zout_meta = ZipMeta(close=True, delete=True, obj=zipfile.ZipFile(output_file, 'w'), path=os.path.abspath(output_file))
+		copy_out_to_in = True
+	elif isinstance(output_file, str):
+		zout_meta = ZipMeta(close=True, delete=False, obj=zipfile.ZipFile(output_file, 'w'), path=os.path.abspath(output_file))
+	elif isinstance(output_file, zipfile.ZipFile):
+		zout_meta = ZipMeta(close=False, delete=False, obj=output_file, path=os.path.abspath(output_file.filename))
+	else:
+		raise TypeError('arg 3 (output_file) must either be None, a path or zipfile.ZipFile instance')
+
+	patches = copy.copy(patches)
+	zout_meta.obj.comment = zin_meta.obj.comment
+	for item in zin_meta.obj.infolist():
+		data = zin_meta.obj.read(item.filename)
+		if item.filename in patches:
+			data = patches.pop(item.filename)
+			if data is None:
+				continue
+		zout_meta.obj.writestr(item, data)
+	for filename, data in patches.items():
+		zout_meta.obj.writestr(filename, data)
+
+	if zin_meta.close:
+		zin_meta.obj.close()
+	if zout_meta.close:
+		zout_meta.obj.close()
+
+	if copy_out_to_in:
+		shutil.copyfile(zout_meta.path, zin_meta.path)
+
+	# zin_meta.delete will never be True
+	if zout_meta.delete:
+		os.unlink(zout_meta.path)
 
 class ArchiveFile(object):
 	"""
