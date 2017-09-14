@@ -41,7 +41,7 @@ from king_phisher.client.widget import completion_providers
 
 class ClientJinjaComletionProviderTests(testing.KingPhisherTestCase):
 	def test_get_proposal_terms(self):
-		provider = completion_providers.JinjaComletionProvider()
+		provider = completion_providers.JinjaCompletionProvider()
 
 		proposal_strings = completion_providers.get_proposal_terms(
 			provider.jinja_tokens,
@@ -68,6 +68,7 @@ class ClientJinjaComletionProviderTests(testing.KingPhisherTestCase):
 					serializers.JSON.load(file_h, strict=True)
 				except Exception:
 					self.fail("failed to load file '{0}' as json data".format(json_file))
+
 
 if __name__ == '__main__':
 	unittest.main()
