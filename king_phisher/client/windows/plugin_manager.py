@@ -36,6 +36,7 @@ import traceback
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
+from king_phisher import version
 
 from gi.repository import Gdk
 from gi.repository import Gtk
@@ -68,6 +69,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		)
 	)
 	top_gobject = 'window'
+
 	def __init__(self, *args, **kwargs):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_plugins']
@@ -77,15 +79,20 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			treeview,
 			cb_refresh=self.load_plugins
 		)
-		toggle_renderer = Gtk.CellRendererToggle()
-		toggle_renderer.connect('toggled', self.signal_renderer_toggled)
+		toggle_renderer_enable = Gtk.CellRendererToggle()
+		toggle_renderer_enable.connect('toggled', self.signal_renderer_toggled_enable)
+		toggle_renderer_install = Gtk.CellRendererToggle()
+		toggle_renderer_install.connect('toggled', self.signal_renderer_toggled_install)
 		tvm.set_column_titles(
-			('Enabled', 'Plugin'),
+			['Enabled', 'Installed', 'Type', 'Title', 'Compatible', 'Version'],
 			column_offset=1,
-			renderers=(toggle_renderer, Gtk.CellRendererText())
+			renderers=[toggle_renderer_enable, toggle_renderer_install, Gtk.CellRendererText(), Gtk.CellRendererText(), Gtk.CellRendererText(), Gtk.CellRendererText()]
 		)
-		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer, self._toggle_cell_data_func)
-		self._model = Gtk.ListStore(str, bool, str)
+		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer_enable, self._toggle_cell_data_func)
+		#tvm.column_views['Installed'].set_cell_data_func(toggle_renderer_enable, self._toggle_cell_data_func)
+		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'visible', 7)
+		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'visible', 7)
+		self._model = Gtk.TreeStore(str, bool, bool, str, str, str, str, bool)
 		self._model.set_sort_column_id(2, Gtk.SortType.ASCENDING)
 		treeview.set_model(self._model)
 		self.load_plugins()
@@ -95,6 +102,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		menu_item = Gtk.MenuItem.new_with_label('Reload')
 		menu_item.connect('activate', self.signal_popup_menu_activate_reload)
 		self.popup_menu.append(menu_item)
+		menu_item_reload_all = Gtk.MenuItem.new_with_label('Reload All')
+		menu_item_reload_all.connect('activate', self.signal_popup_menu_activate_relaod_all)
+		self.popup_menu.append(menu_item_reload_all)
 		self.popup_menu.show_all()
 
 		self.window.show()
@@ -112,6 +122,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		else:
 			cell.set_property('inconsistent', False)
 
+	def signal_popup_menu_activate_relaod_all(self, _):
+		self.load_plugins()
+
 	def load_plugins(self):
 		"""
 		Load the plugins which are available into the treeview to make them
@@ -122,11 +135,19 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		pm = self.application.plugin_manager
 		self._module_errors = {}
 		pm.load_all(on_error=self._on_plugin_load_error)
+		#(parent (name, bool of check box, installed, type_name column, title column, compatible, version, bool if checkbox is visible))
+		catalog = store.append(None, ('catalog', True, None, 'Catalog', 'Manually Installed', None, None, False))
+		repo = store.append(catalog, ('repository', True, None, 'Repository', 'Local Paths', None, None, False))
 		for name, plugin in pm.loaded_plugins.items():
-			store.append((
+			store.append(repo, (
 				plugin.name,
 				plugin.name in pm.enabled_plugins,
-				plugin.title
+				True,
+				'Plugin',
+				plugin.title,
+				'Yes' if version.version >= plugin.req_min_version else 'No',
+				plugin.version,
+				True
 			))
 		for name in self._module_errors.keys():
 			store.append((
@@ -210,9 +231,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if enabled:
 				pm.enable(name)
 
-	def signal_renderer_toggled(self, _, path):
+	def signal_renderer_toggled_enable(self, _, path):
 		pm = self.application.plugin_manager
 		name = self._model[path][0]  # pylint: disable=unsubscriptable-object
+		if not name or name in ['repo', 'catalog', 'repository']:
+			return
 		if name in self._module_errors:
 			gui_utilities.show_dialog_error('Can Not Enable Plugin', self.window, 'Can not enable a plugin which failed to load.')
 			return
@@ -229,6 +252,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self._model[path][1] = True # pylint: disable=unsubscriptable-object
 			self.config['plugins.enabled'].append(name)
 
+	def signal_renderer_toggled_install(self, _, path):
+		pass
+
 	def signal_treeview_row_activated(self, treeview, path, column):
 		name = self._model[path][0] # pylint: disable=unsubscriptable-object
 		self._set_plugin_info(name)
@@ -238,6 +264,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		textview = self.gobjects['textview_plugin_info']
 		buf = textview.get_buffer()
 		buf.delete(buf.get_start_iter(), buf.get_end_iter())
+		if not name or name in ['repo', 'catalog', 'repository']:
+			stack.set_visible_child(textview)
+			self._set_plugin_info_error(name)
+			return
+
 		if name in self._module_errors:
 			stack.set_visible_child(textview)
 			self._set_plugin_info_error(name)
@@ -264,7 +295,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def _set_plugin_info_error(self, name):
 		textview = self.gobjects['textview_plugin_info']
-		exc, formatted_exc = self._module_errors[name]
 		buf = textview.get_buffer()
+		if not name or name in ['repo', 'catalog', 'repository']:
+			buf.insert(buf.get_end_iter(), "{}\n\nPlease Select Plugin".format(name))
+			return
+		exc, formatted_exc = self._module_errors[name]
 		buf.insert(buf.get_end_iter(), "{0!r}\n\n".format(exc), -1)
 		buf.insert(buf.get_end_iter(), ''.join(formatted_exc), -1)
