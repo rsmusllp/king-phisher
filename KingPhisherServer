@@ -32,6 +32,8 @@
 #  pylint: disable=too-many-locals
 
 import argparse
+import copy
+import json
 import logging
 import os
 import pwd
@@ -51,7 +53,7 @@ from king_phisher.server import build
 from king_phisher.server import plugins
 
 from boltons import strutils
-from smoke_zephyr.configuration import Configuration
+from smoke_zephyr.configuration import MemoryConfiguration
 import yaml
 
 logger = logging.getLogger('KingPhisher.Server.CLI')
@@ -182,6 +184,30 @@ def _ex_config_logging(arguments, config, console_handler):
 				console_handler.setLevel(default_log_level)
 	return file_path
 
+#class YamlIncludeLoader(getattr(yaml, 'CLoader', yaml.Loader)):
+class YamlIncludeLoader(yaml.Loader):
+	yaml_constructors = copy.copy(yaml.Loader.yaml_constructors)
+	def __init__(self, stream, *args, **kwargs):
+		self.file_path = os.path.abspath(stream.name)
+		super(YamlIncludeLoader, self).__init__(stream, *args, **kwargs)
+		self.add_constructor('!include', self.constructor_include)
+
+	@staticmethod
+	def constructor_include(self, node):
+		directory = os.path.dirname(self.file_path)
+		include_file_path = os.path.join(directory, self.construct_scalar(node))
+		_, extension = os.path.splitext(include_file_path)
+		with open(include_file_path, 'r') as file_h:
+			if extension in ('.jsn', '.json'):
+				include_data = json.load(file_h)
+			else:
+				include_data = yaml.load(file_h, Loader=self.__class__)
+		return include_data
+
+def _load_config_file(config_file):
+	config = yaml.load(config_file, Loader=YamlIncludeLoader)
+	return MemoryConfiguration(config)
+
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
@@ -206,7 +232,7 @@ def main():
 		return os.EX_NOPERM
 
 	try:
-		config = Configuration(config_file.name)
+		config = _load_config_file(config_file)
 	except Exception as error:
 		color.print_error('an error occurred while parsing the server configuration file')
 		if isinstance(error, yaml.error.YAMLError):
@@ -232,17 +258,7 @@ def main():
 	if not verify_config:
 		color.print_error('could not load server config verification data')
 		return os.EX_NOINPUT
-	missing_options = config.get_missing(verify_config)
-	if missing_options:
-		if 'missing' in missing_options:
-			color.print_error('the following required options are missing from the server configuration:')
-			for option in missing_options['missing']:
-				color.print_error('  - ' + option)
-		if 'incompatible' in missing_options:
-			color.print_error('the following options are of an incompatible data type in the server configuration:')
-			for option in missing_options['incompatible']:
-				color.print_error("  - {0} (type: {1})".format(option[0], option[1]))
-		return os.EX_CONFIG
+
 	if arguments.verify_config:
 		color.print_good('configuration verification passed')
 		color.print_good('all required settings are present')
