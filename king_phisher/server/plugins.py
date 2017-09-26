@@ -148,7 +148,7 @@ class ServerPluginManager(plugins.PluginManagerBase):
 			except errors.KingPhisherPluginError as error:
 				raise error
 			except Exception:
-				self.logger.critical('failed to enable plugin: ' + plugin, exc_info=True)
+				self.logger.critical('failed to enable plugin: ' + plugin)
 				raise errors.KingPhisherPluginError(plugin, 'failed to enable')
 		signals.db_initialized.connect(self._sig_db_initialized)
 
