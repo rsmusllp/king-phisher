@@ -43,6 +43,9 @@ Signals
 .. autodata:: king_phisher.server.signals.email_opened
    :annotation:
 
+.. autodata:: king_phisher.server.signals.request_handle
+   :annotation:
+
 .. autodata:: king_phisher.server.signals.request_received
    :annotation:
 

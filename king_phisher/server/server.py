@@ -169,11 +169,17 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.semaphore_acquire()
 		else:
 			self.adjust_path()
-		http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
+
+		http_method_handler = None
 		try:
+			signals.request_handle.send(self)
+			http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_' + self.command)
 			http_method_handler(*args, **kwargs)
 		except errors.KingPhisherAbortRequestError as error:
-			self.logger.info('http request aborted')
+			if http_method_handler is None:
+				self.logger.debug('http request aborted by a signal handler')
+			else:
+				self.logger.info('http request aborted')
 			if not error.response_sent:
 				self.respond_not_found()
 		finally:

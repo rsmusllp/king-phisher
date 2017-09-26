@@ -175,10 +175,30 @@ db_table_update = blinker.signal(
 )
 
 # request handler signals
+request_handle = blinker.signal(
+	'request-handle',
+	"""
+	Sent after a new HTTP request has been received and is about to be handled.
+	This signal is suitable for implementing custom request handlers or
+	aborting requests. This signal is emitted after :py:obj:`.request_received`
+	to allow subscribers the opportunity to handle requests themselves.
+	
+	.. note::
+		If a request has been handled by the signal, the signal handler must
+		raise the :py:exc:`~king_phisher.errors.KingPhisherAbortRequestError`
+		exception to prevent further processing.
+	
+	:param request_handler: The handler for the received request.
+	"""
+)
+
 request_received = blinker.signal(
 	'request-received',
 	"""
-	Sent when a new HTTP request has been received and is about to be processed.
+	Sent when a new HTTP request has been received and is about to be handled.
+	This signal is *not* suitable for implementing custom request handlers or
+	aborting requests. This signal is emitted before :py:obj:`.request_handle`
+	allowing subscribers to be notified before a request may be blocked.
 
 	:param request_handler: The handler for the received request.
 	"""

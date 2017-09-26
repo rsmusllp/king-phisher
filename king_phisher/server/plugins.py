@@ -138,9 +138,9 @@ class ServerPluginManager(plugins.PluginManagerBase):
 			for req_type, req_value, req_met in klass.compatibility:
 				req_type = req_type.lower()
 				if req_met:
-					self.logger.debug("plugin {0} requirement {1} ({2}) met".format(plugin, req_type, req_value))
+					self.logger.debug("plugin '{0}' requirement {1} ({2}) met".format(plugin, req_type, req_value))
 					continue
-				self.logger.warning("plugin {0} unmet requirement {1} ({2})".format(plugin, req_type, req_value))
+				self.logger.warning("plugin '{0}' unmet requirement {1} ({2})".format(plugin, req_type, req_value))
 				raise errors.KingPhisherPluginError(plugin, 'failed to meet requirement: ' + req_type)
 			# enable the plugin
 			try:

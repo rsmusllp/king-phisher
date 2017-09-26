@@ -332,7 +332,7 @@ class PluginManagerBase(object):
 			return
 		self.enabled_plugins[name] = inst
 		self._lock.release()
-		self.logger.debug("plugin '{0}' has been enabled".format(name))
+		self.logger.info("plugin '{0}' has been enabled".format(name))
 		return inst
 
 	def disable(self, name):
@@ -349,7 +349,7 @@ class PluginManagerBase(object):
 		inst._cleanup()
 		del self.enabled_plugins[name]
 		self._lock.release()
-		self.logger.debug("plugin '{0}' has been disabled".format(name))
+		self.logger.info("plugin '{0}' has been disabled".format(name))
 
 	# methods to deal with plugin load operations
 	def load(self, name, reload_module=False):
