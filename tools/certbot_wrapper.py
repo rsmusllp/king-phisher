@@ -41,10 +41,10 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import king_phisher.color as color
 import king_phisher.utilities as utilities
+import king_phisher.server.configuration as configuration
 
 import advancedhttpserver
 import smoke_zephyr.utilities
-import yaml
 
 LETS_ENCRYPT_LIVE_PATH = '/etc/letsencrypt/live'
 PARSER_EPILOG = """
@@ -58,13 +58,13 @@ def main():
 	parser = argparse.ArgumentParser(description='King Phisher Certbot Wrapper Utility', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
 	parser.add_argument('--certbot', dest='certbot_bin', help='the path to the certbot binary to use')
-	parser.add_argument('server_config', type=argparse.FileType('r'), help='the server configuration file')
+	parser.add_argument('server_config', help='the server configuration file')
 	parser.add_argument('hostnames', nargs='+', help='the host names to request certificates for')
 	parser.epilog = PARSER_EPILOG
 	arguments = parser.parse_args()
 
-	server_config = yaml.load(arguments.server_config)
-	web_root = server_config['server']['web_root']
+	server_config = configuration.ex_load_config(arguments.server_config).get('server')
+	web_root = server_config['web_root']
 
 	if os.getuid():
 		color.print_error('this tool must be ran as root')
@@ -83,11 +83,11 @@ def main():
 	logger.info('using certbot binary at: ' + certbot_bin)
 
 	logger.debug('getting server binding information')
-	if server_config['server'].get('addresses'):
-		address = server_config['server']['addresses'][0]
+	if server_config.get('addresses'):
+		address = server_config['addresses'][0]
 	else:
-		address = server_config['server']['address']
-		address['ssl'] = bool(server_config['server'].get('ssl_cert'))
+		address = server_config['address']
+		address['ssl'] = bool(server_config.get('ssl_cert'))
 
 	logger.debug("checking that the king phisher server is running on: {host}:{port} (ssl={ssl})".format(**address))
 	try:
@@ -99,7 +99,7 @@ def main():
 		return os.EX_UNAVAILABLE
 	logger.info('connected to server version: ' + version['version'])
 
-	vhost_directories = server_config['server']['vhost_directories']
+	vhost_directories = server_config['vhost_directories']
 	if len(arguments.hostnames) > 1 and not vhost_directories:
 		color.print_error('vhost_directories must be true to specify multiple hostnames')
 		return os.EX_CONFIG

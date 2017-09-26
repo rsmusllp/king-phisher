@@ -42,11 +42,10 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import king_phisher.color as color
 import king_phisher.utilities as utilities
 import king_phisher.server.aaa as aaa
+import king_phisher.server.configuration as configuration
 import king_phisher.server.graphql as graphql
 import king_phisher.server.database.manager as manager
 import king_phisher.server.database.models as models
-
-import yaml
 
 history_file = os.path.expanduser('~/.config/king-phisher/database_console.his')
 
@@ -87,15 +86,15 @@ def main():
 	parser = argparse.ArgumentParser(description='King Phisher Interactive Database Console', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
 	config_group = parser.add_mutually_exclusive_group(required=True)
-	config_group.add_argument('-c', '--config', dest='server_config', type=argparse.FileType('r'), help='the server configuration file')
+	config_group.add_argument('-c', '--config', dest='server_config', help='the server configuration file')
 	config_group.add_argument('-u', '--url', dest='database_url', help='the database connection url')
 	arguments = parser.parse_args()
 
 	if arguments.database_url:
 		database_connection_url = arguments.database_url
 	elif arguments.server_config:
-		server_config = yaml.load(arguments.server_config)
-		database_connection_url = server_config['server']['database']
+		server_config = configuration.ex_load_config(arguments.server_config)
+		database_connection_url = server_config.get('server.database')
 	else:
 		raise RuntimeError('no database connection was specified')
 

@@ -10,7 +10,7 @@ to the server application.
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.aaa.get_groups_for_user(username)
+.. autofunction:: king_phisher.server.aaa.get_groups_for_user
 
 Classes
 -------
