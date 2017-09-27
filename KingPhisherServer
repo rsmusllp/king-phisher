@@ -203,23 +203,16 @@ def main():
 		color.print_error('\'server.setuid_username\' option in the config file to drop privileges')
 		return os.EX_NOPERM
 
-	config = configuration.ex_load_config(arguments.config_file)
-
-	# configure environment variables
+	# configure environment variables and load the config
 	find.init_data_path('server')
-	if config.has_option('server.data_path'):
-		find.data_path_append(config.get('server.data_path'))
-
-	# check the configuration for missing and incompatible options
-	verify_config = find.data_file('server_config_verification.yml')
-	if not verify_config:
-		color.print_error('could not load server config verification data')
-		return os.EX_NOINPUT
-
+	config = configuration.ex_load_config(arguments.config_file)
 	if arguments.verify_config:
 		color.print_good('configuration verification passed')
 		color.print_good('all required settings are present')
 		return os.EX_OK
+	if config.has_option('server.data_path'):
+		find.data_path_append(config.get('server.data_path'))
+
 	if arguments.update_geoip_db:
 		color.print_status('downloading a new geoip database')
 		size = geoip.download_geolite2_city_db(config.get('server.geoip.database'))

@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {},
+  "id": "king-phisher.server.config",
+  "properties": {
+    "logging": {
+      "id": "/properties/logging",
+      "properties": {
+        "console": {
+          "id": "/properties/logging/properties/console",
+          "properties": {
+            "enabled": {
+              "id": "/properties/logging/properties/console/properties/enabled",
+              "type": "boolean"
+            },
+            "format": {
+              "id": "/properties/logging/properties/console/properties/format",
+              "type": "string"
+            },
+            "level": {
+              "id": "/properties/logging/properties/console/properties/level",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "file": {
+          "id": "/properties/logging/properties/file",
+          "properties": {
+            "enabled": {
+              "id": "/properties/logging/properties/file/properties/enabled",
+              "type": "boolean"
+            },
+            "format": {
+              "id": "/properties/logging/properties/file/properties/format",
+              "type": "string"
+            },
+            "level": {
+              "id": "/properties/logging/properties/file/properties/level",
+              "type": "string"
+            },
+            "path": {
+              "id": "/properties/logging/properties/file/properties/path",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "server": {
+      "id": "/properties/server",
+      "properties": {
+        "addresses": {
+          "id": "/properties/server/properties/addresses",
+          "items": {
+            "id": "/properties/server/properties/addresses/items",
+            "properties": {
+              "host": {
+                "id": "/properties/server/properties/addresses/items/properties/host",
+                "type": "string"
+              },
+              "port": {
+                "id": "/properties/server/properties/addresses/items/properties/port",
+                "type": "integer"
+              },
+              "ssl": {
+                "id": "/properties/server/properties/addresses/items/properties/ssl",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "port",
+              "host"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "authentication": {
+          "id": "/properties/server/properties/authentication",
+          "properties": {
+            "cache_timeout": {
+              "id": "/properties/server/properties/authentication/properties/cache_timeout",
+              "type": "string"
+            },
+            "group": {
+              "id": "/properties/server/properties/authentication/properties/group",
+              "type": "string"
+            },
+            "pam_service": {
+              "id": "/properties/server/properties/authentication/properties/pam_service",
+              "type": "string"
+            },
+            "session_timeout": {
+              "id": "/properties/server/properties/authentication/properties/session_timeout",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "client_ip_header": {
+          "id": "/properties/server/properties/client_ip_header",
+          "type": "string"
+        },
+        "cookie_name": {
+          "id": "/properties/server/properties/cookie_name",
+          "type": "string"
+        },
+        "data_path": {
+          "id": "/properties/server/properties/data_path",
+          "type": "string"
+        },
+        "database": {
+          "id": "/properties/server/properties/database",
+          "type": "string"
+        },
+        "fork": {
+          "id": "/properties/server/properties/fork",
+          "type": "boolean"
+        },
+        "geoip": {
+          "id": "/properties/server/properties/geoip",
+          "properties": {
+            "database": {
+              "id": "/properties/server/properties/geoip/properties/database",
+              "type": "string"
+            }
+          },
+          "required": [
+            "database"
+          ],
+          "type": "object"
+        },
+        "headers": {
+          "id": "/properties/server/properties/headers",
+          "items": {
+            "id": "/properties/server/properties/headers/items",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "pid_file": {
+          "id": "/properties/server/properties/pid_file",
+          "type": "string"
+        },
+        "plugin_directories": {
+          "id": "/properties/server/properties/plugin_directories",
+          "items": {
+            "id": "/properties/server/properties/plugin_directories/items",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "plugins": {
+          "id": "/properties/server/properties/plugins",
+          "minProperties": 1,
+          "properties": {},
+          "type": "object"
+        },
+        "require_id": {
+          "id": "/properties/server/properties/require_id",
+          "type": "boolean"
+        },
+        "rest_api": {
+          "id": "/properties/server/properties/rest_api",
+          "properties": {
+            "enabled": {
+              "id": "/properties/server/properties/rest_api/properties/enabled",
+              "type": "boolean"
+            },
+            "networks": {
+              "id": "/properties/server/properties/rest_api/properties/networks",
+              "items": {
+                "id": "/properties/server/properties/rest_api/properties/networks/items",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "token": {
+              "id": "/properties/server/properties/rest_api/properties/token",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "enabled",
+            "token"
+          ],
+          "type": "object"
+        },
+        "server_header": {
+          "id": "/properties/server/properties/server_header",
+          "type": "string"
+        },
+        "set_message_opened_on_visit": {
+          "id": "/properties/server/properties/set_message_opened_on_visit",
+          "type": "boolean"
+        },
+        "setuid_username": {
+          "id": "/properties/server/properties/setuid_username",
+          "type": "string"
+        },
+        "ssl_cert": {
+          "id": "/properties/server/properties/ssl_cert",
+          "type": "string"
+        },
+        "ssl_hosts": {
+          "id": "/properties/server/properties/ssl_hosts",
+          "items": {
+            "id": "/properties/server/properties/ssl_hosts/items",
+            "properties": {
+              "host": {
+                "id": "/properties/server/properties/ssl_hosts/items/properties/host",
+                "type": "string"
+              },
+              "ssl_cert": {
+                "id": "/properties/server/properties/ssl_hosts/items/properties/ssl_cert",
+                "type": "string"
+              },
+              "ssl_key": {
+                "id": "/properties/server/properties/ssl_hosts/items/properties/ssl_key",
+                "type": "string"
+              }
+            },
+            "required": [
+              "ssl_cert",
+              "host",
+              "ssl_key"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "ssl_key": {
+          "id": "/properties/server/properties/ssl_key",
+          "type": "string"
+        },
+        "tracking_image": {
+          "id": "/properties/server/properties/tracking_image",
+          "type": "string"
+        },
+        "vhost_directories": {
+          "id": "/properties/server/properties/vhost_directories",
+          "type": "boolean"
+        },
+        "web_root": {
+          "id": "/properties/server/properties/web_root",
+          "type": "string"
+        }
+      },
+      "required": [
+        "set_message_opened_on_visit",
+        "web_root",
+        "geoip",
+        "database",
+        "tracking_image",
+        "rest_api",
+        "cookie_name",
+        "fork",
+        "vhost_directories",
+        "require_id",
+        "addresses"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "server",
+    "logging"
+  ],
+  "type": "object"
+}

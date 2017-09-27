@@ -744,7 +744,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		self.logger.info("handling a page visit for campaign id: {0} from IP address: {1}".format(self.campaign_id, client_ip))
 		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
 
-		if message.opened is None and self.config.get_if_exists('server.set_message_opened_on_visit', True):
+		if message.opened is None and self.config.get('server.set_message_opened_on_visit'):
 			message.opened = db_models.current_timestamp()
 			message.opener_ip = self.get_client_ip()
 			message.opener_user_agent = self.headers.get('user-agent', None)

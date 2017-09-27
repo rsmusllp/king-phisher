@@ -70,6 +70,7 @@ intersphinx_mapping = {
 	'gobject': ('http://lazka.github.io/pgi-docs/GObject-2.0/', None),
 	'gtksource': ('https://lazka.github.io/pgi-docs/GtkSource-3.0/', None),
 	'gtk': ('http://lazka.github.io/pgi-docs/Gtk-3.0/', None),
+	'jsonschema': ('https://python-jsonschema.readthedocs.io/en/latest/', None),
 	'paramiko': ('http://docs.paramiko.org/en/latest/', None),
 	'smokezephyr': ('https://smoke-zephyr.readthedocs.io/en/latest/', None),
 	'sqlalchemy': ('http://docs.sqlalchemy.org/en/latest/', None),

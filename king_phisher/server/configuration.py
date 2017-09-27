@@ -35,9 +35,11 @@ import json
 import os
 import sys
 
-from king_phisher import color
+import king_phisher.color as color
+import king_phisher.find as find
 
-from smoke_zephyr import configuration
+import smoke_zephyr.configuration as configuration
+import jsonschema
 import yaml
 
 YamlLoader = getattr(yaml, 'CLoader', yaml.Loader)
@@ -82,13 +84,40 @@ class Configuration(configuration.MemoryConfiguration):
 		"""
 		return cls(_load_file(file_path))
 
-def ex_load_config(config_file):
+	def iter_schema_errors(self, schema_file):
+		"""
+		Iterate over the :py:class:`~jsonschema.exceptions.ValidationError`
+		instances for all errors found within the specified schema.
+
+		:param str schema_file: The path to the schema file to use for validation.
+		:return: Each of the validation errors.
+		:rtype: :py:class:`~jsonschema.exceptions.ValidationError`
+		"""
+		with open(schema_file, 'r') as file_h:
+			schema = json.load(file_h)
+		validator = jsonschema.Draft4Validator(schema)
+		for error in validator.iter_errors(self.get_storage()):
+			yield error
+
+	def schema_errors(self, schema_file):
+		"""
+		Get a tuple of :py:class:`~jsonschema.exceptions.ValidationError`
+		instances for all errors found within the specified schema.
+
+		:param str schema_file: The path to the schema file to use for validation.
+		:return: The validation errors.
+		:rtype: tuple
+		"""
+		return tuple(self.iter_schema_errors(schema_file))
+
+def ex_load_config(config_file, validate_schema=True):
 	"""
 	Load the server configuration from the specified file. This function is
 	meant to be called early on during a scripts execution and if any error
 	occurs, details will be printed and the process will exit.
 
 	:param str config_file: The path to the configuration file to load.
+	:param bool validate_schema: Whether or not to validate the schema of the configuration.
 	:return: The loaded server configuration.
 	:rtype: :py:class:`.Configuration`
 	"""
@@ -108,4 +137,19 @@ def ex_load_config(config_file):
 				color.print_error("{0} - {1}: {2}".format(error.__class__.__name__, config_file, problem))
 		color.print_error('fix the errors in the configuration file and restart the server')
 		sys.exit(os.EX_CONFIG)
+
+	# check the configuration for missing and incompatible options
+	if validate_schema:
+		find.init_data_path('server')
+		config_schema = find.data_file(os.path.join('schemas', 'json', 'king-phisher.server.config.json'))
+		if not config_schema:
+			color.print_error('could not load server configuration schema data')
+			sys.exit(os.EX_NOINPUT)
+
+		schema_errors = config.schema_errors(config_schema)
+		if schema_errors:
+			color.print_error('the server configuration validation encountered the following errors:')
+			for schema_error in schema_errors:
+				color.print_error("  - {0} error: {1} ({2})".format(schema_error.validator, '.'.join(map(str, schema_error.path)), schema_error.message))
+			sys.exit(os.EX_CONFIG)
 	return config
