@@ -117,7 +117,7 @@ class Repository(object):
 	"""
 	An object representing a single logical source of add on data.
 	"""
-	__slots__ = ('__weakref__', '_req_sess', 'collections', 'created', 'description', 'security_keys', 'homepage', 'title', 'url_base')
+	__slots__ = ('__weakref__', '_req_sess', 'collections', 'description', 'security_keys', 'homepage', 'title', 'url_base')
 	logger = logging.getLogger('KingPhisher.Catalog.Repository')
 	def __init__(self, data, keys=None):
 		"""
@@ -127,20 +127,12 @@ class Repository(object):
 		"""
 		self.security_keys = keys or security_keys.SecurityKeys()
 		"""The :py:class:`~king_phisher.security_keys.SecurityKeys` used for verifying remote data."""
-		created = data.get('created')
-		if isinstance(created, str):
-			self.created = dateutil.parser.parse(created)
-		else:
-			self.created = None
+
 		self._req_sess = requests.Session()
 		self._req_sess.mount('file://', requests_file.FileAdapter())
 		self.description = data.get('description')
 		self.homepage = data.get('homepage')
 		"""The URL of the homepage for this repository if it was specified."""
-		for key in ('title', 'url-base'):
-			if isinstance(data.get(key), str) and data[key]:
-				continue
-			raise KeyError('repository data is missing non-empty string key: ' + key)
 		self.title = data['title']
 		"""The title string of this repository."""
 		self.url_base = data['url-base']
@@ -151,13 +143,9 @@ class Repository(object):
 			# include-files is reversed so the dictionary can get .update()'ed and the first seen will be the value kept
 			for include in reversed(data['collections-include']):
 				include_data = self._fetch_json(include)
-				if 'collections' not in include_data:
-					self.logger.warning("included file {0} missing 'collections' entry".format(include['path']))
-					continue
+				utilities.validate_json_schema(include_data, 'king-phisher.catalog.collections')
 				include_data = include_data['collections']
 				for collection_type in include.get('types', COLLECTION_TYPES):
-					if collection_type not in include_data:
-						continue
 					collection = include_data.get(collection_type)
 					if collection is None:
 						continue
@@ -182,45 +170,15 @@ class Repository(object):
 		if collection_type not in COLLECTION_TYPES:
 			self.logger.warning('unknown repository collection type: ' + collection_type)
 			return
-		if not isinstance(collection_items, list):
-			self.logger.warning('invalid repository collection information for type: ' + collection_type)
-			return
-		if not collection_items:
-			return
 		collection = self.collections.get(collection_type)
 		if collection is None:
 			collection = utilities.FreezableDict()
 		# validate each of the items so we know that the basic keys we expect
 		# to be present are set to with the correct value types
 		for item in collection_items:
-			if not isinstance(item, dict):
-				raise TypeError('collection item is not a dict')
-			for key in ('authors', 'files'):
-				if isinstance(item.get(key), list) and item[key]:
-					continue
-				raise KeyError('collection item is missing non-empty list key: ' + key)
-			for key in ('description', 'name', 'title', 'version'):
-				if isinstance(item.get(key), str) and item[key]:
-					continue
-				raise KeyError('collection item is missing non-empty string key: ' + key)
-
-			if not all(isinstance(value, str) for value in item['authors']):
-				raise TypeError('collection item has non-string item in list: authors')
 			item['authors'] = tuple(item['authors'])
-
-			if not all(isinstance(value, dict) for value in item['files']):
-				raise TypeError('collection item has non-dict item in list: files')
-
 			item_files = []
 			for item_file in item['files']:
-				if not (isinstance(item_file.get('path-destination'), str) and item_file['path-destination']):
-					raise KeyError('collection item file is missing non-empty string key: path-destination')
-				if not (isinstance(item_file.get('path-source'), str) and item_file['path-source']):
-					raise KeyError('collection item file is missing non-empty string key: path-source')
-				if not isinstance(item_file.get('signed-by'), (str, type(None))):
-					raise TypeError('collection item file has invalid item: signed-by')
-				if not isinstance(item_file.get('signature'), (str, type(None))):
-					raise TypeError('collection item file has invalid item: signed-by')
 				# normalize empty strings to None for signed-by and signature
 				if not item_file.get('signature'):
 					item_file['signature'] = None
@@ -347,14 +305,13 @@ class Catalog(object):
 		:param keys: The keys to use for verifying remote data.
 		:type keys: :py:class:`~king_phisher.security_keys.SecurityKeys`
 		"""
+		utilities.validate_json_schema(data, 'king-phisher.catalog')
+
 		self.security_keys = keys or security_keys.SecurityKeys()
 		"""The :py:class:`~king_phisher.security_keys.SecurityKeys` used for verifying remote data."""
-		self.created = None
+		self.created = dateutil.parser.parse(data['created'])
 		"""The timestamp of when the remote data was generated."""
-		created = data.get('created')
-		if isinstance(created, str):
-			self.created = dateutil.parser.parse(created)
-		self.maintainers = tuple(maintainer['id'] for maintainer in data.get('maintainers', []))
+		self.maintainers = tuple(maintainer['id'] for maintainer in data['maintainers'])
 		"""
 		A tuple containing the maintainers of the catalog and repositories.
 		These are also the key identities that should be present for verifying

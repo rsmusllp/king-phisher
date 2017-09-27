@@ -1,0 +1,486 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "additionalProperties": false,
+  "definitions": {},
+  "id": "king-phisher.catalog",
+  "properties": {
+    "created": {
+      "id": "/properties/created",
+      "type": "string"
+    },
+    "created-by": {
+      "id": "/properties/created-by",
+      "type": "string"
+    },
+    "description": {
+      "id": "/properties/description",
+      "type": "string"
+    },
+    "id": {
+      "id": "/properties/id",
+      "type": "string"
+    },
+    "maintainers": {
+      "id": "/properties/maintainers",
+      "items": {
+        "id": "/properties/maintainers/items",
+        "properties": {
+          "id": {
+            "id": "/properties/maintainers/items/properties/id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "repositories": {
+      "id": "/properties/repositories",
+      "items": {
+        "additionalProperties": false,
+        "id": "/properties/repositories/items",
+        "properties": {
+          "collections": {
+            "additionalProperties": false,
+            "id": "/properties/repositories/items/properties/collections",
+            "properties": {
+              "plugins/client": {
+                "id": "/properties/repositories/items/properties/collections/properties/plugins/client",
+                "items": {
+                  "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items",
+                  "properties": {
+                    "authors": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/authors",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/authors/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "description": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/description",
+                      "type": "string"
+                    },
+                    "files": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/files",
+                      "items": {
+                        "additionalProperties": false,
+                        "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/files/items",
+                        "properties": {
+                          "path-destination": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/files/items/properties/path-destination",
+                            "type": "string"
+                          },
+                          "path-source": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/files/items/properties/path-source",
+                            "type": "string"
+                          },
+                          "signature": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/files/items/properties/signature",
+                            "type": "string"
+                          },
+                          "signed-by": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/files/items/properties/signed-by",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "path-destination",
+                          "path-source"
+                        ],
+                        "type": "object"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "homepage": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/homepage",
+                      "type": "string"
+                    },
+                    "name": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/name",
+                      "type": "string"
+                    },
+                    "requirements": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements",
+                      "properties": {
+                        "minimum-version": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/minimum-version",
+                          "type": "string"
+                        },
+                        "packages": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/packages",
+                          "items": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/packages/items",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "title": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/title",
+                      "type": "string"
+                    },
+                    "version": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/version",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "authors",
+                    "version",
+                    "title",
+                    "description",
+                    "files"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "plugins/server": {
+                "id": "/properties/repositories/items/properties/collections/properties/plugins/server",
+                "items": {
+                  "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items",
+                  "properties": {
+                    "authors": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/authors",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/authors/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "description": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/description",
+                      "type": "string"
+                    },
+                    "files": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/files",
+                      "items": {
+                        "additionalProperties": false,
+                        "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/files/items",
+                        "properties": {
+                          "path-destination": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/files/items/properties/path-destination",
+                            "type": "string"
+                          },
+                          "path-source": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/files/items/properties/path-source",
+                            "type": "string"
+                          },
+                          "signature": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/files/items/properties/signature",
+                            "type": "string"
+                          },
+                          "signed-by": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/files/items/properties/signed-by",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "path-destination",
+                          "path-source"
+                        ],
+                        "type": "object"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "homepage": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/homepage",
+                      "type": "string"
+                    },
+                    "name": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/name",
+                      "type": "string"
+                    },
+                    "requirements": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements",
+                      "properties": {
+                        "minimum-version": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/minimum-version",
+                          "type": "string"
+                        },
+                        "packages": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/packages",
+                          "items": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/packages/items",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "title": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/title",
+                      "type": "string"
+                    },
+                    "version": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/version",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "authors",
+                    "version",
+                    "title",
+                    "description",
+                    "files"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "templates/client": {
+                "id": "/properties/repositories/items/properties/collections/properties/templates/client",
+                "items": {
+                  "id": "/properties/repositories/items/properties/collections/properties/templates/client/items",
+                  "properties": {
+                    "authors": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/authors",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/authors/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "description": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/description",
+                      "type": "string"
+                    },
+                    "files": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/files",
+                      "items": {
+                        "additionalProperties": false,
+                        "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/files/items",
+                        "properties": {
+                          "path-destination": {
+                            "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/files/items/properties/path-destination",
+                            "type": "string"
+                          },
+                          "path-source": {
+                            "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/files/items/properties/path-source",
+                            "type": "string"
+                          },
+                          "signature": {
+                            "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/files/items/properties/signature",
+                            "type": "string"
+                          },
+                          "signed-by": {
+                            "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/files/items/properties/signed-by",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "path-destination",
+                          "path-source"
+                        ],
+                        "type": "object"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "homepage": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/homepage",
+                      "type": "string"
+                    },
+                    "name": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/name",
+                      "type": "string"
+                    },
+                    "title": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/title",
+                      "type": "string"
+                    },
+                    "version": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/version",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "authors",
+                    "version",
+                    "title",
+                    "description",
+                    "files"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "templates/server": {
+                "id": "/properties/repositories/items/properties/collections/properties/templates/server",
+                "items": {
+                  "id": "/properties/repositories/items/properties/collections/properties/templates/server/items",
+                  "properties": {
+                    "authors": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/authors",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/authors/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "description": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/description",
+                      "type": "string"
+                    },
+                    "files": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/files",
+                      "items": {
+                        "additionalProperties": false,
+                        "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/files/items",
+                        "properties": {
+                          "path-destination": {
+                            "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/files/items/properties/path-destination",
+                            "type": "string"
+                          },
+                          "path-source": {
+                            "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/files/items/properties/path-source",
+                            "type": "string"
+                          },
+                          "signature": {
+                            "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/files/items/properties/signature",
+                            "type": "string"
+                          },
+                          "signed-by": {
+                            "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/files/items/properties/signed-by",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "path-destination",
+                          "path-source"
+                        ],
+                        "type": "object"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "homepage": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/homepage",
+                      "type": "string"
+                    },
+                    "name": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/name",
+                      "type": "string"
+                    },
+                    "title": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/title",
+                      "type": "string"
+                    },
+                    "version": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/version",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "authors",
+                    "version",
+                    "title",
+                    "description",
+                    "files"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "collections-include": {
+            "id": "/properties/repositories/items/properties/collections-include",
+            "items": {
+              "additionalProperties": false,
+              "id": "/properties/repositories/items/properties/collections-include/items",
+              "properties": {
+                "path-source": {
+                  "id": "/properties/repositories/items/properties/collections-include/items/properties/path-source",
+                  "type": "string"
+                },
+                "types": {
+                  "id": "/properties/repositories/items/properties/collections-include/items/properties/types",
+                  "items": {
+                    "id": "/properties/repositories/items/properties/collections-include/items/properties/types/items",
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "path-source"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "description": {
+            "id": "/properties/repositories/items/properties/description",
+            "type": "string"
+          },
+          "homepage": {
+            "id": "/properties/repositories/items/properties/homepage",
+            "type": "string"
+          },
+          "id": {
+            "id": "/properties/repositories/items/properties/id",
+            "type": "string"
+          },
+          "title": {
+            "id": "/properties/repositories/items/properties/title",
+            "type": "string"
+          },
+          "url-base": {
+            "id": "/properties/repositories/items/properties/url-base",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url-base",
+          "title"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "signature": {
+      "id": "/properties/signature",
+      "type": "string"
+    },
+    "signed-by": {
+      "id": "/properties/signed-by",
+      "type": "string"
+    },
+    "title": {
+      "id": "/properties/title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "created-by",
+    "signature",
+    "maintainers",
+    "repositories",
+    "signed-by",
+    "created"
+  ],
+  "type": "object"
+}

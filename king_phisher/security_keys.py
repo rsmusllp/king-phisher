@@ -191,10 +191,7 @@ class SecurityKeys(object):
 			return 0
 		with open(file_path, 'r') as file_h:
 			key_store = serializers.JSON.load(file_h)
-		file_path = find.data_file(os.path.join('schemas', 'json', 'king-phisher.security.json'))
-		with open(file_path, 'r') as file_h:
-			schema = serializers.JSON.load(file_h)
-		jsonschema.validate(key_store, schema)
+		utilities.validate_json_schema(key_store, 'king-phisher.security')
 		key_store = key_store['keys']
 		loaded = 0
 		for key_idx, key in enumerate(key_store, 1):

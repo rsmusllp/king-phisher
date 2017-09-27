@@ -36,6 +36,7 @@ import datetime
 import functools
 import gc
 import inspect
+import json
 import logging
 import operator
 import os
@@ -48,11 +49,13 @@ import sys
 
 from king_phisher import color
 from king_phisher import constants
+from king_phisher import find
 from king_phisher import its
 from king_phisher import version
 
 import dateutil
 import email_validator
+import jsonschema
 import smoke_zephyr.utilities
 
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,9}$', flags=re.IGNORECASE)
@@ -178,6 +181,7 @@ def argp_add_args(parser, default_root=''):
 	gc_group = parser.add_argument_group('garbage collector options')
 	gc_group.add_argument('--gc-debug-leak', action='store_const', const=gc.DEBUG_LEAK, default=0, help='set the DEBUG_LEAK flag')
 	gc_group.add_argument('--gc-debug-stats', action='store_const', const=gc.DEBUG_STATS, default=0, help='set the DEBUG_STATS flag')
+
 	@functools.wraps(parser.parse_args)
 	def parse_args_hook(*args, **kwargs):
 		arguments = parser._parse_args(*args, **kwargs)
@@ -463,3 +467,10 @@ def switch(value, comp=operator.eq, swapped=False):
 		yield lambda case: comp(case, value)
 	else:
 		yield lambda case: comp(value, case)
+
+def validate_json_schema(data, schema_file_name):
+	schema_file_name += '.json'
+	file_path = find.data_file(os.path.join('schemas', 'json', schema_file_name))
+	with open(file_path, 'r') as file_h:
+		schema = json.load(file_h)
+	jsonschema.validate(data, schema)
