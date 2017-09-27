@@ -31,6 +31,7 @@
 #
 
 import os
+import time
 import unittest
 
 from king_phisher.testing import KingPhisherServerTestCase
@@ -142,6 +143,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		headers = {'Cookie': "{0}={1}".format(self.config.get('server.cookie_name'), self.visit_id)}
 		response = self.http_request('/' + self.landing_page, method='POST', include_id=False, body=body, headers=headers)
 		self.assertHTTPStatus(response, 200)
+		time.sleep(1)
 		creds_count = self.rpc('db/table/count', 'credentials', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(creds_count, 1)
 		cred = next(self.rpc.remote_table('credentials', {'campaign_id': self.campaign_id}))

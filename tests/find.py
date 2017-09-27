@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/server/__init__.py
+#  tests/find.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,20 +30,38 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
+import json
+import os
+import unittest
 
-from .aaa import ServerAuthenticatedSessionManagerTests
-from .aaa import ServerAuthenticationTests
-from .aaa import ServerCachedPasswordTests
-from .configuration import ServerConfigurationTests
-from .database import DatabaseRPCTests
-from .database import DatabaseSchemaTests
-from .database import DatabaseStorageTests
-from .database import DatabaseTests
-from .graphql import ServerGraphQLTests
-from .rest_api import ServerRESTAPITests
-from .server import CampaignWorkflowTests
-from .server import ServerTests
-from .server_rpc import ServerRPCTests
+from king_phisher import find
+from king_phisher import testing
+
+class FindTests(testing.KingPhisherTestCase):
+	def setUp(self):
+		find.init_data_path()
+
+	def test_find_data_file(self):
+		self.assertIsNotNone(find.data_file('security.json'))
+
+	def test_find_data_directory(self):
+		self.assertIsNotNone(find.data_directory('schemas'))
+
+class JSONSchemaDataTests(testing.KingPhisherTestCase):
+	def test_json_schema_directories(self):
+		find.init_data_path()
+
+		directory = find.data_directory(os.path.join('schemas', 'json'))
+		self.assertIsNotNone(directory)
+		for schema_file in os.listdir(directory):
+			self.assertTrue(schema_file.endswith('.json'))
+			schema_file = os.path.join(directory, schema_file)
+			with open(schema_file, 'r') as file_h:
+				schema_data = json.load(file_h)
+
+			self.assertIsInstance(schema_data, dict)
+			self.assertEqual(schema_data.get('$schema'), 'http://json-schema.org/draft-04/schema#')
+			self.assertEqual(schema_data.get('id'), os.path.basename(schema_file)[:-5])
+
+if __name__ == '__main__':
+	unittest.main()
