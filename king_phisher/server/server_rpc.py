@@ -51,11 +51,13 @@ import pyotp
 
 CONFIG_READABLE = (
 	'beef.hook_url',
-	'server.address.host',
-	'server.address.port',
+	'server.addresses',
+	'server.cookie_name',
 	'server.require_id',
+	'server.rest_api.enabled',
 	'server.secret_id',
 	'server.tracking_image',
+	'server.vhost_directories',
 	'server.web_root'
 )
 """Configuration options that can be accessed by the client."""
@@ -84,6 +86,7 @@ def register_rpc(path, database_access=False, log_call=False):
 	:param bool log_call: Whether or not to log the arguments which the function is called with.
 	"""
 	path = '^' + path + '$'
+
 	def decorator(function):
 		@functools.wraps(function)
 		def wrapper(handler_instance, *args, **kwargs):
