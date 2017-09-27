@@ -42,6 +42,8 @@ Functions
 
 .. autofunction:: king_phisher.utilities.switch
 
+.. autofunction:: king_phisher.utilities.validate_json_schema
+
 Classes
 -------
 

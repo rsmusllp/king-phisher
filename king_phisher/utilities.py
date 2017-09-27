@@ -468,8 +468,16 @@ def switch(value, comp=operator.eq, swapped=False):
 	else:
 		yield lambda case: comp(value, case)
 
-def validate_json_schema(data, schema_file_name):
-	schema_file_name += '.json'
+def validate_json_schema(data, schema_file_id):
+	"""
+	Validate the specified data against the specified schema. The schema file
+	will be searched for and loaded based on it's id. If the validation fails
+	a :py:class:`~jsonschema.exceptions.ValidationError` will be raised.
+
+	:param data: The data to validate against the schema.
+	:param schema_file_id: The id of the schema to load.
+	"""
+	schema_file_name = schema_file_id + '.json'
 	file_path = find.data_file(os.path.join('schemas', 'json', schema_file_name))
 	with open(file_path, 'r') as file_h:
 		schema = json.load(file_h)
