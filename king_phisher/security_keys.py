@@ -34,6 +34,7 @@ import binascii
 import copy
 import json
 import logging
+import os
 
 from king_phisher import find
 from king_phisher import serializers
@@ -42,6 +43,7 @@ from king_phisher import utilities
 import ecdsa
 import ecdsa.curves
 import ecdsa.keys
+import jsonschema
 
 ecdsa_curves = dict((c.name, c) for c in ecdsa.curves.curves)
 """
@@ -189,19 +191,19 @@ class SecurityKeys(object):
 			return 0
 		with open(file_path, 'r') as file_h:
 			key_store = serializers.JSON.load(file_h)
-		key_store = key_store.get('keys', [])
+		file_path = find.data_file(os.path.join('schemas', 'json', 'king-phisher.security.json'))
+		with open(file_path, 'r') as file_h:
+			schema = serializers.JSON.load(file_h)
+		jsonschema.validate(key_store, schema)
+		key_store = key_store['keys']
 		loaded = 0
 		for key_idx, key in enumerate(key_store, 1):
-			identifier = key.get('id')
-			if not identifier:
-				self.logger.warning("skipping loading {0}:{1} due to missing id".format(file_name, key_idx))
-				continue
+			identifier = key['id']
 			if identifier in self.keys:
 				self.logger.warning("skipping loading {0}:{1} due to a duplicate id".format(file_name, key_idx))
 				continue
-			if 'verifying-key' in key:
-				verifying_key = key['verifying-key']
-				key['verifying-key'] = VerifyingKey.from_dict(verifying_key, encoding=verifying_key.pop('encoding', 'base64'))
+			verifying_key = key['verifying-key']
+			key['verifying-key'] = VerifyingKey.from_dict(verifying_key, encoding=verifying_key.pop('encoding', 'base64'))
 			self.keys[identifier] = key
 			self.logger.debug("loaded key id: {0} from: {1}".format(identifier, file_path))
 			loaded += 1
