@@ -198,6 +198,7 @@ class SigningKey(ecdsa.SigningKey, object):
 
 		file_data = file_data.decode(encoding)
 		file_data = serializers.JSON.loads(file_data)
+		utilities.validate_json_schema(file_data, 'king-phisher.security.key')
 		return file_data['id'], cls.from_dict(file_data['signing-key'], encoding=file_data.pop('encoding', 'base64'))
 
 	def sign_dict(self, data, signature_encoding='base64'):
@@ -214,6 +215,7 @@ class SigningKey(ecdsa.SigningKey, object):
 		"""
 		utilities.assert_arg_type(data, dict, arg_pos=1)
 		data = copy.copy(data)
+		data.pop('signature', None)  # remove a pre-existing signature
 		json_data = json.dumps(data, sort_keys=True).encode('utf-8')
 		data['signature'] = _encoding_data(self.sign(json_data), encoding=signature_encoding)
 		return data
