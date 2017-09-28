@@ -98,7 +98,17 @@ def _kwarg_curve(kwargs):
 
 def openssl_decrypt_data(ciphertext, password, digest='sha256', encoding='utf-8'):
 	"""
-	Decrypt *ciphertext* in the same way as OpenSSL.
+	Decrypt *ciphertext* in the same way as OpenSSL. For the meaning of
+	*digest* see the :py:func:`.openssl_derive_key_and_iv` function
+	documentation.
+
+	.. note::
+		This function can be used to decrypt ciphertext created with the
+		``openssl`` command line utility.
+
+		.. code-block:: none
+
+			openssl enc -e -aes-256-cbc -in file -out file.enc -md sha256
 
 	:param bytes ciphertext: The encrypted data to decrypt.
 	:param str password: The password to use when deriving the decryption key.
@@ -130,10 +140,10 @@ def openssl_derive_key_and_iv(password, salt, key_length, iv_length, digest='sha
 	OpenSSL.
 
 	.. note::
-		The ``openssl enc ...`` command uses ``sha256`` by default as the
-		*digest*. Alternatively the ``openssl CIPHER`` command uses ``md5`` by
-		default for the *digest* option. Both can be specified by the user with
-		the ``-md`` flag.
+		Different versions of OpenSSL use a different default value for the
+		*digest* function used to derive keys and initialization vectors. A
+		specific one can be used by passing the ``-md`` option to the
+		``openssl`` command.
 
 	:param str password: The password to use when deriving the key and IV.
 	:param bytes salt: A value to use as a salt for the operation.
