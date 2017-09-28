@@ -13,6 +13,13 @@ Data
 .. autodata:: king_phisher.security_keys.ecdsa_curves
    :annotation:
 
+Functions
+---------
+
+.. autofunction:: king_phisher.security_keys.openssl_decrypt_data
+
+.. autofunction:: king_phisher.security_keys.openssl_derive_key_and_iv
+
 Classes
 -------
 

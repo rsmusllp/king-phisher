@@ -32,19 +32,24 @@
 
 import binascii
 import copy
+import hashlib
 import json
 import logging
-import os
 
 from king_phisher import find
 from king_phisher import serializers
 from king_phisher import utilities
 
+import cryptography.hazmat.primitives.ciphers
+import cryptography.hazmat.primitives.ciphers.algorithms
+import cryptography.hazmat.primitives.ciphers.modes
+import cryptography.hazmat.primitives.padding as padding
+import cryptography.hazmat.backends as backends
 import ecdsa
 import ecdsa.curves
 import ecdsa.keys
-import jsonschema
 
+ciphers = cryptography.hazmat.primitives.ciphers
 ecdsa_curves = dict((c.name, c) for c in ecdsa.curves.curves)
 """
 A dictionary of :py:class:`ecdsa.curves.Curve` objects keyed by their
@@ -91,6 +96,63 @@ def _kwarg_curve(kwargs):
 	kwargs['curve'] = curve
 	return kwargs
 
+def openssl_decrypt_data(ciphertext, password, digest='sha256', encoding='utf-8'):
+	"""
+	Decrypt *ciphertext* in the same way as OpenSSL.
+
+	:param bytes ciphertext: The encrypted data to decrypt.
+	:param str password: The password to use when deriving the decryption key.
+	:param str digest: The name of hashing function to use to generate the key.
+	:param str encoding: The name of the encoding to use for the password.
+	:return: The decrypted data.
+	:rtype: bytes
+	"""
+	salt = b''
+	if ciphertext[:8] == b'Salted__':
+		salt = ciphertext[8:16]
+		ciphertext = ciphertext[16:]
+	my_key, my_iv = openssl_derive_key_and_iv(password, salt, 32, 16, digest=digest, encoding=encoding)
+
+	cipher = ciphers.Cipher(
+		ciphers.algorithms.AES(my_key),
+		ciphers.modes.CBC(my_iv),
+		backend=backends.default_backend()
+	)
+	decryptor = cipher.decryptor()
+	plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+
+	unpadder = padding.PKCS7(cipher.algorithm.block_size).unpadder()
+	return unpadder.update(plaintext) + unpadder.finalize()
+
+def openssl_derive_key_and_iv(password, salt, key_length, iv_length, digest='sha256', encoding='utf-8'):
+	"""
+	Derive an encryption key and initialization vector (IV) in the same way as
+	OpenSSL.
+
+	.. note::
+		The ``openssl enc ...`` command uses ``sha256`` by default as the
+		*digest*. Alternatively the ``openssl CIPHER`` command uses ``md5`` by
+		default for the *digest* option. Both can be specified by the user with
+		the ``-md`` flag.
+
+	:param str password: The password to use when deriving the key and IV.
+	:param bytes salt: A value to use as a salt for the operation.
+	:param int key_length: The length in bytes of the key to return.
+	:param int iv_length: The length in bytes of the IV to return.
+	:param str digest: The name of hashing function to use to generate the key.
+	:param str encoding: The name of the encoding to use for the password.
+	:return: The key and IV as a tuple.
+	:rtype: tuple
+	"""
+	password = password.encode(encoding)
+	digest_function = getattr(hashlib, digest)
+	chunk = b''
+	data = b''
+	while len(data) < key_length + iv_length:
+		chunk = digest_function(chunk + password + salt).digest()
+		data += chunk
+	return data[:key_length], data[key_length:key_length + iv_length]
+
 class SigningKey(ecdsa.SigningKey, object):
 	@classmethod
 	def from_secret_exponent(cls, *args, **kwargs):
@@ -106,7 +168,37 @@ class SigningKey(ecdsa.SigningKey, object):
 
 	@classmethod
 	def from_dict(cls, value, encoding='base64'):
+		"""
+		Load the signing key from the specified dict object.
+
+		:param dict value: The dictionary to load the key data from.
+		:param str encoding: The encoding of the required 'data' key.
+		:return: The new signing key.
+		:rtype: :py:class:`.SigningKey`
+		"""
 		return _key_cls_from_dict(cls, value, encoding=encoding)
+
+	@classmethod
+	def from_file(cls, file_path, password=None, encoding='utf-8'):
+		"""
+		Load the signing key from the specified file. If *password* is
+		specified, the file is assumed to have been encoded using OpenSSL using
+		``aes-256-cbc`` with ``sha256`` as the message digest.
+
+		:param str file_path: The path to the file to load.
+		:param str password: An optional password to use for decrypting the file.
+		:param str encoding: The encoding of the data.
+		:return: A tuple of the key's ID, and the new :py:class:`.SigningKey` instance.
+		:rtype: tuple
+		"""
+		with open(file_path, 'rb') as file_h:
+			file_data = file_h.read()
+		if password:
+			file_data = openssl_decrypt_data(file_data, password, encoding=encoding)
+
+		file_data = file_data.decode(encoding)
+		file_data = serializers.JSON.loads(file_data)
+		return file_data['id'], cls.from_dict(file_data['signing-key'], encoding=file_data.pop('encoding', 'base64'))
 
 	def sign_dict(self, data, signature_encoding='base64'):
 		"""
@@ -118,6 +210,7 @@ class SigningKey(ecdsa.SigningKey, object):
 
 		:param dict data: The dictionary of data to sign.
 		:param str signature_encoding: The encoding name of the signature data.
+		:return: The dictionary object is returned with the 'signature' key added.
 		"""
 		utilities.assert_arg_type(data, dict, arg_pos=1)
 		data = copy.copy(data)
