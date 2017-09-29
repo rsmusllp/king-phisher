@@ -70,7 +70,7 @@ if not its.on_rtd:
 		available_versions = repo.enumerate_versions(namespace)
 		for version in versions:
 			if version in available_versions:
-				gi.require_version(repo, namespace, version)
+				gi.require_version(namespace, version)
 				break
 		else:
 			raise RuntimeError("Missing required version for gi namespace '{0}'".format(namespace))

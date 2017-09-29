@@ -449,9 +449,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		signals.safe_send('response-sent', self.logger, self, code=code, message=message)
 
 	def respond_file(self, file_path, attachment=False, query=None):
-		self.semaphore_acquire()
 		self._respond_file_check_id()
-		self.semaphore_release()
 		file_path = os.path.abspath(file_path)
 		mime_type = self.guess_mime_type(file_path)
 		if attachment or (mime_type != 'text/html' and mime_type != 'text/plain'):
@@ -553,10 +551,15 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			return
 		if not self.config.get('server.require_id'):
 			return
+
+		self.semaphore_acquire()
 		if self.message_id == self.config.get('server.secret_id'):
+			self.semaphore_release()
+			self.server.logger.debug('request received with the correct secret id')
 			return
 		# a valid campaign_id requires a valid message_id
 		if not self.campaign_id:
+			self.semaphore_release()
 			self.server.logger.warning('denying request due to lack of a valid id')
 			raise errors.KingPhisherAbortRequestError()
 
@@ -565,21 +568,25 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		query = session.query(db_models.LandingPage)
 		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost)
 		if query.count() == 0:
-			self.server.logger.warning('denying request with not found due to invalid hostname')
 			session.close()
+			self.semaphore_release()
+			self.server.logger.warning('denying request with not found due to invalid hostname')
 			raise errors.KingPhisherAbortRequestError()
 		if campaign.has_expired:
-			self.server.logger.warning('denying request because the campaign has expired')
 			session.close()
+			self.semaphore_release()
+			self.server.logger.warning('denying request because the campaign has expired')
 			raise errors.KingPhisherAbortRequestError()
 		if campaign.reject_after_credentials and self.visit_id is None:
 			query = session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
 			if query.count():
-				self.server.logger.warning('denying request because credentials were already harvested')
 				session.close()
+				self.semaphore_release()
+				self.server.logger.warning('denying request because credentials were already harvested')
 				raise errors.KingPhisherAbortRequestError()
 		session.close()
+		self.semaphore_release()
 		return
 
 	def respond_not_found(self):
