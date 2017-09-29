@@ -34,13 +34,11 @@ from king_phisher import its
 
 import gi
 
-repo = gi.Repository.get_default()
-repo.get_loaded_namespaces()
-
-def repo_has_namespace(name):
+def repo_has_namespace(repo, name):
 	"""
 	Check that the repository has the specified namespace.
 
+	:param repo: The repo to check in.
 	:param str name: The namespace to check for.
 	:return: Whether or not the namespace is available.
 	:rtype: bool
@@ -54,15 +52,17 @@ _gi_versions = [
 	('Pango', '1.0')
 ]
 
-if repo_has_namespace('WebKit2') or not repo_has_namespace('WebKit'):
-	_gi_versions.append(('WebKit2', ('3.0', '4.0')))
-else:
-	_gi_versions.append(('WebKit', '3.0'))
-
-if its.on_linux:
-	_gi_versions.append(('Vte', ('2.90', '2.91')))
-
 if not its.on_rtd:
+	repo = gi.Repository.get_default()
+	repo.get_loaded_namespaces()
+
+	if repo_has_namespace(repo, 'WebKit2') or not repo_has_namespace(repo, 'WebKit'):
+		_gi_versions.append(('WebKit2', ('3.0', '4.0')))
+	else:
+		_gi_versions.append(('WebKit', '3.0'))
+	if its.on_linux:
+		_gi_versions.append(('Vte', ('2.90', '2.91')))
+
 	for namespace, versions in _gi_versions:
 		if not isinstance(versions, (list, tuple)):
 			versions = (versions,)
@@ -70,7 +70,7 @@ if not its.on_rtd:
 		available_versions = repo.enumerate_versions(namespace)
 		for version in versions:
 			if version in available_versions:
-				gi.require_version(namespace, version)
+				gi.require_version(repo, namespace, version)
 				break
 		else:
 			raise RuntimeError("Missing required version for gi namespace '{0}'".format(namespace))

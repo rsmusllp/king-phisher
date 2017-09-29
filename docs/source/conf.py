@@ -31,8 +31,9 @@ sys.path.insert(2, _pkg)
 
 del _prj_root, _pkg
 
-import king_phisher.client
+import king_phisher.its
 import king_phisher.utilities
+import king_phisher.version
 
 # -- General configuration ------------------------------------------------
 needs_sphinx = '1.3'
@@ -93,10 +94,6 @@ master_doc = 'index'
 project = 'King Phisher'
 copyright = '2013-2017, SecureState LLC'
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-#
 # The short X.Y version.
 version = king_phisher.version.version.split('-')[0]
 # The full version, including alpha/beta/rc tags.
