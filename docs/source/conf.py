@@ -31,8 +31,9 @@ sys.path.insert(2, _pkg)
 
 del _prj_root, _pkg
 
-import king_phisher.client
+import king_phisher.its
 import king_phisher.utilities
+import king_phisher.version
 
 # -- General configuration ------------------------------------------------
 needs_sphinx = '1.3'
@@ -71,6 +72,7 @@ intersphinx_mapping = {
 	'gobject': ('http://lazka.github.io/pgi-docs/GObject-2.0/', None),
 	'gtksource': ('https://lazka.github.io/pgi-docs/GtkSource-3.0/', None),
 	'gtk': ('http://lazka.github.io/pgi-docs/Gtk-3.0/', None),
+	'jsonschema': ('https://python-jsonschema.readthedocs.io/en/latest/', None),
 	'paramiko': ('http://docs.paramiko.org/en/latest/', None),
 	'smokezephyr': ('https://smoke-zephyr.readthedocs.io/en/latest/', None),
 	'sqlalchemy': ('http://docs.sqlalchemy.org/en/latest/', None),
@@ -93,10 +95,6 @@ master_doc = 'index'
 project = 'King Phisher'
 copyright = '2013-2017, SecureState LLC'
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-#
 # The short X.Y version.
 version = king_phisher.version.version.split('-')[0]
 # The full version, including alpha/beta/rc tags.

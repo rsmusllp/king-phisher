@@ -34,6 +34,7 @@ import logging
 import weakref
 
 from king_phisher import find
+from king_phisher import its
 from king_phisher import utilities
 from king_phisher.client import dialogs
 from king_phisher.client import export
@@ -54,7 +55,7 @@ from gi.repository import GdkPixbuf
 from gi.repository import Gtk
 import xlsxwriter
 
-if isinstance(Gtk.Widget, utilities.Mock):
+if its.mocked:
 	_Gtk_ApplicationWindow = type('Gtk.ApplicationWindow', (object,), {'__module__': ''})
 else:
 	_Gtk_ApplicationWindow = Gtk.ApplicationWindow

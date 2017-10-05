@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/configuration.py
+#  tests/server/configuration.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -33,20 +33,19 @@
 import os
 import unittest
 
-from king_phisher import find
-from king_phisher import testing
-
-from smoke_zephyr import configuration
+import king_phisher.find as find
+import king_phisher.testing as testing
+import king_phisher.server.configuration as configuration
 
 class ServerConfigurationTests(testing.KingPhisherTestCase):
 	def setUp(self):
-		find.data_path_append('data/server')
+		find.init_data_path('server')
 
 	def test_server_config(self):
 		config_file = find.data_file('server_config.yml')
 		self.assertIsNotNone(config_file)
 		self.assertTrue(os.path.isfile(config_file))
-		config = configuration.Configuration(config_file)
+		config = configuration.Configuration.from_file(config_file)
 		self.assertTrue(config.has_section('server'))
 		self.assertTrue(config.has_option('server.addresses'))
 		addresses = config.get('server.addresses')
@@ -55,15 +54,11 @@ class ServerConfigurationTests(testing.KingPhisherTestCase):
 
 	def test_server_config_verification(self):
 		config_file = find.data_file('server_config.yml')
-		verify_config_file = find.data_file('server_config_verification.yml')
 		self.assertIsNotNone(config_file)
-		config = configuration.Configuration(config_file)
-		bad_options = config.get_missing(verify_config_file)
-		self.assertIsInstance(bad_options, dict)
-		incompatible_options = bad_options.get('incompatible')
-		self.assertFalse(bool(incompatible_options), msg='an option is of an invalid type in the server config template')
-		missing_options = bad_options.get('missing')
-		self.assertFalse(bool(missing_options), msg='an option is missing in the server config template')
+		config_schema = find.data_file(os.path.join('schemas', 'json', 'king-phisher.server.config.json'))
+		self.assertIsNotNone(config_schema)
+		config = configuration.Configuration.from_file(config_file)
+		self.assertIsEmpty(config.schema_errors(config_schema))
 
 if __name__ == '__main__':
 	unittest.main()

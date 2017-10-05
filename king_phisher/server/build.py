@@ -54,26 +54,12 @@ def get_bind_addresses(config):
 	:rtype: list
 	"""
 	addresses = []
-	# pull the legacy lone address
-	if config.has_option('server.address'):
-		host = config.get_if_exists('server.address.host', '0.0.0.0')
-		port = config.get('server.address.port')
-		if not isinstance(port, int) and (0 <= port <= 0xffff):
-			logger.critical("can not bind to invalid port: {0!r}".format(port))
-			raise errors.KingPhisherError("invalid port configuration for address '{0}'".format(host))
-		addresses.append((host, port, config.has_option('server.ssl_cert')))
-
-	# pull the new-style list of addresses
-	if not isinstance(config.get_if_exists('server.addresses', []), list):
-		logger.critical('the server.addresses configuration is invalid, it must be a list of entries')
-		raise errors.KingPhisherError('invalid server.addresses configuration')
-	for entry, address in enumerate(config.get_if_exists('server.addresses', [])):
-		host = address.get('host', '0.0.0.0')
+	for entry, address in enumerate(config.get('server.addresses')):
 		port = address['port']
-		if not (isinstance(port, int) and (0 <= port <= 0xffff)):
+		if not (0 <= port <= 0xffff):
 			logger.critical("setting server.addresses[{0}] invalid port specified".format(entry))
 			raise errors.KingPhisherError("invalid port configuration for address #{0}".format(entry + 1))
-		addresses.append((host, port, address.get('ssl', False)))
+		addresses.append((address['host'], port, address.get('ssl', False)))
 
 	for host, port, use_ssl in addresses:
 		if port in (443, 8443) and not use_ssl:

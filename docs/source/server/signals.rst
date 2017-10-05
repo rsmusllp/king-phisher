@@ -61,6 +61,10 @@ signals use the respective instance of
    :annotation:
    :noindex:
 
+.. autodata:: king_phisher.server.signals.request_handle
+   :annotation:
+   :noindex:
+
 .. autodata:: king_phisher.server.signals.request_received
    :annotation:
    :noindex:

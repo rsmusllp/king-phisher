@@ -40,6 +40,7 @@ import urllib
 from king_phisher import find
 from king_phisher.client import client_rpc
 from king_phisher.server import build
+from king_phisher.server import configuration
 from king_phisher.server import plugins
 from king_phisher.server import rest_api
 from king_phisher.server import server
@@ -146,10 +147,9 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 	def setUp(self):
 		find.data_path_append('data/server')
 		web_root = os.path.join(os.getcwd(), 'data', 'server', 'king_phisher')
-		config = smoke_zephyr.configuration.Configuration(find.data_file('server_config.yml'))
-		config.set('server.address.host', '127.0.0.1')
-		config.set('server.address.port', 0)
-		config.set('server.addresses', [])
+		server_address = {'host': '127.0.0.1', 'port': 0, 'ssl': False}
+		config = configuration.Configuration.from_file(find.data_file('server_config.yml'))
+		config.set('server.addresses', [server_address])
 		config.set('server.database', 'sqlite://')
 		config.set('server.geoip.database', os.environ.get('KING_PHISHER_TEST_GEOIP_DB', './GeoLite2-City.mmdb'))
 		config.set('server.web_root', web_root)
@@ -158,14 +158,14 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 		self.config = config
 		self.plugin_manager = plugins.ServerPluginManager(config)
 		self.server = build.server_from_config(config, handler_klass=KingPhisherRequestHandlerTest, plugin_manager=self.plugin_manager)
-		config.set('server.address.port', self.server.sub_servers[0].server_port)
+		server_address['port'] = self.server.sub_servers[0].server_port
 		self.assertIsInstance(self.server, server.KingPhisherServer)
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
 		self.server_thread.daemon = True
 		self.server_thread.start()
 		self.assertTrue(self.server_thread.is_alive())
 		self.shutdown_requested = False
-		self.rpc = client_rpc.KingPhisherRPCClient(('localhost', self.config.get('server.address.port')))
+		self.rpc = client_rpc.KingPhisherRPCClient(('localhost', server_address['port']))
 		self.rpc.login(username='unittest', password='unittest')
 
 	def assertHTTPStatus(self, http_response, status):
@@ -216,7 +216,8 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 			else:
 				id_value = self.config.get('server.secret_id')
 			resource += "{0}id={1}".format('&' if '?' in resource else '?', id_value)
-		conn = http.client.HTTPConnection('localhost', self.config.get('server.address.port'))
+		server_address = self.config.get('server.addresses')[0]
+		conn = http.client.HTTPConnection('localhost', server_address['port'])
 		request_kwargs = {}
 		if isinstance(body, dict):
 			body = urllib.parse.urlencode(body)

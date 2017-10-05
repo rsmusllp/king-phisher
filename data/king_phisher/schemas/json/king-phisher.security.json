@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {},
+  "id": "king-phisher.security",
+  "properties": {
+    "keys": {
+      "id": "/properties/keys",
+      "items": {
+        "id": "/properties/keys/items",
+        "properties": {
+          "id": {
+            "id": "/properties/keys/items/properties/id",
+            "type": "string"
+          },
+          "verifying-key": {
+            "id": "/properties/keys/items/properties/verifying-key",
+            "properties": {
+              "data": {
+                "id": "/properties/keys/items/properties/verifying-key/properties/encoding",
+                "type": "string"
+              },
+              "data": {
+                "id": "/properties/keys/items/properties/verifying-key/properties/data",
+                "type": "string"
+              },
+              "type": {
+                "id": "/properties/keys/items/properties/verifying-key/properties/type",
+                "type": "string"
+              }
+            },
+            "required": [
+              "data",
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "verifying-key",
+          "id"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "keys"
+  ],
+  "type": "object"
+}

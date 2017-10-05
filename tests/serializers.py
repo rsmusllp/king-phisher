@@ -74,7 +74,7 @@ class ElementTreeTests(_SerializerTests):
 	serializer = _ElementTreeSerializer()
 	serializer_output_type = ET.Element
 
-class JsonSerializerTests(_SerializerTests):
+class JSONSerializerTests(_SerializerTests):
 	serializer = serializers.JSON
 	serializer_output_type = str
 

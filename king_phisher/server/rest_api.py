@@ -73,8 +73,6 @@ def rest_handler(handle_function):
 			return
 		networks = config.get_if_exists('server.rest_api.networks')
 		if networks is not None:
-			if isinstance(networks, str):
-				networks = (networks,)
 			found = False
 			for network in networks:
 				if client_ip in ipaddress.ip_network(network, strict=False):

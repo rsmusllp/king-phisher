@@ -36,6 +36,7 @@ import datetime
 import functools
 import gc
 import inspect
+import json
 import logging
 import operator
 import os
@@ -48,11 +49,13 @@ import sys
 
 from king_phisher import color
 from king_phisher import constants
+from king_phisher import find
 from king_phisher import its
 from king_phisher import version
 
 import dateutil
 import email_validator
+import jsonschema
 import smoke_zephyr.utilities
 
 EMAIL_REGEX = re.compile(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,9}$', flags=re.IGNORECASE)
@@ -129,7 +132,7 @@ class Mock(object):
 	"""
 	__all__ = []
 	def __init__(self, *args, **kwargs):
-		pass
+		its.mocked = True
 
 	def __add__(self, other):
 		return other
@@ -464,3 +467,18 @@ def switch(value, comp=operator.eq, swapped=False):
 		yield lambda case: comp(case, value)
 	else:
 		yield lambda case: comp(value, case)
+
+def validate_json_schema(data, schema_file_id):
+	"""
+	Validate the specified data against the specified schema. The schema file
+	will be searched for and loaded based on it's id. If the validation fails
+	a :py:class:`~jsonschema.exceptions.ValidationError` will be raised.
+
+	:param data: The data to validate against the schema.
+	:param schema_file_id: The id of the schema to load.
+	"""
+	schema_file_name = schema_file_id + '.json'
+	file_path = find.data_file(os.path.join('schemas', 'json', schema_file_name))
+	with open(file_path, 'r') as file_h:
+		schema = json.load(file_h)
+	jsonschema.validate(data, schema)

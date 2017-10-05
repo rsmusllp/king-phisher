@@ -42,13 +42,17 @@ from king_phisher.utilities import random_string
 
 class ServerRPCTests(KingPhisherServerTestCase):
 	def test_rpc_config_get(self):
-		self.assertEqual(self.rpc('config/get', 'server.address.port'), self.config.get('server.address.port'))
-		server_address = self.rpc('config/get', ['server.address.host', 'server.address.port'])
-		self.assertIsInstance(server_address, dict)
-		self.assertTrue('server.address.host' in server_address)
-		self.assertTrue('server.address.port' in server_address)
-		self.assertEqual(server_address['server.address.host'], self.config.get('server.address.host'))
-		self.assertEqual(server_address['server.address.port'], self.config.get('server.address.port'))
+		server_addresses = self.rpc('config/get', 'server.addresses')
+		self.assertIsInstance(server_addresses, list)
+		self.assertIsNotEmpty(server_addresses)
+		self.assertEqual(server_addresses, self.config.get('server.addresses'))
+
+		config_results = self.rpc('config/get', ['server.require_id', 'server.web_root'])
+		self.assertIsInstance(config_results, dict)
+		self.assertIn('server.require_id', config_results)
+		self.assertEqual(config_results['server.require_id'], self.config.get('server.require_id'))
+		self.assertIn('server.web_root', config_results)
+		self.assertEqual(config_results['server.web_root'], self.config.get('server.web_root'))
 
 	def test_rpc_config_get_permissions(self):
 		self.assertTrue(self.config.has_option('server.database'))

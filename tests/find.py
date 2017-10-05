@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/client/widget/completion_providers.py
+#  tests/find.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,45 +30,38 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import glob
+import json
 import os
 import unittest
 
 from king_phisher import find
-from king_phisher import serializers
 from king_phisher import testing
-from king_phisher.client.widget import completion_providers
 
-class ClientJinjaComletionProviderTests(testing.KingPhisherTestCase):
-	def test_get_proposal_terms(self):
-		provider = completion_providers.JinjaCompletionProvider()
+class FindTests(testing.KingPhisherTestCase):
+	def setUp(self):
+		find.init_data_path()
 
-		proposal_strings = completion_providers.get_proposal_terms(
-			provider.jinja_tokens,
-			['time']
-		)
-		self.assertIsInstance(proposal_strings, list)
-		self.assertNotIn('local', proposal_strings)
+	def test_find_data_file(self):
+		self.assertIsNotNone(find.data_file('security.json'))
 
-		proposal_strings = completion_providers.get_proposal_terms(
-			provider.jinja_tokens,
-			['time', '']
-		)
-		self.assertIsInstance(proposal_strings, list)
-		self.assertIn('local', proposal_strings)
+	def test_find_data_directory(self):
+		self.assertIsNotNone(find.data_directory('schemas'))
 
-	def test_load_data_files(self):
-		completion_dir = find.data_directory('completion')
-		self.assertIsNotNone(completion_dir, 'failed to find the \'completion\' directory')
-		# validate that completion definitions claiming to be json are loadable as json
-		for json_file in glob.glob(os.path.join(completion_dir, '*.json')):
-			json_file = os.path.abspath(json_file)
-			with open(json_file, 'r') as file_h:
-				try:
-					serializers.JSON.load(file_h, strict=True)
-				except Exception:
-					self.fail("failed to load file '{0}' as json data".format(json_file))
+class JSONSchemaDataTests(testing.KingPhisherTestCase):
+	def test_json_schema_directories(self):
+		find.init_data_path()
 
+		directory = find.data_directory(os.path.join('schemas', 'json'))
+		self.assertIsNotNone(directory)
+		for schema_file in os.listdir(directory):
+			self.assertTrue(schema_file.endswith('.json'))
+			schema_file = os.path.join(directory, schema_file)
+			with open(schema_file, 'r') as file_h:
+				schema_data = json.load(file_h)
+
+			self.assertIsInstance(schema_data, dict)
+			self.assertEqual(schema_data.get('$schema'), 'http://json-schema.org/draft-04/schema#')
+			self.assertEqual(schema_data.get('id'), os.path.basename(schema_file)[:-5])
 
 if __name__ == '__main__':
 	unittest.main()

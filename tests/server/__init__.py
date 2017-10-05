@@ -37,6 +37,7 @@ logging.getLogger('').setLevel(logging.CRITICAL)
 from .aaa import ServerAuthenticatedSessionManagerTests
 from .aaa import ServerAuthenticationTests
 from .aaa import ServerCachedPasswordTests
+from .configuration import ServerConfigurationTests
 from .database import DatabaseRPCTests
 from .database import DatabaseSchemaTests
 from .database import DatabaseStorageTests

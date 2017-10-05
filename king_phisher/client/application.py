@@ -85,7 +85,7 @@ GTK3_DEFAULT_THEME = 'Adwaita'
 USER_DATA_PATH = 'king-phisher'
 """The default folder location of user specific data storage."""
 
-if isinstance(Gtk.Widget, utilities.Mock):
+if its.mocked:
 	_Gtk_Application = type('Gtk.Application', (object,), {'__module__': ''})
 else:
 	_Gtk_Application = Gtk.Application

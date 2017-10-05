@@ -35,14 +35,14 @@ import os
 import re
 
 from king_phisher import find
+from king_phisher import its
 from king_phisher import serializers
-from king_phisher import utilities
 
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import GtkSource
 
-if isinstance(Gtk.Widget, utilities.Mock):
+if its.mocked:
 	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
 	_GtkSource_CompletionProvider = type('GtkSource.CompletionProvider', (object,), {'__module__': ''})
 else:
@@ -215,7 +215,7 @@ class CustomCompletionProviderBase(GObject.GObject, GtkSource.CompletionProvider
 			proposals.append(item)
 		context.add_proposals(self, proposals, True)
 
-class HTMLComletionProvider(CustomCompletionProviderBase):
+class HTMLCompletionProvider(CustomCompletionProviderBase):
 	"""
 	A completion provider which supports HTML5 tags and attributes.
 	"""
@@ -247,7 +247,7 @@ class HTMLComletionProvider(CustomCompletionProviderBase):
 			proposal_terms = [(term, term + ' ') for term in self.html_tags.keys() if term.startswith(tag)]
 		return proposal_terms
 
-class JinjaComletionProvider(CustomCompletionProviderBase):
+class JinjaCompletionProvider(CustomCompletionProviderBase):
 	"""
 	Used as the base completion provider for King Phisher's Jinja2 template
 	editing.
@@ -312,13 +312,13 @@ class JinjaComletionProvider(CustomCompletionProviderBase):
 		proposal_terms = [(term.split('(', 1)[0], term) for term in proposal_terms]
 		return proposal_terms
 
-class JinjaEmailCompletionProvider(JinjaComletionProvider):
+class JinjaEmailCompletionProvider(JinjaCompletionProvider):
 	"""
 	Completion provider for Jinja syntax within an Email.
 	"""
 	var_context = 'email'
 
-class JinjaPageComletionProvider(JinjaComletionProvider):
+class JinjaPageCompletionProvider(JinjaCompletionProvider):
 	"""
 	Completion provider for Jinja syntax within a web page.
 	"""

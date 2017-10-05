@@ -14,7 +14,13 @@ Version 1.9.x
 
 * Support resetting plugins options to their respective defaults
 * Moved Office 2007+ metadata removal to a new plugin
-* Upgrade AdvancedHTTPServer to v2.0.11 to support async SSL handshakes
+
+* Multiple server improvements
+
+   * Upgrade AdvancedHTTPServer to v2.0.11 to support async SSL handshakes
+   * Support using an include directive in the server configuration file
+   * Added a ``request-handle`` signal for custom HTTP request handlers
+   * Removed ``address`` support from the server config in favor of ``addresses``
 
 Version 1.8.0
 ^^^^^^^^^^^^^

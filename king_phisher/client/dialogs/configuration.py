@@ -34,7 +34,7 @@ import collections
 import logging
 import string
 
-from king_phisher import utilities
+from king_phisher import its
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 
@@ -43,7 +43,7 @@ from gi.repository import Gtk
 
 __all__ = ('ConfigurationDialog',)
 
-if isinstance(Gtk.Frame, utilities.Mock):
+if its.mocked:
 	_Gtk_Frame = type('Gtk.Frame', (object,), {'__module__': ''})
 else:
 	_Gtk_Frame = Gtk.Frame

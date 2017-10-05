@@ -37,6 +37,7 @@ import logging
 import ssl
 import threading
 
+from king_phisher import its
 from king_phisher import serializers
 from king_phisher import utilities
 from king_phisher.client import client_rpc
@@ -45,7 +46,7 @@ from gi.repository import GLib
 from gi.repository import GObject
 import websocket
 
-if isinstance(GObject.GObject, utilities.Mock):
+if its.mocked:
 	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
 else:
 	_GObject_GObject = GObject.GObject
@@ -66,6 +67,7 @@ def event_type_filter(event_types, is_method=False):
 	utilities.assert_arg_type(event_types, (list, set, str, tuple))
 	if isinstance(event_types, str):
 		event_types = (event_types,)
+
 	def decorator(function):
 		@functools.wraps(function)
 		def wrapper(*args):

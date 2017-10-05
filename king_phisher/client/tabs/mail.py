@@ -70,7 +70,7 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse  # pylint: disable=ungrouped-imports
 
-if isinstance(Gtk.Widget, utilities.Mock):
+if its.mocked:
 	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
 else:
 	_GObject_GObject = GObject.GObject
@@ -607,7 +607,7 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		source_completion.set_property('accelerators', 0)
 		source_completion.set_property('auto-complete-delay', 250)
 		source_completion.set_property('show-icons', False)
-		source_completion.add_provider(completion_providers.HTMLComletionProvider())
+		source_completion.add_provider(completion_providers.HTMLCompletionProvider())
 		source_completion.add_provider(completion_providers.JinjaEmailCompletionProvider())
 
 	def _html_file_changed(self, path, monitor_event):

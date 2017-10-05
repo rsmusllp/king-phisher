@@ -12,6 +12,7 @@ application.
 
    aaa.rst
    build.rst
+   configuration.rst
    graphql.rst
    pages.rst
    plugins.rst

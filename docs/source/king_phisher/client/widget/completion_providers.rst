@@ -21,12 +21,12 @@ Classes
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.widget.completion_providers.HTMLComletionProvider
+.. autoclass:: king_phisher.client.widget.completion_providers.HTMLCompletionProvider
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.widget.completion_providers.JinjaComletionProvider
+.. autoclass:: king_phisher.client.widget.completion_providers.JinjaCompletionProvider
    :show-inheritance:
    :members:
    :special-members: __init__

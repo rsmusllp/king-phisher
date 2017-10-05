@@ -34,6 +34,7 @@ import codecs
 import logging
 import os
 
+from king_phisher import its
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
@@ -49,7 +50,7 @@ except ImportError:
 	from gi.repository import WebKit as WebKitX
 	has_webkit2 = False
 
-if isinstance(Gtk.Widget, utilities.Mock):
+if its.mocked:
 	_Gtk_CellRendererText = type('Gtk.CellRendererText', (object,), {'__module__': ''})
 	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {'__module__': ''})
 	_WebKitX_WebView = type('WebKitX.WebView', (object,), {'__module__': ''})

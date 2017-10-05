@@ -39,14 +39,15 @@ from .client import *
 from .server import *
 
 from .color import ColorConversionTests
-from .configuration import ServerConfigurationTests
+from .find import FindTests
+from .find import JSONSchemaDataTests
 from .geoip import GeoIPTests
 from .geoip import GeoIPRPCTests
 from .ics import ICSTests
 from .ipaddress import IPAddressTests
 from .security_keys import SigningKeyTests
 from .serializers import ElementTreeTests
-from .serializers import JsonSerializerTests
+from .serializers import JSONSerializerTests
 from .serializers import MsgPackSerializerTests
 from .sms import SMSTests
 from .spf import SPFTests

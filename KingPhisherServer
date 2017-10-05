@@ -48,11 +48,10 @@ from king_phisher import its
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import build
+from king_phisher.server import configuration
 from king_phisher.server import plugins
 
 from boltons import strutils
-from smoke_zephyr.configuration import Configuration
-import yaml
 
 logger = logging.getLogger('KingPhisher.Server.CLI')
 
@@ -188,7 +187,7 @@ def main():
 	parser.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in the foreground (do not fork)')
 	parser.add_argument('--update-geoip-db', dest='update_geoip_db', action='store_true', default=False, help='update the geoip database and exit')
 	parser.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
-	parser.add_argument('config_file', action='store', type=argparse.FileType('r'), help='configuration file to use')
+	parser.add_argument('config_file', action='store', help='configuration file to use')
 	arguments = parser.parse_args()
 
 	if its.py_v2:
@@ -197,7 +196,6 @@ def main():
 		return 0
 
 	console_log_handler = utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
-	config_file = arguments.config_file
 	del parser
 
 	if os.getuid():
@@ -205,48 +203,16 @@ def main():
 		color.print_error('\'server.setuid_username\' option in the config file to drop privileges')
 		return os.EX_NOPERM
 
-	try:
-		config = Configuration(config_file.name)
-	except Exception as error:
-		color.print_error('an error occurred while parsing the server configuration file')
-		if isinstance(error, yaml.error.YAMLError):
-			problem = getattr(error, 'problem', 'unknown yaml error')
-			if hasattr(error, 'problem_mark'):
-				prob_lineno = error.problem_mark.line + 1
-				color.print_error("{0} - {1}:{2} {3}".format(error.__class__.__name__, config_file.name, prob_lineno, problem))
-				lines = open(config_file.name, 'rU').readlines()
-				for lineno, line in enumerate(lines[max(prob_lineno - 3, 0):(prob_lineno + 2)], max(prob_lineno - 3, 0) + 1):
-					color.print_error("  {0} {1: <3}: {2}".format(('=>' if lineno == prob_lineno else '  '), lineno, line.rstrip()))
-			else:
-				color.print_error("{0} - {1}: {2}".format(error.__class__.__name__, config_file.name, problem))
-		color.print_error('fix the errors in the configuration file and restart the server')
-		return os.EX_CONFIG
-
-	# configure environment variables
+	# configure environment variables and load the config
 	find.init_data_path('server')
-	if config.has_option('server.data_path'):
-		find.data_path_append(config.get('server.data_path'))
-
-	# check the configuration for missing and incompatible options
-	verify_config = find.data_file('server_config_verification.yml')
-	if not verify_config:
-		color.print_error('could not load server config verification data')
-		return os.EX_NOINPUT
-	missing_options = config.get_missing(verify_config)
-	if missing_options:
-		if 'missing' in missing_options:
-			color.print_error('the following required options are missing from the server configuration:')
-			for option in missing_options['missing']:
-				color.print_error('  - ' + option)
-		if 'incompatible' in missing_options:
-			color.print_error('the following options are of an incompatible data type in the server configuration:')
-			for option in missing_options['incompatible']:
-				color.print_error("  - {0} (type: {1})".format(option[0], option[1]))
-		return os.EX_CONFIG
+	config = configuration.ex_load_config(arguments.config_file)
 	if arguments.verify_config:
 		color.print_good('configuration verification passed')
 		color.print_good('all required settings are present')
 		return os.EX_OK
+	if config.has_option('server.data_path'):
+		find.data_path_append(config.get('server.data_path'))
+
 	if arguments.update_geoip_db:
 		color.print_status('downloading a new geoip database')
 		size = geoip.download_geolite2_city_db(config.get('server.geoip.database'))
