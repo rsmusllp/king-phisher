@@ -70,7 +70,7 @@ if sys.version_info[0] < 3:
 else:
 	import urllib.parse  # pylint: disable=ungrouped-imports
 
-if isinstance(Gtk.Widget, utilities.Mock):
+if its.mocked:
 	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
 else:
 	_GObject_GObject = GObject.GObject

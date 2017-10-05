@@ -52,7 +52,7 @@ _gi_versions = [
 	('Pango', '1.0')
 ]
 
-if not its.on_rtd:
+if not its.mocked:
 	repo = gi.Repository.get_default()
 	repo.get_loaded_namespaces()
 

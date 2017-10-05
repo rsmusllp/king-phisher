@@ -41,3 +41,5 @@ on_windows = sys.platform.startswith('win')
 
 py_v2 = sys.version_info[0] == 2
 py_v3 = sys.version_info[0] == 3
+
+mocked = False

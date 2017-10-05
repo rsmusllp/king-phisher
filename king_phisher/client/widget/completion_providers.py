@@ -35,14 +35,14 @@ import os
 import re
 
 from king_phisher import find
+from king_phisher import its
 from king_phisher import serializers
-from king_phisher import utilities
 
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import GtkSource
 
-if isinstance(Gtk.Widget, utilities.Mock):
+if its.mocked:
 	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
 	_GtkSource_CompletionProvider = type('GtkSource.CompletionProvider', (object,), {'__module__': ''})
 else:

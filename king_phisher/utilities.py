@@ -132,7 +132,7 @@ class Mock(object):
 	"""
 	__all__ = []
 	def __init__(self, *args, **kwargs):
-		pass
+		its.mocked = True
 
 	def __add__(self, other):
 		return other
