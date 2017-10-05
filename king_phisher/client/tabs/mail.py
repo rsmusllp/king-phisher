@@ -1022,6 +1022,7 @@ class MailSenderTab(_GObject_GObject):
 		'message-data-import': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, bool, (str, str)),
 		'send-finished': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'send-precheck': (GObject.SIGNAL_RUN_LAST, object, (), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r)),
+		'send-message': (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
 		'send-target': (GObject.SIGNAL_RUN_FIRST, None, (object,))
 	}
 	def __init__(self, parent, application):

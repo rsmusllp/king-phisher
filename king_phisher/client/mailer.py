@@ -739,6 +739,7 @@ class MailSenderThread(threading.Thread):
 			mailer_tab.emit('send-target', target)
 			attachments = self.get_mime_attachments()
 			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, attachments)
+			mailer_tab.emit('send-message', target, msg)
 			if not self._try_send_message(target.email_address, msg):
 				break
 

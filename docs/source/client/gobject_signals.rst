@@ -205,6 +205,18 @@ The following are the signals for the
 
    :signal flags: ``SIGNAL_RUN_FIRST``
 
+.. py:function:: send-message(target, message)
+
+   This signal is emitted when the message for a target has been loaded and
+   constructed. Subscribers to this signal may use it as an oppertunity to
+   modify the message object prior to it being sent.
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param target: The target for the message.
+   :type target: :py:class:`~king_phisher.client.mailer.MessageTarget`
+   :param message: The message about to be sent to the target.
+   :type message: :py:class:`~king_phisher.client.mailer.TopMIMEMultipart`
+
 .. py:function:: send-precheck()
 
    This signal is emitted when the user is about to start sending phishing
