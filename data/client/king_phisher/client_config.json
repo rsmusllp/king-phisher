@@ -13,6 +13,7 @@
   "filter.campaign.other_users": false,
   "plugins": {},
   "plugins.enabled": [],
+  "plugins.installed": {},
   "rpc.serializer": null,
   "server": "localhost:22",
   "server_remote_port": 80,

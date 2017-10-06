@@ -3002,7 +3002,7 @@ Spencer McIntyre</property>
           </packing>
         </child>
         <child>
-          <object class="GtkStatusbar" id="PluginManagerWindow.status_bar">
+          <object class="GtkStatusbar" id="PluginManagerWindow.statusbar">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="tooltip_text" translatable="yes">Current Status</property>

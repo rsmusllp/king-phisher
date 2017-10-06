@@ -36,6 +36,7 @@ import tempfile
 import weakref
 
 from king_phisher import plugins
+from king_phisher import catalog
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
 from king_phisher.client.widget import extras
@@ -543,3 +544,28 @@ class ClientPluginManager(plugins.PluginManagerBase):
 	_plugin_klass = ClientPlugin
 	def __init__(self, path, application):
 		super(ClientPluginManager, self).__init__(path, (application,))
+
+class PluginCatalogManager(catalog.CatalogManager):
+	"""
+	Base manager for handling Catalogs
+	"""
+	def __init__(self, plugin_type, *args, **kwargs):
+		super(PluginCatalogManager, self).__init__(*args, **kwargs)
+		self.manager_type = 'plugins/' + plugin_type
+
+	def get_collection(self, catalog_id, repo_id):
+		"""
+		Returns the manager type of the plugin collection of the requested catalog and repository.
+
+		:param str catalog_id: The name of the catalog the repo belongs to
+		:param repo_id: The id of the repository requested.
+		:return: The the collection of manager type from the specified catalog and repository.
+		:rtype:py:class:
+		"""
+		if self.manager_type not in self.get_repo(catalog_id, repo_id).collections:
+			self.logger.warning('no plugins/client collection found in {}:{}'.format(catalog_id, repo_id))
+			return
+		return self.get_repo(catalog_id, repo_id).collections[self.manager_type]
+
+	def install_plugin(self, catalog_id, repo_id, plugin_id, install_path):
+		self.get_repo(catalog_id, repo_id).get_item_files(self.manager_type, plugin_id, install_path)
