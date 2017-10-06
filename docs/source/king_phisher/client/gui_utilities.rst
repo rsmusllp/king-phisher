@@ -22,6 +22,8 @@ Functions
 
 .. autofunction:: king_phisher.client.gui_utilities.gobject_get_value
 
+.. autofunction:: king_phisher.client.gui_utilities.gobject_set_value
+
 .. autofunction:: king_phisher.client.gui_utilities.gobject_signal_accumulator
 
 .. autofunction:: king_phisher.client.gui_utilities.gobject_signal_blocked
