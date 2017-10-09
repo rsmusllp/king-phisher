@@ -170,6 +170,10 @@ class FileChooserDialog(_Gtk_FileChooserDialog):
 		return {'target_uri': target_uri, 'target_path': target_path}
 
 class MultilineEntry(_Gtk_Frame):
+	"""
+	A custom entry widget which can be styled to look like
+	:py:class:`Gtk.Entry` but accepts multiple lines of input.
+	"""
 	__gproperties__ = {
 		'text': (str, 'text', 'The contents of the entry.', '', GObject.ParamFlags.READWRITE),
 		'text-length': (int, 'text-length', 'The length of the text in the GtkEntry.', 0, 0xffff, 0, GObject.ParamFlags.READABLE)

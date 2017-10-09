@@ -17,6 +17,12 @@ Classes
    :special-members: __init__
    :undoc-members:
 
+.. autoclass:: king_phisher.client.widget.extras.MultilineEntry
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
 .. autoclass:: king_phisher.client.widget.extras.WebKitHTMLView
    :show-inheritance:
    :members:

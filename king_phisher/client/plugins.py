@@ -175,12 +175,13 @@ class ClientOptionString(ClientOptionMixin, plugins.OptionString):
 
 	def get_widget(self, _, value):
 		if self.multiline:
-			#scrolled_window = Gtk.ScrolledWindow()
+			scrolled_window = Gtk.ScrolledWindow()
 			textview = extras.MultilineEntry()
 			textview.set_property('hexpand', True)
-			#scrolled_window.add(textview)
-			#scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-			widget = textview
+			scrolled_window.add(textview)
+			scrolled_window.set_property('height-request', 50)
+			scrolled_window.set_property('vscrollbar-policy', Gtk.PolicyType.ALWAYS)
+			widget = scrolled_window
 		else:
 			widget = Gtk.Entry()
 			widget.set_hexpand(True)
@@ -188,9 +189,15 @@ class ClientOptionString(ClientOptionMixin, plugins.OptionString):
 		return widget
 
 	def get_widget_value(self, widget):
+		if self.multiline:
+			widget = widget.get_child().get_child()
 		return widget.get_property('text')
 
 	def set_widget_value(self, widget, value):
+		if value is None:
+			value = ''
+		if self.multiline:
+			widget = widget.get_child().get_child()
 		widget.set_property('text', value)
 		return widget
 
