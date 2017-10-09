@@ -169,17 +169,29 @@ class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
 		self.adjustment.set_value(int(round(value)))
 
 class ClientOptionString(ClientOptionMixin, plugins.OptionString):
+	def __init__(self, name, *args, **kwargs):
+		self.multiline = bool(kwargs.pop('multiline', False))
+		super(ClientOptionString, self).__init__(name, *args, **kwargs)
+
 	def get_widget(self, _, value):
-		widget = Gtk.Entry()
-		widget.set_hexpand(True)
+		if self.multiline:
+			#scrolled_window = Gtk.ScrolledWindow()
+			textview = extras.MultilineEntry()
+			textview.set_property('hexpand', True)
+			#scrolled_window.add(textview)
+			#scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+			widget = textview
+		else:
+			widget = Gtk.Entry()
+			widget.set_hexpand(True)
 		self.set_widget_value(widget, value)
 		return widget
 
 	def get_widget_value(self, widget):
-		return widget.get_text()
+		return widget.get_property('text')
 
 	def set_widget_value(self, widget, value):
-		widget.set_text((value if value else ''))
+		widget.set_property('text', value)
 		return widget
 
 # extended option types

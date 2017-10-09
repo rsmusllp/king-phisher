@@ -67,6 +67,7 @@ class PluginsConfigurationFrame(_Gtk_Frame):
 		else:
 			grid.set_property('margin-start', 12)
 		grid.set_property('column-spacing', 3)
+		grid.set_property('hexpand', True)
 		grid.set_property('row-spacing', 3)
 		grid.insert_column(0)
 		grid.insert_column(0)
