@@ -37,9 +37,11 @@ import weakref
 
 from king_phisher import plugins
 from king_phisher.client import gui_utilities
+from king_phisher.client import mailer
 from king_phisher.client.widget import extras
 
 from gi.repository import Gtk
+import jinja2.exceptions
 
 def _split_menu_path(menu_path):
 	menu_path = [path_item.strip() for path_item in menu_path.split('>')]
@@ -113,13 +115,16 @@ class ClientOptionBoolean(ClientOptionMixin, plugins.OptionBoolean):
 		return widget
 
 class ClientOptionEnum(ClientOptionMixin, plugins.OptionEnum):
-	"""
-	:param str name: The name of this option.
-	:param str description: The description of this option.
-	:param tuple choices: The supported values for this option.
-	:param default: The default value of this option.
-	:param str display_name: The name to display in the UI to the user for this option
-	"""
+	def __init__(self, name, *args, **kwargs):
+		"""
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param tuple choices: The supported values for this option.
+		:param default: The default value of this option.
+		:param str display_name: The name to display in the UI to the user for this option
+		"""
+		super(ClientOptionEnum, self).__init__(name, *args, **kwargs)
+
 	def get_widget(self, _, value):
 		widget = Gtk.ComboBoxText()
 		widget.set_hexpand(True)
@@ -170,6 +175,16 @@ class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
 
 class ClientOptionString(ClientOptionMixin, plugins.OptionString):
 	def __init__(self, name, *args, **kwargs):
+		"""
+		.. versionchanged:: 1.9.0b5
+			Added the *multiline* option.
+
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param default: The default value of this option.
+		:param str display_name: The name to display in the UI to the user for this option.
+		:param bool multiline: Whether or not this option allows multiple lines of input.
+		"""
 		self.multiline = bool(kwargs.pop('multiline', False))
 		super(ClientOptionString, self).__init__(name, *args, **kwargs)
 
@@ -179,7 +194,7 @@ class ClientOptionString(ClientOptionMixin, plugins.OptionString):
 			textview = extras.MultilineEntry()
 			textview.set_property('hexpand', True)
 			scrolled_window.add(textview)
-			scrolled_window.set_property('height-request', 50)
+			scrolled_window.set_property('height-request', 60)
 			scrolled_window.set_property('vscrollbar-policy', Gtk.PolicyType.ALWAYS)
 			widget = scrolled_window
 		else:
@@ -364,6 +379,45 @@ class ClientPlugin(plugins.PluginBase):
 		menu_item = Gtk.MenuItem.new_with_label(menu_path.pop())
 		menu_item.set_submenu(Gtk.Menu.new())
 		return self._insert_menu_item(menu_path, menu_item)
+
+	def render_template_string(self, template_string, target=None, description='string', log_to_mailer=True):
+		"""
+		Render the specified *template_string* in the message environment. If
+		an error occurs during the rendering process, a message will be logged
+		and ``None`` will be returned. If *log_to_mailer* is set to ``True``
+		then a message will also be displayed in the message send tab of the
+		client.
+
+		.. versionadded:: 1.9.0b5
+
+		:param str template_string: The string to render as a template.
+		:param target: An optional target to pass to the rendering environment.
+		:type target: :py:class:`~king_phisher.client.mailer.MessageTarget`
+		:param str description: A keyword to use to identify the template string in error messages.
+		:param bool log_to_mailer: Whether or not to log to the message send tab as well.
+		:return: The rendered string or ``None`` if an error occurred.
+		:rtype: str
+		"""
+		mailer_tab = self.application.main_tabs['mailer']
+		text_insert = mailer_tab.tabs['send_messages'].text_insert
+		try:
+			template_string = mailer.render_message_template(template_string, self.application.config, target=target)
+		except jinja2.exceptions.TemplateSyntaxError as error:
+			self.logger.error("jinja2 syntax error ({0}) in {1}: {2}".format(error.message, description, template_string))
+			if log_to_mailer:
+				text_insert("Jinja2 syntax error ({0}) in {1}: {2}\n".format(error.message, description, template_string))
+			return None
+		except jinja2.exceptions.UndefinedError as error:
+			self.logger.error("jinj2 undefined error ({0}) in {1}: {2}".format(error.message, description, template_string))
+			if log_to_mailer:
+				text_insert("Jinja2 undefined error ({0}) in {1}: {2}".format(error.message, description, template_string))
+			return None
+		except ValueError as error:
+			self.logger.error("value error ({0}) in {1}: {2}".format(error, description, template_string))
+			if log_to_mailer:
+				text_insert("Value error ({0}) in {1}: {2}\n".format(error, description, template_string))
+			return None
+		return template_string
 
 	def signal_connect(self, name, handler, gobject=None, after=False):
 		"""
