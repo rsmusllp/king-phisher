@@ -361,7 +361,8 @@ class CatalogManager(object):
 	def catalog_ids(self):
 		"""
 		The key names of the catalogs in the manager
-		:return: list
+		:return: the catalogs ids in CatalogManager
+		:rtype: list
 		"""
 		return self.catalogs.keys()
 
@@ -377,7 +378,7 @@ class CatalogManager(object):
 		"""
 		Returns the requested repository instance
 		:param str catalog_id: The name of the catalog the repo belongs to
-		:param str repo_id: The title of the repository requested.
+		:param str repo_id: The id of the repository requested.
 		:return: The repository instance
 		:rtype:py:class:Repository
 		"""
@@ -387,8 +388,11 @@ class CatalogManager(object):
 			return repo
 
 	def add_catalog_url(self, url):
-		c = Catalog.from_url(url)
-		self.catalogs[c.id] = Catalog.from_url(url)
+		try:
+			c = Catalog.from_url(url)
+			self.catalogs[c.id] = c
+		except Exception as error:
+			logging.warning("failed to load catalog from url {} due to {}".format(url, error))
 
 def sign_item_files(local_path, signing_key, signing_key_id, repo_path=None):
 	"""

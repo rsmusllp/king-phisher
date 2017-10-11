@@ -38,7 +38,7 @@ from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
 from king_phisher.client.plugins import PluginCatalogManager
-
+from requests import exceptions as rexceptions
 from gi.repository import Gdk
 from gi.repository import Gtk
 from gi.repository import GLib
@@ -107,9 +107,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._model.set_sort_column_id(2, Gtk.SortType.ASCENDING)
 		treeview.set_model(self._model)
 
-		#GLib.idle_add(self.gobjects['statusbar'].push, (0, 'Loading....'))
-
 		self.catalog_plugins = PluginCatalogManager('client', 'https://raw.githubusercontent.com/securestate/king-phisher-plugins/dev/catalog.json')
+		self.logger.warning("failed to connect to catalog server")
+
 		self.load_plugins()
 
 		self.popup_menu = tvm.get_popup_menu()
@@ -147,9 +147,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		pm = self.application.plugin_manager
 		self._module_errors = {}
 		pm.load_all(on_error=self._on_plugin_load_error)
-		#(parent (name, bool of check box, installed, type_name column, title column, compatible, version, bool if checkbox is visible))
 		for name, plugin in pm.loaded_plugins.items():
-			if plugin.name in self.config['plugins.installed']:
+			if name in self.config['plugins.installed']:
 				continue
 			store.append(None, (
 				plugin.name,
@@ -162,42 +161,79 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				True,
 				False
 			))
-		for catalogs in self.catalog_plugins.catalog_ids():
-			catalog = store.append(None, (catalogs, True, None, 'Catalog', catalogs, None, None, False, False))
-			for repos in self.catalog_plugins.get_repos(catalogs):
-				repo = store.append(catalog, (repos.id, True, None, 'Repository', repos.title, None, None, False, False))
-				plugin_collections = self.catalog_plugins.get_collection(catalogs, repos.id)
-				client_plugins = list(plugin_collections)
-				client_plugins.sort()
-				for plugins in client_plugins:
-					installed = False
-					enabled = False
-					if plugin_collections[plugins]['name'] in self.config['plugins.installed']:
-						if repos.id == self.config['plugins.installed'][plugin_collections[plugins]['name']][1]:
-							installed = True
-							enabled = True if plugin_collections[plugins]['name'] in self.config['plugins.enabled'] else False
-					store.append(repo, (
-						plugin_collections[plugins]['name'],
-						enabled,
-						installed,
-						'Plugin',
-						plugin_collections[plugins]['title'],
-						'Unknown',
-						'N/A',
-						True,
-						True
-					))
 		for name in self._module_errors.keys():
 			store.append((
 				name,
 				False,
 				"{0} (Load Failed)".format(name)
 			))
-		#GLib.idle_add(self.gobjects['statusbar'].pop, 0)
-		#GLib.idle_add(self.gobjects['statusbar'].push, (0, 'Finished loading'))
+
+		if not self.catalog_plugins.catalog_ids():
+			return
+		if not self.catalog_plugins.get_cache():
+			return
+
+		if self.catalog_plugins.catalog_ids():
+			for catalogs in self.catalog_plugins.catalog_ids():
+				catalog = store.append(None, (catalogs, True, None, 'Catalog', catalogs, None, None, False, False))
+				for repos in self.catalog_plugins.get_repos(catalogs):
+					repo = store.append(catalog, (repos.id, True, None, 'Repository', repos.title, None, None, False, False))
+					plugin_collections = self.catalog_plugins.get_collection(catalogs, repos.id)
+					client_plugins = list(plugin_collections)
+					client_plugins.sort()
+					for plugins in client_plugins:
+						installed = False
+						enabled = False
+						if plugin_collections[plugins]['name'] in self.config['plugins.installed']:
+							if repos.id == self.config['plugins.installed'][plugin_collections[plugins]['name']][1]:
+								installed = True
+								enabled = True if plugin_collections[plugins]['name'] in self.config['plugins.enabled'] else False
+						store.append(repo, (
+							plugins,
+							enabled,
+							installed,
+							'Plugin',
+							plugin_collections[plugins]['title'],
+							'Yes' if self.catalog_plugins.is_compatible(catalogs, repos.id, plugins) else 'No',
+							self.compare_plugin_versions(plugin_collections[plugins]['name'], plugin_collections[plugins]['version']),
+							True,
+							True
+						))
+		else:
+			for catalog_id in self.catalog_plugins.get_cache_catalog_ids():
+				catalog_line = store.append(None, (catalog_id, True, None, 'Catalog (offline)', catalog_id, None, None, False, False))
+				for repo in self.catalog_plugins.get_cache_repos(catalog_id):
+					repo_line = store.append(catalog_line, (repo.id, True, None, 'Repository (offline)', repo.title, None, None, False, False))
+					for plugin in self.config['plugins.installed']:
+						if self.config['plugins.installed'][plugin][0] != catalog_id:
+							continue
+						if self.config['plugins.installed'][plugin][1] != repo.id:
+							continue
+						store.append(repo_line, (
+							plugin,
+							True if plugin in self.config['plugins.enabled'] else False,
+							True,
+							'Plugin',
+							pm[plugin].title,
+							'Yes' if pm[plugin].is_compatible else 'No',
+							pm[plugin].version,
+							True,
+							False
+						))
+
+	def compare_plugin_versions(self, plugin_name, plugin_version):
+		if plugin_name not in self.application.plugin_manager:
+			return plugin_version
+		if self.application.plugin_manager[plugin_name].version < plugin_version:
+			return "Upgrade available"
+		return self.application.plugin_manager[plugin_name].version
 
 	def signal_popup_menu_activate_relaod_all(self, _):
 		self.load_plugins()
+
+	def signal_destory(self, _):
+		if self.catalog_plugins:
+			self.catalog_plugins.save_catalog_cache()
 
 	def signal_treeview_row_activated(self, treeview, path, column):
 		self._set_plugin_info(self._model[path])
@@ -285,7 +321,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		name = self._model[path][0]  # pylint: disable=unsubscriptable-object
 		if name not in pm.loaded_plugins:
 			return
-		if name in self.config['plugins.installed']:
+		if self._model[path].parent:
 			installed_plugin_info = self.config['plugins.installed'][name]
 			model_repo, model_cat = self._get_plugin_model_parents(self._model[path])
 			if model_repo[0] != installed_plugin_info[1] or model_cat[0] != installed_plugin_info[0]:
@@ -318,7 +354,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				if not response:
 					return
 				self._disable_plugin(plugin_model)
-			self.application.plugin_manager.unload(plugin_model[0])
 			self._uninstall_plugin(plugin_collection, plugin_model)
 			self.logger.info("uninstalled plugin {}".format(plugin_model[0]))
 		else:
@@ -338,7 +373,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.catalog_plugins.install_plugin(catalog_model[0], repo_model[0], plugin_model[0], DEFAULT_PLUGIN_PATH)
 			self.config['plugins.installed'][plugin_model[0]] = [catalog_model[0], repo_model[0]]
 			plugin_model[2] = True
-			self.logger.info("installed plugin {} from catalog {}, repository {}".format(plugin_model[0], catalog_model[0], repo_model[0]))
+			plugin_model[6] = self.catalog_plugins.get_collection(catalog_model[0], repo_model[0])[plugin_model[0]]['version']
+			self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(plugin_model[0], catalog_model[0], repo_model[0]))
 		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error)
 
 	def _disable_plugin(self, plugin_model):
@@ -405,7 +441,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 		if 'maintainers' in dir(instance_information):
 			if instance_information.maintainers:
-				text += 'maintainer: ' + '\nmaintainer: '.join(instance_information.maintainers) + '\n'
+				text += 'Maintainer: ' + '\nMaintainer: '.join(instance_information.maintainers) + '\n'
 
 		if 'description' in dir(instance_information):
 			if instance_information.description:
@@ -438,7 +474,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					continue
 				plugin = repo.collections['plugins/client'][plugin_model[0]]
 				self.gobjects['label_plugin_info_title'].set_text(plugin['title'])
-				self.gobjects['label_plugin_info_compatible'].set_text('Fix ME Please') #fix me
+				self.gobjects['label_plugin_info_compatible'].set_text('Yes' if self.catalog_plugins.is_compatible(catalog_model[0], repo_model[0], plugin_model[0]) else 'No')
 				self.gobjects['label_plugin_info_version'].set_text(plugin['version'])
 				self.gobjects['label_plugin_info_authors'].set_text('\n'.join(plugin['authors']))
 				label_homepage = self.gobjects['label_plugin_info_homepage']

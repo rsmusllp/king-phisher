@@ -2726,6 +2726,7 @@ Spencer McIntyre</property>
     <property name="title" translatable="yes">Plugin Manager</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
+    <signal name="destroy-event" handler="signal_destory" swapped="no"/>
     <child>
       <object class="GtkBox" id="PluginManagerWindow.box">
         <property name="visible">True</property>

@@ -422,7 +422,7 @@ class PluginManagerBase(object):
 			recursive_reload(module)
 		return module
 
-	def unload(self, name):
+	def PluginBaseMeta(self, name):
 		"""
 		Unload a plugin from memory. If the specified plugin is currently
 		enabled, it will first be disabled before being unloaded. If the plugin
