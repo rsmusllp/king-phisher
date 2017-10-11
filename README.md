@@ -1,6 +1,6 @@
 ![alt text](https://github.com/securestate/king-phisher/raw/master/data/king-phisher-logo.png "King Phisher")
 
-# King Phisher [![Documentation Status][doc-status]][doc-link] [![GitHub Issues][issue-status]][issue-link] ![GitHub Downloads][downloads-status]
+# King Phisher [![Documentation Status][doc-status]][doc-link] [![GitHub Issues][issue-status]][issue-link] [![GitHub Downloads][downloads-status]][downloads-link] [![Slack Status][slack-status]][slack-link]
 *Phishing Campaign Toolkit*
 
 ![alt text](https://raw.githubusercontent.com/securestate/king-phisher/screenshots/dashboard.png "Campaign Dashboard")
@@ -107,7 +107,10 @@ King Phisher Development Team:
  - Spencer McIntyre - zeroSteiner ([@zeroSteiner](https://twitter.com/zeroSteiner))
 
 [doc-link]: http://king-phisher.readthedocs.io/en/latest
-[doc-status]: https://readthedocs.org/projects/king-phisher/badge/?version=latest&style=flat-square
-[downloads-status]: https://img.shields.io/github/downloads/securestate/king-phisher/total.svg?style=flat-square
+[doc-status]: https://readthedocs.org/projects/king-phisher/badge/?version=latest
+[downloads-link]: https://github.com/securestate/king-phisher/releases
+[downloads-status]: https://img.shields.io/github/downloads/securestate/king-phisher/total.svg
 [issue-link]: https://github.com/securestate/king-phisher/issues
-[issue-status]: http://img.shields.io/github/issues/securestate/king-phisher.svg?style=flat-square
+[issue-status]: http://img.shields.io/github/issues/securestate/king-phisher.svg
+[slack-link]: https://king-phisher-slackin.herokuapp.com/
+[slack-status]: https://img.shields.io/badge/slack-join-brightgreen.svg
