@@ -29,12 +29,17 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
+import collections
+import copy
 import distutils.version
 import inspect
 import logging
+import re
+import sys
 import textwrap
 import threading
+
+import smoke_zephyr.requirements
 
 from king_phisher import errors
 from king_phisher import its
@@ -47,6 +52,11 @@ if its.py_v2:
 else:
 	import importlib
 	_reload = importlib.reload
+
+if sys.version_info[:3] >= (3, 3, 0):
+	_Mapping = collections.abc.Mapping
+else:
+	_Mapping = collections.Mapping
 
 StrictVersion = distutils.version.StrictVersion
 
@@ -114,6 +124,58 @@ class OptionInteger(OptionBase):
 class OptionString(OptionBase):
 	"""A plugin option which is represented with a string value."""
 	pass
+
+class Requirements(_Mapping):
+	_package_regex = re.compile(r'^(?P<name>[\w\-]+)(([<>=]=)(\d+(\.\d+)*))?$')
+	def __init__(self, items):
+		"""
+		:param dict items: The items that are members of this collection, keyed by their name.
+		"""
+		# call dict here to allow items to be a two dimensional array suitable for passing to dict
+		self._storage = dict(items)
+
+	def __repr__(self):
+		return "<{0} is_compatible={1!r} >".format(self.__class__.__name__, self.is_compatible)
+
+	def __getitem__(self, key):
+		return self._storage[key]
+
+	def __iter__(self):
+		return iter(self._storage)
+
+	def __len__(self):
+		return len(self._storage)
+
+	@property
+	def is_compatible(self):
+		for req_type, req_details, req_met in self.compatibility_iter():
+			if not req_met:
+				return False
+		return True
+
+	def compatibility_iter(self):
+		if 'minimum-version' in self._storage:
+			StrictVersion = distutils.version.StrictVersion
+			yield ('King Phisher Version', self._storage['minimum-version'], StrictVersion(self._storage['minimum-version']) <= StrictVersion(version.distutils_version))
+		if 'packages' in self._storage:
+			packages = self._storage['packages']
+			try:
+				missing_packages = smoke_zephyr.requirements.check_requirements(self._storage['packages'])
+			except ValueError:
+				missing_packages = self._storage['packages']
+			for package in packages:
+				#if not self._package_regex.match(package):
+				#	continue
+				if self._package_regex.match(package):
+					package = self._package_regex.match(package).group('name')
+				yield ('Required Package', package, package not in missing_packages)
+
+	@property
+	def compatibility(self):
+		return tuple(self.compatibility_iter())
+
+	def to_dict(self):
+		return copy.deepcopy(self._storage)
 
 class PluginBaseMeta(type):
 	"""
@@ -422,7 +484,7 @@ class PluginManagerBase(object):
 			recursive_reload(module)
 		return module
 
-	def PluginBaseMeta(self, name):
+	def unload(self, name):
 		"""
 		Unload a plugin from memory. If the specified plugin is currently
 		enabled, it will first be disabled before being unloaded. If the plugin

@@ -366,7 +366,7 @@ class CatalogManager(object):
 		"""
 		return self.catalogs.keys()
 
-	def get_repos(self, catalog_id):
+	def get_repositories(self, catalog_id):
 		"""
 		Returns a list of repositories from the requested catalog
 		:param str catalog_id: The name of the catalog in which to get names of repositories from
@@ -374,7 +374,7 @@ class CatalogManager(object):
 		"""
 		return [repository for repository in self.catalogs[catalog_id].repositories]
 
-	def get_repo(self, catalog_id, repo_id):
+	def get_repository(self, catalog_id, repo_id):
 		"""
 		Returns the requested repository instance
 		:param str catalog_id: The name of the catalog the repo belongs to
