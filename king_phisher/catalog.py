@@ -354,29 +354,31 @@ class CatalogManager(object):
 	"""
 	def __init__(self, url_catalog=None):
 		self.catalogs = {}
-
 		if url_catalog:
 			self.add_catalog_url(url_catalog)
 
 	def catalog_ids(self):
 		"""
 		The key names of the catalogs in the manager
+
 		:return: the catalogs ids in CatalogManager
-		:rtype: list
+		:rtype: dict_keys
 		"""
 		return self.catalogs.keys()
 
 	def get_repositories(self, catalog_id):
 		"""
 		Returns a list of repositories from the requested catalog
+
 		:param str catalog_id: The name of the catalog in which to get names of repositories from
-		:return: list
+		:return: tuple
 		"""
-		return [repository for repository in self.catalogs[catalog_id].repositories]
+		return self.catalogs[catalog_id].repositories
 
 	def get_repository(self, catalog_id, repo_id):
 		"""
 		Returns the requested repository instance
+
 		:param str catalog_id: The name of the catalog the repo belongs to
 		:param str repo_id: The id of the repository requested.
 		:return: The repository instance

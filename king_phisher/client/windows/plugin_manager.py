@@ -37,16 +37,14 @@ import traceback
 from collections import namedtuple
 
 from king_phisher import utilities
+from king_phisher.client import application
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
 from king_phisher.client.plugins import ClientCatalogManager
 from gi.repository import Gdk
 from gi.repository import Gtk
-from gi.repository import GLib
 
 __all__ = ('PluginManagerWindow',)
-
-DEFAULT_PLUGIN_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher', 'plugins')
 
 class PluginManagerWindow(gui_utilities.GladeGObject):
 	"""
@@ -119,8 +117,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			]
 		)
 		self._model = Gtk.TreeStore(str, bool, bool, str, str, str, str, bool, bool)
-		self._model.set_sort_column_id(2, Gtk.SortType.ASCENDING)
+		self._model.set_sort_column_id(2, Gtk.SortType.DESCENDING)
 		treeview.set_model(self._model)
+		self.DEFAULT_PLUGIN_PATH = os.path.join(application.USER_DATA_PATH, 'plugins')
 
 		self.catalog_plugins = ClientCatalogManager(url_catalog='https://raw.githubusercontent.com/securestate/king-phisher-plugins/dev/catalog.json')
 		self.logger.warning("failed to connect to catalog server")
@@ -406,7 +405,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				catalog_model.id,
 				repo_model.id,
 				self._model_item(path, 'id'),
-				DEFAULT_PLUGIN_PATH
+				self.DEFAULT_PLUGIN_PATH
 			)
 			self.config['plugins.installed'][self._model_item(path, 'id')] = [catalog_model.id, repo_model.id]
 			self._set_model_item(path, 'installed', True)
@@ -464,8 +463,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			plugin_id = self._named_model(*path).id
 		for files in plugin_collection[plugin_id]['files']:
 			file_name = files[0]
-			if os.path.isfile(os.path.join(DEFAULT_PLUGIN_PATH, file_name)):
-				os.remove(os.path.join(DEFAULT_PLUGIN_PATH, file_name))
+			if os.path.isfile(os.path.join(self.DEFAULT_PLUGIN_PATH, file_name)):
+				os.remove(os.path.join(self.DEFAULT_PLUGIN_PATH, file_name))
 			self.application.plugin_manager.unload(plugin_id)
 		del self.config['plugins.installed'][plugin_id]
 		if is_path:
@@ -501,18 +500,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		else:
 			instance_information = self.catalog_plugins.get_repository(self._named_model(*model_instance.parent).id, named_model.id)
 
-		if 'title' in dir(instance_information):
-			text += "Repository: {}\n".format(instance_information.title if instance_information.title else instance_information.id)
-		else:
-			text += "Catalog: {}\n".format(instance_information.id)
-
-		if 'maintainers' in dir(instance_information):
-			if instance_information.maintainers:
-				text += 'Maintainer: ' + '\nMaintainer: '.join(instance_information.maintainers) + '\n'
-
-		if 'description' in dir(instance_information):
-			if instance_information.description:
-				text += instance_information.description + '\n'
+		text += "{0}\n".format(named_model.type)
+		text += "Title: {0}\n".format(getattr(instance_information, 'title', 'None'))
+		text += "Id: {0}\n".format(getattr(instance_information, 'id', 'None'))
+		text += "Description: {}\n".format(getattr(instance_information, 'description', 'None'))
+		if hasattr(instance_information, 'maintainers'):
+			text += 'Maintainer: ' + '\nMaintainer: '.join(getattr(instance_information, 'maintainers', ['None'])) + '\n'
 
 		buf.insert(buf.get_end_iter(), "{0}\n".format(text), -1)
 

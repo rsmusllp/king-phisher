@@ -31,29 +31,27 @@
 #
 
 import collections
-import json
 import os
 import sys
 import tempfile
 import weakref
 
-from king_phisher import plugins
 from king_phisher import catalog
+from king_phisher import plugins
+from king_phisher.client import application
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
 from king_phisher.client.widget import extras
 from king_phisher.plugins import Requirements
+from king_phisher.serializers import JSON
 
 from gi.repository import Gtk
 import jinja2.exceptions
-from gi.repository import GLib
 
 if sys.version_info[:3] >= (3, 3, 0):
 	_MutableMapping = collections.abc.MutableMapping
 else:
 	_MutableMapping = collections.MutableMapping
-
-DEFAULT_CONFIG_PATH = os.path.join(GLib.get_user_config_dir(), 'king-phisher')
 
 def _split_menu_path(menu_path):
 	menu_path = [path_item.strip() for path_item in menu_path.split('>')]
@@ -563,16 +561,16 @@ class CatalogCacheManager(object):
 	def __init__(self, cache_file):
 		self._cache_dict = {}
 		self._data = {}
-		self._CatalogCacheEntry = collections.namedtuple('catalog', ['id', 'collections'])
-		self._CollectionCacheEntry = collections.namedtuple('collection', ['id', 'title', 'url', 'types'])
+		self._CatalogCacheEntry = collections.namedtuple('catalog', ['id', 'repositories'])
+		self._RepositoryCacheEntry = collections.namedtuple('repositories', ['id', 'title', 'url', 'collections'])
+		self._cache_file = cache_file
 
-		if os.path.isfile(cache_file):
+		if os.path.isfile(self._cache_file):
 			with open(cache_file) as file_h:
 				try:
-					self._cache_dict = json.load(file_h)
+					self._cache_dict = JSON.loads(file_h.read())
 				except ValueError:
 					self._cache_dict = {}
-			self._cache_file = cache_file
 
 		if not self._cache_dict or 'catalogs' not in self._cache_dict:
 			self._cache_dict['catalogs'] = {}
@@ -581,19 +579,19 @@ class CatalogCacheManager(object):
 			for catalog_ in cache_cat:
 				self[catalog_] = self._CatalogCacheEntry(
 					cache_cat[catalog_]['id'],
-					self._tuple_collections(cache_cat[catalog_]['collections'])
+					self._tuple_repositories(cache_cat[catalog_]['repositories'])
 				)
 
-	def _tuple_collections(self, list_collections):
-		collections_ = []
-		for collection_ in list_collections:
-			collections_.append(self._CollectionCacheEntry(
-				collection_['id'],
-				collection_['title'],
-				collection_['url'],
-				collection_['types']
+	def _tuple_repositories(self, list_repositories):
+		repositories = []
+		for repository in list_repositories:
+			repositories.append(self._RepositoryCacheEntry(
+				repository['id'],
+				repository['title'],
+				repository['url'],
+				repository['collections']
 			))
-		return collections_
+		return repositories
 
 	def __setitem__(self, key, value):
 		self._data[key] = value
@@ -608,13 +606,12 @@ class CatalogCacheManager(object):
 		return len(self._data)
 
 	def __iter__(self):
-		for key in self._data.keys():
-			yield key
+		return iter(self._data)
 
-	def add_catalog_cache(self, cat_id, collections_):
+	def add_catalog_cache(self, cat_id, repositories):
 		self[cat_id] = self._CatalogCacheEntry(
 			cat_id,
-			self._tuple_collections(collections_)
+			self._tuple_repositories(repositories)
 		)
 
 	def to_dict(self):
@@ -622,24 +619,23 @@ class CatalogCacheManager(object):
 		for key in self:
 			cache[key] = {}
 			cache[key]['id'] = self[key].id
-			collections_ = []
-			for collection_ in self[key].collections:
-				collections_.append(dict(collection_._asdict()))
-				cache[key]['collections'] = collections_
+			repositories = []
+			for repository in self[key].repositories:
+				repositories.append(dict(repository._asdict()))
+			cache[key]['repositories'] = repositories
 		return cache
 
 	def save(self):
 		self._cache_dict['catalogs'] = self.to_dict()
 		with open(self._cache_file, 'w+') as file_h:
-			json.dump(self._cache_dict, file_h, sort_keys=True, indent=4)
+			file_h.write(JSON.dumps(self._cache_dict))
 
 class ClientCatalogManager(catalog.CatalogManager):
 	"""
 	Base manager for handling Catalogs
 	"""
-
 	def __init__(self, manager_type=None, *args, **kwargs):
-		self._catalog_cache = CatalogCacheManager(os.path.join(DEFAULT_CONFIG_PATH, 'cache.json'))
+		self._catalog_cache = CatalogCacheManager(os.path.join(application.USER_DATA_PATH, 'cache.json'))
 		super(ClientCatalogManager, self).__init__(*args, **kwargs)
 		self.manager_type = 'plugins/client'
 		if manager_type:
