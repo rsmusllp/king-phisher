@@ -159,16 +159,25 @@ class Requirements(_Mapping):
 			yield ('King Phisher Version', self._storage['minimum-version'], StrictVersion(self._storage['minimum-version']) <= StrictVersion(version.distutils_version))
 		if 'packages' in self._storage:
 			packages = self._storage['packages']
-			try:
-				missing_packages = smoke_zephyr.requirements.check_requirements(self._storage['packages'])
-			except ValueError:
-				missing_packages = self._storage['packages']
+			missing_packages = self._check_for_missing_packages(self._storage['packages'])
+
 			for package in packages:
-				#if not self._package_regex.match(package):
-				#	continue
 				if self._package_regex.match(package):
 					package = self._package_regex.match(package).group('name')
 				yield ('Required Package', package, package not in missing_packages)
+
+	def _check_for_missing_packages(self, packages):
+		missing_packages = []
+		for package in packages:
+			if package.startswith('gi.'):
+				if not importlib.util.find_spec(package):
+					missing_packages.append(package)
+				logging.info('During requirement check, gi subpackage was manually checked')
+				continue
+			package_check = smoke_zephyr.requirements.check_requirements([package])
+			if package_check:
+				missing_packages.append(package_check[0])
+		return missing_packages
 
 	@property
 	def compatibility(self):

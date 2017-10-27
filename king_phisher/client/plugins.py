@@ -697,6 +697,5 @@ class ClientCatalogManager(catalog.CatalogManager):
 		for item in self._catalog_cache:
 			yield item
 
-	def get_cache_collections(self, catalog_id):
-		for collections_ in self._catalog_cache[catalog_id].collections:
-			yield collections_
+	def get_cache_repositories(self, catalog_id):
+		return iter(self._catalog_cache[catalog_id].repositories)

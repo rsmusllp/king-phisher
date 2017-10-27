@@ -46,6 +46,7 @@ import shlex
 import string
 import subprocess
 import sys
+import threading
 
 from king_phisher import color
 from king_phisher import constants
@@ -482,3 +483,59 @@ def validate_json_schema(data, schema_file_id):
 	with open(file_path, 'r') as file_h:
 		schema = json.load(file_h)
 	jsonschema.validate(data, schema)
+
+class Thread(threading.Thread):
+	"""
+	King Phishers base threading class with two way event.
+	"""
+
+	def __init__(self, *args, **kwargs):
+		super(Thread, self).__init__(*args, **kwargs)
+		self.logger = logging.getLogger('KingPhisher.Thread.{0}'.format(self.name))
+		self.stop_flag = Event()
+		self.stop_flag.clear()
+
+	def run(self):
+		self.logger.debug("thread {0} running in tid: 0x{1:x}".format(self.name, threading.current_thread().ident))
+		super(Thread, self).run()
+
+	def stop(self):
+		"""
+		Sets the flag to signal the threat to stop.
+		"""
+		self.stop_flag.set()
+
+	def is_stopped(self):
+		"""
+		Check to see if the flag is set to stop the thread.
+		"""
+		return self.stop_flag.is_set()
+
+class Event(threading.Event):
+	__slots__ = ('__event',)
+	def __init__(self):
+		super(Event, self).__init__()
+		self.__event = threading.Event()
+		self.__event.set()
+
+	def __repr__(self):
+		return "<{0} is_set={1!r} >".format(self.__class__.__name__, self.is_set())
+
+	def clear(self):
+		super(Event, self).clear()
+		self.__event.set()
+
+	def is_clear(self):
+		return self.__event.is_set()
+
+	def set(self):
+		self.__event.clear()
+		super(Event, self).set()
+
+	def wait(self, timeout=None):
+		if super(Event, self).wait(timeout=timeout):
+			self.__event.clear()
+
+	def wait_clear(self, timeout=None):
+		if self.__event.wait(timeout=timeout):
+			super(Event, self).set()
