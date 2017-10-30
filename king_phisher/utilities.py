@@ -488,10 +488,9 @@ class Thread(threading.Thread):
 	"""
 	King Phishers base threading class with two way event.
 	"""
-
+	logger = logging.getLogger('KingPhisher.Thread')
 	def __init__(self, *args, **kwargs):
 		super(Thread, self).__init__(*args, **kwargs)
-		self.logger = logging.getLogger('KingPhisher.Thread.{0}'.format(self.name))
 		self.stop_flag = Event()
 		self.stop_flag.clear()
 
@@ -501,7 +500,7 @@ class Thread(threading.Thread):
 
 	def stop(self):
 		"""
-		Sets the flag to signal the threat to stop.
+		Sets the flag to signal the thread to stop.
 		"""
 		self.stop_flag.set()
 

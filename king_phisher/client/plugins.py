@@ -556,42 +556,34 @@ class ClientPluginManager(plugins.PluginManagerBase):
 
 class CatalogCacheManager(object):
 	"""
-	Manager to handle cache information for catalogs
+	Manager to handle cache information for catalogs.
 	"""
+	_CatalogCacheEntry = collections.namedtuple('catalog', ['id', 'repositories'])
+	_RepositoryCacheEntry = collections.namedtuple('repositories', ['id', 'title', 'url', 'collections'])
 	def __init__(self, cache_file):
 		self._cache_dict = {}
 		self._data = {}
-		self._CatalogCacheEntry = collections.namedtuple('catalog', ['id', 'repositories'])
-		self._RepositoryCacheEntry = collections.namedtuple('repositories', ['id', 'title', 'url', 'collections'])
 		self._cache_file = cache_file
 
 		if os.path.isfile(self._cache_file):
-			with open(cache_file) as file_h:
+			with open(cache_file, 'r') as file_h:
 				try:
-					self._cache_dict = JSON.loads(file_h.read())
+					self._cache_dict = JSON.load(file_h)
 				except ValueError:
 					self._cache_dict = {}
 
-		if not self._cache_dict or 'catalogs' not in self._cache_dict:
-			self._cache_dict['catalogs'] = {}
-		else:
+		if self._cache_dict and 'catalogs' in self._cache_dict:
 			cache_cat = self._cache_dict['catalogs']
 			for catalog_ in cache_cat:
 				self[catalog_] = self._CatalogCacheEntry(
 					cache_cat[catalog_]['id'],
 					self._tuple_repositories(cache_cat[catalog_]['repositories'])
 				)
+		else:
+			self._cache_dict['catalogs'] = {}
 
-	def _tuple_repositories(self, list_repositories):
-		repositories = []
-		for repository in list_repositories:
-			repositories.append(self._RepositoryCacheEntry(
-				repository['id'],
-				repository['title'],
-				repository['url'],
-				repository['collections']
-			))
-		return repositories
+	def _tuple_repositories(self, repositories):
+		return tuple(self._RepositoryCacheEntry(**repository) for repository in repositories)
 
 	def __setitem__(self, key, value):
 		self._data[key] = value
@@ -608,38 +600,30 @@ class CatalogCacheManager(object):
 	def __iter__(self):
 		return iter(self._data)
 
-	def add_catalog_cache(self, cat_id, repositories):
-		self[cat_id] = self._CatalogCacheEntry(
-			cat_id,
-			self._tuple_repositories(repositories)
-		)
+	def cache_catalog_repositories(self, cat_id, repositories):
+		self[cat_id] = self._CatalogCacheEntry(cat_id, self._tuple_repositories(repositories))
 
 	def to_dict(self):
 		cache = {}
 		for key in self:
 			cache[key] = {}
 			cache[key]['id'] = self[key].id
-			repositories = []
-			for repository in self[key].repositories:
-				repositories.append(dict(repository._asdict()))
-			cache[key]['repositories'] = repositories
+			cache[key]['repositories'] = [repository._asdict() for repository in self[key].repositories]
 		return cache
 
 	def save(self):
 		self._cache_dict['catalogs'] = self.to_dict()
-		with open(self._cache_file, 'w+') as file_h:
-			file_h.write(JSON.dumps(self._cache_dict))
+		with open(self._cache_file, 'w') as file_h:
+			JSON.dump(self._cache_dict, file_h)
 
 class ClientCatalogManager(catalog.CatalogManager):
 	"""
-	Base manager for handling Catalogs
+	Base manager for handling Catalogs.
 	"""
-	def __init__(self, manager_type=None, *args, **kwargs):
+	def __init__(self, manager_type='plugins/client', *args, **kwargs):
 		self._catalog_cache = CatalogCacheManager(os.path.join(application.USER_DATA_PATH, 'cache.json'))
 		super(ClientCatalogManager, self).__init__(*args, **kwargs)
-		self.manager_type = 'plugins/client'
-		if manager_type:
-			self.manager_type = manager_type
+		self.manager_type = manager_type
 
 	def get_collection(self, catalog_id, repo_id):
 		"""
@@ -650,26 +634,24 @@ class ClientCatalogManager(catalog.CatalogManager):
 		:return: The the collection of manager type from the specified catalog and repository.
 		:rtype:py:class:
 		"""
-		if self.manager_type not in self.get_repository(catalog_id, repo_id).collections:
-			return
-		return self.get_repository(catalog_id, repo_id).collections[self.manager_type]
+		return self.catalogs[catalog_id].repositories[repo_id].collections.get(self.manager_type)
 
 	def install_plugin(self, catalog_id, repo_id, plugin_id, install_path):
-		self.get_repository(catalog_id, repo_id).get_item_files(self.manager_type, plugin_id, install_path)
+		self.catalogs[catalog_id].repositories[repo_id].get_item_files(self.manager_type, plugin_id, install_path)
 
-	def save_catalog_cache(self):
+	def save_cache(self):
 		for catalog_ in self.catalogs:
 			if catalog_ not in self._catalog_cache:
-				self._catalog_cache.add_catalog_cache(
+				self._catalog_cache.cache_catalog_repositories(
 					self.catalogs[catalog_].id,
 					self.get_collections_to_cache(catalog_),
 				)
 		self._catalog_cache.save()
 
 	def add_catalog_url(self, url):
-		super().add_catalog_url(url)
+		super(ClientCatalogManager, self).add_catalog_url(url)
 		if self.catalogs:
-			self.save_catalog_cache()
+			self.save_cache()
 
 	def is_compatible(self, catalog_id, repo_id, plugin_name):
 		plugin = self.get_collection(catalog_id, repo_id)[plugin_name]
@@ -692,10 +674,3 @@ class ClientCatalogManager(catalog.CatalogManager):
 
 	def get_cache(self):
 		return self._catalog_cache
-
-	def get_cache_catalog_ids(self):
-		for item in self._catalog_cache:
-			yield item
-
-	def get_cache_repositories(self, catalog_id):
-		return iter(self._catalog_cache[catalog_id].repositories)

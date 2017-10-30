@@ -12,6 +12,9 @@
   "filter.campaign.user": true,
   "filter.campaign.other_users": false,
   "plugins": {},
+  "plugins.catalogs": [
+    "https://raw.githubusercontent.com/securestate/king-phisher-plugins/master/catalog.json"
+  ],
   "plugins.enabled": [],
   "plugins.installed": {},
   "rpc.serializer": null,
