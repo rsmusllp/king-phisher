@@ -1,4 +1,7 @@
 {
+  "catalogs": [
+    "https://raw.githubusercontent.com/securestate/king-phisher-plugins/master/catalog.json"
+  ],
   "dashboard.bottom": "VisitsTimeline",
   "dashboard.top_left": "Overview",
   "dashboard.top_right": "VisitorInfo",
@@ -12,9 +15,6 @@
   "filter.campaign.user": true,
   "filter.campaign.other_users": false,
   "plugins": {},
-  "plugins.catalogs": [
-    "https://raw.githubusercontent.com/securestate/king-phisher-plugins/master/catalog.json"
-  ],
   "plugins.enabled": [],
   "plugins.installed": {},
   "rpc.serializer": null,

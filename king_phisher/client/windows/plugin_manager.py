@@ -46,6 +46,10 @@ from gi.repository import Gtk
 
 __all__ = ('PluginManagerWindow',)
 
+_ROW_TYPE_PLUGIN = 'plugin'
+_ROW_TYPE_REPOSITORY = 'repository'
+_ROW_TYPE_CATALOG = 'catalog'
+
 class PluginManagerWindow(gui_utilities.GladeGObject):
 	"""
 	The window which allows the user to selectively enable and disable plugins
@@ -84,7 +88,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			'version',
 			'visible_enabled',
 			'visible_installed',
-			'installed_sensitive',
+			'sensitive_installed',
 			'type'
 		]
 	)
@@ -148,7 +152,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def _load_catalogs(self):
 		self._update_status_bar('Loading: Downloading Catalogs', idle=True)
 		self.catalog_plugins = ClientCatalogManager()
-		for catalog in self.config['plugins.catalogs']:
+		for catalog in self.config['catalogs']:
 			self.logger.debug("downloading catalog: {}".format(catalog))
 			self._update_status_bar("Loading: Downloading Catalog: {}".format(catalog))
 			self.catalog_plugins.add_catalog_url(catalog)
@@ -195,7 +199,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		pm = self.application.plugin_manager
 		self._module_errors = {}
 		pm.load_all(on_error=self._on_plugin_load_error)
-		model = ('local', None, True, '[Locally Installed]', None, None, False, False, False, 'Catalog')
+		model = (None, None, True, '[Locally Installed]', None, None, False, False, False, _ROW_TYPE_CATALOG)
 		catalog = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
 		models = []
 		for name, plugin in pm.loaded_plugins.items():
@@ -210,34 +214,34 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				version=plugin.version,
 				visible_enabled=True,
 				visible_installed=True,
-				installed_sensitive=False,
-				type='Plugin'
+				sensitive_installed=False,
+				type=_ROW_TYPE_PLUGIN
 			))
 			gui_utilities.glib_idle_add_once(self._store_append, store, catalog, models[-1])
 		del models
 
 		for name in self._module_errors.keys():
-			model = (name, True, False, "{0} (Load Failed)".format(name), 'unknown', True, True, False, 'Plugin')
+			model = (name, True, False, "{0} (Load Failed)".format(name), 'unknown', True, True, False, _ROW_TYPE_PLUGIN)
 			gui_utilities.glib_idle_add_once(self._store_append, store, catalog, model)
 
 		self.logger.debug('loading catalog into plugin treeview')
 		if self.catalog_plugins.catalog_ids():
-			for catalogs in self.catalog_plugins.catalog_ids():
-				model = (catalogs, None, True, catalogs, None, None, False, False, False, 'Catalog')
+			for catalog_id in self.catalog_plugins.catalog_ids():
+				model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
 				catalog = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
-				for repos in self.catalog_plugins.get_repositories(catalogs):
-					model = (repos.id, None, True, repos.title, None, None, False, False, False, 'Repository')
+				for repos in self.catalog_plugins.get_repositories(catalog_id):
+					model = (repos.id, None, True, repos.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
 					repo_line = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog, model)
-					plugin_collections = self.catalog_plugins.get_collection(catalogs, repos.id)
-					self._add_plugins_to_tree(catalogs, repos, store, repo_line, plugin_collections)
+					plugin_collections = self.catalog_plugins.get_collection(catalog_id, repos.id)
+					self._add_plugins_to_tree(catalog_id, repos, store, repo_line, plugin_collections)
 		else:
 			if not self.config['plugins.installed']:
 				return
 			for catalog_id, repositories in self.catalog_plugins.get_cache().items():
-				model = (catalog_id, None, True, "{} (offline)".format(catalog_id), None, None, False, False, False, 'Catalog (offline)')
+				model = (catalog_id, None, True, "{} (offline)".format(catalog_id), None, None, False, False, False, _ROW_TYPE_CATALOG)
 				catalog_line = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
 				for repo in repositories:
-					model = (repo.id, None, True, "{} (offline)".format(repo.title), None, None, False, False, False, 'Repository (offline)')
+					model = (repo.id, None, True, "{} (offline)".format(repo.title), None, None, False, False, False, _ROW_TYPE_REPOSITORY)
 					repo_line = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_line, model)
 					self._add_plugins_offline(catalog_id, repo.id, store, repo_line)
 
@@ -262,8 +266,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				version=self._get_version_or_upgrade(plugin_list[plugin]['name'], plugin_list[plugin]['version']),
 				visible_enabled=True,
 				visible_installed=True,
-				installed_sensitive=True,
-				type='Plugin'
+				sensitive_installed=True,
+				type=_ROW_TYPE_PLUGIN
 			))
 		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
 
@@ -283,8 +287,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				version=self.application.plugin_manager[plugin].version,
 				visible_enabled=True,
 				visible_installed=True,
-				installed_sensitive=False,
-				type='Plugin'
+				sensitive_installed=False,
+				type=_ROW_TYPE_PLUGIN
 			))
 		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
 
@@ -371,7 +375,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 		for tree_iter in gui_utilities.gtk_treeview_selection_iterate(treeview):
 			named_row = self._named_model(*self._model[tree_iter])
-			if named_row.type != 'Plugin':
+			if named_row.type != _ROW_TYPE_PLUGIN:
 				continue
 			enabled = named_row.id in pm.enabled_plugins
 			pm.unload(named_row.id)
@@ -394,7 +398,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def signal_renderer_toggled_enable(self, _, path):
 		pm = self.application.plugin_manager
 		named_row = self._named_model(*self._model[path])
-		if named_row.type != 'Plugin':
+		if named_row.type != _ROW_TYPE_PLUGIN:
 			return
 		if named_row.id not in pm.loaded_plugins:
 			return
@@ -508,44 +512,29 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		buf = textview.get_buffer()
 		buf.delete(buf.get_start_iter(), buf.get_end_iter())
 		model_id = named_model.id
-		if named_model.type != 'Plugin':
-			stack.set_visible_child(textview)
-			self._set_non_plugin_info(model_instance)
-			return
-		if model_id in self._module_errors:
-			stack.set_visible_child(textview)
-			self._set_plugin_info_error(model_id)
+		if named_model.type == _ROW_TYPE_PLUGIN:
+			if model_id in self._module_errors:
+				stack.set_visible_child(textview)
+				self._set_plugin_info_error(model_id)
+			else:
+				stack.set_visible_child(self.gobjects['grid_plugin_info'])
+				self._set_plugin_info_details(model_instance)
 		else:
-			stack.set_visible_child(self.gobjects['grid_plugin_info'])
-			self._set_plugin_info_details(model_instance)
+			self._set_non_plugin_info(model_instance)
 
 	def _set_non_plugin_info(self, model_instance):
 		named_model = self._named_model(*model_instance)
-		if 'offline' in named_model.type or named_model.id == 'local':
-			self._set_non_plugin_offline_info(model_instance)
+		self.gobjects['label_plugin_info_homepage'].set_property('visible', False)
+		self.gobjects['label_plugin_info_title'].set_text(named_model.title)
+		if named_model.title.lower().endswith(' (offline)') or (named_model.id is None and named_model.type == _ROW_TYPE_CATALOG):
 			return
-		textview = self.gobjects['textview_plugin_info']
-		buf = textview.get_buffer()
-		if named_model.type == 'Catalog':
-			instance_information = self.catalog_plugins.catalogs[named_model.id]
+		if named_model.type == _ROW_TYPE_CATALOG:
+			obj = self.catalog_plugins.catalogs[named_model.id]
 		else:
-			instance_information = self.catalog_plugins.catalogs[self._named_model(*model_instance.parent).id].repositories[named_model.id]
-
-		text = "{0}\n".format(named_model.type)
-		text += "Title: {0}\n".format(getattr(instance_information, 'title', 'None'))
-		text += "Id: {0}\n".format(getattr(instance_information, 'id', 'None'))
-		text += "Description: {}\n".format(getattr(instance_information, 'description', 'None'))
-		if getattr(instance_information, 'maintainers', None):
-			text += 'Maintainer: ' + '\nMaintainer: '.join(instance_information.maintainers) + '\n'
-		buf.insert(buf.get_end_iter(), text, -1)
-
-	def _set_non_plugin_offline_info(self, model_instance):
-		named_model = self._named_model(*model_instance)
-		textview = self.gobjects['textview_plugin_info']
-		buf = textview.get_buffer()
-		text = named_model.type.split()[0] + '\n'
-		text += "Title: {0}\n".format(named_model.title)
-		buf.insert(buf.get_end_iter(), text, -1)
+			obj = self.catalog_plugins.catalogs[self._named_model(*model_instance.parent).id].repositories[named_model.id]
+		if getattr(obj, 'description', None):
+			self.gobjects['label_plugin_info_description'].set_text(obj.description)
+		self._set_homepage_url(getattr(obj, 'homepage', None))
 
 	def _set_plugin_info_details(self, plugin_model):
 		named_model = self._named_model(*plugin_model)
@@ -563,14 +552,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.gobjects['label_plugin_info_compatible'].set_text('Yes' if is_compatible else 'No')
 		self.gobjects['label_plugin_info_version'].set_text(plugin['version'])
 		self.gobjects['label_plugin_info_authors'].set_text('\n'.join(plugin['authors']))
-		label_homepage = self.gobjects['label_plugin_info_homepage']
-		if plugin['homepage'] is None:
-			label_homepage.set_property('visible', False)
-		else:
-			label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(plugin['homepage']))
-			label_homepage.set_property('tooltip-text', plugin['homepage'])
-			label_homepage.set_property('visible', True)
 		self.gobjects['label_plugin_info_description'].set_text(plugin['description'])
+		self._set_homepage_url(plugin['homepage'])
 
 	def _set_plugin_info_error(self, model_instance):
 		id_ = self._named_model(*model_instance).id
@@ -579,3 +562,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		exc, formatted_exc = self._module_errors[id_]
 		buf.insert(buf.get_end_iter(), "{0!r}\n\n".format(exc), -1)
 		buf.insert(buf.get_end_iter(), ''.join(formatted_exc), -1)
+
+	def _set_homepage_url(self, url=None):
+		label_homepage = self.gobjects['label_plugin_info_homepage']
+		if url is None:
+			label_homepage.set_property('visible', False)
+			return
+		label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(url))
+		label_homepage.set_property('tooltip-text', url)
+		label_homepage.set_property('visible', True)
