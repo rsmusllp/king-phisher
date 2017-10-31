@@ -488,20 +488,22 @@ class Thread(threading.Thread):
 	"""
 	King Phishers base threading class with two way event.
 	"""
-
-	def __init__(self, *args, **kwargs):
-		super(Thread, self).__init__(*args, **kwargs)
-		self.logger = logging.getLogger('KingPhisher.Thread.{0}'.format(self.name))
+	logger = logging.getLogger('KingPhisher.Thread')
+	def __init__(self, target=None, name=None, args=(), kwargs={}, **_kwargs):
+		super(Thread, self).__init__(target=target, name=name, args=args, kwargs=kwargs, **_kwargs)
+		self.target_name = None
+		if target is not None:
+			self.target_name = target.__module__ + '.' + target.__name__
 		self.stop_flag = Event()
 		self.stop_flag.clear()
 
 	def run(self):
-		self.logger.debug("thread {0} running in tid: 0x{1:x}".format(self.name, threading.current_thread().ident))
+		self.logger.debug("thread {0} running {1} in tid: 0x{2:x}".format(self.name, self.target_name, threading.current_thread().ident))
 		super(Thread, self).run()
 
 	def stop(self):
 		"""
-		Sets the flag to signal the threat to stop.
+		Sets the flag to signal the thread to stop.
 		"""
 		self.stop_flag.set()
 

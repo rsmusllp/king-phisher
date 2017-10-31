@@ -134,7 +134,7 @@ class Repository(object):
 		self.homepage = data.get('homepage')
 		"""The URL of the homepage for this repository if it was specified."""
 		self.id = data['id']
-		"""The unique id of this repository"""
+		"""The unique identifier of this repository."""
 		self.title = data['title']
 		"""The title string of this repository."""
 		self.url_base = data['url-base']
@@ -314,15 +314,15 @@ class Catalog(object):
 		self.created = dateutil.parser.parse(data['created'])
 		"""The timestamp of when the remote data was generated."""
 		self.id = data['id']
-		"""The unique id of the catalog"""
+		"""The unique identifier of this catalog."""
 		self.maintainers = tuple(maintainer['id'] for maintainer in data['maintainers'])
 		"""
 		A tuple containing the maintainers of the catalog and repositories.
 		These are also the key identities that should be present for verifying
 		the remote data.
 		"""
-		self.repositories = tuple(Repository(repo, keys=self.security_keys) for repo in data['repositories'])
-		"""A tuple of the :py:class:`.Repository` objects included in this catalog."""
+		self.repositories = dict((repo['id'], Repository(repo, keys=self.security_keys)) for repo in data['repositories'])
+		"""A dict of the :py:class:`.Repository` objects included in this catalog keyed by their id."""
 		self.logger.info("initialized catalog with {0:,} repositories".format(len(self.repositories)))
 
 	@classmethod
@@ -350,12 +350,13 @@ class Catalog(object):
 
 class CatalogManager(object):
 	"""
-	Base manager for handling multiple Catalogs
+	Base manager for handling multiple :py:class:`.Catalogs`.
 	"""
-	def __init__(self, url_catalog=None):
+	logger = logging.getLogger('KingPhisher.Catalog.Manager')
+	def __init__(self, catalog_url=None):
 		self.catalogs = {}
-		if url_catalog:
-			self.add_catalog_url(url_catalog)
+		if catalog_url:
+			self.add_catalog_url(catalog_url)
 
 	def catalog_ids(self):
 		"""
@@ -368,33 +369,19 @@ class CatalogManager(object):
 
 	def get_repositories(self, catalog_id):
 		"""
-		Returns a list of repositories from the requested catalog
+		Returns repositories from the requested catalog.
 
-		:param str catalog_id: The name of the catalog in which to get names of repositories from
+		:param str catalog_id: The name of the catalog in which to get names of repositories from.
 		:return: tuple
 		"""
-		return self.catalogs[catalog_id].repositories
-
-	def get_repository(self, catalog_id, repo_id):
-		"""
-		Returns the requested repository instance
-
-		:param str catalog_id: The name of the catalog the repo belongs to
-		:param str repo_id: The id of the repository requested.
-		:return: The repository instance
-		:rtype:py:class:Repository
-		"""
-		for repo in self.catalogs[catalog_id].repositories:
-			if repo.id != repo_id:
-				continue
-			return repo
+		return tuple(self.catalogs[catalog_id].repositories.values())
 
 	def add_catalog_url(self, url):
 		try:
 			c = Catalog.from_url(url)
 			self.catalogs[c.id] = c
 		except Exception as error:
-			logging.warning("failed to load catalog from url {} due to {}".format(url, error))
+			self.logger.warning("failed to load catalog from url {0} due to {1}".format(url, error), exc_info=True)
 
 def sign_item_files(local_path, signing_key, signing_key_id, repo_path=None):
 	"""

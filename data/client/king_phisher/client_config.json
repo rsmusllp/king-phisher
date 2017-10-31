@@ -1,4 +1,7 @@
 {
+  "catalogs": [
+    "https://raw.githubusercontent.com/securestate/king-phisher-plugins/master/catalog.json"
+  ],
   "dashboard.bottom": "VisitsTimeline",
   "dashboard.top_left": "Overview",
   "dashboard.top_right": "VisitorInfo",

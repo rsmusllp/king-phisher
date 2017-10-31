@@ -172,7 +172,6 @@ class Requirements(_Mapping):
 			if package.startswith('gi.'):
 				if not importlib.util.find_spec(package):
 					missing_packages.append(package)
-				logging.info('During requirement check, gi subpackage was manually checked')
 				continue
 			package_check = smoke_zephyr.requirements.check_requirements([package])
 			if package_check:
@@ -251,6 +250,7 @@ class PluginBaseMeta(type):
 			'description': cls.description,
 			'homepage': cls.homepage,
 			'name': cls.name,
+			'is_compatible': cls.is_compatible,
 			'requirements': {
 				'minimum-version': cls.req_min_version,
 				'packages': tuple(cls.req_packages.keys())
