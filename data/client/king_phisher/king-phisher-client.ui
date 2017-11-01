@@ -2761,12 +2761,12 @@ Spencer McIntyre</property>
               </packing>
             </child>
             <child>
-              <object class="GtkExpander" id="PluginManagerWindow.expander_plugin_info">
+              <object class="GtkExpander" id="PluginManagerWindow.expander_info">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <signal name="activate" handler="signal_expander_activate" swapped="no"/>
                 <child>
-                  <object class="GtkScrolledWindow" id="PluginManagerWindow.scrolledwindow_plugin_info">
+                  <object class="GtkScrolledWindow" id="PluginManagerWindow.scrolledwindow_info">
                     <property name="height_request">125</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -2774,11 +2774,11 @@ Spencer McIntyre</property>
                     <property name="border_width">3</property>
                     <property name="shadow_type">in</property>
                     <child>
-                      <object class="GtkViewport" id="PluginManagerWindow.viewport_plugin_info">
+                      <object class="GtkViewport" id="PluginManagerWindow.viewport_info">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkStack" id="PluginManagerWindow.stack_plugin_info">
+                          <object class="GtkStack" id="PluginManagerWindow.stack_info">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
@@ -2974,6 +2974,122 @@ Spencer McIntyre</property>
                                 <property name="name">page1</property>
                                 <property name="title" translatable="yes">page1</property>
                                 <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkGrid" id="PluginManagerWindow.grid_catalog_repo_info">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="row_spacing">3</property>
+                                <property name="column_spacing">3</property>
+                                <property name="column_homogeneous">True</property>
+                                <child>
+                                  <object class="GtkLabel" id="PluginManagerWindow.label_catalog_repo_info_title">
+                                    <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
+                                    <property name="can_focus">False</property>
+                                    <attributes>
+                                      <attribute name="weight" value="bold"/>
+                                      <attribute name="scale" value="1.25"/>
+                                    </attributes>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">0</property>
+                                    <property name="width">4</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="PluginManagerWindow.label_catalog_repo_info_for_maintainers">
+                                    <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">end</property>
+                                    <property name="valign">start</property>
+                                    <property name="label" translatable="yes">Maintainers:</property>
+                                    <attributes>
+                                      <attribute name="scale" value="0.90000000000000002"/>
+                                    </attributes>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="PluginManagerWindow.label_catalog_repo_info_maintainers">
+                                    <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">The contributors who have written and provided this plugin.</property>
+                                    <property name="halign">start</property>
+                                    <property name="valign">start</property>
+                                    <attributes>
+                                      <attribute name="scale" value="0.90000000000000002"/>
+                                    </attributes>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="PluginManagerWindow.label_catalog_repo_info_for_description">
+                                    <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">end</property>
+                                    <property name="valign">start</property>
+                                    <property name="label" translatable="yes">Description:</property>
+                                    <attributes>
+                                      <attribute name="scale" value="0.90000000000000002"/>
+                                    </attributes>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="PluginManagerWindow.label_catalog_repo_info_description">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">The description of this plugin and the features it provides.</property>
+                                    <property name="halign">start</property>
+                                    <property name="valign">start</property>
+                                    <property name="wrap">True</property>
+                                    <property name="selectable">True</property>
+                                    <attributes>
+                                      <attribute name="scale" value="0.90000000000000002"/>
+                                    </attributes>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">2</property>
+                                    <property name="width">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="PluginManagerWindow.label_catalog_repo_info_homepage">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="label" translatable="yes">&lt;a href=""&gt;Homepage&lt;/a&gt;</property>
+                                    <property name="use_markup">True</property>
+                                    <property name="track_visited_links">False</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">2</property>
+                                    <property name="top_attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="name">page2</property>
+                                <property name="title" translatable="yes">page2</property>
+                                <property name="position">2</property>
                               </packing>
                             </child>
                           </object>

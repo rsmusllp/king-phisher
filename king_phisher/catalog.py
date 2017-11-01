@@ -377,11 +377,19 @@ class CatalogManager(object):
 		return tuple(self.catalogs[catalog_id].repositories.values())
 
 	def add_catalog_url(self, url):
+		"""
+		Adds catalog to the manager by its url.
+		:param url: url of the catalog which to load
+		:return: The catalog
+		:rtype: :py:class: `.Catalog`
+		"""
 		try:
-			c = Catalog.from_url(url)
-			self.catalogs[c.id] = c
+			catalog = Catalog.from_url(url)
+			self.catalogs[catalog.id] = catalog
 		except Exception as error:
-			self.logger.warning("failed to load catalog from url {0} due to {1}".format(url, error), exc_info=True)
+			self.logger.warning("failed to load catalog from url {0} due to {1}".format(url, error))
+			return
+		return catalog
 
 def sign_item_files(local_path, signing_key, signing_key_id, repo_path=None):
 	"""
