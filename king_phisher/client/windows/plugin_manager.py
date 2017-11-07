@@ -151,17 +151,16 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def _treeview_unselect(self):
 		treeview = self.gobjects['treeview_plugins']
 		treeview.get_selection().unselect_all()
-		self._update_status_bar('Finished Loading Plugin Store', idle=True)
 
 	def signal_window_show(self, _):
 		pass
 
 	def _load_catalogs(self):
-		self._update_status_bar('Loading: Downloading Catalogs', idle=True)
+		self._update_status_bar('Loading, downloading catalogs...', idle=True)
 		self.catalog_plugins = ClientCatalogManager(application.USER_DATA_PATH)
 		for catalog in self.config['catalogs']:
 			self.logger.debug("downloading catalog: {}".format(catalog))
-			self._update_status_bar("Loading: Downloading Catalog: {}".format(catalog))
+			self._update_status_bar("Loading, downloading catalog: {}".format(catalog))
 			self.catalog_plugins.add_catalog_url(catalog)
 		self._load_plugins()
 
@@ -200,7 +199,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		visible to the user.
 		"""
 		self.logger.debug('loading plugins')
-		self._update_status_bar('Loading... Plugins...', idle=True)
+		self._update_status_bar('Loading plugins...', idle=True)
 		store = self._model
 		store.clear()
 		pm = self.application.plugin_manager
@@ -242,21 +241,21 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					plugin_collections = self.catalog_plugins.get_collection(catalog_id, repos.id)
 					self._add_plugins_to_tree(catalog_id, repos, store, repo_line, plugin_collections)
 
-		if not self.config['plugins.installed']:
-			return
-		catalog_cache = self.catalog_plugins.get_cache()
-		for catalog_id in catalog_cache:
-			if self.catalog_plugins.catalogs.get(catalog_id, None):
-				continue
-			named_catalog = catalog_cache[catalog_id]
-			model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
-			catalog_line = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
-			for repo in named_catalog.repositories:
-				model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
-				repo_line = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_line, model)
-				self._add_plugins_offline(catalog_id, repo.id, store, repo_line)
+		if self.config['plugins.installed']:
+			catalog_cache = self.catalog_plugins.get_cache()
+			for catalog_id in catalog_cache:
+				if self.catalog_plugins.catalogs.get(catalog_id, None):
+					continue
+				named_catalog = catalog_cache[catalog_id]
+				model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
+				catalog_line = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
+				for repo in named_catalog.repositories:
+					model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
+					repo_line = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_line, model)
+					self._add_plugins_offline(catalog_id, repo.id, store, repo_line)
 
 		gui_utilities.glib_idle_add_once(self._treeview_unselect)
+		self._update_status_bar('Loading completed', idle=True)
 
 	def _add_plugins_to_tree(self, catalog, repo, store, parent, plugin_list):
 		client_plugins = list(plugin_list)
