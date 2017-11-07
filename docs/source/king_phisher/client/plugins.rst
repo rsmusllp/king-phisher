@@ -7,6 +7,12 @@
 Classes
 -------
 
+.. autoclass:: king_phisher.client.plugins.ClientCatalogManager
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :special-members: __init__
+
 .. autoclass:: king_phisher.client.plugins.ClientOptionBoolean
    :show-inheritance:
    :members:

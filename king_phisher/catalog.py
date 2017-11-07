@@ -362,7 +362,7 @@ class CatalogManager(object):
 		"""
 		The key names of the catalogs in the manager
 
-		:return: the catalogs ids in CatalogManager
+		:return: The catalogs IDs in the manager instance.
 		:rtype: dict_keys
 		"""
 		return self.catalogs.keys()
@@ -378,9 +378,10 @@ class CatalogManager(object):
 
 	def add_catalog_url(self, url):
 		"""
-		Adds catalog to the manager by its url.
-		:param url: url of the catalog which to load
-		:return: The catalog
+		Adds catalog to the manager by its URL.
+
+		:param str url: The URL of the catalog to load.
+		:return: The catalog.
 		:rtype: :py:class: `.Catalog`
 		"""
 		try:
