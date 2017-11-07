@@ -42,7 +42,6 @@ from king_phisher import plugins
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
 from king_phisher.client.widget import extras
-from king_phisher.plugins import Requirements
 from king_phisher.serializers import JSON
 
 from gi.repository import Gtk
@@ -573,7 +572,7 @@ class CatalogCacheManager(object):
 					self._cache_dict = {}
 
 		if self._cache_dict and 'catalogs' in self._cache_dict:
-			cache_cat = self._cache_dict['catalogs']['values']
+			cache_cat = self._cache_dict['catalogs']['value']
 			for catalog_ in cache_cat:
 				self[catalog_] = self._CatalogCacheEntry(
 					cache_cat[catalog_]['id'],
@@ -612,8 +611,8 @@ class CatalogCacheManager(object):
 		return cache
 
 	def save(self):
-		self._cache_dict['catalogs']['timestamp'] = datetime.datetime.utcnow()
-		self._cache_dict['catalogs']['values'] = self.to_dict()
+		self._cache_dict['catalogs']['created'] = datetime.datetime.utcnow()
+		self._cache_dict['catalogs']['value'] = self.to_dict()
 		with open(self._cache_file, 'w') as file_h:
 			JSON.dump(self._cache_dict, file_h)
 
@@ -640,6 +639,7 @@ class ClientCatalogManager(catalog.CatalogManager):
 	def install_plugin(self, catalog_id, repo_id, plugin_id, install_path):
 		"""
 		Installs the specified plugin to the desired plugin path.
+
 		:param catalog_id: The id of the catalog of the desired plugin to install.
 		:param repo_id: The id of the repository of the desired plugin to install.
 		:param plugin_id: The id of the plugin to install.
@@ -649,8 +649,9 @@ class ClientCatalogManager(catalog.CatalogManager):
 
 	def save_cache(self, catalog=None):
 		"""
-		saves the catalog or catalogs in the manager to the cache
-		:param catalog: the :py:class: `~king_phisher.Catalog` to save
+		Saves the catalog or catalogs in the manager to the cache.
+
+		:param catalog: The :py:class:`~king_phisher.catalog.Catalog` to save.
 		"""
 		if catalog:
 			self._catalog_cache.cache_catalog_repositories(
@@ -668,9 +669,10 @@ class ClientCatalogManager(catalog.CatalogManager):
 	def add_catalog_url(self, url):
 		"""
 		Adds catalog to the manager by its url.
-		:param url: url of the catalog which to load
-		:return: The catalog
-		:rtype: :py:class: `~king_phisher.Catalog`
+
+		:param url: URL of the catalog to load.
+		:return: The catalog.
+		:rtype: :py:class:`~king_phisher.catalog.Catalog`
 		"""
 		catalog_ = super(ClientCatalogManager, self).add_catalog_url(url)
 		if catalog_:
@@ -679,33 +681,36 @@ class ClientCatalogManager(catalog.CatalogManager):
 
 	def is_compatible(self, catalog_id, repo_id, plugin_name):
 		"""
-		checks the compatibility of a plugin
+		Checks the compatibility of a plugin.
+
 		:param catalog_id: The catalog id associated with the plugin.
 		:param repo_id: The repository id associated with the plugin.
-		:param plugin_name: The name of the plugin
-		:return: If it is compatible
+		:param plugin_name: The name of the plugin.
+		:return: Whether or not it is compatible.
 		:rtype: bool
 		"""
 		plugin = self.get_collection(catalog_id, repo_id)[plugin_name]
-		return Requirements(plugin['requirements']).is_compatible
+		return plugins.Requirements(plugin['requirements']).is_compatible
 
 	def compatibility(self, catalog_id, repo_id, plugin_name):
 		"""
-		checks the compatibility of a plugin
+		Checks the compatibility of a plugin.
+
 		:param catalog_id: The catalog id associated with the plugin.
 		:param repo_id: The repository id associated with the plugin.
-		:param plugin_name: The name of the plugin
-		:return: List of packages and if the requirements are meet.
+		:param plugin_name: The name of the plugin.
+		:return: Tuple of packages and if the requirements are met.
 		:rtype: tuple
 		"""
 		plugin = self.get_collection(catalog_id, repo_id)[plugin_name]
-		return Requirements(plugin['requirements']).compatibility
+		return plugins.Requirements(plugin['requirements']).compatibility
 
 	def get_collections_to_cache(self, catalog_):
 		"""
-		Will create a list of repositories and its collections in the accurate format to send to cache
-		:param catalog_: The :py:class: '~king_phisher.Catalog`
-		:return: the repository cache information
+		Will create a list of repositories and its collections in the accurate format to send to cache.
+
+		:param catalog_: The :py:class:`~king_phisher.catalog.Catalog` instance.
+		:return: The repository cache information.
 		:rtype: list
 		"""
 		repo_cache_info = []
@@ -720,8 +725,9 @@ class ClientCatalogManager(catalog.CatalogManager):
 
 	def get_cache(self):
 		"""
-		Gets the catalog cache
-		:return: The catalog cache
+		Gets the catalog cache.
+
+		:return: The catalog cache.
 		:rtype: :py:class:`.CatalogCacheManager`
 		"""
 		return self._catalog_cache
