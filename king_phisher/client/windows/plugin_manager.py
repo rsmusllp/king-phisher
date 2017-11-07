@@ -126,7 +126,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'visible', 7)
 		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'sensitive', 8)
 		self._model = Gtk.TreeStore(str, bool, bool, str, str, str, bool, bool, bool, str)
-		self._model.set_sort_column_id(1, Gtk.SortType.DESCENDING)
+		self._model.set_sort_column_id(3, Gtk.SortType.ASCENDING)
 		treeview.set_model(self._model)
 		self.plugin_path = os.path.join(application.USER_DATA_PATH, 'plugins')
 		self.load_thread = utilities.Thread(target=self._load_catalogs)
@@ -313,7 +313,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		return self.application.plugin_manager[plugin_name].version
 
 	def signal_popup_menu_activate_reload_all(self, _):
-		if not self.load_thread.is_alive():
+		if not self.load_thread.isAlive():
 			self.load_thread = utilities.Thread(target=self._load_catalogs)
 			self.load_thread.start()
 
@@ -391,6 +391,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			named_row = self._named_model(*self._model[tree_iter])
 			if named_row.type != _ROW_TYPE_PLUGIN:
 				continue
+			if named_row.id not in pm.enabled_plugins:
+				continue
 			enabled = named_row.id in pm.enabled_plugins
 			pm.unload(named_row.id)
 			try:
@@ -405,7 +407,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				del self._module_errors[named_row.id]
 			self._set_model_item(tree_iter, 'title', klass.title)
 			if named_row.id == selected_plugin:
-				self._set_info(named_row.id)
+				self._set_info(self._model[tree_iter])
 			if enabled:
 				pm.enable(named_row.id)
 
@@ -529,7 +531,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if named_model.type == _ROW_TYPE_PLUGIN:
 			if model_id in self._module_errors:
 				stack.set_visible_child(textview)
-				self._set_plugin_info_error(model_id)
+				self._set_plugin_info_error(model_instance)
 			else:
 				stack.set_visible_child(self.gobjects['grid_plugin_info'])
 				self._set_plugin_info(model_instance)
