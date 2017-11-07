@@ -122,7 +122,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		)
 		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer_enable, self._toggle_cell_data_func)
 		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'visible', 6)
-		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'sensitive', 7)
+		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'sensitive', 1)
 		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'visible', 7)
 		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'sensitive', 8)
 		self._model = Gtk.TreeStore(str, bool, bool, str, str, str, bool, bool, bool, str)
@@ -313,7 +313,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		return self.application.plugin_manager[plugin_name].version
 
 	def signal_popup_menu_activate_reload_all(self, _):
-		if not self.load_thread.isAlive():
+		if not self.load_thread.is_alive():
 			self.load_thread = utilities.Thread(target=self._load_catalogs)
 			self.load_thread.start()
 
