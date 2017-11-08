@@ -32,6 +32,7 @@
 
 import collections
 import os
+import shutil
 import sys
 import traceback
 
@@ -49,6 +50,8 @@ __all__ = ('PluginManagerWindow',)
 _ROW_TYPE_PLUGIN = 'plugin'
 _ROW_TYPE_REPOSITORY = 'repository'
 _ROW_TYPE_CATALOG = 'catalog'
+_LOCAL_REPOSITORY_ID = 'local'
+_LOCAL_REPOSITORY_TITLE = '[Locally Installed]'
 
 class PluginManagerWindow(gui_utilities.GladeGObject):
 	"""
@@ -205,12 +208,13 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		pm = self.application.plugin_manager
 		self._module_errors = {}
 		pm.load_all(on_error=self._on_plugin_load_error)
-		model = (None, None, True, '[Locally Installed]', None, None, False, False, False, _ROW_TYPE_CATALOG)
-		catalog = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
+		model = (_LOCAL_REPOSITORY_ID, None, True, _LOCAL_REPOSITORY_TITLE, None, None, False, False, False, _ROW_TYPE_CATALOG)
+		catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
 		models = []
 		for name, plugin in pm.loaded_plugins.items():
-			if name in self.config['plugins.installed']:
+			if self.config['plugins.installed'].get(name):
 				continue
+			self.config['plugins.installed'][name] = None
 			models.append(self._named_model(
 				id=plugin.name,
 				installed=True,
@@ -223,58 +227,56 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				sensitive_installed=False,
 				type=_ROW_TYPE_PLUGIN
 			))
-			gui_utilities.glib_idle_add_once(self._store_append, store, catalog, models[-1])
+		gui_utilities.glib_idle_add_once(self._store_extend, store, catalog_row, models)
 		del models
 
 		for name in self._module_errors.keys():
-			model = (name, True, False, "{0} (Load Failed)".format(name), 'unknown', True, True, False, _ROW_TYPE_PLUGIN)
-			gui_utilities.glib_idle_add_once(self._store_append, store, catalog, model)
+			model = (name, True, False, "{0} (Load Failed)".format(name), 'No', 'Unknown', True, True, False, _ROW_TYPE_PLUGIN)
+			gui_utilities.glib_idle_add_once(self._store_append, store, catalog_row, model)
 
 		self.logger.debug('loading catalog into plugin treeview')
-		if self.catalog_plugins.catalog_ids():
-			for catalog_id in self.catalog_plugins.catalog_ids():
-				model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
-				catalog = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
-				for repos in self.catalog_plugins.get_repositories(catalog_id):
-					model = (repos.id, None, True, repos.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
-					repo_line = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog, model)
-					plugin_collections = self.catalog_plugins.get_collection(catalog_id, repos.id)
-					self._add_plugins_to_tree(catalog_id, repos, store, repo_line, plugin_collections)
+		for catalog_id in self.catalog_plugins.catalog_ids():
+			model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
+			catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
+			for repo in self.catalog_plugins.get_repositories(catalog_id):
+				model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
+				repo_row = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_row, model)
+				plugin_collections = self.catalog_plugins.get_collection(catalog_id, repo.id)
+				self._add_plugins_to_tree(catalog_id, repo, store, repo_row, plugin_collections)
 
-		if self.config['plugins.installed']:
-			catalog_cache = self.catalog_plugins.get_cache()
-			for catalog_id in catalog_cache:
-				if self.catalog_plugins.catalogs.get(catalog_id, None):
-					continue
-				named_catalog = catalog_cache[catalog_id]
-				model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
-				catalog_line = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
-				for repo in named_catalog.repositories:
-					model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
-					repo_line = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_line, model)
-					self._add_plugins_offline(catalog_id, repo.id, store, repo_line)
+		catalog_cache = self.catalog_plugins.get_cache()
+		for catalog_id in catalog_cache:
+			if self.catalog_plugins.catalogs.get(catalog_id, None):
+				continue
+			named_catalog = catalog_cache[catalog_id]
+			model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
+			catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
+			for repo in named_catalog.repositories:
+				model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
+				repo_row = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_row, model)
+				self._add_plugins_offline(catalog_id, repo.id, store, repo_row)
 
 		gui_utilities.glib_idle_add_once(self._treeview_unselect)
 		self._update_status_bar('Loading completed', idle=True)
 
-	def _add_plugins_to_tree(self, catalog, repo, store, parent, plugin_list):
+	def _add_plugins_to_tree(self, catalog_id, repo, store, parent, plugin_list):
 		client_plugins = list(plugin_list)
 		models = []
 		for plugin in client_plugins:
 			installed = False
 			enabled = False
-			if plugin_list[plugin]['name'] in self.config['plugins.installed']:
-				if repo.id == self.config['plugins.installed'][plugin_list[plugin]['name']]['repo_id']:
-					if catalog == self.config['plugins.installed'][plugin_list[plugin]['name']]['catalog_id']:
-						installed = True
-						enabled = plugin_list[plugin]['name'] in self.config['plugins.enabled']
+			plugin_name = plugin_list[plugin]['name']
+			install_src = self.config['plugins.installed'].get(plugin_name)
+			if install_src and repo.id == install_src['repo_id'] and catalog_id == install_src['catalog_id']:
+				installed = True
+				enabled = plugin_name in self.config['plugins.enabled']
 			models.append(self._named_model(
 				id=plugin,
 				installed=installed,
 				enabled=enabled,
 				title=plugin_list[plugin]['title'],
-				compatibility='Yes' if self.catalog_plugins.is_compatible(catalog, repo.id, plugin) else 'No',
-				version=self._get_version_or_upgrade(plugin_list[plugin]['name'], plugin_list[plugin]['version']),
+				compatibility='Yes' if self.catalog_plugins.is_compatible(catalog_id, repo.id, plugin) else 'No',
+				version=self._get_version_or_upgrade(plugin_name, plugin_list[plugin]['version']),
 				visible_enabled=True,
 				visible_installed=True,
 				sensitive_installed=True,
@@ -284,20 +286,22 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def _add_plugins_offline(self, catalog_id, repo_id, store, parent):
 		models = []
-		for plugin in self.config['plugins.installed']:
-			if plugin not in self.application.plugin_manager:
+		for plugin_name, plugin_src in self.config['plugins.installed'].items():
+			if plugin_src is None:
 				continue
-			if self.config['plugins.installed'][plugin]['catalog_id'] != catalog_id:
+			if plugin_name not in self.application.plugin_manager:
 				continue
-			if self.config['plugins.installed'][plugin]['repo_id'] != repo_id:
+			if plugin_src['catalog_id'] != catalog_id:
+				continue
+			if plugin_src['repo_id'] != repo_id:
 				continue
 			models.append(self._named_model(
-				id=plugin,
+				id=plugin_name,
 				installed=True,
-				enabled=plugin in self.config['plugins.enabled'],
-				title=self.application.plugin_manager[plugin].title,
-				compatibility='Yes' if self.application.plugin_manager[plugin].is_compatible else 'No',
-				version=self.application.plugin_manager[plugin].version,
+				enabled=plugin_name in self.config['plugins.enabled'],
+				title=self.application.plugin_manager[plugin_name].title,
+				compatibility='Yes' if self.application.plugin_manager[plugin_name].is_compatible else 'No',
+				version=self.application.plugin_manager[plugin_name].version,
 				visible_enabled=True,
 				visible_installed=True,
 				sensitive_installed=False,
@@ -419,9 +423,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if named_row.id not in pm.loaded_plugins:
 			return
 		if self._named_model(*self._model[path].parent).id:
-			installed_plugin_info = self.config['plugins.installed'][named_row.id]
+			plugin_src = self.config['plugins.installed'][named_row.id]
 			repo_model, catalog_model = self._get_plugin_model_parents(self._model[path])
-			if repo_model.id != installed_plugin_info['repo_id'] or catalog_model.id != installed_plugin_info['catalog_id']:
+			if plugin_src and (repo_model.id != plugin_src['repo_id'] or catalog_model.id != plugin_src['catalog_id']):
 				return
 		if named_row.id in self._module_errors:
 			gui_utilities.show_dialog_error('Can Not Enable Plugin', self.window, 'Can not enable a plugin which failed to load.')
@@ -439,40 +443,29 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def signal_renderer_toggled_install(self, _, path):
 		repo_model, catalog_model = self._get_plugin_model_parents(self._model[path])
-		plugin_collection = self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)
 		named_row = self._named_model(*self._model[path])
 		if named_row.installed:
 			if named_row.enabled:
-				response = gui_utilities.show_dialog_yes_no(
-					'Plugin is enabled',
-					self.window,
-					"This will disable the plugin, do you wish to continue?"
-				)
-				if not response:
+				if not gui_utilities.show_dialog_yes_no('Plugin is enabled', self.window, 'This will disable the plugin, do you want to continue?'):
 					return
 				self._disable_plugin(path)
-			self._uninstall_plugin(plugin_collection, path)
-			self.logger.info("uninstalled plugin {}".format(named_row.id))
-		else:
-			if named_row.id in self.config['plugins.installed']:
-				installed_plugin_info = self.config['plugins.installed'][named_row.id]
-				if installed_plugin_info != {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}:
-					window_question = "A plugin with this name is already installed from Catalog: {} Repo: {}\nDo you want to replace it with this one?"
-					response = gui_utilities.show_dialog_yes_no(
-						'Plugin installed from another source',
-						self.window,
-						window_question.format(installed_plugin_info['catalog_id'], installed_plugin_info['repo_id'])
-					)
-					if not response:
-						return
-					if not self._remove_matching_plugin(path, installed_plugin_info):
-						self.logger.warning('failed to uninstall plugin {}'.format(named_row.id))
-						return
-			self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
-			self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
-			self._set_model_item(path, 'installed', True)
-			self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
-			self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
+			self._uninstall_plugin(path)
+			return
+
+		if named_row.id in self.config['plugins.installed']:
+			plugin_src = self.config['plugins.installed'].get(named_row.id)
+			if plugin_src != {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}:
+				window_question = 'A plugin with this name is already installed from another\nrepository. Do you want to replace it with this one?'
+				if not gui_utilities.show_dialog_yes_no('Plugin installed from another source', self.window, window_question):
+					return
+				if not self._remove_matching_plugin(path, plugin_src):
+					self.logger.warning("failed to uninstall plugin {0}".format(named_row.id))
+					return
+		self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
+		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
+		self._set_model_item(path, 'installed', True)
+		self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
+		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
 		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error)
 
 	def _disable_plugin(self, path, is_path=True):
@@ -484,42 +477,52 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		else:
 			path[self._named_model._fields.index('enabled')] = False
 
-	def _remove_matching_plugin(self, path, installed_plugin_info):
+	def _remove_matching_plugin(self, path, plugin_src):
 		named_row = self._named_model(*self._model[path])
+		repo_model = None
 		for catalog_model in self._model:
-			if self._named_model(*catalog_model).id != installed_plugin_info['catalog_id']:
+			catalog_id = self._named_model(*catalog_model).id
+			if plugin_src and catalog_id == plugin_src['catalog_id']:
+				repo_model = next((rm for rm in catalog_model.iterchildren() if self._named_model(*rm).id == plugin_src['repo_id']), None)
+				break
+			elif plugin_src is None and catalog_id == _LOCAL_REPOSITORY_ID:
+				# local installation acts as a pseudo-repository
+				repo_model = catalog_model
+				break
+		if not repo_model:
+			return False
+		for plugin_model in repo_model.iterchildren():
+			named_model = self._named_model(*plugin_model)
+			if named_model.id != named_row.id:
 				continue
-			for repo_model in catalog_model.iterchildren():
-				if self._named_model(*repo_model).id != installed_plugin_info['repo_id']:
-					continue
-				for plugin_model in repo_model.iterchildren():
-					named_model = self._named_model(*plugin_model)
-					if named_model.id != named_row.id:
-						continue
-					if named_model.enabled:
-						self._disable_plugin(plugin_model, is_path=False)
-					self._uninstall_plugin(
-						self.catalog_plugins.get_collection(installed_plugin_info['catalog_id'], installed_plugin_info['repo_id']),
-						plugin_model,
-						is_path=False
-					)
-					return True
+			if named_model.enabled:
+				self._disable_plugin(plugin_model, is_path=False)
+			self._uninstall_plugin(plugin_model.path)
+			return True
+		return False
 
 	def _get_plugin_model_parents(self, plugin_model):
 		return self._named_model(*plugin_model.parent), self._named_model(*plugin_model.parent.parent)
 
-	def _uninstall_plugin(self, plugin_collection, path, is_path=True):
-		plugin_id = self._named_model(*(self._model[path] if is_path else path)).id
-		for files in plugin_collection[plugin_id]['files']:
-			file_name = files[0]
-			if os.path.isfile(os.path.join(self.plugin_path, file_name)):
-				os.remove(os.path.join(self.plugin_path, file_name))
-			self.application.plugin_manager.unload(plugin_id)
-		del self.config['plugins.installed'][plugin_id]
-		if is_path:
-			self._set_model_item(path, 'installed', False)
+	def _uninstall_plugin(self, model_path):
+		model_row = self._model[model_path]
+		plugin_id = self._named_model(*model_row).id
+		if os.path.isfile(os.path.join(self.plugin_path, plugin_id, '__init__.py')):
+			shutil.rmtree(os.path.join(self.plugin_path, plugin_id))
+		elif os.path.isfile(os.path.join(self.plugin_path, plugin_id + '.py')):
+			os.remove(os.path.join(self.plugin_path, plugin_id + '.py'))
 		else:
-			path[self._named_model._fields.index('installed')] = False
+			self.logger.warning("failed to find plugin {0} on disk for removal".format(plugin_id))
+			return False
+		self.application.plugin_manager.unload(plugin_id)
+		del self.config['plugins.installed'][plugin_id]
+
+		if model_row.parent and model_row.parent[self._named_model._fields.index('id')] == _LOCAL_REPOSITORY_ID:
+			del self._model[model_path]
+		else:
+			self._set_model_item(model_path, 'installed', False)
+		self.logger.info("successfully uninstalled plugin {0}".format(plugin_id))
+		return True
 
 	def _set_info(self, model_instance):
 		named_model = self._named_model(*model_instance)
