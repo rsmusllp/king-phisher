@@ -31,17 +31,26 @@
 #
 
 import collections
+import datetime
 import os
+import sys
 import tempfile
 import weakref
 
+from king_phisher import catalog
 from king_phisher import plugins
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
 from king_phisher.client.widget import extras
+from king_phisher.serializers import JSON
 
 from gi.repository import Gtk
 import jinja2.exceptions
+
+if sys.version_info[:3] >= (3, 3, 0):
+	_MutableMapping = collections.abc.MutableMapping
+else:
+	_MutableMapping = collections.MutableMapping
 
 def _split_menu_path(menu_path):
 	menu_path = [path_item.strip() for path_item in menu_path.split('>')]
@@ -543,3 +552,182 @@ class ClientPluginManager(plugins.PluginManagerBase):
 	_plugin_klass = ClientPlugin
 	def __init__(self, path, application):
 		super(ClientPluginManager, self).__init__(path, (application,))
+
+class CatalogCacheManager(object):
+	"""
+	Manager to handle cache information for catalogs.
+	"""
+	_CatalogCacheEntry = collections.namedtuple('catalog', ['id', 'repositories'])
+	_RepositoryCacheEntry = collections.namedtuple('repositories', ['id', 'title', 'url', 'collections'])
+	def __init__(self, cache_file):
+		self._cache_dict = {}
+		self._data = {}
+		self._cache_file = cache_file
+
+		if os.path.isfile(self._cache_file):
+			with open(cache_file, 'r') as file_h:
+				try:
+					self._cache_dict = JSON.load(file_h)
+				except ValueError:
+					self._cache_dict = {}
+
+		if self._cache_dict and 'catalogs' in self._cache_dict:
+			cache_cat = self._cache_dict['catalogs']['value']
+			for catalog_ in cache_cat:
+				self[catalog_] = self._CatalogCacheEntry(
+					cache_cat[catalog_]['id'],
+					self._tuple_repositories(cache_cat[catalog_]['repositories'])
+				)
+		else:
+			self._cache_dict['catalogs'] = {}
+
+	def _tuple_repositories(self, repositories):
+		return tuple(self._RepositoryCacheEntry(**repository) for repository in repositories)
+
+	def __setitem__(self, key, value):
+		self._data[key] = value
+
+	def __getitem__(self, key):
+		return self._data[key]
+
+	def __delitem__(self, key):
+		del self._data[key]
+
+	def __len__(self):
+		return len(self._data)
+
+	def __iter__(self):
+		return iter(self._data)
+
+	def cache_catalog_repositories(self, cat_id, repositories):
+		self[cat_id] = self._CatalogCacheEntry(cat_id, self._tuple_repositories(repositories))
+
+	def to_dict(self):
+		cache = {}
+		for key in self:
+			cache[key] = {}
+			cache[key]['id'] = self[key].id
+			cache[key]['repositories'] = [repository._asdict() for repository in self[key].repositories]
+		return cache
+
+	def save(self):
+		self._cache_dict['catalogs']['created'] = datetime.datetime.utcnow()
+		self._cache_dict['catalogs']['value'] = self.to_dict()
+		with open(self._cache_file, 'w') as file_h:
+			JSON.dump(self._cache_dict, file_h)
+
+class ClientCatalogManager(catalog.CatalogManager):
+	"""
+	Base manager for handling Catalogs.
+	"""
+	def __init__(self, user_data_path, manager_type='plugins/client', *args, **kwargs):
+		self._catalog_cache = CatalogCacheManager(os.path.join(user_data_path, 'cache.json'))
+		super(ClientCatalogManager, self).__init__(*args, **kwargs)
+		self.manager_type = manager_type
+
+	def get_collection(self, catalog_id, repo_id):
+		"""
+		Returns the manager type of the plugin collection of the requested catalog and repository.
+
+		:param str catalog_id: The name of the catalog the repo belongs to
+		:param repo_id: The id of the repository requested.
+		:return: The the collection of manager type from the specified catalog and repository.
+		:rtype:py:class:
+		"""
+		return self.catalogs[catalog_id].repositories[repo_id].collections.get(self.manager_type)
+
+	def install_plugin(self, catalog_id, repo_id, plugin_id, install_path):
+		"""
+		Installs the specified plugin to the desired plugin path.
+
+		:param catalog_id: The id of the catalog of the desired plugin to install.
+		:param repo_id: The id of the repository of the desired plugin to install.
+		:param plugin_id: The id of the plugin to install.
+		:param install_path: The path to install the plugin too.
+		"""
+		self.catalogs[catalog_id].repositories[repo_id].get_item_files(self.manager_type, plugin_id, install_path)
+
+	def save_cache(self, catalog=None):
+		"""
+		Saves the catalog or catalogs in the manager to the cache.
+
+		:param catalog: The :py:class:`~king_phisher.catalog.Catalog` to save.
+		"""
+		if catalog:
+			self._catalog_cache.cache_catalog_repositories(
+				catalog.id,
+				self.get_collections_to_cache(catalog.id)
+			)
+		else:
+			for catalog__ in self.catalogs:
+				self._catalog_cache.cache_catalog_repositories(
+					self.catalogs[catalog__].id,
+					self.get_collections_to_cache(catalog__),
+				)
+		self._catalog_cache.save()
+
+	def add_catalog_url(self, url):
+		"""
+		Adds catalog to the manager by its url.
+
+		:param url: URL of the catalog to load.
+		:return: The catalog.
+		:rtype: :py:class:`~king_phisher.catalog.Catalog`
+		"""
+		catalog_ = super(ClientCatalogManager, self).add_catalog_url(url)
+		if catalog_:
+			self.save_cache(catalog=catalog_)
+		return catalog_
+
+	def is_compatible(self, catalog_id, repo_id, plugin_name):
+		"""
+		Checks the compatibility of a plugin.
+
+		:param catalog_id: The catalog id associated with the plugin.
+		:param repo_id: The repository id associated with the plugin.
+		:param plugin_name: The name of the plugin.
+		:return: Whether or not it is compatible.
+		:rtype: bool
+		"""
+		plugin = self.get_collection(catalog_id, repo_id)[plugin_name]
+		return plugins.Requirements(plugin['requirements']).is_compatible
+
+	def compatibility(self, catalog_id, repo_id, plugin_name):
+		"""
+		Checks the compatibility of a plugin.
+
+		:param catalog_id: The catalog id associated with the plugin.
+		:param repo_id: The repository id associated with the plugin.
+		:param plugin_name: The name of the plugin.
+		:return: Tuple of packages and if the requirements are met.
+		:rtype: tuple
+		"""
+		plugin = self.get_collection(catalog_id, repo_id)[plugin_name]
+		return plugins.Requirements(plugin['requirements']).compatibility
+
+	def get_collections_to_cache(self, catalog_):
+		"""
+		Will create a list of repositories and its collections in the accurate format to send to cache.
+
+		:param catalog_: The :py:class:`~king_phisher.catalog.Catalog` instance.
+		:return: The repository cache information.
+		:rtype: list
+		"""
+		repo_cache_info = []
+		for repo in self.get_repositories(catalog_):
+			repo_cache_info.append({
+				'id': repo.id,
+				'title': repo.title,
+				'collections': [collection_ for collection_ in repo.collections],
+				'url': repo.url_base
+			})
+		return repo_cache_info
+
+	def get_cache(self):
+		"""
+		Gets the catalog cache.
+
+		:return: The catalog cache.
+		:rtype: :py:class:`.CatalogCacheManager`
+		"""
+		return self._catalog_cache

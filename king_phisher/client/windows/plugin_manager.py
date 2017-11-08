@@ -30,17 +30,28 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
+import os
+import shutil
 import sys
 import traceback
 
 from king_phisher import utilities
+from king_phisher.client import application
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
+from king_phisher.client.plugins import ClientCatalogManager
 
 from gi.repository import Gdk
 from gi.repository import Gtk
 
 __all__ = ('PluginManagerWindow',)
+
+_ROW_TYPE_PLUGIN = 'plugin'
+_ROW_TYPE_REPOSITORY = 'repository'
+_ROW_TYPE_CATALOG = 'catalog'
+_LOCAL_REPOSITORY_ID = 'local'
+_LOCAL_REPOSITORY_TITLE = '[Locally Installed]'
 
 class PluginManagerWindow(gui_utilities.GladeGObject):
 	"""
@@ -50,8 +61,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
-			'expander_plugin_info',
+			'expander_info',
+			'grid_catalog_repo_info',
 			'grid_plugin_info',
+			'label_catalog_repo_info_title',
+			'label_catalog_repo_info_description',
+			'label_catalog_repo_info_for_description',
+			'label_catalog_repo_info_homepage',
+			'label_catalog_repo_info_maintainers',
+			'label_catalog_repo_info_for_maintainers',
 			'label_plugin_info_authors',
 			'label_plugin_info_for_compatible',
 			'label_plugin_info_compatible',
@@ -61,47 +79,106 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			'label_plugin_info_version',
 			'paned_plugins',
 			'scrolledwindow_plugins',
-			'stack_plugin_info',
+			'stack_info',
 			'treeview_plugins',
 			'textview_plugin_info',
-			'viewport_plugin_info'
+			'viewport_info',
+			'statusbar'
 		)
 	)
 	top_gobject = 'window'
+	_named_model = collections.namedtuple(
+		'model_row',
+		[
+			'id',
+			'installed',
+			'enabled',
+			'title',
+			'compatibility',
+			'version',
+			'visible_enabled',
+			'visible_installed',
+			'sensitive_installed',
+			'type'
+		]
+	)
 	def __init__(self, *args, **kwargs):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_plugins']
-		self._last_plugin_selected = None
+		self.status_bar = self.gobjects['statusbar']
 		self._module_errors = {}
-		tvm = managers.TreeViewManager(
-			treeview,
-			cb_refresh=self.load_plugins
-		)
-		toggle_renderer = Gtk.CellRendererToggle()
-		toggle_renderer.connect('toggled', self.signal_renderer_toggled)
+		tvm = managers.TreeViewManager(treeview, cb_refresh=self._load_plugins)
+		toggle_renderer_enable = Gtk.CellRendererToggle()
+		toggle_renderer_enable.connect('toggled', self.signal_renderer_toggled_enable)
+		toggle_renderer_install = Gtk.CellRendererToggle()
+		toggle_renderer_install.connect('toggled', self.signal_renderer_toggled_install)
 		tvm.set_column_titles(
-			('Enabled', 'Plugin'),
+			['Installed', 'Enabled', 'Title', 'Compatible', 'Version'],
 			column_offset=1,
-			renderers=(toggle_renderer, Gtk.CellRendererText())
+			renderers=[
+				toggle_renderer_install,
+				toggle_renderer_enable,
+				Gtk.CellRendererText(),
+				Gtk.CellRendererText(),
+				Gtk.CellRendererText()
+			]
 		)
-		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer, self._toggle_cell_data_func)
-		self._model = Gtk.ListStore(str, bool, str)
-		self._model.set_sort_column_id(2, Gtk.SortType.ASCENDING)
+		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer_enable, self._toggle_cell_data_func)
+		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'visible', 6)
+		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'sensitive', 1)
+		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'visible', 7)
+		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'sensitive', 8)
+		self._model = Gtk.TreeStore(str, bool, bool, str, str, str, bool, bool, bool, str)
+		self._model.set_sort_column_id(3, Gtk.SortType.ASCENDING)
 		treeview.set_model(self._model)
-		self.load_plugins()
-
+		self.plugin_path = os.path.join(application.USER_DATA_PATH, 'plugins')
+		self.load_thread = utilities.Thread(target=self._load_catalogs)
+		self.load_thread.start()
 		self.popup_menu = tvm.get_popup_menu()
 		self.popup_menu.append(Gtk.SeparatorMenuItem())
 		menu_item = Gtk.MenuItem.new_with_label('Reload')
 		menu_item.connect('activate', self.signal_popup_menu_activate_reload)
 		self.popup_menu.append(menu_item)
+		menu_item_reload_all = Gtk.MenuItem.new_with_label('Reload All')
+		menu_item_reload_all.connect('activate', self.signal_popup_menu_activate_reload_all)
+		self.popup_menu.append(menu_item_reload_all)
 		self.popup_menu.show_all()
-
+		self._update_status_bar('Loading...')
 		self.window.show()
+
 		selection = treeview.get_selection()
 		selection.unselect_all()
 		paned = self.gobjects['paned_plugins']
 		self._paned_offset = paned.get_allocation().height - paned.get_position()
+
+	def _treeview_unselect(self):
+		treeview = self.gobjects['treeview_plugins']
+		treeview.get_selection().unselect_all()
+
+	def signal_window_show(self, _):
+		pass
+
+	def _load_catalogs(self):
+		self._update_status_bar('Loading, downloading catalogs...', idle=True)
+		self.catalog_plugins = ClientCatalogManager(application.USER_DATA_PATH)
+		for catalog in self.config['catalogs']:
+			self.logger.debug("downloading catalog: {}".format(catalog))
+			self._update_status_bar("Loading, downloading catalog: {}".format(catalog))
+			self.catalog_plugins.add_catalog_url(catalog)
+		self._load_plugins()
+
+	def __update_status_bar(self, string_to_set):
+		self.status_bar.pop(0)
+		self.status_bar.push(0, string_to_set)
+
+	def _update_status_bar(self, string_to_set, idle=False):
+		if idle:
+			gui_utilities.glib_idle_add_once(self.__update_status_bar, string_to_set)
+		else:
+			self.__update_status_bar(string_to_set)
+
+	def _set_model_item(self, model_path, item, item_value):
+		self._model[model_path][self._named_model._fields.index(item)] = item_value
 
 	def _on_plugin_load_error(self, name, error):
 		self._module_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
@@ -112,28 +189,144 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		else:
 			cell.set_property('inconsistent', False)
 
-	def load_plugins(self):
+	def _store_append(self, store, parent, model):
+			return store.append(parent, model)
+
+	def _store_extend(self, store, parent, models):
+		for model in models:
+			store.append(parent, model)
+
+	def _load_plugins(self):
 		"""
 		Load the plugins which are available into the treeview to make them
 		visible to the user.
 		"""
+		self.logger.debug('loading plugins')
+		self._update_status_bar('Loading plugins...', idle=True)
 		store = self._model
 		store.clear()
 		pm = self.application.plugin_manager
 		self._module_errors = {}
 		pm.load_all(on_error=self._on_plugin_load_error)
+		model = (_LOCAL_REPOSITORY_ID, None, True, _LOCAL_REPOSITORY_TITLE, None, None, False, False, False, _ROW_TYPE_CATALOG)
+		catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
+		models = []
 		for name, plugin in pm.loaded_plugins.items():
-			store.append((
-				plugin.name,
-				plugin.name in pm.enabled_plugins,
-				plugin.title
+			if self.config['plugins.installed'].get(name):
+				continue
+			self.config['plugins.installed'][name] = None
+			models.append(self._named_model(
+				id=plugin.name,
+				installed=True,
+				enabled=plugin.name in pm.enabled_plugins,
+				title=plugin.title,
+				compatibility='Yes' if plugin.is_compatible else 'No',
+				version=plugin.version,
+				visible_enabled=True,
+				visible_installed=True,
+				sensitive_installed=False,
+				type=_ROW_TYPE_PLUGIN
 			))
+		gui_utilities.glib_idle_add_once(self._store_extend, store, catalog_row, models)
+		del models
+
 		for name in self._module_errors.keys():
-			store.append((
-				name,
-				False,
-				"{0} (Load Failed)".format(name)
+			model = (name, True, False, "{0} (Load Failed)".format(name), 'No', 'Unknown', True, True, False, _ROW_TYPE_PLUGIN)
+			gui_utilities.glib_idle_add_once(self._store_append, store, catalog_row, model)
+
+		self.logger.debug('loading catalog into plugin treeview')
+		for catalog_id in self.catalog_plugins.catalog_ids():
+			model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
+			catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
+			for repo in self.catalog_plugins.get_repositories(catalog_id):
+				model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
+				repo_row = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_row, model)
+				plugin_collections = self.catalog_plugins.get_collection(catalog_id, repo.id)
+				self._add_plugins_to_tree(catalog_id, repo, store, repo_row, plugin_collections)
+
+		catalog_cache = self.catalog_plugins.get_cache()
+		for catalog_id in catalog_cache:
+			if self.catalog_plugins.catalogs.get(catalog_id, None):
+				continue
+			named_catalog = catalog_cache[catalog_id]
+			model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
+			catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
+			for repo in named_catalog.repositories:
+				model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
+				repo_row = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_row, model)
+				self._add_plugins_offline(catalog_id, repo.id, store, repo_row)
+
+		gui_utilities.glib_idle_add_once(self._treeview_unselect)
+		self._update_status_bar('Loading completed', idle=True)
+
+	def _add_plugins_to_tree(self, catalog_id, repo, store, parent, plugin_list):
+		client_plugins = list(plugin_list)
+		models = []
+		for plugin in client_plugins:
+			installed = False
+			enabled = False
+			plugin_name = plugin_list[plugin]['name']
+			install_src = self.config['plugins.installed'].get(plugin_name)
+			if install_src and repo.id == install_src['repo_id'] and catalog_id == install_src['catalog_id']:
+				installed = True
+				enabled = plugin_name in self.config['plugins.enabled']
+			models.append(self._named_model(
+				id=plugin,
+				installed=installed,
+				enabled=enabled,
+				title=plugin_list[plugin]['title'],
+				compatibility='Yes' if self.catalog_plugins.is_compatible(catalog_id, repo.id, plugin) else 'No',
+				version=self._get_version_or_upgrade(plugin_name, plugin_list[plugin]['version']),
+				visible_enabled=True,
+				visible_installed=True,
+				sensitive_installed=True,
+				type=_ROW_TYPE_PLUGIN
 			))
+		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
+
+	def _add_plugins_offline(self, catalog_id, repo_id, store, parent):
+		models = []
+		for plugin_name, plugin_src in self.config['plugins.installed'].items():
+			if plugin_src is None:
+				continue
+			if plugin_name not in self.application.plugin_manager:
+				continue
+			if plugin_src['catalog_id'] != catalog_id:
+				continue
+			if plugin_src['repo_id'] != repo_id:
+				continue
+			models.append(self._named_model(
+				id=plugin_name,
+				installed=True,
+				enabled=plugin_name in self.config['plugins.enabled'],
+				title=self.application.plugin_manager[plugin_name].title,
+				compatibility='Yes' if self.application.plugin_manager[plugin_name].is_compatible else 'No',
+				version=self.application.plugin_manager[plugin_name].version,
+				visible_enabled=True,
+				visible_installed=True,
+				sensitive_installed=False,
+				type=_ROW_TYPE_PLUGIN
+			))
+		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
+
+	def _get_version_or_upgrade(self, plugin_name, plugin_version):
+		if plugin_name not in self.application.plugin_manager:
+			return plugin_version
+		if self.application.plugin_manager[plugin_name].version < plugin_version:
+			return "Upgrade available"
+		return self.application.plugin_manager[plugin_name].version
+
+	def signal_popup_menu_activate_reload_all(self, _):
+		if not self.load_thread.is_alive():
+			self.load_thread = utilities.Thread(target=self._load_catalogs)
+			self.load_thread.start()
+
+	def signal_destory(self, _):
+		if self.catalog_plugins:
+			self.catalog_plugins.save_cache()
+
+	def signal_treeview_row_activated(self, treeview, path, column):
+		self._set_info(self._model[path])
 
 	def signal_label_activate_link(self, _, uri):
 		utilities.open_uri(uri)
@@ -141,10 +334,19 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def signal_eventbox_button_press(self, widget, event):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_PRIMARY):
 			return
-		name = self._last_plugin_selected
-		if name is None:
+		if not self._last_plugin_selected:
 			return
-		klass = self.application.plugin_manager[name]
+		named_plugin = self._named_model(*self._last_plugin_selected)
+		plugin_id = named_plugin.id
+		if plugin_id is None:
+			return
+		if plugin_id in self.application.plugin_manager:
+			klass = self.application.plugin_manager[plugin_id]
+			compatibility_details = list(klass.compatibility)
+		else:
+			repo_model, catalog_model = self._get_plugin_model_parents(self._last_plugin_selected)
+			compatibility_details = list(self.catalog_plugins.compatibility(catalog_model.id, repo_model.id, named_plugin.id))
+
 		popover = Gtk.Popover()
 		popover.set_relative_to(self.gobjects['label_plugin_info_for_compatible'])
 		grid = Gtk.Grid()
@@ -154,7 +356,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		grid.insert_column(0)
 		grid.set_column_spacing(3)
 
-		compatibility_details = list(klass.compatibility)
 		compatibility_details.insert(0, ('Type', 'Value', 'Met'))
 		row = 0
 		for row, req in enumerate(compatibility_details):
@@ -179,7 +380,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			paned.set_position(paned.get_allocation().height + self._paned_offset)
 
 	def signal_paned_button_press_event(self, paned, event):
-		return not self.gobjects['expander_plugin_info'].get_property('expanded')
+		return not self.gobjects['expander_info'].get_property('expanded')
 
 	def signal_popup_menu_activate_reload(self, _):
 		treeview = self.gobjects['treeview_plugins']
@@ -191,80 +392,228 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			selected_plugin = model[tree_paths[0]][0]
 
 		for tree_iter in gui_utilities.gtk_treeview_selection_iterate(treeview):
-			name = self._model[tree_iter][0]  # pylint: disable=unsubscriptable-object
-			enabled = name in pm.enabled_plugins
-			pm.unload(name)
-			try:
-				klass = pm.load(name, reload_module=True)
-			except Exception as error:
-				self._on_plugin_load_error(name, error)
-				if name == selected_plugin:
-					self._set_plugin_info(name)
-				self._model[tree_iter][2] = "{0} (Reload Failed)".format(name)  # pylint: disable=unsubscriptable-object
+			named_row = self._named_model(*self._model[tree_iter])
+			if named_row.type != _ROW_TYPE_PLUGIN:
 				continue
-			if name in self._module_errors:
-				del self._module_errors[name]
-			self._model[tree_iter][2] = klass.title  # pylint: disable=unsubscriptable-object
-			if name == selected_plugin:
-				self._set_plugin_info(name)
+			if named_row.id not in pm.enabled_plugins:
+				continue
+			enabled = named_row.id in pm.enabled_plugins
+			pm.unload(named_row.id)
+			try:
+				klass = pm.load(named_row.id, reload_module=True)
+			except Exception as error:
+				self._on_plugin_load_error(named_row.id, error)
+				if named_row.id == selected_plugin:
+					self._set_info(named_row.id)
+				self._set_model_item(tree_iter, 'title', "{0} (Reload Failed)".format(named_row.id))
+				continue
+			if named_row.id in self._module_errors:
+				del self._module_errors[named_row.id]
+			self._set_model_item(tree_iter, 'title', klass.title)
+			if named_row.id == selected_plugin:
+				self._set_info(self._model[tree_iter])
 			if enabled:
-				pm.enable(name)
+				pm.enable(named_row.id)
 
-	def signal_renderer_toggled(self, _, path):
+	def signal_renderer_toggled_enable(self, _, path):
 		pm = self.application.plugin_manager
-		name = self._model[path][0]  # pylint: disable=unsubscriptable-object
-		if name in self._module_errors:
+		named_row = self._named_model(*self._model[path])
+		if named_row.type != _ROW_TYPE_PLUGIN:
+			return
+		if named_row.id not in pm.loaded_plugins:
+			return
+		if self._named_model(*self._model[path].parent).id:
+			plugin_src = self.config['plugins.installed'][named_row.id]
+			repo_model, catalog_model = self._get_plugin_model_parents(self._model[path])
+			if plugin_src and (repo_model.id != plugin_src['repo_id'] or catalog_model.id != plugin_src['catalog_id']):
+				return
+		if named_row.id in self._module_errors:
 			gui_utilities.show_dialog_error('Can Not Enable Plugin', self.window, 'Can not enable a plugin which failed to load.')
 			return
-		if self._model[path][1]:  # pylint: disable=unsubscriptable-object
-			pm.disable(name)
-			self._model[path][1] = False # pylint: disable=unsubscriptable-object
-			self.config['plugins.enabled'].remove(name)
+		if named_row.enabled:
+			self._disable_plugin(path)
 		else:
-			if not pm.loaded_plugins[name].is_compatible:
+			if not pm.loaded_plugins[named_row.id].is_compatible:
 				gui_utilities.show_dialog_error('Incompatible Plugin', self.window, 'This plugin is not compatible.')
 				return
-			if not pm.enable(name):
+			if not pm.enable(named_row.id):
 				return
-			self._model[path][1] = True # pylint: disable=unsubscriptable-object
-			self.config['plugins.enabled'].append(name)
+			self._set_model_item(path, 'enabled', True)
+			self.config['plugins.enabled'].append(named_row.id)
 
-	def signal_treeview_row_activated(self, treeview, path, column):
-		name = self._model[path][0] # pylint: disable=unsubscriptable-object
-		self._set_plugin_info(name)
+	def signal_renderer_toggled_install(self, _, path):
+		repo_model, catalog_model = self._get_plugin_model_parents(self._model[path])
+		named_row = self._named_model(*self._model[path])
+		if named_row.installed:
+			if named_row.enabled:
+				if not gui_utilities.show_dialog_yes_no('Plugin is enabled', self.window, 'This will disable the plugin, do you want to continue?'):
+					return
+				self._disable_plugin(path)
+			self._uninstall_plugin(path)
+			return
 
-	def _set_plugin_info(self, name):
-		stack = self.gobjects['stack_plugin_info']
+		if named_row.id in self.config['plugins.installed']:
+			plugin_src = self.config['plugins.installed'].get(named_row.id)
+			if plugin_src != {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}:
+				window_question = 'A plugin with this name is already installed from another\nrepository. Do you want to replace it with this one?'
+				if not gui_utilities.show_dialog_yes_no('Plugin installed from another source', self.window, window_question):
+					return
+				if not self._remove_matching_plugin(path, plugin_src):
+					self.logger.warning("failed to uninstall plugin {0}".format(named_row.id))
+					return
+		self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
+		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
+		self._set_model_item(path, 'installed', True)
+		self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
+		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
+		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error)
+
+	def _disable_plugin(self, path, is_path=True):
+		named_row = self._named_model(*(self._model[path] if is_path else path))
+		self.application.plugin_manager.disable(named_row.id)
+		self.config['plugins.enabled'].remove(named_row.id)
+		if is_path:
+			self._set_model_item(path, 'enabled', False)
+		else:
+			path[self._named_model._fields.index('enabled')] = False
+
+	def _remove_matching_plugin(self, path, plugin_src):
+		named_row = self._named_model(*self._model[path])
+		repo_model = None
+		for catalog_model in self._model:
+			catalog_id = self._named_model(*catalog_model).id
+			if plugin_src and catalog_id == plugin_src['catalog_id']:
+				repo_model = next((rm for rm in catalog_model.iterchildren() if self._named_model(*rm).id == plugin_src['repo_id']), None)
+				break
+			elif plugin_src is None and catalog_id == _LOCAL_REPOSITORY_ID:
+				# local installation acts as a pseudo-repository
+				repo_model = catalog_model
+				break
+		if not repo_model:
+			return False
+		for plugin_model in repo_model.iterchildren():
+			named_model = self._named_model(*plugin_model)
+			if named_model.id != named_row.id:
+				continue
+			if named_model.enabled:
+				self._disable_plugin(plugin_model, is_path=False)
+			self._uninstall_plugin(plugin_model.path)
+			return True
+		return False
+
+	def _get_plugin_model_parents(self, plugin_model):
+		return self._named_model(*plugin_model.parent), self._named_model(*plugin_model.parent.parent)
+
+	def _uninstall_plugin(self, model_path):
+		model_row = self._model[model_path]
+		plugin_id = self._named_model(*model_row).id
+		if os.path.isfile(os.path.join(self.plugin_path, plugin_id, '__init__.py')):
+			shutil.rmtree(os.path.join(self.plugin_path, plugin_id))
+		elif os.path.isfile(os.path.join(self.plugin_path, plugin_id + '.py')):
+			os.remove(os.path.join(self.plugin_path, plugin_id + '.py'))
+		else:
+			self.logger.warning("failed to find plugin {0} on disk for removal".format(plugin_id))
+			return False
+		self.application.plugin_manager.unload(plugin_id)
+		del self.config['plugins.installed'][plugin_id]
+
+		if model_row.parent and model_row.parent[self._named_model._fields.index('id')] == _LOCAL_REPOSITORY_ID:
+			del self._model[model_path]
+		else:
+			self._set_model_item(model_path, 'installed', False)
+		self.logger.info("successfully uninstalled plugin {0}".format(plugin_id))
+		return True
+
+	def _set_info(self, model_instance):
+		named_model = self._named_model(*model_instance)
+		stack = self.gobjects['stack_info']
 		textview = self.gobjects['textview_plugin_info']
 		buf = textview.get_buffer()
 		buf.delete(buf.get_start_iter(), buf.get_end_iter())
-		if name in self._module_errors:
-			stack.set_visible_child(textview)
-			self._set_plugin_info_error(name)
+		model_id = named_model.id
+		if named_model.type == _ROW_TYPE_PLUGIN:
+			if model_id in self._module_errors:
+				stack.set_visible_child(textview)
+				self._set_plugin_info_error(model_instance)
+			else:
+				stack.set_visible_child(self.gobjects['grid_plugin_info'])
+				self._set_plugin_info(model_instance)
 		else:
-			stack.set_visible_child(self.gobjects['grid_plugin_info'])
-			self._set_plugin_info_details(name)
+			self._set_nonplugin_info(model_instance)
 
-	def _set_plugin_info_details(self, name):
+	def _set_nonplugin_info(self, model_instance):
+		stack = self.gobjects['stack_info']
+		stack.set_visible_child(self.gobjects['grid_catalog_repo_info'])
+		named_model = self._named_model(*model_instance)
+		obj_catalog = None
+		self._hide_catalog_repo_labels()
+		self.gobjects['label_catalog_repo_info_title'].set_text(named_model.title)
+		if not named_model.id:
+			return
+		if named_model.type == _ROW_TYPE_CATALOG:
+			obj = self.catalog_plugins.catalogs.get(named_model.id, None)
+			if not obj:
+				return
+		else:
+			obj_catalog = self.catalog_plugins.catalogs.get(self._named_model(*model_instance.parent).id, None)
+			if not obj_catalog:
+				return
+			obj = self.catalog_plugins.catalogs[self._named_model(*model_instance.parent).id].repositories[named_model.id]
+
+		maintainers = getattr(obj, 'maintainers', getattr(obj_catalog, 'maintainers', None))
+		if maintainers:
+			self.gobjects['label_catalog_repo_info_maintainers'].set_text('\n'.join(maintainers))
+			self.gobjects['label_catalog_repo_info_maintainers'].set_property('visible', True)
+			self.gobjects['label_catalog_repo_info_for_maintainers'].set_property('visible', True)
+		if getattr(obj, 'description', None):
+			self.gobjects['label_catalog_repo_info_description'].set_text(obj.description)
+			self.gobjects['label_catalog_repo_info_description'].set_property('visible', True)
+			self.gobjects['label_catalog_repo_info_for_description'].set_property('visible', True)
+		if getattr(obj, 'homepage', None) or getattr(obj, 'url', None):
+			url = getattr(obj, 'homepage', getattr(obj, 'url', None))
+			self.gobjects['label_catalog_repo_info_homepage'].set_markup("<a href=\"{0}\">Homepage</a>".format(url))
+			self.gobjects['label_catalog_repo_info_homepage'].set_property('tooltip-text', url)
+			self.gobjects['label_catalog_repo_info_homepage'].set_property('visible', True)
+
+	def _hide_catalog_repo_labels(self):
+		self.gobjects['label_catalog_repo_info_maintainers'].set_property('visible', False)
+		self.gobjects['label_catalog_repo_info_for_maintainers'].set_property('visible', False)
+		self.gobjects['label_catalog_repo_info_description'].set_property('visible', False)
+		self.gobjects['label_catalog_repo_info_for_description'].set_property('visible', False)
+		self.gobjects['label_catalog_repo_info_homepage'].set_property('visible', False)
+
+	def _set_plugin_info(self, plugin_model):
+		named_model = self._named_model(*plugin_model)
 		pm = self.application.plugin_manager
-		self._last_plugin_selected = name
-		klass = pm.loaded_plugins[name]
-		self.gobjects['label_plugin_info_title'].set_text(klass.title)
-		self.gobjects['label_plugin_info_compatible'].set_text('Yes' if klass.is_compatible else 'No')
-		self.gobjects['label_plugin_info_version'].set_text(klass.version)
-		self.gobjects['label_plugin_info_authors'].set_text('\n'.join(klass.authors))
-		label_homepage = self.gobjects['label_plugin_info_homepage']
-		if klass.homepage is None:
-			label_homepage.set_property('visible', False)
+		self._last_plugin_selected = plugin_model
+		if named_model.id in pm.loaded_plugins:
+			plugin = pm.loaded_plugins[named_model.id].metadata
+			is_compatible = plugin['is_compatible']
 		else:
-			label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(klass.homepage))
-			label_homepage.set_property('tooltip-text', klass.homepage)
-			label_homepage.set_property('visible', True)
-		self.gobjects['label_plugin_info_description'].set_text(klass.description)
+			repo_model, catalog_model = self._get_plugin_model_parents(plugin_model)
+			plugin = self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_model.id]
+			is_compatible = self.catalog_plugins.is_compatible(catalog_model.id, repo_model.id, named_model.id)
 
-	def _set_plugin_info_error(self, name):
+		self.gobjects['label_plugin_info_title'].set_text(plugin['title'])
+		self.gobjects['label_plugin_info_compatible'].set_text('Yes' if is_compatible else 'No')
+		self.gobjects['label_plugin_info_version'].set_text(plugin['version'])
+		self.gobjects['label_plugin_info_authors'].set_text('\n'.join(plugin['authors']))
+		self.gobjects['label_plugin_info_description'].set_text(plugin['description'])
+		self._set_homepage_url(plugin['homepage'])
+
+	def _set_plugin_info_error(self, model_instance):
+		id_ = self._named_model(*model_instance).id
 		textview = self.gobjects['textview_plugin_info']
-		exc, formatted_exc = self._module_errors[name]
 		buf = textview.get_buffer()
+		exc, formatted_exc = self._module_errors[id_]
 		buf.insert(buf.get_end_iter(), "{0!r}\n\n".format(exc), -1)
 		buf.insert(buf.get_end_iter(), ''.join(formatted_exc), -1)
+
+	def _set_homepage_url(self, url=None):
+		label_homepage = self.gobjects['label_plugin_info_homepage']
+		if url is None:
+			label_homepage.set_property('visible', False)
+			return
+		label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(url))
+		label_homepage.set_property('tooltip-text', url)
+		label_homepage.set_property('visible', True)

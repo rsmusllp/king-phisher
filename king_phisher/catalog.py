@@ -117,7 +117,7 @@ class Repository(object):
 	"""
 	An object representing a single logical source of add on data.
 	"""
-	__slots__ = ('__weakref__', '_req_sess', 'collections', 'description', 'security_keys', 'homepage', 'title', 'url_base')
+	__slots__ = ('__weakref__', 'id', '_req_sess', 'collections', 'description', 'security_keys', 'homepage', 'title', 'url_base')
 	logger = logging.getLogger('KingPhisher.Catalog.Repository')
 	def __init__(self, data, keys=None):
 		"""
@@ -133,6 +133,8 @@ class Repository(object):
 		self.description = data.get('description')
 		self.homepage = data.get('homepage')
 		"""The URL of the homepage for this repository if it was specified."""
+		self.id = data['id']
+		"""The unique identifier of this repository."""
 		self.title = data['title']
 		"""The title string of this repository."""
 		self.url_base = data['url-base']
@@ -297,7 +299,7 @@ class Catalog(object):
 	data for the application. This information can then be loaded from an
 	arbitrary source.
 	"""
-	__slots__ = ('__weakref__', 'created', 'maintainers', 'repositories', 'security_keys')
+	__slots__ = ('__weakref__', 'id', 'created', 'maintainers', 'repositories', 'security_keys')
 	logger = logging.getLogger('KingPhisher.Catalog')
 	def __init__(self, data, keys=None):
 		"""
@@ -311,14 +313,16 @@ class Catalog(object):
 		"""The :py:class:`~king_phisher.security_keys.SecurityKeys` used for verifying remote data."""
 		self.created = dateutil.parser.parse(data['created'])
 		"""The timestamp of when the remote data was generated."""
+		self.id = data['id']
+		"""The unique identifier of this catalog."""
 		self.maintainers = tuple(maintainer['id'] for maintainer in data['maintainers'])
 		"""
 		A tuple containing the maintainers of the catalog and repositories.
 		These are also the key identities that should be present for verifying
 		the remote data.
 		"""
-		self.repositories = tuple(Repository(repo, keys=self.security_keys) for repo in data['repositories'])
-		"""A tuple of the :py:class:`.Repository` objects included in this catalog."""
+		self.repositories = dict((repo['id'], Repository(repo, keys=self.security_keys)) for repo in data['repositories'])
+		"""A dict of the :py:class:`.Repository` objects included in this catalog keyed by their id."""
 		self.logger.info("initialized catalog with {0:,} repositories".format(len(self.repositories)))
 
 	@classmethod
@@ -343,6 +347,50 @@ class Catalog(object):
 		data = serializers.JSON.loads(data)
 		keys.verify_dict(data, signature_encoding='base64')
 		return cls(data, keys=keys)
+
+class CatalogManager(object):
+	"""
+	Base manager for handling multiple :py:class:`.Catalogs`.
+	"""
+	logger = logging.getLogger('KingPhisher.Catalog.Manager')
+	def __init__(self, catalog_url=None):
+		self.catalogs = {}
+		if catalog_url:
+			self.add_catalog_url(catalog_url)
+
+	def catalog_ids(self):
+		"""
+		The key names of the catalogs in the manager
+
+		:return: The catalogs IDs in the manager instance.
+		:rtype: dict_keys
+		"""
+		return self.catalogs.keys()
+
+	def get_repositories(self, catalog_id):
+		"""
+		Returns repositories from the requested catalog.
+
+		:param str catalog_id: The name of the catalog in which to get names of repositories from.
+		:return: tuple
+		"""
+		return tuple(self.catalogs[catalog_id].repositories.values())
+
+	def add_catalog_url(self, url):
+		"""
+		Adds catalog to the manager by its URL.
+
+		:param str url: The URL of the catalog to load.
+		:return: The catalog.
+		:rtype: :py:class: `.Catalog`
+		"""
+		try:
+			catalog = Catalog.from_url(url)
+			self.catalogs[catalog.id] = catalog
+		except Exception as error:
+			self.logger.warning("failed to load catalog from url {0} due to {1}".format(url, error))
+			return
+		return catalog
 
 def sign_item_files(local_path, signing_key, signing_key_id, repo_path=None):
 	"""
