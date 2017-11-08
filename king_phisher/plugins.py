@@ -170,7 +170,10 @@ class Requirements(_Mapping):
 		missing_packages = []
 		for package in packages:
 			if package.startswith('gi.'):
-				if not importlib.util.find_spec(package):
+				try:
+					if not importlib.util.find_spec(package):
+						missing_packages.append(package)
+				except ImportError:
 					missing_packages.append(package)
 				continue
 			package_check = smoke_zephyr.requirements.check_requirements([package])
