@@ -83,13 +83,12 @@ GTK3_DEFAULT_THEME = 'Adwaita'
 """The default GTK3 Theme for style information."""
 
 USER_DATA_PATH = 'king-phisher'
-"""The default folder location of user specific data storage."""
+"""The default folder name for user specific data storage."""
 
 if its.mocked:
 	_Gtk_Application = type('Gtk.Application', (object,), {'__module__': ''})
 else:
 	_Gtk_Application = Gtk.Application
-	USER_DATA_PATH = os.path.join(GLib.get_user_config_dir(), USER_DATA_PATH)
 
 class KingPhisherClientApplication(_Gtk_Application):
 	"""
@@ -131,6 +130,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self._theme_file = 'theme.v1.css'
 		else:
 			self._theme_file = DISABLED
+		self.user_data_path = os.path.join(GLib.get_user_config_dir(), USER_DATA_PATH)
 		self.logger = logging.getLogger('KingPhisher.Client.Application')
 		# log version information for debugging purposes
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
@@ -145,7 +145,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.set_flags(Gio.ApplicationFlags.NON_UNIQUE)
 		self.set_property('application-id', 'org.king-phisher.client')
 		self.set_property('register-session', True)
-		self.config_file = config_file or os.path.join(USER_DATA_PATH, 'config.json')
+		self.config_file = config_file or os.path.join(self.user_data_path, 'config.json')
 		"""The file containing the King Phisher client configuration."""
 		if not os.path.isfile(self.config_file):
 			self._create_config()
@@ -179,7 +179,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			self.logger.info('disabling all plugins')
 			self.config['plugins.enabled'] = []
 		self.plugin_manager = plugins.ClientPluginManager(
-			[os.path.join(USER_DATA_PATH, 'plugins'), find.data_directory('plugins')],
+			[os.path.join(self.user_data_path, 'plugins'), find.data_directory('plugins')],
 			self
 		)
 		if use_plugins:

@@ -513,7 +513,7 @@ class Thread(threading.Thread):
 		"""
 		return self.stop_flag.is_set()
 
-class Event(threading.Event):
+class Event(getattr(threading, ('_Event' if hasattr(threading, '_Event') else 'Event'))):
 	__slots__ = ('__event',)
 	def __init__(self):
 		super(Event, self).__init__()

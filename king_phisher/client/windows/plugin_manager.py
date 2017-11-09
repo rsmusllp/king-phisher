@@ -37,10 +37,9 @@ import sys
 import traceback
 
 from king_phisher import utilities
-from king_phisher.client import application
+from king_phisher.client import plugins
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
-from king_phisher.client.plugins import ClientCatalogManager
 
 from gi.repository import Gdk
 from gi.repository import Gtk
@@ -131,7 +130,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._model = Gtk.TreeStore(str, bool, bool, str, str, str, bool, bool, bool, str)
 		self._model.set_sort_column_id(3, Gtk.SortType.ASCENDING)
 		treeview.set_model(self._model)
-		self.plugin_path = os.path.join(application.USER_DATA_PATH, 'plugins')
+		self.plugin_path = os.path.join(self.application.user_data_path, 'plugins')
 		self.load_thread = utilities.Thread(target=self._load_catalogs)
 		self.load_thread.start()
 		self.popup_menu = tvm.get_popup_menu()
@@ -160,7 +159,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def _load_catalogs(self):
 		self._update_status_bar('Loading, downloading catalogs...', idle=True)
-		self.catalog_plugins = ClientCatalogManager(application.USER_DATA_PATH)
+		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
 		for catalog in self.config['catalogs']:
 			self.logger.debug("downloading catalog: {}".format(catalog))
 			self._update_status_bar("Loading, downloading catalog: {}".format(catalog))

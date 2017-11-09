@@ -388,6 +388,7 @@ class PluginManagerBase(object):
 		self._lock.acquire()
 		klass = self.loaded_plugins[name]
 		if not klass.is_compatible:
+			self._lock.release()
 			raise errors.KingPhisherPluginError(name, 'the plugin is incompatible')
 		inst = klass(*self.plugin_init_args)
 		try:
