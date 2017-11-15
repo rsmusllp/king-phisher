@@ -41,6 +41,7 @@ import king_phisher.version as version
 import graphene
 import graphene.relay.connection
 import graphene.types
+import graphene.types.utils
 import graphql_relay.connection.arrayconnection
 import graphene_sqlalchemy
 
@@ -67,17 +68,17 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 		return connection_type
 
 	@classmethod
-	def connection_resolver(cls, resolver, connection, model, root, args, context, info):
-		iterable = resolver(root, args, context, info)
+	def connection_resolver(cls, resolver, connection, model, root, info, **kwargs):
+		iterable = resolver(root, info, **kwargs)
 		if iterable is None:
-			iterable = cls.get_query(model, context, info, args)
+			iterable = cls.get_query(model, info, **kwargs)
 		if isinstance(iterable, Query):
 			_len = iterable.count()
 		else:
 			_len = len(iterable)
-		return graphql_relay.connection.arrayconnection.connection_from_list_slice(
+		connection = graphql_relay.connection.arrayconnection.connection_from_list_slice(
 			iterable,
-			args,
+			kwargs,
 			slice_start=0,
 			list_length=_len,
 			list_slice_length=_len,
@@ -85,6 +86,15 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 			pageinfo_type=graphene.relay.connection.PageInfo,
 			edge_type=connection.Edge
 		)
+		connection.iterable = iterable
+		connection.length = _len
+		return connection
+
+	@property
+	def type(self):
+		# this is to bypass the one from
+		# graphene_sqlalchemy.SQLAlchemyConnectionField which breaks
+		return graphene.types.utils.get_type(self._type)
 
 # replacement graphql types
 class DateTime(graphene.types.Scalar):
@@ -152,8 +162,8 @@ class PluginConnection(graphene.relay.Connection):
 	class Meta:
 		node = Plugin
 	total = graphene.Int()
-	def resolve_total(self, args, context, info):
-		return len(context.get('plugin_manager', {}))
+	def resolve_total(self, info, **kwargs):
+		return len(info.context.get('plugin_manager', {}))
 
 # database graphql objects
 class AlertSubscription(graphene_sqlalchemy.SQLAlchemyObjectType):
@@ -175,7 +185,7 @@ class DeaddropConnection(graphene_sqlalchemy.SQLAlchemyObjectType):
 	first_visit = DateTime()
 	last_visit = DateTime()
 	visitor_geoloc = graphene.Field(GeoLocation)
-	def resolve_visitor_geoloc(self, args, context, info):
+	def resolve_visitor_geoloc(self, info, **kwargs):
 		visitor_ip = self.visitor_ip
 		if not visitor_ip:
 			return
@@ -202,7 +212,7 @@ class Visit(graphene_sqlalchemy.SQLAlchemyObjectType):
 	visitor_geoloc = graphene.Field(GeoLocation)
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
-	def resolve_visitor_geoloc(self, args, context, info):
+	def resolve_visitor_geoloc(self, info, **kwargs):
 		visitor_ip = self.visitor_ip
 		if not visitor_ip:
 			return
@@ -218,7 +228,7 @@ class Message(graphene_sqlalchemy.SQLAlchemyObjectType):
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
 	visits = SQLAlchemyConnectionField(Visit)
-	def resolve_opener_geoloc(self, args, context, info):
+	def resolve_opener_geoloc(self, info, **kwargs):
 		opener_ip = self.opener_ip
 		if not opener_ip:
 			return
@@ -302,121 +312,121 @@ class Database(graphene.ObjectType):
 	users = SQLAlchemyConnectionField(User)
 	visit = graphene.Field(Visit, id=graphene.String())
 	visits = SQLAlchemyConnectionField(Visit)
-	def resolve_alert_subscription(self, args, context, info):
-		query = AlertSubscription.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_alert_subscription(self, info, **kwargs):
+		query = AlertSubscription.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_alert_subscriptions(self, args, context, info):
-		query = AlertSubscription.get_query(context)
+	def resolve_alert_subscriptions(self, info, **kwargs):
+		query = AlertSubscription.get_query(info)
 		return query.all()
 
-	def resolve_campaign(self, args, context, info):
-		query = Campaign.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_campaign(self, info, **kwargs):
+		query = Campaign.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_campaigns(self, args, context, info):
-		query = Campaign.get_query(context)
+	def resolve_campaigns(self, info, **kwargs):
+		query = Campaign.get_query(info)
 		return query.all()
 
-	def resolve_campaign_type(self, args, context, info):
-		query = CampaignType.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_campaign_type(self, info, **kwargs):
+		query = CampaignType.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_campaign_types(self, args, context, info):
-		query = CampaignType.get_query(context)
+	def resolve_campaign_types(self, info, **kwargs):
+		query = CampaignType.get_query(info)
 		return query.all()
 
-	def resolve_company(self, args, context, info):
-		query = Company.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_company(self, info, **kwargs):
+		query = Company.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_companies(self, args, context, info):
-		query = Company.get_query(context)
+	def resolve_companies(self, info, **kwargs):
+		query = Company.get_query(info)
 		return query.all()
 
-	def resolve_company_department(self, args, context, info):
-		query = CompanyDepartment.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_company_department(self, info, **kwargs):
+		query = CompanyDepartment.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_company_departments(self, args, context, info):
-		query = CompanyDepartment.get_query(context)
+	def resolve_company_departments(self, info, **kwargs):
+		query = CompanyDepartment.get_query(info)
 		return query.all()
 
-	def resolve_credential(self, args, context, info):
-		query = Credential.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_credential(self, info, **kwargs):
+		query = Credential.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_credentials(self, args, context, info):
-		query = Credential.get_query(context)
+	def resolve_credentials(self, info, **kwargs):
+		query = Credential.get_query(info)
 		return query.all()
 
-	def resolve_deaddrop_connection(self, args, context, info):
-		query = DeaddropConnection.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_deaddrop_connection(self, info, **kwargs):
+		query = DeaddropConnection.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_deaddrop_connections(self, args, context, info):
-		query = DeaddropConnection.get_query(context)
+	def resolve_deaddrop_connections(self, info, **kwargs):
+		query = DeaddropConnection.get_query(info)
 		return query.all()
 
-	def resolve_deaddrop_deployment(self, args, context, info):
-		query = DeaddropDeployment.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_deaddrop_deployment(self, info, **kwargs):
+		query = DeaddropDeployment.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_deaddrop_deployments(self, args, context, info):
-		query = DeaddropDeployment.get_query(context)
+	def resolve_deaddrop_deployments(self, info, **kwargs):
+		query = DeaddropDeployment.get_query(info)
 		return query.all()
 
-	def resolve_industry(self, args, context, info):
-		query = Industry.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_industry(self, info, **kwargs):
+		query = Industry.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_industries(self, args, context, info):
-		query = Industry.get_query(context)
+	def resolve_industries(self, info, **kwargs):
+		query = Industry.get_query(info)
 		return query.all()
 
-	def resolve_landing_page(self, args, context, info):
-		query = LandingPage.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_landing_page(self, info, **kwargs):
+		query = LandingPage.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_landing_pages(self, args, context, info):
-		query = LandingPage.get_query(context)
+	def resolve_landing_pages(self, info, **kwargs):
+		query = LandingPage.get_query(info)
 		return query.all()
 
-	def resolve_message(self, args, context, info):
-		query = Message.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_message(self, info, **kwargs):
+		query = Message.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_messages(self, args, context, info):
-		query = Message.get_query(context)
+	def resolve_messages(self, info, **kwargs):
+		query = Message.get_query(info)
 		return query.all()
 
-	def resolve_user(self, args, context, info):
-		query = User.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_user(self, info, **kwargs):
+		query = User.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_users(self, args, context, info):
-		query = User.get_query(context)
+	def resolve_users(self, info, **kwargs):
+		query = User.get_query(info)
 		return query.all()
 
-	def resolve_visit(self, args, context, info):
-		query = Visit.get_query(context)
-		query = query.filter_by(**args)
+	def resolve_visit(self, info, **kwargs):
+		query = Visit.get_query(info)
+		query = query.filter_by(**kwargs)
 		return query.first()
 
-	def resolve_visits(self, args, context, info):
-		query = Visit.get_query(context)
+	def resolve_visits(self, info, **kwargs):
+		query = Visit.get_query(info)
 		return query.all()
 
 # top level query object for the schema
@@ -429,27 +439,27 @@ class Query(graphene.ObjectType):
 	plugin = graphene.Field(Plugin, name=graphene.String())
 	plugins = graphene.relay.ConnectionField(PluginConnection)
 	version = graphene.Field(graphene.String)
-	def resolve_db(self, args, context, info):
+	def resolve_db(self, info, **kwargs):
 		return Database()
 
-	def resolve_geoloc(self, args, context, info):
-		ip_address = args.get('ip')
+	def resolve_geoloc(self, info, **kwargs):
+		ip_address = kwargs.get('ip')
 		if ip_address is None:
 			return
 		return GeoLocation.from_ip_address(ip_address)
 
-	def resolve_plugin(self, args, context, info):
-		plugin_manager = context.get('plugin_manager', {})
+	def resolve_plugin(self, info, **kwargs):
+		plugin_manager = info.context.get('plugin_manager', {})
 		for _, plugin in plugin_manager:
-			if plugin.name != args.get('name'):
+			if plugin.name != kwargs.get('name'):
 				continue
 			return Plugin.from_plugin(plugin)
 
-	def resolve_plugins(self, args, context, info):
-		plugin_manager = context.get('plugin_manager', {})
+	def resolve_plugins(self, info, **kwargs):
+		plugin_manager = info.context.get('plugin_manager', {})
 		return [Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
 
-	def resolve_version(self, args, context, info):
+	def resolve_version(self, info, **kwargs):
 		return version.version
 
 class AuthorizationMiddleware(object):
@@ -460,12 +470,12 @@ class AuthorizationMiddleware(object):
 	and all objects and operations will be accessible. The **rpc_session**
 	key's value must be an instance of :py:class:`~.AuthenticatedSession`.
 	"""
-	def resolve(self, next_, root, args, context, info):
-		rpc_session = context.get('rpc_session')
+	def resolve(self, next_, root, info, **kwargs):
+		rpc_session = info.context.get('rpc_session')
 		if isinstance(root, db_models.Base) and rpc_session is not None:
 			if not root.session_has_read_prop_access(rpc_session, info.field_name):
 				return
-		return next_(root, args, context, info)
+		return next_(root, info, **kwargs)
 
 class Schema(graphene.Schema):
 	"""
