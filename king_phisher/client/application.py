@@ -201,7 +201,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.actions['emit-application-signal'] = action
 		self.add_action(action)
 
-	def _create_ssh_forwarder(self, server, username, password):
+	def _create_ssh_forwarder(self, server, username, password, window=None):
 		"""
 		Create and set the
 		:py:attr:`~.KingPhisherClientApplication._ssh_forwarder` attribute.
@@ -209,10 +209,12 @@ class KingPhisherClientApplication(_Gtk_Application):
 		:param tuple server: The server information as a host and port tuple.
 		:param str username: The username to authenticate to the SSH server with.
 		:param str password: The password to authenticate to the SSH server with.
+		:param window: The GTK window to use as the parent for error dialogs.
+		:type window: :py:class:`Gtk.Window`
 		:rtype: int
 		:return: The local port that is forwarded to the remote server or None if the connection failed.
 		"""
-		active_window = self.get_active_window()
+		window = window or self.get_active_window()
 		title_ssh_error = 'Failed To Connect To The SSH Service'
 		server_remote_port = self.config['server_remote_port']
 
@@ -227,25 +229,21 @@ class KingPhisherClientApplication(_Gtk_Application):
 			)
 			self._ssh_forwarder.start()
 		except ssh_forward.KingPhisherSSHKeyError as error:
-			gui_utilities.show_dialog_error(
-				'SSH Key Configuration Error',
-				active_window,
-				error.message
-			)
+			gui_utilities.show_dialog_error('SSH Key Configuration Error', window, error.message)
 		except errors.KingPhisherAbortError as error:
 			self.logger.info("ssh connection aborted ({0})".format(error.message))
 		except paramiko.PasswordRequiredException:
-			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The specified SSH key requires a password.')
+			gui_utilities.show_dialog_error(title_ssh_error, window, 'The specified SSH key requires a password.')
 		except paramiko.AuthenticationException:
 			self.logger.warning('failed to authenticate to the remote ssh server')
-			gui_utilities.show_dialog_error(title_ssh_error, active_window, 'The server responded that the credentials are invalid.')
+			gui_utilities.show_dialog_error(title_ssh_error, window, 'The server responded that the credentials are invalid.')
 		except paramiko.SSHException as error:
 			self.logger.warning("failed with ssh exception '{0}'".format(error.args[0]))
 		except socket.error as error:
-			gui_utilities.show_dialog_exc_socket_error(error, active_window, title=title_ssh_error)
+			gui_utilities.show_dialog_exc_socket_error(error, window, title=title_ssh_error)
 		except Exception as error:
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
-			gui_utilities.show_dialog_error(title_ssh_error, active_window, "An {0}.{1} error occurred.".format(error.__class__.__module__, error.__class__.__name__))
+			gui_utilities.show_dialog_error(title_ssh_error, window, "An {0}.{1} error occurred.".format(error.__class__.__module__, error.__class__.__name__))
 		else:
 			return self._ssh_forwarder.local_server
 		self.emit('server-disconnected')
@@ -536,18 +534,28 @@ class KingPhisherClientApplication(_Gtk_Application):
 		)
 		return style_provider
 
-	def server_connect(self, username, password, otp=None):
+	def server_connect(self, username, password, otp=None, window=None):
+		"""
+		Initialize the connection to the King Phisher server.
+
+		:param str username: The username to authenticate with.
+		:param str password: The password to authenticate with.
+		:param str otp: The optional one-time password to authenticate with.
+		:param window: The GTK window to use as the parent for error dialogs.
+		:type window: :py:class:`Gtk.Window`
+		:rtype: tuple
+		"""
 		# pylint: disable=too-many-locals
 		server_version_info = None
 		title_rpc_error = 'Failed To Connect To The King Phisher RPC Service'
-		active_window = self.get_active_window()
+		window = window or self.get_active_window()
 
 		server = parse_server(self.config['server'], 22)
 		if ipaddress.is_loopback(server[0]):
 			local_server = ('localhost', self.config['server_remote_port'])
 			self.logger.info("connecting to local king phisher instance")
 		else:
-			local_server = self._create_ssh_forwarder(server, username, password)
+			local_server = self._create_ssh_forwarder(server, username, password, window=window)
 		if not local_server:
 			return False, ConnectionErrorReason.ERROR_PORT_FORWARD
 
@@ -567,19 +575,19 @@ class KingPhisherClientApplication(_Gtk_Application):
 				raise RuntimeError('no version information was retrieved from the server')
 		except advancedhttpserver.RPCError as error:
 			self.logger.warning('failed to connect to the remote rpc service due to http status: ' + str(error.status))
-			gui_utilities.show_dialog_error(title_rpc_error, active_window, "The server responded with HTTP status: {0}.".format(str(error.status)))
+			gui_utilities.show_dialog_error(title_rpc_error, window, "The server responded with HTTP status: {0}.".format(str(error.status)))
 		except BadStatusLine as error:
 			self.logger.warning('failed to connect to the remote rpc service due to http bad status line: ' + error.line)
-			gui_utilities.show_dialog_error(title_rpc_error, active_window, generic_message)
+			gui_utilities.show_dialog_error(title_rpc_error, window, generic_message)
 		except socket.error as error:
 			self.logger.debug('failed to connect to the remote rpc service due to a socket error', exc_info=True)
-			gui_utilities.show_dialog_exc_socket_error(error, active_window)
+			gui_utilities.show_dialog_exc_socket_error(error, window)
 		except ssl.CertificateError as error:
 			self.logger.warning('failed to connect to the remote rpc service with a https certificate error: ' + error.message)
-			gui_utilities.show_dialog_error(title_rpc_error, active_window, 'The server presented an invalid SSL certificate.')
+			gui_utilities.show_dialog_error(title_rpc_error, window, 'The server presented an invalid SSL certificate.')
 		except Exception:
 			self.logger.warning('failed to connect to the remote rpc service', exc_info=True)
-			gui_utilities.show_dialog_error(title_rpc_error, active_window, generic_message)
+			gui_utilities.show_dialog_error(title_rpc_error, window, generic_message)
 		else:
 			connection_failed = False
 
@@ -607,7 +615,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			error_text = 'The client is running an old and incompatible version.'
 			error_text += '\nPlease update the local client installation.'
 		if error_text:
-			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', active_window, error_text)
+			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', window, error_text)
 			self.emit('server-disconnected')
 			return False, ConnectionErrorReason.ERROR_INCOMPATIBLE_VERSIONS
 

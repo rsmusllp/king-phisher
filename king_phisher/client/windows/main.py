@@ -310,19 +310,19 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		otp = self.config['server_one_time_password']
 		if not otp:
 			otp = None
-		_, reason = self.application.server_connect(username, password, otp)
+		_, reason = self.application.server_connect(username, password, otp, window=dialog)
 		if reason == ConnectionErrorReason.ERROR_INVALID_OTP:
 			revealer = self.login_dialog.gobjects['revealer_server_one_time_password']
 			if revealer.get_child_revealed():
-				gui_utilities.show_dialog_error('Login Failed', self, 'A valid one time password (OTP) token is required.')
+				gui_utilities.show_dialog_error('Login Failed', dialog, 'A valid one time password (OTP) token is required.')
 			else:
 				revealer.set_reveal_child(True)
 			entry = self.login_dialog.gobjects['entry_server_one_time_password']
 			entry.grab_focus()
 		elif reason == ConnectionErrorReason.ERROR_INVALID_CREDENTIALS:
-			gui_utilities.show_dialog_error('Login Failed', self, 'The provided credentials are incorrect.')
+			gui_utilities.show_dialog_error('Login Failed', dialog, 'The provided credentials are incorrect.')
 		elif reason == ConnectionErrorReason.ERROR_UNKNOWN:
-			gui_utilities.show_dialog_error('Login Failed', self, 'An unknown error has occurred.')
+			gui_utilities.show_dialog_error('Login Failed', dialog, 'An unknown error has occurred.')
 
 	def export_campaign_xlsx(self):
 		"""Export the current campaign to an Excel compatible XLSX workbook."""
