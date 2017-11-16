@@ -42,8 +42,8 @@ string parameter and optional query variables. This can be used for easily
 testing queries. It should be noted however that using this utility directly on
 the server does not restrict access to data as the RPC interface does.
 
-Example Query
--------------
+Example Queries
+---------------
 
 The following query is an example of retrieving the first 3 users from the
 users table. The query includes the necessary information to perform subsequent
@@ -78,6 +78,44 @@ queries to iterate over all entries.
          }
       }
    }
+
+.. code-block:: none
+
+   # Get a summary of all of the campaigns
+   query getCampaigns {
+      db {
+         campaigns {
+            # get the total number of campaigns
+            total
+            edges {
+               node {
+                  id
+                  created
+                  name
+                  # get the details about the user that created this campaign
+                  user {
+                     id
+                     phoneNumber
+                  }
+                  # get the total number of messages in this campaign
+                  messages {
+                     total
+                  }
+                  # get the total number of visits in this campaign
+                  visits {
+                     total
+                  }
+               }
+            }
+         }
+      }
+   }
+
+.. code-block:: none
+
+   # This query does not define the operation type or an operation name
+   # and is condensed to a single line
+   { plugins { total edges { node { name title authors } } } }
 
 .. _GraphQL: http://graphql.org/
 .. _Relay: https://facebook.github.io/relay/graphql/connections.htm
