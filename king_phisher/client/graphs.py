@@ -276,7 +276,7 @@ class GraphBase(object):
 		if not response:
 			return
 		destination_file = response['target_path']
-		self.figure.savefig(destination_file, format='png')
+		self.figure.savefig(destination_file, dpi=200, facecolor=self.figure.get_facecolor(), format='png')
 
 	def signal_activate_popup_refresh(self, event):
 		self.refresh()
