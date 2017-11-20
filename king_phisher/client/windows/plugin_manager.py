@@ -421,11 +421,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		if named_row.id not in pm.loaded_plugins:
 			return
-		if self._named_model(*self._model[path].parent).id:
-			plugin_src = self.config['plugins.installed'][named_row.id]
-			repo_model, catalog_model = self._get_plugin_model_parents(self._model[path])
-			if plugin_src and (repo_model.id != plugin_src['repo_id'] or catalog_model.id != plugin_src['catalog_id']):
-				return
+
 		if named_row.id in self._module_errors:
 			gui_utilities.show_dialog_error('Can Not Enable Plugin', self.window, 'Can not enable a plugin which failed to load.')
 			return
