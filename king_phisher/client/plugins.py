@@ -632,7 +632,6 @@ class ClientCatalogManager(catalog.CatalogManager):
 		:param str catalog_id: The name of the catalog the repo belongs to
 		:param repo_id: The id of the repository requested.
 		:return: The the collection of manager type from the specified catalog and repository.
-		:rtype:py:class:
 		"""
 		return self.catalogs[catalog_id].repositories[repo_id].collections.get(self.manager_type)
 

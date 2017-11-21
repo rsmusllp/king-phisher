@@ -392,7 +392,7 @@ class CatalogManager(object):
 			return
 		return catalog
 
-def sign_item_files(local_path, signing_key, signing_key_id, repo_path=None):
+def sign_item_files(local_path, signing_key, repo_path=None):
 	"""
 	This utility function is used to create a :py:class:`.CollectionItemFile`
 	iterator from the specified source to be included in either a catalog file
@@ -400,7 +400,6 @@ def sign_item_files(local_path, signing_key, signing_key_id, repo_path=None):
 
 	:param str local_path: The real location of where the files exist on disk.
 	:param signing_key: The key with which to sign the files for verification.
-	:param str signing_key_id: The unique identifier for *signing_key*.
 	:param str repo_path: The path of the repository as it exists on disk.
 	"""
 	local_path = os.path.abspath(local_path)
@@ -429,6 +428,6 @@ def sign_item_files(local_path, signing_key, signing_key_id, repo_path=None):
 			path_destination=destination_file_path,
 			path_source=source_file_path,
 			signature=signature,
-			signed_by=signing_key_id
+			signed_by=signing_key.id
 		)
 		yield item_file
