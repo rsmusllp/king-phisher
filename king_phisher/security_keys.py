@@ -143,7 +143,8 @@ def openssl_derive_key_and_iv(password, salt, key_length, iv_length, digest='sha
 		Different versions of OpenSSL use a different default value for the
 		*digest* function used to derive keys and initialization vectors. A
 		specific one can be used by passing the ``-md`` option to the
-		``openssl`` command.
+		``openssl`` command which corresponds to the *digest* parameter of this
+		function.
 
 	:param str password: The password to use when deriving the key and IV.
 	:param bytes salt: A value to use as a salt for the operation.
@@ -204,8 +205,10 @@ class SigningKey(ecdsa.SigningKey, object):
 	def from_file(cls, file_path, password=None, encoding='utf-8'):
 		"""
 		Load the signing key from the specified file. If *password* is
-		specified, the file is assumed to have been encoded using OpenSSL using
-		``aes-256-cbc`` with ``sha256`` as the message digest.
+		specified, the file is assumed to have been encrypted using OpenSSL
+		with ``aes-256-cbc`` as the cipher and ``sha256`` as the message
+		digest. This uses :py:func:`.openssl_decrypt_data` internally for
+		decrypting the data.
 
 		:param str file_path: The path to the file to load.
 		:param str password: An optional password to use for decrypting the file.
