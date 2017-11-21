@@ -278,7 +278,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				version=self._get_version_or_upgrade(plugin_name, plugin_list[plugin]['version']),
 				visible_enabled=True,
 				visible_installed=True,
-				sensitive_installed=True,
+				sensitive_installed=self.catalog_plugins.is_compatible(catalog_id, repo.id, plugin),
 				type=_ROW_TYPE_PLUGIN
 			))
 		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
