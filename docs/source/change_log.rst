@@ -10,10 +10,13 @@ Version 1.x.x
 Version 1.9.x
 ^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.9.0` on November 22nd, 2017
 
 * Support resetting plugins options to their respective defaults
 * Moved Office 2007+ metadata removal to a new plugin
+* Added support for installing plugins from remote sources through the UI
+* Added timeout support for SPF DNS queries
+* Support for installing on Arch Linux
 
 * Multiple server improvements
 
@@ -21,6 +24,7 @@ Version 1.9.x
    * Support using an include directive in the server configuration file
    * Added a ``request-handle`` signal for custom HTTP request handlers
    * Removed ``address`` support from the server config in favor of ``addresses``
+   * Support ``login`` as an alias of the ``username`` parameter for credentials
 
 Version 1.8.0
 ^^^^^^^^^^^^^
