@@ -157,6 +157,7 @@ include_files.append((os.path.join(site.getsitepackages()[0], 'libs', 'geos.lib'
 include_files.append((matplotlib.get_data_path(), 'mpl-data'))
 include_files.append((basemap.basemap_datadir, 'mpl-basemap-data'))
 include_files.append(('data/client/king_phisher', 'king_phisher'))
+include_files.append(('data/king_phisher', 'king_phisher'))
 include_files.append((pytz.__path__[0], 'pytz'))
 include_files.append((requests.__path__[0], 'requests'))
 
