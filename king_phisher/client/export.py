@@ -429,6 +429,14 @@ def liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_op
 		start_row = 2
 		worksheet.merge_range(0, 0, 0, len(column_names) - 1, xlsx_options.title, title_format)
 	row_count = liststore_export(store, columns, _xlsx_write, (worksheet,), row_offset=start_row, write_columns=False)
+
+	if not row_count:
+		column_ = 0
+		for column_name in column_names:
+			worksheet.write(start_row, column_, column_name)
+			column_ += 1
+		return row_count
+
 	options = {
 		'columns': list({'header': column_name} for column_name in column_names),
 		'style': 'Table Style Medium 1'

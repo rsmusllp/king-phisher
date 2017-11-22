@@ -31,15 +31,26 @@
 #
 
 import collections
+import datetime
 import os
+import sys
 import tempfile
 import weakref
 
+from king_phisher import catalog
 from king_phisher import plugins
 from king_phisher.client import gui_utilities
+from king_phisher.client import mailer
 from king_phisher.client.widget import extras
+from king_phisher.serializers import JSON
 
 from gi.repository import Gtk
+import jinja2.exceptions
+
+if sys.version_info[:3] >= (3, 3, 0):
+	_MutableMapping = collections.abc.MutableMapping
+else:
+	_MutableMapping = collections.MutableMapping
 
 def _split_menu_path(menu_path):
 	menu_path = [path_item.strip() for path_item in menu_path.split('>')]
@@ -113,13 +124,16 @@ class ClientOptionBoolean(ClientOptionMixin, plugins.OptionBoolean):
 		return widget
 
 class ClientOptionEnum(ClientOptionMixin, plugins.OptionEnum):
-	"""
-	:param str name: The name of this option.
-	:param str description: The description of this option.
-	:param tuple choices: The supported values for this option.
-	:param default: The default value of this option.
-	:param str display_name: The name to display in the UI to the user for this option
-	"""
+	def __init__(self, name, *args, **kwargs):
+		"""
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param tuple choices: The supported values for this option.
+		:param default: The default value of this option.
+		:param str display_name: The name to display in the UI to the user for this option
+		"""
+		super(ClientOptionEnum, self).__init__(name, *args, **kwargs)
+
 	def get_widget(self, _, value):
 		widget = Gtk.ComboBoxText()
 		widget.set_hexpand(True)
@@ -169,17 +183,46 @@ class ClientOptionInteger(ClientOptionMixin, plugins.OptionInteger):
 		self.adjustment.set_value(int(round(value)))
 
 class ClientOptionString(ClientOptionMixin, plugins.OptionString):
+	def __init__(self, name, *args, **kwargs):
+		"""
+		.. versionchanged:: 1.9.0b5
+			Added the *multiline* option.
+
+		:param str name: The name of this option.
+		:param str description: The description of this option.
+		:param default: The default value of this option.
+		:param str display_name: The name to display in the UI to the user for this option.
+		:param bool multiline: Whether or not this option allows multiple lines of input.
+		"""
+		self.multiline = bool(kwargs.pop('multiline', False))
+		super(ClientOptionString, self).__init__(name, *args, **kwargs)
+
 	def get_widget(self, _, value):
-		widget = Gtk.Entry()
-		widget.set_hexpand(True)
+		if self.multiline:
+			scrolled_window = Gtk.ScrolledWindow()
+			textview = extras.MultilineEntry()
+			textview.set_property('hexpand', True)
+			scrolled_window.add(textview)
+			scrolled_window.set_property('height-request', 60)
+			scrolled_window.set_property('vscrollbar-policy', Gtk.PolicyType.ALWAYS)
+			widget = scrolled_window
+		else:
+			widget = Gtk.Entry()
+			widget.set_hexpand(True)
 		self.set_widget_value(widget, value)
 		return widget
 
 	def get_widget_value(self, widget):
-		return widget.get_text()
+		if self.multiline:
+			widget = widget.get_child().get_child()
+		return widget.get_property('text')
 
 	def set_widget_value(self, widget, value):
-		widget.set_text((value if value else ''))
+		if value is None:
+			value = ''
+		if self.multiline:
+			widget = widget.get_child().get_child()
+		widget.set_property('text', value)
 		return widget
 
 # extended option types
@@ -346,6 +389,45 @@ class ClientPlugin(plugins.PluginBase):
 		menu_item.set_submenu(Gtk.Menu.new())
 		return self._insert_menu_item(menu_path, menu_item)
 
+	def render_template_string(self, template_string, target=None, description='string', log_to_mailer=True):
+		"""
+		Render the specified *template_string* in the message environment. If
+		an error occurs during the rendering process, a message will be logged
+		and ``None`` will be returned. If *log_to_mailer* is set to ``True``
+		then a message will also be displayed in the message send tab of the
+		client.
+
+		.. versionadded:: 1.9.0b5
+
+		:param str template_string: The string to render as a template.
+		:param target: An optional target to pass to the rendering environment.
+		:type target: :py:class:`~king_phisher.client.mailer.MessageTarget`
+		:param str description: A keyword to use to identify the template string in error messages.
+		:param bool log_to_mailer: Whether or not to log to the message send tab as well.
+		:return: The rendered string or ``None`` if an error occurred.
+		:rtype: str
+		"""
+		mailer_tab = self.application.main_tabs['mailer']
+		text_insert = mailer_tab.tabs['send_messages'].text_insert
+		try:
+			template_string = mailer.render_message_template(template_string, self.application.config, target=target)
+		except jinja2.exceptions.TemplateSyntaxError as error:
+			self.logger.error("jinja2 syntax error ({0}) in {1}: {2}".format(error.message, description, template_string))
+			if log_to_mailer:
+				text_insert("Jinja2 syntax error ({0}) in {1}: {2}\n".format(error.message, description, template_string))
+			return None
+		except jinja2.exceptions.UndefinedError as error:
+			self.logger.error("jinj2 undefined error ({0}) in {1}: {2}".format(error.message, description, template_string))
+			if log_to_mailer:
+				text_insert("Jinja2 undefined error ({0}) in {1}: {2}".format(error.message, description, template_string))
+			return None
+		except ValueError as error:
+			self.logger.error("value error ({0}) in {1}: {2}".format(error, description, template_string))
+			if log_to_mailer:
+				text_insert("Value error ({0}) in {1}: {2}\n".format(error, description, template_string))
+			return None
+		return template_string
+
 	def signal_connect(self, name, handler, gobject=None, after=False):
 		"""
 		Connect *handler* to a signal by *name* to an arbitrary GObject. Signals
@@ -470,3 +552,181 @@ class ClientPluginManager(plugins.PluginManagerBase):
 	_plugin_klass = ClientPlugin
 	def __init__(self, path, application):
 		super(ClientPluginManager, self).__init__(path, (application,))
+
+class CatalogCacheManager(object):
+	"""
+	Manager to handle cache information for catalogs.
+	"""
+	_CatalogCacheEntry = collections.namedtuple('catalog', ['id', 'repositories'])
+	_RepositoryCacheEntry = collections.namedtuple('repositories', ['id', 'title', 'url', 'collections'])
+	def __init__(self, cache_file):
+		self._cache_dict = {}
+		self._data = {}
+		self._cache_file = cache_file
+
+		if os.path.isfile(self._cache_file):
+			with open(cache_file, 'r') as file_h:
+				try:
+					self._cache_dict = JSON.load(file_h)
+				except ValueError:
+					self._cache_dict = {}
+
+		if self._cache_dict and 'catalogs' in self._cache_dict:
+			cache_cat = self._cache_dict['catalogs']['value']
+			for catalog_ in cache_cat:
+				self[catalog_] = self._CatalogCacheEntry(
+					cache_cat[catalog_]['id'],
+					self._tuple_repositories(cache_cat[catalog_]['repositories'])
+				)
+		else:
+			self._cache_dict['catalogs'] = {}
+
+	def _tuple_repositories(self, repositories):
+		return tuple(self._RepositoryCacheEntry(**repository) for repository in repositories)
+
+	def __setitem__(self, key, value):
+		self._data[key] = value
+
+	def __getitem__(self, key):
+		return self._data[key]
+
+	def __delitem__(self, key):
+		del self._data[key]
+
+	def __len__(self):
+		return len(self._data)
+
+	def __iter__(self):
+		return iter(self._data)
+
+	def cache_catalog_repositories(self, cat_id, repositories):
+		self[cat_id] = self._CatalogCacheEntry(cat_id, self._tuple_repositories(repositories))
+
+	def to_dict(self):
+		cache = {}
+		for key in self:
+			cache[key] = {}
+			cache[key]['id'] = self[key].id
+			cache[key]['repositories'] = [repository._asdict() for repository in self[key].repositories]
+		return cache
+
+	def save(self):
+		self._cache_dict['catalogs']['created'] = datetime.datetime.utcnow()
+		self._cache_dict['catalogs']['value'] = self.to_dict()
+		with open(self._cache_file, 'w') as file_h:
+			JSON.dump(self._cache_dict, file_h)
+
+class ClientCatalogManager(catalog.CatalogManager):
+	"""
+	Base manager for handling Catalogs.
+	"""
+	def __init__(self, user_data_path, manager_type='plugins/client', *args, **kwargs):
+		self._catalog_cache = CatalogCacheManager(os.path.join(user_data_path, 'cache.json'))
+		super(ClientCatalogManager, self).__init__(*args, **kwargs)
+		self.manager_type = manager_type
+
+	def get_collection(self, catalog_id, repo_id):
+		"""
+		Returns the manager type of the plugin collection of the requested catalog and repository.
+
+		:param str catalog_id: The name of the catalog the repo belongs to
+		:param repo_id: The id of the repository requested.
+		:return: The the collection of manager type from the specified catalog and repository.
+		"""
+		return self.catalogs[catalog_id].repositories[repo_id].collections.get(self.manager_type)
+
+	def install_plugin(self, catalog_id, repo_id, plugin_id, install_path):
+		"""
+		Installs the specified plugin to the desired plugin path.
+
+		:param catalog_id: The id of the catalog of the desired plugin to install.
+		:param repo_id: The id of the repository of the desired plugin to install.
+		:param plugin_id: The id of the plugin to install.
+		:param install_path: The path to install the plugin too.
+		"""
+		self.catalogs[catalog_id].repositories[repo_id].get_item_files(self.manager_type, plugin_id, install_path)
+
+	def save_cache(self, catalog=None):
+		"""
+		Saves the catalog or catalogs in the manager to the cache.
+
+		:param catalog: The :py:class:`~king_phisher.catalog.Catalog` to save.
+		"""
+		if catalog:
+			self._catalog_cache.cache_catalog_repositories(
+				catalog.id,
+				self.get_collections_to_cache(catalog.id)
+			)
+		else:
+			for catalog__ in self.catalogs:
+				self._catalog_cache.cache_catalog_repositories(
+					self.catalogs[catalog__].id,
+					self.get_collections_to_cache(catalog__),
+				)
+		self._catalog_cache.save()
+
+	def add_catalog_url(self, url):
+		"""
+		Adds catalog to the manager by its url.
+
+		:param url: URL of the catalog to load.
+		:return: The catalog.
+		:rtype: :py:class:`~king_phisher.catalog.Catalog`
+		"""
+		catalog_ = super(ClientCatalogManager, self).add_catalog_url(url)
+		if catalog_:
+			self.save_cache(catalog=catalog_)
+		return catalog_
+
+	def is_compatible(self, catalog_id, repo_id, plugin_name):
+		"""
+		Checks the compatibility of a plugin.
+
+		:param catalog_id: The catalog id associated with the plugin.
+		:param repo_id: The repository id associated with the plugin.
+		:param plugin_name: The name of the plugin.
+		:return: Whether or not it is compatible.
+		:rtype: bool
+		"""
+		plugin = self.get_collection(catalog_id, repo_id)[plugin_name]
+		return plugins.Requirements(plugin['requirements']).is_compatible
+
+	def compatibility(self, catalog_id, repo_id, plugin_name):
+		"""
+		Checks the compatibility of a plugin.
+
+		:param catalog_id: The catalog id associated with the plugin.
+		:param repo_id: The repository id associated with the plugin.
+		:param plugin_name: The name of the plugin.
+		:return: Tuple of packages and if the requirements are met.
+		:rtype: tuple
+		"""
+		plugin = self.get_collection(catalog_id, repo_id)[plugin_name]
+		return plugins.Requirements(plugin['requirements']).compatibility
+
+	def get_collections_to_cache(self, catalog_):
+		"""
+		Will create a list of repositories and its collections in the accurate format to send to cache.
+
+		:param catalog_: The :py:class:`~king_phisher.catalog.Catalog` instance.
+		:return: The repository cache information.
+		:rtype: list
+		"""
+		repo_cache_info = []
+		for repo in self.get_repositories(catalog_):
+			repo_cache_info.append({
+				'id': repo.id,
+				'title': repo.title,
+				'collections': [collection_ for collection_ in repo.collections],
+				'url': repo.url_base
+			})
+		return repo_cache_info
+
+	def get_cache(self):
+		"""
+		Gets the catalog cache.
+
+		:return: The catalog cache.
+		:rtype: :py:class:`.CatalogCacheManager`
+		"""
+		return self._catalog_cache

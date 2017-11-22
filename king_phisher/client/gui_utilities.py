@@ -116,6 +116,7 @@ def glib_idle_add_wait(function, *args, **kwargs):
 	"""
 	gsource_completed = threading.Event()
 	results = []
+
 	@functools.wraps(function)
 	def wrapper():
 		results.append(function(*args, **kwargs))
@@ -127,9 +128,9 @@ def glib_idle_add_wait(function, *args, **kwargs):
 
 def gobject_get_value(gobject, gtype=None):
 	"""
-	Retreive the value of a GObject widget. Only objects with value
-	retrieving functions present in the :py:data:`.GOBJECT_PROPERTY_MAP`
-	can be processed by this function.
+	Retrieve the value of a GObject widget. Only objects with corresponding
+	entries present in the :py:data:`.GOBJECT_PROPERTY_MAP` can be processed by
+	this function.
 
 	:param gobject: The object to retrieve the value for.
 	:type gobject: :py:class:`GObject.Object`
@@ -147,6 +148,26 @@ def gobject_get_value(gobject, gtype=None):
 	else:
 		value = gobject.get_property(GOBJECT_PROPERTY_MAP[gtype])
 	return value
+
+def gobject_set_value(gobject, value, gtype=None):
+	"""
+	Set the value of a GObject widget. Only objects with corresponding entries
+	present in the :py:data:`.GOBJECT_PROPERTY_MAP` can be processed by this
+	function.
+
+	:param gobject: The object to set the value for.
+	:type gobject: :py:class:`GObject.Object`
+	:param value: The value to set for the object.
+	:param str gtype: An explicit type to treat *gobject* as.
+	"""
+	gtype = (gtype or gobject.__class__.__name__)
+	gtype = gtype.lower()
+	if gtype not in GOBJECT_PROPERTY_MAP:
+		raise ValueError('unsupported gtype: ' + gtype)
+	if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):
+		GOBJECT_PROPERTY_MAP[gtype][0](gobject, value)
+	else:
+		gobject.set_property(GOBJECT_PROPERTY_MAP[gtype], value)
 
 @contextlib.contextmanager
 def gobject_signal_blocked(gobject, signal_name):
@@ -179,6 +200,7 @@ def gobject_signal_accumulator(test=None):
 	"""
 	if test is None:
 		test = lambda retval, accumulated: True
+
 	def _accumulator(_, accumulated, retval):
 		if accumulated is None:
 			accumulated = []

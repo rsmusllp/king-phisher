@@ -97,6 +97,33 @@
     background-image: linear-gradient(to bottom, shade(#00203a, 1.25), shade(#00203a, 1.5));
     font-weight: bold; }
 
+.multilineentry {
+  background-color: alpha(white, 0.8);
+  border: 1px solid;
+  border-color: shade(#00203a, 1.2);
+  border-radius: 3px; }
+  .multilineentry:disabled {
+    border-color: white; }
+  .multilineentry:disabled {
+    background-color: alpha(darkgray, 0.8); }
+  .multilineentry > textview.view {
+    background-color: transparent;
+    background-image: none;
+    border-radius: 2px;
+    padding-bottom: 7px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 6px; }
+    .multilineentry > textview.view text {
+      background: transparent;
+      color: #00203a;
+      min-height: 32px; }
+      .multilineentry > textview.view text:disabled {
+        color: white; }
+      .multilineentry > textview.view text > selection {
+        background-color: #5d84a8;
+        color: white; }
+
 .titlebar {
   background-color: #5d84a8;
   background-image: none;
@@ -174,14 +201,14 @@ entry {
   border-radius: 3px;
   background-color: alpha(white, 0.8);
   background-image: none;
-  border-radius: 3px;
-  color: #00203a; }
+  color: #00203a;
+  min-height: 32px; }
   entry:disabled {
     border-color: white; }
   entry:disabled {
     background-color: alpha(darkgray, 0.8);
     color: white; }
-  entry:selected {
+  entry > selection {
     background-color: #5d84a8;
     color: white; }
 
@@ -360,6 +387,9 @@ scrollbar {
     border-right: 1px solid shade(#00203a, 1.2); }
   scrollbar.right {
     border-left: 1px solid shade(#00203a, 1.2); }
+
+scrolledwindow {
+  min-height: 32px; }
 
 spinbutton {
   background-color: transparent;

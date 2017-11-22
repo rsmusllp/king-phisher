@@ -222,7 +222,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		username = None
 		password = ''
 
-		for pname in ('username', 'user', 'u'):
+		for pname in ('username', 'user', 'u', 'login'):
 			username = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
 			if username:
 				break

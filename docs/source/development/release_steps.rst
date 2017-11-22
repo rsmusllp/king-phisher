@@ -23,7 +23,7 @@ Release Steps
 
    #. Upload the final Windows build
    #. Insert the changes from the change log
-   #. Insert the MD5 and SHA1 hashes of the Windows build
+   #. Insert the MD5, SHA1, SHA512 hashes of the Windows build
 
 #. Update the Docker build
 #. Publicize the release

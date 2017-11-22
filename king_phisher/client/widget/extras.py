@@ -53,10 +53,12 @@ except ImportError:
 if its.mocked:
 	_Gtk_CellRendererText = type('Gtk.CellRendererText', (object,), {'__module__': ''})
 	_Gtk_FileChooserDialog = type('Gtk.FileChooserDialog', (object,), {'__module__': ''})
+	_Gtk_Frame = type('Gtk.Frame', (object,), {'__module__': ''})
 	_WebKitX_WebView = type('WebKitX.WebView', (object,), {'__module__': ''})
 else:
 	_Gtk_CellRendererText = Gtk.CellRendererText
 	_Gtk_FileChooserDialog = Gtk.FileChooserDialog
+	_Gtk_Frame = Gtk.Frame
 	_WebKitX_WebView = WebKitX.WebView
 
 class CellRendererBytes(_Gtk_CellRendererText):
@@ -166,6 +168,40 @@ class FileChooserDialog(_Gtk_FileChooserDialog):
 		target_uri = self.get_uri()
 		target_path = self.get_filename()
 		return {'target_uri': target_uri, 'target_path': target_path}
+
+class MultilineEntry(_Gtk_Frame):
+	"""
+	A custom entry widget which can be styled to look like
+	:py:class:`Gtk.Entry` but accepts multiple lines of input.
+	"""
+	__gproperties__ = {
+		'text': (str, 'text', 'The contents of the entry.', '', GObject.ParamFlags.READWRITE),
+		'text-length': (int, 'text-length', 'The length of the text in the GtkEntry.', 0, 0xffff, 0, GObject.ParamFlags.READABLE)
+	}
+	__gtype_name__ = 'MultilineEntry'
+	def __init__(self, *args, **kwargs):
+		Gtk.Frame.__init__(self, *args, **kwargs)
+		self.get_style_context().add_class('multilineentry')
+		textview = Gtk.TextView()
+		self.add(textview)
+
+	def do_get_property(self, prop):
+		textview = self.get_child()
+		if prop.name == 'text':
+			buffer = textview.get_buffer()
+			return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
+		elif prop.name == 'text-length':
+			return 0
+		raise AttributeError('unknown property: ' + prop.name)
+
+	def do_set_property(self, prop, value):
+		textview = self.get_child()
+		if prop.name == 'text':
+			textview.get_buffer().set_text(value)
+		elif prop.name == 'text-length':
+			raise ValueError('read-only property: ' + prop.name)
+		else:
+			raise AttributeError('unknown property: ' + prop.name)
 
 class WebKitHTMLView(_WebKitX_WebView):
 	"""

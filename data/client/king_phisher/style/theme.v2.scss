@@ -75,6 +75,36 @@
   }
 }
 
+
+.multilineentry {
+  background-color: gtkalpha(white, 0.8);
+  @include bo-opaque();
+  &:disabled {
+    background-color: gtkalpha(darkgray, 0.8);
+  }
+  > textview.view {
+    background-color: transparent;
+    background-image: none;
+    border-radius: 2px;
+    padding-bottom: 7px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 6px;
+    text {
+      background: transparent;
+      color: $theme_color_0;
+      min-height: 32px;
+      &:disabled {
+        color: white;
+      }
+      > selection {
+        background-color: $theme_color_1;
+        color: white;
+      }
+    }
+  }
+}
+
 .titlebar {
   background-color: mix($theme_color_0, $theme_color_1, 0.4);
   background-image: none;
@@ -149,13 +179,13 @@ entry {
   @include bo-opaque();
   background-color: gtkalpha(white, 0.8);
   background-image: none;
-  border-radius: 3px;
   color: $theme_color_0;
+  min-height: 32px;
   &:disabled {
     background-color: gtkalpha(darkgray, 0.8);
     color: white;
   }
-  &:selected {
+  > selection {
     background-color: $theme_color_1;
     color: white;
   }
@@ -339,6 +369,10 @@ scrollbar {
   &.bottom { border-top: 1px solid $theme_color_bg; }
   &.left { border-right: 1px solid $theme_color_bg; }
   &.right { border-left: 1px solid $theme_color_bg; }
+}
+
+scrolledwindow {
+  min-height: 32px;
 }
 
 spinbutton {

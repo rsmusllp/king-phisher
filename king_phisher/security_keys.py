@@ -79,9 +79,9 @@ def _encoding_data(value, encoding=None):
 		raise ValueError('unknown encoding: ' + encoding)
 	return value
 
-def _key_cls_from_dict(cls, value, encoding=None):
+def _key_cls_from_dict(cls, value, encoding=None, **kwargs):
 	key_data = _decode_data(value['data'], encoding=encoding)
-	return cls.from_string(key_data, curve=value['type'])
+	return cls.from_string(key_data, curve=value['type'], **kwargs)
 
 def _kwarg_curve(kwargs):
 	if 'curve' not in kwargs:
@@ -143,7 +143,8 @@ def openssl_derive_key_and_iv(password, salt, key_length, iv_length, digest='sha
 		Different versions of OpenSSL use a different default value for the
 		*digest* function used to derive keys and initialization vectors. A
 		specific one can be used by passing the ``-md`` option to the
-		``openssl`` command.
+		``openssl`` command which corresponds to the *digest* parameter of this
+		function.
 
 	:param str password: The password to use when deriving the key and IV.
 	:param bytes salt: A value to use as a salt for the operation.
@@ -164,36 +165,50 @@ def openssl_derive_key_and_iv(password, salt, key_length, iv_length, digest='sha
 	return data[:key_length], data[key_length:key_length + iv_length]
 
 class SigningKey(ecdsa.SigningKey, object):
+	def __init__(self, *args, **kwargs):
+		self.id = kwargs.pop('id', None)
+		"""An optional string identifier for this key instance."""
+		super(SigningKey, self).__init__(*args, **kwargs)
+
 	@classmethod
 	def from_secret_exponent(cls, *args, **kwargs):
+		id_ = kwargs.pop('id', None)
 		instance = super(SigningKey, cls).from_secret_exponent(*args, **kwargs)
 		orig_vk = instance.verifying_key
-		instance.verifying_key = VerifyingKey.from_public_point(orig_vk.pubkey.point, instance.curve, instance.default_hashfunc)
+		instance.verifying_key = VerifyingKey.from_public_point(orig_vk.pubkey.point, instance.curve, instance.default_hashfunc, id=id_)
+		instance.id = id_
 		return instance
 
 	@classmethod
 	def from_string(cls, string, **kwargs):
 		kwargs = _kwarg_curve(kwargs)
-		return super(SigningKey, cls).from_string(string, **kwargs)
+		id_ = kwargs.pop('id', None)
+		inst = super(SigningKey, cls).from_string(string, **kwargs)
+		inst.id = id_
+		inst.verifying_key.id = id_
+		return inst
 
 	@classmethod
-	def from_dict(cls, value, encoding='base64'):
+	def from_dict(cls, value, encoding='base64', **kwargs):
 		"""
 		Load the signing key from the specified dict object.
 
 		:param dict value: The dictionary to load the key data from.
 		:param str encoding: The encoding of the required 'data' key.
+		:param dict kwargs: Additional key word arguments to pass to the class on initialization.
 		:return: The new signing key.
 		:rtype: :py:class:`.SigningKey`
 		"""
-		return _key_cls_from_dict(cls, value, encoding=encoding)
+		return _key_cls_from_dict(cls, value, encoding=encoding, **kwargs)
 
 	@classmethod
 	def from_file(cls, file_path, password=None, encoding='utf-8'):
 		"""
 		Load the signing key from the specified file. If *password* is
-		specified, the file is assumed to have been encoded using OpenSSL using
-		``aes-256-cbc`` with ``sha256`` as the message digest.
+		specified, the file is assumed to have been encrypted using OpenSSL
+		with ``aes-256-cbc`` as the cipher and ``sha256`` as the message
+		digest. This uses :py:func:`.openssl_decrypt_data` internally for
+		decrypting the data.
 
 		:param str file_path: The path to the file to load.
 		:param str password: An optional password to use for decrypting the file.
@@ -209,7 +224,7 @@ class SigningKey(ecdsa.SigningKey, object):
 		file_data = file_data.decode(encoding)
 		file_data = serializers.JSON.loads(file_data)
 		utilities.validate_json_schema(file_data, 'king-phisher.security.key')
-		return file_data['id'], cls.from_dict(file_data['signing-key'], encoding=file_data.pop('encoding', 'base64'))
+		return cls.from_dict(file_data['signing-key'], encoding=file_data.pop('encoding', 'base64'), id=file_data['id'])
 
 	def sign_dict(self, data, signature_encoding='base64'):
 		"""
@@ -231,14 +246,38 @@ class SigningKey(ecdsa.SigningKey, object):
 		return data
 
 class VerifyingKey(ecdsa.VerifyingKey, object):
+	def __init__(self, *args, **kwargs):
+		self.id = kwargs.pop('id', None)
+		"""An optional string identifier for this key instance."""
+		super(VerifyingKey, self).__init__(*args, **kwargs)
+
+	@classmethod
+	def from_public_point(cls, *args, **kwargs):
+		id_ = kwargs.pop('id', None)
+		inst = super(VerifyingKey, cls).from_public_point(*args, **kwargs)
+		inst.id = id_
+		return inst
+
 	@classmethod
 	def from_string(cls, string, **kwargs):
 		kwargs = _kwarg_curve(kwargs)
-		return super(VerifyingKey, cls).from_string(string, **kwargs)
+		id_ = kwargs.pop('id', None)
+		inst = super(VerifyingKey, cls).from_string(string, **kwargs)
+		inst.id = id_
+		return inst
 
 	@classmethod
-	def from_dict(cls, value, encoding='base64'):
-		return _key_cls_from_dict(cls, value, encoding=encoding)
+	def from_dict(cls, value, encoding='base64', **kwargs):
+		"""
+		Load the verifying key from the specified dict object.
+
+		:param dict value: The dictionary to load the key data from.
+		:param str encoding: The encoding of the required 'data' key.
+		:param dict kwargs: Additional key word arguments to pass to the class on initialization.
+		:return: The new verifying key.
+		:rtype: :py:class:`.VerifyingKey`
+		"""
+		return _key_cls_from_dict(cls, value, encoding=encoding, **kwargs)
 
 	def verify_dict(self, data, signature_encoding='base64'):
 		"""
