@@ -241,6 +241,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
 				repo_row = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_row, model)
 				plugin_collections = self.catalog_plugins.get_collection(catalog_id, repo.id)
+				if not plugin_collections:
+					continue
 				self._add_plugins_to_tree(catalog_id, repo, store, repo_row, plugin_collections)
 
 		catalog_cache = self.catalog_plugins.get_cache()
