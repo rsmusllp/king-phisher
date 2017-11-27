@@ -160,10 +160,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def _load_catalogs(self):
 		self._update_status_bar('Loading, downloading catalogs...', idle=True)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
-		for catalog in self.config['catalogs']:
-			self.logger.debug("downloading catalog: {}".format(catalog))
-			self._update_status_bar("Loading, downloading catalog: {}".format(catalog))
-			self.catalog_plugins.add_catalog_url(catalog)
+		for catalog_url in self.config['catalogs']:
+			self.logger.debug("downloading catalog: {}".format(catalog_url))
+			self._update_status_bar("Loading, downloading catalog: {}".format(catalog_url))
+			self.catalog_plugins.add_catalog_url(catalog_url)
 		self._load_plugins()
 
 	def __update_status_bar(self, string_to_set):
@@ -261,26 +261,25 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._update_status_bar('Loading completed', idle=True)
 
 	def _add_plugins_to_tree(self, catalog_id, repo, store, parent, plugin_list):
-		client_plugins = list(plugin_list)
 		models = []
-		for plugin in client_plugins:
+		for plugin_info in plugin_list.values():
 			installed = False
 			enabled = False
-			plugin_name = plugin_list[plugin]['name']
+			plugin_name = plugin_info['name']
 			install_src = self.config['plugins.installed'].get(plugin_name)
 			if install_src and repo.id == install_src['repo_id'] and catalog_id == install_src['catalog_id']:
 				installed = True
 				enabled = plugin_name in self.config['plugins.enabled']
 			models.append(self._named_model(
-				id=plugin,
+				id=plugin_name,
 				installed=installed,
 				enabled=enabled,
-				title=plugin_list[plugin]['title'],
-				compatibility='Yes' if self.catalog_plugins.is_compatible(catalog_id, repo.id, plugin) else 'No',
-				version=self._get_version_or_upgrade(plugin_name, plugin_list[plugin]['version']),
+				title=plugin_info['title'],
+				compatibility='Yes' if self.catalog_plugins.is_compatible(catalog_id, repo.id, plugin_name) else 'No',
+				version=plugin_info['version'],
 				visible_enabled=True,
 				visible_installed=True,
-				sensitive_installed=self.catalog_plugins.is_compatible(catalog_id, repo.id, plugin),
+				sensitive_installed=self.catalog_plugins.is_compatible(catalog_id, repo.id, plugin_name),
 				type=_ROW_TYPE_PLUGIN
 			))
 		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
@@ -309,13 +308,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				type=_ROW_TYPE_PLUGIN
 			))
 		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
-
-	def _get_version_or_upgrade(self, plugin_name, plugin_version):
-		if plugin_name not in self.application.plugin_manager:
-			return plugin_version
-		if self.application.plugin_manager[plugin_name].version < plugin_version:
-			return "Upgrade available"
-		return self.application.plugin_manager[plugin_name].version
 
 	def signal_popup_menu_activate_reload_all(self, _):
 		if not self.load_thread.is_alive():
