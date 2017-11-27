@@ -396,7 +396,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			named_row = self._named_model(*self._model[tree_iter])
 			if named_row.type != _ROW_TYPE_PLUGIN:
 				continue
-			if named_row.id not in pm.enabled_plugins:
+			if named_row.id not in pm.loaded_plugins:
 				continue
 			enabled = named_row.id in pm.enabled_plugins
 			pm.unload(named_row.id)
@@ -411,6 +411,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if named_row.id in self._module_errors:
 				del self._module_errors[named_row.id]
 			self._set_model_item(tree_iter, 'title', klass.title)
+			self._set_model_item(tree_iter, 'compatibility', 'Yes' if klass.is_compatible else 'No')
+			self._set_model_item(tree_iter, 'version', klass.version)
 			if named_row.id == selected_plugin:
 				self._set_info(self._model[tree_iter])
 			if enabled:
