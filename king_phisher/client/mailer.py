@@ -85,25 +85,89 @@ template_environment = templates.MessageTemplateEnvironment()
 MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
 """A named tuple for holding both image and file attachments for a message."""
 
-class MessageTarget(object):
+def _iterate_targets_file(target_file):
+	target_file_h = open(target_file, 'rU')
+	csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
+	for line_no, raw_target in enumerate(csv_reader, 1):
+		if its.py_v2:
+			# this will intentionally cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
+			# when csv.DictReader is initialized
+			raw_target = dict((k, (v if v is None else v.decode('utf-8'))) for k, v in raw_target.items())
+		target = MessageTarget(line=line_no, **raw_target)
+		# the caller needs to catch and process the missing fields appropriately
+		yield target
+	target_file_h.close()
+
+def count_targets_file(target_file):
+	count = 0
+	for target in _iterate_targets_file(target_file):
+		if target.missing_fields:
+			continue
+		if not utilities.is_valid_email_address(target.email_address):
+			continue
+		count += 1
+	return count
+
+def nonempty_str(value):
+	if not value:
+		return None
+	value = value.strip()
+	return value if value else None
+
+def get_invite_start_from_config(config):
+	if config['mailer.calendar_invite_all_day']:
+		start_time = datetime.datetime.combine(
+			config['mailer.calendar_invite_date'],
+			datetime.time(0, 0)
+		)
+	else:
+		start_time = datetime.datetime.combine(
+			config['mailer.calendar_invite_date'],
+			datetime.time(
+				int(config['mailer.calendar_invite_start_hour']),
+				int(config['mailer.calendar_invite_start_minute'])
+			)
+		)
+	return start_time
+
+@smoke_zephyr.utilities.Cache('3m')
+def guess_smtp_server_address(host, forward_host=None):
 	"""
-	A simple class for holding information regarding a messages intended
-	recipient.
+	Guess the IP address of the SMTP server that will be connected to given the
+	SMTP host information and an optional SSH forwarding host. If a hostname is
+	in use it will be resolved to an IP address, either IPv4 or IPv6 and in that
+	order. If a hostname resolves to multiple IP addresses, None will be
+	returned. This function is intended to guess the SMTP servers IP address
+	given the client configuration so it can be used for SPF record checks.
+
+	:param str host: The SMTP server that is being connected to.
+	:param str forward_host: An optional host that is being used to tunnel the connection.
+	:return: The IP address of the SMTP server.
+	:rtype: None, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
 	"""
-	__slots__ = 'department', 'email_address', 'first_name', 'last_name', 'line', 'uid'
-	def __init__(self, first_name, last_name, email_address, uid, department=None, line=None):
-		self.first_name = first_name
-		"""The target recipient's first name."""
-		self.last_name = last_name
-		"""The target recipient's last name."""
-		self.email_address = email_address
-		"""The target recipient's email address."""
-		self.uid = uid
-		"""The unique identifier that is going to be used for this target."""
-		self.department = department
-		"""The target recipient's department name."""
-		self.line = line
-		"""The line number in the file from which this target was loaded."""
+	host = host.rsplit(':', 1)[0]
+	if ipaddress.is_valid(host):
+		ip = ipaddress.ip_address(host)
+		if not ip.is_loopback:
+			return ip
+	else:
+		info = None
+		for family in (socket.AF_INET, socket.AF_INET6):
+			try:
+				info = socket.getaddrinfo(host, 1, family)
+			except socket.gaierror:
+				continue
+			info = set(list([r[4][0] for r in info]))
+			if len(info) != 1:
+				return
+			break
+		if info:
+			ip = ipaddress.ip_address(info.pop())
+			if not ip.is_loopback:
+				return ip
+	if forward_host:
+		return guess_smtp_server_address(forward_host)
+	return
 
 def render_message_template(template, config, target=None, analyze=False):
 	"""
@@ -125,7 +189,6 @@ def render_message_template(template, config, target=None, analyze=False):
 			first_name='Alice',
 			last_name='Liddle',
 			email_address='aliddle@wonderland.com',
-			department=None,
 			uid=(config['server_config'].get('server.secret_id') or utilities.make_message_uid())
 		)
 		template_environment.set_mode(template_environment.MODE_PREVIEW)
@@ -196,60 +259,35 @@ def render_message_template(template, config, target=None, analyze=False):
 	template_vars.update(template_environment.standard_variables)
 	return template.render(template_vars)
 
-def get_invite_start_from_config(config):
-	if config['mailer.calendar_invite_all_day']:
-		start_time = datetime.datetime.combine(
-			config['mailer.calendar_invite_date'],
-			datetime.time(0, 0)
-		)
-	else:
-		start_time = datetime.datetime.combine(
-			config['mailer.calendar_invite_date'],
-			datetime.time(
-				int(config['mailer.calendar_invite_start_hour']),
-				int(config['mailer.calendar_invite_start_minute'])
-			)
-		)
-	return start_time
-
-@smoke_zephyr.utilities.Cache('3m')
-def guess_smtp_server_address(host, forward_host=None):
+class MessageTarget(object):
 	"""
-	Guess the IP address of the SMTP server that will be connected to given the
-	SMTP host information and an optional SSH forwarding host. If a hostname is
-	in use it will be resolved to an IP address, either IPv4 or IPv6 and in that
-	order. If a hostname resolves to multiple IP addresses, None will be
-	returned. This function is intended to guess the SMTP servers IP address
-	given the client configuration so it can be used for SPF record checks.
-
-	:param str host: The SMTP server that is being connected to.
-	:param str forward_host: An optional host that is being used to tunnel the connection.
-	:return: The IP address of the SMTP server.
-	:rtype: None, :py:class:`ipaddress.IPv4Address`, :py:class:`ipaddress.IPv6Address`
+	A simple class for holding information regarding a messages intended
+	recipient.
 	"""
-	host = host.rsplit(':', 1)[0]
-	if ipaddress.is_valid(host):
-		ip = ipaddress.ip_address(host)
-		if not ip.is_loopback:
-			return ip
-	else:
-		info = None
-		for family in (socket.AF_INET, socket.AF_INET6):
-			try:
-				info = socket.getaddrinfo(host, 1, family)
-			except socket.gaierror:
-				continue
-			info = set(list([r[4][0] for r in info]))
-			if len(info) != 1:
-				return
-			break
-		if info:
-			ip = ipaddress.ip_address(info.pop())
-			if not ip.is_loopback:
-				return ip
-	if forward_host:
-		return guess_smtp_server_address(forward_host)
-	return
+	required_fields = ('first_name', 'last_name', 'email_address')
+	__slots__ = 'department', 'email_address', 'first_name', 'last_name', 'line', 'uid'
+	def __init__(self, first_name, last_name, email_address, uid=None, department=None, line=None):
+		self.first_name = first_name
+		"""The target recipient's first name."""
+		self.last_name = last_name
+		"""The target recipient's last name."""
+		self.email_address = nonempty_str(email_address)
+		"""The target recipient's email address."""
+		self.uid = uid
+		"""The unique identifier that is going to be used for this target."""
+		if self.uid is None:
+			self.uid = utilities.make_message_uid()
+		self.department = nonempty_str(department)
+		"""The target recipient's department name."""
+		self.line = line
+		"""The line number in the file from which this target was loaded."""
+
+	def __repr__(self):
+		return "<{0} first_name={1!r} last_name={2!r} email_address={3!r} >".format(self.__class__.__name__, self.first_name, self.last_name, self.email_address)
+
+	@property
+	def missing_fields(self):
+		return tuple(field for field in self.required_fields if getattr(self, field) is None)
 
 class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 	"""
@@ -452,7 +490,7 @@ class MailSenderThread(threading.Thread):
 				return False
 		return True
 
-	def count_messages(self):
+	def count_targets(self):
 		"""
 		Count the number of targets that will be sent messages.
 
@@ -470,50 +508,22 @@ class MailSenderThread(threading.Thread):
 			target = MessageTarget(
 				first_name=target_name[0].strip(),
 				last_name=target_name[1].strip(),
-				email_address=self.config['mailer.target_email_address'].strip(),
-				department=None,
-				uid=utilities.make_message_uid()
+				email_address=self.config['mailer.target_email_address'].strip()
 			)
 			yield target
 		elif target_type == 'file':
-			target_file_h = open(self.target_file, 'rU')
-			csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
-			for line_no, raw_target in enumerate(csv_reader, 1):
-				if its.py_v2:
-					# this will intentionally cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
-					# when csv.DictReader is initialized
-					raw_target = dict((k, (v if v is None else v.decode('utf-8'))) for k, v in raw_target.items())
-				for required_field in ('first_name', 'last_name', 'email_address'):
-					if raw_target[required_field] is None:
-						raw_target = None
-						if counting:
-							self.tab_notify_status("Target CSV line {0} skipped due to missing field: {1}".format(line_no, required_field.replace('_', ' ')))
-						break
-				if raw_target is None:
-					continue
-				department = raw_target['department']
-				if department is not None:
-					department = department.strip()
-					if department == '':
-						department = None
-				email_address = raw_target['email_address'] or ''
-				email_address = email_address.strip()
-				target = MessageTarget(
-					first_name=raw_target['first_name'].strip(),
-					last_name=raw_target['last_name'].strip(),
-					email_address=email_address,
-					department=department,
-					uid=utilities.make_message_uid(),
-					line=line_no
-				)
-				if not target.email_address:
-					self.logger.warning("skipping line {0} in target csv file due to missing email address".format(line_no))
+			for target in _iterate_targets_file(self.target_file):
+				missing_fields = target.missing_fields
+				if missing_fields:
+					if counting:
+						msg = "Target CSV line {0} skipped due to missing field{1}".format(target.line, ('' if len(missing_fields) == 1 else 's'))
+						msg += ':' + ', '.join(field.replace('_', ' ') for field in missing_fields)
+						self.tab_notify_status(msg)
 					continue
 				if not utilities.is_valid_email_address(target.email_address):
-					self.logger.warning("skipping line {0} in target csv file due to invalid email address: {1}".format(line_no, email_address))
+					self.logger.warning("skipping line {0} in target csv file due to invalid email address: {1}".format(target.line, target.email_address))
 					continue
 				yield target
-			target_file_h.close()
 		else:
 			self.logger.error("the configured target type '{0}' is unsupported".format(target_type))
 
@@ -720,7 +730,7 @@ class MailSenderThread(threading.Thread):
 		mailer_tab = self.application.main_tabs['mailer']
 		max_messages_per_connection = self.config.get('mailer.max_messages_per_connection', 5)
 
-		emails_total = "{0:,}".format(self.count_messages())
+		emails_total = "{0:,}".format(self.count_targets())
 		sending_line = "Sending email {{0: >{0},}} of {1} with UID: {{1}} to {{2}}".format(len(emails_total), emails_total)
 		emails_total = int(emails_total.replace(',', ''))
 
