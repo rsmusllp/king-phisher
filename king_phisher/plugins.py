@@ -168,17 +168,12 @@ class Requirements(_Mapping):
 	def compatibility_iter(self):
 		StrictVersion = distutils.version.StrictVersion
 		if self._storage.get('minimum-python-version'):
-			yield (
-				'Minimum Python Version',
-				self._storage['minimum-python-version'],
-				StrictVersion(self._storage['minimum-python-version']) <= StrictVersion('.'.join(map(str, sys.version_info[:3])))
-			)
+			available = StrictVersion(self._storage['minimum-python-version']) <= StrictVersion('.'.join(map(str, sys.version_info[:3])))
+			yield ('Minimum Python Version', self._storage['minimum-python-version'], available)
+
 		if self._storage.get('minimum-version'):
-			yield (
-				'Minimum King Phisher Version',
-				self._storage['minimum-version'],
-				StrictVersion(self._storage['minimum-version']) <= StrictVersion(version.distutils_version)
-			)
+			available = StrictVersion(self._storage['minimum-version']) <= StrictVersion(version.distutils_version)
+			yield ('Minimum King Phisher Version', self._storage['minimum-version'], available)
 
 		if self._storage.get('packages'):
 			for name, available in self._storage['packages'].items():

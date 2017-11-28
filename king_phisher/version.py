@@ -60,7 +60,6 @@ def get_revision():
 		return None
 	return rev.decode('utf-8')
 
-
 revision = get_revision()
 """The git revision identifying the latest commit if available."""
 

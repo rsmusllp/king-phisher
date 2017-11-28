@@ -385,11 +385,16 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			selected_plugin = model[tree_paths[0]][0]
 
 		for tree_iter in gui_utilities.gtk_treeview_selection_iterate(treeview):
-			named_row = self._named_model(*self._model[tree_iter])
+			model_row = self._model[tree_iter]
+			# only reloading installed plugins is currently supported
+			if model_row.parent is None:
+				continue
+			named_row = self._named_model(*model_row)
 			if named_row.type != _ROW_TYPE_PLUGIN:
 				continue
-			if named_row.id not in pm.loaded_plugins:
+			if not named_row.installed:
 				continue
+
 			enabled = named_row.id in pm.enabled_plugins
 			pm.unload(named_row.id)
 			try:
@@ -397,7 +402,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			except Exception as error:
 				self._on_plugin_load_error(named_row.id, error)
 				if named_row.id == selected_plugin:
-					self._set_info(named_row.id)
+					self._set_info(model_row)
 				self._set_model_item(tree_iter, 'title', "{0} (Reload Failed)".format(named_row.id))
 				continue
 			if named_row.id in self._module_errors:
@@ -525,14 +530,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if named_model.type == _ROW_TYPE_PLUGIN:
 			if model_id in self._module_errors:
 				stack.set_visible_child(textview)
-				self._set_plugin_info_error(model_instance)
+				self._set_info_plugin_error(model_instance)
 			else:
 				stack.set_visible_child(self.gobjects['grid_plugin_info'])
-				self._set_plugin_info(model_instance)
+				self._set_info_plugin(model_instance)
 		else:
-			self._set_nonplugin_info(model_instance)
+			self._set_info_nonplugin(model_instance)
 
-	def _set_nonplugin_info(self, model_instance):
+	def _set_info_nonplugin(self, model_instance):
 		stack = self.gobjects['stack_info']
 		stack.set_visible_child(self.gobjects['grid_catalog_repo_info'])
 		named_model = self._named_model(*model_instance)
@@ -566,14 +571,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.gobjects['label_catalog_repo_info_homepage'].set_property('tooltip-text', url)
 			self.gobjects['label_catalog_repo_info_homepage'].set_property('visible', True)
 
-	def _hide_catalog_repo_labels(self):
-		self.gobjects['label_catalog_repo_info_maintainers'].set_property('visible', False)
-		self.gobjects['label_catalog_repo_info_for_maintainers'].set_property('visible', False)
-		self.gobjects['label_catalog_repo_info_description'].set_property('visible', False)
-		self.gobjects['label_catalog_repo_info_for_description'].set_property('visible', False)
-		self.gobjects['label_catalog_repo_info_homepage'].set_property('visible', False)
-
-	def _set_plugin_info(self, plugin_model):
+	def _set_info_plugin(self, plugin_model):
 		named_model = self._named_model(*plugin_model)
 		pm = self.application.plugin_manager
 		self._last_plugin_selected = plugin_model
@@ -592,13 +590,20 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.gobjects['label_plugin_info_description'].set_text(plugin['description'])
 		self._set_homepage_url(plugin['homepage'])
 
-	def _set_plugin_info_error(self, model_instance):
+	def _set_info_plugin_error(self, model_instance):
 		id_ = self._named_model(*model_instance).id
 		textview = self.gobjects['textview_plugin_info']
 		buf = textview.get_buffer()
 		exc, formatted_exc = self._module_errors[id_]
 		buf.insert(buf.get_end_iter(), "{0!r}\n\n".format(exc), -1)
 		buf.insert(buf.get_end_iter(), ''.join(formatted_exc), -1)
+
+	def _hide_catalog_repo_labels(self):
+		self.gobjects['label_catalog_repo_info_maintainers'].set_property('visible', False)
+		self.gobjects['label_catalog_repo_info_for_maintainers'].set_property('visible', False)
+		self.gobjects['label_catalog_repo_info_description'].set_property('visible', False)
+		self.gobjects['label_catalog_repo_info_for_description'].set_property('visible', False)
+		self.gobjects['label_catalog_repo_info_homepage'].set_property('visible', False)
 
 	def _set_homepage_url(self, url=None):
 		label_homepage = self.gobjects['label_plugin_info_homepage']
