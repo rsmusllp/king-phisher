@@ -6197,7 +6197,7 @@ your communications. Please contact the system administrator.</property>
                         <property name="left_padding">12</property>
                         <property name="right_padding">3</property>
                         <child>
-                          <object class="GtkGrid" id="grid10">
+                          <object class="GtkGrid" id="MailSenderConfigurationTab.grid_target_info">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_bottom">3</property>
@@ -6250,19 +6250,7 @@ your communications. Please contact the system administrator.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkLabel" id="label1">
-                                <property name="width_request">138</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Target Name</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label38">
+                              <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_email_address">
                                 <property name="width_request">138</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -6270,21 +6258,19 @@ your communications. Please contact the system administrator.</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">3</property>
+                                <property name="top_attach">4</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_name">
+                              <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_name">
+                                <property name="width_request">138</property>
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="tooltip_text" translatable="yes">The first and last name of the desired target.</property>
-                                <property name="hexpand">True</property>
-                                <property name="placeholder_text" translatable="yes">Alice Liddle</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Target Name</property>
                               </object>
                               <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">2</property>
-                                <property name="width">2</property>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">3</property>
                               </packing>
                             </child>
                             <child>
@@ -6294,6 +6280,20 @@ your communications. Please contact the system administrator.</property>
                                 <property name="tooltip_text" translatable="yes">The targets email address.</property>
                                 <property name="hexpand">True</property>
                                 <property name="placeholder_text" translatable="yes">aliddle@king-phisher.com</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">4</property>
+                                <property name="width">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_name">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">The first and last name of the desired target.</property>
+                                <property name="hexpand">True</property>
+                                <property name="placeholder_text" translatable="yes">Alice Liddle</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -6313,7 +6313,7 @@ your communications. Please contact the system administrator.</property>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
-                                <property name="top_attach">1</property>
+                                <property name="top_attach">2</property>
                               </packing>
                             </child>
                             <child>
@@ -6330,14 +6330,15 @@ your communications. Please contact the system administrator.</property>
                                 <property name="placeholder_text" translatable="yes">targets.csv</property>
                                 <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
                                 <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
+                                <signal name="changed" handler="signal_entry_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">1</property>
+                                <property name="top_attach">2</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkLabel" id="label28">
+                              <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_file">
                                 <property name="width_request">138</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -6345,15 +6346,34 @@ your communications. Please contact the system administrator.</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">1</property>
+                                <property name="top_attach">2</property>
                               </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_count">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">True</property>
+                                <attributes>
+                                  <attribute name="style" value="italic"/>
+                                </attributes>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">1</property>
+                                <property name="width">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
                             </child>
                           </object>
                         </child>
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="label52">
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_info">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Target Information*</property>

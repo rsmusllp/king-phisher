@@ -807,6 +807,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			'entry_attachment_file',
 			'expander_calendar_invite_settings',
 			'expander_email_settings',
+			'label_target_count',
 			'radiobutton_message_type_calendar_invite',
 			'radiobutton_message_type_email',
 			'radiobutton_target_field_bcc',
@@ -843,6 +844,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.target_field.set_active(self.config['mailer.target_field'])
 		self.target_type = managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
+		self._update_target_count()
 
 	def _campaign_load(self, campaign_id):
 		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
@@ -851,6 +853,28 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		else:
 			self.config['mailer.company_name'] = campaign.company.name
 		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
+
+	def _update_target_count(self):
+		if not hasattr(self, 'target_type'):
+			# this will be the case during initialization before the attribute is set
+			return
+		target_type = self.target_type.get_active()
+		count = None
+		text = ''
+		if target_type == 'file':
+			target_file = self.gobjects['entry_target_file'].get_text()
+			if target_file:
+				try:
+					count = mailer.count_targets_file(target_file)
+				except UnicodeDecodeError:
+					text = 'No targets (unicode decoding error)'
+			else:
+				text = 'No target csv file specified'
+		elif target_type == 'single':
+			count = 1
+		if count is not None:
+			text = "{0:,} target{1}".format(count, '' if count == 1 else 's')
+		self.gobjects['label_target_count'].set_text(text)
 
 	def objects_load_from_config(self):
 		super(MailSenderConfigurationTab, self).objects_load_from_config()
@@ -958,6 +982,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		entry.set_text('')
 		return True
 
+	def signal_entry_changed(self, entry):
+		self._update_target_count()
+
 	def signal_expander_activate_message_type(self, expander):
 		if expander.get_expanded():
 			# ignore attempts to un-expand
@@ -1008,6 +1035,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.gobjects['entry_target_file'].set_sensitive(target_type == 'file')
 		self.gobjects['entry_target_name'].set_sensitive(target_type == 'single')
 		self.gobjects['entry_target_email_address'].set_sensitive(target_type == 'single')
+		self._update_target_count()
 
 class MailSenderTab(_GObject_GObject):
 	"""
