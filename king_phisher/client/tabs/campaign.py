@@ -297,9 +297,10 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			if self.is_destroyed.is_set():
 				break
 			for edge in results['db']['campaign'][self.table_name]['edges']:
-				row_data = self.format_node_data(edge['node'])
+				node = edge['node']
+				row_data = self.format_node_data(node)
 				row_data = list(map(self.format_cell_data, row_data))
-				row_data.insert(0, str(edge['node']['id']))
+				row_data.insert(0, str(node['id']))
 				gui_utilities.glib_idle_add_wait(store.append, row_data)
 			page_info = results['db']['campaign'][self.table_name]['pageInfo']
 		if self.is_destroyed.is_set():
