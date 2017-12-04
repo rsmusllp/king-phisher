@@ -193,6 +193,14 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 			)
 		return response['data']
 
+	def graphql_file(self, file_or_path, query_vars=None):
+		if isinstance(file_or_path, str):
+			with open(file_or_path, 'r') as file_h:
+				query = file_h.read()
+		else:
+			query = file_or_path.read()
+		return self.graphql(query, query_vars=query_vars)
+
 	def reconnect(self):
 		"""Reconnect to the remote server."""
 		self.lock.acquire()
@@ -377,9 +385,17 @@ def vte_child_routine(config):
 		import readline
 		import rlcompleter  # pylint: disable=unused-variable
 	except ImportError:
-		pass
+		has_readline = False
 	else:
-		readline.parse_and_bind('tab: complete')
+		has_readline = True
+
+	try:
+		import IPython.terminal.embed
+	except ImportError:
+		has_ipython = False
+	else:
+		has_ipython = True
+
 	for plugins_directory in ('rpc_plugins', 'rpc-plugins'):
 		plugins_directory = find.data_directory(plugins_directory)
 		if not plugins_directory:
@@ -392,11 +408,11 @@ def vte_child_routine(config):
 		rpc.headers = {}
 	for name, value in headers.items():
 		rpc.headers[str(name)] = str(value)
+	user_data_path = config['user_data_path']
 
-	banner = "Python {0} on {1}".format(sys.version, sys.platform)
-	print(banner)  # pylint: disable=superfluous-parens
-	information = "Campaign Name: '{0}' ID: {1}".format(config['campaign_name'], config['campaign_id'])
-	print(information)  # pylint: disable=superfluous-parens
+	print("Python {0} on {1}".format(sys.version, sys.platform))  # pylint: disable=superfluous-parens
+	print("Campaign Name: '{0}' ID: {1}".format(config['campaign_name'], config['campaign_id']))  # pylint: disable=superfluous-parens
+	print('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
 	console_vars = {
 		'CAMPAIGN_NAME': config['campaign_name'],
 		'CAMPAIGN_ID': config['campaign_id'],
@@ -404,9 +420,17 @@ def vte_child_routine(config):
 		'rpc': rpc,
 		'sys': sys
 	}
-	export_to_builtins = ['CAMPAIGN_NAME', 'CAMPAIGN_ID', 'rpc']
-	console = code.InteractiveConsole(console_vars)
-	for var in export_to_builtins:
-		console.push("__builtins__['{0}'] = {0}".format(var))
-	console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
+
+	if has_ipython:
+		console = IPython.terminal.embed.InteractiveShellEmbed(ipython_dir=os.path.join(user_data_path, 'ipython'))
+		console.register_magic_function(rpc.graphql, 'line')
+		console.register_magic_function(rpc.graphql_file, 'line')
+		console.mainloop(console_vars)
+	else:
+		if has_readline:
+			readline.parse_and_bind('tab: complete')
+		console = code.InteractiveConsole(console_vars)
+		for var in tuple(console_vars.keys()):
+			console.push("__builtins__['{0}'] = {0}".format(var))
+		console.interact('')
 	return
