@@ -863,13 +863,15 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		text = ''
 		if target_type == 'file':
 			target_file = self.gobjects['entry_target_file'].get_text()
-			if target_file:
+			if target_file and os.access(target_file, os.R_OK):
 				try:
 					count = mailer.count_targets_file(target_file)
 				except UnicodeDecodeError:
 					text = 'No targets (unicode decoding error)'
+			elif target_file:
+				text = 'Invalid target CSV file specified'
 			else:
-				text = 'No target csv file specified'
+				text = 'No target CSV file specified'
 		elif target_type == 'single':
 			count = 1
 		if count is not None:
