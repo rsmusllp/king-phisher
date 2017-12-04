@@ -32,6 +32,7 @@
 
 import code
 import collections
+import functools
 import logging
 import os
 import ssl
@@ -389,6 +390,29 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		"""
 		return self.call('ping')
 
+def _magic_graphql(rpc, mode, line):
+	if mode == 'file':
+		if not os.access(line, os.R_OK):
+			print('GraphQL Exception: invalid query file')
+			return
+		with open(line, 'r') as file_h:
+			query = file_h.read()
+		_graphql_function = rpc.graphql_file
+	elif mode == 'query':
+		query = line
+		_graphql_function = rpc.graphql
+	else:
+		raise RuntimeError('unsupported magic mode: ' + mode)
+
+	try:
+		result = _graphql_function(query)
+	except errors.KingPhisherGraphQLQueryError as error:
+		print('GraphQL Exception: ' + error.message)
+		for message in error.errors:
+			print(message.rstrip())
+		return
+	return result
+
 def vte_child_routine(config):
 	"""
 	This is the method which is executed within the child process spawned
@@ -442,8 +466,8 @@ def vte_child_routine(config):
 
 	if has_ipython:
 		console = IPython.terminal.embed.InteractiveShellEmbed(ipython_dir=os.path.join(user_data_path, 'ipython'))
-		console.register_magic_function(rpc.graphql, 'line')
-		console.register_magic_function(rpc.graphql_file, 'line')
+		console.register_magic_function(functools.partial(_magic_graphql, rpc, 'query'), 'line', 'graphql')
+		console.register_magic_function(functools.partial(_magic_graphql, rpc, 'file'), 'line', 'graphql_file')
 		console.mainloop(console_vars)
 	else:
 		if has_readline:
