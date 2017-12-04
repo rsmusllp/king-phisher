@@ -183,6 +183,16 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		return "<{0} '{1}@{2}:{3}{4}'>".format(self.__class__.__name__, self.username, self.host, self.port, self.uri_base)
 
 	def graphql(self, query, query_vars=None):
+		"""
+		Execute a GraphQL query on the server and return the results. This will
+		raise :py:exc:`~king_phisher.errors.KingPhisherGraphQLQueryError` if
+		the query fails.
+
+		:param str query: The GraphQL query string to execute.
+		:param query_vars: The variables for *query*.
+		:return: The query results.
+		:rtype: dict
+		"""
 		response = self.call('graphql', query, query_vars=query_vars)
 		if response['errors']:
 			raise errors.KingPhisherGraphQLQueryError(
@@ -194,6 +204,15 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		return response['data']
 
 	def graphql_file(self, file_or_path, query_vars=None):
+		"""
+		This method wraps :py:meth:`~.graphql` to provide a convenient way to
+		execute GraphQL queries from files.
+
+		:param file_or_path: The file object or path to the file from which to read.
+		:param query_vars: The variables for *query*.
+		:return: The query results.
+		:rtype: dict
+		"""
 		if isinstance(file_or_path, str):
 			with open(file_or_path, 'r') as file_h:
 				query = file_h.read()
