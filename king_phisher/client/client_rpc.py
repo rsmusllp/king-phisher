@@ -397,15 +397,13 @@ def _magic_graphql(rpc, mode, line):
 			return
 		with open(line, 'r') as file_h:
 			query = file_h.read()
-		_graphql_function = rpc.graphql_file
 	elif mode == 'query':
 		query = line
-		_graphql_function = rpc.graphql
 	else:
 		raise RuntimeError('unsupported magic mode: ' + mode)
 
 	try:
-		result = _graphql_function(query)
+		result = rpc.graphql(query)
 	except errors.KingPhisherGraphQLQueryError as error:
 		print('GraphQL Exception: ' + error.message)
 		for message in error.errors:
