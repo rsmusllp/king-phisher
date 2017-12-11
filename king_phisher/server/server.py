@@ -592,7 +592,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	def respond_not_found(self):
 		self.send_response(404, 'Not Found')
 		self.send_header('Content-Type', 'text/html')
-		page_404 = find.data_file('error_404.html')
+		page_404 = find.data_file(os.path.join('pages', 'error_404.html'))
 		if page_404:
 			with open(page_404, 'rb') as file_h:
 				message = file_h.read()
@@ -869,9 +869,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		global_vars = {}
 		if config.has_section('server.page_variables'):
 			global_vars = config.get('server.page_variables')
-		global_vars['embed_youtube_video'] = pages.embed_youtube_video
-		global_vars['make_csrf_page'] = pages.make_csrf_page
-		global_vars['make_redirect_page'] = pages.make_redirect_page
+		global_vars.update(pages.EXPORTED_FUNCTIONS)
 		self.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
 		self.ws_manager = web_sockets.WebSocketsManager(config, self.job_manager)
 
