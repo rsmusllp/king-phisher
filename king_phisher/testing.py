@@ -46,7 +46,6 @@ from king_phisher.server import rest_api
 from king_phisher.server import server
 
 import advancedhttpserver
-import smoke_zephyr.configuration
 import smoke_zephyr.utilities
 
 if sys.version_info[0] < 3:
@@ -245,12 +244,12 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 		philes_yielded = 0
 		web_root = self.config.get('server.web_root')
 		self.assertTrue(os.path.isdir(web_root), msg='The test web root does not exist')
-		philes = (phile for phile in os.listdir(web_root) if os.path.isfile(os.path.join(web_root, phile)))
-		for phile in philes:
-			if not include_templates and os.path.splitext(phile)[1] in ('.txt', '.html'):
+		for web_file_path in smoke_zephyr.utilities.FileWalker(web_root, absolute_path=True, skip_dirs=True):
+			web_file_path = os.path.relpath(web_file_path, web_root)
+			if not include_templates and os.path.splitext(web_file_path)[1] in ('.txt', '.html'):
 				continue
 			if philes_yielded < limit:
-				yield phile
+				yield web_file_path
 				philes_yielded += 1
 		self.assertGreater(philes_yielded, 0, msg='No files were found in the web root')
 

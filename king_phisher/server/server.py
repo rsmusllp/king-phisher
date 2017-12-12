@@ -248,6 +248,24 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				username, password = basic_auth
 		return username, password
 
+	def get_template_vars(self):
+		template_vars = {
+			'client': self.get_template_vars_client(),
+			'request': {
+				'command': self.command,
+				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
+				'headers': dict(self.headers),
+				'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys()))),
+				'user_agent': self.headers.get('user-agent')
+			},
+			'server': {
+				'hostname': self.vhost,
+				'address': self.connection.getsockname()[0]
+			}
+		}
+		template_vars.update(self.server.template_env.standard_variables)
+		return template_vars
+
 	def get_template_vars_client(self):
 		"""
 		Build a dictionary of variables for a client with an associated
@@ -469,21 +487,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		self.semaphore_acquire()
 		template_data = b''
 		headers = []
-		template_vars = {
-			'client': self.get_template_vars_client(),
-			'request': {
-				'command': self.command,
-				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
-				'headers': dict(self.headers),
-				'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys()))),
-				'user_agent': self.headers.get('user-agent')
-			},
-			'server': {
-				'hostname': self.vhost,
-				'address': self.connection.getsockname()[0]
-			}
-		}
-		template_vars.update(self.server.template_env.standard_variables)
+		template_vars = self.get_template_vars()
 		try:
 			template_module = template.make_module(template_vars)
 		except (TypeError, jinja2.TemplateError) as error:
@@ -591,10 +595,10 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 	def respond_not_found(self):
 		self.send_response(404, 'Not Found')
-		self.send_header('Content-Type', 'text/html')
-		page_404 = find.data_file(os.path.join('pages', 'error_404.html'))
-		if page_404:
-			with open(page_404, 'rb') as file_h:
+		self.send_header('Content-Type', 'text/html; charset=utf-8')
+		file_path = find.data_file(os.path.join('pages', 'error_404.html'))
+		if file_path:
+			with open(file_path, 'rb') as file_h:
 				message = file_h.read()
 		else:
 			message = b'Resource Not Found\n'
