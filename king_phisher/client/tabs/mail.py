@@ -952,12 +952,14 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 		if not spf_result:
 			gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'No SPF records found.')
-		else:
-			if spf_result is 'fail':
-				gui_utilities.show_dialog_info('SPF Check Results:', self.parent, 'SPF exists with a hard fail. Your messages will probably be blocked.')
-			elif spf_result is 'softfail':
-				gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'SPF Exists with a soft fail. Your messages have strong possibility of being blocked. Check your logs.')
-			return True
+			True
+
+		message = 'SPF exists and the policy evaluates to: ' + spf_result
+		if spf_result is 'fail':
+			message = 'SPF exists with a hard fail, messages will probably be blocked.'
+		elif spf_result is 'softfail':
+			message = 'SPF exists with a soft fail, messages might be blocked.'
+		gui_utilities.show_dialog_info('SPF Check Results', self.parent, message)
 		return True
 
 	def signal_checkbutton_toggled_calendar_invite_all_day(self, button):
