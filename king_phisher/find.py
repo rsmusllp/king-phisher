@@ -97,19 +97,20 @@ def data_file(name, access_mode=os.R_OK):
 	"""
 	search_path = os.environ[ENV_VAR]
 	for directory in search_path.split(os.pathsep):
-		test_file_path = os.path.join(directory, DATA_DIRECTORY_NAME, name)
-		if not os.path.isfile(test_file_path):
+		test_path = os.path.join(directory, DATA_DIRECTORY_NAME, name)
+		if not os.path.isfile(test_path):
 			continue
-		if not os.access(test_file_path, access_mode):
+		if not os.access(test_path, access_mode):
 			continue
-		return test_file_path
+		return test_path
 	return None
 
-def data_directory(name):
+def data_directory(name, access_mode=os.R_OK):
 	"""
 	Locate a subdirectory in the data search path.
 
 	:param str name: The directory name to locate.
+	:param int access_mode: The access that is required for the directory.
 	:return: The path to the located directory.
 	:rtype: str
 	"""
@@ -117,6 +118,8 @@ def data_directory(name):
 	for directory in search_path.split(os.pathsep):
 		test_path = os.path.join(directory, DATA_DIRECTORY_NAME, name)
 		if not os.path.isdir(test_path):
+			continue
+		if not os.access(test_path, access_mode):
 			continue
 		return test_path
 	return None
