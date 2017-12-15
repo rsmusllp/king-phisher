@@ -59,6 +59,18 @@ def safe_send(signal, logger, *args, **kwargs):
 		logger.error("an error occurred while emitting signal '{0}' from {1}:{2}".format(signal, calling_frame[1], calling_frame[2]), exc_info=True)
 	return
 
+# campaign signals
+campaign_alert = blinker.signal(
+	'campaign-alert',
+	"""
+	Emitted for each user who is subscribed to alerts for a particular
+	campaign.
+	
+	:param str table: The table name that the alert is for.
+	:param alert_subscription: The alert subscription.
+	:param int count: The number associated with the alert event per the specified sender.
+	"""
+)
 
 # database signals
 db_initialized = blinker.signal(

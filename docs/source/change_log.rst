@@ -12,6 +12,8 @@ Version 1.10.x
 
 *In progress*
 
+* Added a ``campaign-alert`` server signal for custom alert delivery mechanisms
+
 Version 1.9.x
 ^^^^^^^^^^^^^
 

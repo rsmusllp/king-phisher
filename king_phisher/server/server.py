@@ -33,6 +33,7 @@
 import base64
 import binascii
 import collections
+import datetime
 import json
 import logging
 import os
@@ -108,21 +109,24 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				self.send_header(header, value)
 		return super(KingPhisherRequestHandler, self).end_headers(*args, **kwargs)
 
-	def issue_alert(self, alert_text, campaign_id):
+	def issue_alert(self, campaign_id, table, count):
 		"""
-		Send an SMS alert. If no *campaign_id* is specified all users
-		with registered SMS information will receive the alert otherwise
-		only users subscribed to the campaign specified.
+		Send a campaign alert for the specified table.
 
-		:param str alert_text: The message to send to subscribers.
 		:param int campaign_id: The campaign subscribers to send the alert to.
+		:param str table: The type of event to use as the sender when it is forwarded.
+		:param int count: The number associated with the event alert.
 		"""
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
-
-		if '{campaign_name}' in alert_text:
-			alert_text = alert_text.format(campaign_name=campaign.name)
+		alert_text = "{0:,} {1} reached for campaign: {2}".format(count, table.replace('_', ' '), campaign.name)
+		now = datetime.datetime.utcnow()
 		for subscription in campaign.alert_subscriptions:
+			if subscription.mute_timestamp and subscription.mute_timestamp < now:
+				continue
+			results = signals.campaign_alert.send(table, alert_subscription=subscription, count=count)
+			if any((result for (_, result) in results)):
+				continue
 			user = subscription.user
 			carrier = user.phone_carrier
 			number = user.phone_number
@@ -682,8 +686,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		session.close()
 		self.semaphore_release()
 		if new_connection and visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
-			alert_text = "{0} deaddrop connections reached for campaign: {{campaign_name}}".format(visit_count)
-			self.server.job_manager.job_run(self.issue_alert, (alert_text, deployment.campaign_id))
+			self.server.job_manager.job_run(self.issue_alert, (deployment.campaign_id, 'deaddrop_connections', visit_count))
 		return
 
 	def handle_email_opened(self, query):
@@ -789,8 +792,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			session.add(visit)
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
-				alert_text = "{0} visits reached for campaign: {{campaign_name}}".format(visit_count)
-				self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
+				self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'visits', visit_count))
 			signals.safe_send('visit-received', self.logger, self)
 
 		if visit_id is None:
@@ -818,8 +820,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 			cred_count = len(campaign.credentials)
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
-			alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
-			self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
+			self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'credentials', cred_count))
 		signals.safe_send('credentials-received', self.logger, self, username=username, password=password)
 
 class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):

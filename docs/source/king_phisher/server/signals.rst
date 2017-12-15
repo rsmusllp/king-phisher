@@ -16,6 +16,9 @@ Functions
 Signals
 -------
 
+.. autodata:: king_phisher.server.signals.campaign_alert
+   :annotation:
+
 .. autodata:: king_phisher.server.signals.credentials_received
    :annotation:
 

@@ -1648,6 +1648,12 @@ Spencer McIntyre</property>
     <child>
       <placeholder/>
     </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="action_area">
       <object class="GtkBox" id="CampaignAssistant.action_area">
         <property name="can_focus">False</property>
@@ -3474,7 +3480,7 @@ Spencer McIntyre</property>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes"> </col>
+        <col id="0" translatable="yes"/>
       </row>
       <row>
         <col id="0" translatable="yes">AT&amp;T</col>
@@ -3703,7 +3709,7 @@ Spencer McIntyre</property>
                                 <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Carrier</property>
+                                <property name="label" translatable="yes">Phone Carrier</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -3751,7 +3757,7 @@ Spencer McIntyre</property>
                       <object class="GtkLabel" id="ConfigurationDialog.label1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">&lt;b&gt;SMS Settings&lt;/b&gt;</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Alert Settings&lt;/b&gt;</property>
                         <property name="use_markup">True</property>
                       </object>
                     </child>
