@@ -32,6 +32,7 @@
 
 import argparse
 import random
+import re
 import smtplib
 import sys
 
@@ -105,6 +106,12 @@ def send_sms(message_text, phone_number, carrier, from_address=None):
 	"""
 	from_address = (from_address or DEFAULT_FROM_ADDRESS)
 	phone_number = phone_number.replace('-', '').replace(' ', '')
+	# remove the country code for these 10-digit based
+	match = re.match('1?(?P<phone_number>[0-9]{10})', phone_number)
+	if match is None:
+		raise ValueError('the phone number appears invalid')
+	phone_number = match.group('phone_number')
+
 	if len(message_text) > 160:
 		raise ValueError('message length exceeds 160 characters')
 	message = MIMEText(message_text)

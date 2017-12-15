@@ -292,8 +292,8 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 				del self.config['sms_carrier']
 		elif phone_number_set and sms_carrier_set:
 			phone_number = ''.join(d for d in phone_number if d in string.digits)
-			if len(phone_number) != 10:
-				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must contain exactly 10 digits')
+			if len(phone_number) > 11:
+				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must not contain more than 11 digits')
 				return
 			username = self.config['server_username']
 			self.application.rpc('db/table/set', 'users', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))
