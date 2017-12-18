@@ -75,7 +75,7 @@ def on_session_after_flush(session, flush_context):
 		for obj in getattr(session, session_attribute):
 			objs[obj.__tablename__].append(obj)
 		for table, targets in objs.items():
-			signals.safe_send(signal, logger, table, targets=tuple(targets), session=session)
+			signals.send_safe(signal, logger, table, targets=tuple(targets), session=session)
 
 def _popen_psql(sql):
 	if os.getuid():

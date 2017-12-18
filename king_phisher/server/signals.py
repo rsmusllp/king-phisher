@@ -37,7 +37,7 @@ from king_phisher import utilities
 
 import blinker
 
-def safe_send(signal, logger, *args, **kwargs):
+def send_safe(signal, logger, sender, **kwargs):
 	"""
 	Send a signal and catch any exception which may be raised during it's
 	emission. Details regarding the error that occurs (including a stack trace)
@@ -47,16 +47,21 @@ def safe_send(signal, logger, *args, **kwargs):
 	:param str signal: The name of the signal to send safely.
 	:param logger: The logger to use for logging exceptions.
 	:type logger: :py:class:`logging.Logger`
-	:param args: The arguments to be forwarded to the signal as it is sent.
+	:param sender: The sender for this signal emission.
 	:param kwargs: The key word arguments to be forward to the signal as it is sent.
 	"""
 	utilities.assert_arg_type(signal, str, 1)
 	utilities.assert_arg_type(logger, (logging.Logger, logging.LoggerAdapter), 2)
-	try:
-		blinker.signal(signal).send(*args, **kwargs)
-	except Exception:
-		calling_frame = inspect.stack()[1]
-		logger.error("an error occurred while emitting signal '{0}' from {1}:{2}".format(signal, calling_frame[1], calling_frame[2]), exc_info=True)
+
+	signal = blinker.signal(signal)
+	for receiver in signal.receivers_for(sender):
+		try:
+			result = receiver(sender, **kwargs)
+		except Exception:
+			calling_frame = inspect.stack()[1]
+			logger.error("an error occurred while emitting signal '{0}' from {1}:{2}".format(signal, calling_frame[1], calling_frame[2]), exc_info=True)
+		else:
+			yield (receiver, result)
 	return
 
 # campaign signals

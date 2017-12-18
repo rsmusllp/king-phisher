@@ -101,7 +101,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		tracking_image = self.config.get('server.tracking_image')
 		tracking_image = tracking_image.replace('.', '\\.')
 		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
-		signals.safe_send('request-received', self.logger, self)
+		signals.send_safe('request-received', self.logger, self)
 
 	def end_headers(self, *args, **kwargs):
 		if self.command != 'RPC':
@@ -124,7 +124,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		for subscription in campaign.alert_subscriptions:
 			if subscription.mute_timestamp and subscription.mute_timestamp < now:
 				continue
-			results = signals.campaign_alert.send(table, alert_subscription=subscription, count=count)
+			results = tuple(signals.send_safe('campaign-alert', self.server.logger, table, alert_subscription=subscription, count=count))
 			if any((result for (_, result) in results)):
 				continue
 			user = subscription.user
@@ -468,7 +468,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 	def send_response(self, code, message=None):
 		super(KingPhisherRequestHandler, self).send_response(code, message)
-		signals.safe_send('response-sent', self.logger, self, code=code, message=message)
+		signals.send_safe('response-sent', self.logger, self, code=code, message=message)
 
 	def respond_file(self, file_path, attachment=False, query=None):
 		self._respond_file_check_id()
@@ -714,7 +714,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			message.opener_user_agent = self.headers.get('user-agent', None)
 			session.commit()
 		session.close()
-		signals.safe_send('email-opened', self.logger, self)
+		signals.send_safe('email-opened', self.logger, self)
 		self.semaphore_release()
 
 	def handle_javascript_hook(self, query):
@@ -793,7 +793,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
 				self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'visits', visit_count))
-			signals.safe_send('visit-received', self.logger, self)
+			signals.send_safe('visit-received', self.logger, self)
 
 		if visit_id is None:
 			self.logger.error('the visit id has not been set')
@@ -821,7 +821,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			cred_count = len(campaign.credentials)
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
 			self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'credentials', cred_count))
-		signals.safe_send('credentials-received', self.logger, self, username=username, password=password)
+		signals.send_safe('credentials-received', self.logger, self, username=username, password=password)
 
 class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 	"""

@@ -11,7 +11,7 @@ available in the :ref:`server-signals-label` documentation.
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.signals.safe_send
+.. autofunction:: king_phisher.server.signals.send_safe
 
 Signals
 -------
