@@ -124,7 +124,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		for subscription in campaign.alert_subscriptions:
 			if subscription.mute_timestamp and subscription.mute_timestamp < now:
 				continue
-			results = tuple(signals.send_safe('campaign-alert', self.server.logger, table, alert_subscription=subscription, count=count))
+			results = signals.send_safe('campaign-alert', self.server.logger, table, alert_subscription=subscription, count=count)
 			if any((result for (_, result) in results)):
 				continue
 			user = subscription.user

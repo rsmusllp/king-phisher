@@ -37,19 +37,7 @@ from king_phisher import utilities
 
 import blinker
 
-def send_safe(signal, logger, sender, **kwargs):
-	"""
-	Send a signal and catch any exception which may be raised during it's
-	emission. Details regarding the error that occurs (including a stack trace)
-	are logged to the specified *logger*. This is suitable for allowing signals
-	to be emitted in critical code paths without interrupting the emitter.
-
-	:param str signal: The name of the signal to send safely.
-	:param logger: The logger to use for logging exceptions.
-	:type logger: :py:class:`logging.Logger`
-	:param sender: The sender for this signal emission.
-	:param kwargs: The key word arguments to be forward to the signal as it is sent.
-	"""
+def send_safe_iter(signal, logger, sender, **kwargs):
 	utilities.assert_arg_type(signal, str, 1)
 	utilities.assert_arg_type(logger, (logging.Logger, logging.LoggerAdapter), 2)
 
@@ -63,6 +51,21 @@ def send_safe(signal, logger, sender, **kwargs):
 		else:
 			yield (receiver, result)
 	return
+
+def send_safe(signal, logger, sender, **kwargs):
+	"""
+	Send a signal and catch any exception which may be raised during it's
+	emission. Details regarding the error that occurs (including a stack trace)
+	are logged to the specified *logger*. This is suitable for allowing signals
+	to be emitted in critical code paths without interrupting the emitter.
+
+	:param str signal: The name of the signal to send safely.
+	:param logger: The logger to use for logging exceptions.
+	:type logger: :py:class:`logging.Logger`
+	:param sender: The sender for this signal emission.
+	:param kwargs: The key word arguments to be forward to the signal as it is sent.
+	"""
+	return tuple(send_safe_iter(signal, logger, sender, **kwargs))
 
 # campaign signals
 campaign_alert = blinker.signal(
