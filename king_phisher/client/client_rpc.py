@@ -392,6 +392,8 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 
 def _magic_graphql(rpc, mode, line):
 	if mode == 'file':
+		line = os.path.expandvars(line)
+		line = os.path.expanduser(line)
 		if not os.access(line, os.R_OK):
 			print('GraphQL Exception: invalid query file')
 			return
