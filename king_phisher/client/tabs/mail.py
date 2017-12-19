@@ -954,7 +954,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 		if not spf_result:
 			gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'No SPF records found.')
-			True
+			return True
 
 		message = 'SPF exists and the policy evaluates to: ' + spf_result
 		if spf_result is 'fail':
