@@ -40,12 +40,12 @@ import os
 import re
 import shutil
 import threading
+import weakref
 
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
 from king_phisher import ipaddress
-from king_phisher import sms
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher import xor
@@ -119,23 +119,28 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		"""
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
-		alert_text = "{0:,} {1} reached for campaign: {2}".format(count, table.replace('_', ' '), campaign.name)
 		now = datetime.datetime.utcnow()
-		for subscription in campaign.alert_subscriptions:
-			if subscription.mute_timestamp and subscription.mute_timestamp < now:
-				continue
+		alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if subscription.mute_timestamp is None or subscription.mute_timestamp > now)
+		if not alert_subscriptions:
+			self.server.logger.debug("no active alert subscriptions are present for campaign id: {0} ({1})".format(campaign.id, campaign.name))
+			session.close()
+			return
+		if not signals.campaign_alert.receivers:
+			self.server.logger.warning('users are subscribed to campaign alerts, and no signal handlers are connected')
+			session.close()
+			return
+		if not signals.campaign_alert.has_receivers_for(table):
+			self.server.logger.info('users are subscribed to campaign alerts, and no signal handlers are connected for sender: ' + table)
+			session.close()
+			return
+
+		for subscription in alert_subscriptions:
 			results = signals.send_safe('campaign-alert', self.server.logger, table, alert_subscription=subscription, count=count)
 			if any((result for (_, result) in results)):
 				continue
-			user = subscription.user
-			carrier = user.phone_carrier
-			number = user.phone_number
-			if carrier is None or number is None:
-				self.server.logger.warning("skipping alert because user {0} has missing information".format(user.id))
-				continue
-			self.server.logger.debug("sending alert SMS message to {0} ({1})".format(number, carrier))
-			sms.send_sms(alert_text, number, carrier)
+			self.server.logger.warning("user {0} is subscribed to campaign alerts, and no signal handlers succeeded to send an alert".format(subscription.user.id))
 		session.close()
+		return
 
 	def adjust_path(self):
 		"""Adjust the :py:attr:`~.KingPhisherRequestHandler.path` attribute based on multiple factors."""
@@ -901,7 +906,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
 		self.__shutdown_lock = threading.Lock()
-		plugin_manager.server = self
+		plugin_manager.server = weakref.proxy(self)
 
 		headers = self.config.get_if_exists('server.headers', [])
 		for header in headers:
