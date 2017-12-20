@@ -48,7 +48,7 @@ class BaseSMTPServer(smtpd.SMTPServer, object):
 		super(BaseSMTPServer, self).__init__(localaddr, remoteaddr)
 		self.logger.info("smtp server listening on {0}:{1}".format(localaddr[0], localaddr[1]))
 
-	def process_message(self, peer, mailfrom, rcpttos, data):
+	def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
 		self.logger.info("received message from {0} ({1}) to {2}".format(mailfrom, peer[0], ', '.join(rcpttos)))
 
 	def serve_forever(self):
