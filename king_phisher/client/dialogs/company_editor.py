@@ -82,19 +82,31 @@ class CompanyEditorDialog(gui_utilities.GladeGObject):
 			combobox.set_model(rpc.get_tag_model(tag_table, model=model))
 
 	def _get_company_info(self, company_id):
-		company = self.application.rpc.remote_table_row('companies', company_id)
-
+		company = self.application.rpc.graphql("""\
+		query getCompany($id: String!) {
+			db {
+				company(id: $id) {
+					id
+					description
+					name
+					industryId
+					urlMain
+					urlEmail
+					urlRemoteAccess
+				}
+			}
+		}""", {'id': company_id})['db']['company']
 		combobox = self.gobjects['combobox_company_industry']
-		if company.industry_id is None:
+		if company['industryId'] is None:
 			combobox.set_active_iter(None)
 			combobox.get_child().set_text('')
 		else:
-			combobox.set_active_iter(gui_utilities.gtk_list_store_search(combobox.get_model(), company.industry_id))
-		self.gobjects['entry_company_name'].set_text(company.name)
-		self.gobjects['entry_company_description'].set_text(company.description or '')
-		self.gobjects['entry_company_url_main'].set_text(company.url_main or '')
-		self.gobjects['entry_company_url_email'].set_text(company.url_email or '')
-		self.gobjects['entry_company_url_remote_access'].set_text(company.url_remote_access or '')
+			combobox.set_active_iter(gui_utilities.gtk_list_store_search(combobox.get_model(), company['industryId']))
+		self.gobjects['entry_company_name'].set_text(company['name'])
+		self.gobjects['entry_company_description'].set_text(company['description'] or '')
+		self.gobjects['entry_company_url_main'].set_text(company['urlMain'] or '')
+		self.gobjects['entry_company_url_email'].set_text(company['urlEmail'] or '')
+		self.gobjects['entry_company_url_remote_access'].set_text(company['urlRemoteAccess'] or '')
 
 	def _get_tag_from_combobox(self, combobox, db_table):
 		model = combobox.get_model()
@@ -110,21 +122,20 @@ class CompanyEditorDialog(gui_utilities.GladeGObject):
 		return model.get_value(model_iter, 0)
 
 	def _set_company_info(self, company_id):
-		campaign = self.application.rpc.remote_table_row('campaigns', self.config['campaign_id'])
-		company = self.application.rpc.remote_table_row('companies', company_id)
-		company.name = self.get_entry_value('company_name')
-		company.description = self.get_entry_value('company_description')
-		company.industry_id = self._get_tag_from_combobox(self.gobjects['combobox_company_industry'], 'industries')
-		company.url_main = self.get_entry_value('company_url_main')
-		company.url_email = self.get_entry_value('company_url_email')
-		company.url_remote_access = self.get_entry_value('company_url_remote_access')
-		company.commit()
+		company_name = self.get_entry_value('company_name')
+		company_description = self.get_entry_value('company_description')
+		self.application.rpc.remote_table_row_set('companies', company_id, {
+			'name': company_name,
+			'description': company_description,
+			'industry_id': self._get_tag_from_combobox(self.gobjects['combobox_company_industry'], 'industries'),
+			'url_main': self.get_entry_value('company_url_main'),
+			'url_email': self.get_entry_value('company_url_email'),
+			'url_remote_access': self.get_entry_value('company_url_remote_access')
+		})
 		model = self.gobjects['combobox_company_existing'].get_model()
 		model_iter = gui_utilities.gtk_list_store_search(model, company_id)
-		model[model_iter][1] = company.name
-		model[model_iter][2] = company.description
-		if campaign.company_id == company.id:
-			self.application.emit('campaign-changed', campaign.id)
+		model[model_iter][1] = company_name
+		model[model_iter][2] = company_description
 
 	def _should_set_company_info(self):
 		if self._last_company_id is None:

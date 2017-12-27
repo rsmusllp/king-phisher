@@ -304,6 +304,10 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		row_cls = database_table_objects[table]
 		return row_cls(self, **row)
 
+	def remote_table_row_set(self, table, row_id, attributes):
+		keys, values = zip(*attributes.items())
+		return self.call('db/table/set', table, row_id, keys, values)
+
 	def geoip_lookup(self, ip):
 		"""
 		Look up the geographic location information for the specified IP
