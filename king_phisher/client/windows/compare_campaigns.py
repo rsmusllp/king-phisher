@@ -37,9 +37,6 @@ from king_phisher.client.graphs import CampaignCompGraph
 
 from gi.repository import Gtk
 
-_GRAPHQL_QUERY_CAMPAIGNS = """\
-"""
-
 class CampaignCompWindow(gui_utilities.GladeGObject):
 	"""
 	The window which allows the user to select campaigns and compare the data
@@ -89,7 +86,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		store = self._model
 		store.clear()
 		campaigns = self.application.rpc.graphql("""\
-		{
+		query getCampaigns {
 			db {
 				campaigns {
 					edges {

@@ -169,7 +169,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		hlfg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlfg', default=ColorHexCode.BLACK)
 		now = datetime.datetime.now()
 		campaigns = self.application.rpc.graphql("""\
-		{
+		query getCampaigns {
 			db {
 				campaigns {
 					edges {

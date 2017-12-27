@@ -46,10 +46,12 @@ from king_phisher import utilities
 
 import advancedhttpserver
 import boltons.typeutils
+import smoke_zephyr.utilities
 from gi.repository import Gtk
 
 _tag_mixin_slots = ('id', 'name', 'description')
 _tag_mixin_types = (int, str, str)
+_tag_tables = ('campaigns', 'companies', 'company_departments', 'industries')
 database_table_objects = utilities.FreezableDict()
 UNRESOLVED = boltons.typeutils.make_sentinel('UNRESOLVED', var_name='UNRESOLVED')
 """A sentinel value used for values in rows to indicate that the data has not been loaded from the server."""
@@ -355,14 +357,20 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		:return: The model with the loaded data from the server.
 		:rtype: :py:class:`Gtk.ListStore`
 		"""
+		if tag_table not in _tag_tables:
+			raise ValueError('tag_table is not a valid tag interface exposing table')
+		tag_table = smoke_zephyr.utilities.parse_case_snake_to_camel(tag_table, upper_first=False)
 		if model is None:
-			model = Gtk.ListStore(*_tag_mixin_types)
+			model = Gtk.ListStore(str, str, str)
 			# sort by the name column, ascending
 			model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 		else:
 			model.clear()
-		for row in self.remote_table(tag_table):
-			model.append((row.id, row.name, row.description))
+		graphql_query = 'query getTags { db { ' + tag_table + ' { edges { node { id name description } } } } }'
+		tags = self.graphql(graphql_query)['db'][tag_table]['edges']
+		for tag in tags:
+			tag = tag['node']
+			model.append((tag['id'], tag['name'], tag['description']))
 		return model
 
 	def login(self, username, password, otp=None):
