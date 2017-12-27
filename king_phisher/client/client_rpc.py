@@ -51,7 +51,7 @@ from gi.repository import Gtk
 
 _tag_mixin_slots = ('id', 'name', 'description')
 _tag_mixin_types = (int, str, str)
-_tag_tables = ('campaigns', 'companies', 'company_departments', 'industries')
+_tag_tables = ('campaign_types', 'campaigns', 'companies', 'company_departments', 'industries')
 database_table_objects = utilities.FreezableDict()
 UNRESOLVED = boltons.typeutils.make_sentinel('UNRESOLVED', var_name='UNRESOLVED')
 """A sentinel value used for values in rows to indicate that the data has not been loaded from the server."""
