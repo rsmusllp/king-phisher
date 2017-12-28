@@ -467,6 +467,8 @@ def rpc_database_get_row_by_id(handler, session, table_name, row_id):
 	if row:
 		row.assert_session_has_permissions('r', handler.rpc_session)
 		row = dict(zip(columns, (getattr(row, c) for c in columns)))
+	elif table.is_private:
+		raise errors.KingPhisherPermissionError()
 	return row
 
 @register_rpc('/db/table/insert', database_access=True)

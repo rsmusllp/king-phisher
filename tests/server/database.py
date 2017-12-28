@@ -56,14 +56,13 @@ class DatabaseRPCTests(testing.KingPhisherServerTestCase):
 	def assertRPCPermissionDenied(self, db_method, *args, **kwargs):
 		super(DatabaseRPCTests, self).assertRPCPermissionDenied('db/table/' + db_method, *args, **kwargs)
 
-	def test_meta_data_is_private(self):
+	def test_storage_data_is_private(self):
 		# ensure that meta_data is kept private and that private tables can't be accessed via rpc
 		self.assertTrue(db_models.MetaData.is_private)
 		self.assertIsNone(self.rpc('db/table/view', 'meta_data'))
-		self.assertRPCPermissionDenied('get', 'meta_data', 'schema_version')
-		self.assertRPCPermissionDenied('set', 'meta_data', 'schema_version', ('value', 'value_type'), ('test', 'str'))
-		self.assertRPCPermissionDenied('insert', 'meta_data', ('id', 'value', 'value_type'), ('test', 'test', 'str'))
-		self.assertRPCPermissionDenied('delete', 'meta_data', 'schema_version')
+		self.assertRPCPermissionDenied('get', 'storage_data', 1)
+		self.assertRPCPermissionDenied('set', 'storage_data', 1, ('namespace',), ('test',))
+		self.assertRPCPermissionDenied('delete', 'storage_data', 1)
 
 class DatabaseSchemaTests(testing.KingPhisherTestCase):
 	def test_get_tables_id(self):

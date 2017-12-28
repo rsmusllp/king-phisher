@@ -42,6 +42,7 @@ from king_phisher import archive
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
+from king_phisher import serializers
 from king_phisher.server import signals
 
 import alembic.command
@@ -65,7 +66,8 @@ _flush_signal_map = (
 	('db-session-inserted', 'new'),
 	('db-session-updated', 'dirty')
 )
-_meta_data_type_map = {'int': int, 'str': str}
+_meta_data_namespace = 'meta_data'
+_meta_data_serializer = serializers.MsgPack
 _popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 
 @sqlalchemy.event.listens_for(Session, 'after_flush')
@@ -165,12 +167,11 @@ def get_meta_data(key, session=None):
 	"""
 	close_session = session is None
 	session = (session or Session())
-	result = get_row_by_id(session, models.MetaData, key)
+	obj = session.query(models.StorageData).filter_by(namespace=_meta_data_namespace, key=key).first()
+	value = None if obj is None else _meta_data_serializer.loads(obj.value)
 	if close_session:
 		session.close()
-	if result is None:
-		return None
-	return _meta_data_type_map[result.value_type](result.value)
+	return value
 
 def get_row_by_id(session, table, row_id):
 	"""
@@ -189,6 +190,31 @@ def get_row_by_id(session, table, row_id):
 	result = query.first()
 	return result
 
+def get_schema_version(engine):
+	results = None
+	# try the new style storage
+	try:
+		results = engine.execute(
+			sqlalchemy.text("SELECT value FROM storage_data WHERE namespace = :namespace AND key = 'schema_version'"),
+			namespace=_meta_data_namespace
+		).fetchone()
+	except sqlalchemy.exc.ProgrammingError:
+		pass
+	if results:
+		return _meta_data_serializer.loads(results[0])
+
+	# try the old style storage
+	try:
+		results = engine.execute(sqlalchemy.text("SELECT value_type, value FROM meta_data WHERE id = 'schema_version'")).fetchone()
+	except sqlalchemy.exc.ProgrammingError:
+		pass
+	if results:
+		value_type, value = results
+		if value_type != 'int':
+			raise TypeError('the value is not of type: int')
+		return int(value)
+	return models.SCHEMA_VERSION
+
 def set_meta_data(key, value, session=None):
 	"""
 	Store a piece of metadata regarding the King Phisher database.
@@ -198,18 +224,14 @@ def set_meta_data(key, value, session=None):
 	:type value: int, str
 	:param session: The session to use to store the value.
 	"""
-	value_type = type(value).__name__
-	if value_type not in _meta_data_type_map:
-		raise ValueError('incompatible data type:' + value_type)
 	close_session = session is None
 	session = (session or Session())
-	result = get_row_by_id(session, models.MetaData, key)
-	if result:
-		session.delete(result)
-	md = models.MetaData(id=key)
-	md.value_type = value_type
-	md.value = str(value)
-	session.add(md)
+	value = _meta_data_serializer.dumps(value)
+	obj = session.query(models.StorageData).filter_by(namespace=_meta_data_namespace, key=key).first()
+	if obj is None:
+		obj = models.StorageData(namespace=_meta_data_namespace, key=key)
+	obj.value = value
+	session.add(obj)
 	if close_session:
 		session.commit()
 		session.close()
@@ -297,24 +319,22 @@ def init_database(connection_url, extra_init=False):
 	Session.remove()
 	Session.configure(bind=engine)
 	inspector = sqlalchemy.inspect(engine)
-	if not 'meta_data' in inspector.get_table_names():
-		logger.debug('meta_data table not found, creating all new tables')
+	if 'campaigns' not in inspector.get_table_names():
+		logger.debug('campaigns table not found, creating all new tables')
 		try:
 			models.Base.metadata.create_all(engine)
 		except sqlalchemy.exc.SQLAlchemyError as error:
 			error_lines = (line.strip() for line in error.message.split('\n'))
 			raise errors.KingPhisherDatabaseError('SQLAlchemyError: ' + ' '.join(error_lines).strip())
 
-	session = Session()
-	set_meta_data('database_driver', connection_url.drivername, session=session)
-	schema_version = (get_meta_data('schema_version', session=session) or models.SCHEMA_VERSION)
-	session.commit()
-	session.close()
+	schema_version = get_schema_version(engine)
+	set_meta_data('database_driver', connection_url.drivername)
 
 	logger.debug("current database schema version: {0} ({1})".format(schema_version, ('latest' if schema_version == models.SCHEMA_VERSION else 'obsolete')))
-	if not 'alembic_version' in inspector.get_table_names():
+	if 'alembic_version' not in inspector.get_table_names():
 		logger.debug('alembic version table not found, attempting to create and set version')
 		init_alembic(engine, schema_version)
+
 	if schema_version > models.SCHEMA_VERSION:
 		raise errors.KingPhisherDatabaseError('the database schema is for a newer version, automatic downgrades are not supported')
 	elif schema_version < models.SCHEMA_VERSION:
@@ -341,7 +361,6 @@ def init_database(connection_url, extra_init=False):
 		# reset it because it may have been altered by alembic
 		Session.remove()
 		Session.configure(bind=engine)
-		session = Session()
 	set_meta_data('schema_version', models.SCHEMA_VERSION)
 
 	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
