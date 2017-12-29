@@ -46,6 +46,7 @@ from king_phisher import archive
 from king_phisher import ipaddress
 from king_phisher import serializers
 from king_phisher import utilities
+from king_phisher.client import gui_utilities
 from king_phisher.errors import KingPhisherInputValidationError
 
 from boltons import iterutils
@@ -53,6 +54,7 @@ import dateutil.tz
 import geojson
 from smoke_zephyr.utilities import escape_single_quote
 from smoke_zephyr.utilities import unescape_single_quote
+from smoke_zephyr.utilities import parse_case_snake_to_camel
 import xlsxwriter
 
 __all__ = (
@@ -152,25 +154,181 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 	serializers.to_elementtree_subelement(metadata, 'version', '1.3')
 
 	campaign = ET.SubElement(root, 'campaign')
-	campaign_info = rpc.remote_table_row('campaigns', campaign_id)
-	for key, value in campaign_info._asdict().items():
+	logger.info('gathering campaign information for export')
+	campaign_info = _get_graphql_campaignexport(rpc, campaign_id)
+	gui_utilities.gtk_sync()
+	for key, value in campaign_info.items():
+		if key in ('landingPages', 'messages', 'visits', 'credentials', 'deaddropDeployments', 'deaddropConnections'):
+			continue
 		if isinstance(value, datetime.datetime):
 			value = value.replace(tzinfo=tzutc)
 		serializers.to_elementtree_subelement(campaign, key, value)
+		gui_utilities.gtk_sync()
 
 	# Tables with a campaign_id field
-	for table_name in ('landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections'):
-		table_element = ET.SubElement(campaign, table_name)
-		for table_row in rpc.remote_table(table_name, query_filter={'campaign_id': campaign_id}):
-			table_row_element = ET.SubElement(table_element, table_name[:-1])
-			for key, value in table_row._asdict().items():
-				if isinstance(value, datetime.datetime):
-					value = value.replace(tzinfo=tzutc)
-				serializers.to_elementtree_subelement(table_row_element, key, value)
+	table_names = ['landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']
+	cursor = None
+	last_cursor = None
+	table_elements = {}
+	while True:
+		gui_utilities.gtk_sync()
+		if not cursor and last_cursor:
+			break
+		if cursor:
+			last_cursor = cursor
+			campaign_info = _get_graphql_campaignexport(rpc, campaign_id, cursor)
+			cursor = None
+			gui_utilities.gtk_sync()
+		for table_name in table_names:
+			gui_utilities.gtk_sync()
+			if campaign_info[parse_case_snake_to_camel(table_name, upper_first=False)]['pageInfo']['hasNextPage']:
+				cursor = campaign_info[parse_case_snake_to_camel(table_name, upper_first=False)]['pageInfo']['endCursor']
+			table = campaign_info[parse_case_snake_to_camel(table_name, upper_first=False)]['edges']
+			if table_name not in table_elements:
+				table_elements[table_name] = ET.SubElement(campaign, table_name)
+			for node in table:
+				gui_utilities.gtk_sync()
+				row = node['node']
+				table_row_element = ET.SubElement(table_elements[table_name], table_name[:-1])
+				for key, value in row.items():
+					gui_utilities.gtk_sync()
+					if isinstance(value, datetime.datetime):
+						value = value.replace(tzinfo=tzutc)
+					serializers.to_elementtree_subelement(table_row_element, key, value)
+	logger.info('completed processing campaign information for export')
 
 	document = minidom.parseString(ET.tostring(root))
 	with open(xml_file, 'wb') as file_h:
 		file_h.write(document.toprettyxml(indent='  ', encoding=encoding))
+	logger.info('campaign export complete')
+
+def _get_graphql_campaignexport(rpc, campaign_id, cursor=None, page=1000):
+	options = {'campaign': campaign_id, 'cursor': cursor, 'page': page}
+	results = rpc.graphql("""\
+	query getCampaignExport($campaign: String!, $cursor: String, $page: Int) {
+		db {
+			campaign(id: $campaign) {
+				id
+				name
+				description
+				userId
+				created
+				rejectAfterCredentials
+				expiration
+				campaignTypeId
+				companyId
+				landingPages(first: $page, after: $cursor) {
+					edges {
+						node {
+							id
+							campaignId
+							hostname
+							page
+						}
+					}
+					pageInfo {
+						hasNextPage
+						endCursor
+					}
+				}
+				messages(first: $page, after: $cursor) {
+					edges {
+						node {
+							id
+							campaignId
+							targetEmail
+							firstName
+							lastName
+							opened
+							openerIp
+							openerUserAgent
+							sent
+							trained
+							companyDepartmentId
+						}
+					}
+					pageInfo {
+						hasNextPage
+						startCursor
+						endCursor
+					}
+				}
+				visits(first: $page, after: $cursor) {
+					edges {
+						node {
+							id
+							messageId
+							campaignId
+							visitCount
+							visitorIp
+							visitorDetails
+							firstVisit
+							lastVisit
+						}
+					}
+					pageInfo {
+						hasNextPage
+						startCursor
+						endCursor
+					}
+				}
+				credentials(first: $page, after: $cursor) {
+					edges {
+						node {
+							id
+							visitId
+							messageId
+							campaignId
+							username
+							password
+							submitted
+						}
+					}
+					pageInfo {
+						hasNextPage
+						startCursor
+						endCursor
+					}
+				}
+				deaddropDeployments(first: $page, after: $cursor) {
+					edges {
+						node {
+							id
+							campaignId
+							destination
+						}
+					}
+					pageInfo {
+						hasNextPage
+						startCursor
+						endCursor
+					}
+				}
+				deaddropConnections(first: $page, after: $cursor) {
+					edges {
+						node {
+							id
+							deploymentId
+							campaignId
+							visitCount
+							visitorIp
+							localUsername
+							localHostname
+							localIpAddresses
+							firstVisit
+							lastVisit
+						}
+					}
+					pageInfo {
+						hasNextPage
+						startCursor
+						endCursor
+					}
+				}
+			}
+		}
+	}""", options)
+	return results['db']['campaign']
 
 def campaign_credentials_to_msf_txt(rpc, campaign_id, target_file):
 	"""
@@ -183,8 +341,27 @@ def campaign_credentials_to_msf_txt(rpc, campaign_id, target_file):
 	:param str target_file: The destination file for the credential data.
 	"""
 	with open(target_file, 'w') as file_h:
-		for credential in rpc.remote_table('credentials', query_filter={'campaign_id': campaign_id}):
-			file_h.write("{0} {1}\n".format(credential.username, credential.password))
+		for credential_node in _get_graphql_campaign_credentials(rpc, campaign_id):
+			credential = credential_node['node']
+			file_h.write("{0} {1}\n".format(credential['username'], credential['password']))
+
+def _get_graphql_campaign_credentials(rpc, campaign_id):
+	results = rpc.graphql("""\
+	query getCampaignCredentials($campaign: String!) {
+		db {
+			campaign(id: $campaign) {
+				credentials {
+					edges {
+						node {
+							username
+							password
+						}
+					}
+				}
+			}
+		}
+	}""", {'campaign': campaign_id})
+	return results['db']['campaign']['credentials']['edges']
 
 def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	"""
@@ -198,17 +375,18 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	"""
 	ips_for_georesolution = {}
 	ip_counter = collections.Counter()
-	for visit in rpc.remote_table('visits', query_filter={'campaign_id': campaign_id}):
-		ip_counter.update((visit.visitor_ip,))
-		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
+	for visit_node in _get_graphql_campaign_visits(rpc, campaign_id):
+		visit = visit_node['node']
+		ip_counter.update((visit['visitorIp'],))
+		visitor_ip = ipaddress.ip_address(visit['visitorIp'])
 		if not isinstance(visitor_ip, ipaddress.IPv4Address):
 			continue
 		if visitor_ip.is_loopback or visitor_ip.is_private:
 			continue
 		if not visitor_ip in ips_for_georesolution:
-			ips_for_georesolution[visitor_ip] = visit.first_visit
-		elif ips_for_georesolution[visitor_ip] > visit.first_visit:
-			ips_for_georesolution[visitor_ip] = visit.first_visit
+			ips_for_georesolution[visitor_ip] = visit['firstVisit']
+		elif ips_for_georesolution[visitor_ip] > visit['firstVisit']:
+			ips_for_georesolution[visitor_ip] = visit['firstVisit']
 	ips_for_georesolution = [ip for (ip, _) in sorted(ips_for_georesolution.items(), key=lambda x: x[1])]
 	locations = {}
 	for ip_addresses in iterutils.chunked(ips_for_georesolution, 50):
@@ -221,6 +399,24 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	feature_collection = geojson.FeatureCollection(points)
 	with open(geojson_file, 'w') as file_h:
 		serializers.JSON.dump(feature_collection, file_h, pretty=True)
+
+def _get_graphql_campaign_visits(rpc, campaign_id):
+	results = rpc.graphql("""\
+	query getCampaignVisits($campaign: String!) {
+		db {
+			campaign(id: $campaign) {
+				visits {
+					edges {
+						node {
+							visitorIp
+							firstVisit
+						}
+					}
+				}
+			}
+		}
+	}""", {'campaign': campaign_id})
+	return results['db']['campaign']['visits']['edges']
 
 def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 	"""
