@@ -32,6 +32,7 @@
 
 import collections
 import contextlib
+import datetime
 import logging
 import os
 import re
@@ -157,22 +158,6 @@ def import_database(target_file, clear=True):
 	session.commit()
 	kpdb.close()
 
-def get_meta_data(key, session=None):
-	"""
-	Retrieve the value from the database's metadata storage.
-
-	:param str key: The name of the value to retrieve.
-	:param session: The session to use to retrieve the value.
-	:return: The meta data value.
-	"""
-	close_session = session is None
-	session = (session or Session())
-	obj = session.query(models.StorageData).filter_by(namespace=_meta_data_namespace, key=key).first()
-	value = None if obj is None else _meta_data_serializer.loads(obj.value)
-	if close_session:
-		session.close()
-	return value
-
 def get_row_by_id(session, table, row_id):
 	"""
 	Retrieve a database row from the specified table by it's unique id.
@@ -215,7 +200,7 @@ def get_schema_version(engine):
 		return int(value)
 	return models.SCHEMA_VERSION
 
-def set_meta_data(key, value, session=None):
+def set_metadata(key, value, session=None):
 	"""
 	Store a piece of metadata regarding the King Phisher database.
 
@@ -230,6 +215,9 @@ def set_meta_data(key, value, session=None):
 	obj = session.query(models.StorageData).filter_by(namespace=_meta_data_namespace, key=key).first()
 	if obj is None:
 		obj = models.StorageData(namespace=_meta_data_namespace, key=key)
+	elif obj.value != value:
+		obj.value = value
+		obj.modified = datetime.datetime.utcnow()
 	obj.value = value
 	session.add(obj)
 	if close_session:
@@ -359,8 +347,9 @@ def init_database(connection_url, extra_init=False):
 		# reset it because it may have been altered by alembic
 		Session.remove()
 		Session.configure(bind=engine)
-	set_meta_data('database_driver', connection_url.drivername)
-	set_meta_data('schema_version', models.SCHEMA_VERSION)
+	set_metadata('database_driver', connection_url.drivername)
+	set_metadata('last_started', datetime.datetime.utcnow())
+	set_metadata('schema_version', models.SCHEMA_VERSION)
 
 	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
 	signals.db_initialized.send(connection_url)
