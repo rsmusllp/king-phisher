@@ -182,8 +182,8 @@ class DeaddropConnection(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.DeaddropConnection
 		interfaces = (RelayNode,)
-	first_visit = DateTime()
-	last_visit = DateTime()
+	first_seen = DateTime()
+	last_seen = DateTime()
 	visitor_geoloc = graphene.Field(GeoLocation)
 	def resolve_visitor_geoloc(self, info, **kwargs):
 		visitor_ip = self.visitor_ip
@@ -198,17 +198,12 @@ class DeaddropDeployment(graphene_sqlalchemy.SQLAlchemyObjectType):
 	# relationships
 	deaddrop_connections = SQLAlchemyConnectionField(DeaddropConnection)
 
-class LandingPage(graphene_sqlalchemy.SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.LandingPage
-		interfaces = (RelayNode,)
-
 class Visit(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.Visit
 		interfaces = (RelayNode,)
-	first_visit = DateTime()
-	last_visit = DateTime()
+	first_seen = DateTime()
+	last_seen = DateTime()
 	visitor_geoloc = graphene.Field(GeoLocation)
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
@@ -218,12 +213,19 @@ class Visit(graphene_sqlalchemy.SQLAlchemyObjectType):
 			return
 		return GeoLocation.from_ip_address(visitor_ip)
 
+class LandingPage(graphene_sqlalchemy.SQLAlchemyObjectType):
+	class Meta:
+		model = db_models.LandingPage
+		interfaces = (RelayNode,)
+	first_visits = SQLAlchemyConnectionField(Visit)
+
 class Message(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.Message
 		interfaces = (RelayNode,)
 	opened = DateTime()
 	opener_geoloc = graphene.Field(GeoLocation)
+	reported = DateTime()
 	sent = DateTime()
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
@@ -281,6 +283,8 @@ class User(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.User
 		interfaces = (RelayNode,)
+	expiration = DateTime()
+	last_login = DateTime()
 	# relationships
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
 	campaigns = SQLAlchemyConnectionField(Campaign)

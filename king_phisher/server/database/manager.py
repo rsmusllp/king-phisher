@@ -66,7 +66,7 @@ _flush_signal_map = (
 	('db-session-inserted', 'new'),
 	('db-session-updated', 'dirty')
 )
-_meta_data_namespace = 'meta_data'
+_meta_data_namespace = 'metadata'
 _meta_data_serializer = serializers.MsgPack
 _popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 
@@ -328,8 +328,6 @@ def init_database(connection_url, extra_init=False):
 			raise errors.KingPhisherDatabaseError('SQLAlchemyError: ' + ' '.join(error_lines).strip())
 
 	schema_version = get_schema_version(engine)
-	set_meta_data('database_driver', connection_url.drivername)
-
 	logger.debug("current database schema version: {0} ({1})".format(schema_version, ('latest' if schema_version == models.SCHEMA_VERSION else 'obsolete')))
 	if 'alembic_version' not in inspector.get_table_names():
 		logger.debug('alembic version table not found, attempting to create and set version')
@@ -361,6 +359,7 @@ def init_database(connection_url, extra_init=False):
 		# reset it because it may have been altered by alembic
 		Session.remove()
 		Session.configure(bind=engine)
+	set_meta_data('database_driver', connection_url.drivername)
 	set_meta_data('schema_version', models.SCHEMA_VERSION)
 
 	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
@@ -407,7 +406,7 @@ def init_database_postgresql(connection_url):
 			logger.debug('postgresql service successfully started via systemctl')
 
 	rows = _popen_psql('SELECT usename FROM pg_user')
-	if not connection_url.username in rows:
+	if connection_url.username not in rows:
 		logger.info('the specified postgresql user does not exist, adding it now')
 		if not is_sanitary(connection_url.username):
 			raise errors.KingPhisherInputValidationError('will not create the postgresql user (username contains bad characters)')
@@ -420,7 +419,7 @@ def init_database_postgresql(connection_url):
 		logger.debug('the specified postgresql user was successfully created')
 
 	rows = _popen_psql('SELECT datname FROM pg_database')
-	if not connection_url.database in rows:
+	if connection_url.database not in rows:
 		logger.info('the specified postgresql database does not exist, adding it now')
 		if not is_sanitary(connection_url.database):
 			raise errors.KingPhisherInputValidationError('will not create the postgresql database (name contains bad characters)')
