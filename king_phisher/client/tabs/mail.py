@@ -160,11 +160,22 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		return True
 
 	def _sender_precheck_campaign(self):
-		campaign = self.application.rpc.remote_table_row('campaigns', self.config['campaign_id'])
-		if campaign.expiration and campaign.expiration < datetime.datetime.utcnow():
+		expiration = self._get_graphql_campaign_expiration()
+		if expiration and expiration < datetime.datetime.utcnow():
 			gui_utilities.show_dialog_warning('Campaign Is Expired', self.parent, 'The current campaign has already expired.')
 			return False
 		return True
+
+	def _get_graphql_campaign_expiration(self, campaign_id=None):
+		results = self.application.rpc.graphql("""\
+		query getCampaignExpiration($id: String!) {
+			db {
+				campaign(id: $id) {
+					expiration
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		return results['db']['campaign']['expiration']
 
 	def _sender_precheck_settings(self):
 		required_settings = {
@@ -849,12 +860,25 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self._update_target_count()
 
 	def _campaign_load(self, campaign_id):
-		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
-		if campaign.company_id is None:
+		company_name = self._get_graphql_campaign_company()
+		if company_name is None:
 			self.config['mailer.company_name'] = None
 		else:
-			self.config['mailer.company_name'] = campaign.company.name
+			self.config['mailer.company_name'] = company_name
 		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
+
+	def _get_graphql_campaign_company(self, campaign_id=None):
+		results = self.application.rpc.graphql("""\
+		query getCampaignCompanyName($id: String!) {
+			db {
+				campaign(id: $id) {
+					company {
+						name
+					}
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		return results['db']['campaign']['company']['name']
 
 	def _update_target_count(self):
 		if not hasattr(self, 'target_type'):
