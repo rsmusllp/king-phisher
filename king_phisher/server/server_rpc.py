@@ -96,8 +96,6 @@ def register_rpc(path, database_access=False, log_call=False):
 					for key, value in sorted(kwargs.items()):
 						args_repr += ", {0}={1!r}".format(key, value)
 				msg = "calling RPC method {0}({1})".format(function.__name__, args_repr)
-				if getattr(handler_instance, 'rpc_session', False):
-					msg = handler_instance.rpc_session.user + ' is ' + msg
 				rpc_logger.debug(msg)
 			signals.send_safe('rpc-method-call', rpc_logger, path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs)
 			if database_access:
@@ -239,11 +237,11 @@ def rpc_campaign_alerts_subscribe(handler, session, campaign_id):
 
 	:param int campaign_id: The ID of the campaign.
 	"""
-	username = handler.rpc_session.user
+	user_id = handler.rpc_session.user
 	query = session.query(db_models.AlertSubscription)
-	query = query.filter_by(campaign_id=campaign_id, user_id=username)
+	query = query.filter_by(campaign_id=campaign_id, user_id=user_id)
 	if query.count() == 0:
-		subscription = db_models.AlertSubscription(campaign_id=campaign_id, user_id=username)
+		subscription = db_models.AlertSubscription(campaign_id=campaign_id, user_id=user_id)
 		subscription.assert_session_has_permissions('c', handler.rpc_session)
 		session.add(subscription)
 		session.commit()
@@ -255,9 +253,9 @@ def rpc_campaign_alerts_unsubscribe(handler, session, campaign_id):
 
 	:param int campaign_id: The ID of the campaign.
 	"""
-	username = handler.rpc_session.user
+	user_id = handler.rpc_session.user
 	query = session.query(db_models.AlertSubscription)
-	query = query.filter_by(campaign_id=campaign_id, user_id=username)
+	query = query.filter_by(campaign_id=campaign_id, user_id=user_id)
 	subscription = query.first()
 	if subscription:
 		subscription.assert_session_has_permissions('d', handler.rpc_session)
@@ -699,12 +697,13 @@ def rpc_login(handler, session, username, password, otp=None):
 		logger.warning("failed login request from {0} for user {1}, (authentication failed)".format(handler.client_address[0], username))
 		return fail_default
 
-	user = db_manager.get_row_by_id(session, db_models.User, username)
+	user = session.query(db_models.User).filter_by(name=username).first()
 	if not user:
-		logger.info('creating new user object with id: ' + username)
-		user = db_models.User(id=username)
-		session.add(user)
-		session.commit()
+		logger.info('creating new user object with name: ' + username)
+		user = db_models.User(name=username)
+	elif user.has_expired:
+		logger.warning("failed login request from {0} for user {1}, (user has expired)".format(handler.client_address[0], username))
+		return fail_default
 	elif user.otp_secret:
 		if otp is None:
 			logger.debug("failed login request from {0} for user {1}, (missing otp)".format(handler.client_address[0], username))
@@ -714,10 +713,13 @@ def rpc_login(handler, session, username, password, otp=None):
 			return fail_otp
 		totp = pyotp.TOTP(user.otp_secret)
 		now = datetime.datetime.now()
-		if not otp in (totp.at(now + datetime.timedelta(seconds=offset)) for offset in (0, -30, 30)):
+		if otp not in (totp.at(now + datetime.timedelta(seconds=offset)) for offset in (0, -30, 30)):
 			logger.warning("failed login request from {0} for user {1}, (invalid otp)".format(handler.client_address[0], username))
 			return fail_otp
-	session_id = handler.server.session_manager.put(username)
+	user.last_login = db_models.current_timestamp()
+	session.add(user)
+	session.commit()
+	session_id = handler.server.session_manager.put(user.id)
 	logger.info("successful login request from {0} for user {1}".format(handler.client_address[0], username))
 	signals.send_safe('rpc-user-logged-in', logger, handler, session=session_id, name=username)
 	return True, ConnectionErrorReason.SUCCESS, session_id

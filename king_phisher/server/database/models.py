@@ -190,7 +190,7 @@ class AlertSubscription(Base):
 	__repr_attributes__ = ('campaign_id', 'user_id')
 	__tablename__ = 'alert_subscriptions'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
+	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 	mute_timestamp = sqlalchemy.Column(sqlalchemy.DateTime)
 
@@ -214,7 +214,7 @@ class AuthenticatedSession(Base):
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
 	created = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
 	last_seen = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
-	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
+	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 
 @register_table
 class Campaign(Base):
@@ -223,7 +223,7 @@ class Campaign(Base):
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
 	description = sqlalchemy.Column(sqlalchemy.String)
-	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
+	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	max_credentials = sqlalchemy.Column(sqlalchemy.Integer)
 	expiration = sqlalchemy.Column(sqlalchemy.DateTime)
@@ -362,6 +362,7 @@ class Message(Base):
 
 @register_table
 class User(Base):
+	__repr_attributes__ = ('name',)
 	__tablename__ = 'users'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
@@ -386,12 +387,20 @@ class User(Base):
 		return session.user == self.id
 
 	def session_has_read_prop_access(self, session, prop):
-		if prop in ('id', 'campaigns'):  # everyone can read the id
+		if prop in ('id', 'campaigns', 'name'):  # everyone can read the id
 			return True
 		return self.session_has_read_access(session)
 
 	def session_has_update_access(self, session):
 		return session.user == self.id
+
+	@property
+	def has_expired(self):
+		if self.expiration is None:
+			return False
+		if self.expiration > current_timestamp():
+			return False
+		return True
 
 @register_table
 class Visit(Base):

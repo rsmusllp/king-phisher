@@ -113,7 +113,9 @@ class KeyValueStorage(_MutableMapping):
 		with self._session() as session:
 			obj = self._query(session).filter_by(key=key).first()
 			if obj is None:
-				obj = models.StorageData(namespace=self.namespace, key=key)
-			obj.value = value
+				obj = models.StorageData(namespace=self.namespace, key=key, value=value)
+			elif obj.value != value:
+				obj.value = value
+				obj.modified = models.current_timestamp()
 			session.add(obj)
 			session.commit()
