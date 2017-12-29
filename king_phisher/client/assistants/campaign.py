@@ -158,35 +158,51 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 		if self.campaign_id is None:
 			return
-		campaign = self.application.rpc.remote_table_row('campaigns', self.campaign_id, cache=True, refresh=True)
+		campaign = self._get_graphql_campaign_info()
 
-		self.gobjects['entry_campaign_name'].set_text(campaign.name)
-		if campaign.description is not None:
-			self.gobjects['entry_campaign_description'].set_text(campaign.description)
-		if campaign.campaign_type_id is not None:
+		self.gobjects['entry_campaign_name'].set_text(campaign['name'])
+		if campaign['description'] is not None:
+			self.gobjects['entry_campaign_description'].set_text(campaign['description'])
+		if campaign['campaignTypeId'] is not None:
 			combobox = self.gobjects['combobox_campaign_type']
 			model = combobox.get_model()
-			model_iter = gui_utilities.gtk_list_store_search(model, campaign.campaign_type_id, column=0)
+			model_iter = gui_utilities.gtk_list_store_search(model, campaign['campaignTypeId'], column=0)
 			if model_iter is not None:
 				combobox.set_active_iter(model_iter)
 
 		self.gobjects['checkbutton_alert_subscribe'].set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.campaign_id))
-		self.gobjects['checkbutton_reject_after_credentials'].set_property('active', campaign.reject_after_credentials)
+		self.gobjects['checkbutton_reject_after_credentials'].set_property('active', campaign['rejectAfterCredentials'])
 
-		if campaign.company_id is not None:
+		if campaign['companyId'] is not None:
 			self.gobjects['radiobutton_company_existing'].set_active(True)
 			combobox = self.gobjects['combobox_company_existing']
 			model = combobox.get_model()
-			model_iter = gui_utilities.gtk_list_store_search(model, campaign.company_id, column=0)
+			model_iter = gui_utilities.gtk_list_store_search(model, campaign['companyId'], column=0)
 			if model_iter is not None:
 				combobox.set_active_iter(model_iter)
 
-		if campaign.expiration is not None:
-			expiration = utilities.datetime_utc_to_local(campaign.expiration)
+		if campaign['expiration'] is not None:
+			expiration = utilities.datetime_utc_to_local(campaign['expiration'])
 			self.gobjects['checkbutton_expire_campaign'].set_active(True)
 			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration)
 			self.gobjects['spinbutton_campaign_expiration_hour'].set_value(expiration.hour)
 			self.gobjects['spinbutton_campaign_expiration_minute'].set_value(expiration.minute)
+
+	def _get_graphql_campaign_info(self, campaign_id=None):
+		results = self.application.rpc.graphql("""\
+		query getCampaignInfo($id: String!) {
+			db {
+				campaign(id: $id) {
+					name
+					campaignTypeId
+					companyId
+					description
+					expiration
+					rejectAfterCredentials
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		return results['db']['campaign']
 
 	def _get_tag_from_combobox(self, combobox, db_table):
 		model = combobox.get_model()
@@ -218,9 +234,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if model_iter is not None:
 			return model.get_value(model_iter, 0)
 		# check if this company name already exists remotely
-		remote_companies = list(self.application.rpc.remote_table('companies', query_filter={'name': name}))
-		if len(remote_companies):
-			return remote_companies[0].id
+		remote_company_id = self._get_graphql_company_id(name)
+		if remote_company_id:
+			return remote_company_id
 
 		company_id = self.application.rpc(
 			'db/table/insert',
@@ -237,6 +253,17 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		)
 		self.gobjects['radiobutton_company_existing'].set_active(True)
 		return company_id
+
+	def _get_graphql_company_id(self, company_name):
+		results = self.application.rpc.graphql("""\
+		query getCompanyId($name: String!) {
+			db {
+				company(name: $name) {
+					id
+				}
+			}
+		}""", {'name': company_name})
+		return results['db']['company']['id']
 
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
