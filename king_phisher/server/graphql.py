@@ -171,6 +171,7 @@ class AlertSubscription(graphene_sqlalchemy.SQLAlchemyObjectType):
 		model = db_models.AlertSubscription
 		interfaces = (RelayNode,)
 	expiration = DateTime()
+	has_expired = graphene.Boolean()
 
 class Credential(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
@@ -242,6 +243,7 @@ class Campaign(graphene_sqlalchemy.SQLAlchemyObjectType):
 		interfaces = (RelayNode,)
 	created = DateTime()
 	expiration = DateTime()
+	has_expired = graphene.Boolean()
 	# relationships
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
 	credentials = SQLAlchemyConnectionField(Credential)
@@ -284,6 +286,7 @@ class User(graphene_sqlalchemy.SQLAlchemyObjectType):
 		model = db_models.User
 		interfaces = (RelayNode,)
 	expiration = DateTime()
+	has_expired = graphene.Boolean()
 	last_login = DateTime()
 	# relationships
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
@@ -294,9 +297,9 @@ class Database(graphene.ObjectType):
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
 	campaign_type = graphene.Field(CampaignType, id=graphene.String())
 	campaign_types = SQLAlchemyConnectionField(CampaignType)
-	campaign = graphene.Field(Campaign, id=graphene.String())
+	campaign = graphene.Field(Campaign, id=graphene.String(), name=graphene.String())
 	campaigns = SQLAlchemyConnectionField(Campaign)
-	company = graphene.Field(Company, id=graphene.String())
+	company = graphene.Field(Company, id=graphene.String(), name=graphene.String())
 	companies = SQLAlchemyConnectionField(Company)
 	company_department = graphene.Field(CompanyDepartment, id=graphene.String())
 	company_departments = SQLAlchemyConnectionField(CompanyDepartment)
@@ -312,7 +315,7 @@ class Database(graphene.ObjectType):
 	landing_pages = SQLAlchemyConnectionField(LandingPage)
 	message = graphene.Field(Message, id=graphene.String())
 	messages = SQLAlchemyConnectionField(Message)
-	user = graphene.Field(User, id=graphene.String())
+	user = graphene.Field(User, id=graphene.String(), name=graphene.String())
 	users = SQLAlchemyConnectionField(User)
 	visit = graphene.Field(Visit, id=graphene.String())
 	visits = SQLAlchemyConnectionField(Visit)
