@@ -24,6 +24,7 @@ alert_subscriptions_type = sqlalchemy.Enum('email', 'sms', name='alert_subscript
 user_id_tables = ('alert_subscriptions', 'authenticated_sessions', 'campaigns')
 
 def upgrade():
+	op.alter_column('alert_subscriptions', 'mute_timestamp', new_column_name='expiration')
 	op.drop_column('alert_subscriptions', 'type')
 	alert_subscriptions_type.drop(op.get_bind(), checkfirst=True)
 
@@ -113,7 +114,7 @@ def upgrade():
 	db_manager.Session.remove()
 	db_manager.Session.configure(bind=op.get_bind())
 	session = db_manager.Session()
-	db_manager.set_meta_data('schema_version', 8, session=session)
+	db_manager.set_metadata('schema_version', 8, session=session)
 	session.commit()
 
 def downgrade():
@@ -194,6 +195,7 @@ def downgrade():
 
 	alert_subscriptions_type.create(op.get_bind(), checkfirst=True)
 	op.add_column('alert_subscriptions', sqlalchemy.Column('type', alert_subscriptions_type, default='sms', server_default='sms', nullable=False))
+	op.alter_column('alert_subscriptions', 'expiration', new_column_name='mute_timestamp')
 
 	# adjust the schema version metadata
 	op.execute('INSERT INTO meta_data (id, value_type, value) VALUES (\'schema_version\', \'int\', \'7\')')

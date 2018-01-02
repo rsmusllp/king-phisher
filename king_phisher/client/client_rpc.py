@@ -111,7 +111,7 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 
 class AlertSubscription(RemoteRow):
 	__table__ = 'alert_subscriptions'
-	__slots__ = ('id', 'user_id', 'campaign_id', 'mute_timestamp')
+	__slots__ = ('id', 'user_id', 'campaign_id', 'expiration')
 
 class Campaign(RemoteRow):
 	__table__ = 'campaigns'

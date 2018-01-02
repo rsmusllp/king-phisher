@@ -170,7 +170,7 @@ class AlertSubscription(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.AlertSubscription
 		interfaces = (RelayNode,)
-	mute_timestamp = DateTime()
+	expiration = DateTime()
 
 class Credential(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:

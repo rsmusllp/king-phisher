@@ -179,6 +179,17 @@ class BaseRowCls(object):
 Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
 metadata = Base.metadata
 
+class ExpireMixIn(object):
+	expiration = sqlalchemy.Column(sqlalchemy.DateTime)
+
+	@property
+	def has_expired(self):
+		if self.expiration is None:
+			return False
+		if self.expiration > current_timestamp():
+			return False
+		return True
+
 class TagMixIn(object):
 	__repr_attributes__ = ('name',)
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -186,13 +197,12 @@ class TagMixIn(object):
 	description = sqlalchemy.Column(sqlalchemy.String)
 
 @register_table
-class AlertSubscription(Base):
+class AlertSubscription(Base, ExpireMixIn):
 	__repr_attributes__ = ('campaign_id', 'user_id')
 	__tablename__ = 'alert_subscriptions'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
-	mute_timestamp = sqlalchemy.Column(sqlalchemy.DateTime)
 
 	def session_has_create_access(self, session):
 		return session.user == self.user_id
@@ -217,7 +227,7 @@ class AuthenticatedSession(Base):
 	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 
 @register_table
-class Campaign(Base):
+class Campaign(Base, ExpireMixIn):
 	__repr_attributes__ = ('name',)
 	__tablename__ = 'campaigns'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -226,7 +236,6 @@ class Campaign(Base):
 	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	max_credentials = sqlalchemy.Column(sqlalchemy.Integer)
-	expiration = sqlalchemy.Column(sqlalchemy.DateTime)
 	campaign_type_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaign_types.id'))
 	company_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('companies.id'))
 	# relationships
@@ -237,14 +246,6 @@ class Campaign(Base):
 	landing_pages = sqlalchemy.orm.relationship('LandingPage', backref='campaign', cascade='all, delete-orphan')
 	messages = sqlalchemy.orm.relationship('Message', backref='campaign', cascade='all, delete-orphan')
 	visits = sqlalchemy.orm.relationship('Visit', backref='campaign', cascade='all, delete-orphan')
-
-	@property
-	def has_expired(self):
-		if self.expiration is None:
-			return False
-		if self.expiration > current_timestamp():
-			return False
-		return True
 
 @register_table
 class CampaignType(TagMixIn, Base):
@@ -361,12 +362,11 @@ class Message(Base):
 	visits = sqlalchemy.orm.relationship('Visit', backref='message', cascade='all, delete-orphan')
 
 @register_table
-class User(Base):
+class User(Base, ExpireMixIn):
 	__repr_attributes__ = ('name',)
 	__tablename__ = 'users'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
-	expiration = sqlalchemy.Column(sqlalchemy.DateTime)
 	description = sqlalchemy.Column(sqlalchemy.String)
 	phone_carrier = sqlalchemy.Column(sqlalchemy.String)
 	phone_number = sqlalchemy.Column(sqlalchemy.String)
@@ -393,14 +393,6 @@ class User(Base):
 
 	def session_has_update_access(self, session):
 		return session.user == self.id
-
-	@property
-	def has_expired(self):
-		if self.expiration is None:
-			return False
-		if self.expiration > current_timestamp():
-			return False
-		return True
 
 @register_table
 class Visit(Base):
