@@ -111,12 +111,12 @@ class RemoteRow(RemoteRowMeta('_RemoteRow', (object,), {})):
 
 class AlertSubscription(RemoteRow):
 	__table__ = 'alert_subscriptions'
-	__slots__ = ('id', 'user_id', 'campaign_id', 'type', 'mute_timestamp')
+	__slots__ = ('id', 'user_id', 'campaign_id', 'mute_timestamp')
 
 class Campaign(RemoteRow):
 	__table__ = 'campaigns'
 	__xref_attr__ = 'campaign'
-	__slots__ = ('id', 'name', 'description', 'user_id', 'created', 'reject_after_credentials', 'expiration', 'campaign_type_id', 'company_id')
+	__slots__ = ('id', 'name', 'description', 'user_id', 'created', 'max_credentials', 'expiration', 'campaign_type_id', 'company_id')
 
 class CampaignType(RemoteRow):
 	__table__ = 'campaign_types'
@@ -139,7 +139,7 @@ class Credential(RemoteRow):
 
 class DeaddropConnection(RemoteRow):
 	__table__ = 'deaddrop_connections'
-	__slots__ = ('id', 'deployment_id', 'campaign_id', 'visit_count', 'visitor_ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_visit', 'last_visit')
+	__slots__ = ('id', 'deployment_id', 'campaign_id', 'count', 'ip', 'local_username', 'local_hostname', 'local_ip_addresses', 'first_seen', 'last_seen')
 
 class DeaddropDeployment(RemoteRow):
 	__table__ = 'deaddrop_deployments'
@@ -158,17 +158,17 @@ class LandingPage(RemoteRow):
 class Message(RemoteRow):
 	__table__ = 'messages'
 	__xref_attr__ = 'message'
-	__slots__ = ('id', 'campaign_id', 'target_email', 'first_name', 'last_name', 'opened', 'opener_ip', 'opener_user_agent', 'sent', 'trained', 'company_department_id')
+	__slots__ = ('id', 'campaign_id', 'target_email', 'first_name', 'last_name', 'opened', 'opener_ip', 'opener_user_agent', 'reported', 'delivery_status', 'delivery_details', 'testing', 'sent', 'trained', 'company_department_id')
 
 class User(RemoteRow):
 	__table__ = 'users'
 	__xref_attr__ = 'user'
-	__slots__ = ('id', 'phone_carrier', 'phone_number', 'email_address', 'otp_secret')
+	__slots__ = ('id', 'phone_carrier', 'phone_number', 'email_address', 'otp_secret', 'last_login', 'name', 'expiration', 'description')
 
 class Visit(RemoteRow):
 	__table__ = 'visits'
 	__xref_attr__ = 'visit'
-	__slots__ = ('id', 'message_id', 'campaign_id', 'visit_count', 'visitor_ip', 'visitor_details', 'first_visit', 'last_visit')
+	__slots__ = ('id', 'message_id', 'campaign_id', 'first_landing_page_id', 'count', 'ip', 'details', 'first_seen', 'last_seen', 'user_agent')
 
 database_table_objects.freeze()
 

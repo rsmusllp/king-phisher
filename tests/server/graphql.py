@@ -44,19 +44,20 @@ class ServerGraphQLTests(KingPhisherTestCase):
 			db_manager.init_database('sqlite://')
 		except Exception as error:
 			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
-		alice = db_models.User(id='alice', otp_secret='secret')
-		calie = db_models.User(id='calie', otp_secret='secret')
+		alice = db_models.User(name='alice', otp_secret='secret')
+		calie = db_models.User(name='calie', otp_secret='secret')
 		session = db_manager.Session()
 		session.add(alice)
 		session.add(calie)
 		session.commit()
+		self.users = {'alice': alice.id, 'calie': calie.id}
 		session.close()
 
 	def test_query_auth_middleware_no_session(self):
 		self._init_db()
 		session = db_manager.Session()
 		result = graphql.schema.execute(
-			"{ db { users { edges { node { id, otpSecret } } } } }",
+			"{ db { users { edges { node { id otpSecret } } } } }",
 			context_value={'session': session}
 		)
 		users = result.data['db']['users']['edges']
@@ -67,14 +68,15 @@ class ServerGraphQLTests(KingPhisherTestCase):
 	def test_query_auth_middleware_session(self):
 		self._init_db()
 		session = db_manager.Session()
-		rpc_session = aaa.AuthenticatedSession('alice')
+		rpc_session = aaa.AuthenticatedSession(self.users['alice'])
 		result = graphql.schema.execute(
-			"{ db { users { edges { node { id, otpSecret } } } } }",
+			"{ db { users { edges { node { id name otpSecret } } } } }",
 			context_value={'rpc_session': rpc_session, 'session': session}
 		)
 		users = result.data['db']['users']['edges']
 		self.assertEquals(len(users), 2)
-		self.assertEquals(users[0]['node']['id'], 'alice')
+		self.assertEquals(users[0]['node']['id'], str(self.users['alice']))
+		self.assertEquals(users[0]['node']['name'], 'alice')
 		self.assertEquals(users[0]['node']['otpSecret'], 'secret')
 		self.assertIsNone(users[1]['node']['otpSecret'])
 

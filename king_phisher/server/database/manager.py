@@ -67,8 +67,8 @@ _flush_signal_map = (
 	('db-session-inserted', 'new'),
 	('db-session-updated', 'dirty')
 )
-_meta_data_namespace = 'metadata'
-_meta_data_serializer = serializers.MsgPack
+_metadata_namespace = 'metadata'
+_metadata_serializer = serializers.MsgPack
 _popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 
 @sqlalchemy.event.listens_for(Session, 'after_flush')
@@ -158,6 +158,30 @@ def import_database(target_file, clear=True):
 	session.commit()
 	kpdb.close()
 
+def get_metadata(key, session=None):
+	"""
+	Store a piece of metadata regarding the King Phisher database.
+
+	:param str key: The name of the data.
+	:param value: The value to store.
+	:type value: int, str
+	:param session: The session to use to store the value.
+	"""
+	if not isinstance(key, str):
+		raise TypeError('key must be a str instance')
+	close_session = session is None
+	session = (session or Session())
+	obj = session.query(models.StorageData).filter_by(namespace=_metadata_namespace, key=key).first()
+	if obj is None:
+		raise KeyError(key)
+	value = obj.value
+	if value is not None:
+		value = _metadata_serializer.loads(value)
+	if close_session:
+		session.commit()
+		session.close()
+	return value
+
 def get_row_by_id(session, table, row_id):
 	"""
 	Retrieve a database row from the specified table by it's unique id.
@@ -181,17 +205,17 @@ def get_schema_version(engine):
 	try:
 		results = engine.execute(
 			sqlalchemy.text("SELECT value FROM storage_data WHERE namespace = :namespace AND key = 'schema_version'"),
-			namespace=_meta_data_namespace
+			namespace=_metadata_namespace
 		).fetchone()
-	except sqlalchemy.exc.ProgrammingError:
+	except sqlalchemy.exc.DatabaseError:
 		pass
 	if results:
-		return _meta_data_serializer.loads(results[0])
+		return _metadata_serializer.loads(results[0])
 
 	# try the old style storage
 	try:
 		results = engine.execute(sqlalchemy.text("SELECT value_type, value FROM meta_data WHERE id = 'schema_version'")).fetchone()
-	except sqlalchemy.exc.ProgrammingError:
+	except sqlalchemy.exc.DatabaseError:
 		pass
 	if results:
 		value_type, value = results
@@ -209,12 +233,15 @@ def set_metadata(key, value, session=None):
 	:type value: int, str
 	:param session: The session to use to store the value.
 	"""
+	if not isinstance(key, str):
+		raise TypeError('key must be a str instance')
 	close_session = session is None
 	session = (session or Session())
-	value = _meta_data_serializer.dumps(value)
-	obj = session.query(models.StorageData).filter_by(namespace=_meta_data_namespace, key=key).first()
+	if value is not None:
+		value = _metadata_serializer.dumps(value)
+	obj = session.query(models.StorageData).filter_by(namespace=_metadata_namespace, key=key).first()
 	if obj is None:
-		obj = models.StorageData(namespace=_meta_data_namespace, key=key)
+		obj = models.StorageData(namespace=_metadata_namespace, key=key)
 	elif obj.value != value:
 		obj.value = value
 		obj.modified = datetime.datetime.utcnow()
