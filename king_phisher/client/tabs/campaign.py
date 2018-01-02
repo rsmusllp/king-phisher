@@ -408,11 +408,11 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 		'Last Hit'
 	)
 	def format_node_data(self, connection):
-		deploy_details = self.rpc.remote_table_row('deaddrop_deployments', connection.deployment_id, cache=True)
-		if not deploy_details:
+		deaddrop_destination = self._get_graphql_deaddrop_deployments(connection.deployment_id)
+		if not deaddrop_destination:
 			return None
 		row = (
-			deploy_details.destination,
+			deaddrop_destination,
 			connection.visit_count,
 			connection.visitor_ip,
 			connection.local_username,
@@ -422,6 +422,17 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			connection.last_visit
 		)
 		return row
+
+	def _get_graphql_deaddrop_deployments(self, deployment_id):
+		results = self.rpc.graphql("""\
+		query getDeaddropDeploymentsDestination($id: String!) {
+			db {
+				deaddropDeployment(id: $id) {
+					destination
+				}
+			}
+		}""", {'id': deployment_id})
+		return results['db']['deaddropDeployment'].get('destination', None)
 
 class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding submitted credentials."""
@@ -570,7 +581,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		"""The loading routine to be executed within a thread."""
 		if not 'campaign_id' in self.config:
 			return
-		if not self.rpc.remote_table_row('campaigns', self.config['campaign_id']):
+		if not self._get_graphql_campaign():
 			return
 		info_cache = {}
 		for graph in self.graphs:
@@ -581,6 +592,17 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			info_cache.update(gui_utilities.glib_idle_add_wait(lambda g=graph: g.refresh(info_cache, self.loader_thread_stop)))
 		else:
 			self.last_load_time = time.time()
+
+	def _get_graphql_campaign(self, campaign_id=None):
+		results = self.rpc.graphql("""\
+		query getCampaign($id: String!) {
+			db {
+				campaign(id: $id) {
+					name
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		return results['db'].get('campaign', None)
 
 class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding incoming visitors."""
