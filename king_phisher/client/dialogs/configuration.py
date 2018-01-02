@@ -182,7 +182,8 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		self.application.rpc(remote_method, self.config['campaign_id'])
 
 	def signal_toggle_reject_after_credentials(self, cbutton):
-		self.application.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
+		max_credentials = (1 if cbutton.get_property('active') else None)
+		self.application.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'max_credentials', max_credentials)
 
 	def signal_changed_spf_check_level(self, combobox):
 		ti = combobox.get_active_iter()
@@ -230,11 +231,11 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
 		if GObject.pygobject_version < (3, 10):
 			cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-			cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['rejectAfterCredentials'])
+			cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['maxCredentials'])
 		else:
 			with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
 				cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-				cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['rejectAfterCredentials'])
+				cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['maxCredentials'])
 		cb_reject_after_creds.set_sensitive(self.config['server_config']['server.require_id'])
 
 	def _get_graphql_campaign(self, campaign_id=None):

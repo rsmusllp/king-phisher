@@ -297,7 +297,7 @@ class DeaddropDeployment(Base):
 
 @register_table
 class DeaddropConnection(Base):
-	__repr_attributes__ = ('campaign_id', 'deployment_id', 'visitor_ip')
+	__repr_attributes__ = ('campaign_id', 'deployment_id', 'ip')
 	__tablename__ = 'deaddrop_connections'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	deployment_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('deaddrop_deployments.id'), nullable=False)

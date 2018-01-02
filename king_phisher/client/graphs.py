@@ -318,6 +318,7 @@ class CampaignGraph(GraphBase):
 		Refresh the graph data by retrieving the information from the
 		remote server.
 
+		:param dict info_cache: An optional cache of data tables.
 		:param stop_event: An optional object indicating that the operation should stop.
 		:type stop_event: :py:class:`threading.Event`
 		:return: A dictionary of cached tables from the server.
@@ -678,8 +679,8 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 		operating_systems = collections.Counter()
 		for visit in visits:
 			user_agent = None
-			if visit['node']['visitorDetails']:
-				user_agent = ua_parser.parse_user_agent(visit['node']['visitorDetails'])
+			if visit['node']['userAgent']:
+				user_agent = ua_parser.parse_user_agent(visit['node']['userAgent'])
 			operating_systems.update([user_agent.os_name if user_agent and user_agent.os_name else 'Unknown OS'])
 
 		os_names = sorted(operating_systems.keys())
@@ -700,7 +701,7 @@ class CampaignGraphVisitorInfoPie(CampaignPieGraph):
 
 		operating_systems = collections.Counter()
 		for visit in visits:
-			ua = ua_parser.parse_user_agent(visit['node']['visitorDetails'])
+			ua = ua_parser.parse_user_agent(visit['node']['userAgent'])
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 		(os_names, count) = tuple(zip(*reversed(sorted(operating_systems.items(), key=lambda item: item[1]))))
 		self.graph_pie(count, labels=tuple("{0:,}".format(os) for os in count), legend_labels=os_names)
@@ -718,7 +719,7 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 		color_line_bg = self.get_color('line_bg', ColorHexCode.WHITE)
 		color_line_fg = self.get_color('line_fg', ColorHexCode.BLACK)
 		visits = info_cache['visits']['edges']
-		first_visits = [utilities.datetime_utc_to_local(visit['node']['firstVisit']) for visit in visits]
+		first_seen_timestamps = [utilities.datetime_utc_to_local(visit['node']['firstSeen']) for visit in visits]
 
 		ax = self.axes[0]
 		ax.tick_params(
@@ -732,15 +733,15 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 		ax.set_ylabel('Number of Visits', color=self.get_color('fg', ColorHexCode.WHITE), size=10)
 		self._ax_hide_ticks(ax)
 		self._ax_set_spine_color(ax, color_bg)
-		if not len(first_visits):
+		if not len(first_seen_timestamps):
 			ax.set_yticks((0,))
 			ax.set_xticks((0,))
 			return
 
-		first_visits.sort()
+		first_seen_timestamps.sort()
 		ax.plot_date(
-			first_visits,
-			range(1, len(first_visits) + 1),
+			first_seen_timestamps,
+			range(1, len(first_seen_timestamps) + 1),
 			'-',
 			color=color_line_fg,
 			linewidth=6
@@ -792,7 +793,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		visits = unique(info_cache['visits']['edges'], key=lambda visit: visit['node']['messageId'])
 		visits = [visit['node'] for visit in visits]
 		cred_ips = set(cred['node']['messageId'] for cred in info_cache['credentials']['edges'])
-		cred_ips = set([visit['visitorIp'] for visit in visits if visit['messageId'] in cred_ips])
+		cred_ips = set([visit['node']['ip'] for visit in visits if visit['node']['messageId'] in cred_ips])
 
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		color_land = self.get_color('map_land', ColorHexCode.GRAY)
@@ -823,6 +824,10 @@ class CampaignGraphVisitsMap(CampaignGraph):
 
 		if not visits:
 			return
+
+		ctr = collections.Counter()
+		ctr.update([visit['node']['ip'] for visit in visits])
+
 		base_markersize = self.markersize_scale
 		base_markersize = max(base_markersize, 3.05)
 		base_markersize = min(base_markersize, 9)
@@ -840,8 +845,9 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			ip_address = visit['visitorIp']
 			geo_locations[ip_address] = geoip.GeoLocation.from_graphql(ip_address, visit['visitorGeoloc'])
 
-		o_high = float(max(ctr.values()))
-		o_low = float(min(ctr.values()))
+	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
+		o_high = float(max(ctr.values())) if ctr else 0.0
+		o_low = float(min(ctr.values())) if ctr else 0.0
 		color_with_creds = self.color_with_creds
 		color_without_creds = self.color_without_creds
 		for visitor_ip, geo_location in geo_locations.items():

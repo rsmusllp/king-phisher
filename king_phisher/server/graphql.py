@@ -186,10 +186,10 @@ class DeaddropConnection(graphene_sqlalchemy.SQLAlchemyObjectType):
 	last_seen = DateTime()
 	visitor_geoloc = graphene.Field(GeoLocation)
 	def resolve_visitor_geoloc(self, info, **kwargs):
-		visitor_ip = self.visitor_ip
-		if not visitor_ip:
+		ip = self.ip
+		if not ip:
 			return
-		return GeoLocation.from_ip_address(visitor_ip)
+		return GeoLocation.from_ip_address(ip)
 
 class DeaddropDeployment(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
@@ -208,10 +208,10 @@ class Visit(graphene_sqlalchemy.SQLAlchemyObjectType):
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
 	def resolve_visitor_geoloc(self, info, **kwargs):
-		visitor_ip = self.visitor_ip
-		if not visitor_ip:
+		ip = self.ip
+		if not ip:
 			return
-		return GeoLocation.from_ip_address(visitor_ip)
+		return GeoLocation.from_ip_address(ip)
 
 class LandingPage(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:

@@ -260,10 +260,10 @@ def _get_graphql_campaignexport(rpc, campaign_id, cursor=None, page=1000):
 							messageId
 							campaignId
 							visitCount
-							visitorIp
+							ip
 							visitorDetails
-							firstVisit
-							lastVisit
+							firstSeen
+							lastSeen
 						}
 					}
 					pageInfo {
@@ -311,12 +311,12 @@ def _get_graphql_campaignexport(rpc, campaign_id, cursor=None, page=1000):
 							deploymentId
 							campaignId
 							visitCount
-							visitorIp
+							ip
 							localUsername
 							localHostname
 							localIpAddresses
-							firstVisit
-							lastVisit
+							firstSeen
+							lastSeen
 						}
 					}
 					pageInfo {
@@ -377,16 +377,16 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	ip_counter = collections.Counter()
 	for visit_node in _get_graphql_campaign_visits(rpc, campaign_id):
 		visit = visit_node['node']
-		ip_counter.update((visit['visitorIp'],))
-		visitor_ip = ipaddress.ip_address(visit['visitorIp'])
+		ip_counter.update((visit['ip'],))
+		visitor_ip = ipaddress.ip_address(visit['ip'])
 		if not isinstance(visitor_ip, ipaddress.IPv4Address):
 			continue
 		if visitor_ip.is_loopback or visitor_ip.is_private:
 			continue
 		if not visitor_ip in ips_for_georesolution:
-			ips_for_georesolution[visitor_ip] = visit['firstVisit']
-		elif ips_for_georesolution[visitor_ip] > visit['firstVisit']:
-			ips_for_georesolution[visitor_ip] = visit['firstVisit']
+			ips_for_georesolution[visitor_ip] = visit['firstSeen']
+		elif ips_for_georesolution[visitor_ip] > visit['firstSeen']:
+			ips_for_georesolution[visitor_ip] = visit['firstSeen']
 	ips_for_georesolution = [ip for (ip, _) in sorted(ips_for_georesolution.items(), key=lambda x: x[1])]
 	locations = {}
 	for ip_addresses in iterutils.chunked(ips_for_georesolution, 50):
@@ -408,8 +408,8 @@ def _get_graphql_campaign_visits(rpc, campaign_id):
 				visits {
 					edges {
 						node {
-							visitorIp
-							firstVisit
+							firstSeen
+							ip
 						}
 					}
 				}

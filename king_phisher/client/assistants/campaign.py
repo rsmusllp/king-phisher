@@ -171,7 +171,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				combobox.set_active_iter(model_iter)
 
 		self.gobjects['checkbutton_alert_subscribe'].set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.campaign_id))
-		self.gobjects['checkbutton_reject_after_credentials'].set_property('active', campaign['rejectAfterCredentials'])
+		self.gobjects['checkbutton_reject_after_credentials'].set_property('active', bool(campaign.max_credentials))
 
 		if campaign['companyId'] is not None:
 			self.gobjects['radiobutton_company_existing'].set_active(True)
@@ -334,7 +334,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		properties['campaign_type_id'] = self._get_tag_from_combobox(self.gobjects['combobox_campaign_type'], 'campaign_types')
 		properties['company_id'] = company_id
 		properties['expiration'] = expiration
-		properties['reject_after_credentials'] = self.gobjects['checkbutton_reject_after_credentials'].get_property('active')
+		properties['max_credentials'] = (1 if self.gobjects['checkbutton_reject_after_credentials'].get_property('active') else None)
 		self.application.rpc('db/table/set', 'campaigns', cid, tuple(properties.keys()), tuple(properties.values()))
 
 		should_subscribe = self.gobjects['checkbutton_alert_subscribe'].get_property('active')

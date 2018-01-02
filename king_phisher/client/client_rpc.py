@@ -275,7 +275,8 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		row_cls = database_table_objects[table]
 		while results:
 			for row in results['rows']:
-				yield row_cls(self, *row)
+				row = dict(zip(results['columns'], row))
+				yield row_cls(self, **row)
 			page += 1
 			if 'page_size' in results and 'total_rows' in results:
 				if results['page_size'] * page >= results['total_rows']:

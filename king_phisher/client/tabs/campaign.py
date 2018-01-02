@@ -366,13 +366,13 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			node: deaddropConnection(id: $id) {
 				id
 				deaddropDeployment { destination }
-				visitCount
-				visitorIp
+				count
+				ip
 				localUsername
 				localHostname
 				localIpAddresses
-				firstVisit
-				lastVisit
+				firstSeen
+				lastSeen
 			}
 		}
 	}
@@ -390,13 +390,13 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 								id
 								destination
 							}
-							visitCount
-							visitorIp
+							count
+							ip
 							localUsername
 							localHostname
 							localIpAddresses
-							firstVisit
-							lastVisit
+							firstSeen
+							lastSeen
 						}
 					}
 					pageInfo {
@@ -424,26 +424,15 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			return None
 		row = (
 			deaddrop_destination,
-			connection['visitCount'],
-			connection['visitorIp'],
+			connection['count'],
+			connection['ip'],
 			connection['localUsername'],
 			connection['localHostname'],
 			connection['localIpAddresses'],
-			connection['firstVisit'],
-			connection['lastVisit']
+			connection['firstSeen'],
+			connection['lastSeen']
 		)
 		return row
-
-	def _get_graphql_deaddrop_deployments(self, deployment_id):
-		results = self.rpc.graphql("""\
-		query getDeaddropDeploymentsDestination($id: String!) {
-			db {
-				deaddropDeployment(id: $id) {
-					destination
-				}
-			}
-		}""", {'id': deployment_id})
-		return results['db']['deaddropDeployment'].get('destination', None)
 
 class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding submitted credentials."""
@@ -625,12 +614,12 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 			node: visit(id: $id) {
 				id
 				message { targetEmail }
-				visitorIp
-				visitCount
-				visitorDetails
+				ip
+				count
+				userAgent
 				visitorGeoloc { city }
-				firstVisit
-				lastVisit
+				firstSeen
+				lastSeen
 			}
 		}
 	}
@@ -645,12 +634,12 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 						node {
 							id
 							message { targetEmail }
-							visitorIp
-							visitCount
-							visitorDetails
+							ip
+							count
+							userAgent
 							visitorGeoloc { city }
-							firstVisit
-							lastVisit
+							firstSeen
+							lastSeen
 						}
 					}
 					pageInfo {
@@ -677,7 +666,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	)
 	def format_node_data(self, node):
 		geo_location = UNKNOWN_LOCATION_STRING
-		visitor_ip = node['visitorIp']
+		visitor_ip = node['ip']
 		if visitor_ip is None:
 			visitor_ip = ''
 		else:
@@ -693,11 +682,11 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		row = (
 			node['message']['targetEmail'],
 			str(visitor_ip),
-			node['visitCount'],
-			node['visitorDetails'],
+			node['count'],
+			node['userAgent'],
 			geo_location,
-			node['firstVisit'],
-			node['lastVisit']
+			node['firstSeen'],
+			node['lastSeen']
 		)
 		return row
 
