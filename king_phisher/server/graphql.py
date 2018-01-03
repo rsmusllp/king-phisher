@@ -30,8 +30,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import absolute_import
+
 import datetime
 import functools
+import operator
 
 import king_phisher.geoip as geoip
 import king_phisher.ipaddress as ipaddress
@@ -42,13 +45,67 @@ import graphene
 import graphene.relay.connection
 import graphene.types
 import graphene.types.utils
-import graphql_relay.connection.arrayconnection
 import graphene_sqlalchemy
+import graphql.language.ast
+import graphql_relay.connection.arrayconnection
+import smoke_zephyr.utilities
 import sqlalchemy.orm.query
 
+# replacement graphql scalars
+class AnyScalar(graphene.types.Scalar):
+	@staticmethod
+	def serialize(dt):
+		raise NotImplementedError()
+
+	@staticmethod
+	def parse_literal(node):
+		if isinstance(node, graphql.language.ast.FloatValue):
+			return float(node.value)
+		if isinstance(node, graphql.language.ast.IntValue):
+			return int(node.value)
+		return node.value
+
+	@staticmethod
+	def parse_value(value):
+		return value
+
+class DateTimeScalar(graphene.types.Scalar):
+	@staticmethod
+	def serialize(dt):
+		return dt
+
+	@staticmethod
+	def parse_literal(node):
+		if isinstance(node, graphql.language.ast.StringValue):
+			return datetime.datetime.strptime(node.value, '%Y-%m-%dT%H:%M:%S.%f')
+
+	@staticmethod
+	def parse_value(value):
+		return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
+
+# misc definitions
+class RelayNode(graphene.relay.Node):
+	@classmethod
+	def from_global_id(cls, global_id):
+		return global_id
+
+	@classmethod
+	def to_global_id(cls, _, local_id):
+		return local_id
+
+class FilterInput(graphene.InputObjectType):
+	AND = graphene.List('king_phisher.server.graphql.FilterInput', name='and')
+	OR = graphene.List('king_phisher.server.graphql.FilterInput', name='or')
+	field = graphene.String()
+	value = AnyScalar()
+	operator = graphene.String()
+
+# custom sqlalchemy related objects
 class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 	__connection_types = {}
 	def __init__(self, node, *args, **kwargs):
+		if 'filter' not in kwargs:
+			kwargs['filter'] = FilterInput()
 		node = self.connection_factory(node)
 		super(SQLAlchemyConnectionField, self).__init__(node, *args, **kwargs)
 
@@ -91,6 +148,50 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 		connection.length = _len
 		return connection
 
+	@classmethod
+	def _filter_query(cls, model, gql_filter):
+		# precedence: AND, OR, field
+		sql_filter = None
+		if gql_filter.get('AND'):
+			sql_filter = sqlalchemy.and_(*cls._filter_query_list(model, gql_filter['AND']))
+		if gql_filter.get('OR'):
+			if sql_filter is not None:
+				raise ValueError('the \'and\', \'or\', and \'field\' filter operators are mutually exclusive')
+			sql_filter = sqlalchemy.or_(*cls._filter_query_list(model, gql_filter['OR']))
+
+		if gql_filter.get('field'):
+			if sql_filter is not None:
+				raise ValueError('the \'and\', \'or\', and \'field\' filter operators are mutually exclusive')
+			operator_name = gql_filter.get('operator', 'eq')
+			if operator_name not in ('eq', 'ge', 'gt', 'le', 'lt', 'ne'):
+				raise ValueError('invalid operator: ' + operator_name)
+			comparison_operator = getattr(operator, operator_name)
+			gql_field = gql_filter['field']
+			sql_field = smoke_zephyr.utilities.parse_case_camel_to_snake(gql_field)
+			if '_' in gql_field or sql_field not in model.columns():
+				raise ValueError('invalid filter field: ' + gql_field)
+			sql_filter = comparison_operator(getattr(model, sql_field), gql_filter.get('value', None))
+		return sql_filter
+
+	@classmethod
+	def _filter_query_list(cls, model, gql_filters):
+		return [cls._filter_query(model, gql_filter) for gql_filter in gql_filters]
+
+	@classmethod
+	def filter_query(cls, model, query, gql_filter):
+		sql_filter = cls._filter_query(model, gql_filter)
+		if sql_filter is not None:
+			query = query.filter(sql_filter)
+		return query
+
+	@classmethod
+	def get_query(cls, model, info, **kwargs):
+		query = super(SQLAlchemyConnectionField, cls).get_query(model, info, **kwargs)
+		query_filter = kwargs.pop('filter', None)
+		if query_filter:
+			query = cls.filter_query(model, query, query_filter)
+		return query
+
 	@property
 	def type(self):
 		# this is to bypass the one from
@@ -107,30 +208,6 @@ class SQLAlchemyObjectType(graphene_sqlalchemy.SQLAlchemyObjectType):
 		for field, value in kwargs.items():
 			query = query.filter(getattr(model, field) == value)
 		return query
-
-# replacement graphql types
-class DateTime(graphene.types.Scalar):
-	@staticmethod
-	def serialize(dt):
-		return dt
-
-	@staticmethod
-	def parse_literal(node):
-		if isinstance(node, graphene.language.ast.StringValue):
-			return datetime.datetime.strptime(node.value, '%Y-%m-%dT%H:%M:%S.%f')
-
-	@staticmethod
-	def parse_value(value):
-		return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
-
-class RelayNode(graphene.relay.Node):
-	@classmethod
-	def from_global_id(cls, global_id):
-		return global_id
-
-	@classmethod
-	def to_global_id(cls, _, local_id):
-		return local_id
 
 # misc graphql objects
 class GeoLocation(graphene.ObjectType):
@@ -182,21 +259,21 @@ class AlertSubscription(SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.AlertSubscription
 		interfaces = (RelayNode,)
-	expiration = DateTime()
+	expiration = DateTimeScalar()
 	has_expired = graphene.Boolean()
 
 class Credential(SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.Credential
 		interfaces = (RelayNode,)
-	submitted = DateTime()
+	submitted = DateTimeScalar()
 
 class DeaddropConnection(SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.DeaddropConnection
 		interfaces = (RelayNode,)
-	first_seen = DateTime()
-	last_seen = DateTime()
+	first_seen = DateTimeScalar()
+	last_seen = DateTimeScalar()
 	visitor_geoloc = graphene.Field(GeoLocation)
 	def resolve_visitor_geoloc(self, info, **kwargs):
 		ip = self.ip
@@ -215,8 +292,8 @@ class Visit(SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.Visit
 		interfaces = (RelayNode,)
-	first_seen = DateTime()
-	last_seen = DateTime()
+	first_seen = DateTimeScalar()
+	last_seen = DateTimeScalar()
 	visitor_geoloc = graphene.Field(GeoLocation)
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
@@ -236,10 +313,10 @@ class Message(SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.Message
 		interfaces = (RelayNode,)
-	opened = DateTime()
+	opened = DateTimeScalar()
 	opener_geoloc = graphene.Field(GeoLocation)
-	reported = DateTime()
-	sent = DateTime()
+	reported = DateTimeScalar()
+	sent = DateTimeScalar()
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
 	visits = SQLAlchemyConnectionField(Visit)
@@ -253,8 +330,8 @@ class Campaign(SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.Campaign
 		interfaces = (RelayNode,)
-	created = DateTime()
-	expiration = DateTime()
+	created = DateTimeScalar()
+	expiration = DateTimeScalar()
 	has_expired = graphene.Boolean()
 	# relationships
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
@@ -297,9 +374,9 @@ class User(SQLAlchemyObjectType):
 	class Meta:
 		model = db_models.User
 		interfaces = (RelayNode,)
-	expiration = DateTime()
+	expiration = DateTimeScalar()
 	has_expired = graphene.Boolean()
-	last_login = DateTime()
+	last_login = DateTimeScalar()
 	# relationships
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
 	campaigns = SQLAlchemyConnectionField(Campaign)

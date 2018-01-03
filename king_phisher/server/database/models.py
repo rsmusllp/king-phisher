@@ -90,7 +90,7 @@ def register_table(table):
 
 	:param cls table: The table to register.
 	"""
-	columns = tuple(col.name for col in table.__table__.columns)
+	columns = tuple(col.name for col in table.columns())
 	database_tables[table.__tablename__] = columns
 	database_table_objects[table.__tablename__] = table
 
@@ -176,6 +176,10 @@ class BaseRowCls(object):
 			return False
 		return True
 
+	@classmethod
+	def columns(cls):
+		return cls.__table__.columns
+
 Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
 metadata = Base.metadata
 
@@ -197,7 +201,7 @@ class TagMixIn(object):
 	description = sqlalchemy.Column(sqlalchemy.String)
 
 @register_table
-class AlertSubscription(Base, ExpireMixIn):
+class AlertSubscription(ExpireMixIn, Base):
 	__repr_attributes__ = ('campaign_id', 'user_id')
 	__tablename__ = 'alert_subscriptions'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -227,7 +231,7 @@ class AuthenticatedSession(Base):
 	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 
 @register_table
-class Campaign(Base, ExpireMixIn):
+class Campaign(ExpireMixIn, Base):
 	__repr_attributes__ = ('name',)
 	__tablename__ = 'campaigns'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -362,7 +366,7 @@ class Message(Base):
 	visits = sqlalchemy.orm.relationship('Visit', backref='message', cascade='all, delete-orphan')
 
 @register_table
-class User(Base, ExpireMixIn):
+class User(ExpireMixIn, Base):
 	__repr_attributes__ = ('name',)
 	__tablename__ = 'users'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
