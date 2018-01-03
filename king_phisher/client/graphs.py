@@ -317,7 +317,6 @@ class CampaignGraph(GraphBase):
 		Refresh the graph data by retrieving the information from the
 		remote server.
 
-		:param dict info_cache: An optional cache of data tables.
 		:param stop_event: An optional object indicating that the operation should stop.
 		:type stop_event: :py:class:`threading.Event`
 		:return: A dictionary of cached tables from the server.
@@ -326,14 +325,10 @@ class CampaignGraph(GraphBase):
 		info_cache = (info_cache or {})
 		if not self.rpc:
 			return info_cache
-		for table in self.table_subscriptions:
-			if stop_event and stop_event.is_set():
-				return info_cache
-			if not table in info_cache:
-				query_filter = None
-				if 'campaign_id' in client_rpc.database_table_objects[table].__slots__:
-					query_filter = {'campaign_id': self.config['campaign_id']}
-				info_cache[table] = tuple(self.rpc.remote_table(table, query_filter=query_filter))
+		if stop_event and stop_event.is_set():
+			return info_cache
+		if not info_cache:
+			info_cache = self._get_graphql_campaign_cache(self.config['campaign_id'])
 		for ax in self.axes:
 			ax.clear()
 		if self._legend is not None:
@@ -348,6 +343,95 @@ class CampaignGraph(GraphBase):
 			y=0.97
 		)
 		self.canvas.draw()
+		return info_cache
+
+	def _get_graphql_company_departments(self):
+		results = self.rpc.graphql("""\
+		query getCompanyDepartments {
+			db {
+				companyDepartments {
+					edges {
+						node {
+							id
+							name
+						}
+					}
+				}
+			}
+		}""")
+		return results['db']['companyDepartments']
+
+	def _get_graphql_campaign_cache(self, campaign_id):
+		options = {'campaign': campaign_id}
+		results = self.rpc.graphql("""\
+		query getCampaignGraphing($campaign: String!) {
+			db {
+				campaign(id: $campaign) {
+					name
+					description
+					expiration
+					messages {
+						total
+						edges {
+							node {
+								id
+								targetEmail
+								firstName
+								lastName
+								opened
+								openerIp
+								openerUserAgent
+								sent
+								trained
+								companyDepartmentId
+							}
+						}
+					}
+					visits {
+						total
+						edges {
+							node {
+								id
+								messageId
+								campaignId
+								visitCount
+								visitorIp
+								visitorDetails
+								firstVisit
+								lastVisit
+							}
+						}
+					}
+					credentials {
+						total
+						edges {
+							node {
+								id
+								visitId
+								messageId
+								campaignId
+								username
+								password
+								submitted
+							}
+						}
+					}
+				}
+			}
+		}""", options)
+
+		info_cache = {
+			'campaign': {
+				'name': results['db']['campaign']['name'],
+				'description': results['db']['campaign']['description'],
+				'expiration': results['db']['campaign']['expiration'],
+			},
+			'messages': results['db']['campaign']['messages'],
+			'visits': results['db']['campaign']['visits'],
+			'credentials': results['db']['campaign']['credentials'],
+			'companyDepartments': self._get_graphql_company_departments()
+		}
+
 		return info_cache
 
 class CampaignBarGraph(CampaignGraph):
@@ -503,25 +587,26 @@ class CampaignGraphDepartmentComparison(CampaignBarGraph):
 	table_subscriptions = ('company_departments', 'messages', 'visits')
 	yticklabel_fmt = "{0:.01f}%"
 	def _load_graph(self, info_cache):
-		departments = info_cache['company_departments']
-		departments = dict((department.id, department.name) for department in departments)
+		campaign_id = self.config['campaign_id']
+		departments = info_cache['companyDepartments']
+		departments = dict((department['node']['id'], department['node']['name']) for department in departments['edges'])
 
 		messages = info_cache['messages']
-		message_departments = dict((message.id, departments[message.company_department_id]) for message in messages if message.company_department_id is not None)
+		message_departments = dict((message['node']['id'], departments.get(str(message['node'].get('companyDepartmentId')))) for message in messages['edges'] if message['node']['companyDepartmentId'] is not None)
 		if not len(message_departments):
 			self._graph_null_bar('')
 			return
-		messages = [message for message in messages if message.id in message_departments]
+		messages = [message['node'] for message in messages['edges'] if message['node']['id'] in message_departments]
 
 		visits = info_cache['visits']
-		visits = [visit for visit in visits if visit.message_id in message_departments]
-		visits = unique(visits, key=lambda visit: visit.message_id)
+		visits = [visit['node'] for visit in visits['edges'] if visit['node']['messageId'] in message_departments]
+		visits = unique(visits, key=lambda visit: visit['messageId'])
 
 		department_visits = collections.Counter()
-		department_visits.update(message_departments[visit.message_id] for visit in visits)
+		department_visits.update(message_departments[visit['messageId']] for visit in visits)
 
 		department_totals = collections.Counter()
-		department_totals.update(message_departments[message.id] for message in messages)
+		department_totals.update(message_departments[message['id']] for message in messages)
 
 		department_scores = dict((department, (float(department_visits[department]) / float(total)) * 100) for department, total in department_totals.items())
 		department_scores = sorted(department_scores.items(), key=lambda x: (x[1], x[0]), reverse=True)
@@ -538,20 +623,20 @@ class CampaignGraphOverview(CampaignBarGraph):
 	name_human = 'Bar - Campaign Overview'
 	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
-		rpc = self.rpc
-		visits = info_cache['visits']
-		creds = info_cache['credentials']
-		messages_count = rpc('db/table/count', 'messages', query_filter={'campaign_id': self.config['campaign_id']})
-		messages_not_opened = rpc('db/table/count', 'messages', query_filter={'campaign_id': self.config['campaign_id'], 'opened': None})
+		visits = info_cache['visits']['edges']
+		creds = info_cache['credentials']['edges']
+		messages = info_cache['messages']
+		messages_count = messages['total']
+		messages_opened = [message['node'] for message in messages['edges'] if message['node']['opened'] is not None]
 
 		bars = []
 		bars.append(messages_count)
-		bars.append(messages_count - messages_not_opened)
+		bars.append(len(messages_opened))
 		bars.append(len(visits))
-		bars.append(len(unique(visits, key=lambda visit: visit.message_id)))
+		bars.append(len(unique(visits, key=lambda visit: visit['node']['messageId'])))
 		if len(creds):
 			bars.append(len(creds))
-			bars.append(len(unique(creds, key=lambda cred: cred.message_id)))
+			bars.append(len(unique(creds, key=lambda cred: cred['node']['messageId'])))
 		yticklabels = ('Messages', 'Opened', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')
 		self.graph_bar(bars, len(yticklabels), yticklabels[:len(bars)])
 		return
@@ -563,13 +648,13 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 	name_human = 'Bar - Visitor OS Information'
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
-		visits = info_cache['visits']
+		visits = info_cache['visits']['edges']
 
 		operating_systems = collections.Counter()
 		for visit in visits:
 			user_agent = None
-			if visit.visitor_details:
-				user_agent = ua_parser.parse_user_agent(visit.visitor_details)
+			if visit['node']['visitorDetails']:
+				user_agent = ua_parser.parse_user_agent(visit['node']['visitorDetails'])
 			operating_systems.update([user_agent.os_name if user_agent and user_agent.os_name else 'Unknown OS'])
 
 		os_names = sorted(operating_systems.keys())
@@ -584,14 +669,14 @@ class CampaignGraphVisitorInfoPie(CampaignPieGraph):
 	name_human = 'Pie - Visitor OS Information'
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
-		visits = info_cache['visits']
+		visits = info_cache['visits']['edges']
 		if not len(visits):
 			self._graph_null_pie('No Visitor Information')
 			return
 
 		operating_systems = collections.Counter()
 		for visit in visits:
-			ua = ua_parser.parse_user_agent(visit.visitor_details)
+			ua = ua_parser.parse_user_agent(visit['node']['visitorDetails'])
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 		(os_names, count) = tuple(zip(*reversed(sorted(operating_systems.items(), key=lambda item: item[1]))))
 		self.graph_pie(count, labels=tuple("{0:,}".format(os) for os in count), legend_labels=os_names)
@@ -609,8 +694,8 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		color_line_bg = self.get_color('line_bg', ColorHexCode.WHITE)
 		color_line_fg = self.get_color('line_fg', ColorHexCode.BLACK)
-		visits = info_cache['visits']
-		first_visits = [utilities.datetime_utc_to_local(visit.first_visit) for visit in visits]
+		visits = info_cache['visits']['edges']
+		first_visits = [utilities.datetime_utc_to_local(visit['node']['firstVisit']) for visit in visits]
 
 		ax = self.axes[0]
 		ax.tick_params(
@@ -652,13 +737,13 @@ class CampaignGraphMessageResults(CampaignPieGraph):
 	name_human = 'Pie - Message Results'
 	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
-		rpc = self.rpc
-		messages_count = rpc('db/table/count', 'messages', query_filter={'campaign_id': self.config['campaign_id']})
+		messages = info_cache['messages']
+		messages_count = messages['total']
 		if not messages_count:
 			self._graph_null_pie('No Messages Sent')
 			return
-		visits_count = len(unique(info_cache['visits'], key=lambda visit: visit.message_id))
-		credentials_count = len(unique(info_cache['credentials'], key=lambda cred: cred.message_id))
+		visits_count = len(unique(info_cache['visits']['edges'], key=lambda visit: visit['node']['messageId']))
+		credentials_count = len(unique(info_cache['credentials']['edges'], key=lambda cred: cred['node']['messageId']))
 
 		if not credentials_count <= visits_count <= messages_count:
 			raise ValueError('credential visit and message counts are inconsistent')
@@ -683,9 +768,9 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	is_available = has_matplotlib_basemap
 	draw_states = False
 	def _load_graph(self, info_cache):
-		visits = unique(info_cache['visits'], key=lambda visit: visit.message_id)
-		cred_ips = set(cred.message_id for cred in info_cache['credentials'])
-		cred_ips = set([visit.visitor_ip for visit in visits if visit.message_id in cred_ips])
+		visits = unique(info_cache['visits']['edges'], key=lambda visit: visit['node']['messageId'])
+		cred_ips = set(cred['node']['messageId'] for cred in info_cache['credentials']['edges'])
+		cred_ips = set([visit['node']['visitorIp'] for visit in visits if visit['node']['messageId'] in cred_ips])
 
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		color_land = self.get_color('map_land', ColorHexCode.GRAY)
@@ -718,7 +803,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			return
 
 		ctr = collections.Counter()
-		ctr.update([visit.visitor_ip for visit in visits])
+		ctr.update([visit['node']['visitorIp'] for visit in visits])
 
 		base_markersize = self.markersize_scale
 		base_markersize = max(base_markersize, 3.05)
@@ -802,7 +887,7 @@ class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 	name_human = 'Pie - Password Complexity'
 	table_subscriptions = ('credentials',)
 	def _load_graph(self, info_cache):
-		passwords = set(cred.password for cred in info_cache['credentials'])
+		passwords = set(cred['node']['password'] for cred in info_cache['credentials']['edges'])
 		if not len(passwords):
 			self._graph_null_pie('No Credential Information')
 			return
@@ -893,7 +978,7 @@ class CampaignCompGraph(GraphBase):
 
 		ax.grid(True)
 		ax.set_xticks(range(len(campaigns)))
-		ax.set_xticklabels([ellipsize(rpc.remote_table_row('campaigns', cid).name) for cid in campaigns])
+		ax.set_xticklabels([ellipsize(self._get_graphql_campaign_name(cid)) for cid in campaigns])
 		for tick in ax.xaxis.get_major_ticks():
 			tick.label.set_fontsize(self.markersize_scale * 1.25)
 		labels = ax.get_xticklabels()
@@ -933,6 +1018,17 @@ class CampaignCompGraph(GraphBase):
 		)
 		self.add_legend_patch(legend_patch)
 		pyplot.tight_layout()
+
+	def _get_graphql_campaign_name(self, campaign_id=None):
+		results = self.rpc.graphql("""\
+		query getCampaignName($id: String!) {
+			db {
+				campaign(id: $id) {
+					name
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		return results['db']['campaign']['name']
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
 		if self._legend is not None:
