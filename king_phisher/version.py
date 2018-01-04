@@ -78,13 +78,14 @@ distutils_version = version
 
 if version_label:
 	version += '-' + version_label
-	if revision:
-		version += " (rev: {0})".format(revision[:12])
 	distutils_version += version_label[0]
 	if version_label[-1].isdigit():
 		distutils_version += version_label[-1]
 	else:
 		distutils_version += '0'
+
+if revision:
+	version += " (rev: {0})".format(revision[:12])
 
 rpc_api_version = collections.namedtuple('rpc_api_version', ('major', 'minor'))(5, 5)
 """
