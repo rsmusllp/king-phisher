@@ -49,6 +49,7 @@ import graphene_sqlalchemy
 import graphql.language.ast
 import graphql_relay.connection.arrayconnection
 import smoke_zephyr.utilities
+import sqlalchemy.orm
 import sqlalchemy.orm.query
 
 # replacement graphql scalars
@@ -187,6 +188,7 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 	@classmethod
 	def get_query(cls, model, info, **kwargs):
 		query = super(SQLAlchemyConnectionField, cls).get_query(model, info, **kwargs)
+		query = query.options(sqlalchemy.orm.lazyload('*'))
 		query_filter = kwargs.pop('filter', None)
 		if query_filter:
 			query = cls.filter_query(model, query, query_filter)
@@ -201,9 +203,11 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 class SQLAlchemyObjectType(graphene_sqlalchemy.SQLAlchemyObjectType):
 	class Meta:
 		abstract = True
+
 	@classmethod
 	def get_query(cls, info, **kwargs):
-		query = super(SQLAlchemyObjectType, cls).get_query(info)
+		query = super(SQLAlchemyObjectType, cls).get_query(info, **kwargs)
+		query = query.options(sqlalchemy.orm.lazyload('*'))
 		model = cls._meta.model
 		for field, value in kwargs.items():
 			query = query.filter(getattr(model, field) == value)
