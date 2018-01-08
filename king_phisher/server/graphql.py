@@ -101,6 +101,14 @@ class FilterInput(graphene.InputObjectType):
 	value = AnyScalar()
 	operator = graphene.String()
 
+def sa_object_resolver(attname, default_value, model, info, **kwargs):
+	mapper = sqlalchemy.inspect(model.__class__)
+	if attname in mapper.relationships:
+		return db_models.get_relationship_query(info.context['session'], model, attname)
+	return getattr(model, attname)
+
+sa_object_meta = functools.partial(dict, default_resolver=sa_object_resolver, interfaces=(RelayNode,))
+
 # custom sqlalchemy related objects
 class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 	__connection_types = {}
@@ -131,7 +139,10 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 		iterable = resolver(root, info, **kwargs)
 		if iterable is None:
 			iterable = cls.get_query(model, info, **kwargs)
-		if isinstance(iterable, sqlalchemy.orm.query.Query):
+			_len = iterable.count()
+		elif isinstance(iterable, sqlalchemy.orm.query.Query):
+			if kwargs.get('filter'):
+				iterable = cls.filter_query(model, iterable, kwargs['filter'])
 			_len = iterable.count()
 		else:
 			_len = len(iterable)
@@ -188,10 +199,9 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 	@classmethod
 	def get_query(cls, model, info, **kwargs):
 		query = super(SQLAlchemyConnectionField, cls).get_query(model, info, **kwargs)
-		query = query.options(sqlalchemy.orm.lazyload('*'))
-		query_filter = kwargs.pop('filter', None)
-		if query_filter:
-			query = cls.filter_query(model, query, query_filter)
+		query = query.options(sqlalchemy.orm.raiseload('*'))
+		if kwargs.get('filter'):
+			query = cls.filter_query(model, query, kwargs['filter'])
 		return query
 
 	@property
@@ -207,7 +217,7 @@ class SQLAlchemyObjectType(graphene_sqlalchemy.SQLAlchemyObjectType):
 	@classmethod
 	def get_query(cls, info, **kwargs):
 		query = super(SQLAlchemyObjectType, cls).get_query(info, **kwargs)
-		query = query.options(sqlalchemy.orm.lazyload('*'))
+		query = query.options(sqlalchemy.orm.raiseload('*'))
 		model = cls._meta.model
 		for field, value in kwargs.items():
 			query = query.filter(getattr(model, field) == value)
@@ -260,22 +270,16 @@ class PluginConnection(graphene.relay.Connection):
 
 # database graphql objects
 class AlertSubscription(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.AlertSubscription
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.AlertSubscription)
 	expiration = DateTimeScalar()
 	has_expired = graphene.Boolean()
 
 class Credential(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.Credential
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.Credential)
 	submitted = DateTimeScalar()
 
 class DeaddropConnection(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.DeaddropConnection
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.DeaddropConnection)
 	first_seen = DateTimeScalar()
 	last_seen = DateTimeScalar()
 	visitor_geoloc = graphene.Field(GeoLocation)
@@ -286,16 +290,12 @@ class DeaddropConnection(SQLAlchemyObjectType):
 		return GeoLocation.from_ip_address(ip)
 
 class DeaddropDeployment(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.DeaddropDeployment
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.DeaddropDeployment)
 	# relationships
 	deaddrop_connections = SQLAlchemyConnectionField(DeaddropConnection)
 
 class Visit(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.Visit
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.Visit)
 	first_seen = DateTimeScalar()
 	last_seen = DateTimeScalar()
 	visitor_geoloc = graphene.Field(GeoLocation)
@@ -308,15 +308,11 @@ class Visit(SQLAlchemyObjectType):
 		return GeoLocation.from_ip_address(ip)
 
 class LandingPage(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.LandingPage
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.LandingPage)
 	first_visits = SQLAlchemyConnectionField(Visit)
 
 class Message(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.Message
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.Message)
 	opened = DateTimeScalar()
 	opener_geoloc = graphene.Field(GeoLocation)
 	reported = DateTimeScalar()
@@ -331,9 +327,7 @@ class Message(SQLAlchemyObjectType):
 		return GeoLocation.from_ip_address(opener_ip)
 
 class Campaign(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.Campaign
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.Campaign)
 	created = DateTimeScalar()
 	expiration = DateTimeScalar()
 	has_expired = graphene.Boolean()
@@ -347,37 +341,27 @@ class Campaign(SQLAlchemyObjectType):
 	visits = SQLAlchemyConnectionField(Visit)
 
 class CampaignType(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.CampaignType
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.CampaignType)
 	# relationships
 	campaigns = SQLAlchemyConnectionField(Campaign)
 
 class Company(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.Company
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.Company)
 	# relationships
 	campaigns = SQLAlchemyConnectionField(Campaign)
 
 class CompanyDepartment(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.CompanyDepartment
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.CompanyDepartment)
 	# relationships
 	messages = SQLAlchemyConnectionField(Message)
 
 class Industry(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.Industry
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.Industry)
 	# relationships
 	companies = SQLAlchemyConnectionField(Company)
 
 class User(SQLAlchemyObjectType):
-	class Meta:
-		model = db_models.User
-		interfaces = (RelayNode,)
+	Meta = sa_object_meta(model=db_models.User)
 	expiration = DateTimeScalar()
 	has_expired = graphene.Boolean()
 	last_login = DateTimeScalar()
