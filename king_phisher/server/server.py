@@ -768,20 +768,21 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			message.opener_ip = self.get_client_ip()
 			message.opener_user_agent = self.headers.get('user-agent', None)
 
+		query = session.query(db_models.LandingPage)
+		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
+		landing_page = query.first()
+
 		set_new_visit = True
 		visit_id = None
-		landing_page = None
 		if self.visit_id:
 			visit_id = self.visit_id
 			set_new_visit = False
-			query = session.query(db_models.LandingPage)
-			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
-			landing_page = query.first()
 			if landing_page:
 				visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
 				if visit.message_id == self.message_id:
 					visit.count += 1
 					visit.last_seen = db_models.current_timestamp()
+					session.commit()
 				else:
 					set_new_visit = True
 					visit_id = None
@@ -789,7 +790,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if visit_id is None:
 			visit_id = utilities.make_visit_uid()
 
-		if set_new_visit:
+		if landing_page and set_new_visit:
 			kp_cookie_name = self.config.get('server.cookie_name')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
 			self.send_header('Set-Cookie', cookie)
@@ -798,19 +799,17 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			visit.first_landing_page_id = landing_page.id
 			visit.user_agent = self.headers.get('user-agent', '')
 			session.add(visit)
+			session.commit()
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
 				self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'visits', visit_count))
 			signals.send_safe('visit-received', self.logger, self)
 
-		if visit_id is None:
-			self.logger.error('the visit id has not been set')
-			raise RuntimeError('the visit id has not been set')
 		self._handle_page_visit_creds(session, visit_id)
 		trained = self.get_query('trained')
 		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
 			message.trained = True
-		session.commit()
+			session.commit()
 		session.close()
 
 	def _handle_page_visit_creds(self, session, visit_id):
@@ -825,6 +824,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			cred.username = username
 			cred.password = password
 			session.add(cred)
+			session.commit()
 			campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 			cred_count = len(campaign.credentials)
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):

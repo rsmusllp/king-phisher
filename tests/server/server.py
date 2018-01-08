@@ -155,12 +155,12 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 	def step_5_get_repeat_visit(self):
 		# simulate a user returning to the landing page without specifying the message id in the parameters
 		visit = self.rpc.remote_table_row('visits', self.visit_id)
-		visit_count = visit.visit_count
+		visit_count = visit.count
 		self.headers = {'Cookie': "{0}={1}".format(self.config.get('server.cookie_name'), self.visit_id)}
 		response = self.http_request('/' + self.landing_page, include_id=False, headers=self.headers)
 		self.assertHTTPStatus(response, 200)
 		visit = self.rpc.remote_table_row('visits', self.visit_id)
-		self.assertEqual(visit.visit_count, visit_count + 1)
+		self.assertEqual(visit.count, visit_count + 1)
 
 	def step_6_get_new_message_visit(self):
 		# simulate a user who has already been issued a visit id in a cookie clicking a link in a new message
