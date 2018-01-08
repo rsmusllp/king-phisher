@@ -52,6 +52,28 @@ import smoke_zephyr.utilities
 import sqlalchemy.orm
 import sqlalchemy.orm.query
 
+# authorization middlware
+class AuthorizationMiddleware(object):
+	"""
+	An authorization provider to ensure that the permissions on the objects
+	that are queried are respected. If no **rpc_session** key is provided in
+	the **context** dictionary then no authorization checks can be performed
+	and all objects and operations will be accessible. The **rpc_session**
+	key's value must be an instance of :py:class:`~.AuthenticatedSession`.
+	"""
+	def resolve(self, next_, root, info, **kwargs):
+		if isinstance(root, db_models.Base) and not self.info_has_read_prop_access(info, root, instance=root):
+			return
+		return next_(root, info, **kwargs)
+
+	@classmethod
+	def info_has_read_prop_access(cls, info, model, field_name=None, instance=None):
+		rpc_session = info.context.get('rpc_session')
+		if rpc_session is None:
+			return True
+		field_name = field_name or info.field_name
+		return model.session_has_read_prop_access(rpc_session, field_name, instance=instance)
+
 # replacement graphql scalars
 class AnyScalar(graphene.types.Scalar):
 	@staticmethod
@@ -137,15 +159,6 @@ def sa_object_resolver(attname, default_value, model, info, **kwargs):
 
 sa_object_meta = functools.partial(dict, default_resolver=sa_object_resolver, interfaces=(RelayNode,))
 
-#def has_read_prop_access(model, info, field_name):
-#	rpc_session = info.context.get('rpc_session')
-#	if rpc_session is None:
-#		return True
-#	result = model.session_has_read_prop_access(rpc_session, field_name)
-#	if not result:
-#		print('\n!!!NO READ PROP ACCESS!!!\n\n')
-#	return result
-
 # custom sqlalchemy related objects
 class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 	__connection_types = {}
@@ -227,13 +240,13 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 			sql_field = smoke_zephyr.utilities.parse_case_camel_to_snake(gql_field)
 			if '_' in gql_field or sql_field not in model.columns():
 				raise ValueError('invalid filter field: ' + gql_field)
-			#if has_read_prop_access(model, info, sql_field):
-			#	sql_filter = comparison_operator(getattr(model, sql_field), gql_filter.get('value', None))
+			if AuthorizationMiddleware.info_has_read_prop_access(info, model, sql_field):
+				sql_filter = comparison_operator(getattr(model, sql_field), gql_filter.get('value', None))
 		return sql_filter
 
 	@classmethod
-	def _query_filter_list(cls, model, gql_filters):
-		query_filter_list = [cls.__query_filter(model, gql_filter) for gql_filter in gql_filters]
+	def _query_filter_list(cls, model, info, gql_filters):
+		query_filter_list = [cls.__query_filter(model, info, gql_filter) for gql_filter in gql_filters]
 		return [query_filter for query_filter in query_filter_list if query_filter is not None]
 
 	@classmethod
@@ -244,8 +257,8 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 			sql_field = smoke_zephyr.utilities.parse_case_camel_to_snake(gql_field)
 			if '_' in gql_field or sql_field not in model.columns():
 				raise ValueError('invalid sort field: ' + gql_field)
-			#if not has_read_prop_access(model, info, sql_field):
-			#	continue
+			if not AuthorizationMiddleware.info_has_read_prop_access(info, model, sql_field):
+				continue
 			if direction == 'aesc':
 				field = getattr(model, sql_field)
 			elif direction == 'desc':
@@ -532,21 +545,6 @@ class Query(graphene.ObjectType):
 
 	def resolve_version(self, info, **kwargs):
 		return version.version
-
-class AuthorizationMiddleware(object):
-	"""
-	An authorization provider to ensure that the permissions on the objects
-	that are queried are respected. If no **rpc_session** key is provided in
-	the **context** dictionary then no authorization checks can be performed
-	and all objects and operations will be accessible. The **rpc_session**
-	key's value must be an instance of :py:class:`~.AuthenticatedSession`.
-	"""
-	def resolve(self, next_, root, info, **kwargs):
-		rpc_session = info.context.get('rpc_session')
-		if isinstance(root, db_models.Base) and rpc_session is not None:
-			if not root.session_has_read_prop_access(rpc_session, info.field_name):
-				return
-		return next_(root, info, **kwargs)
 
 class Schema(graphene.Schema):
 	"""

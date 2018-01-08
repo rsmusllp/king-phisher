@@ -137,44 +137,42 @@ class BaseRowCls(object):
 		:return: Whether the session has the desired permissions.
 		:rtype: bool
 		"""
-		if self.is_private:
+		cls = self.__class__
+		if cls.is_private:
 			return False
 		access = access.lower()
 		for case in utilities.switch(access, comp=operator.contains, swapped=True):
-			if case('c') and not self.session_has_create_access(session):
+			if case('c') and not cls.session_has_create_access(session, instance=self):
 				break
-			if case('r') and not self.session_has_read_access(session):
+			if case('r') and not cls.session_has_read_access(session, instance=self):
 				break
-			if case('u') and not self.session_has_update_access(session):
+			if case('u') and not cls.session_has_update_access(session, instance=self):
 				break
-			if case('d') and not self.session_has_delete_access(session):
+			if case('d') and not cls.session_has_delete_access(session, instance=self):
 				break
 		else:
 			return True
 		return False
 
-	def session_has_create_access(self, session):
-		if self.is_private:
-			return False
-		return True
+	@classmethod
+	def session_has_create_access(cls, session, instance=None):
+		return not cls.is_private
 
-	def session_has_delete_access(self, session):
-		if self.is_private:
-			return False
-		return True
+	@classmethod
+	def session_has_delete_access(cls, session, instance=None):
+		return not cls.is_private
 
-	def session_has_read_access(self, session):
-		if self.is_private:
-			return False
-		return True
+	@classmethod
+	def session_has_read_access(cls, session, instance=None):
+		return not cls.is_private
 
-	def session_has_read_prop_access(self, session, prop):
-		return self.session_has_read_access(session)
+	@classmethod
+	def session_has_read_prop_access(cls, session, prop, instance=None):
+		return cls.session_has_read_access(session, instance=instance)
 
-	def session_has_update_access(self, session):
-		if self.is_private:
-			return False
-		return True
+	@classmethod
+	def session_has_update_access(cls, session, instance=None):
+		return not cls.is_private
 
 	@classmethod
 	def columns(cls):
@@ -208,17 +206,21 @@ class AlertSubscription(ExpireMixIn, Base):
 	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 
-	def session_has_create_access(self, session):
-		return session.user == self.user_id
+	@classmethod
+	def session_has_create_access(cls, session, instance=None):
+		return instance and session.user == instance.user_id
 
-	def session_has_delete_access(self, session):
-		return session.user == self.user_id
+	@classmethod
+	def session_has_delete_access(cls, session, instance=None):
+		return instance and session.user == instance.user_id
 
-	def session_has_read_access(self, session):
-		return session.user == self.user_id
+	@classmethod
+	def session_has_read_access(cls, session, instance=None):
+		return instance and session.user == instance.user_id
 
-	def session_has_update_access(self, session):
-		return session.user == self.user_id
+	@classmethod
+	def session_has_update_access(cls, session, instance=None):
+		return instance and session.user == instance.user_id
 
 @register_table
 class AuthenticatedSession(Base):
@@ -381,22 +383,27 @@ class User(ExpireMixIn, Base):
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')
 
-	def session_has_create_access(self, session):
+	@classmethod
+	def session_has_create_access(cls, session, instance=None):
 		return False
 
-	def session_has_delete_access(self, session):
+	@classmethod
+	def session_has_delete_access(cls, session, instance=None):
 		return False
 
-	def session_has_read_access(self, session):
-		return session.user == self.id
+	@classmethod
+	def session_has_read_access(cls, session, instance=None):
+		return instance and session.user == instance.id
 
-	def session_has_read_prop_access(self, session, prop):
+	@classmethod
+	def session_has_read_prop_access(cls, session, prop, instance=None):
 		if prop in ('id', 'campaigns', 'name'):  # everyone can read the id
 			return True
-		return self.session_has_read_access(session)
+		return cls.session_has_read_access(session, instance=instance)
 
-	def session_has_update_access(self, session):
-		return session.user == self.id
+	@classmethod
+	def session_has_update_access(cls, session, instance=None):
+		return instance and session.user == instance.id
 
 @register_table
 class Visit(Base):
