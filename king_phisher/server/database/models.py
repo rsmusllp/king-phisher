@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import datetime
 import logging
 import operator
@@ -48,10 +49,24 @@ DATABASE_TABLE_REGEX = '[a-z_]+'
 SCHEMA_VERSION = 8
 """The schema version of the database, used for compatibility checks."""
 
+MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name'))
+"""Table metadata.
+
+.. py:attribute:: column_names
+
+   A tuple of strings representing the table's column names.
+
+.. py:attribute:: model
+
+   The SQLAlchemy model class associated with this table.
+
+.. py:attribute:: name
+
+   The name of this table.
+"""
+
 database_tables = {}
-"""A dictionary which contains all the database tables and their column names."""
-database_table_objects = {}
-"""A dictionary which contains all the database tables and their primitive objects."""
+"""A dictionary which contains all the database tables and their :py:class:`.MetaTable` instances."""
 logger = logging.getLogger('KingPhisher.Server.Database.Models')
 
 def current_timestamp(*args, **kwargs):
@@ -71,7 +86,7 @@ def get_tables_with_column_id(column_id):
 	:return: The list of matching tables.
 	:rtype: set
 	"""
-	return set(x[0] for x in database_tables.items() if column_id in x[1])
+	return set(name for (name, metatable) in database_tables.items() if column_id in metatable.column_names)
 
 def forward_signal_delete(mapper, connection, target):
 	signals.send_safe('db-table-delete', logger, target.__tablename__, mapper=mapper, connection=connection, target=target)
@@ -90,9 +105,8 @@ def register_table(table):
 
 	:param cls table: The table to register.
 	"""
-	columns = tuple(col.name for col in table.columns())
-	database_tables[table.__tablename__] = columns
-	database_table_objects[table.__tablename__] = table
+	metatable = table.metatable()
+	database_tables[metatable.name] = metatable
 
 	sqlalchemy.event.listen(table, 'before_delete', forward_signal_delete)
 	sqlalchemy.event.listen(table, 'before_insert', forward_signal_insert)
@@ -175,8 +189,15 @@ class BaseRowCls(object):
 		return not cls.is_private
 
 	@classmethod
-	def columns(cls):
-		return cls.__table__.columns
+	def metatable(cls):
+		"""
+		Generate a :py:class:`.MetaTable` instance for this model class.
+
+		:return: The appropriate metadata for the table represented by this model.
+		:rtype: :py:class:`.MetaTable`
+		"""
+		columns = tuple(col.name for col in cls.__table__.columns)
+		return MetaTable(column_names=columns, model=cls, name=cls.__tablename__)
 
 Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
 metadata = Base.metadata

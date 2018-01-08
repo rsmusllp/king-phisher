@@ -39,7 +39,7 @@ from king_phisher.server.database import models
 class ClientRPCRemoteRowTests(testing.KingPhisherTestCase):
 	def test_table_row_classes_are_populated(self):
 		self.assertGreater(len(client_rpc.database_table_objects), 0)
-		public_tables = tuple(table for table in models.database_table_objects.values() if not table.is_private)
+		public_tables = tuple(metatable.model for metatable in models.database_tables.values() if not metatable.model.is_private)
 		self.assertEqual(len(client_rpc.database_table_objects), len(public_tables))
 		for remote_row in client_rpc.database_table_objects.values():
 			self.assertTrue(issubclass(remote_row, client_rpc.RemoteRow))

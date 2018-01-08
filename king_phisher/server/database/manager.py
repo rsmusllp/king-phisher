@@ -122,8 +122,8 @@ def export_database(target_file):
 	kpdb.metadata['database-schema'] = models.SCHEMA_VERSION
 	for table in models.metadata.sorted_tables:
 		table_name = table.name
-		table = models.database_table_objects[table_name]
-		kpdb.add_data('tables/' + table_name, sqlalchemy.ext.serializer.dumps(session.query(table).all()))
+		model = models.database_table[table_name].model
+		kpdb.add_data('tables/' + table_name, sqlalchemy.ext.serializer.dumps(session.query(model).all()))
 	kpdb.close()
 
 def import_database(target_file, clear=True):
@@ -193,7 +193,7 @@ def get_row_by_id(session, table, row_id):
 	:return: The object representing the specified row or None if it does not exist.
 	"""
 	if not issubclass(table, models.Base):
-		table = models.database_table_objects[table]
+		table = models.database_tables[table].model
 	query = session.query(table)
 	query = query.filter_by(id=row_id)
 	result = query.first()

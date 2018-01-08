@@ -10,9 +10,6 @@ functionality for defining and managing the models themselves.
 Data
 ----
 
-.. autodata:: king_phisher.server.database.models.database_table_objects
-   :annotation:
-
 .. autodata:: king_phisher.server.database.models.database_tables
    :annotation:
 
@@ -34,3 +31,6 @@ Classes
 .. autoclass:: king_phisher.server.database.models.BaseRowCls
    :show-inheritance:
    :members:
+
+.. autoclass:: king_phisher.server.database.models.MetaTable
+   :show-inheritance:

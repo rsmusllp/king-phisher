@@ -88,29 +88,29 @@ class DatabaseSchemaTests(testing.KingPhisherTestCase):
 	def test_public_table_column_types(self):
 		# this test is to ensure that the data types of public tables are
 		# suitable for serialization, i.e. not binary
-		for table_name, table in db_models.database_table_objects.items():
-			if table.is_private:
+		for metatable in db_models.database_tables.values():
+			if metatable.model.is_private:
 				continue
-			for column in table.__table__.columns:
+			for column in metatable.model.__table__.columns:
 				self.assertIsInstance(
 					column.type,
 					(sqlalchemy.Boolean, sqlalchemy.DateTime, sqlalchemy.Integer, sqlalchemy.String),
-					msg="{0}.{1} is not an acceptable data type for a public table".format(table_name, column.name)
+					msg="{0}.{1} is not an acceptable data type for a public table".format(metatable.name, column.name)
 				)
 
 	def test_public_tables_str_id_has_default_func(self):
 		# this test is to ensure that public tables that use strings as their
 		# id column have a default function to generate them
-		for table_name, table in db_models.database_table_objects.items():
-			if table.is_private:
+		for metatable in db_models.database_tables.values():
+			if metatable.model.is_private:
 				continue
-			id_column = getattr(table, 'id', None)
+			id_column = getattr(metatable.model, 'id', None)
 			if id_column is None:
 				continue
 			for column in id_column.property.columns:
 				if not isinstance(column.type, sqlalchemy.String):
 					continue
-				self.assertIsNotNone(column.default, msg="{0}.id must have a default function defined".format(table_name))
+				self.assertIsNotNone(column.default, msg="{0}.id must have a default function defined".format(metatable.name))
 
 	def test_table_names(self):
 		for table_name in db_models.database_tables.keys():

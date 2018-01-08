@@ -142,7 +142,7 @@ class SortInput(graphene.InputObjectType):
 def sa_get_relationship(session, model, name):
 	mapper = sqlalchemy.inspect(model.__class__)
 	relationship = mapper.relationships[name]
-	foreign_model = db_models.database_table_objects[relationship.table.name]
+	foreign_model = db_models.database_tables[relationship.table.name].model
 	query = session.query(foreign_model)
 	if relationship.uselist:
 		column_name = relationship.primaryjoin.right.name

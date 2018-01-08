@@ -69,8 +69,6 @@ VIEW_ROW_COUNT = 50
 """The default number of rows to return when one of the /view methods are called."""
 
 database_tables = db_models.database_tables
-database_table_objects = db_models.database_table_objects
-
 rpc_logger = logging.getLogger('KingPhisher.Server.RPC')
 
 def register_rpc(path, database_access=False, log_call=False):
@@ -350,15 +348,14 @@ def rpc_database_count_rows(handler, session, table_name, query_filter=None):
 	:return: The number of matching rows.
 	:rtype: int
 	"""
-	table = database_table_objects.get(table_name)
-	if not table:
+	metatable = database_tables.get(table_name)
+	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	query_filter = query_filter or {}
-	columns = database_tables[table_name]
 	for column in query_filter.keys():
-		if column not in columns:
+		if column not in metatable.column_names:
 			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(column, table_name))
-	query = session.query(table)
+	query = session.query(metatable.model)
 	query = query.filter_by(**query_filter)
 	return query.count()
 
@@ -374,29 +371,28 @@ def rpc_database_view_rows(handler, session, table_name, page=0, query_filter=No
 	:return: A dictionary with columns and rows keys.
 	:rtype: dict
 	"""
-	table = database_table_objects.get(table_name)
-	if not table:
+	metatable = database_tables.get(table_name)
+	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	query_filter = query_filter or {}
-	columns = database_tables[table_name]
 	for column in query_filter.keys():
-		if column not in columns:
+		if column not in metatable.column_names:
 			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(column, table_name))
 
 	offset = page * VIEW_ROW_COUNT
 	# it's critical that the columns are in the order that the client is expecting
 	rows = []
-	query = session.query(table)
+	query = session.query(metatable.model)
 	query = query.filter_by(**query_filter)
 	total_rows = query.count()
 	for row in query[offset:]:
 		if len(rows) == VIEW_ROW_COUNT:
 			break
 		if row.session_has_permissions('r', handler.rpc_session):
-			rows.append([getattr(row, c) for c in columns])
+			rows.append([getattr(row, c) for c in metatable.column_names])
 	if not len(rows):
 		return None
-	return {'columns': columns, 'rows': rows, 'total_rows': total_rows, 'page_size': VIEW_ROW_COUNT}
+	return {'columns': metatable.column_names, 'rows': rows, 'total_rows': total_rows, 'page_size': VIEW_ROW_COUNT}
 
 @register_rpc('/db/table/delete', database_access=True, log_call=True)
 def rpc_database_delete_row_by_id(handler, session, table_name, row_id):
@@ -407,10 +403,10 @@ def rpc_database_delete_row_by_id(handler, session, table_name, row_id):
 	:param str table_name: The name of the database table to delete a row from.
 	:param row_id: The id value.
 	"""
-	table = database_table_objects.get(table_name)
-	if not table:
+	metatable = database_tables.get(table_name)
+	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
-	row = db_manager.get_row_by_id(session, table, row_id)
+	row = db_manager.get_row_by_id(session, metatable.model, row_id)
 	if row is None:
 		logger = logging.getLogger('KingPhisher.Server.API.RPC')
 		logger.debug("received delete request for non existing row with id {0} from table {1}".format(row_id, table_name))
@@ -431,12 +427,12 @@ def rpc_database_delete_rows_by_id(handler, session, table_name, row_ids):
 	:return: The row ids that were deleted.
 	:rtype: list
 	"""
-	table = database_table_objects.get(table_name)
-	if not table:
+	metatable = database_tables.get(table_name)
+	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	deleted_rows = []
 	for row_id in row_ids:
-		row = db_manager.get_row_by_id(session, table, row_id)
+		row = db_manager.get_row_by_id(session, metatable.model, row_id)
 		if not row:
 			continue
 		if not row.session_has_permissions('d', handler.rpc_session):
@@ -457,15 +453,14 @@ def rpc_database_get_row_by_id(handler, session, table_name, row_id):
 	:return: The specified row data.
 	:rtype: dict
 	"""
-	table = database_table_objects.get(table_name)
-	if not table:
+	metatable = database_tables.get(table_name)
+	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
-	columns = database_tables[table_name]
-	row = db_manager.get_row_by_id(session, table, row_id)
+	row = db_manager.get_row_by_id(session, metatable.model, row_id)
 	if row:
 		row.assert_session_has_permissions('r', handler.rpc_session)
-		row = dict(zip(columns, (getattr(row, c) for c in columns)))
-	elif table.is_private:
+		row = dict(zip(metatable.column_names, (getattr(row, c) for c in metatable.column_names)))
+	elif metatable.model.is_private:
 		raise errors.KingPhisherPermissionError()
 	return row
 
@@ -485,14 +480,14 @@ def rpc_database_insert_row(handler, session, table_name, keys, values):
 		values = (values,)
 	if len(keys) != len(values):
 		raise errors.KingPhisherAPIError('the number of keys does not match the number of values')
-	table = database_table_objects.get(table_name)
-	if not table:
+	metatable = database_tables.get(table_name)
+	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	for key in keys:
-		if key not in database_tables[table_name]:
+		if key not in metatable.column_names:
 			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(key, table_name))
 
-	row = table()
+	row = metatable.model()
 	for key, value in zip(keys, values):
 		setattr(row, key, value)
 	row.assert_session_has_permissions('c', handler.rpc_session)
@@ -520,24 +515,24 @@ def rpc_database_insert_row_multi(handler, session, table_name, keys, rows, deco
 	if not isinstance(rows, list):
 		rows = list(rows)
 
-	table = database_table_objects.get(table_name)
-	if not table:
+	metatable = database_tables.get(table_name)
+	if not metatable:
 		raise errors.KingPhisherAPIError('failed to get table object for: {0}'.format(table_name))
 	for key in keys:
-		if key not in database_tables[table_name]:
+		if key not in metatable.column_names:
 			raise errors.KingPhisherAPIError('column {0} is invalid for table {1}'.format(keys, table_name))
 
 	for row in rows:
 		if len(row) != len(keys):
 			raise errors.KingPhisherAPIError('row is not the same length as the number of values defined')
 		row = dict(zip(keys, row))
-		if 'id' in row and db_manager.get_row_by_id(session, table, row['id']) is not None:
+		if 'id' in row and db_manager.get_row_by_id(session, metatable.model, row['id']) is not None:
 			if deconflict_ids:
 				row['id'] = None
 			else:
 				raise errors.KingPhisherAPIError('row id conflicts with an existing value')
 
-		table_row = table(**row)
+		table_row = metatable.model(**row)
 		table_row.assert_session_has_permissions('c', handler.rpc_session)
 		session.add(table_row)
 		inserted_rows.append(table_row)
@@ -559,13 +554,13 @@ def rpc_database_set_row_value(handler, session, table_name, row_id, keys, value
 		values = (values,)
 	if len(keys) != len(values):
 		raise errors.KingPhisherAPIError('the number of keys does not match the number of values')
-	table = database_table_objects.get(table_name)
-	if not table:
+	metatable = database_tables.get(table_name)
+	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	for key, value in zip(keys, values):
-		if key not in database_tables[table_name]:
+		if key not in metatable.column_names:
 			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(key, table_name))
-	row = db_manager.get_row_by_id(session, table, row_id)
+	row = db_manager.get_row_by_id(session, metatable.model, row_id)
 	if not row:
 		raise errors.KingPhisherAPIError("failed to get row id: {0} from table: {1}".format(row_id, table_name))
 	row.assert_session_has_permissions('u', handler.rpc_session)
@@ -614,14 +609,14 @@ def rpc_events_subscribe(handler, event_id, event_types=None, attributes=None):
 		raise errors.KingPhisherAPIError('invalid event_id: ' + event_id)
 	table_name = event_id[3:]
 	table_name = table_name.replace('-', '_')
-	columns = database_tables.get(table_name)
-	if columns is None:
+	metatable = database_tables.get(table_name)
+	if metatable is None:
 		raise errors.KingPhisherAPIError("invalid table object: {0}".format(table_name))
 	for event_type in event_types:
 		if event_type not in ('deleted', 'inserted', 'updated'):
 			raise errors.KingPhisherAPIError("event type {0} is invalid for db-* events".format(event_type))
 	for column in attributes:
-		if column not in columns:
+		if column not in metatable.column_names:
 			raise errors.KingPhisherAPIError("column {0} is invalid for table {1}".format(column, table_name))
 	return event_socket.subscribe(event_id, event_types=event_types, attributes=attributes)
 
