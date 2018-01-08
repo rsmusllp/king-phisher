@@ -94,20 +94,57 @@ class RelayNode(graphene.relay.Node):
 	def to_global_id(cls, _, local_id):
 		return local_id
 
+class FilterOperatorEnum(graphene.Enum):
+	EQ = 'eq'
+	GE = 'ge'
+	GT = 'gt'
+	LE = 'le'
+	LT = 'lt'
+	NE = 'ne'
+
 class FilterInput(graphene.InputObjectType):
 	AND = graphene.List('king_phisher.server.graphql.FilterInput', name='and')
 	OR = graphene.List('king_phisher.server.graphql.FilterInput', name='or')
 	field = graphene.String()
 	value = AnyScalar()
-	operator = graphene.String()
+	operator = FilterOperatorEnum()
+
+class SortDirectionEnum(graphene.Enum):
+	AESC = 'aesc'
+	DESC = 'desc'
+
+class SortInput(graphene.InputObjectType):
+	field = graphene.String(required=True)
+	direction = SortDirectionEnum()
+
+def sa_get_relationship(session, model, name):
+	mapper = sqlalchemy.inspect(model.__class__)
+	relationship = mapper.relationships[name]
+	foreign_model = db_models.database_table_objects[relationship.table.name]
+	query = session.query(foreign_model)
+	if relationship.uselist:
+		column_name = relationship.primaryjoin.right.name
+		return query.filter(getattr(foreign_model, column_name) == model.id)
+	column_name = relationship.primaryjoin.left.name
+	query = query.filter(getattr(foreign_model, column_name) == getattr(model, relationship.primaryjoin.right.name))
+	return query.first()
 
 def sa_object_resolver(attname, default_value, model, info, **kwargs):
 	mapper = sqlalchemy.inspect(model.__class__)
 	if attname in mapper.relationships:
-		return db_models.get_relationship_query(info.context['session'], model, attname)
+		return sa_get_relationship(info.context['session'], model, attname)
 	return getattr(model, attname)
 
 sa_object_meta = functools.partial(dict, default_resolver=sa_object_resolver, interfaces=(RelayNode,))
+
+#def has_read_prop_access(model, info, field_name):
+#	rpc_session = info.context.get('rpc_session')
+#	if rpc_session is None:
+#		return True
+#	result = model.session_has_read_prop_access(rpc_session, field_name)
+#	if not result:
+#		print('\n!!!NO READ PROP ACCESS!!!\n\n')
+#	return result
 
 # custom sqlalchemy related objects
 class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
@@ -115,6 +152,8 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 	def __init__(self, node, *args, **kwargs):
 		if 'filter' not in kwargs:
 			kwargs['filter'] = FilterInput()
+		if 'sort' not in kwargs:
+			kwargs['sort'] = graphene.List(SortInput)
 		node = self.connection_factory(node)
 		super(SQLAlchemyConnectionField, self).__init__(node, *args, **kwargs)
 
@@ -141,8 +180,7 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 			iterable = cls.get_query(model, info, **kwargs)
 			_len = iterable.count()
 		elif isinstance(iterable, sqlalchemy.orm.query.Query):
-			if kwargs.get('filter'):
-				iterable = cls.filter_query(model, iterable, kwargs['filter'])
+			iterable = cls.query_shim(model, info, iterable, **kwargs)
 			_len = iterable.count()
 		else:
 			_len = len(iterable)
@@ -161,15 +199,22 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 		return connection
 
 	@classmethod
-	def _filter_query(cls, model, gql_filter):
+	def _query_filter(cls, model, info, query, gql_filter):
+		sql_filter = cls.__query_filter(model, info, gql_filter)
+		if sql_filter is not None:
+			query = query.filter(sql_filter)
+		return query
+
+	@classmethod
+	def __query_filter(cls, model, info, gql_filter):
 		# precedence: AND, OR, field
 		sql_filter = None
 		if gql_filter.get('AND'):
-			sql_filter = sqlalchemy.and_(*cls._filter_query_list(model, gql_filter['AND']))
+			sql_filter = sqlalchemy.and_(*cls._query_filter_list(model, info, gql_filter['AND']))
 		if gql_filter.get('OR'):
 			if sql_filter is not None:
 				raise ValueError('the \'and\', \'or\', and \'field\' filter operators are mutually exclusive')
-			sql_filter = sqlalchemy.or_(*cls._filter_query_list(model, gql_filter['OR']))
+			sql_filter = sqlalchemy.or_(*cls._query_filter_list(model, info, gql_filter['OR']))
 
 		if gql_filter.get('field'):
 			if sql_filter is not None:
@@ -182,27 +227,47 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 			sql_field = smoke_zephyr.utilities.parse_case_camel_to_snake(gql_field)
 			if '_' in gql_field or sql_field not in model.columns():
 				raise ValueError('invalid filter field: ' + gql_field)
-			sql_filter = comparison_operator(getattr(model, sql_field), gql_filter.get('value', None))
+			#if has_read_prop_access(model, info, sql_field):
+			#	sql_filter = comparison_operator(getattr(model, sql_field), gql_filter.get('value', None))
 		return sql_filter
 
 	@classmethod
-	def _filter_query_list(cls, model, gql_filters):
-		return [cls._filter_query(model, gql_filter) for gql_filter in gql_filters]
+	def _query_filter_list(cls, model, gql_filters):
+		query_filter_list = [cls.__query_filter(model, gql_filter) for gql_filter in gql_filters]
+		return [query_filter for query_filter in query_filter_list if query_filter is not None]
 
 	@classmethod
-	def filter_query(cls, model, query, gql_filter):
-		sql_filter = cls._filter_query(model, gql_filter)
-		if sql_filter is not None:
-			query = query.filter(sql_filter)
+	def _query_sort(cls, model, info, query, gql_sort):
+		for field in gql_sort:
+			direction = field.get('direction', 'aesc')
+			gql_field = field['field']
+			sql_field = smoke_zephyr.utilities.parse_case_camel_to_snake(gql_field)
+			if '_' in gql_field or sql_field not in model.columns():
+				raise ValueError('invalid sort field: ' + gql_field)
+			#if not has_read_prop_access(model, info, sql_field):
+			#	continue
+			if direction == 'aesc':
+				field = getattr(model, sql_field)
+			elif direction == 'desc':
+				field = getattr(model, sql_field).desc()
+			else:
+				raise ValueError('sort direction must be either \'aesc\' or \'desc\'')
+			query = query.order_by(field)
+		return query
+
+	@classmethod
+	def query_shim(cls, model, info, query, **kwargs):
+		if kwargs.get('filter'):
+			query = cls._query_filter(model, info, query, kwargs['filter'])
+		if kwargs.get('sort'):
+			query = cls._query_sort(model, info, query, kwargs['sort'])
 		return query
 
 	@classmethod
 	def get_query(cls, model, info, **kwargs):
 		query = super(SQLAlchemyConnectionField, cls).get_query(model, info, **kwargs)
 		query = query.options(sqlalchemy.orm.raiseload('*'))
-		if kwargs.get('filter'):
-			query = cls.filter_query(model, query, kwargs['filter'])
-		return query
+		return cls.query_shim(model, info, query, **kwargs)
 
 	@property
 	def type(self):
@@ -216,7 +281,7 @@ class SQLAlchemyObjectType(graphene_sqlalchemy.SQLAlchemyObjectType):
 
 	@classmethod
 	def get_query(cls, info, **kwargs):
-		query = super(SQLAlchemyObjectType, cls).get_query(info, **kwargs)
+		query = super(SQLAlchemyObjectType, cls).get_query(info)
 		query = query.options(sqlalchemy.orm.raiseload('*'))
 		model = cls._meta.model
 		for field, value in kwargs.items():

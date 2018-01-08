@@ -63,14 +63,6 @@ def current_timestamp(*args, **kwargs):
 	"""
 	return datetime.datetime.utcnow()
 
-def get_relationship_query(session, model, name):
-	mapper = sqlalchemy.inspect(model.__class__)
-	relationship = mapper.relationships[name]
-	foreign_model = database_table_objects[relationship.table.name]
-	query = session.query(foreign_model)
-	column_name = relationship.primaryjoin.right.name
-	return query.filter(getattr(foreign_model, column_name) == model.id)
-
 def get_tables_with_column_id(column_id):
 	"""
 	Get all tables which contain a column named *column_id*.
