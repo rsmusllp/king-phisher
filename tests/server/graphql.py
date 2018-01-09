@@ -33,10 +33,12 @@
 from king_phisher import its
 from king_phisher import version
 from king_phisher.server import aaa
-from king_phisher.server import graphql
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
+from king_phisher.server.graphql import schema
 from king_phisher.testing import KingPhisherTestCase
+
+graphql_schema = schema.Schema()
 
 class ServerGraphQLTests(KingPhisherTestCase):
 	def _init_db(self):
@@ -56,7 +58,7 @@ class ServerGraphQLTests(KingPhisherTestCase):
 	def test_query_auth_middleware_no_session(self):
 		self._init_db()
 		session = db_manager.Session()
-		result = graphql.schema.execute(
+		result = graphql_schema.execute(
 			"{ db { users { edges { node { id otpSecret } } } } }",
 			context_value={'session': session}
 		)
@@ -69,7 +71,7 @@ class ServerGraphQLTests(KingPhisherTestCase):
 		self._init_db()
 		session = db_manager.Session()
 		rpc_session = aaa.AuthenticatedSession(self.users['alice'])
-		result = graphql.schema.execute(
+		result = graphql_schema.execute(
 			"{ db { users { edges { node { id name otpSecret } } } } }",
 			context_value={'rpc_session': rpc_session, 'session': session}
 		)
@@ -83,7 +85,7 @@ class ServerGraphQLTests(KingPhisherTestCase):
 	def test_query_get_node(self):
 		self._init_db()
 		session = db_manager.Session()
-		result = graphql.schema.execute(
+		result = graphql_schema.execute(
 			"{ db { users(first: 1) { total edges { cursor node { id } } } } }",
 			context_value={'session': session}
 		)
@@ -100,7 +102,7 @@ class ServerGraphQLTests(KingPhisherTestCase):
 	def test_query_get_total(self):
 		self._init_db()
 		session = db_manager.Session()
-		result = graphql.schema.execute(
+		result = graphql_schema.execute(
 			"{ db { users { total } } }",
 			context_value={'session': session}
 		)
@@ -109,7 +111,7 @@ class ServerGraphQLTests(KingPhisherTestCase):
 	def test_query_get_pageinfo(self):
 		self._init_db()
 		session = db_manager.Session()
-		result = graphql.schema.execute(
+		result = graphql_schema.execute(
 			"{ db { users(first: 1) { total pageInfo { hasNextPage } } } }",
 			context_value={'session': session}
 		)
@@ -119,12 +121,12 @@ class ServerGraphQLTests(KingPhisherTestCase):
 		self.assertTrue(users['pageInfo'].get('hasNextPage', False))
 
 	def test_query_plugins(self):
-		result = graphql.schema.execute("{ plugins { edges { node { name } } } }")
+		result = graphql_schema.execute("{ plugins { edges { node { name } } } }")
 		self.assertIn('plugins', result.data)
 		plugins = result.data['plugins']['edges']
 		self.assertIsInstance(plugins, list)
 		self.assertEqual(len(plugins), 0)
 
 	def test_query_version(self):
-		result = graphql.schema.execute("{ version }")
+		result = graphql_schema.execute("{ version }")
 		self.assertEquals(result.data['version'], version.version)

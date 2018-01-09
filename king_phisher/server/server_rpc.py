@@ -41,10 +41,10 @@ from king_phisher import geoip
 from king_phisher import ipaddress
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
-from king_phisher.server import graphql
 from king_phisher.server import signals
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
+from king_phisher.server.graphql import schema
 
 import advancedhttpserver
 import pyotp
@@ -69,6 +69,7 @@ VIEW_ROW_COUNT = 50
 """The default number of rows to return when one of the /view methods are called."""
 
 database_tables = db_models.database_tables
+graphql_schema = schema.Schema()
 rpc_logger = logging.getLogger('KingPhisher.Server.RPC')
 
 def register_rpc(path, database_access=False, log_call=False):
@@ -762,7 +763,7 @@ def rpc_graphql(handler, session, query, query_vars=None):
 	:rtype: dict
 	"""
 	query_vars = query_vars or {}
-	result = graphql.schema.execute(
+	result = graphql_schema.execute(
 		query,
 		context_value={
 			'plugin_manager': handler.server.plugin_manager,

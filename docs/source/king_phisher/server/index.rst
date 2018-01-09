@@ -9,11 +9,11 @@ application.
    :titlesonly:
 
    database/index.rst
+   graphql/index.rst
 
    aaa.rst
    build.rst
    configuration.rst
-   graphql.rst
    pages.rst
    plugins.rst
    rest_api.rst

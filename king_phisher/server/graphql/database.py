@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/server/graphql.py
+#  king_phisher/server/graphql/database.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -32,114 +32,35 @@
 
 from __future__ import absolute_import
 
-import datetime
 import functools
 import operator
 
-import king_phisher.geoip as geoip
-import king_phisher.ipaddress as ipaddress
 import king_phisher.server.database.models as db_models
-import king_phisher.version as version
+import king_phisher.server.graphql.types as gql_types
+import king_phisher.server.graphql.geolocation as gql_geolocation
+import king_phisher.server.graphql.middleware as gql_middleware
 
 import graphene
 import graphene.relay.connection
 import graphene.types
 import graphene.types.utils
 import graphene_sqlalchemy
-import graphql.language.ast
 import graphql_relay.connection.arrayconnection
 import smoke_zephyr.utilities
 import sqlalchemy.orm
 import sqlalchemy.orm.query
 
-# authorization middlware
-class AuthorizationMiddleware(object):
-	"""
-	An authorization provider to ensure that the permissions on the objects
-	that are queried are respected. If no **rpc_session** key is provided in
-	the **context** dictionary then no authorization checks can be performed
-	and all objects and operations will be accessible. The **rpc_session**
-	key's value must be an instance of :py:class:`~.AuthenticatedSession`.
-	"""
-	def resolve(self, next_, root, info, **kwargs):
-		if isinstance(root, db_models.Base) and not self.info_has_read_prop_access(info, root, instance=root):
-			return
-		return next_(root, info, **kwargs)
-
-	@classmethod
-	def info_has_read_prop_access(cls, info, model, field_name=None, instance=None):
-		rpc_session = info.context.get('rpc_session')
-		if rpc_session is None:
-			return True
-		field_name = field_name or info.field_name
-		return model.session_has_read_prop_access(rpc_session, field_name, instance=instance)
-
-# replacement graphql scalars
-class AnyScalar(graphene.types.Scalar):
-	@staticmethod
-	def serialize(dt):
-		raise NotImplementedError()
-
-	@staticmethod
-	def parse_literal(node):
-		if isinstance(node, graphql.language.ast.FloatValue):
-			return float(node.value)
-		if isinstance(node, graphql.language.ast.IntValue):
-			return int(node.value)
-		return node.value
-
-	@staticmethod
-	def parse_value(value):
-		return value
-
-class DateTimeScalar(graphene.types.Scalar):
-	@staticmethod
-	def serialize(dt):
-		return dt
-
-	@staticmethod
-	def parse_literal(node):
-		if isinstance(node, graphql.language.ast.StringValue):
-			return datetime.datetime.strptime(node.value, '%Y-%m-%dT%H:%M:%S.%f')
-
-	@staticmethod
-	def parse_value(value):
-		return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
-
-# misc definitions
-class RelayNode(graphene.relay.Node):
-	@classmethod
-	def from_global_id(cls, global_id):
-		return global_id
-
-	@classmethod
-	def to_global_id(cls, _, local_id):
-		return local_id
-
-class FilterOperatorEnum(graphene.Enum):
-	EQ = 'eq'
-	GE = 'ge'
-	GT = 'gt'
-	LE = 'le'
-	LT = 'lt'
-	NE = 'ne'
-
-class FilterInput(graphene.InputObjectType):
-	AND = graphene.List('king_phisher.server.graphql.FilterInput', name='and')
-	OR = graphene.List('king_phisher.server.graphql.FilterInput', name='or')
-	field = graphene.String()
-	value = AnyScalar()
-	operator = FilterOperatorEnum()
-
-class SortDirectionEnum(graphene.Enum):
-	AESC = 'aesc'
-	DESC = 'desc'
-
-class SortInput(graphene.InputObjectType):
-	field = graphene.String(required=True)
-	direction = SortDirectionEnum()
-
 def sa_get_relationship(session, model, name):
+	"""
+	Resolve the relationship on a SQLAlchemy model to either an object (in the
+	case of one-to-one relationships) or a query to all of the objects (in the
+	case of one-to-many relationships).
+
+	:param session: The SQLAlchemy session to associate the query with.
+	:param model: The SQLAlchemy model of the object associated with the relationship.
+	:param name: The name of the relationship as it exists in the *model*.
+	:return: Either the object or a SQLAlchemy query for the objects.
+	"""
 	mapper = sqlalchemy.inspect(model.__class__)
 	relationship = mapper.relationships[name]
 	foreign_model = db_models.database_tables[relationship.table.name].model
@@ -152,21 +73,33 @@ def sa_get_relationship(session, model, name):
 	return query.first()
 
 def sa_object_resolver(attname, default_value, model, info, **kwargs):
+	"""
+	Resolve the attribute for the given SQLAlchemy model object. If the
+	attribute is a relationship, use :py:func:`.sq_get_relationship` to resolve
+	it.
+
+	:param str attname: The name of the attribute to resolve on the object.
+	:param default_value: The default value to return if the attribute is unavailable.
+	:param model: The SQLAlchemy model to resolve the attribute for.
+	:type model: :py:class:`sqlalchemy.ext.declarative.api.Base`
+	:param info: The resolve information for this execution.
+	:type info: :py:class:`graphql.execution.base.ResolveInfo`
+	"""
 	mapper = sqlalchemy.inspect(model.__class__)
 	if attname in mapper.relationships:
 		return sa_get_relationship(info.context['session'], model, attname)
-	return getattr(model, attname)
+	return getattr(model, attname, default_value)
 
-sa_object_meta = functools.partial(dict, default_resolver=sa_object_resolver, interfaces=(RelayNode,))
+sa_object_meta = functools.partial(dict, default_resolver=sa_object_resolver, interfaces=(gql_types.RelayNode,))
 
 # custom sqlalchemy related objects
 class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 	__connection_types = {}
 	def __init__(self, node, *args, **kwargs):
 		if 'filter' not in kwargs:
-			kwargs['filter'] = FilterInput()
+			kwargs['filter'] = gql_types.FilterInput()
 		if 'sort' not in kwargs:
-			kwargs['sort'] = graphene.List(SortInput)
+			kwargs['sort'] = graphene.List(gql_types.SortInput)
 		node = self.connection_factory(node)
 		super(SQLAlchemyConnectionField, self).__init__(node, *args, **kwargs)
 
@@ -238,9 +171,9 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 			comparison_operator = getattr(operator, operator_name)
 			gql_field = gql_filter['field']
 			sql_field = smoke_zephyr.utilities.parse_case_camel_to_snake(gql_field)
-			if '_' in gql_field or sql_field not in model.columns():
+			if '_' in gql_field or sql_field not in model.metatable().column_names:
 				raise ValueError('invalid filter field: ' + gql_field)
-			if AuthorizationMiddleware.info_has_read_prop_access(info, model, sql_field):
+			if gql_middleware.AuthorizationMiddleware.info_has_read_prop_access(info, model, sql_field):
 				sql_filter = comparison_operator(getattr(model, sql_field), gql_filter.get('value', None))
 		return sql_filter
 
@@ -255,9 +188,9 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 			direction = field.get('direction', 'aesc')
 			gql_field = field['field']
 			sql_field = smoke_zephyr.utilities.parse_case_camel_to_snake(gql_field)
-			if '_' in gql_field or sql_field not in model.columns():
+			if '_' in gql_field or sql_field not in model.metatable().column_names:
 				raise ValueError('invalid sort field: ' + gql_field)
-			if not AuthorizationMiddleware.info_has_read_prop_access(info, model, sql_field):
+			if not gql_middleware.AuthorizationMiddleware.info_has_read_prop_access(info, model, sql_field):
 				continue
 			if direction == 'aesc':
 				field = getattr(model, sql_field)
@@ -301,71 +234,26 @@ class SQLAlchemyObjectType(graphene_sqlalchemy.SQLAlchemyObjectType):
 			query = query.filter(getattr(model, field) == value)
 		return query
 
-# misc graphql objects
-class GeoLocation(graphene.ObjectType):
-	city = graphene.Field(graphene.String)
-	continent = graphene.Field(graphene.String)
-	coordinates = graphene.List(graphene.Float)
-	country = graphene.Field(graphene.String)
-	postal_code = graphene.Field(graphene.String)
-	time_zone = graphene.Field(graphene.String)
-	@classmethod
-	def from_ip_address(cls, ip_address):
-		ip_address = ipaddress.ip_address(ip_address)
-		if ip_address.is_private:
-			return
-		result = geoip.lookup(ip_address)
-		if result is None:
-			return
-		return cls(**result)
-
-class Plugin(graphene.ObjectType):
-	class Meta:
-		interfaces = (RelayNode,)
-	authors = graphene.List(graphene.String)
-	title = graphene.Field(graphene.String)
-	description = graphene.Field(graphene.String)
-	homepage = graphene.Field(graphene.String)
-	name = graphene.Field(graphene.String)
-	version = graphene.Field(graphene.String)
-	@classmethod
-	def from_plugin(cls, plugin):
-		return cls(
-			authors=plugin.authors,
-			description=plugin.description,
-			homepage=plugin.homepage,
-			name=plugin.name,
-			title=plugin.title,
-			version=plugin.version
-		)
-
-class PluginConnection(graphene.relay.Connection):
-	class Meta:
-		node = Plugin
-	total = graphene.Int()
-	def resolve_total(self, info, **kwargs):
-		return len(info.context.get('plugin_manager', {}))
-
 # database graphql objects
 class AlertSubscription(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.AlertSubscription)
-	expiration = DateTimeScalar()
+	expiration = gql_types.DateTimeScalar()
 	has_expired = graphene.Boolean()
 
 class Credential(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Credential)
-	submitted = DateTimeScalar()
+	submitted = gql_types.DateTimeScalar()
 
 class DeaddropConnection(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.DeaddropConnection)
-	first_seen = DateTimeScalar()
-	last_seen = DateTimeScalar()
-	visitor_geoloc = graphene.Field(GeoLocation)
+	first_seen = gql_types.DateTimeScalar()
+	last_seen = gql_types.DateTimeScalar()
+	visitor_geoloc = graphene.Field(gql_geolocation.GeoLocation)
 	def resolve_visitor_geoloc(self, info, **kwargs):
 		ip = self.ip
 		if not ip:
 			return
-		return GeoLocation.from_ip_address(ip)
+		return gql_geolocation.GeoLocation.from_ip_address(ip)
 
 class DeaddropDeployment(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.DeaddropDeployment)
@@ -374,16 +262,16 @@ class DeaddropDeployment(SQLAlchemyObjectType):
 
 class Visit(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Visit)
-	first_seen = DateTimeScalar()
-	last_seen = DateTimeScalar()
-	visitor_geoloc = graphene.Field(GeoLocation)
+	first_seen = gql_types.DateTimeScalar()
+	last_seen = gql_types.DateTimeScalar()
+	visitor_geoloc = graphene.Field(gql_geolocation.GeoLocation)
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
 	def resolve_visitor_geoloc(self, info, **kwargs):
 		ip = self.ip
 		if not ip:
 			return
-		return GeoLocation.from_ip_address(ip)
+		return gql_geolocation.GeoLocation.from_ip_address(ip)
 
 class LandingPage(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.LandingPage)
@@ -391,10 +279,10 @@ class LandingPage(SQLAlchemyObjectType):
 
 class Message(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Message)
-	opened = DateTimeScalar()
-	opener_geoloc = graphene.Field(GeoLocation)
-	reported = DateTimeScalar()
-	sent = DateTimeScalar()
+	opened = gql_types.DateTimeScalar()
+	opener_geoloc = graphene.Field(gql_geolocation.GeoLocation)
+	reported = gql_types.DateTimeScalar()
+	sent = gql_types.DateTimeScalar()
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
 	visits = SQLAlchemyConnectionField(Visit)
@@ -402,12 +290,12 @@ class Message(SQLAlchemyObjectType):
 		opener_ip = self.opener_ip
 		if not opener_ip:
 			return
-		return GeoLocation.from_ip_address(opener_ip)
+		return gql_geolocation.GeoLocation.from_ip_address(opener_ip)
 
 class Campaign(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Campaign)
-	created = DateTimeScalar()
-	expiration = DateTimeScalar()
+	created = gql_types.DateTimeScalar()
+	expiration = gql_types.DateTimeScalar()
 	has_expired = graphene.Boolean()
 	# relationships
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
@@ -440,9 +328,9 @@ class Industry(SQLAlchemyObjectType):
 
 class User(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.User)
-	expiration = DateTimeScalar()
+	expiration = gql_types.DateTimeScalar()
 	has_expired = graphene.Boolean()
-	last_login = DateTimeScalar()
+	last_login = gql_types.DateTimeScalar()
 	# relationships
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
 	campaigns = SQLAlchemyConnectionField(Campaign)
@@ -512,63 +400,3 @@ class Database(graphene.ObjectType):
 
 	def resolve_visit(self, info, **kwargs):
 		return Visit.get_query(info, **kwargs).first()
-
-# top level query object for the schema
-class Query(graphene.ObjectType):
-	"""
-	This is the root query object used for GraphQL queries.
-	"""
-	db = graphene.Field(Database)
-	geoloc = graphene.Field(GeoLocation, ip=graphene.String())
-	plugin = graphene.Field(Plugin, name=graphene.String())
-	plugins = graphene.relay.ConnectionField(PluginConnection)
-	version = graphene.Field(graphene.String)
-	def resolve_db(self, info, **kwargs):
-		return Database()
-
-	def resolve_geoloc(self, info, **kwargs):
-		ip_address = kwargs.get('ip')
-		if ip_address is None:
-			return
-		return GeoLocation.from_ip_address(ip_address)
-
-	def resolve_plugin(self, info, **kwargs):
-		plugin_manager = info.context.get('plugin_manager', {})
-		for _, plugin in plugin_manager:
-			if plugin.name != kwargs.get('name'):
-				continue
-			return Plugin.from_plugin(plugin)
-
-	def resolve_plugins(self, info, **kwargs):
-		plugin_manager = info.context.get('plugin_manager', {})
-		return [Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
-
-	def resolve_version(self, info, **kwargs):
-		return version.version
-
-class Schema(graphene.Schema):
-	"""
-	This is the top level schema object for GraphQL. It automatically sets up
-	sane defaults to be used by the King Phisher server including setting
-	the query to :py:class:`.Query` and adding the
-	:py:class:`.AuthorizationMiddleware` to each execution.
-	"""
-	def __init__(self, **kwargs):
-		kwargs['auto_camelcase'] = True
-		kwargs['query'] = Query
-		super(Schema, self).__init__(**kwargs)
-
-	def execute(self, *args, **kwargs):
-		if 'context_value' not in kwargs:
-			kwargs['context_value'] = {}
-		middleware = list(kwargs.pop('middleware', []))
-		middleware.insert(0, AuthorizationMiddleware())
-		kwargs['middleware'] = middleware
-		return super(Schema, self).execute(*args, **kwargs)
-
-	def execute_file(self, path, *args, **kwargs):
-		with open(path, 'r') as file_h:
-			query = file_h.read()
-		return self.execute(query, *args, **kwargs)
-
-schema = Schema()
