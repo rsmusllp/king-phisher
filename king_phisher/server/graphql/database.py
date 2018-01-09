@@ -248,8 +248,8 @@ class DeaddropConnection(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.DeaddropConnection)
 	first_seen = gql_types.DateTimeScalar()
 	last_seen = gql_types.DateTimeScalar()
-	visitor_geoloc = graphene.Field(gql_geolocation.GeoLocation)
-	def resolve_visitor_geoloc(self, info, **kwargs):
+	ip_geoloc = graphene.Field(gql_geolocation.GeoLocation)
+	def resolve_ip_geoloc(self, info, **kwargs):
 		ip = self.ip
 		if not ip:
 			return
@@ -264,10 +264,10 @@ class Visit(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Visit)
 	first_seen = gql_types.DateTimeScalar()
 	last_seen = gql_types.DateTimeScalar()
-	visitor_geoloc = graphene.Field(gql_geolocation.GeoLocation)
+	ip_geoloc = graphene.Field(gql_geolocation.GeoLocation)
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
-	def resolve_visitor_geoloc(self, info, **kwargs):
+	def resolve_ip_geoloc(self, info, **kwargs):
 		ip = self.ip
 		if not ip:
 			return
@@ -280,13 +280,13 @@ class LandingPage(SQLAlchemyObjectType):
 class Message(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Message)
 	opened = gql_types.DateTimeScalar()
-	opener_geoloc = graphene.Field(gql_geolocation.GeoLocation)
+	opener_ip_geoloc = graphene.Field(gql_geolocation.GeoLocation)
 	reported = gql_types.DateTimeScalar()
 	sent = gql_types.DateTimeScalar()
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
 	visits = SQLAlchemyConnectionField(Visit)
-	def resolve_opener_geoloc(self, info, **kwargs):
+	def resolve_opener_ip_geoloc(self, info, **kwargs):
 		opener_ip = self.opener_ip
 		if not opener_ip:
 			return

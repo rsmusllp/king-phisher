@@ -169,7 +169,12 @@ if not king_phisher.its.on_rtd:
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['_static']
+html_context = {
+	'css_files': [
+		'_static/theme_overrides.css',  # override wide tables in RTD theme
+	],
+}
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -224,14 +229,14 @@ htmlhelp_basename = 'king_phisher_doc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
+	# The paper size ('letterpaper' or 'a4paper').
+	#'papersize': 'letterpaper',
 
-    # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
+	# The font size ('10pt', '11pt' or '12pt').
+	#'pointsize': '10pt',
 
-    # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+	# Additional stuff for the LaTeX preamble.
+	#'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
