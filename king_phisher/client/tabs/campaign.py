@@ -373,12 +373,15 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	query getDeaddropConnections($campaign: String!, $count: Int!, $cursor: String) {
 		db {
 			campaign(id: $campaign) {
-				deaddropConnections(first: $count, after: $cursor) {
+				deaddrop_connections: deaddropConnections(first: $count, after: $cursor) {
 					total
 					edges {
 						node {
 							id
-							deaddropDeployment { destination }
+							deaddropDeployment {
+								id
+								destination
+							}
 							visitCount
 							visitorIp
 							localUsername
@@ -408,18 +411,18 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 		'Last Hit'
 	)
 	def format_node_data(self, connection):
-		deaddrop_destination = self._get_graphql_deaddrop_deployments(connection.deployment_id)
+		deaddrop_destination = connection['deaddropDeployment']['destination']
 		if not deaddrop_destination:
 			return None
 		row = (
 			deaddrop_destination,
-			connection.visit_count,
-			connection.visitor_ip,
-			connection.local_username,
-			connection.local_hostname,
-			connection.local_ip_addresses,
-			connection.first_visit,
-			connection.last_visit
+			connection['visitCount'],
+			connection['visitorIp'],
+			connection['localUsername'],
+			connection['localHostname'],
+			connection['localIpAddresses'],
+			connection['firstVisit'],
+			connection['lastVisit']
 		)
 		return row
 
