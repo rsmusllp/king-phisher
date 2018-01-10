@@ -33,61 +33,29 @@
 from __future__ import absolute_import
 
 import king_phisher.version as version
-import king_phisher.server.graphql.database
-import king_phisher.server.graphql.geolocation
-import king_phisher.server.graphql.middleware
-import king_phisher.server.graphql.types
+import king_phisher.server.graphql.middleware as gql_middleware
+import king_phisher.server.graphql.types as gql_types
 
 import graphene.types.utils
-
-kpgql = king_phisher.server.graphql
-
-# misc graphql objects
-class Plugin(graphene.ObjectType):
-	class Meta:
-		interfaces = (kpgql.types.RelayNode,)
-	authors = graphene.List(graphene.String)
-	title = graphene.Field(graphene.String)
-	description = graphene.Field(graphene.String)
-	homepage = graphene.Field(graphene.String)
-	name = graphene.Field(graphene.String)
-	version = graphene.Field(graphene.String)
-	@classmethod
-	def from_plugin(cls, plugin):
-		return cls(
-			authors=plugin.authors,
-			description=plugin.description,
-			homepage=plugin.homepage,
-			name=plugin.name,
-			title=plugin.title,
-			version=plugin.version
-		)
-
-class PluginConnection(graphene.relay.Connection):
-	class Meta:
-		node = Plugin
-	total = graphene.Int()
-	def resolve_total(self, info, **kwargs):
-		return len(info.context.get('plugin_manager', {}))
 
 # top level query object for the schema
 class Query(graphene.ObjectType):
 	"""
 	This is the root query object used for GraphQL queries.
 	"""
-	db = graphene.Field(kpgql.database.Database)
-	geoloc = graphene.Field(kpgql.geolocation.GeoLocation, ip=graphene.String())
-	plugin = graphene.Field(Plugin, name=graphene.String())
-	plugins = graphene.relay.ConnectionField(PluginConnection)
+	db = graphene.Field(gql_types.Database)
+	geoloc = graphene.Field(gql_types.GeoLocation, ip=graphene.String())
+	plugin = graphene.Field(gql_types.Plugin, name=graphene.String())
+	plugins = graphene.relay.ConnectionField(gql_types.PluginConnection)
 	version = graphene.Field(graphene.String)
 	def resolve_db(self, info, **kwargs):
-		return kpgql.database.Database()
+		return gql_types.Database()
 
 	def resolve_geoloc(self, info, **kwargs):
 		ip_address = kwargs.get('ip')
 		if ip_address is None:
 			return
-		return kpgql.geolocation.GeoLocation.from_ip_address(ip_address)
+		return gql_types.GeoLocation.from_ip_address(ip_address)
 
 	def resolve_plugin(self, info, **kwargs):
 		plugin_manager = info.context.get('plugin_manager', {})
@@ -119,7 +87,7 @@ class Schema(graphene.Schema):
 		if 'context_value' not in kwargs:
 			kwargs['context_value'] = {}
 		middleware = list(kwargs.pop('middleware', []))
-		middleware.insert(0, kpgql.middleware.AuthorizationMiddleware())
+		middleware.insert(0, gql_middleware.AuthorizationMiddleware())
 		kwargs['middleware'] = middleware
 		return super(Schema, self).execute(*args, **kwargs)
 

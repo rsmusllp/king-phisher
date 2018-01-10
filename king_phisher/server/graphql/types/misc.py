@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/server/graphql/types.py
+#  king_phisher/server/graphql/types/misc.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -34,10 +34,38 @@ from __future__ import absolute_import
 
 import datetime
 
+import king_phisher.geoip as geoip
+import king_phisher.ipaddress as ipaddress
+
 import graphene.types.utils
 import graphql.language.ast
 
-# replacement graphql scalars
+__all__ = ('GeoLocation', 'Plugin', 'PluginConnection', 'RelayNode')
+
+# custom enum types
+class FilterOperatorEnum(graphene.Enum):
+	EQ = 'eq'
+	GE = 'ge'
+	GT = 'gt'
+	LE = 'le'
+	LT = 'lt'
+	NE = 'ne'
+
+class SortDirectionEnum(graphene.Enum):
+	AESC = 'aesc'
+	DESC = 'desc'
+
+# misc definitions
+class RelayNode(graphene.relay.Node):
+	@classmethod
+	def from_global_id(cls, global_id):
+		return global_id
+
+	@classmethod
+	def to_global_id(cls, _, local_id):
+		return local_id
+
+# custom scalar types
 class AnyScalar(graphene.types.Scalar):
 	@staticmethod
 	def serialize(dt):
@@ -69,34 +97,58 @@ class DateTimeScalar(graphene.types.Scalar):
 	def parse_value(value):
 		return datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
 
-# misc definitions
-class RelayNode(graphene.relay.Node):
+# custom compound types
+class GeoLocation(graphene.ObjectType):
+	city = graphene.Field(graphene.String)
+	continent = graphene.Field(graphene.String)
+	coordinates = graphene.List(graphene.Float)
+	country = graphene.Field(graphene.String)
+	postal_code = graphene.Field(graphene.String)
+	time_zone = graphene.Field(graphene.String)
 	@classmethod
-	def from_global_id(cls, global_id):
-		return global_id
+	def from_ip_address(cls, ip_address):
+		ip_address = ipaddress.ip_address(ip_address)
+		if ip_address.is_private:
+			return
+		result = geoip.lookup(ip_address)
+		if result is None:
+			return
+		return cls(**result)
 
+class Plugin(graphene.ObjectType):
+	class Meta:
+		interfaces = (RelayNode,)
+	authors = graphene.List(graphene.String)
+	title = graphene.Field(graphene.String)
+	description = graphene.Field(graphene.String)
+	homepage = graphene.Field(graphene.String)
+	name = graphene.Field(graphene.String)
+	version = graphene.Field(graphene.String)
 	@classmethod
-	def to_global_id(cls, _, local_id):
-		return local_id
+	def from_plugin(cls, plugin):
+		return cls(
+			authors=plugin.authors,
+			description=plugin.description,
+			homepage=plugin.homepage,
+			name=plugin.name,
+			title=plugin.title,
+			version=plugin.version
+		)
 
-class FilterOperatorEnum(graphene.Enum):
-	EQ = 'eq'
-	GE = 'ge'
-	GT = 'gt'
-	LE = 'le'
-	LT = 'lt'
-	NE = 'ne'
+class PluginConnection(graphene.relay.Connection):
+	class Meta:
+		node = Plugin
+	total = graphene.Int()
+	def resolve_total(self, info, **kwargs):
+		return len(info.context.get('plugin_manager', {}))
 
+# custom compound input types
 class FilterInput(graphene.InputObjectType):
-	AND = graphene.List('king_phisher.server.graphql.types.FilterInput', name='and')
-	OR = graphene.List('king_phisher.server.graphql.types.FilterInput', name='or')
+	and_ = graphene.List('king_phisher.server.graphql.types.misc.FilterInput', name='and')
+	or_ = graphene.List('king_phisher.server.graphql.types.misc.FilterInput', name='or')
 	field = graphene.String()
 	value = AnyScalar()
 	operator = FilterOperatorEnum()
-
-class SortDirectionEnum(graphene.Enum):
-	AESC = 'aesc'
-	DESC = 'desc'
 
 class SortInput(graphene.InputObjectType):
 	field = graphene.String(required=True)

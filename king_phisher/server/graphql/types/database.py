@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/server/graphql/database.py
+#  king_phisher/server/graphql/types/database.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -35,9 +35,8 @@ from __future__ import absolute_import
 import functools
 import operator
 
+from . import misc as gql_misctypes
 import king_phisher.server.database.models as db_models
-import king_phisher.server.graphql.types as gql_types
-import king_phisher.server.graphql.geolocation as gql_geolocation
 import king_phisher.server.graphql.middleware as gql_middleware
 
 import graphene
@@ -49,6 +48,8 @@ import graphql_relay.connection.arrayconnection
 import smoke_zephyr.utilities
 import sqlalchemy.orm
 import sqlalchemy.orm.query
+
+__all__ = ('Database',)
 
 def sa_get_relationship(session, model, name):
 	"""
@@ -75,7 +76,7 @@ def sa_get_relationship(session, model, name):
 def sa_object_resolver(attname, default_value, model, info, **kwargs):
 	"""
 	Resolve the attribute for the given SQLAlchemy model object. If the
-	attribute is a relationship, use :py:func:`.sq_get_relationship` to resolve
+	attribute is a relationship, use :py:func:`.sa_get_relationship` to resolve
 	it.
 
 	:param str attname: The name of the attribute to resolve on the object.
@@ -90,16 +91,16 @@ def sa_object_resolver(attname, default_value, model, info, **kwargs):
 		return sa_get_relationship(info.context['session'], model, attname)
 	return getattr(model, attname, default_value)
 
-sa_object_meta = functools.partial(dict, default_resolver=sa_object_resolver, interfaces=(gql_types.RelayNode,))
+sa_object_meta = functools.partial(dict, default_resolver=sa_object_resolver, interfaces=(gql_misctypes.RelayNode,))
 
 # custom sqlalchemy related objects
 class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 	__connection_types = {}
 	def __init__(self, node, *args, **kwargs):
 		if 'filter' not in kwargs:
-			kwargs['filter'] = gql_types.FilterInput()
+			kwargs['filter'] = gql_misctypes.FilterInput()
 		if 'sort' not in kwargs:
-			kwargs['sort'] = graphene.List(gql_types.SortInput)
+			kwargs['sort'] = graphene.List(gql_misctypes.SortInput)
 		node = self.connection_factory(node)
 		super(SQLAlchemyConnectionField, self).__init__(node, *args, **kwargs)
 
@@ -155,12 +156,12 @@ class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
 	def __query_filter(cls, model, info, gql_filter):
 		# precedence: AND, OR, field
 		sql_filter = None
-		if gql_filter.get('AND'):
-			sql_filter = sqlalchemy.and_(*cls._query_filter_list(model, info, gql_filter['AND']))
-		if gql_filter.get('OR'):
+		if gql_filter.get('and_'):
+			sql_filter = sqlalchemy.and_(*cls._query_filter_list(model, info, gql_filter['and_']))
+		if gql_filter.get('or_'):
 			if sql_filter is not None:
 				raise ValueError('the \'and\', \'or\', and \'field\' filter operators are mutually exclusive')
-			sql_filter = sqlalchemy.or_(*cls._query_filter_list(model, info, gql_filter['OR']))
+			sql_filter = sqlalchemy.or_(*cls._query_filter_list(model, info, gql_filter['or_']))
 
 		if gql_filter.get('field'):
 			if sql_filter is not None:
@@ -237,23 +238,23 @@ class SQLAlchemyObjectType(graphene_sqlalchemy.SQLAlchemyObjectType):
 # database graphql objects
 class AlertSubscription(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.AlertSubscription)
-	expiration = gql_types.DateTimeScalar()
+	expiration = gql_misctypes.DateTimeScalar()
 	has_expired = graphene.Boolean()
 
 class Credential(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Credential)
-	submitted = gql_types.DateTimeScalar()
+	submitted = gql_misctypes.DateTimeScalar()
 
 class DeaddropConnection(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.DeaddropConnection)
-	first_seen = gql_types.DateTimeScalar()
-	last_seen = gql_types.DateTimeScalar()
-	ip_geoloc = graphene.Field(gql_geolocation.GeoLocation)
+	first_seen = gql_misctypes.DateTimeScalar()
+	last_seen = gql_misctypes.DateTimeScalar()
+	ip_geoloc = graphene.Field(gql_misctypes.GeoLocation)
 	def resolve_ip_geoloc(self, info, **kwargs):
 		ip = self.ip
 		if not ip:
 			return
-		return gql_geolocation.GeoLocation.from_ip_address(ip)
+		return gql_misctypes.GeoLocation.from_ip_address(ip)
 
 class DeaddropDeployment(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.DeaddropDeployment)
@@ -262,16 +263,16 @@ class DeaddropDeployment(SQLAlchemyObjectType):
 
 class Visit(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Visit)
-	first_seen = gql_types.DateTimeScalar()
-	last_seen = gql_types.DateTimeScalar()
-	ip_geoloc = graphene.Field(gql_geolocation.GeoLocation)
+	first_seen = gql_misctypes.DateTimeScalar()
+	last_seen = gql_misctypes.DateTimeScalar()
+	ip_geoloc = graphene.Field(gql_misctypes.GeoLocation)
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
 	def resolve_ip_geoloc(self, info, **kwargs):
 		ip = self.ip
 		if not ip:
 			return
-		return gql_geolocation.GeoLocation.from_ip_address(ip)
+		return gql_misctypes.GeoLocation.from_ip_address(ip)
 
 class LandingPage(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.LandingPage)
@@ -279,10 +280,10 @@ class LandingPage(SQLAlchemyObjectType):
 
 class Message(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Message)
-	opened = gql_types.DateTimeScalar()
-	opener_ip_geoloc = graphene.Field(gql_geolocation.GeoLocation)
-	reported = gql_types.DateTimeScalar()
-	sent = gql_types.DateTimeScalar()
+	opened = gql_misctypes.DateTimeScalar()
+	opener_ip_geoloc = graphene.Field(gql_misctypes.GeoLocation)
+	reported = gql_misctypes.DateTimeScalar()
+	sent = gql_misctypes.DateTimeScalar()
 	# relationships
 	credentials = SQLAlchemyConnectionField(Credential)
 	visits = SQLAlchemyConnectionField(Visit)
@@ -290,12 +291,12 @@ class Message(SQLAlchemyObjectType):
 		opener_ip = self.opener_ip
 		if not opener_ip:
 			return
-		return gql_geolocation.GeoLocation.from_ip_address(opener_ip)
+		return gql_misctypes.GeoLocation.from_ip_address(opener_ip)
 
 class Campaign(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.Campaign)
-	created = gql_types.DateTimeScalar()
-	expiration = gql_types.DateTimeScalar()
+	created = gql_misctypes.DateTimeScalar()
+	expiration = gql_misctypes.DateTimeScalar()
 	has_expired = graphene.Boolean()
 	# relationships
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
@@ -328,9 +329,9 @@ class Industry(SQLAlchemyObjectType):
 
 class User(SQLAlchemyObjectType):
 	Meta = sa_object_meta(model=db_models.User)
-	expiration = gql_types.DateTimeScalar()
+	expiration = gql_misctypes.DateTimeScalar()
 	has_expired = graphene.Boolean()
-	last_login = gql_types.DateTimeScalar()
+	last_login = gql_misctypes.DateTimeScalar()
 	# relationships
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
 	campaigns = SQLAlchemyConnectionField(Campaign)

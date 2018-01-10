@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/server/graphql/geolocation.py
+#  king_phisher/server/graphql/types/__init__.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -32,24 +32,5 @@
 
 from __future__ import absolute_import
 
-import king_phisher.geoip as geoip
-import king_phisher.ipaddress as ipaddress
-
-import graphene.types.utils
-
-class GeoLocation(graphene.ObjectType):
-	city = graphene.Field(graphene.String)
-	continent = graphene.Field(graphene.String)
-	coordinates = graphene.List(graphene.Float)
-	country = graphene.Field(graphene.String)
-	postal_code = graphene.Field(graphene.String)
-	time_zone = graphene.Field(graphene.String)
-	@classmethod
-	def from_ip_address(cls, ip_address):
-		ip_address = ipaddress.ip_address(ip_address)
-		if ip_address.is_private:
-			return
-		result = geoip.lookup(ip_address)
-		if result is None:
-			return
-		return cls(**result)
+from .database import *
+from .misc import *

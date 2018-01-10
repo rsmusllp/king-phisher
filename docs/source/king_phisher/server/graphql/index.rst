@@ -14,6 +14,7 @@ can be accessed directly by the server or through the RPC end point at
    :maxdepth: 2
    :titlesonly:
 
-   database.rst
+   types/index.rst
+
    middleware.rst
    schema.rst
