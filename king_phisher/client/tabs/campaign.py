@@ -35,6 +35,7 @@ import logging
 import threading
 import time
 
+from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
 from king_phisher import utilities
@@ -303,7 +304,11 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		while page_info['hasNextPage']:
 			if self.rpc is None:
 				break
-			results = self.rpc.graphql(self.table_query, {'campaign': campaign_id, 'count': count, 'cursor': page_info['endCursor']})
+			try:
+				results = self.rpc.graphql(self.table_query, {'campaign': campaign_id, 'count': count, 'cursor': page_info['endCursor']})
+			except errors.KingPhisherGraphQLQueryError as error:
+				self.logger.error('graphql error: ' + error.message)
+				raise
 			if self.loader_thread_stop.is_set():
 				break
 			if self.is_destroyed.is_set():
@@ -617,7 +622,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 				ip
 				count
 				userAgent
-				visitorGeoloc { city }
+				ipGeoloc { city }
 				firstSeen
 				lastSeen
 			}
@@ -637,7 +642,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 							ip
 							count
 							userAgent
-							visitorGeoloc { city }
+							ipGeoloc { city }
 							firstSeen
 							lastSeen
 						}
@@ -677,8 +682,8 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 				geo_location = 'N/A (Private)'
 			elif isinstance(visitor_ip, ipaddress.IPv6Address):
 				geo_location = 'N/A (IPv6 Address)'
-			elif node['visitorGeoloc']:
-				geo_location = node['visitorGeoloc']['city']
+			elif node['ipGeoloc']:
+				geo_location = node['ipGeoloc']['city']
 		row = (
 			node['message']['targetEmail'],
 			str(visitor_ip),

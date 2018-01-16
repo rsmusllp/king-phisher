@@ -383,19 +383,11 @@ class CampaignGraph(GraphBase):
 								id
 								messageId
 								campaignId
-								visitCount
-								visitorIp
-								visitorGeoloc {
-									city
-									continent
-									coordinates
-									country
-									postalCode
-									timeZone
-								}
-								visitorDetails
-								firstVisit
-								lastVisit
+								count
+								ip
+								firstSeen
+								lastSeen
+								userAgent
 							}
 						}
 					}

@@ -243,7 +243,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		query getCampaign($id: String!) {
 			db {
 				campaign(id: $id) {
-					rejectAfterCredentials
+					maxCredentials
 				}
 			}
 		}""", {'id': campaign_id or self.config['campaign_id']})

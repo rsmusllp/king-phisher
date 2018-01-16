@@ -198,7 +198,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 					companyId
 					description
 					expiration
-					rejectAfterCredentials
+					maxCredentials
 				}
 			}
 		}""", {'id': campaign_id or self.config['campaign_id']})
