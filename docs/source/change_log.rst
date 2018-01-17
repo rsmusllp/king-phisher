@@ -13,6 +13,14 @@ Version 1.10.x
 *In progress*
 
 * Added a ``campaign-alert`` server signal for custom alert delivery mechanisms
+* Use GraphQL for loading data instead of the legacy table-based API
+* Support fault-tolerance when dispatching server signals
+* Allow a country code to be set in users' phone numbers
+* Multiple RPC Terminal improvements
+
+   * Fix a bug regarding line wrapping due to the ``TERM`` environment variable
+   * Use ipython when it's installed
+   * Added ``%graphql`` and ``%graphql_file`` magic commands
 
 Version 1.9.x
 ^^^^^^^^^^^^^
@@ -42,7 +50,7 @@ Released :release:`1.8.0` on June 6th, 2017
 * Support the client on OS X by using Docker
 * Support for issuing certificates  with acme while the server is running
 * Add a wrapping tool for certbot to make the process easier
-* Updated `tools/cx_freeze.py` to build the King Phisher client in Python 3.4
+* Updated ``tools/cx_freeze.py`` to build the King Phisher client in Python 3.4
 * Updated documentation for the Windows build
 
 Version 1.7.1
