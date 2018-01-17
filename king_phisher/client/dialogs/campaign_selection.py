@@ -168,36 +168,35 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
 		hlfg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlfg', default=ColorHexCode.BLACK)
 		now = datetime.datetime.now()
-		campaigns_query = """\
-		{
+		campaigns = self.application.rpc.graphql("""\
+		query getCampaigns {
 			db {
 				campaigns {
 					edges {
 						node {
-							id,
-							name,
-							description,
+							id
+							name
+							description
 							company {
 								name
-							},
+							}
 							campaignType {
 								name
-							},
+							}
 							messages {
 								total
-							},
+							}
 							user {
 								id
-							},
-							created,
+							}
+							created
 							expiration
 						}
 					}
 				}
 			}
 		}
-		"""
-		campaigns = self.application.rpc.graphql(campaigns_query)
+		""")
 		for campaign in campaigns['db']['campaigns']['edges']:
 			campaign = campaign['node']
 			created_ts = utilities.datetime_utc_to_local(campaign['created'])

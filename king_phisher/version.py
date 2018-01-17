@@ -60,14 +60,13 @@ def get_revision():
 		return None
 	return rev.decode('utf-8')
 
-
 revision = get_revision()
 """The git revision identifying the latest commit if available."""
 
-version_info = collections.namedtuple('version_info', ('major', 'minor', 'micro'))(1, 9, 0)
+version_info = collections.namedtuple('version_info', ('major', 'minor', 'micro'))(1, 10, 0)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
 
-version_label = ''
+version_label = 'beta'
 """A version label such as alpha or beta."""
 
 version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)
@@ -79,13 +78,14 @@ distutils_version = version
 
 if version_label:
 	version += '-' + version_label
-	if revision:
-		version += " (rev: {0})".format(revision[:12])
 	distutils_version += version_label[0]
 	if version_label[-1].isdigit():
 		distutils_version += version_label[-1]
 	else:
 		distutils_version += '0'
+
+if revision:
+	version += " (rev: {0})".format(revision[:12])
 
 rpc_api_version = collections.namedtuple('rpc_api_version', ('major', 'minor'))(5, 5)
 """

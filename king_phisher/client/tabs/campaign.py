@@ -171,6 +171,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def signal_kp_server_connected(self, _):
 		event_id = 'db-' + self.table_name.replace('_', '-')
 		server_events = self.application.server_events
+		if not server_events:
+			return
 		server_events.subscribe(event_id, ('deleted', 'inserted', 'updated'), ('id', 'campaign_id'))
 		server_events.connect(event_id, self.signal_server_event_db)
 
@@ -297,9 +299,10 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			if self.is_destroyed.is_set():
 				break
 			for edge in results['db']['campaign'][self.table_name]['edges']:
-				row_data = self.format_node_data(edge['node'])
+				node = edge['node']
+				row_data = self.format_node_data(node)
 				row_data = list(map(self.format_cell_data, row_data))
-				row_data.insert(0, str(edge['node']['id']))
+				row_data.insert(0, str(node['id']))
 				gui_utilities.glib_idle_add_wait(store.append, row_data)
 			page_info = results['db']['campaign'][self.table_name]['pageInfo']
 		if self.is_destroyed.is_set():
@@ -370,12 +373,15 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	query getDeaddropConnections($campaign: String!, $count: Int!, $cursor: String) {
 		db {
 			campaign(id: $campaign) {
-				deaddropConnections(first: $count, after: $cursor) {
+				deaddrop_connections: deaddropConnections(first: $count, after: $cursor) {
 					total
 					edges {
 						node {
 							id
-							deaddropDeployment { destination }
+							deaddropDeployment {
+								id
+								destination
+							}
 							visitCount
 							visitorIp
 							localUsername
@@ -405,20 +411,31 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 		'Last Hit'
 	)
 	def format_node_data(self, connection):
-		deploy_details = self.rpc.remote_table_row('deaddrop_deployments', connection.deployment_id, cache=True)
-		if not deploy_details:
+		deaddrop_destination = connection['deaddropDeployment']['destination']
+		if not deaddrop_destination:
 			return None
 		row = (
-			deploy_details.destination,
-			connection.visit_count,
-			connection.visitor_ip,
-			connection.local_username,
-			connection.local_hostname,
-			connection.local_ip_addresses,
-			connection.first_visit,
-			connection.last_visit
+			deaddrop_destination,
+			connection['visitCount'],
+			connection['visitorIp'],
+			connection['localUsername'],
+			connection['localHostname'],
+			connection['localIpAddresses'],
+			connection['firstVisit'],
+			connection['lastVisit']
 		)
 		return row
+
+	def _get_graphql_deaddrop_deployments(self, deployment_id):
+		results = self.rpc.graphql("""\
+		query getDeaddropDeploymentsDestination($id: String!) {
+			db {
+				deaddropDeployment(id: $id) {
+					destination
+				}
+			}
+		}""", {'id': deployment_id})
+		return results['db']['deaddropDeployment'].get('destination', None)
 
 class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding submitted credentials."""
@@ -567,7 +584,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		"""The loading routine to be executed within a thread."""
 		if not 'campaign_id' in self.config:
 			return
-		if not self.rpc.remote_table_row('campaigns', self.config['campaign_id']):
+		if not self._get_graphql_campaign():
 			return
 		info_cache = {}
 		for graph in self.graphs:
@@ -578,6 +595,17 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			info_cache.update(gui_utilities.glib_idle_add_wait(lambda g=graph: g.refresh(info_cache, self.loader_thread_stop)))
 		else:
 			self.last_load_time = time.time()
+
+	def _get_graphql_campaign(self, campaign_id=None):
+		results = self.rpc.graphql("""\
+		query getCampaign($id: String!) {
+			db {
+				campaign(id: $id) {
+					name
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		return results['db'].get('campaign', None)
 
 class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding incoming visitors."""

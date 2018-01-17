@@ -32,6 +32,7 @@
 
 import code
 import collections
+import functools
 import logging
 import os
 import ssl
@@ -45,10 +46,12 @@ from king_phisher import utilities
 
 import advancedhttpserver
 import boltons.typeutils
+import smoke_zephyr.utilities
 from gi.repository import Gtk
 
 _tag_mixin_slots = ('id', 'name', 'description')
 _tag_mixin_types = (int, str, str)
+_tag_tables = ('campaign_types', 'campaigns', 'companies', 'company_departments', 'industries')
 database_table_objects = utilities.FreezableDict()
 UNRESOLVED = boltons.typeutils.make_sentinel('UNRESOLVED', var_name='UNRESOLVED')
 """A sentinel value used for values in rows to indicate that the data has not been loaded from the server."""
@@ -183,6 +186,16 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		return "<{0} '{1}@{2}:{3}{4}'>".format(self.__class__.__name__, self.username, self.host, self.port, self.uri_base)
 
 	def graphql(self, query, query_vars=None):
+		"""
+		Execute a GraphQL query on the server and return the results. This will
+		raise :py:exc:`~king_phisher.errors.KingPhisherGraphQLQueryError` if
+		the query fails.
+
+		:param str query: The GraphQL query string to execute.
+		:param query_vars: The variables for *query*.
+		:return: The query results.
+		:rtype: dict
+		"""
 		response = self.call('graphql', query, query_vars=query_vars)
 		if response['errors']:
 			raise errors.KingPhisherGraphQLQueryError(
@@ -192,6 +205,23 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 				query_vars=query_vars
 			)
 		return response['data']
+
+	def graphql_file(self, file_or_path, query_vars=None):
+		"""
+		This method wraps :py:meth:`~.graphql` to provide a convenient way to
+		execute GraphQL queries from files.
+
+		:param file_or_path: The file object or path to the file from which to read.
+		:param query_vars: The variables for *query*.
+		:return: The query results.
+		:rtype: dict
+		"""
+		if isinstance(file_or_path, str):
+			with open(file_or_path, 'r') as file_h:
+				query = file_h.read()
+		else:
+			query = file_or_path.read()
+		return self.graphql(query, query_vars=query_vars)
 
 	def reconnect(self):
 		"""Reconnect to the remote server."""
@@ -276,6 +306,10 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		row_cls = database_table_objects[table]
 		return row_cls(self, **row)
 
+	def remote_table_row_set(self, table, row_id, attributes):
+		keys, values = zip(*attributes.items())
+		return self.call('db/table/set', table, row_id, keys, values)
+
 	def geoip_lookup(self, ip):
 		"""
 		Look up the geographic location information for the specified IP
@@ -323,14 +357,20 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		:return: The model with the loaded data from the server.
 		:rtype: :py:class:`Gtk.ListStore`
 		"""
+		if tag_table not in _tag_tables:
+			raise ValueError('tag_table is not a valid tag interface exposing table')
+		tag_table = smoke_zephyr.utilities.parse_case_snake_to_camel(tag_table, upper_first=False)
 		if model is None:
-			model = Gtk.ListStore(*_tag_mixin_types)
+			model = Gtk.ListStore(str, str, str)
 			# sort by the name column, ascending
 			model.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 		else:
 			model.clear()
-		for row in self.remote_table(tag_table):
-			model.append((row.id, row.name, row.description))
+		graphql_query = 'query getTags { db { ' + tag_table + ' { edges { node { id name description } } } } }'
+		tags = self.graphql(graphql_query)['db'][tag_table]['edges']
+		for tag in tags:
+			tag = tag['node']
+			model.append((tag['id'], tag['name'], tag['description']))
 		return model
 
 	def login(self, username, password, otp=None):
@@ -362,6 +402,29 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		"""
 		return self.call('ping')
 
+def _magic_graphql(rpc, mode, line):
+	if mode == 'file':
+		line = os.path.expandvars(line)
+		line = os.path.expanduser(line)
+		if not os.access(line, os.R_OK):
+			print('GraphQL Exception: invalid query file')
+			return
+		with open(line, 'r') as file_h:
+			query = file_h.read()
+	elif mode == 'query':
+		query = line
+	else:
+		raise RuntimeError('unsupported magic mode: ' + mode)
+
+	try:
+		result = rpc.graphql(query)
+	except errors.KingPhisherGraphQLQueryError as error:
+		print('GraphQL Exception: ' + error.message)
+		for message in error.errors:
+			print(message.rstrip())
+		return
+	return result
+
 def vte_child_routine(config):
 	"""
 	This is the method which is executed within the child process spawned
@@ -377,9 +440,17 @@ def vte_child_routine(config):
 		import readline
 		import rlcompleter  # pylint: disable=unused-variable
 	except ImportError:
-		pass
+		has_readline = False
 	else:
-		readline.parse_and_bind('tab: complete')
+		has_readline = True
+
+	try:
+		import IPython.terminal.embed
+	except ImportError:
+		has_ipython = False
+	else:
+		has_ipython = True
+
 	for plugins_directory in ('rpc_plugins', 'rpc-plugins'):
 		plugins_directory = find.data_directory(plugins_directory)
 		if not plugins_directory:
@@ -392,11 +463,11 @@ def vte_child_routine(config):
 		rpc.headers = {}
 	for name, value in headers.items():
 		rpc.headers[str(name)] = str(value)
+	user_data_path = config['user_data_path']
 
-	banner = "Python {0} on {1}".format(sys.version, sys.platform)
-	print(banner)  # pylint: disable=superfluous-parens
-	information = "Campaign Name: '{0}' ID: {1}".format(config['campaign_name'], config['campaign_id'])
-	print(information)  # pylint: disable=superfluous-parens
+	print("Python {0} on {1}".format(sys.version, sys.platform))  # pylint: disable=superfluous-parens
+	print("Campaign Name: '{0}' ID: {1}".format(config['campaign_name'], config['campaign_id']))  # pylint: disable=superfluous-parens
+	print('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
 	console_vars = {
 		'CAMPAIGN_NAME': config['campaign_name'],
 		'CAMPAIGN_ID': config['campaign_id'],
@@ -404,9 +475,17 @@ def vte_child_routine(config):
 		'rpc': rpc,
 		'sys': sys
 	}
-	export_to_builtins = ['CAMPAIGN_NAME', 'CAMPAIGN_ID', 'rpc']
-	console = code.InteractiveConsole(console_vars)
-	for var in export_to_builtins:
-		console.push("__builtins__['{0}'] = {0}".format(var))
-	console.interact('The \'rpc\' object holds the connected KingPhisherRPCClient instance')
+
+	if has_ipython:
+		console = IPython.terminal.embed.InteractiveShellEmbed(ipython_dir=os.path.join(user_data_path, 'ipython'))
+		console.register_magic_function(functools.partial(_magic_graphql, rpc, 'query'), 'line', 'graphql')
+		console.register_magic_function(functools.partial(_magic_graphql, rpc, 'file'), 'line', 'graphql_file')
+		console.mainloop(console_vars)
+	else:
+		if has_readline:
+			readline.parse_and_bind('tab: complete')
+		console = code.InteractiveConsole(console_vars)
+		for var in tuple(console_vars.keys()):
+			console.push("__builtins__['{0}'] = {0}".format(var))
+		console.interact('')
 	return

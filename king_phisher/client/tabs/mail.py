@@ -160,11 +160,22 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		return True
 
 	def _sender_precheck_campaign(self):
-		campaign = self.application.rpc.remote_table_row('campaigns', self.config['campaign_id'])
-		if campaign.expiration and campaign.expiration < datetime.datetime.utcnow():
+		expiration = self._get_graphql_campaign_expiration()
+		if expiration and expiration < datetime.datetime.utcnow():
 			gui_utilities.show_dialog_warning('Campaign Is Expired', self.parent, 'The current campaign has already expired.')
 			return False
 		return True
+
+	def _get_graphql_campaign_expiration(self, campaign_id=None):
+		results = self.application.rpc.graphql("""\
+		query getCampaignExpiration($id: String!) {
+			db {
+				campaign(id: $id) {
+					expiration
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		return results['db']['campaign']['expiration']
 
 	def _sender_precheck_settings(self):
 		required_settings = {
@@ -240,7 +251,9 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			self.text_insert('done, failed due to DNS timeout.\n')
 			dialog_title = 'Sender Policy Framework Failure'
 			dialog_message = 'Timeout on DNS query, unable to check SPF records.\n\nContinue sending messages anyways?'
-			if not gui_utilities.show_dialog_yes_no(dialog_title, self.parent, dialog_message):
+			if gui_utilities.show_dialog_yes_no(dialog_title, self.parent, dialog_message):
+				return True
+			else:
 				self.text_insert('Sending aborted due to a DNS query timeout during the record check.\n')
 				return False
 		except spf.SPFError as error:
@@ -807,6 +820,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			'entry_attachment_file',
 			'expander_calendar_invite_settings',
 			'expander_email_settings',
+			'label_target_count',
 			'radiobutton_message_type_calendar_invite',
 			'radiobutton_message_type_email',
 			'radiobutton_target_field_bcc',
@@ -843,14 +857,52 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.target_field.set_active(self.config['mailer.target_field'])
 		self.target_type = managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
+		self._update_target_count()
 
 	def _campaign_load(self, campaign_id):
-		campaign = self.application.rpc.remote_table_row('campaigns', campaign_id, cache=True, refresh=True)
-		if campaign.company_id is None:
+		company_name = self._get_graphql_campaign_company()
+		if company_name is None:
 			self.config['mailer.company_name'] = None
 		else:
-			self.config['mailer.company_name'] = campaign.company.name
+			self.config['mailer.company_name'] = company_name
 		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
+
+	def _get_graphql_campaign_company(self, campaign_id=None):
+		results = self.application.rpc.graphql("""\
+		query getCampaignCompanyName($id: String!) {
+			db {
+				campaign(id: $id) {
+					company {
+						name
+					}
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		return results['db']['campaign']['company']['name']
+
+	def _update_target_count(self):
+		if not hasattr(self, 'target_type'):
+			# this will be the case during initialization before the attribute is set
+			return
+		target_type = self.target_type.get_active()
+		count = None
+		text = ''
+		if target_type == 'file':
+			target_file = self.gobjects['entry_target_file'].get_text()
+			if target_file and os.access(target_file, os.R_OK):
+				try:
+					count = mailer.count_targets_file(target_file)
+				except UnicodeDecodeError:
+					text = 'No targets (unicode decoding error)'
+			elif target_file:
+				text = 'Invalid target CSV file specified'
+			else:
+				text = 'No target CSV file specified'
+		elif target_type == 'single':
+			count = 1
+		if count is not None:
+			text = "{0:,} target{1}".format(count, '' if count == 1 else 's')
+		self.gobjects['label_target_count'].set_text(text)
 
 	def objects_load_from_config(self):
 		super(MailSenderConfigurationTab, self).objects_load_from_config()
@@ -926,12 +978,14 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 		if not spf_result:
 			gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'No SPF records found.')
-		else:
-			if spf_result is 'fail':
-				gui_utilities.show_dialog_info('SPF Check Results:', self.parent, 'SPF exists with a hard fail. Your messages will probably be blocked.')
-			elif spf_result is 'softfail':
-				gui_utilities.show_dialog_info('SPF Check Results', self.parent, 'SPF Exists with a soft fail. Your messages have strong possibility of being blocked. Check your logs.')
 			return True
+
+		message = 'SPF exists and the policy evaluates to: ' + spf_result
+		if spf_result is 'fail':
+			message = 'SPF exists with a hard fail, messages will probably be blocked.'
+		elif spf_result is 'softfail':
+			message = 'SPF exists with a soft fail, messages might be blocked.'
+		gui_utilities.show_dialog_info('SPF Check Results', self.parent, message)
 		return True
 
 	def signal_checkbutton_toggled_calendar_invite_all_day(self, button):
@@ -957,6 +1011,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	def signal_entry_backspace(self, entry):
 		entry.set_text('')
 		return True
+
+	def signal_entry_changed(self, entry):
+		self._update_target_count()
 
 	def signal_expander_activate_message_type(self, expander):
 		if expander.get_expanded():
@@ -1008,6 +1065,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.gobjects['entry_target_file'].set_sensitive(target_type == 'file')
 		self.gobjects['entry_target_name'].set_sensitive(target_type == 'single')
 		self.gobjects['entry_target_email_address'].set_sensitive(target_type == 'single')
+		self._update_target_count()
 
 class MailSenderTab(_GObject_GObject):
 	"""

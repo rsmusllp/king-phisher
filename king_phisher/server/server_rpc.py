@@ -99,7 +99,7 @@ def register_rpc(path, database_access=False, log_call=False):
 				if getattr(handler_instance, 'rpc_session', False):
 					msg = handler_instance.rpc_session.user + ' is ' + msg
 				rpc_logger.debug(msg)
-			signals.rpc_method_call.send(path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs)
+			signals.send_safe('rpc-method-call', rpc_logger, path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs)
 			if database_access:
 				session = db_manager.Session()
 				try:
@@ -108,7 +108,7 @@ def register_rpc(path, database_access=False, log_call=False):
 					session.close()
 			else:
 				result = function(handler_instance, *args, **kwargs)
-			signals.rpc_method_called.send(path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs, retval=result)
+			signals.send_safe('rpc-method-called', rpc_logger, path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs, retval=result)
 			return result
 		advancedhttpserver.RegisterPath(path, is_rpc=True)(wrapper)
 		return wrapper
@@ -717,7 +717,7 @@ def rpc_login(handler, session, username, password, otp=None):
 			return fail_otp
 	session_id = handler.server.session_manager.put(username)
 	logger.info("successful login request from {0} for user {1}".format(handler.client_address[0], username))
-	signals.rpc_user_logged_in.send(handler, session=session_id, name=username)
+	signals.send_safe('rpc-user-logged-in', logger, handler, session=session_id, name=username)
 	return True, ConnectionErrorReason.SUCCESS, session_id
 
 @register_rpc('/logout', log_call=True)
@@ -728,7 +728,7 @@ def rpc_logout(handler):
 	handler.server.session_manager.remove(handler.rpc_session_id)
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
 	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], rpc_session.user))
-	signals.rpc_user_logged_out.send(handler, session=handler.rpc_session_id, name=rpc_session.user)
+	signals.send_safe('rpc-user-logged-out', logger, handler, session=handler.rpc_session_id, name=rpc_session.user)
 
 @register_rpc('/plugins/list', log_call=True)
 def rpc_plugins_list(handler):

@@ -176,5 +176,5 @@ class ServerPluginManager(plugins.PluginManagerBase):
 	@server.setter
 	def server(self, value):
 		self._server = value
-		for _, plugin in self:
+		for plugin in self.enabled_plugins.values():
 			plugin.server = value

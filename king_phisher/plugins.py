@@ -32,8 +32,10 @@
 import collections
 import copy
 import distutils.version
+import functools
 import inspect
 import logging
+import platform
 import re
 import sys
 import textwrap
@@ -132,7 +134,17 @@ class Requirements(_Mapping):
 		:param dict items: The items that are members of this collection, keyed by their name.
 		"""
 		# call dict here to allow items to be a two dimensional array suitable for passing to dict
-		self._storage = dict(items)
+		items = dict(items)
+		packages = items.get('packages')
+		if isinstance(packages, (list, set, tuple)):
+			missing_packages = self._check_for_missing_packages(packages)
+			packages_dict = {}
+			for package_version in packages:
+				match = self._package_regex.match(package_version)
+				package_name = match.group('name') if match else package_version
+				packages_dict[package_version] = package_name not in missing_packages
+			items['packages'] = packages_dict
+		self._storage = items
 
 	def __repr__(self):
 		return "<{0} is_compatible={1!r} >".format(self.__class__.__name__, self.is_compatible)
@@ -154,17 +166,23 @@ class Requirements(_Mapping):
 		return True
 
 	def compatibility_iter(self):
-		if 'minimum-version' in self._storage:
-			StrictVersion = distutils.version.StrictVersion
-			yield ('King Phisher Version', self._storage['minimum-version'], StrictVersion(self._storage['minimum-version']) <= StrictVersion(version.distutils_version))
-		if 'packages' in self._storage:
-			packages = self._storage['packages']
-			missing_packages = self._check_for_missing_packages(self._storage['packages'])
+		StrictVersion = distutils.version.StrictVersion
+		if self._storage.get('minimum-python-version'):
+			available = StrictVersion(self._storage['minimum-python-version']) <= StrictVersion('.'.join(map(str, sys.version_info[:3])))
+			yield ('Minimum Python Version', self._storage['minimum-python-version'], available)
 
-			for package in packages:
-				if self._package_regex.match(package):
-					package = self._package_regex.match(package).group('name')
-				yield ('Required Package', package, package not in missing_packages)
+		if self._storage.get('minimum-version'):
+			available = StrictVersion(self._storage['minimum-version']) <= StrictVersion(version.distutils_version)
+			yield ('Minimum King Phisher Version', self._storage['minimum-version'], available)
+
+		if self._storage.get('packages'):
+			for name, available in self._storage['packages'].items():
+				yield ('Required Package', name, available)
+
+		if self._storage.get('platforms'):
+			platforms = tuple(p.title() for p in self._storage['platforms'])
+			system = platform.system()
+			yield ('Supported Platforms', ', '.join(platforms), system.title() in platforms)
 
 	def _check_for_missing_packages(self, packages):
 		missing_packages = []
@@ -186,7 +204,10 @@ class Requirements(_Mapping):
 		return tuple(self.compatibility_iter())
 
 	def to_dict(self):
-		return copy.deepcopy(self._storage)
+		# this method always returns 'packages' as an iterable
+		storage = copy.deepcopy(self._storage)
+		storage['packages'] = tuple(storage.get('packages', {}).keys())
+		return storage
 
 class PluginBaseMeta(type):
 	"""
@@ -204,7 +225,23 @@ class PluginBaseMeta(type):
 			description = description.split('\n\n')
 			description = [chunk.replace('\n', ' ').strip() for chunk in description]
 			dct['description'] = '\n\n'.join(description)
+		raw_reqs = {}
+		update_requirements = functools.partial(mcs._update_requirements, bases, dct, raw_reqs)
+		update_requirements('req_min_py_version', 'minimum-python-version')
+		update_requirements('req_min_version', 'minimum-version')
+		update_requirements('req_packages', 'packages')
+		update_requirements('req_platforms', 'platforms')
+		dct['requirements'] = Requirements(raw_reqs)
 		return super(PluginBaseMeta, mcs).__new__(mcs, name, bases, dct)
+
+	@staticmethod
+	def _update_requirements(bases, dct, requirements, property, requirement):
+		if property in dct:
+			requirements[requirement] = dct[property]
+		else:
+			base = next((base for base in bases if hasattr(base, property)), None)
+			if base is not None:
+				requirements[requirement] = getattr(base, property)
 
 	@property
 	def compatibility(cls):
@@ -216,11 +253,7 @@ class PluginBaseMeta(type):
 
 		:return: Tuples of compatibility information.
 		"""
-		if cls.req_min_version is not None:
-			yield ('King Phisher Version', cls.req_min_version, StrictVersion(cls.req_min_version) <= StrictVersion(version.distutils_version))
-		if cls.req_packages is not None:
-			for name, available in cls.req_packages.items():
-				yield ('Required Package', name, available)
+		return cls.requirements.compatibility
 
 	@property
 	def is_compatible(cls):
@@ -233,13 +266,7 @@ class PluginBaseMeta(type):
 		:return: Whether or not this plugin class is compatible.
 		:rtype: bool
 		"""
-		if cls.req_min_version is not None:
-			if StrictVersion(cls.req_min_version) > StrictVersion(version.distutils_version):
-				return False
-		if cls.req_packages:
-			if not all(cls.req_packages.values()):
-				return False
-		return True
+		return cls.requirements.is_compatible
 
 	@property
 	def name(cls):
@@ -254,10 +281,7 @@ class PluginBaseMeta(type):
 			'homepage': cls.homepage,
 			'name': cls.name,
 			'is_compatible': cls.is_compatible,
-			'requirements': {
-				'minimum-version': cls.req_min_version,
-				'packages': tuple(cls.req_packages.keys())
-			},
+			'requirements': cls.requirements.to_dict(),
 			'version': cls.version
 		}
 		return metadata
@@ -280,10 +304,14 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""An optional homepage for the plugin."""
 	options = []
 	"""A list of configurable option definitions for the plugin."""
+	req_min_py_version = None
+	"""The required minimum Python version for compatibility."""
 	req_min_version = '1.3.0b0'
 	"""The required minimum version for compatibility."""
 	req_packages = {}
 	"""A dictionary of required packages, keyed by the package name and a boolean value of it's availability."""
+	req_platforms = ()
+	"""A tuple of case-insensitive supported platform names."""
 	version = '1.0'
 	"""The version identifier of this plugin."""
 	_logging_prefix = 'KingPhisher.Plugins.'

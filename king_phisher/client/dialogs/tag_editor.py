@@ -65,7 +65,7 @@ class TagEditorDialog(gui_utilities.GladeGObject):
 		self.treeview_managers = {}
 		for tag_table in self.tag_tables:
 			treeview = self.gobjects['treeview_' + tag_table]
-			model = Gtk.ListStore(int, str, str)
+			model = Gtk.ListStore(str, str, str)
 			treeview.set_model(model)
 			tvm = managers.TreeViewManager(
 				treeview,
@@ -98,16 +98,14 @@ class TagEditorDialog(gui_utilities.GladeGObject):
 		self.application.rpc('db/table/delete', tag_table, tag_id)
 		self.load_tags(tag_table)
 
-	def load_tags(self, tags=None):
-		if tags is None:
-			tags = self.tag_tables
-		elif isinstance(tags, str):
-			tags = (tags,)
-		for tag in tags:
-			model = self.gobjects['treeview_' + tag].get_model()
-			model.clear()
-			for tag in self.application.rpc.remote_table(tag):
-				model.append((tag.id, tag.name, tag.description))
+	def load_tags(self, tag_tables=None):
+		if tag_tables is None:
+			tag_tables = self.tag_tables
+		elif isinstance(tag_tables, str):
+			tag_tables = (tag_tables,)
+		for tag_table in tag_tables:
+			model = self.gobjects['treeview_' + tag_table].get_model()
+			self.application.rpc.get_tag_model(tag_table, model=model)
 
 	def interact(self):
 		self.dialog.show_all()

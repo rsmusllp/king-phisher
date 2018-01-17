@@ -33,18 +33,19 @@
 import base64
 import binascii
 import collections
+import datetime
 import json
 import logging
 import os
 import re
 import shutil
 import threading
+import weakref
 
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
 from king_phisher import ipaddress
-from king_phisher import sms
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher import xor
@@ -100,7 +101,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		tracking_image = self.config.get('server.tracking_image')
 		tracking_image = tracking_image.replace('.', '\\.')
 		self.handler_map[regex_prefix + tracking_image + '$'] = self.handle_email_opened
-		signals.safe_send('request-received', self.logger, self)
+		signals.send_safe('request-received', self.logger, self)
 
 	def end_headers(self, *args, **kwargs):
 		if self.command != 'RPC':
@@ -108,30 +109,38 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				self.send_header(header, value)
 		return super(KingPhisherRequestHandler, self).end_headers(*args, **kwargs)
 
-	def issue_alert(self, alert_text, campaign_id):
+	def issue_alert(self, campaign_id, table, count):
 		"""
-		Send an SMS alert. If no *campaign_id* is specified all users
-		with registered SMS information will receive the alert otherwise
-		only users subscribed to the campaign specified.
+		Send a campaign alert for the specified table.
 
-		:param str alert_text: The message to send to subscribers.
 		:param int campaign_id: The campaign subscribers to send the alert to.
+		:param str table: The type of event to use as the sender when it is forwarded.
+		:param int count: The number associated with the event alert.
 		"""
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
+		now = datetime.datetime.utcnow()
+		alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if subscription.mute_timestamp is None or subscription.mute_timestamp > now)
+		if not alert_subscriptions:
+			self.server.logger.debug("no active alert subscriptions are present for campaign id: {0} ({1})".format(campaign.id, campaign.name))
+			session.close()
+			return
+		if not signals.campaign_alert.receivers:
+			self.server.logger.warning('users are subscribed to campaign alerts, and no signal handlers are connected')
+			session.close()
+			return
+		if not signals.campaign_alert.has_receivers_for(table):
+			self.server.logger.info('users are subscribed to campaign alerts, and no signal handlers are connected for sender: ' + table)
+			session.close()
+			return
 
-		if '{campaign_name}' in alert_text:
-			alert_text = alert_text.format(campaign_name=campaign.name)
-		for subscription in campaign.alert_subscriptions:
-			user = subscription.user
-			carrier = user.phone_carrier
-			number = user.phone_number
-			if carrier is None or number is None:
-				self.server.logger.warning("skipping alert because user {0} has missing information".format(user.id))
+		for subscription in alert_subscriptions:
+			results = signals.send_safe('campaign-alert', self.server.logger, table, alert_subscription=subscription, count=count)
+			if any((result for (_, result) in results)):
 				continue
-			self.server.logger.debug("sending alert SMS message to {0} ({1})".format(number, carrier))
-			sms.send_sms(alert_text, number, carrier)
+			self.server.logger.warning("user {0} is subscribed to campaign alerts, and no signal handlers succeeded to send an alert".format(subscription.user.id))
 		session.close()
+		return
 
 	def adjust_path(self):
 		"""Adjust the :py:attr:`~.KingPhisherRequestHandler.path` attribute based on multiple factors."""
@@ -247,6 +256,24 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			if len(basic_auth) == 2 and len(basic_auth[0]):
 				username, password = basic_auth
 		return username, password
+
+	def get_template_vars(self):
+		template_vars = {
+			'client': self.get_template_vars_client(),
+			'request': {
+				'command': self.command,
+				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
+				'headers': dict(self.headers),
+				'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys()))),
+				'user_agent': self.headers.get('user-agent')
+			},
+			'server': {
+				'hostname': self.vhost,
+				'address': self.connection.getsockname()[0]
+			}
+		}
+		template_vars.update(self.server.template_env.standard_variables)
+		return template_vars
 
 	def get_template_vars_client(self):
 		"""
@@ -446,7 +473,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 	def send_response(self, code, message=None):
 		super(KingPhisherRequestHandler, self).send_response(code, message)
-		signals.safe_send('response-sent', self.logger, self, code=code, message=message)
+		signals.send_safe('response-sent', self.logger, self, code=code, message=message)
 
 	def respond_file(self, file_path, attachment=False, query=None):
 		self._respond_file_check_id()
@@ -469,21 +496,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		self.semaphore_acquire()
 		template_data = b''
 		headers = []
-		template_vars = {
-			'client': self.get_template_vars_client(),
-			'request': {
-				'command': self.command,
-				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
-				'headers': dict(self.headers),
-				'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys()))),
-				'user_agent': self.headers.get('user-agent')
-			},
-			'server': {
-				'hostname': self.vhost,
-				'address': self.connection.getsockname()[0]
-			}
-		}
-		template_vars.update(self.server.template_env.standard_variables)
+		template_vars = self.get_template_vars()
 		try:
 			template_module = template.make_module(template_vars)
 		except (TypeError, jinja2.TemplateError) as error:
@@ -591,10 +604,10 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 	def respond_not_found(self):
 		self.send_response(404, 'Not Found')
-		self.send_header('Content-Type', 'text/html')
-		page_404 = find.data_file('error_404.html')
-		if page_404:
-			with open(page_404, 'rb') as file_h:
+		self.send_header('Content-Type', 'text/html; charset=utf-8')
+		file_path = find.data_file(os.path.join('pages', 'error_404.html'))
+		if file_path:
+			with open(file_path, 'rb') as file_h:
 				message = file_h.read()
 		else:
 			message = b'Resource Not Found\n'
@@ -678,8 +691,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		session.close()
 		self.semaphore_release()
 		if new_connection and visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
-			alert_text = "{0} deaddrop connections reached for campaign: {{campaign_name}}".format(visit_count)
-			self.server.job_manager.job_run(self.issue_alert, (alert_text, deployment.campaign_id))
+			self.server.job_manager.job_run(self.issue_alert, (deployment.campaign_id, 'deaddrop_connections', visit_count))
 		return
 
 	def handle_email_opened(self, query):
@@ -707,7 +719,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			message.opener_user_agent = self.headers.get('user-agent', None)
 			session.commit()
 		session.close()
-		signals.safe_send('email-opened', self.logger, self)
+		signals.send_safe('email-opened', self.logger, self)
 		self.semaphore_release()
 
 	def handle_javascript_hook(self, query):
@@ -785,9 +797,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			session.add(visit)
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
-				alert_text = "{0} visits reached for campaign: {{campaign_name}}".format(visit_count)
-				self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
-			signals.safe_send('visit-received', self.logger, self)
+				self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'visits', visit_count))
+			signals.send_safe('visit-received', self.logger, self)
 
 		if visit_id is None:
 			self.logger.error('the visit id has not been set')
@@ -814,9 +825,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 			cred_count = len(campaign.credentials)
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
-			alert_text = "{0} credentials submitted for campaign: {{campaign_name}}".format(cred_count)
-			self.server.job_manager.job_run(self.issue_alert, (alert_text, self.campaign_id))
-		signals.safe_send('credentials-received', self.logger, self, username=username, password=password)
+			self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'credentials', cred_count))
+		signals.send_safe('credentials-received', self.logger, self, username=username, password=password)
 
 class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 	"""
@@ -869,9 +879,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		global_vars = {}
 		if config.has_section('server.page_variables'):
 			global_vars = config.get('server.page_variables')
-		global_vars['embed_youtube_video'] = pages.embed_youtube_video
-		global_vars['make_csrf_page'] = pages.make_csrf_page
-		global_vars['make_redirect_page'] = pages.make_redirect_page
+		global_vars.update(pages.EXPORTED_FUNCTIONS)
 		self.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
 		self.ws_manager = web_sockets.WebSocketsManager(config, self.job_manager)
 
@@ -898,7 +906,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self.__is_shutdown = threading.Event()
 		self.__is_shutdown.clear()
 		self.__shutdown_lock = threading.Lock()
-		plugin_manager.server = self
+		plugin_manager.server = weakref.proxy(self)
 
 		headers = self.config.get_if_exists('server.headers', [])
 		for header in headers:

@@ -85,26 +85,46 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
 		store = self._model
 		store.clear()
-		for campaign in self.application.rpc.remote_table('campaigns'):
-			company = campaign.company
-			if company:
-				company = company.name
-			created_ts = utilities.datetime_utc_to_local(campaign.created)
+		campaigns = self.application.rpc.graphql("""\
+		query getCampaigns {
+			db {
+				campaigns {
+					edges {
+						node {
+							id
+							campaignType {
+								name
+							}
+							company {
+								name
+							}
+							created
+							expiration
+							name
+							userId
+						}
+					}
+				}
+			}
+		}
+		""")
+		for campaign in campaigns['db']['campaigns']['edges']:
+			campaign = campaign['node']
+			company = campaign['company']['name'] if campaign['company'] else None
+			created_ts = utilities.datetime_utc_to_local(campaign['created'])
 			created_ts = utilities.format_datetime(created_ts)
-			campaign_type = campaign.campaign_type
-			if campaign_type:
-				campaign_type = campaign_type.name
-			expiration_ts = campaign.expiration
+			campaign_type = campaign['campaignType']['name'] if campaign['campaignType'] else None
+			expiration_ts = campaign['expiration']
 			if expiration_ts is not None:
-				expiration_ts = utilities.datetime_utc_to_local(campaign.expiration)
+				expiration_ts = utilities.datetime_utc_to_local(expiration_ts)
 				expiration_ts = utilities.format_datetime(expiration_ts)
 			store.append((
-				str(campaign.id),
+				campaign['id'],
 				False,
-				campaign.name,
+				campaign['name'],
 				company,
 				campaign_type,
-				campaign.user_id,
+				campaign['userId'],
 				created_ts,
 				expiration_ts
 			))

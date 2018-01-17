@@ -134,7 +134,8 @@ class RPCTerminal(object):
 				'username': rpc.username,
 				'uri_base': rpc.uri_base,
 				'headers': rpc.headers
-			}
+			},
+			'user_data_path': self.application.user_data_path
 		}
 
 		module_path = os.path.dirname(client_rpc.__file__) + ((os.path.sep + '..') * client_rpc.__name__.count('.'))
@@ -161,9 +162,11 @@ class RPCTerminal(object):
 			working_directory=os.getcwd(),
 			argv=[sys.executable, '-c', python_command],
 			envp=[
+				find.ENV_VAR + '=' + os.environ[find.ENV_VAR],
 				'DISPLAY=' + os.environ['DISPLAY'],
 				'PATH=' + os.environ['PATH'],
-				'PYTHONPATH=' + module_path, find.ENV_VAR + '=' + os.environ[find.ENV_VAR]
+				'PYTHONPATH=' + module_path,
+				'TERM=' + os.environ.get('TERM', 'xterm')
 			],
 			flags=(GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD),
 			child_setup=self._child_setup,

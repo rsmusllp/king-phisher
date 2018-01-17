@@ -512,8 +512,8 @@ def show_dialog_exc_socket_error(error, parent, title=None):
 	title = title or 'Connection Error'
 	if isinstance(error, socket.timeout):
 		description = 'The connection to the server timed out.'
-	else:
-		error_number, error_message = error.args
+	elif len(error.args) > 1:
+		error_number, error_message = error.args[:2]
 		if error_number == 111:
 			description = 'The server refused the connection.'
 		else:

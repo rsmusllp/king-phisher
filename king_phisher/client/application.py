@@ -318,13 +318,27 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Show a dialog prompting the user to for the a new name to assign to the
 		currently selected campaign.
 		"""
-		campaign = self.rpc.remote_table_row('campaigns', self.config['campaign_id'])
-		prompt = dialogs.TextEntryDialog.build_prompt(self, 'Rename Campaign', 'Enter the new campaign name:', campaign.name)
+		campaign_name = self._get_graphql_campaign_name()
+		prompt = dialogs.TextEntryDialog.build_prompt(self, 'Rename Campaign', 'Enter the new campaign name:', campaign_name)
 		response = prompt.interact()
-		if response is None or response == campaign.name:
+		if response is None or response == campaign_name:
 			return
 		self.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'name', response)
 		gui_utilities.show_dialog_info('Campaign Name Updated', self.get_active_window(), 'The campaign name was successfully changed.')
+
+	def _get_graphql_campaign_name(self, campaign_id=None):
+		results = self.rpc.graphql("""\
+		query getCampaignName($id: String!) {
+			db {
+				campaign(id: $id) {
+					name
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		if results['db'].get('campaign', None):
+			return results['db']['campaign'].get('name', None)
+		else:
+			return None
 
 	def exception_hook(self, exc_type, exc_value, exc_traceback):
 		if isinstance(exc_value, KeyboardInterrupt):
@@ -445,14 +459,14 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self.logger.debug('no campaign selected, disconnecting and exiting')
 				self.emit('exit')
 				return True
-		campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True)
-		if campaign_info is None:
+		campaign_name = self._get_graphql_campaign_name()
+		if not campaign_name:
 			if not self.show_campaign_selection():
 				self.logger.debug('no campaign selected, disconnecting and exiting')
 				self.emit('exit')
 				return True
-			campaign_info = self.rpc.remote_table_row('campaigns', self.config['campaign_id'], cache=True, refresh=True)
-		self.config['campaign_name'] = campaign_info.name
+			campaign_name = self._get_graphql_campaign_name()
+		self.config['campaign_name'] = campaign_name
 		self.emit('campaign-set', None, self.config['campaign_id'])
 		return
 

@@ -117,5 +117,33 @@ queries to iterate over all entries.
    # and is condensed to a single line
    { plugins { total edges { node { name title authors } } } }
 
+.. code-block:: none
+
+   # This query is an example of how a single database object can be referenced
+   # by its ID (which is always a string in GraphQL)
+   query getSpecificCampaign {
+      db {
+         # Campaign is specified here (instead of campaigns) as well as the ID
+         campaign(id: "1") {
+            name
+            description
+         }
+      }
+   }
+
+.. code-block:: none
+
+   # This query is the same as the previous one, except here the campaign ID
+   # is defined as a variable
+   query getSpecificCampaign($id: String) {
+      db {
+         # The variable, defined above is then used here
+         campaign(id: $id) {
+            name
+            description
+         }
+      }
+   }
+
 .. _GraphQL: http://graphql.org/
 .. _Relay: https://facebook.github.io/relay/graphql/connections.htm

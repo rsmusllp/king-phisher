@@ -24,6 +24,9 @@ Exceptions
 .. autoexception:: king_phisher.errors.KingPhisherDatabaseError
    :show-inheritance:
 
+.. autoexception:: king_phisher.errors.KingPhisherGraphQLQueryError
+   :show-inheritance:
+
 .. autoexception:: king_phisher.errors.KingPhisherInputValidationError
    :show-inheritance:
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 
+<!-- Generated with glade 3.20.2 
 
 Copyright (c) 2013-2017, SecureState LLC
 All rights reserved.
@@ -116,6 +116,9 @@ Spencer McIntyre</property>
         </child>
       </object>
     </child>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkWindow" id="CampaignCompWindow">
     <property name="can_focus">False</property>
@@ -217,6 +220,9 @@ Spencer McIntyre</property>
           </packing>
         </child>
       </object>
+    </child>
+    <child type="titlebar">
+      <placeholder/>
     </child>
   </object>
   <object class="GtkDialog" id="CampaignSelectionDialog">
@@ -405,6 +411,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">CampaignSelectionDialog.button_cancel</action-widget>
       <action-widget response="-10">CampaignSelectionDialog.button_select</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkBox" id="CampaignViewCredentialsTab">
     <property name="width_request">400</property>
@@ -1633,6 +1642,18 @@ Spencer McIntyre</property>
         <property name="has_padding">False</property>
       </packing>
     </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="action_area">
       <object class="GtkBox" id="CampaignAssistant.action_area">
         <property name="can_focus">False</property>
@@ -1789,6 +1810,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">CompanyEditorDialog.button_cancel</action-widget>
       <action-widget response="-10">CompanyEditorDialog.button_apply</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkGrid" id="CompanyEditorGrid">
     <property name="visible">True</property>
@@ -2162,6 +2186,9 @@ Spencer McIntyre</property>
     <action-widgets>
       <action-widget response="-5">button1</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkApplicationWindow" id="ImportCampaignWindow">
     <property name="width_request">600</property>
@@ -2357,6 +2384,9 @@ Spencer McIntyre</property>
         </child>
       </object>
     </child>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkDialog" id="LoginDialogBase">
     <property name="can_focus">False</property>
@@ -2533,6 +2563,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">LoginDialogBase.button_cancel</action-widget>
       <action-widget response="-10">LoginDialogBase.button_connect</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
     <style>
       <class name="background-add"/>
     </style>
@@ -3140,6 +3173,9 @@ Spencer McIntyre</property>
         </child>
       </object>
     </child>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkAdjustment" id="PortAdjustment">
     <property name="lower">1</property>
@@ -3430,6 +3466,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">LoginDialog.button_cancel</action-widget>
       <action-widget response="-10">LoginDialog.button_connect</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
     <style>
       <class name="background-add"/>
     </style>
@@ -3441,7 +3480,7 @@ Spencer McIntyre</property>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes"> </col>
+        <col id="0" translatable="yes"/>
       </row>
       <row>
         <col id="0" translatable="yes">AT&amp;T</col>
@@ -3670,7 +3709,7 @@ Spencer McIntyre</property>
                                 <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Carrier</property>
+                                <property name="label" translatable="yes">Phone Carrier</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -3683,8 +3722,8 @@ Spencer McIntyre</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">The phone number to send SMS alerts to.</property>
                                 <property name="hexpand">True</property>
-                                <property name="max_length">14</property>
-                                <property name="placeholder_text" translatable="yes">(###) ###-####</property>
+                                <property name="max_length">16</property>
+                                <property name="placeholder_text" translatable="yes">1 (###) ###-####</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -3718,7 +3757,7 @@ Spencer McIntyre</property>
                       <object class="GtkLabel" id="ConfigurationDialog.label1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">&lt;b&gt;SMS Settings&lt;/b&gt;</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Alert Settings&lt;/b&gt;</property>
                         <property name="use_markup">True</property>
                       </object>
                     </child>
@@ -4071,7 +4110,7 @@ Spencer McIntyre</property>
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkCheckButton" id="ConfigurationDialog.checkbutton_alert_subscribe">
-                    <property name="label" translatable="yes">Subscribe To SMS Alerts</property>
+                    <property name="label" translatable="yes">Subscribe To Campaign Alerts</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -4422,6 +4461,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">ConfigurationDialog.button_cancel</action-widget>
       <action-widget response="-10">ConfigurationDialog.button_apply</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkImage" id="StockAddImage">
     <property name="visible">True</property>
@@ -4657,6 +4699,9 @@ Spencer McIntyre</property>
       <action-widget response="-6">ClonePageDialog.button_cancel</action-widget>
       <action-widget response="-10">ClonePageDialog.button_clone</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkImage" id="StockHelpImage">
     <property name="visible">True</property>
@@ -4770,6 +4815,9 @@ Spencer McIntyre</property>
           <placeholder/>
         </child>
       </object>
+    </child>
+    <child type="titlebar">
+      <placeholder/>
     </child>
   </object>
   <object class="GtkImage" id="StockMediaPlayImage">
@@ -5502,6 +5550,9 @@ host key will store it for identification verification of future connections.</p
       <action-widget response="-2">HostKeyAcceptDialog.button_reject</action-widget>
       <action-widget response="-3">HostKeyAcceptDialog.button_accept</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkDialog" id="HostKeyWarnDialog">
     <property name="width_request">450</property>
@@ -5716,6 +5767,9 @@ your communications. Please contact the system administrator.</property>
       <action-widget response="-3">HostKeyWarnDialog.button_accept</action-widget>
       <action-widget response="-2">HostKeyWarnDialog.button_reject</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkDialog" id="TagEditorDialog">
     <property name="width_request">450</property>
@@ -5862,6 +5916,9 @@ your communications. Please contact the system administrator.</property>
     <action-widgets>
       <action-widget response="-7">TagEditorDialog.button_close</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkDialog" id="TextEntryDialog">
     <property name="can_focus">False</property>
@@ -5963,6 +6020,9 @@ your communications. Please contact the system administrator.</property>
       <action-widget response="-6">TextEntryDialog.button_cancel</action-widget>
       <action-widget response="-10">TextEntryDialog.button_apply</action-widget>
     </action-widgets>
+    <child>
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkAdjustment" id="TimeDuration">
     <property name="lower">1</property>
@@ -6197,7 +6257,7 @@ your communications. Please contact the system administrator.</property>
                         <property name="left_padding">12</property>
                         <property name="right_padding">3</property>
                         <child>
-                          <object class="GtkGrid" id="grid10">
+                          <object class="GtkGrid" id="MailSenderConfigurationTab.grid_target_info">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_bottom">3</property>
@@ -6250,19 +6310,7 @@ your communications. Please contact the system administrator.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkLabel" id="label1">
-                                <property name="width_request">138</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Target Name</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label38">
+                              <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_email_address">
                                 <property name="width_request">138</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -6270,21 +6318,19 @@ your communications. Please contact the system administrator.</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">3</property>
+                                <property name="top_attach">4</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_name">
+                              <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_name">
+                                <property name="width_request">138</property>
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="tooltip_text" translatable="yes">The first and last name of the desired target.</property>
-                                <property name="hexpand">True</property>
-                                <property name="placeholder_text" translatable="yes">Alice Liddle</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Target Name</property>
                               </object>
                               <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">2</property>
-                                <property name="width">2</property>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">3</property>
                               </packing>
                             </child>
                             <child>
@@ -6294,6 +6340,20 @@ your communications. Please contact the system administrator.</property>
                                 <property name="tooltip_text" translatable="yes">The targets email address.</property>
                                 <property name="hexpand">True</property>
                                 <property name="placeholder_text" translatable="yes">aliddle@king-phisher.com</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">4</property>
+                                <property name="width">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="MailSenderConfigurationTab.entry_target_name">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">The first and last name of the desired target.</property>
+                                <property name="hexpand">True</property>
+                                <property name="placeholder_text" translatable="yes">Alice Liddle</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -6313,7 +6373,7 @@ your communications. Please contact the system administrator.</property>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
-                                <property name="top_attach">1</property>
+                                <property name="top_attach">2</property>
                               </packing>
                             </child>
                             <child>
@@ -6330,14 +6390,15 @@ your communications. Please contact the system administrator.</property>
                                 <property name="placeholder_text" translatable="yes">targets.csv</property>
                                 <signal name="activate" handler="signal_entry_activate_open_file" swapped="no"/>
                                 <signal name="backspace" handler="signal_entry_backspace" swapped="no"/>
+                                <signal name="changed" handler="signal_entry_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">1</property>
+                                <property name="top_attach">2</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkLabel" id="label28">
+                              <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_file">
                                 <property name="width_request">138</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -6345,15 +6406,34 @@ your communications. Please contact the system administrator.</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">1</property>
+                                <property name="top_attach">2</property>
                               </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_count">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">True</property>
+                                <attributes>
+                                  <attribute name="style" value="italic"/>
+                                </attributes>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">1</property>
+                                <property name="width">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
                             </child>
                           </object>
                         </child>
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="label52">
+                      <object class="GtkLabel" id="MailSenderConfigurationTab.label_target_info">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Target Information*</property>

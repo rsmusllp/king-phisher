@@ -41,6 +41,17 @@ if its.py_v2:
 else:
 	import html
 
+EXPORTED_FUNCTIONS = {}
+
+def export_function(function):
+	"""
+	A decorator to "export" a function by placing it in
+	:py:data:`.EXPORTED_FUNCTIONS`.
+	"""
+	EXPORTED_FUNCTIONS[function.__name__] = function
+	return function
+
+@export_function
 def embed_youtube_video(video_id, autoplay=True, enable_js=False, start=0, end=None):
 	"""
 	A Jinja function to embed a video into a web page using YouTube's
@@ -73,6 +84,7 @@ def embed_youtube_video(video_id, autoplay=True, enable_js=False, start=0, end=N
 	iframe_tag = "<iframe id=\"ytplayer\" type=\"text/html\" width=\"720\" height=\"405\" src=\"{0}\" frameborder=\"0\" allowfullscreen></iframe>".format(yt_url)
 	return markupsafe.Markup(iframe_tag)
 
+@export_function
 def make_csrf_page(url, params, method='POST'):
 	"""
 	A Jinja function which will create an HTML page that will automatically
@@ -99,6 +111,7 @@ def make_csrf_page(url, params, method='POST'):
 	page = '\n'.join(page)
 	return markupsafe.Markup(page)
 
+@export_function
 def make_redirect_page(url, title='Automatic Redirect'):
 	"""
 	A Jinja function which will create an HTML page that will automatically

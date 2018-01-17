@@ -11,10 +11,13 @@ available in the :ref:`server-signals-label` documentation.
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.signals.safe_send
+.. autofunction:: king_phisher.server.signals.send_safe
 
 Signals
 -------
+
+.. autodata:: king_phisher.server.signals.campaign_alert
+   :annotation:
 
 .. autodata:: king_phisher.server.signals.credentials_received
    :annotation:

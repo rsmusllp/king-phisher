@@ -230,12 +230,23 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
 		if GObject.pygobject_version < (3, 10):
 			cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-			cb_reject_after_creds.set_property('active', self.application.rpc.remote_table_row('campaigns', self.config['campaign_id']).reject_after_credentials)
+			cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['rejectAfterCredentials'])
 		else:
 			with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
 				cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-				cb_reject_after_creds.set_property('active', self.application.rpc.remote_table_row('campaigns', self.config['campaign_id']).reject_after_credentials)
+				cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['rejectAfterCredentials'])
 		cb_reject_after_creds.set_sensitive(self.config['server_config']['server.require_id'])
+
+	def _get_graphql_campaign(self, campaign_id=None):
+		results = self.application.rpc.graphql("""\
+		query getCampaign($id: String!) {
+			db {
+				campaign(id: $id) {
+					rejectAfterCredentials
+				}
+			}
+		}""", {'id': campaign_id or self.config['campaign_id']})
+		return results['db']['campaign']
 
 	def _finialize_settings_dashboard(self):
 		dashboard_changed = False
@@ -264,7 +275,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
 			self.save_plugin_options()
-			self.verify_sms_settings()
+			self.save_sms_settings()
 			entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
 			self.application.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
 			if graphs.has_matplotlib:
@@ -280,20 +291,15 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			for option_name, option_widget in option_widgets.items():
 				plugin_config[option_name] = option_widget.option.get_widget_value(option_widget.widget)
 
-	def verify_sms_settings(self):
+	def save_sms_settings(self):
 		phone_number = gui_utilities.gobject_get_value(self.gobjects['entry_sms_phone_number'])
-		phone_number_set = bool(phone_number)
-		sms_carrier_set = bool(self.gobjects['combobox_sms_carrier'].get_active() > 0)
-		if phone_number_set ^ sms_carrier_set:
-			gui_utilities.show_dialog_warning('Missing Information', self.parent, 'Both a phone number and a valid carrier must be specified')
-			if 'sms_phone_number' in self.config:
-				del self.config['sms_phone_number']
-			if 'sms_carrier' in self.config:
-				del self.config['sms_carrier']
-		elif phone_number_set and sms_carrier_set:
+		sms_carrier = gui_utilities.gobject_get_value(self.gobjects['combobox_sms_carrier'])
+		username = self.config['server_username']
+		if phone_number:
 			phone_number = ''.join(d for d in phone_number if d in string.digits)
-			if len(phone_number) != 10:
-				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must contain exactly 10 digits')
+			if len(phone_number) > 11:
+				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must not contain more than 11 digits')
 				return
-			username = self.config['server_username']
-			self.application.rpc('db/table/set', 'users', username, ('phone_number', 'phone_carrier'), (phone_number, self.config['sms_carrier']))
+		phone_number = phone_number if phone_number else None
+		sms_carrier = sms_carrier if sms_carrier else None
+		self.application.rpc('db/table/set', 'users', username, ('phone_number', 'phone_carrier'), (phone_number, sms_carrier))
