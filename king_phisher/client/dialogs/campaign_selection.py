@@ -188,6 +188,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 							}
 							user {
 								id
+								name
 							}
 							created
 							expiration
@@ -214,7 +215,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 				(campaign['company']['name'] if campaign['company'] is not None else None),
 				(campaign['campaignType']['name'] if campaign['campaignType'] is not None else None),
 				"{0:,}".format(campaign['messages']['total']),
-				campaign['user']['id'],
+				campaign['user']['name'],
 				created_ts,
 				expiration_ts,
 				(hlbg_color if is_expired else bg_color),
