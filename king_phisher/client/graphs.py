@@ -34,17 +34,15 @@ import collections
 import string
 
 from king_phisher import color
-from king_phisher import ipaddress
+from king_phisher import geoip
 from king_phisher import its
 from king_phisher import ua_parser
 from king_phisher import utilities
-from king_phisher.client import client_rpc
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
 from king_phisher.constants import ColorHexCode
 from king_phisher.constants import OSFamily
 
-from boltons import iterutils
 from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
 from smoke_zephyr.utilities import unique
@@ -396,6 +394,14 @@ class CampaignGraph(GraphBase):
 								campaignId
 								visitCount
 								visitorIp
+								visitorGeoloc {
+									city
+									continent
+									coordinates
+									country
+									postalCode
+									timeZone
+								}
 								visitorDetails
 								firstVisit
 								lastVisit
@@ -419,7 +425,6 @@ class CampaignGraph(GraphBase):
 				}
 			}
 		}""", options)
-
 		info_cache = {
 			'campaign': {
 				'name': results['db']['campaign']['name'],
@@ -431,7 +436,6 @@ class CampaignGraph(GraphBase):
 			'credentials': results['db']['campaign']['credentials'],
 			'companyDepartments': self._get_graphql_company_departments()
 		}
-
 		return info_cache
 
 class CampaignBarGraph(CampaignGraph):
@@ -587,7 +591,6 @@ class CampaignGraphDepartmentComparison(CampaignBarGraph):
 	table_subscriptions = ('company_departments', 'messages', 'visits')
 	yticklabel_fmt = "{0:.01f}%"
 	def _load_graph(self, info_cache):
-		campaign_id = self.config['campaign_id']
 		departments = info_cache['companyDepartments']
 		departments = dict((department['node']['id'], department['node']['name']) for department in departments['edges'])
 
@@ -649,7 +652,6 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']['edges']
-
 		operating_systems = collections.Counter()
 		for visit in visits:
 			user_agent = None
@@ -769,8 +771,9 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	draw_states = False
 	def _load_graph(self, info_cache):
 		visits = unique(info_cache['visits']['edges'], key=lambda visit: visit['node']['messageId'])
+		visits = [visit['node'] for visit in visits]
 		cred_ips = set(cred['node']['messageId'] for cred in info_cache['credentials']['edges'])
-		cred_ips = set([visit['node']['visitorIp'] for visit in visits if visit['node']['messageId'] in cred_ips])
+		cred_ips = set([visit['visitorIp'] for visit in visits if visit['messageId'] in cred_ips])
 
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		color_land = self.get_color('map_land', ColorHexCode.GRAY)
@@ -801,37 +804,22 @@ class CampaignGraphVisitsMap(CampaignGraph):
 
 		if not visits:
 			return
-
-		ctr = collections.Counter()
-		ctr.update([visit['node']['visitorIp'] for visit in visits])
-
 		base_markersize = self.markersize_scale
 		base_markersize = max(base_markersize, 3.05)
 		base_markersize = min(base_markersize, 9)
-		self._plot_visitor_map_points(bm, ctr, base_markersize, cred_ips)
-
+		self._plot_visitor_map_points(bm, visits, cred_ips, base_markersize)
 		self.add_legend_patch(((self.color_with_creds, 'With Credentials'), (self.color_without_creds, 'Without Credentials')))
 		return
 
-	def _resolve_geolocations(self, all_ips):
-		geo_locations = {}
-		public_ips = []
-		for visitor_ip in all_ips:
-			ip = ipaddress.ip_address(visitor_ip)
-			if ip.is_private or ip.is_loopback:
-				continue
-			public_ips.append(visitor_ip)
-		public_ips.sort()
-		for ip_chunk in iterutils.chunked(public_ips, 100):
-			geo_locations.update(self.rpc.geoip_lookup_multi(ip_chunk))
-		return geo_locations
+	def _plot_visitor_map_points(self, bm, visits, cred_ips, base_markersize):
+		ctr = collections.Counter()
+		ctr.update([visit['visitorIp'] for visit in visits])
+		geo_locations = dict((visit['visitorIp'], geoip.GeoLocation.from_graphql(visit['visitorIp'], visit['visitorGeoloc'])) for visit in visits)
 
-	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
 		o_high = float(max(ctr.values()))
 		o_low = float(min(ctr.values()))
 		color_with_creds = self.color_with_creds
 		color_without_creds = self.color_without_creds
-		geo_locations = self._resolve_geolocations(ctr.keys())
 		for visitor_ip, geo_location in geo_locations.items():
 			if not (geo_location.coordinates.longitude and geo_location.coordinates.latitude):
 				continue
@@ -908,7 +896,7 @@ class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 		return met >= 3
 
 class CampaignCompGraph(GraphBase):
-	""" Display selected campaigns data by order of campaign start date."""
+	"""Display selected campaigns data by order of campaign start date."""
 	graph_title = 'Campaign Comparison Graph'
 	name_human = 'Graph'
 	def __init__(self, *args, **kwargs):
