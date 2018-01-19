@@ -878,7 +878,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 				}
 			}
 		}""", {'id': campaign_id or self.config['campaign_id']})
-		return results['db']['campaign']['company']['name']
+		company = results['db']['campaign']['company']
+		return company['name'] if company else None
 
 	def _update_target_count(self):
 		if not hasattr(self, 'target_type'):

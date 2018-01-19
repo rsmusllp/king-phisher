@@ -455,7 +455,7 @@ class CampaignBarGraph(CampaignGraph):
 		ax.invert_yaxis()
 		self.axes.append(ax.twinx())
 
-	def _barh(self, ax, bars, height, max_bars=None):
+	def _barh(self, ax, bars, height):
 		# define the necessary colors
 		color_bg = self.get_color('bg', ColorHexCode.WHITE)
 		color_bar_bg = self.get_color('bar_bg', ColorHexCode.GRAY)
@@ -488,15 +488,14 @@ class CampaignBarGraph(CampaignGraph):
 		raise NotImplementedError()
 
 	def _graph_null_bar(self, title):
-		return self.graph_bar([0], 1, [''], xlabel=title)
+		return self.graph_bar([0], [''], xlabel=title)
 
-	def graph_bar(self, bars, max_bars, yticklabels, xlabel=None):
+	def graph_bar(self, bars, yticklabels, xlabel=None):
 		"""
 		Create a horizontal bar graph with better defaults for the standard use
 		cases.
 
 		:param list bars: The values of the bars to graph.
-		:param int max_bars: The number to treat as the logical maximum number of plotted bars.
 		:param list yticklabels: The labels to use on the x-axis.
 		:param str xlabel: The label to give to the y-axis.
 		:return: The bars created using :py:mod:`matplotlib`
@@ -506,12 +505,11 @@ class CampaignBarGraph(CampaignGraph):
 		color_bg = self.get_color('bg', ColorHexCode.WHITE)
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		ax1, ax2 = self.axes  # primary axis
-		bar_container = self._barh(ax1, bars, height, max_bars)
+		bar_container = self._barh(ax1, bars, height)
 
 		yticks = [float(y) + (height / 2) for y in range(len(bars))]
 
 		# this makes the top bar shorter than the rest
-		# ax1.set_ybound(0, max(len(bars), max_bars))
 		ax1.set_yticks(yticks)
 		ax1.set_yticklabels(yticklabels, color=color_fg, size=10)
 
@@ -616,7 +614,7 @@ class CampaignGraphDepartmentComparison(CampaignBarGraph):
 		department_scores = collections.OrderedDict(department_scores)
 
 		yticklabels, bars = zip(*department_scores.items())
-		self.graph_bar(bars, len(yticklabels), yticklabels)
+		self.graph_bar(bars, yticklabels)
 		return
 
 @export_graph_provider
@@ -641,7 +639,7 @@ class CampaignGraphOverview(CampaignBarGraph):
 			bars.append(len(creds))
 			bars.append(len(unique(creds, key=lambda cred: cred['node']['messageId'])))
 		yticklabels = ('Messages', 'Opened', 'Visits', 'Unique\nVisits', 'Credentials', 'Unique\nCredentials')
-		self.graph_bar(bars, len(yticklabels), yticklabels[:len(bars)])
+		self.graph_bar(bars, yticklabels[:len(bars)])
 		return
 
 @export_graph_provider
@@ -661,7 +659,7 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 
 		os_names = sorted(operating_systems.keys())
 		bars = [operating_systems[os_name] for os_name in os_names]
-		self.graph_bar(bars, len(OSFamily), os_names)
+		self.graph_bar(bars, os_names)
 		return
 
 @export_graph_provider
@@ -814,7 +812,12 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	def _plot_visitor_map_points(self, bm, visits, cred_ips, base_markersize):
 		ctr = collections.Counter()
 		ctr.update([visit['visitorIp'] for visit in visits])
-		geo_locations = dict((visit['visitorIp'], geoip.GeoLocation.from_graphql(visit['visitorIp'], visit['visitorGeoloc'])) for visit in visits)
+		geo_locations = {}
+		for visit in visits:
+			if not visit['visitorGeoloc']:
+				continue
+			ip_address = visit['visitorIp']
+			geo_locations[ip_address] = geoip.GeoLocation.from_graphql(ip_address, visit['visitorGeoloc'])
 
 		o_high = float(max(ctr.values()))
 		o_low = float(min(ctr.values()))
