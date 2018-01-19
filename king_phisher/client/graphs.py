@@ -41,8 +41,8 @@ from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
 from king_phisher.constants import ColorHexCode
-from king_phisher.constants import OSFamily
 
+from boltons import iterutils
 from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
 from smoke_zephyr.utilities import unique
@@ -456,32 +456,29 @@ class CampaignBarGraph(CampaignGraph):
 		self.axes.append(ax.twinx())
 
 	def _barh(self, ax, bars, height):
-		# define the necessary colors
-		color_bg = self.get_color('bg', ColorHexCode.WHITE)
-		color_bar_bg = self.get_color('bar_bg', ColorHexCode.GRAY)
-		color_bar_fg = self.get_color('bar_fg', ColorHexCode.BLACK)
+		largest = (max(bars) if len(bars) else 0)
+		bars = [[cell, largest - cell] for cell in bars]
+		bar_colors = (self.get_color('bar_fg', ColorHexCode.BLACK), self.get_color('bar_bg', ColorHexCode.GRAY))
+		return self._barh_stacked(ax, bars, bar_colors, height)
 
-		ax.set_axis_bgcolor(color_bg)
+	def _barh_stacked(self, ax, bars, bar_colors, height):
+		# define the necessary colors
+		ax.set_axis_bgcolor(self.get_color('bg', ColorHexCode.WHITE))
 		self.resize(height=60 + 20 * len(bars))
 
-		# draw the foreground / filled bar
-		bar_container = ax.barh(
-			range(len(bars)),
-			bars,
-			height=height,
-			color=color_bar_fg,
-			linewidth=0
-		)
-		# draw the background / unfilled bar
-		largest_bar = (max(bars) if len(bars) else 0)
-		ax.barh(
-			range(len(bars)),
-			[largest_bar - bar for bar in bars],
-			left=bars,
-			height=height,
-			color=color_bar_bg,
-			linewidth=0
-		)
+		bar_count = list(range(len(bars)))
+		columns = []
+		columns.append([0] * bar_count)
+		columns.extend(zip(*bars))
+		for (left_subbars, right_subbars), color, in zip(iterutils.pairwise(columns), bar_colors):
+			bar_container = ax.barh(
+				bar_count,
+				right_subbars,
+				color=color,
+				height=height,
+				left=left_subbars,
+				linewidth=0,
+			)
 		return bar_container
 
 	def _load_graph(self, info_cache):
