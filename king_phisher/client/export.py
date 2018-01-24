@@ -610,7 +610,7 @@ def liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_op
 	utilities.assert_arg_type(worksheet, xlsxwriter.worksheet.Worksheet, 2)
 	utilities.assert_arg_type(columns, dict, 3)
 	utilities.assert_arg_type(title_format, xlsxwriter.format.Format, 4)
-	utilities.assert_arg_type(xlsx_options, XLSXWorksheetOptions, 5)
+	utilities.assert_arg_type(xlsx_options, (type(None), XLSXWorksheetOptions), 5)
 
 	if xlsx_options is None:
 		worksheet.set_column(0, len(columns), 30)
