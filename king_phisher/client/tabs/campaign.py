@@ -201,6 +201,17 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 						model[ti][idx] = self.format_cell_data(cell_data)
 					break
 
+	def _export_lock(self):
+		show_dialog_warning = lambda: gui_utilities.show_dialog_warning('Export Failed', self.parent, 'Can not export data while loading.')
+		if not self.loader_thread_lock.acquire(False):
+			show_dialog_warning()
+			return False
+		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
+			self.loader_thread_lock.release()
+			show_dialog_warning()
+			return False
+		return True
+
 	def _prompt_to_delete_row(self, treeview, _):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
@@ -268,15 +279,14 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""
 		if not force and ((time.time() - self.last_load_time) < self.refresh_frequency):
 			return
-		self.loader_thread_lock.acquire()
-		self._sync_loader_thread()
-		self.loader_thread_stop.clear()
-		store = self.gobjects['treeview_campaign'].get_model()
-		store.clear()
-		self.loader_thread = threading.Thread(target=self.loader_thread_routine, args=(store,))
-		self.loader_thread.daemon = True
-		self.loader_thread.start()
-		self.loader_thread_lock.release()
+		with self.loader_thread_lock:
+			self._sync_loader_thread()
+			self.loader_thread_stop.clear()
+			store = self.gobjects['treeview_campaign'].get_model()
+			store.clear()
+			self.loader_thread = utilities.Thread(target=self.loader_thread_routine, args=(store,))
+			self.loader_thread.daemon = True
+			self.loader_thread.start()
 		return
 
 	def loader_thread_routine(self, store):
@@ -315,8 +325,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 
 	def export_table_to_csv(self):
 		"""Export the data represented by the view to a CSV file."""
-		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
-			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
+		if not self._export_lock():
 			return
 		dialog = extras.FileChooserDialog('Export Data', self.parent)
 		file_name = self.config['campaign_name'] + '.csv'
@@ -340,8 +349,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		:param title_format: The formatting to use for the title row.
 		:type title_format: :py:class:`xlsxwriter.format.Format`
 		"""
-		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
-			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
+		if not self._export_lock():
 			return
 		store = self.gobjects['treeview_campaign'].get_model()
 		columns = dict(enumerate(('UID',) + self.view_columns))
@@ -569,7 +577,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		with self.loader_thread_lock:
 			self._sync_loader_thread()
 			self.loader_thread_stop.clear()
-			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
+			self.loader_thread = utilities.Thread(target=self.loader_thread_routine)
 			self.loader_thread.daemon = True
 			self.loader_thread.start()
 
