@@ -79,10 +79,15 @@ else:
 		has_matplotlib_basemap = True
 
 EXPORTED_GRAPHS = {}
-
 MPL_COLOR_NULL = 'darkcyan'
+PERCENT_FORMAT = '.3g'
 
 __all__ = ('export_graph_provider', 'get_graph', 'get_graphs', 'CampaignGraph')
+
+def _matrices_add(mat1, mat2):
+	if not len(mat1) == len(mat2):
+		raise RuntimeError('len(mat1) != len(mat2)')
+	return [mat1[i] + mat2[i] for i in range(len(mat1))]
 
 def export_graph_provider(cls):
 	"""
@@ -134,8 +139,6 @@ class GraphBase(object):
 	"""The human readable name of the graph provider used for UI identification."""
 	graph_title = 'Unknown'
 	"""The title that will be given to the graph."""
-	table_subscriptions = []
-	"""A list of tables from which information is needed to produce the graph."""
 	is_available = True
 	def __init__(self, application, size_request=None, style_context=None):
 		"""
@@ -425,10 +428,14 @@ class CampaignGraph(GraphBase):
 		return info_cache
 
 class CampaignBarGraph(CampaignGraph):
-	yticklabel_fmt = "{0:,}"
+	subplot_adjustment = {'top': 0.9, 'right': 0.85, 'bottom': 0.05, 'left': 0.225}
+	yticklabel_config = {
+		'left': {'size': 10},
+		'right': {'format': "{0:,}", 'size': 12}
+	}
 	def __init__(self, *args, **kwargs):
 		super(CampaignBarGraph, self).__init__(*args, **kwargs)
-		self.figure.subplots_adjust(top=0.85, right=0.85, bottom=0.05, left=0.225)
+		self.figure.subplots_adjust(**self.subplot_adjustment)
 		ax = self.axes[0]
 		ax.tick_params(
 			axis='both',
@@ -440,12 +447,6 @@ class CampaignBarGraph(CampaignGraph):
 		)
 		ax.invert_yaxis()
 		self.axes.append(ax.twinx())
-
-	def _barh(self, ax, bars, height):
-		largest = (max(bars) if len(bars) else 0)
-		bars = [[cell, largest - cell] for cell in bars]
-		bar_colors = (self.get_color('bar_fg', ColorHexCode.BLACK), self.get_color('bar_bg', ColorHexCode.GRAY))
-		return self._barh_stacked(ax, bars, bar_colors, height)
 
 	def _barh_stacked(self, ax, bars, bar_colors, height):
 		"""
@@ -461,9 +462,9 @@ class CampaignBarGraph(CampaignGraph):
 
 		bar_count = len(bars)
 		columns = []
-		columns.append([0] * bar_count)
+		left_subbars = [0] * bar_count
 		columns.extend(zip(*bars))
-		for (left_subbars, right_subbars), color, in zip(iterutils.pairwise(columns), bar_colors):
+		for right_subbars, color, in zip(columns, bar_colors):
 			bar_container = ax.barh(
 				range(len(bars)),
 				right_subbars,
@@ -472,6 +473,7 @@ class CampaignBarGraph(CampaignGraph):
 				left=left_subbars,
 				linewidth=0,
 			)
+			left_subbars = _matrices_add(left_subbars, right_subbars)
 		return bar_container
 
 	def _load_graph(self, info_cache):
@@ -491,20 +493,30 @@ class CampaignBarGraph(CampaignGraph):
 		:return: The bars created using :py:mod:`matplotlib`
 		:rtype: `matplotlib.container.BarContainer`
 		"""
+		largest = (max(bars) if len(bars) else 0)
+		bars = [[cell, largest - cell] for cell in bars]
+		bar_colors = (self.get_color('bar_fg', ColorHexCode.BLACK), self.get_color('bar_bg', ColorHexCode.GRAY))
+		return self.graph_bar_stacked(bars, bar_colors, yticklabels, xlabel=xlabel)
+
+	def graph_bar_stacked(self, bars, bar_colors, yticklabels, xlabel=None):
 		height = 0.275
 		color_bg = self.get_color('bg', ColorHexCode.WHITE)
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		ax1, ax2 = self.axes  # primary axis
-		bar_container = self._barh(ax1, bars, height)
+		bar_container = self._barh_stacked(ax1, bars, bar_colors, height)
 
 		yticks = [float(y) + (height / 2) for y in range(len(bars))]
 
 		# this makes the top bar shorter than the rest
 		ax1.set_yticks(yticks)
-		ax1.set_yticklabels(yticklabels, color=color_fg, size=10)
+		ax1.set_yticklabels(yticklabels, color=color_fg, size=self.yticklabel_config['left']['size'])
 
 		ax2.set_yticks(yticks)
-		ax2.set_yticklabels([self.yticklabel_fmt.format(bar) for bar in bars], color=color_fg, size=12)
+		ax2.set_yticklabels(
+			[self.yticklabel_config['right']['format'].format(*subbar, PERCENT=PERCENT_FORMAT) for subbar in bars],
+			color=color_fg,
+			size=self.yticklabel_config['right']['size']
+		)
 		ax2.set_ylim(ax1.get_ylim())
 
 		# remove the y-axis tick marks
@@ -559,7 +571,7 @@ class CampaignPieGraph(CampaignGraph):
 			autopct=autopct,
 			colors=colors,
 			explode=[0.1] + ([0] * (len(parts) - 1)),
-			labels=labels or tuple("{0:.1f}%".format(p) for p in parts),
+			labels=labels or tuple("{0:{PERCENT}}%".format(p, PERCENT=PERCENT_FORMAT) for p in parts),
 			labeldistance=1.15,
 			shadow=True,
 			startangle=45,
@@ -576,8 +588,11 @@ class CampaignGraphDepartmentComparison(CampaignBarGraph):
 	"""Display a graph which compares the different departments."""
 	graph_title = 'Department Comparison'
 	name_human = 'Bar - Department Comparison'
-	table_subscriptions = ('company_departments', 'messages', 'visits')
-	yticklabel_fmt = "{0:.01f}%"
+	subplot_adjustment = {'top': 0.9, 'right': 0.775, 'bottom': 0.075, 'left': 0.225}
+	yticklabel_config = {
+		'left': {'size': 10},
+		'right': {'format': "{0:{PERCENT}}%, {1:{PERCENT}}%", 'size': 10}
+	}
 	def _load_graph(self, info_cache):
 		messages = info_cache['messages']['edges']
 		messages = [message['node'] for message in messages if message['node']['companyDepartment'] is not None]
@@ -591,18 +606,42 @@ class CampaignGraphDepartmentComparison(CampaignBarGraph):
 		visits = unique(visits, key=lambda visit: visit['messageId'])
 		visits = dict((visit['id'], visit) for visit in visits)
 
+		creds = info_cache['credentials']['edges']
+		creds = [cred['node'] for cred in creds if cred['node']['messageId'] in messages]
+		creds = unique(creds, key=lambda cred: cred['messageId'])
+		creds = dict((cred['id'], cred) for cred in creds)
+
+		department_messages = collections.Counter()
+		department_messages.update(message['companyDepartment']['name'] for message in messages.values())
+
 		department_visits = collections.Counter()
 		department_visits.update(messages[visit['messageId']]['companyDepartment']['name'] for visit in visits.values())
 
-		department_totals = collections.Counter()
-		department_totals.update(message['companyDepartment']['name'] for message in messages.values())
+		department_credentials = collections.Counter()
+		department_credentials.update(messages[cred['messageId']]['companyDepartment']['name'] for cred in creds.values())
 
-		department_scores = dict((department, (float(department_visits[department]) / float(total)) * 100) for department, total in department_totals.items())
-		department_scores = sorted(department_scores.items(), key=lambda x: (x[1], x[0]), reverse=True)
-		department_scores = collections.OrderedDict(department_scores)
-
-		yticklabels, bars = zip(*department_scores.items())
-		self.graph_bar(bars, yticklabels)
+		bars = []
+		department_names = tuple(department_messages.keys())
+		for department_name in department_names:
+			dep_messages = float(department_messages[department_name])
+			dep_creds = float(department_credentials.get(department_name, 0)) / dep_messages * 100
+			dep_visits = (float(department_visits.get(department_name, 0)) / dep_messages * 100) - dep_creds
+			bars.append((
+				dep_creds,
+				dep_visits,
+				(100.0 - (dep_creds + dep_visits))
+			))
+		bar_colors = (
+			self.get_color('map_marker1', ColorHexCode.RED),
+			self.get_color('map_marker2', ColorHexCode.YELLOW),
+			self.get_color('bar_bg', ColorHexCode.GRAY)
+		)
+		self.graph_bar_stacked(
+			bars,
+			bar_colors,
+			department_names
+		)
+		self.add_legend_patch(tuple(zip(bar_colors[:2], ('With Credentials', 'Without Credentials'))), fontsize=10)
 		return
 
 @export_graph_provider
@@ -610,7 +649,6 @@ class CampaignGraphOverview(CampaignBarGraph):
 	"""Display a graph which represents an overview of the campaign."""
 	graph_title = 'Campaign Overview'
 	name_human = 'Bar - Campaign Overview'
-	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']['edges']
 		creds = info_cache['credentials']['edges']
@@ -635,7 +673,6 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 	"""Display a graph which shows the different operating systems seen from visitors."""
 	graph_title = 'Campaign Visitor OS Information'
 	name_human = 'Bar - Visitor OS Information'
-	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']['edges']
 		operating_systems = collections.Counter()
@@ -655,7 +692,6 @@ class CampaignGraphVisitorInfoPie(CampaignPieGraph):
 	"""Display a graph which compares the different operating systems seen from visitors."""
 	graph_title = 'Campaign Visitor OS Information'
 	name_human = 'Pie - Visitor OS Information'
-	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']['edges']
 		if not len(visits):
@@ -675,7 +711,6 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 	"""Display a graph which represents the visits of a campaign over time."""
 	graph_title = 'Campaign Visits Timeline'
 	name_human = 'Line - Visits Timeline'
-	table_subscriptions = ('visits',)
 	def _load_graph(self, info_cache):
 		# define the necessary colors
 		color_bg = self.get_color('bg', ColorHexCode.WHITE)
@@ -723,7 +758,6 @@ class CampaignGraphMessageResults(CampaignPieGraph):
 	"""Display the percentage of messages which resulted in a visit."""
 	graph_title = 'Campaign Message Results'
 	name_human = 'Pie - Message Results'
-	table_subscriptions = ('credentials', 'visits')
 	def _load_graph(self, info_cache):
 		messages = info_cache['messages']
 		messages_count = messages['total']
@@ -752,7 +786,6 @@ class CampaignGraphMessageResults(CampaignPieGraph):
 class CampaignGraphVisitsMap(CampaignGraph):
 	"""A base class to display a map which shows the locations of visit origins."""
 	graph_title = 'Campaign Visit Locations'
-	table_subscriptions = ('credentials', 'visits')
 	is_available = has_matplotlib_basemap
 	draw_states = False
 	def _load_graph(self, info_cache):
@@ -864,7 +897,6 @@ class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 	"""Display a graph which displays the number of passwords which meet standard complexity requirements."""
 	graph_title = 'Campaign Password Complexity'
 	name_human = 'Pie - Password Complexity'
-	table_subscriptions = ('credentials',)
 	def _load_graph(self, info_cache):
 		passwords = set(cred['node']['password'] for cred in info_cache['credentials']['edges'])
 		if not len(passwords):
