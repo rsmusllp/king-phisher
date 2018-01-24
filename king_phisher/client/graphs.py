@@ -343,22 +343,6 @@ class CampaignGraph(GraphBase):
 		self.canvas.draw()
 		return info_cache
 
-	def _get_graphql_company_departments(self):
-		results = self.rpc.graphql("""\
-		query getCompanyDepartments {
-			db {
-				companyDepartments {
-					edges {
-						node {
-							id
-							name
-						}
-					}
-				}
-			}
-		}""")
-		return results['db']['companyDepartments']
-
 	def _get_graphql_campaign_cache(self, campaign_id):
 		options = {'campaign': campaign_id}
 		results = self.rpc.graphql("""\
@@ -381,7 +365,10 @@ class CampaignGraph(GraphBase):
 								openerUserAgent
 								sent
 								trained
-								companyDepartmentId
+								companyDepartment {
+									id
+									name
+								}
 							}
 						}
 					}
@@ -433,8 +420,7 @@ class CampaignGraph(GraphBase):
 			},
 			'messages': results['db']['campaign']['messages'],
 			'visits': results['db']['campaign']['visits'],
-			'credentials': results['db']['campaign']['credentials'],
-			'companyDepartments': self._get_graphql_company_departments()
+			'credentials': results['db']['campaign']['credentials']
 		}
 		return info_cache
 
@@ -462,17 +448,24 @@ class CampaignBarGraph(CampaignGraph):
 		return self._barh_stacked(ax, bars, bar_colors, height)
 
 	def _barh_stacked(self, ax, bars, bar_colors, height):
+		"""
+		:param ax: This axis to use for the graph.
+		:param tuple bars: A two dimensional array of bars, and their respective stack sizes.
+		:param tuple bar_colors: A one dimensional array of colors for each of the stacks.
+		:param float height: The height of the bars.
+		:return:
+		"""
 		# define the necessary colors
 		ax.set_axis_bgcolor(self.get_color('bg', ColorHexCode.WHITE))
 		self.resize(height=60 + 20 * len(bars))
 
-		bar_count = list(range(len(bars)))
+		bar_count = len(bars)
 		columns = []
 		columns.append([0] * bar_count)
 		columns.extend(zip(*bars))
 		for (left_subbars, right_subbars), color, in zip(iterutils.pairwise(columns), bar_colors):
 			bar_container = ax.barh(
-				bar_count,
+				range(len(bars)),
 				right_subbars,
 				color=color,
 				height=height,
@@ -586,25 +579,23 @@ class CampaignGraphDepartmentComparison(CampaignBarGraph):
 	table_subscriptions = ('company_departments', 'messages', 'visits')
 	yticklabel_fmt = "{0:.01f}%"
 	def _load_graph(self, info_cache):
-		departments = info_cache['companyDepartments']
-		departments = dict((department['node']['id'], department['node']['name']) for department in departments['edges'])
-
-		messages = info_cache['messages']
-		message_departments = dict((message['node']['id'], departments.get(str(message['node'].get('companyDepartmentId')))) for message in messages['edges'] if message['node']['companyDepartmentId'] is not None)
-		if not len(message_departments):
+		messages = info_cache['messages']['edges']
+		messages = [message['node'] for message in messages if message['node']['companyDepartment'] is not None]
+		if not messages:
 			self._graph_null_bar('')
 			return
-		messages = [message['node'] for message in messages['edges'] if message['node']['id'] in message_departments]
+		messages = dict((message['id'], message) for message in messages)
 
-		visits = info_cache['visits']
-		visits = [visit['node'] for visit in visits['edges'] if visit['node']['messageId'] in message_departments]
+		visits = info_cache['visits']['edges']
+		visits = [visit['node'] for visit in visits if visit['node']['messageId'] in messages]
 		visits = unique(visits, key=lambda visit: visit['messageId'])
+		visits = dict((visit['id'], visit) for visit in visits)
 
 		department_visits = collections.Counter()
-		department_visits.update(message_departments[visit['messageId']] for visit in visits)
+		department_visits.update(messages[visit['messageId']]['companyDepartment']['name'] for visit in visits.values())
 
 		department_totals = collections.Counter()
-		department_totals.update(message_departments[message['id']] for message in messages)
+		department_totals.update(message['companyDepartment']['name'] for message in messages.values())
 
 		department_scores = dict((department, (float(department_visits[department]) / float(total)) * 100) for department, total in department_totals.items())
 		department_scores = sorted(department_scores.items(), key=lambda x: (x[1], x[0]), reverse=True)
