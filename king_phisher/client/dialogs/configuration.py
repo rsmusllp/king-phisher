@@ -276,7 +276,6 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
 			self.save_plugin_options()
-			self.save_sms_settings()
 			entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
 			self.application.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
 			if graphs.has_matplotlib:
