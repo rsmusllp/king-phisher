@@ -64,6 +64,8 @@ def linkcode_resolve(domain, info):
 	file_name = info['module'].replace('.', '/') + '.py'
 	return "https://github.com/{0}/blob/{1}/{2}".format(GITHUB_REPO, GITHUB_BRANCH, file_name)
 
+def setup(app):
+	app.add_stylesheet('theme_overrides.css')
 
 intersphinx_mapping = {
 	'advancedhttpserver': ('https://advancedhttpserver.readthedocs.io/en/latest/', None),
@@ -93,7 +95,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'King Phisher'
-copyright = '2013-2017, SecureState LLC'
+copyright = '2013-2018, SecureState LLC'
 
 # The short X.Y version.
 version = king_phisher.version.version.split('-')[0]
@@ -170,11 +172,6 @@ if not king_phisher.its.on_rtd:
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-html_context = {
-	'css_files': [
-		'_static/theme_overrides.css',  # override wide tables in RTD theme
-	],
-}
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
