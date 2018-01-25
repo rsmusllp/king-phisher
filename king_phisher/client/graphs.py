@@ -42,7 +42,6 @@ from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
 from king_phisher.constants import ColorHexCode
 
-from boltons import iterutils
 from gi.repository import Gtk
 from smoke_zephyr.requirements import check_requirements
 from smoke_zephyr.utilities import unique
@@ -385,6 +384,14 @@ class CampaignGraph(GraphBase):
 								campaignId
 								count
 								ip
+								ipGeoloc {
+									city
+									continent
+									coordinates
+									country
+									postalCode
+									timeZone
+								}
 								firstSeen
 								lastSeen
 								userAgent
@@ -785,7 +792,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		visits = unique(info_cache['visits']['edges'], key=lambda visit: visit['node']['messageId'])
 		visits = [visit['node'] for visit in visits]
 		cred_ips = set(cred['node']['messageId'] for cred in info_cache['credentials']['edges'])
-		cred_ips = set([visit['node']['ip'] for visit in visits if visit['node']['messageId'] in cred_ips])
+		cred_ips = set([visit['ip'] for visit in visits if visit['messageId'] in cred_ips])
 
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		color_land = self.get_color('map_land', ColorHexCode.GRAY)
@@ -813,12 +820,8 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			fill_color=color_water,
 			linewidth=0
 		)
-
 		if not visits:
 			return
-
-		ctr = collections.Counter()
-		ctr.update([visit['node']['ip'] for visit in visits])
 
 		base_markersize = self.markersize_scale
 		base_markersize = max(base_markersize, 3.05)
@@ -829,15 +832,14 @@ class CampaignGraphVisitsMap(CampaignGraph):
 
 	def _plot_visitor_map_points(self, bm, visits, cred_ips, base_markersize):
 		ctr = collections.Counter()
-		ctr.update([visit['visitorIp'] for visit in visits])
+		ctr.update([visit['ip'] for visit in visits])
 		geo_locations = {}
 		for visit in visits:
-			if not visit['visitorGeoloc']:
+			if not visit['ipGeoloc']:
 				continue
-			ip_address = visit['visitorIp']
-			geo_locations[ip_address] = geoip.GeoLocation.from_graphql(ip_address, visit['visitorGeoloc'])
+			ip_address = visit['ip']
+			geo_locations[ip_address] = geoip.GeoLocation.from_graphql(ip_address, visit['ipGeoloc'])
 
-	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
 		o_high = float(max(ctr.values())) if ctr else 0.0
 		o_low = float(min(ctr.values())) if ctr else 0.0
 		color_with_creds = self.color_with_creds
