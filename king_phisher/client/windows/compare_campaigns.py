@@ -30,6 +30,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
+
+from king_phisher import find
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
@@ -85,29 +88,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
 		store = self._model
 		store.clear()
-		campaigns = self.application.rpc.graphql("""\
-		query getCampaigns {
-			db {
-				campaigns {
-					edges {
-						node {
-							id
-							campaignType {
-								name
-							}
-							company {
-								name
-							}
-							created
-							expiration
-							name
-							userId
-						}
-					}
-				}
-			}
-		}
-		""")
+		campaigns = self.application.rpc.graphql_file(find.data_file(os.path.join('queries', 'get_campaigns.graphql')))
 		for campaign in campaigns['db']['campaigns']['edges']:
 			campaign = campaign['node']
 			company = campaign['company']['name'] if campaign['company'] else None
@@ -124,7 +105,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 				campaign['name'],
 				company,
 				campaign_type,
-				campaign['userId'],
+				campaign['user']['name'],
 				created_ts,
 				expiration_ts
 			))
