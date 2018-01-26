@@ -48,6 +48,9 @@ def upgrade():
 	op.add_column('messages', sqlalchemy.Column('delivery_status', sqlalchemy.String))
 	op.add_column('messages', sqlalchemy.Column('reported', sqlalchemy.DateTime))
 	op.add_column('messages', sqlalchemy.Column('testing', sqlalchemy.Boolean))
+	op.execute('UPDATE messages SET testing=FALSE')
+	op.alter_column('messages', 'testing', server_default=False)
+	op.alter_column('messages', 'testing', nullable=False)
 
 	op.drop_table('meta_data')
 
