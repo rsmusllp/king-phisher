@@ -1,3 +1,4 @@
+# retrieve information about all the campaigns
 query getCampaigns {
   db {
     campaigns {

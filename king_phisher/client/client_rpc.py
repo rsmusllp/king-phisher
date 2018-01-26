@@ -223,6 +223,23 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 			query = file_or_path.read()
 		return self.graphql(query, query_vars=query_vars)
 
+	def graphql_find_file(self, query_file, **query_vars):
+		"""
+		This method is similar to :py:meth:`~.graphql_file`. The first argument
+		(*query_file*) is the name of a query file that will be located using
+		:py:func:`find.data_file`. Additional keyword arguments are passed as
+		the variables to the query.
+
+		:param str query_file: The name of the query file to locate.
+		:param query_vars: These keyword arguments are passed as the variables to the query.
+		:return: The query results.
+		:rtype: dict
+		"""
+		path = find.data_file(os.path.join('queries', query_file))
+		if path is None:
+			raise errors.KingPhisherResourceError('could not find GraphQL query file: ' + query_file)
+		return self.graphql_file(path, query_vars=query_vars)
+
 	def reconnect(self):
 		"""Reconnect to the remote server."""
 		self.lock.acquire()

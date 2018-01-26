@@ -231,23 +231,12 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
 		if GObject.pygobject_version < (3, 10):
 			cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-			cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['maxCredentials'])
+			cb_reject_after_creds.set_property('active', self.application.get_graphql_campaign()['maxCredentials'])
 		else:
 			with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
 				cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-				cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['maxCredentials'])
+				cb_reject_after_creds.set_property('active', self.application.get_graphql_campaign()['maxCredentials'])
 		cb_reject_after_creds.set_sensitive(self.config['server_config']['server.require_id'])
-
-	def _get_graphql_campaign(self, campaign_id=None):
-		results = self.application.rpc.graphql("""\
-		query getCampaign($id: String!) {
-			db {
-				campaign(id: $id) {
-					maxCredentials
-				}
-			}
-		}""", {'id': campaign_id or self.config['campaign_id']})
-		return results['db']['campaign']
 
 	def _finialize_settings_dashboard(self):
 		dashboard_changed = False

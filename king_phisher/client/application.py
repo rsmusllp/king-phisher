@@ -313,32 +313,19 @@ class KingPhisherClientApplication(_Gtk_Application):
 		else:
 			self.rpc('db/table/delete/multi', 'visits', row_ids)
 
-	def campaign_rename(self):
+	def get_graphql_campaign(self, campaign_id=None):
 		"""
-		Show a dialog prompting the user to for the a new name to assign to the
-		currently selected campaign.
-		"""
-		campaign_name = self._get_graphql_campaign_name()
-		prompt = dialogs.TextEntryDialog.build_prompt(self, 'Rename Campaign', 'Enter the new campaign name:', campaign_name)
-		response = prompt.interact()
-		if response is None or response == campaign_name:
-			return
-		self.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'name', response)
-		gui_utilities.show_dialog_info('Campaign Name Updated', self.get_active_window(), 'The campaign name was successfully changed.')
+		Retrieve the GraphQL representation of the specified campaign. If
+		*campaign_id* is not specified, then the data for the current campaign
+		is retrieved.
 
-	def _get_graphql_campaign_name(self, campaign_id=None):
-		results = self.rpc.graphql("""\
-		query getCampaignName($id: String!) {
-			db {
-				campaign(id: $id) {
-					name
-				}
-			}
-		}""", {'id': campaign_id or self.config['campaign_id']})
-		if results['db'].get('campaign', None):
-			return results['db']['campaign'].get('name', None)
-		else:
-			return None
+		:param str campaign_id: The ID for the campaign whose information should be retrieved.
+		:return: The campaign's GraphQL representation.
+		:rtype: dict
+		"""
+		campaign_id = campaign_id or self.config['campaign_id']
+		campaign = self.rpc.graphql_find_file('get_campaign.graphql', id=campaign_id)
+		return campaign['db']['campaign']
 
 	def exception_hook(self, exc_type, exc_value, exc_traceback):
 		if isinstance(exc_value, KeyboardInterrupt):
@@ -454,19 +441,14 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def do_server_connected(self):
 		self.load_server_config()
 		campaign_id = self.config.get('campaign_id')
-		if not campaign_id:
+		campaign = self.get_graphql_campaign() if campaign_id else None
+		if not campaign:
 			if not self.show_campaign_selection():
 				self.logger.debug('no campaign selected, disconnecting and exiting')
 				self.emit('exit')
 				return True
-		campaign_name = self._get_graphql_campaign_name()
-		if not campaign_name:
-			if not self.show_campaign_selection():
-				self.logger.debug('no campaign selected, disconnecting and exiting')
-				self.emit('exit')
-				return True
-			campaign_name = self._get_graphql_campaign_name()
-		self.config['campaign_name'] = campaign_name
+			campaign = self.get_graphql_campaign()
+		self.config['campaign_name'] = campaign['name']
 		self.emit('campaign-set', None, self.config['campaign_id'])
 		return
 

@@ -586,7 +586,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		"""The loading routine to be executed within a thread."""
 		if not 'campaign_id' in self.config:
 			return
-		if not self._get_graphql_campaign():
+		if not self.application.get_graphql_campaign():
 			return
 		info_cache = {}
 		for graph in self.graphs:
@@ -597,17 +597,6 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 			info_cache.update(gui_utilities.glib_idle_add_wait(lambda g=graph: g.refresh(info_cache, self.loader_thread_stop)))
 		else:
 			self.last_load_time = time.time()
-
-	def _get_graphql_campaign(self, campaign_id=None):
-		results = self.rpc.graphql("""\
-		query getCampaign($id: String!) {
-			db {
-				campaign(id: $id) {
-					name
-				}
-			}
-		}""", {'id': campaign_id or self.config['campaign_id']})
-		return results['db'].get('campaign', None)
 
 class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding incoming visitors."""

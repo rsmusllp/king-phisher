@@ -31,9 +31,7 @@
 #
 
 import datetime
-import os
 
-from king_phisher import find
 from king_phisher import its
 from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
@@ -170,7 +168,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
 		hlfg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlfg', default=ColorHexCode.BLACK)
 		now = datetime.datetime.now()
-		campaigns = self.application.rpc.graphql_file(find.data_file(os.path.join('queries', 'get_campaigns.graphql')))
+		campaigns = self.application.rpc.graphql_find_file('get_campaigns.graphql')
 		for campaign in campaigns['db']['campaigns']['edges']:
 			campaign = campaign['node']
 			created_ts = utilities.datetime_utc_to_local(campaign['created'])
