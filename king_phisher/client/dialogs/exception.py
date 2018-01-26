@@ -49,7 +49,7 @@ from gi.repository import Pango
 
 __all__ = ('ExceptionDialog',)
 
-EXCEPTION_DETAILS_TEMPLATE = """
+EXCEPTION_DETAILS_TEMPLATE = """\
 Error Type: {error_type}
 Error Details: {error_details}
 Error UID: {error_uid}

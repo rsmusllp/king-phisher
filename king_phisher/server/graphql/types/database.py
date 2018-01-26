@@ -336,7 +336,21 @@ class User(SQLAlchemyObjectType):
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
 	campaigns = SQLAlchemyConnectionField(Campaign)
 
+def database_resolver(attname, default_value, model, info, **kwargs):
+	field = model._meta.fields.get(attname)
+	if not field:
+		raise RuntimeError('can not resolve database attribute: ' + attname)
+	if isinstance(field, SQLAlchemyObjectType):
+		try:
+			result = field.type.get_query(info, **kwargs).first()
+		except sqlalchemy.exc.DataError:
+			result = None
+	else:
+		result = getattr(model, attname, default_value)
+	return result
+
 class Database(graphene.ObjectType):
+	Meta = {'default_resolver': database_resolver}
 	alert_subscription = graphene.Field(AlertSubscription, id=graphene.String())
 	alert_subscriptions = SQLAlchemyConnectionField(AlertSubscription)
 	campaign_type = graphene.Field(CampaignType, id=graphene.String())
@@ -363,41 +377,3 @@ class Database(graphene.ObjectType):
 	users = SQLAlchemyConnectionField(User)
 	visit = graphene.Field(Visit, id=graphene.String())
 	visits = SQLAlchemyConnectionField(Visit)
-	def resolve_alert_subscription(self, info, **kwargs):
-		return AlertSubscription.get_query(info, **kwargs).first()
-
-	def resolve_campaign(self, info, **kwargs):
-		return Campaign.get_query(info, **kwargs).first()
-
-	def resolve_campaign_type(self, info, **kwargs):
-		return CampaignType.get_query(info, **kwargs).first()
-
-	def resolve_company(self, info, **kwargs):
-		return Company.get_query(info, **kwargs).first()
-
-	def resolve_company_department(self, info, **kwargs):
-		return CompanyDepartment.get_query(info, **kwargs).first()
-
-	def resolve_credential(self, info, **kwargs):
-		return Credential.get_query(info, **kwargs).first()
-
-	def resolve_deaddrop_connection(self, info, **kwargs):
-		return DeaddropConnection.get_query(info, **kwargs).first()
-
-	def resolve_deaddrop_deployment(self, info, **kwargs):
-		return DeaddropDeployment.get_query(info, **kwargs).first()
-
-	def resolve_industry(self, info, **kwargs):
-		return Industry.get_query(info, **kwargs).first()
-
-	def resolve_landing_page(self, info, **kwargs):
-		return LandingPage.get_query(info, **kwargs).first()
-
-	def resolve_message(self, info, **kwargs):
-		return Message.get_query(info, **kwargs).first()
-
-	def resolve_user(self, info, **kwargs):
-		return User.get_query(info, **kwargs).first()
-
-	def resolve_visit(self, info, **kwargs):
-		return Visit.get_query(info, **kwargs).first()
