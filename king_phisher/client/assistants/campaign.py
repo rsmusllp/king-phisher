@@ -171,7 +171,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				combobox.set_active_iter(model_iter)
 
 		self.gobjects['checkbutton_alert_subscribe'].set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.campaign_id))
-		self.gobjects['checkbutton_reject_after_credentials'].set_property('active', bool(campaign.max_credentials))
+		self.gobjects['checkbutton_reject_after_credentials'].set_property('active', bool(campaign['maxCredentials']))
 
 		if campaign['company'] is not None:
 			self.gobjects['radiobutton_company_existing'].set_active(True)
