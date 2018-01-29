@@ -675,13 +675,15 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 	name_human = 'Bar - Visitor OS Information'
 	def _load_graph(self, info_cache):
 		visits = info_cache['visits']['edges']
+		if not len(visits):
+			self._graph_null_bar('No Visitor Information')
+			return
 		operating_systems = collections.Counter()
 		for visit in visits:
 			user_agent = None
 			if visit['node']['userAgent']:
 				user_agent = ua_parser.parse_user_agent(visit['node']['userAgent'])
 			operating_systems.update([user_agent.os_name if user_agent and user_agent.os_name else 'Unknown OS'])
-
 		os_names = sorted(operating_systems.keys())
 		bars = [operating_systems[os_name] for os_name in os_names]
 		self.graph_bar(bars, os_names)
