@@ -340,7 +340,7 @@ def database_resolver(attname, default_value, model, info, **kwargs):
 	field = model._meta.fields.get(attname)
 	if not field:
 		raise RuntimeError('can not resolve database attribute: ' + attname)
-	if isinstance(field, SQLAlchemyObjectType):
+	if issubclass(field.type, SQLAlchemyObjectType):
 		try:
 			result = field.type.get_query(info, **kwargs).first()
 		except sqlalchemy.exc.DataError:
