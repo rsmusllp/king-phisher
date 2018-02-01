@@ -16,6 +16,7 @@ Version 1.10.x
 * Use GraphQL for loading data instead of the legacy table-based API
 * Support fault-tolerance when dispatching server signals
 * Allow a country code to be set in users' phone numbers
+* Visits will now be tracked if the landing page is any existing type
 * Multiple RPC Terminal improvements
 
    * Fix a bug regarding line wrapping due to the ``TERM`` environment variable

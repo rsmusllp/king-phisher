@@ -552,7 +552,15 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			file_name = os.path.basename(file_path)
 			self.send_header('Content-Disposition', 'attachment; filename=' + file_name)
 		self.send_header('Last-Modified', self.date_time_string(fs.st_mtime))
+		self.semaphore_acquire()
+		try:
+			self.handle_page_visit()
+		except Exception as error:
+			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
+		finally:
+			self.semaphore_release()
 		self.end_headers()
+
 		shutil.copyfileobj(file_obj, self.wfile)
 		file_obj.close()
 		return
