@@ -1,7 +1,7 @@
-:mod:`client.export`
-====================
+:mod:`export`
+=============
 
-.. module:: client.export
+.. module:: king_phisher.client.export
    :synopsis:
 
 This module provides functionality for exporting information from the client
@@ -10,16 +10,16 @@ application into a variety of formats.
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.export.campaign_to_xml
+.. autofunction:: campaign_to_xml
 
-.. autofunction:: king_phisher.client.export.campaign_visits_to_geojson
+.. autofunction:: campaign_visits_to_geojson
 
-.. autofunction:: king_phisher.client.export.convert_value
+.. autofunction:: convert_value
 
-.. autofunction:: king_phisher.client.export.message_data_to_kpm
+.. autofunction:: message_data_to_kpm
 
-.. autofunction:: king_phisher.client.export.liststore_export
+.. autofunction:: liststore_export
 
-.. autofunction:: king_phisher.client.export.liststore_to_csv
+.. autofunction:: liststore_to_csv
 
-.. autofunction:: king_phisher.client.export.liststore_to_xlsx_worksheet
+.. autofunction:: liststore_to_xlsx_worksheet

@@ -1,12 +1,12 @@
-:mod:`types.database`
-=====================
+:mod:`database`
+===============
 
-.. module:: types.database
+.. module:: king_phisher.server.graphql.types.database
    :synopsis:
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.graphql.types.database.sa_get_relationship
+.. autofunction:: sa_get_relationship
 
-.. autofunction:: king_phisher.server.graphql.types.database.sa_object_resolver
+.. autofunction:: sa_object_resolver

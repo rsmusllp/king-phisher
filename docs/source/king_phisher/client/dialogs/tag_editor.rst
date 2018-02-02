@@ -1,12 +1,12 @@
-:mod:`dialogs.tag_editor`
-=========================
+:mod:`tag_editor`
+=================
 
-.. module:: dialogs.tag_editor
+.. module:: king_phisher.client.dialogs.tag_editor
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.dialogs.tag_editor.TagEditorDialog
+.. autoclass:: TagEditorDialog
    :show-inheritance:
    :members:

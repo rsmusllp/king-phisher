@@ -1,12 +1,12 @@
-:mod:`graphql.middlware`
-========================
+:mod:`middlware`
+================
 
-.. module:: graphql.middleware
+.. module:: king_phisher.server.graphql.middleware
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.server.graphql.middleware.AuthorizationMiddleware
+.. autoclass:: AuthorizationMiddleware
    :show-inheritance:
    :members:

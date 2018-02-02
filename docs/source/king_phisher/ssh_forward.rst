@@ -1,7 +1,7 @@
 :mod:`ssh_forward`
 ==================
 
-.. module:: ssh_forward
+.. module:: king_phisher.ssh_forward
    :synopsis:
 
 This module provides functionality for forwarding network services over SSH.
@@ -9,7 +9,7 @@ This module provides functionality for forwarding network services over SSH.
 Classes
 -------
 
-.. autoclass:: king_phisher.ssh_forward.SSHTCPForwarder
+.. autoclass:: SSHTCPForwarder
    :show-inheritance:
    :members:
    :special-members: __init__
@@ -17,7 +17,7 @@ Classes
 Exceptions
 ----------
 
-.. autoclass:: king_phisher.ssh_forward.KingPhisherSSHKeyError
+.. autoclass:: KingPhisherSSHKeyError
    :show-inheritance:
    :members:
    :undoc-members:

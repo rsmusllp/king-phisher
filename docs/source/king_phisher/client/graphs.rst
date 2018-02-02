@@ -1,7 +1,7 @@
-:mod:`client.graphs`
-====================
+:mod:`graphs`
+=============
 
-.. module:: client.graphs
+.. module:: king_phisher.client.graphs
    :synopsis:
 
 This module provides the functionality to support the client application's
@@ -10,87 +10,87 @@ graphing capabilities.
 Data
 ----
 
-.. autodata:: king_phisher.client.graphs.has_matplotlib
+.. autodata:: has_matplotlib
 
-.. autodata:: king_phisher.client.graphs.has_matplotlib_basemap
+.. autodata:: has_matplotlib_basemap
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.graphs.export_graph_provider
+.. autofunction:: export_graph_provider
 
-.. autofunction:: king_phisher.client.graphs.get_graph
+.. autofunction:: get_graph
 
-.. autofunction:: king_phisher.client.graphs.get_graphs
+.. autofunction:: get_graphs
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.graphs.GraphBase
+.. autoclass:: GraphBase
    :show-inheritance:
    :members:
    :special-members: __init__
    
-.. autoclass:: king_phisher.client.graphs.CampaignGraph
+.. autoclass:: CampaignGraph
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.graphs.CampaignGraphMessageResults
-   :show-inheritance:
-   :members:
-   :special-members: __init__
-   :undoc-members:
-
-.. autoclass:: king_phisher.client.graphs.CampaignGraphOverview
+.. autoclass:: CampaignGraphMessageResults
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.graphs.CampaignGraphPasswordComplexityPie
+.. autoclass:: CampaignGraphOverview
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.graphs.CampaignGraphVisitorInfo
+.. autoclass:: CampaignGraphPasswordComplexityPie
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.graphs.CampaignGraphVisitorInfoPie
+.. autoclass:: CampaignGraphVisitorInfo
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.graphs.CampaignGraphVisitsMap
+.. autoclass:: CampaignGraphVisitorInfoPie
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.graphs.CampaignGraphVisitsMapUSA
+.. autoclass:: CampaignGraphVisitsMap
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.graphs.CampaignGraphVisitsMapWorld
+.. autoclass:: CampaignGraphVisitsMapUSA
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.graphs.CampaignGraphVisitsTimeline
+.. autoclass:: CampaignGraphVisitsMapWorld
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.graphs.CampaignCompGraph
+.. autoclass:: CampaignGraphVisitsTimeline
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: CampaignCompGraph
    :show-inheritance:
    :members:
    :special-members: __init__

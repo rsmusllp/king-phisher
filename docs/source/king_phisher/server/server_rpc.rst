@@ -1,7 +1,7 @@
-:mod:`server.server_rpc`
-========================
+:mod:`server_rpc`
+=================
 
-.. module:: server.server_rpc
+.. module:: king_phisher.server.server_rpc
    :synopsis:
 
 This module provides the RPC server functionality that is used by the client
@@ -10,73 +10,73 @@ to communicate with the server application.
 Data
 ----
 
-.. autodata:: king_phisher.server.server_rpc.CONFIG_READABLE
+.. autodata:: CONFIG_READABLE
    :annotation:
 
-.. autodata:: king_phisher.server.server_rpc.CONFIG_WRITEABLE
+.. autodata:: CONFIG_WRITEABLE
    :annotation:
 
-.. autodata:: king_phisher.server.server_rpc.RPC_AUTH_HEADER
+.. autodata:: RPC_AUTH_HEADER
 
-.. autodata:: king_phisher.server.server_rpc.VIEW_ROW_COUNT
+.. autodata:: VIEW_ROW_COUNT
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.server_rpc.register_rpc
+.. autofunction:: register_rpc
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_campaign_alerts_is_subscribed
+.. autofunction:: rpc_campaign_alerts_is_subscribed
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_campaign_alerts_subscribe
+.. autofunction:: rpc_campaign_alerts_subscribe
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_campaign_alerts_unsubscribe
+.. autofunction:: rpc_campaign_alerts_unsubscribe
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_campaign_landing_page_new
+.. autofunction:: rpc_campaign_landing_page_new
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_campaign_message_new
+.. autofunction:: rpc_campaign_message_new
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_campaign_new
+.. autofunction:: rpc_campaign_new
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_campaign_stats
+.. autofunction:: rpc_campaign_stats
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_config_get
+.. autofunction:: rpc_config_get
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_config_set
+.. autofunction:: rpc_config_set
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_events_is_subscribed
+.. autofunction:: rpc_events_is_subscribed
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_events_subscribe
+.. autofunction:: rpc_events_subscribe
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_events_unsubscribe
+.. autofunction:: rpc_events_unsubscribe
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_database_count_rows
+.. autofunction:: rpc_database_count_rows
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_database_delete_row_by_id
+.. autofunction:: rpc_database_delete_row_by_id
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_database_delete_rows_by_id
+.. autofunction:: rpc_database_delete_rows_by_id
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_database_get_row_by_id
+.. autofunction:: rpc_database_get_row_by_id
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_database_insert_row
+.. autofunction:: rpc_database_insert_row
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_database_set_row_value
+.. autofunction:: rpc_database_set_row_value
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_database_view_rows
+.. autofunction:: rpc_database_view_rows
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_geoip_lookup
+.. autofunction:: rpc_geoip_lookup
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_geoip_lookup_multi
+.. autofunction:: rpc_geoip_lookup_multi
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_graphql
+.. autofunction:: rpc_graphql
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_login
+.. autofunction:: rpc_login
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_logout
+.. autofunction:: rpc_logout
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_ping
+.. autofunction:: rpc_ping
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_plugins_list
+.. autofunction:: rpc_plugins_list
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_shutdown
+.. autofunction:: rpc_shutdown
 
-.. autofunction:: king_phisher.server.server_rpc.rpc_version
+.. autofunction:: rpc_version

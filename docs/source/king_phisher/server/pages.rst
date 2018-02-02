@@ -1,7 +1,7 @@
-:mod:`server.pages`
-====================
+:mod:`pages`
+============
 
-.. module:: server.pages
+.. module:: king_phisher.server.pages
    :synopsis:
 
 This module provides functionality for Jinja functions used to generate server
@@ -10,8 +10,8 @@ page content.
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.pages.embed_youtube_video
+.. autofunction:: embed_youtube_video
 
-.. autofunction:: king_phisher.server.pages.make_csrf_page
+.. autofunction:: make_csrf_page
 
-.. autofunction:: king_phisher.server.pages.make_redirect_page
+.. autofunction:: make_redirect_page

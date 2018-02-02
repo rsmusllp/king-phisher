@@ -1,8 +1,5 @@
-:mod:`graphql.types`
-====================
-
-.. module:: graphql.types
-   :synopsis:
+:mod:`types`
+============
 
 .. toctree::
    :maxdepth: 2

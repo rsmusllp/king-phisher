@@ -14,6 +14,7 @@ build/*
 configs/*
 dist/*
 docs/build/*
+docs/coverage/*
 docs/html/*
 ssl/*
 

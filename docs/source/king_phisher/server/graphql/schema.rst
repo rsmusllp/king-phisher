@@ -1,14 +1,14 @@
-:mod:`graphql.schema`
-=====================
+:mod:`schema`
+=============
 
-.. module:: graphql.schema
+.. module:: king_phisher.server.graphql.schema
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.server.graphql.schema.Query
+.. autoclass:: Query
    :show-inheritance:
 
-.. autoclass:: king_phisher.server.graphql.schema.Schema
+.. autoclass:: Schema
    :show-inheritance:

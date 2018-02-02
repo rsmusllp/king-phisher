@@ -1,5 +1,5 @@
-:mod:`client.widget`
-====================
+:mod:`widget`
+=============
 
 .. toctree::
    :maxdepth: 2

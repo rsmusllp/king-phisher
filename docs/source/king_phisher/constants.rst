@@ -1,7 +1,7 @@
 :mod:`constants`
 ================
 
-.. module:: constants
+.. module:: king_phisher.constants
    :synopsis:
 
 This module keeps collections of related constants organized for use in other
@@ -10,36 +10,36 @@ modules.
 Data
 ----
 
-.. autodata:: king_phisher.constants.DEFAULT_LOG_LEVEL
+.. autodata:: DEFAULT_LOG_LEVEL
 
-.. autodata:: king_phisher.constants.DISABLED
+.. autodata:: DISABLED
 
 Classes
 -------
 
-.. autoclass:: king_phisher.constants.ConstantGroup
+.. autoclass:: ConstantGroup
    :members:
    :undoc-members:
 
-.. autoclass:: king_phisher.constants.ConnectionErrorReason
-.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED
-.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_CONNECTION
-.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INCOMPATIBLE_VERSIONS
-.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INVALID_CREDENTIALS
-.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_INVALID_OTP
-.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_PORT_FORWARD
-.. autoattribute:: king_phisher.constants.ConnectionErrorReason.ERROR_UNKNOWN
-.. autoattribute:: king_phisher.constants.ConnectionErrorReason.SUCCESS
+.. autoclass:: ConnectionErrorReason
+.. autoattribute:: ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED
+.. autoattribute:: ConnectionErrorReason.ERROR_CONNECTION
+.. autoattribute:: ConnectionErrorReason.ERROR_INCOMPATIBLE_VERSIONS
+.. autoattribute:: ConnectionErrorReason.ERROR_INVALID_CREDENTIALS
+.. autoattribute:: ConnectionErrorReason.ERROR_INVALID_OTP
+.. autoattribute:: ConnectionErrorReason.ERROR_PORT_FORWARD
+.. autoattribute:: ConnectionErrorReason.ERROR_UNKNOWN
+.. autoattribute:: ConnectionErrorReason.SUCCESS
 
-.. autoclass:: king_phisher.constants.OSArch
-.. autoattribute:: king_phisher.constants.OSArch.PPC
-.. autoattribute:: king_phisher.constants.OSArch.X86
-.. autoattribute:: king_phisher.constants.OSArch.X86_64
+.. autoclass:: OSArch
+.. autoattribute:: OSArch.PPC
+.. autoattribute:: OSArch.X86
+.. autoattribute:: OSArch.X86_64
 
-.. autoclass:: king_phisher.constants.OSFamily
-.. autoattribute:: king_phisher.constants.OSFamily.ANDROID
-.. autoattribute:: king_phisher.constants.OSFamily.BLACKBERRY
-.. autoattribute:: king_phisher.constants.OSFamily.IOS
-.. autoattribute:: king_phisher.constants.OSFamily.LINUX
-.. autoattribute:: king_phisher.constants.OSFamily.OSX
-.. autoattribute:: king_phisher.constants.OSFamily.WINDOWS
+.. autoclass:: OSFamily
+.. autoattribute:: OSFamily.ANDROID
+.. autoattribute:: OSFamily.BLACKBERRY
+.. autoattribute:: OSFamily.IOS
+.. autoattribute:: OSFamily.LINUX
+.. autoattribute:: OSFamily.OSX
+.. autoattribute:: OSFamily.WINDOWS

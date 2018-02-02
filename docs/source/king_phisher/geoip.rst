@@ -1,7 +1,7 @@
 :mod:`geoip`
 ============
 
-.. module:: geoip
+.. module:: king_phisher.geoip
    :synopsis:
 
 This module uses GeoLite2 data created by MaxMind, available from
@@ -10,28 +10,28 @@ This module uses GeoLite2 data created by MaxMind, available from
 Data
 ----
 
-.. autodata:: king_phisher.geoip.DB_DOWNLOAD_URL
+.. autodata:: DB_DOWNLOAD_URL
    :annotation:
 
-.. autodata:: king_phisher.geoip.DB_RESULT_FIELDS
+.. autodata:: DB_RESULT_FIELDS
    :annotation:
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.geoip.download_geolite2_city_db
+.. autofunction:: download_geolite2_city_db
 
-.. autofunction:: king_phisher.geoip.init_database
+.. autofunction:: init_database
 
-.. autofunction:: king_phisher.geoip.lookup
+.. autofunction:: lookup
 
 Classes
 -------
 
-.. autoclass:: king_phisher.geoip.Coordinates
+.. autoclass:: Coordinates
    :members:
 
-.. autoclass:: king_phisher.geoip.GeoLocation
+.. autoclass:: GeoLocation
    :members:
    :special-members: __init__, __geo_interface__
    :undoc-members:

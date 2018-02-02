@@ -1,7 +1,7 @@
 :mod:`serializers`
 ==================
 
-.. module:: serializers
+.. module:: king_phisher.serializers
    :synopsis:
 
 This module provides a standardized interface for serializing objects using
@@ -13,21 +13,21 @@ of them.
 Functions
 ---------
 
-.. autofunction:: king_phisher.serializers.from_elementtree_element
+.. autofunction:: from_elementtree_element
 
-.. autofunction:: king_phisher.serializers.to_elementtree_subelement
+.. autofunction:: to_elementtree_subelement
 
 Classes
 -------
 
-.. autoclass:: king_phisher.serializers.JSON
+.. autoclass:: JSON
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.serializers.MsgPack
+.. autoclass:: MsgPack
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.serializers.Serializer
+.. autoclass:: Serializer
    :show-inheritance:
    :members:

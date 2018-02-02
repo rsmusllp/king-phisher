@@ -1,16 +1,16 @@
-:mod:`server.plugins`
-=====================
+:mod:`plugins`
+==============
 
-.. module:: server.plugins
+.. module:: king_phisher.server.plugins
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.server.plugins.ServerPlugin
+.. autoclass:: ServerPlugin
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.server.plugins.ServerPluginManager
+.. autoclass:: ServerPluginManager
    :show-inheritance:
    :members:

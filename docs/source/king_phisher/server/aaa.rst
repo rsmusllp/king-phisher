@@ -1,7 +1,7 @@
-:mod:`server.aaa`
-=================
+:mod:`aaa`
+==========
 
-.. module:: server.aaa
+.. module:: king_phisher.server.aaa
    :synopsis:
 
 This module provides the functionality authentication authorization and access
@@ -10,30 +10,30 @@ to the server application.
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.aaa.get_groups_for_user
+.. autofunction:: get_groups_for_user
 
 Classes
 -------
 
-.. autoclass:: king_phisher.server.aaa.AuthenticatedSession
+.. autoclass:: AuthenticatedSession
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.server.aaa.AuthenticatedSessionManager
+.. autoclass:: AuthenticatedSessionManager
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.server.aaa.CachedPassword
+.. autoclass:: CachedPassword
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.server.aaa.ForkedAuthenticator
+.. autoclass:: ForkedAuthenticator
    :show-inheritance:
    :members:
    :special-members: __init__

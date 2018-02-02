@@ -1,7 +1,7 @@
-:mod:`client.gui_utilities`
-===========================
+:mod:`gui_utilities`
+====================
 
-.. module:: client.gui_utilities
+.. module:: king_phisher.client.gui_utilities
    :synopsis:
 
 This module provides various utility functions specific to the graphical nature
@@ -10,95 +10,95 @@ of the client application.
 Data
 ----
 
-.. autodata:: king_phisher.client.gui_utilities.GOBJECT_PROPERTY_MAP
+.. autodata:: GOBJECT_PROPERTY_MAP
    :annotation:
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.gui_utilities.glib_idle_add_once
+.. autofunction:: glib_idle_add_once
 
-.. autofunction:: king_phisher.client.gui_utilities.glib_idle_add_wait
+.. autofunction:: glib_idle_add_wait
 
-.. autofunction:: king_phisher.client.gui_utilities.gobject_get_value
+.. autofunction:: gobject_get_value
 
-.. autofunction:: king_phisher.client.gui_utilities.gobject_set_value
+.. autofunction:: gobject_set_value
 
-.. autofunction:: king_phisher.client.gui_utilities.gobject_signal_accumulator
+.. autofunction:: gobject_signal_accumulator
 
-.. autofunction:: king_phisher.client.gui_utilities.gobject_signal_blocked
+.. autofunction:: gobject_signal_blocked
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_calendar_get_pydate
+.. autofunction:: gtk_calendar_get_pydate
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_calendar_set_pydate
+.. autofunction:: gtk_calendar_set_pydate
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_list_store_search
+.. autofunction:: gtk_list_store_search
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_menu_get_item_by_label
+.. autofunction:: gtk_menu_get_item_by_label
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_menu_insert_by_path
+.. autofunction:: gtk_menu_insert_by_path
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_menu_position
+.. autofunction:: gtk_menu_position
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_style_context_get_color
+.. autofunction:: gtk_style_context_get_color
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_sync
+.. autofunction:: gtk_sync
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_treesortable_sort_func_numeric
+.. autofunction:: gtk_treesortable_sort_func_numeric
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_selection_to_clipboard
+.. autofunction:: gtk_treeview_selection_to_clipboard
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_selection_iterate
+.. autofunction:: gtk_treeview_selection_iterate
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_treeview_set_column_titles
+.. autofunction:: gtk_treeview_set_column_titles
 
-.. autofunction:: king_phisher.client.gui_utilities.gtk_widget_destroy_children
+.. autofunction:: gtk_widget_destroy_children
 
-.. autofunction:: king_phisher.client.gui_utilities.show_dialog
+.. autofunction:: show_dialog
 
-.. autofunction:: king_phisher.client.gui_utilities.show_dialog_exc_socket_error
+.. autofunction:: show_dialog_exc_socket_error
 
-.. autofunction:: king_phisher.client.gui_utilities.show_dialog_error
+.. autofunction:: show_dialog_error
 
-.. autofunction:: king_phisher.client.gui_utilities.show_dialog_info
+.. autofunction:: show_dialog_info
 
-.. autofunction:: king_phisher.client.gui_utilities.show_dialog_warning
+.. autofunction:: show_dialog_warning
 
-.. autofunction:: king_phisher.client.gui_utilities.show_dialog_yes_no
+.. autofunction:: show_dialog_yes_no
 
-.. autofunction:: king_phisher.client.gui_utilities.which_glade
+.. autofunction:: which_glade
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.gui_utilities.FileMonitor
+.. autoclass:: FileMonitor
    :show-inheritance:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.gui_utilities.GladeDependencies
+.. autoclass:: GladeDependencies
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.gui_utilities.GladeGObjectMeta
+.. autoclass:: GladeGObjectMeta
    :show-inheritance:
    :members:
    :undoc-members:
 
-.. autoclass:: king_phisher.client.gui_utilities.GladeGObject
-   :show-inheritance:
-   :members:
-   :special-members: __init__
-   :undoc-members:
-
-.. autoclass:: king_phisher.client.gui_utilities.GladeProxy
+.. autoclass:: GladeGObject
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.gui_utilities.GladeProxyDestination
+.. autoclass:: GladeProxy
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+   :undoc-members:
+
+.. autoclass:: GladeProxyDestination
    :show-inheritance:
    :members:
    :special-members: __init__

@@ -1,5 +1,5 @@
-:mod:`client.assistants`
-========================
+:mod:`assistants`
+=================
 
 .. toctree::
    :maxdepth: 2

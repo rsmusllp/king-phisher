@@ -1,18 +1,18 @@
-:mod:`client.server_events`
-===========================
+:mod:`server_events`
+====================
 
-.. module:: client.server_events
+.. module:: king_phisher.client.server_events
    :synopsis:
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.server_events.event_type_filter
+.. autofunction:: event_type_filter
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.server_events.ServerEventSubscriber
+.. autoclass:: ServerEventSubscriber
    :show-inheritance:
    :members:
    :inherited-members:

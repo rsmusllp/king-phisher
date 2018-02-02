@@ -1,13 +1,13 @@
-:mod:`dialogs.clone_page`
-=========================
+:mod:`clone_page`
+=================
 
-.. module:: dialogs.clone_page
+.. module:: king_phisher.client.dialogs.clone_page
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.dialogs.clone_page.ClonePageDialog
+.. autoclass:: ClonePageDialog
    :show-inheritance:
    :members:
    :special-members: __init__

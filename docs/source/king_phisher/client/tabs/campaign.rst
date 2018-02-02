@@ -1,7 +1,7 @@
-:mod:`tabs.campaign`
-====================
+:mod:`campaign`
+===============
 
-.. module:: tabs.campaign
+.. module:: king_phisher.client.tabs.campaign
    :synopsis:
 
 This module provides the contents of the tab representing the campaign
@@ -10,35 +10,35 @@ information in client's graphical interface.
 Classes
 -------
 
-.. autoclass:: king_phisher.client.tabs.campaign.CampaignViewCredentialsTab
+.. autoclass:: CampaignViewCredentialsTab
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.tabs.campaign.CampaignViewDashboardTab
+.. autoclass:: CampaignViewDashboardTab
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.tabs.campaign.CampaignViewDeaddropTab
+.. autoclass:: CampaignViewDeaddropTab
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.tabs.campaign.CampaignViewGenericTab
+.. autoclass:: CampaignViewGenericTab
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.tabs.campaign.CampaignViewGenericTableTab
+.. autoclass:: CampaignViewGenericTableTab
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.tabs.campaign.CampaignViewMessagesTab
+.. autoclass:: CampaignViewMessagesTab
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.tabs.campaign.CampaignViewTab
+.. autoclass:: CampaignViewTab
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.tabs.campaign.CampaignViewVisitsTab
+.. autoclass:: CampaignViewVisitsTab
    :show-inheritance:
    :members:

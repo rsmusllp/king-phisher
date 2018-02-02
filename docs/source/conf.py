@@ -44,6 +44,7 @@ needs_sphinx = '1.3'
 extensions = [
 	'king_phisher.rpc_docs',
 	'sphinx.ext.autodoc',
+	'sphinx.ext.coverage',
 	'sphinx.ext.extlinks',
 	'sphinx.ext.intersphinx',
 	'sphinx.ext.linkcode',
@@ -121,7 +122,7 @@ http_index_localname = "{0} REST API".format(project)
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#add_module_names = True
+add_module_names = False
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.

@@ -1,7 +1,7 @@
-:mod:`server.server`
-====================
+:mod:`server`
+=============
 
-.. module:: server.server
+.. module:: king_phisher.server.server
    :synopsis:
 
 This module contains the functionality that provides the application's low-level
@@ -10,11 +10,11 @@ HTTP server logic.
 Classes
 -------
 
-.. autoclass:: king_phisher.server.server.KingPhisherRequestHandler
+.. autoclass:: KingPhisherRequestHandler
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.server.server.KingPhisherServer
+.. autoclass:: KingPhisherServer
    :show-inheritance:
    :members:
    :special-members: __init__

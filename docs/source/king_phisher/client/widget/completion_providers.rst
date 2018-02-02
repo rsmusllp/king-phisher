@@ -1,7 +1,7 @@
-:mod:`widget.completion_providers`
-==================================
+:mod:`completion_providers`
+===========================
 
-.. module:: widget.completion_providers
+.. module:: king_phisher.client.widget.completion_providers
    :synopsis:
 
 This module contains classes for custom auto completion for GtkSourceCompletion.
@@ -11,27 +11,27 @@ completion.
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.widget.completion_providers.get_proposal_terms
+.. autofunction:: get_proposal_terms
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.widget.completion_providers.CustomCompletionProviderBase
+.. autoclass:: CustomCompletionProviderBase
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.widget.completion_providers.HTMLCompletionProvider
+.. autoclass:: HTMLCompletionProvider
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.widget.completion_providers.JinjaCompletionProvider
+.. autoclass:: JinjaCompletionProvider
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.widget.completion_providers.JinjaEmailCompletionProvider
+.. autoclass:: JinjaEmailCompletionProvider
    :show-inheritance:
    :members:
    :special-members: __init__

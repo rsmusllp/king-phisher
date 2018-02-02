@@ -1,13 +1,13 @@
-:mod:`assistants.campaign`
-==========================
+:mod:`campaign`
+===============
 
-.. module:: assistants.campaign
+.. module:: king_phisher.client.assistants.campaign
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.assistants.campaign.CampaignAssistant
+.. autoclass:: CampaignAssistant
    :show-inheritance:
    :members:
    :special-members: __init__

@@ -1,8 +1,5 @@
-:mod:`server.graphql`
-=====================
-
-.. module:: server.graphql
-   :synopsis:
+:mod:`graphql`
+==============
 
 This package provides the `GraphQL <http://graphql.org/>`_ interface for
 querying information from the King Phisher server. This allows flexibility in

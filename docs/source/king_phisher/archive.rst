@@ -1,7 +1,7 @@
 :mod:`archive`
 ==============
 
-.. module:: archive
+.. module:: king_phisher.archive
    :synopsis:
 
 This module provides a generic means to combine data and files into a single
@@ -10,14 +10,14 @@ archive file.
 Functions
 ---------
 
-.. autofunction:: king_phisher.archive.is_archive
+.. autofunction:: is_archive
 
-.. autofunction:: king_phisher.archive.patch_zipfile
+.. autofunction:: patch_zipfile
 
 Classes
 -------
 
-.. autoclass:: king_phisher.archive.ArchiveFile
+.. autoclass:: ArchiveFile
    :members:
    :special-members: __init__
    :undoc-members:

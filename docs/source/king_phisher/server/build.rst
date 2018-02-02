@@ -1,7 +1,7 @@
-:mod:`server.build`
-===================
+:mod:`build`
+============
 
-.. module:: server.build
+.. module:: king_phisher.server.build
    :synopsis:
 
 This module contains the functionality to build a new server instance from a
@@ -11,8 +11,8 @@ potential configuration problems contained.
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.build.get_bind_addresses
+.. autofunction:: get_bind_addresses
 
-.. autofunction:: king_phisher.server.build.get_ssl_hostnames
+.. autofunction:: get_ssl_hostnames
 
-.. autofunction:: king_phisher.server.build.server_from_config
+.. autofunction:: server_from_config
