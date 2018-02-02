@@ -42,11 +42,15 @@ else:
 	import html
 
 EXPORTED_FUNCTIONS = {}
+"""A dictionary of the exported page functions."""
 
 def export_function(function):
 	"""
 	A decorator to "export" a function by placing it in
 	:py:data:`.EXPORTED_FUNCTIONS`.
+
+	:param function: The function to export.
+	:type function: function
 	"""
 	EXPORTED_FUNCTIONS[function.__name__] = function
 	return function

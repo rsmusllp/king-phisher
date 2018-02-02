@@ -18,6 +18,8 @@ Functions
 
 .. autofunction:: normalize_connection_url
 
+.. autofunction:: get_metadata
+
 .. autofunction:: get_row_by_id
 
 .. autofunction:: init_alembic

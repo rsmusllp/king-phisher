@@ -46,6 +46,8 @@ Functions
 
 .. autofunction:: gtk_treesortable_sort_func_numeric
 
+.. autofunction:: gtk_treeview_get_column_titles
+
 .. autofunction:: gtk_treeview_selection_to_clipboard
 
 .. autofunction:: gtk_treeview_selection_iterate

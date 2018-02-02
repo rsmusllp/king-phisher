@@ -10,11 +10,15 @@ application into a variety of formats.
 Functions
 ---------
 
+.. autofunction:: campaign_credentials_to_msf_txt
+
 .. autofunction:: campaign_to_xml
 
 .. autofunction:: campaign_visits_to_geojson
 
 .. autofunction:: convert_value
+
+.. autofunction:: message_data_from_kpm
 
 .. autofunction:: message_data_to_kpm
 

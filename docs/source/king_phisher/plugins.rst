@@ -7,6 +7,11 @@
 This module provides the core functionality necessary to support user provided
 plugins.
 
+Functions
+---------
+
+.. autofunction:: recursive_reload
+
 Classes
 -------
 
