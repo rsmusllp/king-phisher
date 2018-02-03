@@ -10,7 +10,13 @@ the client application.
 Functions
 ---------
 
+.. autofunction:: count_targets_file
+
+.. autofunction:: get_invite_start_from_config
+
 .. autofunction:: guess_smtp_server_address
+
+.. autofunction:: nonempty_str
 
 .. autofunction:: render_message_template
 

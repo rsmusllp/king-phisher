@@ -11,6 +11,7 @@ Data
 ----
 
 .. autodata:: COLLECTION_TYPES
+   :annotation:
 
 Functions
 ---------
@@ -21,6 +22,12 @@ Classes
 -------
 
 .. autoclass:: Catalog
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :special-members: __init__
+
+.. autoclass:: CatalogManager
    :show-inheritance:
    :members:
    :inherited-members:

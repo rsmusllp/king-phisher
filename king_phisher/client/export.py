@@ -476,7 +476,7 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 		message_config[config_name] = file_path
 
 	if 'message_content.html' in kpm.file_names:
-		if not 'html_file' in message_config:
+		if 'html_file' not in message_config:
 			logger.warning('the kpm message configuration is missing the html_file setting')
 			raise errors.KingPhisherInputValidationError('data is missing from the message archive')
 		arcfile_h = kpm.get_file('message_content.html')

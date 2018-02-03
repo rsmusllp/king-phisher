@@ -99,6 +99,14 @@ def _iterate_targets_file(target_file):
 	target_file_h.close()
 
 def count_targets_file(target_file):
+	"""
+	Count the number of valid targets that the specified file contains. This
+	skips lines which are missing fields or where the email address is invalid.
+
+	:param str target_file: The path the the target CSV file on disk.
+	:return: The number of valid targets.
+	:rtype: int
+	"""
 	count = 0
 	for target in _iterate_targets_file(target_file):
 		if target.missing_fields:
@@ -109,12 +117,27 @@ def count_targets_file(target_file):
 	return count
 
 def nonempty_str(value):
+	"""
+	Convert *value* into either a non-empty string or None. This will also
+	strip leading and trailing whitespace.
+
+	:param str value: The value to convert.
+	:return: Either the non-empty string or None.
+	"""
 	if not value:
 		return None
 	value = value.strip()
 	return value if value else None
 
 def get_invite_start_from_config(config):
+	"""
+	Get the start time for an invite from the configuration. This takes into
+	account whether the invite is for all day or starts at a specific time.
+
+	:param dict config: The King Phisher client configuration.
+	:return: The timestamp of when the invite is to start.
+	:rtype: :py:class:`datetime.datetime`
+	"""
 	if config['mailer.calendar_invite_all_day']:
 		start_time = datetime.datetime.combine(
 			config['mailer.calendar_invite_date'],
@@ -297,7 +320,7 @@ class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 	def __init__(self, mime_type, config, target):
 		"""
 		:param str mime_type: The type of this part such as related or alternative.
-		:param dict config: The client configuration.
+		:param dict config: The King Phisher client configuration.
 		:param target: The target information for the messages intended recipient.
 		:type target: :py:class:`.MessageTarget`
 		"""
@@ -500,6 +523,15 @@ class MailSenderThread(threading.Thread):
 		return sum(1 for _ in self.iterate_targets(counting=True))
 
 	def iterate_targets(self, counting=False):
+		"""
+		Iterate over each of the targets as defined within the configuration.
+		If *counting* is ``False``, messages will not be displayed to the end
+		user through the notification tab.
+
+		:param bool counting: Whether or not to iterate strictly for counting purposes.
+		:return: Each message target.
+		:rtype: :py:class:`~.MessageTarget`
+		"""
 		target_type = self.config['mailer.target_type']
 		if target_type == 'single':
 			target_name = self.config['mailer.target_name'].split(' ')
@@ -528,6 +560,7 @@ class MailSenderThread(threading.Thread):
 			self.logger.error("the configured target type '{0}' is unsupported".format(target_type))
 
 	def run(self):
+		"""The entry point of the thread."""
 		self.logger.debug("mailer routine running in tid: 0x{0:x}".format(threading.current_thread().ident))
 		self.running.set()
 		self.should_stop.clear()

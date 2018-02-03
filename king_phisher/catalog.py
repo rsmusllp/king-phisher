@@ -105,12 +105,25 @@ class Collection(_Mapping):
 		return repo
 
 	def get_file(self, *args, **kwargs):
+		"""
+		A simple convenience method which forwards to the associated
+		:py:class:`~.Repository`'s :py:meth:`~.Repository.get_file` method.
+		"""
 		return self._repo_ref.get_file(*args, **kwargs)
 
 	def get_item(self, *args, **kwargs):
+		"""
+		A simple convenience method which forwards to the associated
+		:py:class:`~.Repository`'s :py:meth:`~.Repository.get_item` method.
+		"""
 		return self._repo_ref.get_item(self.type, *args, **kwargs)
 
 	def get_item_files(self, *args, **kwargs):
+		"""
+		A simple convenience method which forwards to the associated
+		:py:class:`~.Repository`'s :py:meth:`~.Repository.get_item_files`
+		method.
+		"""
 		return self._repo_ref.get_item_files(self.type, *args, **kwargs)
 
 class Repository(object):
@@ -350,7 +363,7 @@ class Catalog(object):
 
 class CatalogManager(object):
 	"""
-	Base manager for handling multiple :py:class:`.Catalogs`.
+	Base manager for handling multiple :py:class:`.Catalog` instances.
 	"""
 	logger = logging.getLogger('KingPhisher.Catalog.Manager')
 	def __init__(self, catalog_url=None):
@@ -360,12 +373,12 @@ class CatalogManager(object):
 
 	def catalog_ids(self):
 		"""
-		The key names of the catalogs in the manager
+		The key names of the catalogs in the manager.
 
 		:return: The catalogs IDs in the manager instance.
-		:rtype: dict_keys
+		:rtype: tuple
 		"""
-		return self.catalogs.keys()
+		return tuple(self.catalogs.keys())
 
 	def get_repositories(self, catalog_id):
 		"""
@@ -378,11 +391,11 @@ class CatalogManager(object):
 
 	def add_catalog_url(self, url):
 		"""
-		Adds catalog to the manager by its URL.
+		Adds the specified catalog to the manager by its URL.
 
 		:param str url: The URL of the catalog to load.
 		:return: The catalog.
-		:rtype: :py:class: `.Catalog`
+		:rtype: :py:class:`.Catalog`
 		"""
 		try:
 			catalog = Catalog.from_url(url)
