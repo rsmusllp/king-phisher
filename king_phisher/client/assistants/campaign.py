@@ -218,9 +218,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if model_iter is not None:
 			return model.get_value(model_iter, 0)
 		# check if this company name already exists remotely
-		remote_company_id = self._get_graphql_company_id(name)
-		if remote_company_id:
-			return remote_company_id
+		remote_company = self._get_graphql_company(name)
+		if remote_company:
+			return remote_company['id']
 
 		company_id = self.application.rpc(
 			'db/table/insert',
@@ -238,16 +238,16 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self.gobjects['radiobutton_company_existing'].set_active(True)
 		return company_id
 
-	def _get_graphql_company_id(self, company_name):
+	def _get_graphql_company(self, company_name):
 		results = self.application.rpc.graphql("""\
-		query getCompanyId($name: String!) {
+		query getCompany($name: String!) {
 			db {
 				company(name: $name) {
 					id
 				}
 			}
 		}""", {'name': company_name})
-		return results['db']['company']['id']
+		return results['db']['company']
 
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
