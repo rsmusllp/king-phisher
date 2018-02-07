@@ -57,7 +57,7 @@ def is_archive(file_path):
 
 def patch_zipfile(input_file, patches, output_file=None):
 	"""
-	Path content into the specified input Zip file. The *input_file* must be
+	Patch content into the specified input Zip file. The *input_file* must be
 	either an input path string to the file to patch or a
 	:py:class:`zipfile.ZipFile` instance. Patch data is supplied in the *patch*
 	argument which is a dictionary keyed by the paths to modify, values are

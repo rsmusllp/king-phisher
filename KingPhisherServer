@@ -137,10 +137,10 @@ def _ex_config_logging(arguments, config, console_handler):
 			if isinstance(options, dict):   # new style
 				if not options.get('enabled', True):
 					break
-				if not 'path' in options:
+				if 'path' not in options:
 					color.print_error('logging.file is missing required key \'path\'')
 					sys.exit(os.EX_CONFIG)
-				if not 'level' in options:
+				if 'level' not in options:
 					color.print_error('logging.file is missing required key \'level\'')
 					sys.exit(os.EX_CONFIG)
 				file_path = options['path']
@@ -173,7 +173,7 @@ def _ex_config_logging(arguments, config, console_handler):
 
 				if arguments.loglvl is None and 'level' in options:
 					log_level = str(options.get('level', '')).upper()
-					if not log_level in log_levels:
+					if log_level not in log_levels:
 						color.print_error('logging.console.level is invalid, must be one of: ' + ', '.join(log_levels))
 						sys.exit(os.EX_CONFIG)
 					console_handler.setLevel(getattr(logging, log_level))
