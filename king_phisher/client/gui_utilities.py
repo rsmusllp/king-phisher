@@ -748,13 +748,13 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 		from the corresponding value in the :py:attr:`~.GladeGObject.config`.
 		"""
 		for gobject_id, gobject in self.gobjects.items():
-			if not '_' in gobject_id:
+			if '_' not in gobject_id:
 				continue
 			gtype, config_name = gobject_id.split('_', 1)
 			config_name = self.config_prefix + config_name
-			if not gtype in GOBJECT_PROPERTY_MAP or not config_name in self.config:
+			if gtype not in GOBJECT_PROPERTY_MAP:
 				continue
-			value = self.config[config_name]
+			value = self.config.get(config_name)
 			if value is None:
 				continue
 			if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):

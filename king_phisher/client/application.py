@@ -473,7 +473,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 		:param bool load_defaults: Load missing options from the template configuration file.
 		"""
-		self.logger.info('loading the config from disk')
 		client_template = find.data_file('client_config.json')
 		self.logger.info('loading the config from: ' + self.config_file)
 		with open(self.config_file, 'r') as tmp_file:
