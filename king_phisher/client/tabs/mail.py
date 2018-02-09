@@ -591,6 +591,13 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		self.textview.set_property('indent-width', self.config.get('text_source.tab_width', 4))
 		self.textview.set_property('insert-spaces-instead-of-tabs', not self.config.get('text_source.hardtabs', False))
 		self.textview.set_property('tab-width', self.config.get('text_source.tab_width', 4))
+		wrap_mode = self.config.get('text_source.wrap_mode', 'NONE')
+		if wrap_mode.startswith('GTK_WRAP_'):
+			wrap_mode = wrap_mode[9:]
+		if wrap_mode.upper() in ('CHAR', 'NONE', 'WORD', 'WORD_CHAR'):
+			self.textview.set_property('wrap-mode', getattr(Gtk.WrapMode, wrap_mode.upper()))
+		else:
+			self.logger.warning("invalid GtkWrapMode: {0!r}".format(wrap_mode))
 
 		self.toolbutton_save_html_file = self.gobjects['toolbutton_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
