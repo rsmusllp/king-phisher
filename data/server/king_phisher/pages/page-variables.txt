@@ -16,6 +16,8 @@ client.message_id:        {{ client.message_id }}
 client.credential_count:  {{ client.credential_count }}
 client.visit_count:       {{ client.visit_count }}
 client.visit_id:          {{ client.visit_id }}
+{% endif %}
+{% if client.campaign is defined %}
 
 ### Client Session Campaign Variables
 client.campaign.name:              {{ client.campaign.name }}
@@ -39,7 +41,7 @@ client.company.url_remote_access:  {{ client.company.url_remote_access }}
 request.command         {{ request.command }}
 {% if request.cookies %}
 request.cookies:
-{% for key, value in request.cookies.iteritems() %}
+{% for key, value in request.cookies.items() %}
     {{ key }} = {{ value }}
 {% endfor %}
 {% else %}
@@ -47,14 +49,14 @@ request.cookies:        N/A
 {% endif %}
 {% if request.parameters %}
 request.parameters:
-{% for key, value in request.parameters.iteritems() %}
+{% for key, value in request.parameters.items() %}
     {{ key }} = {{ value }}
 {% endfor %}
 {% else %}
 request.parameters:     N/A
 {% endif %}
 
-## Request User Agent Information
+### Request User Agent Information
 request.user_agent:     {{ request.user_agent }}
 {% set ua_info = parse_user_agent(request.user_agent) %}
 os_name:                {{ ua_info.os_name }}
@@ -74,5 +76,5 @@ yesterday:              {{ time.local | yesterday }}
 tomorrow:               {{ time.local | tomorrow }}
 strftime:               {{ time.local | strftime('%A, %d %B %Y %I:%M%p') }}
 
-# Miscellaneous
+# Miscellaneous Variables
 version:                {{ version }}

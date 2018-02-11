@@ -1,0 +1,177 @@
+<!doctype html>
+{% macro header(tag, title) -%}
+    <{{ tag }} id="{{ title | lower | replace(' ', '-') }}">
+      {{ title }}
+      <a href="#{{ title | lower | replace(' ', '-') }}" class="btn"><img src="https://cdnjs.cloudflare.com/ajax/libs/octicons/4.4.0/svg/link.svg"></img></a>
+    </{{ tag }}>
+{% endmacro %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <title>Page Variables</title>
+</head>
+
+<body>
+  <!--
+    This file can be placed in the web root to show what variables and filters are
+    available.
+  -->
+  <div class="container">
+
+    {{ header('h2', 'Client Variables') }}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">client.address</td><td class="col-md-8">{{ client.address }}</td></tr>
+      <tbody>
+    </table>
+
+    {% if client.message_id is defined -%}
+    {{ header('h3', 'Client Session Variables') }}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">client.company_name</td><td class="col-md-8">{{ client.company_name }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.email_address</td><td class="col-md-8">{{ client.email_address }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.first_name</td><td class="col-md-8">{{ client.first_name }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.last_name</td><td class="col-md-8">{{ client.last_name }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.is_trained</td><td class="col-md-8">{{ client.is_trained }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.message_id</td><td class="col-md-8">{{ client.message_id }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.credential_count</td><td class="col-md-8">{{ client.credential_count }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.visit_count</td><td class="col-md-8">{{ client.visit_count }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.visit_id</td><td class="col-md-8">{{ client.visit_id }}</td></tr>
+      <tbody>
+    </table>
+    {% endif %}
+
+    {% if client.campaign is defined -%}
+    {{ header('h3', 'Client Session Campaign Variables') }}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">client.campaign.name</td><td class="col-md-8">{{ client.campaign.name }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.campaign.created</td><td class="col-md-8">{{ client.campaign.created }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.campaign.expiration</td><td class="col-md-8">{{ client.campaign.expiration }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.campaign.has_expired</td><td class="col-md-8">{{ client.campaign.has_expired }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.campaign.message_count</td><td class="col-md-8">{{ client.campaign.message_count }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.campaign.visit_count</td><td class="col-md-8">{{ client.campaign.visit_count }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.campaign.credential_count</td><td class="col-md-8">{{ client.campaign.credential_count }}</td></tr>
+      <tbody>
+    </table>
+    {% endif %}
+
+    {% if client.company is defined -%}
+    {{ header('h3', 'Client Session Company Variables') }}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">client.company.name</td><td class="col-md-8">{{ client.company.name }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.company.url_email</td><td class="col-md-8">{{ client.company.url_email }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.company.url_main</td><td class="col-md-8">{{ client.company.url_main }}</td></tr>
+        <tr class="row"><td class="col-md-4">client.company.url_remote_access</td><td class="col-md-8">{{ client.company.url_remote_access }}</td></tr>
+      <tbody>
+    </table>
+    {% endif %}
+
+    {{ header('h2', 'Request Variables') }}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">request.command</td><td class="col-md-8">{{ request.command }}</td></tr>
+        <tr class="row">
+          <td class="col-md-4">request.cookies</td>
+          <td class="col-md-8">
+            <ul class="list-group">
+            {% for key, value in request.cookies.items() %}
+              <li class="list-group-item">{{ key }} = {{ value }}</li>
+            {% endfor %}
+            </ul>
+          </td>
+        </tr>
+        <tr class="row">
+          <td class="col-md-4">request.parameters</td>
+          <td class="col-md-8">
+            <ul class="list-group">
+            {% for key, value in request.parameters.items() %}
+              <li class="list-group-item">{{ key }} = {{ value }}</li>
+            {% endfor %}
+            </ul>
+          </td>
+        </tr>
+      <tbody>
+    </table>
+
+    {{ header('h3', 'Request User Agent Information') }}
+    {% set ua_info = parse_user_agent(request.user_agent) %}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">request.user_agent</td><td class="col-md-8">{{ request.user_agent }}</td></tr>
+        <tr class="row"><td class="col-md-4">os_name</td><td class="col-md-8">{{ ua_info.os_name }}</td></tr>
+        <tr class="row"><td class="col-md-4">os_version</td><td class="col-md-8">{{ ua_info.os_version }}</td></tr>
+        <tr class="row"><td class="col-md-4">os_arch</td><td class="col-md-8">{{ ua_info.os_arch }}</td></tr>
+      <tbody>
+    </table>
+
+    {{ header('h2', 'Server Variables') }}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">server.address</td><td class="col-md-8">{{ server.address }}</td></tr>
+        <tr class="row"><td class="col-md-4">server.hostname</td><td class="col-md-8">{{ server.hostname }}</td></tr>
+      <tbody>
+    </table>
+
+    {{ header('h2', 'Time Variables') }}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">time.local</td><td class="col-md-8">{{ time.local }}</td></tr>
+        <tr class="row"><td class="col-md-4">time.utc</td><td class="col-md-8">{{ time.utc }}</td></tr>
+      <tbody>
+    </table>
+
+    {{ header('h3', 'Time Filters') }}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">yesterday</td><td class="col-md-8">{{ time.local | yesterday }}</td></tr>
+        <tr class="row"><td class="col-md-4">tomorrow</td><td class="col-md-8">{{ time.local | tomorrow }}</td></tr>
+        <tr class="row"><td class="col-md-4">strftime</td><td class="col-md-8">{{ time.local | strftime('%A, %d %B %Y %I:%M%p') }}</td></tr>
+      <tbody>
+    </table>
+
+
+    {{ header('h2', 'Miscellaneous Variables') }}
+    <table class="table">
+      <thead>
+        <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="col-md-4">version</td><td class="col-md-8">{{ version }}</td></tr>
+      <tbody>
+    </table>
+  </div>
+</body>
+</html>
