@@ -1,6 +1,9 @@
 #
 # King-Phisher Server Configuration
 #
+# Configuration options can also be loaded from other files using:
+#   !include path/to/file.yml
+# This allows the main file to be broken up into smaller parts if necessary
 
 logging:
   console:
@@ -119,6 +122,10 @@ server:
   # Configure the image file name used to track opened emails
   tracking_image: email_logo_banner.gif
 
-  # Use subfolders in the web_root which correspond to vhost names
+  # Use subfolders in the web_root which correspond to server hostnames, for
+  # example if the server's hostname is king-phisher.lan, then the web root for
+  # http://king-phisher.lan would be /var/www/king-phisher.lan
   vhost_directories: false
+
+  # The root directory from which page content and templates are served from
   web_root: /var/www
