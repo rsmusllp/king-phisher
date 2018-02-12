@@ -45,27 +45,27 @@ The ``filter`` argument is a ``FilterInput`` GraphQL object and can be passed
 to database connection to filter what data is returned by the query. This
 argument is an object containing one or more of the following key words.
 
-+----------+--------------------+-------------+------------------------------------------------+
-| Keyword  | Type               | Default     | Description                                    |
-+==========+====================+=============+================================================+
-| and*     | List               | N/A         | A list of additional filter objects, where all |
-|          |                    |             | must evaluate to true.                         |
-+----------+--------------------+-------------+------------------------------------------------+
-| or*      | List               | N/A         | A list of additional filter objects, where one |
-|          |                    |             | or more must evaluate to true.                 |
-+----------+--------------------+-------------+------------------------------------------------+
-| field*   | String             | N/A         | The name of a database field to filter by.     |
-+----------+--------------------+-------------+------------------------------------------------+
-| operator | FilterOperatorEnum | ``EQ``      | The operator to use with value, one of ``EQ``, |
-|          |                    |             | ``GE``, ``GT``, ``LE``, ``LT``, ``NE``.        |
-+----------+--------------------+-------------+------------------------------------------------+
-| value    | AnyScalar          | ``Null`` ** | The value of the field to use with the         |
-|          |                    |             | specified comparison operator.                 |
-+----------+--------------------+-------------+------------------------------------------------+
++----------------+--------------------+----------+------------------------------------------------+
+| Keyword        | Type               | Default  | Description                                    |
++================+====================+==========+================================================+
+| and :sup:`1`   | List               | N/A      | A list of additional filter objects, where all |
+|                |                    |          | must evaluate to true.                         |
++----------------+--------------------+----------+------------------------------------------------+
+| or :sup:`1`    | List               | N/A      | A list of additional filter objects, where one |
+|                |                    |          | or more must evaluate to true.                 |
++----------------+--------------------+----------+------------------------------------------------+
+| field :sup:`1` | String             | N/A      | The name of a database field to filter by.     |
++----------------+--------------------+----------+------------------------------------------------+
+| operator       | FilterOperatorEnum | ``EQ``   | The operator to use with value, one of ``EQ``, |
+|                |                    |          | ``GE``, ``GT``, ``LE``, ``LT``, ``NE``.        |
++----------------+--------------------+----------+------------------------------------------------+
+| value          | AnyScalar          | ``Null`` | The value of the field to use with the         |
+|                |                    | :sup:`2` | specified comparison operator.                 |
++----------------+--------------------+----------+------------------------------------------------+
 
-\* Exactly one of these keywords must be specified.
+:sup:`1` Exactly one of these keywords must be specified.
 
-\** ``null`` can not be passed as a literal for input. To compare a value to
+:sup:`2` ``null`` can not be passed as a literal for input. To compare a value to
 ``null``, the ``value`` keyword must be omitted.
 
 The sort Argument
