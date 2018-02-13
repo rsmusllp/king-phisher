@@ -168,7 +168,7 @@ class Requirements(_Mapping):
 	def compatibility_iter(self):
 		StrictVersion = distutils.version.StrictVersion
 		if self._storage.get('minimum-python-version'):
-			available = StrictVersion(self._storage['minimum-python-version']) <= StrictVersion('.'.join(map(str, sys.version_info[:3])))
+			available = StrictVersion(self._storage['minimum-python-version']) <= StrictVersion(platform.python_version())
 			yield ('Minimum Python Version', self._storage['minimum-python-version'], available)
 
 		if self._storage.get('minimum-version'):

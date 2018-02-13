@@ -77,6 +77,7 @@ intersphinx_mapping = {
 	'gtk': ('http://lazka.github.io/pgi-docs/Gtk-3.0/', None),
 	'jsonschema': ('https://python-jsonschema.readthedocs.io/en/latest/', None),
 	'paramiko': ('http://docs.paramiko.org/en/latest/', None),
+	'python': ('https://docs.python.org/3', None),
 	'smokezephyr': ('https://smoke-zephyr.readthedocs.io/en/latest/', None),
 	'sqlalchemy': ('http://docs.sqlalchemy.org/en/latest/', None),
 	'webkit2': ('http://lazka.github.io/pgi-docs/WebKit2-4.0/', None)
