@@ -61,15 +61,24 @@ application may be interested in using it.
 
 class CollectionItemFile(object):
 	"""
-	An object representing a single remote file and the necessary data to validate
-	it's integrity.
+	An object representing a single remote file and the necessary data to
+	validate it's integrity. In order to validate the data integrity both the
+	:py:attr:`.signature` and :py:attr:`.signed_by` attributes must be
+	available. These attributes must either both be present or absent, i.e.
+	one can not be set without the other.
 	"""
 	__slots__ = ('__weakref__', 'path_destination', 'path_source', 'signature', 'signed_by')
-	def __init__(self, path_destination, path_source, signed_by, signature):
+	def __init__(self, path_destination, path_source, signature=None, signed_by=None):
+		if bool(signature) ^ bool(signed_by):
+			raise ValueError('collection item file must either have both signature and signed-by keys or neither')
 		self.path_destination = path_destination
+		"""The relative path of where this file should be placed."""
 		self.path_source = path_source
+		"""The relative path of where this file should be retrieved from."""
 		self.signed_by = signed_by
+		"""The identity of the :py:class:`~king_phisher.security_keys.SigningKey` which generated the :py:attr:`.signature`"""
 		self.signature = signature
+		"""The signature data used for integrity verification of the represented resource."""
 
 	@classmethod
 	def from_dict(cls, value):
@@ -80,9 +89,7 @@ class CollectionItemFile(object):
 		:return:
 		"""
 		# make sure both keys are present or neither are present
-		if bool(value['signature']) ^ bool(value['signed-by']):
-			raise ValueError('collection item file must either have both signature and signed-by keys or neither')
-		return cls(value['path-destination'], value['path-source'], signature=value.get('signature'), signed_by=data.get('signed-by'))
+		return cls(value.get('path-destination', value['path-source']), value['path-source'], signature=value.get('signature'), signed_by=value.get('signed-by'))
 
 	def to_dict(self):
 		"""
@@ -261,12 +268,7 @@ class Repository(object):
 
 	def _fetch(self, item_file, encoding=None, verify=True):
 		if isinstance(item_file, dict):
-			item_file = CollectionItemFile(
-				path_destination=item_file.get('path-destination', item_file['path-source']),
-				path_source=item_file['path-source'],
-				signature=item_file.get('signature'),
-				signed_by=item_file.get('signed-by')
-			)
+			item_file = CollectionItemFile.from_dict(item_file)
 		url = self.url_base + '/' + item_file.path_source
 		self.logger.debug("fetching repository data item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
 		data = self._fetch_url(url)
