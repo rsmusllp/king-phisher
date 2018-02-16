@@ -59,11 +59,35 @@ context as to how the data is intended to be used and what parts of the
 application may be interested in using it.
 """
 
-CollectionItemFile = collections.namedtuple('CollectionItemFile', ('path_destination', 'path_source', 'signed_by', 'signature'))
-"""
-An object representing a single remote file and the necessary data to validate
-it's integrity.
-"""
+class CollectionItemFile(object):
+	"""
+	An object representing a single remote file and the necessary data to validate
+	it's integrity.
+	"""
+	__slots__ = ('__weakref__', 'path_destination', 'path_source', 'signature', 'signed_by')
+	def __init__(self, path_destination, path_source, signed_by, signature):
+		self.path_destination = path_destination
+		self.path_source = path_source
+		self.signed_by = signed_by
+		self.signature = signature
+
+	@classmethod
+	def from_dict(cls, data):
+		# make sure both keys are present or neither are present
+		if bool(data['signature']) ^ bool(data['signed-by']):
+			raise ValueError('collection item file must either have both signature and signed-by keys or neither')
+		return cls(data['path-destination'], data['path-source'], signature=data.get('signature'), signed_by=data.get('signed-by'))
+
+	def to_dict(self):
+		data = {
+			'path-destination': self.path_destination,
+			'path-source': self.path_source
+		}
+		if self.signature and self.signed_by:
+			data['signature'] = self.signature
+			data['signed-by'] = self.signed_by
+		return data
+
 class Collection(_Mapping):
 	"""
 	An object representing a set of individual pieces of add on data that are
@@ -71,7 +95,6 @@ class Collection(_Mapping):
 	contained within it must each have a unique identity in the form of it's
 	name attribute.
 	"""
-	# this breaks the docs which must run on Python 2.7 due to the sphinxcontrib-domaintools package
 	#__slots__ = ('__weakref__', '__repo_ref', '_storage', 'type')
 	logger = logging.getLogger('KingPhisher.Catalog.Collection')
 	def __init__(self, repo, type, items):
@@ -125,6 +148,14 @@ class Collection(_Mapping):
 		method.
 		"""
 		return self._repo_ref.get_item_files(self.type, *args, **kwargs)
+
+	def to_dict(self):
+		data = {}
+		for key, value in self.items():
+			value = dict(value)
+			value['files'] = tuple(cif.to_dict() for cif in value['files'])
+			data[key] = value
+		return data
 
 class Repository(object):
 	"""
@@ -199,13 +230,7 @@ class Repository(object):
 					item_file['signature'] = None
 				if not item_file.get('signed-by'):
 					item_file['signed-by'] = None
-				# make sure both keys are present or neither are present
-				if bool(item_file['signature']) ^ bool(item_file['signed-by']):
-					raise ValueError('collection item file must either have both signature and signed-by keys or neither')
-				item_file['path_destination'] = item_file.pop('path-destination')
-				item_file['path_source'] = item_file.pop('path-source')
-				item_file['signed_by'] = item_file.pop('signed-by')
-				item_files.append(CollectionItemFile(**item_file))
+				item_files.append(CollectionItemFile.from_dict(item_file))
 			item['files'] = tuple(item_files)
 			item = utilities.FreezableDict(sorted(item.items(), key=lambda i: i[0]))
 			item.freeze()
@@ -305,6 +330,23 @@ class Repository(object):
 			os.makedirs(dir_name, exist_ok=True)
 			with open(file_destination, 'wb') as file_h:
 				file_h.write(data)
+
+	def to_dict(self):
+		data = {
+			'id': self.id,
+			'title': self.title,
+			'url-base': self.url_base
+		}
+		if self.collections:
+			collections = {}
+			for name, collection in self.collections.items():
+				collections[name] = tuple(collection.to_dict().values())
+			data['collections'] = collections
+		if self.description:
+			data['description'] = self.description
+		if self.homepage:
+			data['homepage'] = self.homepage
+		return data
 
 class Catalog(object):
 	"""

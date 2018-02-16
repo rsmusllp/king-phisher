@@ -706,7 +706,8 @@ class ClientCatalogManager(catalog.CatalogManager):
 
 	def get_collections_to_cache(self, catalog_):
 		"""
-		Will create a list of repositories and its collections in the accurate format to send to cache.
+		Create a list of repositories and their collections in a format
+		suitable for storage in the cache file.
 
 		:param catalog_: The :py:class:`~king_phisher.catalog.Catalog` instance.
 		:return: The repository cache information.
