@@ -72,13 +72,26 @@ class CollectionItemFile(object):
 		self.signature = signature
 
 	@classmethod
-	def from_dict(cls, data):
+	def from_dict(cls, value):
+		"""
+		Load the collection item file from the specified dict object.
+
+		:param dict value: The dictionary to load the data from.
+		:return:
+		"""
 		# make sure both keys are present or neither are present
-		if bool(data['signature']) ^ bool(data['signed-by']):
+		if bool(value['signature']) ^ bool(value['signed-by']):
 			raise ValueError('collection item file must either have both signature and signed-by keys or neither')
-		return cls(data['path-destination'], data['path-source'], signature=data.get('signature'), signed_by=data.get('signed-by'))
+		return cls(value['path-destination'], value['path-source'], signature=value.get('signature'), signed_by=data.get('signed-by'))
 
 	def to_dict(self):
+		"""
+		Dump the instance to a dictionary suitable for being reloaded with
+		:py:meth:`.from_dict`.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
 		data = {
 			'path-destination': self.path_destination,
 			'path-source': self.path_source
@@ -90,10 +103,11 @@ class CollectionItemFile(object):
 
 class Collection(_Mapping):
 	"""
-	An object representing a set of individual pieces of add on data that are
-	all of the same type. A collection is also a logical domain where the items
-	contained within it must each have a unique identity in the form of it's
-	name attribute.
+	An object representing a set of :py:class:`CollectionItemFile` instances,
+	each of which represent a piece of of add on data that are all of the same
+	type (see :py:data:`.COLLECTION_TYPES`). A collection is also a logical
+	domain where the items contained within it must each have a unique identity
+	in the form of its name attribute.
 	"""
 	#__slots__ = ('__weakref__', '__repo_ref', '_storage', 'type')
 	logger = logging.getLogger('KingPhisher.Catalog.Collection')
@@ -150,11 +164,19 @@ class Collection(_Mapping):
 		return self._repo_ref.get_item_files(self.type, *args, **kwargs)
 
 	def to_dict(self):
-		data = {}
-		for key, value in self.items():
-			value = dict(value)
-			value['files'] = tuple(cif.to_dict() for cif in value['files'])
-			data[key] = value
+		"""
+		Dump the instance to a dictionary.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
+		data = {'type': self.type}
+		items = collections.deque()
+		for item in self.values():
+			item = dict(item)
+			item['files'] = tuple(cif.to_dict() for cif in item['files'])
+			items.append(item)
+		data['items'] = tuple(items)
 		return data
 
 class Repository(object):
@@ -332,16 +354,23 @@ class Repository(object):
 				file_h.write(data)
 
 	def to_dict(self):
+		"""
+		Dump the instance to a dictionary suitable for being reloaded with
+		:py:meth:`.__init__`.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
 		data = {
 			'id': self.id,
 			'title': self.title,
 			'url-base': self.url_base
 		}
 		if self.collections:
-			collections = {}
+			collections_ = {}
 			for name, collection in self.collections.items():
-				collections[name] = tuple(collection.to_dict().values())
-			data['collections'] = collections
+				collections_[name] = collection.to_dict()['items']
+			data['collections'] = collections_
 		if self.description:
 			data['description'] = self.description
 		if self.homepage:
