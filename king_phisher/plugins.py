@@ -294,8 +294,8 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	changes. Instead the :py:meth:`.initialize` and :py:meth:`.finalize` methods
 	should be overridden to provide plugin functionality.
 	"""
-	authors = []
-	"""The list of authors who have provided this plugin."""
+	authors = ()
+	"""The tuple of authors who have provided this plugin."""
 	title = None
 	"""The title of the plugin."""
 	description = None

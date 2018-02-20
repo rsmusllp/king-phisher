@@ -141,6 +141,39 @@ class Collection(_Mapping):
 	def __len__(self):
 		return len(self._storage)
 
+	@classmethod
+	def from_dict(cls, value, repo):
+		"""
+		Load the collection item file from the specified dict object.
+
+		:param dict value: The dictionary to load the data from.
+		:return:
+		"""
+		items = utilities.FreezableDict()
+		for item in value['items']:
+			item['files'] = tuple(CollectionItemFile.from_dict(file) for file in item['files'])
+			items[item['title']] = item
+		items.freeze()
+		return cls(repo, value['type'], items)
+
+	def to_dict(self):
+		"""
+		Dump the instance to a dictionary suitable for being reloaded with
+		:py:meth:`.from_dict`.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
+		data = {'type': self.type}
+		items = []
+		for item in self.values():
+			item = dict(item)
+			item['authors'] = list(item['authors'])
+			item['files'] = [cif.to_dict() for cif in item['files']]
+			items.append(item)
+		data['items'] = items
+		return data
+
 	@property
 	def _repo_ref(self):
 		repo = self.__repo_ref()
@@ -169,22 +202,6 @@ class Collection(_Mapping):
 		method.
 		"""
 		return self._repo_ref.get_item_files(self.type, *args, **kwargs)
-
-	def to_dict(self):
-		"""
-		Dump the instance to a dictionary.
-
-		:return: The instance represented as a dictionary.
-		:rtype: dict
-		"""
-		data = {'type': self.type}
-		items = collections.deque()
-		for item in self.values():
-			item = dict(item)
-			item['files'] = tuple(cif.to_dict() for cif in item['files'])
-			items.append(item)
-		data['items'] = tuple(items)
-		return data
 
 class Repository(object):
 	"""
@@ -302,6 +319,27 @@ class Repository(object):
 			raise RuntimeError('failed to fetch data from: ' + url)
 		return resp.content
 
+	def to_dict(self):
+		"""
+		Dump the instance to a dictionary suitable for being reloaded with
+		:py:meth:`.__init__`.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
+		data = {
+			'id': self.id,
+			'title': self.title,
+			'url-base': self.url_base
+		}
+		if self.collections:
+			data['collections'] = {key: value.to_dict()['items'] for key, value in self.collections.items()}
+		if self.description:
+			data['description'] = self.description
+		if self.homepage:
+			data['homepage'] = self.homepage
+		return data
+
 	def get_file(self, item_file, encoding=None):
 		"""
 		Download and return the file data from the repository. If no encoding
@@ -355,37 +393,13 @@ class Repository(object):
 			with open(file_destination, 'wb') as file_h:
 				file_h.write(data)
 
-	def to_dict(self):
-		"""
-		Dump the instance to a dictionary suitable for being reloaded with
-		:py:meth:`.__init__`.
-
-		:return: The instance represented as a dictionary.
-		:rtype: dict
-		"""
-		data = {
-			'id': self.id,
-			'title': self.title,
-			'url-base': self.url_base
-		}
-		if self.collections:
-			collections_ = {}
-			for name, collection in self.collections.items():
-				collections_[name] = collection.to_dict()['items']
-			data['collections'] = collections_
-		if self.description:
-			data['description'] = self.description
-		if self.homepage:
-			data['homepage'] = self.homepage
-		return data
-
 class Catalog(object):
 	"""
 	An object representing a set of :py:class:`.Repositories` containing add on
 	data for the application. This information can then be loaded from an
 	arbitrary source.
 	"""
-	__slots__ = ('__weakref__', 'id', 'created', 'maintainers', 'repositories', 'security_keys')
+	__slots__ = ('__weakref__', 'id', 'created', 'created_by', 'maintainers', 'repositories', 'security_keys')
 	logger = logging.getLogger('KingPhisher.Catalog')
 	def __init__(self, data, keys=None):
 		"""
@@ -393,12 +407,11 @@ class Catalog(object):
 		:param keys: The keys to use for verifying remote data.
 		:type keys: :py:class:`~king_phisher.security_keys.SecurityKeys`
 		"""
-		utilities.validate_json_schema(data, 'king-phisher.catalog')
-
 		self.security_keys = keys or security_keys.SecurityKeys()
 		"""The :py:class:`~king_phisher.security_keys.SecurityKeys` used for verifying remote data."""
 		self.created = dateutil.parser.parse(data['created'])
 		"""The timestamp of when the remote data was generated."""
+		self.created_by = data['created-by']
 		self.id = data['id']
 		"""The unique identifier of this catalog."""
 		self.maintainers = tuple(maintainer['id'] for maintainer in data['maintainers'])
@@ -415,7 +428,9 @@ class Catalog(object):
 	def from_url(cls, url, keys=None, encoding='utf-8'):
 		"""
 		Initialize a new :py:class:`.Catalog` object from a resource at the
-		specified URL.
+		specified URL. The resulting data is validated against a schema file
+		with :py:func:`~king_phisher.utilities.validate_json_schema` before
+		being passed to :py:meth:`~.__init__`.
 
 		:param str url: The URL to the catalog data to load.
 		:param keys: The keys to use for verifying remote data.
@@ -431,8 +446,26 @@ class Catalog(object):
 		resp = req_sess.get(url)
 		data = resp.content.decode(encoding)
 		data = serializers.JSON.loads(data)
+		utilities.validate_json_schema(data, 'king-phisher.catalog')
 		keys.verify_dict(data, signature_encoding='base64')
 		return cls(data, keys=keys)
+
+	def to_dict(self):
+		"""
+		Dump the instance to a dictionary suitable for being reloaded with
+		:py:meth:`.__init__`.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
+		data = {
+			'created': self.created.isoformat() + '+00:00',
+			'created-by': self.created_by,
+			'id': self.id,
+			'maintainers': [{'id': maintainer} for maintainer in self.maintainers],
+			'repositories': [repo.to_dict() for repo in self.repositories.values()]
+		}
+		return data
 
 class CatalogManager(object):
 	"""
