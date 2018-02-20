@@ -860,11 +860,11 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self._update_target_count()
 
 	def _campaign_load(self, campaign_id):
-		company_name = self._get_graphql_campaign_company()
-		if company_name is None:
+		company = self._get_graphql_campaign_company()
+		if company is None:
 			self.config['mailer.company_name'] = None
 		else:
-			self.config['mailer.company_name'] = company_name
+			self.config['mailer.company_name'] = company['name']
 		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
 
 	def _get_graphql_campaign_company(self, campaign_id=None):
@@ -878,7 +878,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 				}
 			}
 		}""", {'id': campaign_id or self.config['campaign_id']})
-		return results['db']['campaign']['company']['name']
+		return results['db']['campaign']['company']
 
 	def _update_target_count(self):
 		if not hasattr(self, 'target_type'):
