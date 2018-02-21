@@ -684,11 +684,11 @@ class MailSenderThread(threading.Thread):
 		target_field = self.config.get('mailer.target_field', 'to').lower()
 		for header in ('To', 'CC', 'BCC'):
 			if header.lower() == target_field:
-				msg[header] = target.email_address
+				msg[header] = '<' + target.email_address + '>'
 				continue
 			value = self.config.get('mailer.recipient_email_' + header.lower())
 			if value:
-				msg[header] = value
+				msg[header] = '<' + value + '>'
 
 		importance = self.config.get('mailer.importance', 'Normal')
 		if importance != 'Normal':
