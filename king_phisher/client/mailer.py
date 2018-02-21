@@ -43,6 +43,7 @@ import email.mime.base
 import email.mime.image
 import email.mime.multipart
 import email.mime.text
+import email.utils
 import logging
 import mimetypes
 import os
@@ -285,6 +286,22 @@ def render_message_template(template, config, target=None, analyze=False):
 	template_vars.update(template_environment.standard_variables)
 	return template.render(template_vars)
 
+def rfc2282_timestamp(dt=None, utc=False):
+	"""
+	Convert a :py:class:`datetime.datetime` instance into an :rfc:`2282`
+	compliant timestamp suitable for use in MIME-encoded messages.
+
+	:param dt: A time to use for the timestamp otherwise the current time is used.
+	:type dt: :py:class:`datetime.datetime`
+	:param utc: Whether to return the timestamp as a UTC offset or from the local timezone.
+	:return: The timestamp.
+	:rtype: str
+	"""
+	dt = dt or datetime.datetime.utcnow()
+	# email.utils.formatdate wants the time to be in the local timezone
+	dt = utilities.datetime_utc_to_local(dt)
+	return email.utils.formatdate(time.mktime(dt.timetuple()), not utc)
+
 class MessageTarget(object):
 	"""
 	A simple class for holding information regarding a messages intended
@@ -335,6 +352,7 @@ class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 			self['From'] = "\"{0}\" <{1}>".format(config['mailer.source_email_alias'], config['mailer.source_email'])
 		else:
 			self['From'] = config['mailer.source_email']
+		self['Date'] = rfc2282_timestamp()
 		self.preamble = 'This is a multi-part message in MIME format.'
 
 class MailSenderThread(threading.Thread):

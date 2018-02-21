@@ -25,6 +25,8 @@ Functions
 
 .. autofunction:: render_message_template
 
+.. autofunction:: rfc2282_timestamp
+
 Classes
 -------
 

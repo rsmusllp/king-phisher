@@ -23,6 +23,8 @@ Version 1.10.x
    * Use ipython when it's installed
    * Added ``%graphql`` and ``%graphql_file`` magic commands
 
+* Tweaks to the default MIME-encoded HTML message to reduce it's SpamAssassin score
+
 Version 1.9.x
 ^^^^^^^^^^^^^
 

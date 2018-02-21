@@ -55,6 +55,7 @@ from king_phisher import its
 from king_phisher import version
 
 import dateutil
+import dateutil.tz
 import email_validator
 import jsonschema
 import smoke_zephyr.utilities
