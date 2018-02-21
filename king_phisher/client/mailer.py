@@ -85,6 +85,9 @@ template_environment = templates.MessageTemplateEnvironment()
 MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
 """A named tuple for holding both image and file attachments for a message."""
 
+MIME_TEXT_PLAIN = 'This message requires an HTML aware email agent to be properly viewed.'
+"""The static string to place in MIME message as a text/plain part. This is shown by email clients that do not support HTML."""
+
 def _iterate_targets_file(target_file):
 	target_file_h = open(target_file, 'rU')
 	csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
@@ -703,6 +706,8 @@ class MailSenderThread(threading.Thread):
 			msg_template = file_h.read()
 		formatted_msg = render_message_template(msg_template, self.config, target=target)
 		msg_body = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
+		msg_alt.attach(msg_body)
+		msg_body = mime.text.MIMEText(MIME_TEXT_PLAIN, 'plain', 'utf-8')
 		msg_alt.attach(msg_body)
 
 		# process attachments
