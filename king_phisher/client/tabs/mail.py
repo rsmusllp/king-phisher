@@ -106,6 +106,10 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		top_level=('StockMediaPlayImage',)
 	)
 	top_gobject = 'box'
+	precheck_routines = ('settings', 'attachment', 'required-files', 'campaign', 'url', 'source', 'spf')
+	"""The built-in precheck routines that are executed before sending messages."""
+	# precheck routines should be able to be executed in an arbitrary order and
+	# must return whether or not sending should proceed
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Send')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
@@ -166,6 +170,14 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			return False
 		return True
 
+	def _sender_precheck_required_files(self):
+		missing_files = self.sender_thread.missing_files()
+		if not missing_files:
+			return True
+		text = ''.join("Missing required file: '{0}'\n".format(f) for f in missing_files)
+		self.text_insert(text)
+		return False
+
 	def _sender_precheck_settings(self):
 		required_settings = {
 			'mailer.webserver_url': 'Web Server URL',
@@ -173,7 +185,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			'mailer.html_file': 'Message HTML File'
 		}
 		target_field = self.config.get('mailer.target_field')
-		if not target_field in ('to', 'cc', 'bcc'):
+		if target_field not in ('to', 'cc', 'bcc'):
 			gui_utilities.show_dialog_warning('Invalid Target Field', self.parent, 'Please select a valid target field.')
 			return False
 		target_type = self.config.get('mailer.target_type')
@@ -183,23 +195,26 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			required_settings['mailer.target_email_address'] = 'Target Email Address'
 			required_settings['mailer.target_name'] = 'Target Name'
 		else:
+			self.text_insert("Invalid target type: '{0}'\n".format(target_type))
 			gui_utilities.show_dialog_warning('Invalid Target Type', self.parent, 'Please specify a target file or name and email address.')
 			return False
 		message_type = self.config.get('mailer.message_type')
-		if not message_type in ('email', 'calendar_invite'):
+		if message_type not in ('email', 'calendar_invite'):
 			gui_utilities.show_dialog_warning('Invalid Message Type', self.parent, 'Please select a valid message type.')
 			return False
 		if message_type == 'email' and target_field != 'to':
 			required_settings['mailer.recipient_email_to'] = 'Recipient \'To\' Email Address'
 		for setting, setting_name in required_settings.items():
 			if not self.config.get(setting):
+				self.text_insert("Missing required option: '{0}'\n".format(setting_name))
 				gui_utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
 				return
 			if not setting.endswith('_file'):
 				continue
 			file_path = self.config[setting]
 			if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
-				gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: the file could not be read.".format(setting_name))
+				self.text_insert("Missing required file: '{0}'\n".format(file_path))
+				gui_utilities.show_dialog_warning('Invalid Configuration Option', self.parent, "Setting: '{0}'\nReason: the file could not be read.".format(setting_name))
 				return False
 		if not self.config.get('smtp_server'):
 			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
@@ -289,41 +304,30 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.textbuffer_iter = self.textbuffer.get_start_iter()
 
 	def signal_button_clicked_sender_start(self, button):
-		if not self._sender_precheck_settings():
-			return
-		if not self._sender_precheck_campaign():
-			return
-		if not self._sender_precheck_url():
-			return
-		if not self._sender_precheck_source():
-			return
-		if not self._sender_precheck_spf():
-			return
-		if not self._sender_precheck_attachment():
-			return
-		mailer_tab = self.application.main_tabs['mailer']
-		if not all(mailer_tab.emit('send-precheck')):
-			self.text_insert('Message pre-check conditions failed, aborting.\n')
-			return
-
-		self.text_insert("Sending messages started at: {:%A %B %d, %Y %H:%M:%S}\n".format(datetime.datetime.now()))
-		self.text_insert("Message mode is: {0}\n".format(self.config['mailer.message_type'].replace('_', ' ').title()))
-
+		self.application.emit('config-save')
 		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:
 			return
-		self.application.emit('config-save')
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
 		self.sender_thread = mailer.MailSenderThread(self.application, self.config['mailer.target_file'], self.application.rpc, self)
 
-		# verify settings
-		missing_files = self.sender_thread.missing_files()
-		if missing_files:
-			text = ''.join("Missing required file: '{0}'\n".format(f) for f in missing_files)
-			self.sender_start_failure('Missing required files', text)
+		for precheck_routine in self.precheck_routines:
+			method = getattr(self, '_sender_precheck_' + precheck_routine.replace('-', '_'))
+			self.logger.debug('running precheck-routine: ' + precheck_routine)
+			if not method():
+				self.sender_start_failure()
+				return
+			gui_utilities.gtk_sync()
+
+		mailer_tab = self.application.main_tabs['mailer']
+		if not all(mailer_tab.emit('send-precheck')):
+			self.sender_start_failure(text='Message pre-check conditions failed, aborting.\n')
 			return
+
+		self.text_insert("Sending messages started at: {:%A %B %d, %Y %H:%M:%S}\n".format(datetime.datetime.now()))
+		self.text_insert("Message mode is: {0}\n".format(self.config['mailer.message_type'].replace('_', ' ').title()))
 
 		# connect to the smtp server
 		if self.config['smtp_ssh_enable']:

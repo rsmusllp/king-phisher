@@ -215,12 +215,7 @@ def render_message_template(template, config, target=None, analyze=False):
 	:rtype: str
 	"""
 	if target is None:
-		target = MessageTarget(
-			first_name='Alice',
-			last_name='Liddle',
-			email_address='aliddle@wonderland.com',
-			uid=(config['server_config'].get('server.secret_id') or utilities.make_message_uid())
-		)
+		target = MessageTargetPlaceholder(uid=config['server_config'].get('server.secret_id'))
 		template_environment.set_mode(template_environment.MODE_PREVIEW)
 
 	if analyze:
@@ -334,6 +329,14 @@ class MessageTarget(object):
 	@property
 	def missing_fields(self):
 		return tuple(field for field in self.required_fields if getattr(self, field) is None)
+
+class MessageTargetPlaceholder(MessageTarget):
+	"""
+	A default :py:class:`~.MessageTarget` for use as a placeholder value while
+	rendering, performing tests, etc.
+	"""
+	def __init__(self, uid=None):
+		super(MessageTargetPlaceholder, self).__init__('Alice', 'Liddle', 'aliddle@wonderland.com', uid=uid, department='Visitors')
 
 class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 	"""
@@ -634,7 +637,13 @@ class MailSenderThread(threading.Thread):
 			self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		return True
 
-	def create_calendar_invite(self, target, attachments):
+	def create_message(self, target=None):
+		if target is None:
+			target = MessageTargetPlaceholder(uid=self.config['server_config'].get('server.secret_id'))
+		attachments = self.get_mime_attachments()
+		return getattr(self, 'create_message_' + self.config['mailer.message_type'])(target, attachments)
+
+	def create_message_calendar_invite(self, target, attachments):
 		"""
 		Create a MIME calendar invite to be sent from a set of parameters.
 
@@ -692,7 +701,7 @@ class MailSenderThread(threading.Thread):
 			top_msg.attach(attach)
 		return top_msg
 
-	def create_email(self, target, attachments):
+	def create_message_email(self, target, attachments):
 		"""
 		Create a MIME email to be sent from a set of parameters.
 
@@ -806,8 +815,7 @@ class MailSenderThread(threading.Thread):
 			emails_done += 1
 			self.tab_notify_status(sending_line.format(emails_done, target.uid, target.email_address))
 			mailer_tab.emit('send-target', target)
-			attachments = self.get_mime_attachments()
-			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, attachments)
+			msg = self.create_message(target=target)
 			mailer_tab.emit('send-message', target, msg)
 			if not self._try_send_message(target.email_address, msg):
 				break
