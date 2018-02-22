@@ -93,6 +93,9 @@ def _iterate_targets_file(target_file):
 	target_file_h = open(target_file, 'rU')
 	csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
 	for line_no, raw_target in enumerate(csv_reader, 1):
+		if None in raw_target:
+			# remove the additional fields
+			del raw_target[None]
 		if its.py_v2:
 			# this will intentionally cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
 			# when csv.DictReader is initialized
