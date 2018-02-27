@@ -559,6 +559,7 @@ class MailSenderThread(threading.Thread):
 		:return: Each message target.
 		:rtype: :py:class:`~.MessageTarget`
 		"""
+		mailer_tab = self.application.main_tabs['mailer']
 		target_type = self.config['mailer.target_type']
 		if target_type == 'single':
 			target_name = self.config['mailer.target_name'].split(' ')
@@ -569,6 +570,8 @@ class MailSenderThread(threading.Thread):
 				last_name=target_name[1].strip(),
 				email_address=self.config['mailer.target_email_address'].strip()
 			)
+			if not counting:
+				mailer_tab.emit('target-create', target)
 			yield target
 		elif target_type == 'file':
 			for target in _iterate_targets_file(self.target_file):
@@ -582,6 +585,8 @@ class MailSenderThread(threading.Thread):
 				if not utilities.is_valid_email_address(target.email_address):
 					self.logger.warning("skipping line {0} in target csv file due to invalid email address: {1}".format(target.line, target.email_address))
 					continue
+				if not counting:
+					mailer_tab.emit('target-create', target)
 				yield target
 		else:
 			self.logger.error("the configured target type '{0}' is unsupported".format(target_type))
@@ -641,7 +646,10 @@ class MailSenderThread(threading.Thread):
 		if target is None:
 			target = MessageTargetPlaceholder(uid=self.config['server_config'].get('server.secret_id'))
 		attachments = self.get_mime_attachments()
-		return getattr(self, 'create_message_' + self.config['mailer.message_type'])(target, attachments)
+		message = getattr(self, 'create_message_' + self.config['mailer.message_type'])(target, attachments)
+		mailer_tab = self.application.main_tabs['mailer']
+		mailer_tab.emit('message-create', target, message)
+		return message
 
 	def create_message_calendar_invite(self, target, attachments):
 		"""
@@ -813,11 +821,16 @@ class MailSenderThread(threading.Thread):
 				self.server_smtp_reconnect()
 
 			emails_done += 1
+			if not all(mailer_tab.emit('target-send', target)):
+				self.logger.info("target-send signal subscriber vetoed target: {0!r}".format(target))
+				continue
 			self.tab_notify_status(sending_line.format(emails_done, target.uid, target.email_address))
-			mailer_tab.emit('send-target', target)
-			msg = self.create_message(target=target)
-			mailer_tab.emit('send-message', target, msg)
-			if not self._try_send_message(target.email_address, msg):
+
+			message = self.create_message(target=target)
+			if not all(mailer_tab.emit('message-send', target, message)):
+				self.logger.info("message-send signal subscriber vetoed message to target: {0!r}".format(target))
+				continue
+			if not self._try_send_message(target.email_address, message):
 				break
 
 			self.tab_notify_sent(emails_done, emails_total)

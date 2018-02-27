@@ -178,6 +178,20 @@ Mail Tab Signals
 The following are the signals for the
 :py:class:`~king_phisher.client.tabs.mail.MailSenderTab` object.
 
+.. py:function:: message-create(target, message)
+
+   This signal is emitted when the message and target have been loaded and
+   constructed. Subscribers to this signal may use it as an opportunity to
+   modify the message object prior to it being sent.
+
+   .. versionadded:: 1.10.0b2
+
+   :signal flags: ``SIGNAL_RUN_FIRST``
+   :param target: The target for the message.
+   :type target: :py:class:`~king_phisher.client.mailer.MessageTarget`
+   :param message: The message about to be sent to the target.
+   :type message: :py:class:`~king_phisher.client.mailer.TopMIMEMultipart`
+
 .. py:function:: message-data-export(target_file)
 
    This signal is emitted when the client is going to export the message
@@ -199,23 +213,27 @@ The following are the signals for the
    :return: Whether or not the message archive was successfully imported.
    :rtype: bool
 
+.. py:function:: message-send(target, message)
+
+   This signal is emitted after the message has been fully constructed
+   (after :py:func:`message-create`) and can be used as an opportunity to
+   inspect the message object and prevent it from being sent.
+
+   .. versionadded:: 1.10.0b2
+
+   :signal flags: ``SIGNAL_RUN_LAST``
+   :param target: The target for the message.
+   :type target: :py:class:`~king_phisher.client.mailer.MessageTarget`
+   :param message: The message about to be sent to the target.
+   :type message: :py:class:`~king_phisher.client.mailer.TopMIMEMultipart`
+   :return: Whether or not to proceed with sending the message.
+   :rtype: bool
+
 .. py:function:: send-finished()
 
    This signal is emitted after all messages have been sent.
 
    :signal flags: ``SIGNAL_RUN_FIRST``
-
-.. py:function:: send-message(target, message)
-
-   This signal is emitted when the message for a target has been loaded and
-   constructed. Subscribers to this signal may use it as an oppertunity to
-   modify the message object prior to it being sent.
-
-   :signal flags: ``SIGNAL_RUN_FIRST``
-   :param target: The target for the message.
-   :type target: :py:class:`~king_phisher.client.mailer.MessageTarget`
-   :param message: The message about to be sent to the target.
-   :type message: :py:class:`~king_phisher.client.mailer.TopMIMEMultipart`
 
 .. py:function:: send-precheck()
 
@@ -228,15 +246,31 @@ The following are the signals for the
    :return: Whether or not the handler's pre-check condition has passed.
    :rtype: bool
 
-.. py:function:: send-target(target)
+.. py:function:: target-create(target)
 
-   This signal is emitted when the target for a message has been loaded.
-   Subscribers to this signal can use it as an opportunity to modify the
-   target's attributes, including but not limited to the email address.
+   This signal is emitted when the target has been loaded and constructed.
+   Subscribers to this signal may use it as an opportunity to modify the
+   target object prior to it being sent.
+
+   .. versionadded:: 1.10.0b2
 
    :signal flags: ``SIGNAL_RUN_FIRST``
    :param target: The target for the message.
    :type target: :py:class:`~king_phisher.client.mailer.MessageTarget`
+
+.. py:function:: target-send(target)
+
+   This signal is emitted after the target has been fully constructed (after
+   :py:function:`target-create`) and can be used as an opportunity to inspect
+   the target object and prevent it from being sent to.
+
+   .. versionadded:: 1.10.0b2
+
+   :signal flags: ``SIGNAL_RUN_LAST``
+   :param target: The target for the message.
+   :type target: :py:class:`~king_phisher.client.mailer.MessageTarget`
+   :return: Whether or not to proceed with sending to the target.
+   :rtype: bool
 
 Server Event Signals
 --------------------

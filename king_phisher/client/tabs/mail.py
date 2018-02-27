@@ -1063,12 +1063,14 @@ class MailSenderTab(_GObject_GObject):
 	:GObject Signals: :ref:`gobject-signals-mail-tab-label`
 	"""
 	__gsignals__ = {
+		'message-create': (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
 		'message-data-export': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, bool, (str,)),
 		'message-data-import': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, bool, (str, str)),
+		'message-send': (GObject.SIGNAL_RUN_LAST, object, (object, object), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r)),
 		'send-finished': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'send-precheck': (GObject.SIGNAL_RUN_LAST, object, (), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r)),
-		'send-message': (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
-		'send-target': (GObject.SIGNAL_RUN_FIRST, None, (object,))
+		'target-create': (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+		'target-send': (GObject.SIGNAL_RUN_LAST, object, (object,), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r)),
 	}
 	def __init__(self, parent, application):
 		"""
@@ -1274,5 +1276,11 @@ class MailSenderTab(_GObject_GObject):
 		config_tab.objects_load_from_config()
 		return True
 
+	def do_message_send(self, target, message):
+		return True
+
 	def do_send_precheck(self):
+		return True
+
+	def do_target_send(self, target):
 		return True

@@ -24,6 +24,11 @@ Version 1.10.x
    * Added ``%graphql`` and ``%graphql_file`` magic commands
 
 * Tweaks to the default MIME-encoded HTML message to reduce it's SpamAssassin score
+* Modified client signals to allow better API control
+
+   * Added ``message-create`` and ``target-create`` for modifying the respective objects
+   * Added ``message-send`` and ``target-send`` to allow skipping the message and target
+   * Removed the ``send-message`` and ``send-target`` signals in favor of the new ones
 
 Version 1.9.x
 ^^^^^^^^^^^^^
