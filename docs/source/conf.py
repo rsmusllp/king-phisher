@@ -15,7 +15,9 @@
 GITHUB_BRANCH = 'dev'
 GITHUB_REPO = 'securestate/king-phisher'
 
+import copy
 import os
+import re
 import ssl
 import sys
 
@@ -35,8 +37,12 @@ import king_phisher.its
 import king_phisher.utilities
 import king_phisher.version
 
+import sphinx
+import sphinx.domains.python
+import sphinx.util.docfields
+
 # -- General configuration ------------------------------------------------
-needs_sphinx = '1.3'
+needs_sphinx = '1.6'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -65,8 +71,20 @@ def linkcode_resolve(domain, info):
 	file_name = info['module'].replace('.', '/') + '.py'
 	return "https://github.com/{0}/blob/{1}/{2}".format(GITHUB_REPO, GITHUB_BRANCH, file_name)
 
+def gobject_signal_parse(env, sig, signode):
+	match = re.match(r'([a-z\-]+)\((([a-zA-Z_]+, *)*[a-zA-Z_]+)?\)', sig)
+	signode += sphinx.addnodes.desc_name(sig, sig)
+	return match.group(1)
+
 def setup(app):
 	app.add_stylesheet('theme_overrides.css')
+	doc_field_types = list(copy.copy(sphinx.domains.python.PyObject.doc_field_types))
+	doc_field_types.append(sphinx.util.docfields.Field('flags', label='Signal flags', names=['flag', 'flags'], has_arg=False))
+	app.add_object_type(
+		'gobject-signal', 'gsig',
+		doc_field_types=doc_field_types,
+		parse_node=gobject_signal_parse
+	)
 
 intersphinx_mapping = {
 	'advancedhttpserver': ('https://advancedhttpserver.readthedocs.io/en/latest/', None),
