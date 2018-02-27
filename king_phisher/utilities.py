@@ -394,6 +394,19 @@ def make_visit_uid():
 	"""
 	return random_string(24)
 
+def nonempty_string(value):
+	"""
+	Convert *value* into either a non-empty string or None. This will also
+	strip leading and trailing whitespace.
+
+	:param str value: The value to convert.
+	:return: Either the non-empty string or None.
+	"""
+	if not value:
+		return None
+	value = value.strip()
+	return value if value else None
+
 def random_string(size):
 	"""
 	Generate a random string consisting of uppercase letters, lowercase letters

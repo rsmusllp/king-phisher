@@ -21,8 +21,6 @@ Functions
 
 .. autofunction:: guess_smtp_server_address
 
-.. autofunction:: nonempty_str
-
 .. autofunction:: render_message_template
 
 .. autofunction:: rfc2282_timestamp

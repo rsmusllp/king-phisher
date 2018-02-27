@@ -28,6 +28,8 @@ Functions
 
 .. autofunction:: make_visit_uid
 
+.. autofunction:: nonempty_string
+
 .. autofunction:: open_uri
 
 .. autofunction:: parse_datetime

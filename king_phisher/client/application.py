@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import copy
 import logging
 import os
@@ -89,6 +90,19 @@ if its.mocked:
 	_Gtk_Application = type('Gtk.Application', (object,), {'__module__': ''})
 else:
 	_Gtk_Application = Gtk.Application
+
+ServerUser = collections.namedtuple('ServerUser', ('id', 'name'))
+"""
+A named tuple representing the user that is authenticated on the remote server.
+
+.. py:attribute:: id
+
+   The user's unique identifier.
+
+.. py:attribute:: name
+
+   The user's name.
+"""
 
 class KingPhisherClientApplication(_Gtk_Application):
 	"""
@@ -162,6 +176,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		# the server periodically and keep the session alive
 		self.server_events = None
 		"""The :py:class:`~.ServerEventSubscriber` instance for the application to receive server events."""
+		self.server_user = None
+		"""The :py:class:`~.ServerUser` instance for the authenticated user."""
 		self._ssh_forwarder = None
 		"""The SSH forwarder responsible for tunneling RPC communications."""
 		self.style_provider = None
@@ -638,6 +654,16 @@ class KingPhisherClientApplication(_Gtk_Application):
 			event_subscriber.shutdown()
 			return False, ConnectionErrorReason.ERROR_UNKNOWN
 		self.server_events = event_subscriber
+		user = self.rpc.graphql("""\
+		query getUser($name: String!) {
+			db {
+				user(name: $name) {
+					id
+					name
+				}
+			}
+		}""", {'name': self.config['server_username']})['db']['user']
+		self.server_user = ServerUser(id=user['id'], name=user['name'])
 		self.emit('server-connected')
 		return True, ConnectionErrorReason.SUCCESS
 

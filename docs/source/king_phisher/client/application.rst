@@ -17,6 +17,9 @@ Data
 Classes
 -------
 
+.. autoclass:: ServerUser
+   :show-inheritance:
+
 .. autoclass:: KingPhisherClientApplication
    :show-inheritance:
    :members:

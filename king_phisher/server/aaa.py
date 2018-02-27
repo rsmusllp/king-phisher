@@ -184,6 +184,7 @@ class AuthenticatedSessionManager(object):
 		specified user id. Any previously existing sessions for the specified
 		user are removed from the manager.
 
+		:param user: The unique identifier for the authenticated user.
 		:return: The unique identifier for this session.
 		:rtype: str
 		"""

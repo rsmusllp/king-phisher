@@ -35,6 +35,7 @@ import logging
 import string
 
 from king_phisher import its
+from king_phisher import utilities
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 
@@ -265,6 +266,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
 			self.save_plugin_options()
+			self.save_sms_settings()
 			entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
 			self.application.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
 			if graphs.has_matplotlib:
@@ -283,12 +285,12 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 	def save_sms_settings(self):
 		phone_number = gui_utilities.gobject_get_value(self.gobjects['entry_sms_phone_number'])
 		sms_carrier = gui_utilities.gobject_get_value(self.gobjects['combobox_sms_carrier'])
-		username = self.config['server_username']
+		server_user = self.application.server_user
 		if phone_number:
 			phone_number = ''.join(d for d in phone_number if d in string.digits)
 			if len(phone_number) > 11:
 				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must not contain more than 11 digits')
 				return
-		phone_number = phone_number if phone_number else None
-		sms_carrier = sms_carrier if sms_carrier else None
-		self.application.rpc('db/table/set', 'users', username, ('phone_number', 'phone_carrier'), (phone_number, sms_carrier))
+		phone_number = utilities.nonempty_string(phone_number)
+		sms_carrier = utilities.nonempty_string(sms_carrier)
+		self.application.rpc('db/table/set', 'users', server_user.id, ('phone_number', 'phone_carrier'), (phone_number, sms_carrier))

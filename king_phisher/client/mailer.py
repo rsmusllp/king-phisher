@@ -123,19 +123,6 @@ def count_targets_file(target_file):
 		count += 1
 	return count
 
-def nonempty_str(value):
-	"""
-	Convert *value* into either a non-empty string or None. This will also
-	strip leading and trailing whitespace.
-
-	:param str value: The value to convert.
-	:return: Either the non-empty string or None.
-	"""
-	if not value:
-		return None
-	value = value.strip()
-	return value if value else None
-
 def get_invite_start_from_config(config):
 	"""
 	Get the start time for an invite from the configuration. This takes into
@@ -312,13 +299,13 @@ class MessageTarget(object):
 		"""The target recipient's first name."""
 		self.last_name = last_name
 		"""The target recipient's last name."""
-		self.email_address = nonempty_str(email_address)
+		self.email_address = utilities.nonempty_string(email_address)
 		"""The target recipient's email address."""
 		self.uid = uid
 		"""The unique identifier that is going to be used for this target."""
 		if self.uid is None:
 			self.uid = utilities.make_message_uid()
-		self.department = nonempty_str(department)
+		self.department = utilities.nonempty_string(department)
 		"""The target recipient's department name."""
 		self.line = line
 		"""The line number in the file from which this target was loaded."""
