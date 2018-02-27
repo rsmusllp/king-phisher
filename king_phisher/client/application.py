@@ -97,11 +97,11 @@ A named tuple representing the user that is authenticated on the remote server.
 
 .. py:attribute:: id
 
-   The user's unique identifier.
+	The user's unique identifier.
 
 .. py:attribute:: name
 
-   The user's name.
+	The user's name.
 """
 
 class KingPhisherClientApplication(_Gtk_Application):

@@ -34,10 +34,16 @@ Classes
    :special-members: __init__
 
 .. autoclass:: MessageAttachments
-   :members:
 
 .. autoclass:: MessageTarget
+   :show-inheritance:
    :members:
+   :special-members: __init__
+
+.. autoclass:: MessageTargetPlaceholder
+   :show-inheritance:
+   :members:
+   :special-members: __init__
 
 .. autoclass:: TopMIMEMultipart
    :show-inheritance:

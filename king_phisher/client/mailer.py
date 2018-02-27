@@ -84,7 +84,19 @@ __all__ = (
 template_environment = templates.MessageTemplateEnvironment()
 
 MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
-"""A named tuple for holding both image and file attachments for a message."""
+"""
+A named tuple for holding both image and file attachments for a message.
+
+.. py:attribute:: files
+
+	A tuple of :py:class:`~.mime.MIMEBase` instances representing the messsages
+	attachments.
+
+.. py:attribute:: images
+
+	A tuple of :py:class:`~.mime.MIMEImage` instances representing the images in
+	the message.
+"""
 
 MIME_TEXT_PLAIN = 'This message requires an HTML aware email agent to be properly viewed.\r\n\r\n'
 """The static string to place in MIME message as a text/plain part. This is shown by email clients that do not support HTML."""
@@ -327,8 +339,9 @@ class MessageTargetPlaceholder(MessageTarget):
 
 class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 	"""
-	A :py:class:`.mime.multipart.MIMEMultipart` subclass for representing the top / outer most
-	part of a MIME multipart message.
+	A :py:class:`.mime.multipart.MIMEMultipart` subclass for representing the
+	top / outer most part of a MIME multipart message. This adds additional
+	default headers to the message.
 	"""
 	def __init__(self, mime_type, config, target):
 		"""
