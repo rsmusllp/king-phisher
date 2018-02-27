@@ -86,7 +86,7 @@ template_environment = templates.MessageTemplateEnvironment()
 MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
 """A named tuple for holding both image and file attachments for a message."""
 
-MIME_TEXT_PLAIN = 'This message requires an HTML aware email agent to be properly viewed.'
+MIME_TEXT_PLAIN = 'This message requires an HTML aware email agent to be properly viewed.\r\n\r\n'
 """The static string to place in MIME message as a text/plain part. This is shown by email clients that do not support HTML."""
 
 def _iterate_targets_file(target_file):
@@ -360,6 +360,30 @@ class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 			self['From'] = config['mailer.source_email']
 		self['Date'] = rfc2282_timestamp()
 		self.preamble = 'This is a multi-part message in MIME format.'
+
+class MIMEText(mime.text.MIMEText):
+	def __init__(self, text, subtype, charset='utf-8'):
+		super(MIMEText, self).__init__(text, subtype, charset)
+
+	@property
+	def payload_string(self):
+		return self.get_payload_string()
+
+	@payload_string.setter
+	def payload_string(self, text):
+		self.set_payload_string(text)
+
+	def get_payload_string(self):
+		payload = self.get_payload(decode=True)
+		if payload:
+			charset = self.get_charset()
+			payload = payload.decode(charset.input_charset)
+		return payload
+
+	def set_payload_string(self, payload, charset=None):
+		if 'Content-Transfer-Encoding' in self:
+			del self['Content-Transfer-Encoding']
+		return self.set_payload(payload, charset=charset or self.get_charset())
 
 class MailSenderThread(threading.Thread):
 	"""
@@ -673,14 +697,14 @@ class MailSenderThread(threading.Thread):
 		related_msg.attach(alt_msg)
 
 		part = mime.base.MIMEBase('text', 'plain', charset='utf-8')
-		part.set_payload('This calendar invite requires an HTML enabled viewer.\r\n\r\n')
+		part.set_payload(MIME_TEXT_PLAIN)
 		encoders.encode_base64(part)
 		alt_msg.attach(part)
 
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
 		formatted_msg = render_message_template(msg_template, self.config, target=target)
-		part = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
+		part = MIMEText(formatted_msg, 'html')
 		alt_msg.attach(part)
 
 		start_time = get_invite_start_from_config(self.config)
@@ -743,9 +767,9 @@ class MailSenderThread(threading.Thread):
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
 		formatted_msg = render_message_template(msg_template, self.config, target=target)
-		msg_body = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
+		msg_body = MIMEText(formatted_msg, 'html')
 		msg_alt.attach(msg_body)
-		msg_body = mime.text.MIMEText(MIME_TEXT_PLAIN, 'plain', 'utf-8')
+		msg_body = MIMEText(MIME_TEXT_PLAIN, 'plain')
 		msg_alt.attach(msg_body)
 
 		# process attachments
