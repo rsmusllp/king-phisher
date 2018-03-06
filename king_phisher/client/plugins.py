@@ -493,7 +493,7 @@ class ClientPluginMailerAttachment(ClientPlugin):
 	def __init__(self, *args, **kwargs):
 		super(ClientPluginMailerAttachment, self).__init__(*args, **kwargs)
 		mailer_tab = self.application.main_tabs['mailer']
-		self.signal_connect('send-target', self._signal_send_target, gobject=mailer_tab)
+		self.signal_connect('target-create', self._signal_send_target, gobject=mailer_tab)
 
 	def _signal_send_target(self, _, target):
 		config = self.application.config
