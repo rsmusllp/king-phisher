@@ -512,6 +512,13 @@ class CatalogManager(object):
 		return catalog
 
 	def add_catalog_dict(self, dict_):
+		"""
+		Adds the specified catalog to the manager by its dict.
+
+		:param dict dict_: The dict of the catalog to load.
+		:return: The catalog.
+		:rtype: :py:class:`.Catalog`
+		"""
 		try:
 			catalog = Catalog(dict_)
 			self.catalogs[catalog.id] = catalog

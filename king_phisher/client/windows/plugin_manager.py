@@ -158,25 +158,22 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def signal_window_show(self, _):
 		pass
 
-	def _load_catalogs(self):
+	def _load_catalogs(self, refresh=False):
 		start_time = datetime.datetime.utcnow()
-		self.logger.debug('starting import @ {}'.format(start_time))
 		self._update_status_bar('Loading, downloading catalogs...', idle=True)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
 		catalog_cache = self.catalog_plugins.get_cache()
 		for catalog_url in self.config['catalogs']:
 			cache_id = self._check_cache(catalog_url)
 			if cache_id:
-				if (datetime.datetime.utcnow() - catalog_cache[cache_id]['cached_time']).seconds < 14400:
-					self.logger.debug('loading catalog {} from cache'.format(cache_id))
+				if (datetime.datetime.utcnow() - catalog_cache[cache_id]['cached_time']).seconds < 14400 and not refresh:
+					self.logger.debug("loading catalog {} from cache".format(cache_id))
 					self.catalog_plugins.add_catalog_dict(self.catalog_plugins.get_cache()[cache_id])
 					continue
 			self.logger.debug("downloading catalog: {}".format(catalog_url))
 			self._update_status_bar("Loading, downloading catalog: {}".format(catalog_url))
 			self.catalog_plugins.add_catalog_url(catalog_url)
-		self.logger.debug('Completed fetching catalog_urls took {}'.format(datetime.datetime.utcnow() - start_time))
 		self._load_plugins()
-		self.logger.debug('Completed loading plugin_manager took {}'.format(datetime.datetime.utcnow() - start_time))
 
 	def _check_cache(self, catalog_url):
 		cache = self.catalog_plugins.get_cache().get_all_base_urls()
@@ -331,7 +328,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def signal_popup_menu_activate_reload_all(self, _):
 		if not self.load_thread.is_alive():
-			self.load_thread = utilities.Thread(target=self._load_catalogs)
+			refresh = True
+			self.load_thread = utilities.Thread(target=self._load_catalogs, args=[refresh])
 			self.load_thread.start()
 
 	def signal_destory(self, _):
