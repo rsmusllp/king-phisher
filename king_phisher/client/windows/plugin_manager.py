@@ -31,6 +31,7 @@
 #
 
 import collections
+import datetime
 import os
 import shutil
 import sys
@@ -158,13 +159,32 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		pass
 
 	def _load_catalogs(self):
+		start_time = datetime.datetime.utcnow()
+		self.logger.debug('starting import @ {}'.format(start_time))
 		self._update_status_bar('Loading, downloading catalogs...', idle=True)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
+		catalog_cache = self.catalog_plugins.get_cache()
 		for catalog_url in self.config['catalogs']:
+			cache_id = self._check_cache(catalog_url)
+			if cache_id:
+				if (datetime.datetime.utcnow() - catalog_cache[cache_id]['cached_time']).seconds < 14400:
+					self.logger.debug('loading catalog {} from cache'.format(cache_id))
+					self.catalog_plugins.add_catalog_dict(self.catalog_plugins.get_cache()[cache_id])
+					continue
 			self.logger.debug("downloading catalog: {}".format(catalog_url))
 			self._update_status_bar("Loading, downloading catalog: {}".format(catalog_url))
 			self.catalog_plugins.add_catalog_url(catalog_url)
+		self.logger.debug('Completed fetching catalog_urls took {}'.format(datetime.datetime.utcnow() - start_time))
 		self._load_plugins()
+		self.logger.debug('Completed loading plugin_manager took {}'.format(datetime.datetime.utcnow() - start_time))
+
+	def _check_cache(self, catalog_url):
+		cache = self.catalog_plugins.get_cache().get_all_base_urls()
+		catalog_id = None
+		for catalog_id in cache:
+			if catalog_url in cache[catalog_id]:
+				catalog_id = catalog_id
+		return catalog_id
 
 	def __update_status_bar(self, string_to_set):
 		self.status_bar.pop(0)

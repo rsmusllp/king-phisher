@@ -511,6 +511,15 @@ class CatalogManager(object):
 			return
 		return catalog
 
+	def add_catalog_dict(self, dict_):
+		try:
+			catalog = Catalog(dict_)
+			self.catalogs[catalog.id] = catalog
+		except Exception as error:
+			self.logger.warning("failed to load catalog from dict due to {}".format(error))
+			return
+		return catalog
+
 def sign_item_files(local_path, signing_key, repo_path=None):
 	"""
 	This utility function is used to create a :py:class:`.CollectionItemFile`

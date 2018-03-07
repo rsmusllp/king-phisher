@@ -493,7 +493,7 @@ class ClientPluginMailerAttachment(ClientPlugin):
 	def __init__(self, *args, **kwargs):
 		super(ClientPluginMailerAttachment, self).__init__(*args, **kwargs)
 		mailer_tab = self.application.main_tabs['mailer']
-		self.signal_connect('target-create', self._signal_send_target, gobject=mailer_tab)
+		self.signal_connect('send-target', self._signal_send_target, gobject=mailer_tab)
 
 	def _signal_send_target(self, _, target):
 		config = self.application.config
@@ -572,12 +572,10 @@ class CatalogCacheManager(object):
 					self._cache_dict = {}
 
 		if self._cache_dict and 'catalogs' in self._cache_dict:
-			cache_cat = self._cache_dict['catalogs']['value']
-			for catalog_ in cache_cat:
-				self[catalog_] = self._CatalogCacheEntry(
-					cache_cat[catalog_]['id'],
-					self._tuple_repositories(cache_cat[catalog_]['repositories'])
-				)
+			if self._cache_dict['catalogs'].get('version') != '2.0':
+				self._cache_dict['catalogs'] = {}
+			else:
+				self._data = self._cache_dict['catalogs']['values']
 		else:
 			self._cache_dict['catalogs'] = {}
 
@@ -599,20 +597,43 @@ class CatalogCacheManager(object):
 	def __iter__(self):
 		return iter(self._data)
 
+	def get_repositories(self, catalog_id):
+		"""
+		Returns repositories from the requested catalog.
+
+		:param str catalog_id: The name of the catalog in which to get names of repositories from.
+		:return: tuple
+		"""
+		repositories = [repository for repository in self[catalog_id]['repositories']]
+		return tuple(repositories)
+
+	def get_catalog_ids(self):
+		"""
+		The key names of the catalogs in the manager.
+
+		:return: The catalogs IDs in the cache instance.
+		:rtype: tuple
+		"""
+		return tuple(self._data.keys())
+
+	def get_all_base_urls(self):
+		"""
+		Returns url_base from all cached repositories.
+
+		:return: dic
+		"""
+		cache_catalog = {}
+		for catalog_ in self:
+			cache_catalog[catalog_] = (repositories['url-base'] for repositories in self[catalog_]['repositories'])
+		return cache_catalog
+
 	def cache_catalog_repositories(self, cat_id, repositories):
 		self[cat_id] = self._CatalogCacheEntry(cat_id, self._tuple_repositories(repositories))
 
-	def to_dict(self):
-		cache = {}
-		for key in self:
-			cache[key] = {}
-			cache[key]['id'] = self[key].id
-			cache[key]['repositories'] = [repository._asdict() for repository in self[key].repositories]
-		return cache
-
 	def save(self):
-		self._cache_dict['catalogs']['created'] = datetime.datetime.utcnow()
-		self._cache_dict['catalogs']['value'] = self.to_dict()
+		self._cache_dict['catalogs']['values'] = self._data
+		self._cache_dict['catalogs']['cache_saved'] = datetime.datetime.utcnow()
+		self._cache_dict['catalogs']['version'] = '2.0'
 		with open(self._cache_file, 'w') as file_h:
 			JSON.dump(self._cache_dict, file_h)
 
@@ -653,16 +674,11 @@ class ClientCatalogManager(catalog.CatalogManager):
 		:param catalog: The :py:class:`~king_phisher.catalog.Catalog` to save.
 		"""
 		if catalog:
-			self._catalog_cache.cache_catalog_repositories(
-				catalog.id,
-				self.get_collections_to_cache(catalog.id)
-			)
+			self._catalog_cache[catalog.id] = catalog.to_dict()
+			self._catalog_cache[catalog.id]['cached_time'] = datetime.datetime.utcnow()
 		else:
-			for catalog__ in self.catalogs:
-				self._catalog_cache.cache_catalog_repositories(
-					self.catalogs[catalog__].id,
-					self.get_collections_to_cache(catalog__),
-				)
+			for catalog_ in self.catalogs:
+				self._catalog_cache[catalog_] = self.catalogs[catalog_].to_dict()
 		self._catalog_cache.save()
 
 	def add_catalog_url(self, url):
@@ -703,25 +719,6 @@ class ClientCatalogManager(catalog.CatalogManager):
 		"""
 		plugin = self.get_collection(catalog_id, repo_id)[plugin_name]
 		return plugins.Requirements(plugin['requirements']).compatibility
-
-	def get_collections_to_cache(self, catalog_):
-		"""
-		Create a list of repositories and their collections in a format
-		suitable for storage in the cache file.
-
-		:param catalog_: The :py:class:`~king_phisher.catalog.Catalog` instance.
-		:return: The repository cache information.
-		:rtype: list
-		"""
-		repo_cache_info = []
-		for repo in self.get_repositories(catalog_):
-			repo_cache_info.append({
-				'id': repo.id,
-				'title': repo.title,
-				'collections': [collection_ for collection_ in repo.collections],
-				'url': repo.url_base
-			})
-		return repo_cache_info
 
 	def get_cache(self):
 		"""
