@@ -16,7 +16,7 @@ ipaddress>=1.0.18              ; python_version < '3.3'
 jsonschema>=2.6.0
 jinja2>=2.10
 markupsafe>=1.0
-matplotlib>=2.1.0
+matplotlib==2.1.0
 msgpack-python>=0.4.8
 paramiko>=2.4.0
 pluginbase>=0.5
