@@ -12,6 +12,11 @@ sudo bash ./install.sh
 ## Windows (Client Only)
 Download the latest [Windows build here.][releases]
 
+## Windows 10 Subsystem
+- Download [VcXsrv][vcxsrv] from the Microsoft Store
+- Clone King-Phisher repo and install as normal
+- include in your .bashrc/.zshrc file ```export DISPLAY=:0.0```
+
 ## Getting Started
 - [Getting Started][wiki-getting-started]
 - [How to videos][videos]
@@ -23,3 +28,4 @@ Download the latest [Windows build here.][releases]
 [videos]: https://securestate.wistia.com/projects/laevqz2p29
 [wiki]: https://github.com/securestate/king-phisher/wiki
 [wiki-getting-started]: https://github.com/securestate/king-phisher/wiki/Getting-Started
+[vcxsrv]: https://sourceforge.net/projects/vcxsrv/
