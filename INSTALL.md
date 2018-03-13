@@ -12,10 +12,10 @@ sudo bash ./install.sh
 ## Windows (Client Only)
 Download the latest [Windows build here.][releases]
 
-## Windows 10 Subsystem
+### Windows 10 Subsystem For Linux (WSL)
 - Download [VcXsrv][vcxsrv] from the Microsoft Store
-- Clone King-Phisher repo and install as normal
-- Include in your .bashrc/.zshrc file ```export DISPLAY=:0.0```
+- Clone the king-phisher repo and install as normal
+- Include in your .bashrc/.zshrc file `export DISPLAY=:0.0`
 
 ## Getting Started
 - [Getting Started][wiki-getting-started]
