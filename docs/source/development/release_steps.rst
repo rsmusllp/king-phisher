@@ -8,7 +8,7 @@ Pre Release Steps
 -----------------
 
 #. Test and fix any issues with the Windows MSI build
-#. Ensure unit tests pass with Python 2.7 & Python 3.5
+#. Ensure unit tests pass with Python 3.4+
 #. Remove the version label
 #. Create the final Windows MSI build
 #. Update the change log
@@ -17,13 +17,14 @@ Release Steps
 -------------
 
 #. Create a final signed commit on the dev branch and push it to GitHub
-#. Merge dev into master and push master to GitHub
+#. Merge dev into master and push master and push the changes
 #. Create and push a signed tag of the release commit
+#. Merge dev into master for the plugins repository and push the changes
 #. Create a new release on GitHub
 
    #. Upload the final Windows build
    #. Insert the changes from the change log
-   #. Insert the MD5, SHA1, SHA512 hashes of the Windows build
+   #. Insert the MD5, SHA1 and SHA512 hashes of the Windows build
 
 #. Update the Docker build
 #. Publicize the release

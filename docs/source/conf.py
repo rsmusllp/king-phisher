@@ -36,7 +36,7 @@ import king_phisher.utilities
 import king_phisher.version
 
 # -- General configuration ------------------------------------------------
-needs_sphinx = '1.3'
+needs_sphinx = '1.6'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -93,7 +93,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'King Phisher'
-copyright = '2013-2017, SecureState LLC'
+copyright = '2013-2018, SecureState LLC'
 
 # The short X.Y version.
 version = king_phisher.version.version.split('-')[0]
