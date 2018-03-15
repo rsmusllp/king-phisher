@@ -557,8 +557,6 @@ class CatalogCacheManager(object):
 	"""
 	Manager to handle cache information for catalogs.
 	"""
-	_CatalogCacheEntry = collections.namedtuple('catalog', ['id', 'repositories'])
-	_RepositoryCacheEntry = collections.namedtuple('repositories', ['id', 'title', 'url', 'collections'])
 	def __init__(self, cache_file):
 		self.cache_version = '2.0'
 		self._cache_dict = {}
@@ -573,7 +571,7 @@ class CatalogCacheManager(object):
 					self._cache_dict = {}
 
 		if self._cache_dict and 'catalogs' in self._cache_dict:
-			if self._cache_dict['catalogs'].get('version') != self.cache_version:
+			if self._cache_dict['catalogs'].get('version', None) != self.cache_version:
 				self._cache_dict['catalogs'] = {}
 			else:
 				self._data = self._cache_dict['catalogs']['values']
@@ -595,7 +593,7 @@ class CatalogCacheManager(object):
 	def __iter__(self):
 		return iter(self._data)
 
-	def get_all_base_urls(self):
+	def get_catalog_urls(self):
 		"""
 		Returns url_base from all cached repositories.
 
@@ -603,7 +601,7 @@ class CatalogCacheManager(object):
 		"""
 		cache_catalog = {}
 		for catalog_id in self:
-			cache_catalog[catalog_id] = [repositories['url-base'] for repositories in self[catalog_id]['value']['repositories']]
+			cache_catalog[catalog_id] = self[catalog_id].get('catalog_url', None)
 		return cache_catalog
 
 	def save(self):
@@ -643,20 +641,21 @@ class ClientCatalogManager(catalog.CatalogManager):
 		"""
 		self.catalogs[catalog_id].repositories[repo_id].get_item_files(self.manager_type, plugin_id, install_path)
 
-	def save_cache(self, catalog):
+	def save_cache(self, catalog, catalog_url):
 		"""
 		Saves the catalog or catalogs in the manager to the cache.
 
 		:param catalog: The :py:class:`~king_phisher.catalog.Catalog` to save.
 		"""
 		self._catalog_cache[catalog.id] = {
-			'value': catalog.to_dict(),
-			'created': datetime.datetime.utcnow()
+			'created': datetime.datetime.utcnow(),
+			'catalog_url': catalog_url,
+			'value': catalog.to_dict()
 			}
 
 		self._catalog_cache.save()
 
-	def add_catalog(self, catalog, cache=False):
+	def add_catalog(self, catalog, catalog_url=None, cache=False):
 		"""
 		Adds catalog to the manager by its url.
 
@@ -666,8 +665,8 @@ class ClientCatalogManager(catalog.CatalogManager):
 		:rtype: :py:class:`~king_phisher.catalog.Catalog`
 		"""
 		self.catalogs[catalog.id] = catalog
-		if cache:
-			self.save_cache(catalog=catalog)
+		if cache and catalog_url:
+			self.save_cache(catalog=catalog, catalog_url=catalog_url)
 		return catalog
 
 	def is_compatible(self, catalog_id, repo_id, plugin_name):

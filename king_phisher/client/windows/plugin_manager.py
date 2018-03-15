@@ -193,8 +193,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				self.idle_show_dialog_error('Catalog Loading Error', 'Catalog Dictionary is malformed')
 		elif isinstance(catalog, str):
 			try:
-				url_catalog = Catalog.from_url(catalog)
-				self.catalog_plugins.add_catalog(url_catalog, cache=True)
+				catalog_url = catalog
+				catalog = Catalog.from_url(catalog)
+				self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
 			except requests.exceptions.ConnectionError:
 				self.logger.warning("connection error trying to download catalog url: {}".format(catalog))
 				self.idle_show_dialog_error('Catalog Loading Error', "Failed to download catalog, Please check your internet connection")
@@ -216,11 +217,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		:return: catalog ID of the associated catalog url or None
 		:rtype: str
 		"""
-		cache = self.catalog_plugins.get_cache().get_all_base_urls()
-		for catalog_id in cache:
-			for base_url in cache[catalog_id]:
-				if base_url in catalog_url:
-					return catalog_id
+		cache = self.catalog_plugins.get_cache().get_catalog_urls()
+		for catalog_id, catalog_urls in cache.items():
+			if not catalog_urls:
+				continue
+			if catalog_url in catalog_urls:
+				return catalog_id
 		return None
 
 	def __update_status_bar(self, string_to_set):
