@@ -33,9 +33,7 @@
 import collections
 import datetime
 import os
-import requests.exceptions
 import shutil
-import socket
 import sys
 import traceback
 
@@ -47,6 +45,7 @@ from king_phisher.client.widget import managers
 
 from gi.repository import Gdk
 from gi.repository import Gtk
+import requests.exceptions
 
 __all__ = ('PluginManagerWindow',)
 
@@ -166,64 +165,33 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._update_status_bar('Loading, catalogs...', idle=True)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
 		catalog_cache = self.catalog_plugins.get_cache()
+		now = datetime.datetime.utcnow()
 		for catalog_url in self.config['catalogs']:
-			if not refresh:
-				cache_id = self._check_cache(catalog_url)
-				if cache_id:
-					now = datetime.datetime.utcnow()
-					if catalog_cache[cache_id]['created'] + expiration > now:
-						self.logger.debug("loading catalog {} from cache".format(cache_id))
-						self._add_catalog(self.catalog_plugins.get_cache()[cache_id]['value'])
-						continue
+			catalog_cache_dict = catalog_cache.get_catalog_by_url(catalog_url)
+			if not refresh and catalog_cache_dict and catalog_cache_dict['created'] + expiration > now:
+				try:
+					catalog = Catalog(catalog_cache_dict['value'])
+				except (KeyError, TypeError) as error:
+					self.logger.warning("{0} error when trying to add catalog dict to manager".format(error.__class__.__name))
+				else:
+					self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_cache_dict['url'], cache=False)
+					continue
 			self.logger.debug("downloading catalog: {}".format(catalog_url))
 			self._update_status_bar("Loading, downloading catalog: {}".format(catalog_url))
-			self._add_catalog(catalog_url)
-		self._load_plugins()
-
-	def _add_catalog(self, catalog):
-		if isinstance(catalog, dict):
 			try:
-				catalog = Catalog(catalog)
-				self.catalog_plugins.add_catalog(catalog)
-			except TypeError:
-				self.logger.warning("type error when trying to add catalog dict to manager")
-				self.idle_show_dialog_error('Catalog Loading Error', 'Catalog Dictionary is malformed')
-			except KeyError:
-				self.logger.warning("key error when trying to add catalog dict to manager")
-				self.idle_show_dialog_error('Catalog Loading Error', 'Catalog Dictionary is malformed')
-		elif isinstance(catalog, str):
-			try:
-				catalog_url = catalog
-				catalog = Catalog.from_url(catalog)
-				self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
+				catalog = Catalog.from_url(catalog_url)
 			except requests.exceptions.ConnectionError:
 				self.logger.warning("connection error trying to download catalog url: {}".format(catalog))
-				self.idle_show_dialog_error('Catalog Loading Error', "Failed to download catalog, Please check your internet connection")
+				self.idle_show_dialog_error('Catalog Loading Error', "Failed to download catalog, check your internet connection.")
 			except Exception:
-				self.logger.warning("Failed to add catalog by url", exc_info=True)
+				self.logger.warning("failed to add catalog by url", exc_info=True)
 				self.idle_show_dialog_error('Catalog Loading Error', "Failed to add catalog")
-		else:
-			self.logger.warning("can only accept url strings and dictionaries to add catalog to manager, not {}".format(type(catalog)))
-			self.idle_show_dialog_error('Catalog Loading Error', "Invalid type to add catalog.")
+			else:
+				self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
+		self._load_plugins()
 
 	def idle_show_dialog_error(self, title, message):
 		gui_utilities.glib_idle_add_once(gui_utilities.show_dialog_error, title, self.window, message)
-
-	def _check_cache(self, catalog_url):
-		"""
-		Check to see if catalog url is in the cache, if so it returns the catalog ID.
-
-		:param str catalog_url: The catalog URL to search for
-		:return: catalog ID of the associated catalog url or None
-		:rtype: str
-		"""
-		cache = self.catalog_plugins.get_cache().get_catalog_urls()
-		for catalog_id, catalog_urls in cache.items():
-			if not catalog_urls:
-				continue
-			if catalog_url in catalog_urls:
-				return catalog_id
-		return None
 
 	def __update_status_bar(self, string_to_set):
 		self.status_bar.pop(0)
@@ -521,11 +489,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
 		except requests.exceptions.ConnectionError:
 			self.logger.warning("failed to download plugin {}".format(named_row.id))
-			gui_utilities.show_dialog_error('Failed to install', self.window, "Failed to download {} plugin, Check your internet connection.".format(named_row.id))
+			gui_utilities.show_dialog_error('Failed To Install', self.window, "Failed to download {} plugin, check your internet connection.".format(named_row.id))
 			return
 		except Exception:
 			self.logger.warning("failed to install plugin {}".format(named_row.id), exc_info=True)
-			gui_utilities.show_dialog_error('Failed to install', self.window, "Failed to install {} plugin".format(named_row.id))
+			gui_utilities.show_dialog_error('Failed To Install', self.window, "Failed to install {} plugin.".format(named_row.id))
 			return
 
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}

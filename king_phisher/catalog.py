@@ -459,7 +459,7 @@ class Catalog(object):
 		:rtype: dict
 		"""
 		data = {
-			'created': self.created.isoformat() + '+00:00',
+			'created': self.created.isoformat(),
 			'created-by': self.created_by,
 			'id': self.id,
 			'maintainers': [{'id': maintainer} for maintainer in self.maintainers],
@@ -499,7 +499,8 @@ class CatalogManager(object):
 		"""
 		Adds the specified catalog to the manager.
 
-		:param :py:class:.'Catalog' catalog:
+		:param catalog: Add the specified catalog to the manager.
+		:type catalog: :py:class:`.Catalog`
 		:return: The catalog.
 		:rtype: :py:class:`.Catalog`
 		"""

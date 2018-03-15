@@ -7,6 +7,12 @@
 Classes
 -------
 
+.. autoclass:: CatalogCacheManager
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :special-members: __init__
+
 .. autoclass:: ClientCatalogManager
    :show-inheritance:
    :members:
