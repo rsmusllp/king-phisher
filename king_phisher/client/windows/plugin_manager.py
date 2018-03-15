@@ -31,18 +31,21 @@
 #
 
 import collections
+import datetime
 import os
 import shutil
 import sys
 import traceback
 
 from king_phisher import utilities
+from king_phisher.catalog import Catalog
 from king_phisher.client import plugins
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
 
 from gi.repository import Gdk
 from gi.repository import Gtk
+import requests.exceptions
 
 __all__ = ('PluginManagerWindow',)
 
@@ -157,14 +160,38 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def signal_window_show(self, _):
 		pass
 
-	def _load_catalogs(self):
-		self._update_status_bar('Loading, downloading catalogs...', idle=True)
+	def _load_catalogs(self, refresh=False):
+		expiration = datetime.timedelta(hours=4)
+		self._update_status_bar('Loading, catalogs...', idle=True)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
+		catalog_cache = self.catalog_plugins.get_cache()
+		now = datetime.datetime.utcnow()
 		for catalog_url in self.config['catalogs']:
+			catalog_cache_dict = catalog_cache.get_catalog_by_url(catalog_url)
+			if not refresh and catalog_cache_dict and catalog_cache_dict['created'] + expiration > now:
+				try:
+					catalog = Catalog(catalog_cache_dict['value'])
+				except (KeyError, TypeError) as error:
+					self.logger.warning("{0} error when trying to add catalog dict to manager".format(error.__class__.__name))
+				else:
+					self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_cache_dict['url'], cache=False)
+					continue
 			self.logger.debug("downloading catalog: {}".format(catalog_url))
 			self._update_status_bar("Loading, downloading catalog: {}".format(catalog_url))
-			self.catalog_plugins.add_catalog_url(catalog_url)
+			try:
+				catalog = Catalog.from_url(catalog_url)
+			except requests.exceptions.ConnectionError:
+				self.logger.warning("connection error trying to download catalog url: {}".format(catalog))
+				self.idle_show_dialog_error('Catalog Loading Error', "Failed to download catalog, check your internet connection.")
+			except Exception:
+				self.logger.warning("failed to add catalog by url", exc_info=True)
+				self.idle_show_dialog_error('Catalog Loading Error', "Failed to add catalog")
+			else:
+				self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
 		self._load_plugins()
+
+	def idle_show_dialog_error(self, title, message):
+		gui_utilities.glib_idle_add_once(gui_utilities.show_dialog_error, title, self.window, message)
 
 	def __update_status_bar(self, string_to_set):
 		self.status_bar.pop(0)
@@ -249,7 +276,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		for catalog_id in catalog_cache:
 			if self.catalog_plugins.catalogs.get(catalog_id, None):
 				continue
-			named_catalog = catalog_cache[catalog_id]
+			named_catalog = catalog_cache[catalog_id]['value']
 			model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
 			catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
 			for repo in named_catalog.repositories:
@@ -311,12 +338,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def signal_popup_menu_activate_reload_all(self, _):
 		if not self.load_thread.is_alive():
-			self.load_thread = utilities.Thread(target=self._load_catalogs)
+			refresh = True
+			self.load_thread = utilities.Thread(target=self._load_catalogs, args=[refresh])
 			self.load_thread.start()
 
 	def signal_destory(self, _):
-		if self.catalog_plugins:
-			self.catalog_plugins.save_cache()
+		pass
 
 	def signal_treeview_row_activated(self, treeview, path, column):
 		self._set_info(self._model[path])
@@ -457,7 +484,18 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				if not self._remove_matching_plugin(path, plugin_src):
 					self.logger.warning("failed to uninstall plugin {0}".format(named_row.id))
 					return
-		self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
+
+		try:
+			self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
+		except requests.exceptions.ConnectionError:
+			self.logger.warning("failed to download plugin {}".format(named_row.id))
+			gui_utilities.show_dialog_error('Failed To Install', self.window, "Failed to download {} plugin, check your internet connection.".format(named_row.id))
+			return
+		except Exception:
+			self.logger.warning("failed to install plugin {}".format(named_row.id), exc_info=True)
+			gui_utilities.show_dialog_error('Failed To Install', self.window, "Failed to install {} plugin.".format(named_row.id))
+			return
+
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
 		self._set_model_item(path, 'installed', True)
 		self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
