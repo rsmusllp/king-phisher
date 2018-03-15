@@ -495,36 +495,15 @@ class CatalogManager(object):
 		"""
 		return tuple(self.catalogs[catalog_id].repositories.values())
 
-	def add_catalog_url(self, url):
+	def add_catalog(self, catalog):
 		"""
-		Adds the specified catalog to the manager by its URL.
+		Adds the specified catalog to the manager.
 
-		:param str url: The URL of the catalog to load.
+		:param :py:class:.'Catalog' catalog:
 		:return: The catalog.
 		:rtype: :py:class:`.Catalog`
 		"""
-		try:
-			catalog = Catalog.from_url(url)
-			self.catalogs[catalog.id] = catalog
-		except Exception as error:
-			self.logger.warning("failed to load catalog from url {0} due to {1}".format(url, error))
-			return
-		return catalog
-
-	def add_catalog_dict(self, dict_):
-		"""
-		Adds the specified catalog to the manager by its dict.
-
-		:param dict dict_: The dict of the catalog to load.
-		:return: The catalog.
-		:rtype: :py:class:`.Catalog`
-		"""
-		try:
-			catalog = Catalog(dict_)
-			self.catalogs[catalog.id] = catalog
-		except Exception as error:
-			self.logger.warning("failed to load catalog from dict due to {}".format(error))
-			return
+		self.catalogs[catalog.id] = catalog
 		return catalog
 
 def sign_item_files(local_path, signing_key, repo_path=None):

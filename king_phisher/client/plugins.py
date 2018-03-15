@@ -560,6 +560,7 @@ class CatalogCacheManager(object):
 	_CatalogCacheEntry = collections.namedtuple('catalog', ['id', 'repositories'])
 	_RepositoryCacheEntry = collections.namedtuple('repositories', ['id', 'title', 'url', 'collections'])
 	def __init__(self, cache_file):
+		self.cache_version = '2.0'
 		self._cache_dict = {}
 		self._data = {}
 		self._cache_file = cache_file
@@ -572,15 +573,12 @@ class CatalogCacheManager(object):
 					self._cache_dict = {}
 
 		if self._cache_dict and 'catalogs' in self._cache_dict:
-			if self._cache_dict['catalogs'].get('version') != '2.0':
+			if self._cache_dict['catalogs'].get('version') != self.cache_version:
 				self._cache_dict['catalogs'] = {}
 			else:
 				self._data = self._cache_dict['catalogs']['values']
 		else:
 			self._cache_dict['catalogs'] = {}
-
-	def _tuple_repositories(self, repositories):
-		return tuple(self._RepositoryCacheEntry(**repository) for repository in repositories)
 
 	def __setitem__(self, key, value):
 		self._data[key] = value
@@ -597,25 +595,6 @@ class CatalogCacheManager(object):
 	def __iter__(self):
 		return iter(self._data)
 
-	def get_repositories(self, catalog_id):
-		"""
-		Returns repositories from the requested catalog.
-
-		:param str catalog_id: The name of the catalog in which to get names of repositories from.
-		:return: tuple
-		"""
-		repositories = [repository for repository in self[catalog_id]['repositories']]
-		return tuple(repositories)
-
-	def get_catalog_ids(self):
-		"""
-		The key names of the catalogs in the manager.
-
-		:return: The catalogs IDs in the cache instance.
-		:rtype: tuple
-		"""
-		return tuple(self._data.keys())
-
 	def get_all_base_urls(self):
 		"""
 		Returns url_base from all cached repositories.
@@ -623,17 +602,14 @@ class CatalogCacheManager(object):
 		:return: dic
 		"""
 		cache_catalog = {}
-		for catalog_ in self:
-			cache_catalog[catalog_] = (repositories['url-base'] for repositories in self[catalog_]['repositories'])
+		for catalog_id in self:
+			cache_catalog[catalog_id] = [repositories['url-base'] for repositories in self[catalog_id]['value']['repositories']]
 		return cache_catalog
-
-	def cache_catalog_repositories(self, cat_id, repositories):
-		self[cat_id] = self._CatalogCacheEntry(cat_id, self._tuple_repositories(repositories))
 
 	def save(self):
 		self._cache_dict['catalogs']['values'] = self._data
-		self._cache_dict['catalogs']['cache_saved'] = datetime.datetime.utcnow()
-		self._cache_dict['catalogs']['version'] = '2.0'
+		self._cache_dict['catalogs']['created'] = datetime.datetime.utcnow()
+		self._cache_dict['catalogs']['version'] = self.cache_version
 		with open(self._cache_file, 'w') as file_h:
 			JSON.dump(self._cache_dict, file_h)
 
@@ -667,32 +643,32 @@ class ClientCatalogManager(catalog.CatalogManager):
 		"""
 		self.catalogs[catalog_id].repositories[repo_id].get_item_files(self.manager_type, plugin_id, install_path)
 
-	def save_cache(self, catalog=None):
+	def save_cache(self, catalog):
 		"""
 		Saves the catalog or catalogs in the manager to the cache.
 
 		:param catalog: The :py:class:`~king_phisher.catalog.Catalog` to save.
 		"""
-		if catalog:
-			self._catalog_cache[catalog.id] = catalog.to_dict()
-			self._catalog_cache[catalog.id]['cached_time'] = datetime.datetime.utcnow()
-		else:
-			for catalog_ in self.catalogs:
-				self._catalog_cache[catalog_] = self.catalogs[catalog_].to_dict()
+		self._catalog_cache[catalog.id] = {
+			'value': catalog.to_dict(),
+			'created': datetime.datetime.utcnow()
+			}
+
 		self._catalog_cache.save()
 
-	def add_catalog_url(self, url):
+	def add_catalog(self, catalog, cache=False):
 		"""
 		Adds catalog to the manager by its url.
 
-		:param url: URL of the catalog to load.
+		:param :py:class:`~king_phisher.catalog.Catalog` catalog: URL of the catalog to load.
+		:param bool cache: True if you want the catalog to be saved to cache
 		:return: The catalog.
 		:rtype: :py:class:`~king_phisher.catalog.Catalog`
 		"""
-		catalog_ = super(ClientCatalogManager, self).add_catalog_url(url)
-		if catalog_:
-			self.save_cache(catalog=catalog_)
-		return catalog_
+		self.catalogs[catalog.id] = catalog
+		if cache:
+			self.save_cache(catalog=catalog)
+		return catalog
 
 	def is_compatible(self, catalog_id, repo_id, plugin_name):
 		"""

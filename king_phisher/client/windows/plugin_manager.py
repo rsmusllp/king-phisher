@@ -33,11 +33,14 @@
 import collections
 import datetime
 import os
+import requests.exceptions
 import shutil
+import socket
 import sys
 import traceback
 
 from king_phisher import utilities
+from king_phisher.catalog import Catalog
 from king_phisher.client import plugins
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
@@ -159,29 +162,66 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		pass
 
 	def _load_catalogs(self, refresh=False):
-		start_time = datetime.datetime.utcnow()
-		self._update_status_bar('Loading, downloading catalogs...', idle=True)
+		expiration = datetime.timedelta(hours=4)
+		self._update_status_bar('Loading, catalogs...', idle=True)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
 		catalog_cache = self.catalog_plugins.get_cache()
 		for catalog_url in self.config['catalogs']:
-			cache_id = self._check_cache(catalog_url)
-			if cache_id:
-				if (datetime.datetime.utcnow() - catalog_cache[cache_id]['cached_time']).seconds < 14400 and not refresh:
-					self.logger.debug("loading catalog {} from cache".format(cache_id))
-					self.catalog_plugins.add_catalog_dict(self.catalog_plugins.get_cache()[cache_id])
-					continue
+			if not refresh:
+				cache_id = self._check_cache(catalog_url)
+				if cache_id:
+					now = datetime.datetime.utcnow()
+					if catalog_cache[cache_id]['created'] + expiration > now:
+						self.logger.debug("loading catalog {} from cache".format(cache_id))
+						self._add_catalog(self.catalog_plugins.get_cache()[cache_id]['value'])
+						continue
 			self.logger.debug("downloading catalog: {}".format(catalog_url))
 			self._update_status_bar("Loading, downloading catalog: {}".format(catalog_url))
-			self.catalog_plugins.add_catalog_url(catalog_url)
+			self._add_catalog(catalog_url)
 		self._load_plugins()
 
+	def _add_catalog(self, catalog):
+		if isinstance(catalog, dict):
+			try:
+				catalog = Catalog(catalog)
+				self.catalog_plugins.add_catalog(catalog)
+			except TypeError:
+				self.logger.warning("type error when trying to add catalog dict to manager")
+				self.idle_show_dialog_error('Catalog Loading Error', 'Catalog Dictionary is malformed')
+			except KeyError:
+				self.logger.warning("key error when trying to add catalog dict to manager")
+				self.idle_show_dialog_error('Catalog Loading Error', 'Catalog Dictionary is malformed')
+		elif isinstance(catalog, str):
+			try:
+				url_catalog = Catalog.from_url(catalog)
+				self.catalog_plugins.add_catalog(url_catalog, cache=True)
+			except requests.exceptions.ConnectionError:
+				self.logger.warning("connection error trying to download catalog url: {}".format(catalog))
+				self.idle_show_dialog_error('Catalog Loading Error', "Failed to download catalog, Please check your internet connection")
+			except Exception:
+				self.logger.warning("Failed to add catalog by url", exc_info=True)
+				self.idle_show_dialog_error('Catalog Loading Error', "Failed to add catalog")
+		else:
+			self.logger.warning("can only accept url strings and dictionaries to add catalog to manager, not {}".format(type(catalog)))
+			self.idle_show_dialog_error('Catalog Loading Error', "Invalid type to add catalog.")
+
+	def idle_show_dialog_error(self, title, message):
+		gui_utilities.glib_idle_add_once(gui_utilities.show_dialog_error, title, self.window, message)
+
 	def _check_cache(self, catalog_url):
+		"""
+		Check to see if catalog url is in the cache, if so it returns the catalog ID.
+
+		:param str catalog_url: The catalog URL to search for
+		:return: catalog ID of the associated catalog url or None
+		:rtype: str
+		"""
 		cache = self.catalog_plugins.get_cache().get_all_base_urls()
-		catalog_id = None
 		for catalog_id in cache:
-			if catalog_url in cache[catalog_id]:
-				catalog_id = catalog_id
-		return catalog_id
+			for base_url in cache[catalog_id]:
+				if base_url in catalog_url:
+					return catalog_id
+		return None
 
 	def __update_status_bar(self, string_to_set):
 		self.status_bar.pop(0)
@@ -266,7 +306,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		for catalog_id in catalog_cache:
 			if self.catalog_plugins.catalogs.get(catalog_id, None):
 				continue
-			named_catalog = catalog_cache[catalog_id]
+			named_catalog = catalog_cache[catalog_id]['value']
 			model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
 			catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
 			for repo in named_catalog.repositories:
@@ -333,8 +373,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.load_thread.start()
 
 	def signal_destory(self, _):
-		if self.catalog_plugins:
-			self.catalog_plugins.save_cache()
+		pass
 
 	def signal_treeview_row_activated(self, treeview, path, column):
 		self._set_info(self._model[path])
@@ -475,7 +514,18 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				if not self._remove_matching_plugin(path, plugin_src):
 					self.logger.warning("failed to uninstall plugin {0}".format(named_row.id))
 					return
-		self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
+
+		try:
+			self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
+		except requests.exceptions.ConnectionError:
+			self.logger.warning("failed to download plugin {}".format(named_row.id))
+			gui_utilities.show_dialog_error('Failed to install', self.window, "Failed to download {} plugin, Check your internet connection.".format(named_row.id))
+			return
+		except Exception:
+			self.logger.warning("failed to install plugin {}".format(named_row.id), exc_info=True)
+			gui_utilities.show_dialog_error('Failed to install', self.window, "Failed to install {} plugin".format(named_row.id))
+			return
+
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
 		self._set_model_item(path, 'installed', True)
 		self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
