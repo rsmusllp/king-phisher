@@ -43,6 +43,7 @@ import email.mime.base
 import email.mime.image
 import email.mime.multipart
 import email.mime.text
+import email.utils
 import logging
 import mimetypes
 import os
@@ -83,12 +84,30 @@ __all__ = (
 template_environment = templates.MessageTemplateEnvironment()
 
 MessageAttachments = collections.namedtuple('MessageAttachments', ('files', 'images'))
-"""A named tuple for holding both image and file attachments for a message."""
+"""
+A named tuple for holding both image and file attachments for a message.
+
+.. py:attribute:: files
+
+	A tuple of :py:class:`~.mime.MIMEBase` instances representing the messsages
+	attachments.
+
+.. py:attribute:: images
+
+	A tuple of :py:class:`~.mime.MIMEImage` instances representing the images in
+	the message.
+"""
+
+MIME_TEXT_PLAIN = 'This message requires an HTML aware email agent to be properly viewed.\r\n\r\n'
+"""The static string to place in MIME message as a text/plain part. This is shown by email clients that do not support HTML."""
 
 def _iterate_targets_file(target_file):
 	target_file_h = open(target_file, 'rU')
 	csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
 	for line_no, raw_target in enumerate(csv_reader, 1):
+		if None in raw_target:
+			# remove the additional fields
+			del raw_target[None]
 		if its.py_v2:
 			# this will intentionally cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
 			# when csv.DictReader is initialized
@@ -99,6 +118,14 @@ def _iterate_targets_file(target_file):
 	target_file_h.close()
 
 def count_targets_file(target_file):
+	"""
+	Count the number of valid targets that the specified file contains. This
+	skips lines which are missing fields or where the email address is invalid.
+
+	:param str target_file: The path the the target CSV file on disk.
+	:return: The number of valid targets.
+	:rtype: int
+	"""
 	count = 0
 	for target in _iterate_targets_file(target_file):
 		if target.missing_fields:
@@ -108,13 +135,15 @@ def count_targets_file(target_file):
 		count += 1
 	return count
 
-def nonempty_str(value):
-	if not value:
-		return None
-	value = value.strip()
-	return value if value else None
-
 def get_invite_start_from_config(config):
+	"""
+	Get the start time for an invite from the configuration. This takes into
+	account whether the invite is for all day or starts at a specific time.
+
+	:param dict config: The King Phisher client configuration.
+	:return: The timestamp of when the invite is to start.
+	:rtype: :py:class:`datetime.datetime`
+	"""
 	if config['mailer.calendar_invite_all_day']:
 		start_time = datetime.datetime.combine(
 			config['mailer.calendar_invite_date'],
@@ -185,12 +214,7 @@ def render_message_template(template, config, target=None, analyze=False):
 	:rtype: str
 	"""
 	if target is None:
-		target = MessageTarget(
-			first_name='Alice',
-			last_name='Liddle',
-			email_address='aliddle@wonderland.com',
-			uid=(config['server_config'].get('server.secret_id') or utilities.make_message_uid())
-		)
+		target = MessageTargetPlaceholder(uid=config['server_config'].get('server.secret_id'))
 		template_environment.set_mode(template_environment.MODE_PREVIEW)
 
 	if analyze:
@@ -259,6 +283,22 @@ def render_message_template(template, config, target=None, analyze=False):
 	template_vars.update(template_environment.standard_variables)
 	return template.render(template_vars)
 
+def rfc2282_timestamp(dt=None, utc=False):
+	"""
+	Convert a :py:class:`datetime.datetime` instance into an :rfc:`2282`
+	compliant timestamp suitable for use in MIME-encoded messages.
+
+	:param dt: A time to use for the timestamp otherwise the current time is used.
+	:type dt: :py:class:`datetime.datetime`
+	:param utc: Whether to return the timestamp as a UTC offset or from the local timezone.
+	:return: The timestamp.
+	:rtype: str
+	"""
+	dt = dt or datetime.datetime.utcnow()
+	# email.utils.formatdate wants the time to be in the local timezone
+	dt = utilities.datetime_utc_to_local(dt)
+	return email.utils.formatdate(time.mktime(dt.timetuple()), not utc)
+
 class MessageTarget(object):
 	"""
 	A simple class for holding information regarding a messages intended
@@ -271,13 +311,13 @@ class MessageTarget(object):
 		"""The target recipient's first name."""
 		self.last_name = last_name
 		"""The target recipient's last name."""
-		self.email_address = nonempty_str(email_address)
+		self.email_address = utilities.nonempty_string(email_address)
 		"""The target recipient's email address."""
 		self.uid = uid
 		"""The unique identifier that is going to be used for this target."""
 		if self.uid is None:
 			self.uid = utilities.make_message_uid()
-		self.department = nonempty_str(department)
+		self.department = utilities.nonempty_string(department)
 		"""The target recipient's department name."""
 		self.line = line
 		"""The line number in the file from which this target was loaded."""
@@ -289,15 +329,24 @@ class MessageTarget(object):
 	def missing_fields(self):
 		return tuple(field for field in self.required_fields if getattr(self, field) is None)
 
+class MessageTargetPlaceholder(MessageTarget):
+	"""
+	A default :py:class:`~.MessageTarget` for use as a placeholder value while
+	rendering, performing tests, etc.
+	"""
+	def __init__(self, uid=None):
+		super(MessageTargetPlaceholder, self).__init__('Alice', 'Liddle', 'aliddle@wonderland.com', uid=uid, department='Visitors')
+
 class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 	"""
-	A :py:class:`.mime.multipart.MIMEMultipart` subclass for representing the top / outer most
-	part of a MIME multipart message.
+	A :py:class:`.mime.multipart.MIMEMultipart` subclass for representing the
+	top / outer most part of a MIME multipart message. This adds additional
+	default headers to the message.
 	"""
 	def __init__(self, mime_type, config, target):
 		"""
 		:param str mime_type: The type of this part such as related or alternative.
-		:param dict config: The client configuration.
+		:param dict config: The King Phisher client configuration.
 		:param target: The target information for the messages intended recipient.
 		:type target: :py:class:`.MessageTarget`
 		"""
@@ -309,7 +358,32 @@ class TopMIMEMultipart(mime.multipart.MIMEMultipart):
 			self['From'] = "\"{0}\" <{1}>".format(config['mailer.source_email_alias'], config['mailer.source_email'])
 		else:
 			self['From'] = config['mailer.source_email']
+		self['Date'] = rfc2282_timestamp()
 		self.preamble = 'This is a multi-part message in MIME format.'
+
+class MIMEText(mime.text.MIMEText):
+	def __init__(self, text, subtype, charset='utf-8'):
+		super(MIMEText, self).__init__(text, subtype, charset)
+
+	@property
+	def payload_string(self):
+		return self.get_payload_string()
+
+	@payload_string.setter
+	def payload_string(self, text):
+		self.set_payload_string(text)
+
+	def get_payload_string(self):
+		payload = self.get_payload(decode=True)
+		if payload:
+			charset = self.get_charset()
+			payload = payload.decode(charset.input_charset)
+		return payload
+
+	def set_payload_string(self, payload, charset=None):
+		if 'Content-Transfer-Encoding' in self:
+			del self['Content-Transfer-Encoding']
+		return self.set_payload(payload, charset=charset or self.get_charset())
 
 class MailSenderThread(threading.Thread):
 	"""
@@ -500,6 +574,16 @@ class MailSenderThread(threading.Thread):
 		return sum(1 for _ in self.iterate_targets(counting=True))
 
 	def iterate_targets(self, counting=False):
+		"""
+		Iterate over each of the targets as defined within the configuration.
+		If *counting* is ``False``, messages will not be displayed to the end
+		user through the notification tab.
+
+		:param bool counting: Whether or not to iterate strictly for counting purposes.
+		:return: Each message target.
+		:rtype: :py:class:`~.MessageTarget`
+		"""
+		mailer_tab = self.application.main_tabs['mailer']
 		target_type = self.config['mailer.target_type']
 		if target_type == 'single':
 			target_name = self.config['mailer.target_name'].split(' ')
@@ -510,6 +594,8 @@ class MailSenderThread(threading.Thread):
 				last_name=target_name[1].strip(),
 				email_address=self.config['mailer.target_email_address'].strip()
 			)
+			if not counting:
+				mailer_tab.emit('target-create', target)
 			yield target
 		elif target_type == 'file':
 			for target in _iterate_targets_file(self.target_file):
@@ -523,11 +609,14 @@ class MailSenderThread(threading.Thread):
 				if not utilities.is_valid_email_address(target.email_address):
 					self.logger.warning("skipping line {0} in target csv file due to invalid email address: {1}".format(target.line, target.email_address))
 					continue
+				if not counting:
+					mailer_tab.emit('target-create', target)
 				yield target
 		else:
 			self.logger.error("the configured target type '{0}' is unsupported".format(target_type))
 
 	def run(self):
+		"""The entry point of the thread."""
 		self.logger.debug("mailer routine running in tid: 0x{0:x}".format(threading.current_thread().ident))
 		self.running.set()
 		self.should_stop.clear()
@@ -577,7 +666,16 @@ class MailSenderThread(threading.Thread):
 			self.max_messages_per_minute = float(self.config.get('smtp_max_send_rate', 0.0))
 		return True
 
-	def create_calendar_invite(self, target, attachments):
+	def create_message(self, target=None):
+		if target is None:
+			target = MessageTargetPlaceholder(uid=self.config['server_config'].get('server.secret_id'))
+		attachments = self.get_mime_attachments()
+		message = getattr(self, 'create_message_' + self.config['mailer.message_type'])(target, attachments)
+		mailer_tab = self.application.main_tabs['mailer']
+		mailer_tab.emit('message-create', target, message)
+		return message
+
+	def create_message_calendar_invite(self, target, attachments):
 		"""
 		Create a MIME calendar invite to be sent from a set of parameters.
 
@@ -599,14 +697,14 @@ class MailSenderThread(threading.Thread):
 		related_msg.attach(alt_msg)
 
 		part = mime.base.MIMEBase('text', 'plain', charset='utf-8')
-		part.set_payload('This calendar invite requires an HTML enabled viewer.\r\n\r\n')
+		part.set_payload(MIME_TEXT_PLAIN)
 		encoders.encode_base64(part)
 		alt_msg.attach(part)
 
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
 		formatted_msg = render_message_template(msg_template, self.config, target=target)
-		part = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
+		part = MIMEText(formatted_msg, 'html')
 		alt_msg.attach(part)
 
 		start_time = get_invite_start_from_config(self.config)
@@ -635,7 +733,7 @@ class MailSenderThread(threading.Thread):
 			top_msg.attach(attach)
 		return top_msg
 
-	def create_email(self, target, attachments):
+	def create_message_email(self, target, attachments):
 		"""
 		Create a MIME email to be sent from a set of parameters.
 
@@ -651,11 +749,11 @@ class MailSenderThread(threading.Thread):
 		target_field = self.config.get('mailer.target_field', 'to').lower()
 		for header in ('To', 'CC', 'BCC'):
 			if header.lower() == target_field:
-				msg[header] = target.email_address
+				msg[header] = '<' + target.email_address + '>'
 				continue
 			value = self.config.get('mailer.recipient_email_' + header.lower())
 			if value:
-				msg[header] = value
+				msg[header] = '<' + value + '>'
 
 		importance = self.config.get('mailer.importance', 'Normal')
 		if importance != 'Normal':
@@ -669,7 +767,9 @@ class MailSenderThread(threading.Thread):
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
 		formatted_msg = render_message_template(msg_template, self.config, target=target)
-		msg_body = mime.text.MIMEText(formatted_msg, 'html', 'utf-8')
+		msg_body = MIMEText(formatted_msg, 'html')
+		msg_alt.attach(msg_body)
+		msg_body = MIMEText(MIME_TEXT_PLAIN, 'plain')
 		msg_alt.attach(msg_body)
 
 		# process attachments
@@ -745,12 +845,16 @@ class MailSenderThread(threading.Thread):
 				self.server_smtp_reconnect()
 
 			emails_done += 1
+			if not all(mailer_tab.emit('target-send', target)):
+				self.logger.info("target-send signal subscriber vetoed target: {0!r}".format(target))
+				continue
 			self.tab_notify_status(sending_line.format(emails_done, target.uid, target.email_address))
-			mailer_tab.emit('send-target', target)
-			attachments = self.get_mime_attachments()
-			msg = getattr(self, 'create_' + self.config['mailer.message_type'])(target, attachments)
-			mailer_tab.emit('send-message', target, msg)
-			if not self._try_send_message(target.email_address, msg):
+
+			message = self.create_message(target=target)
+			if not all(mailer_tab.emit('message-send', target, message)):
+				self.logger.info("message-send signal subscriber vetoed message to target: {0!r}".format(target))
+				continue
+			if not self._try_send_message(target.email_address, message):
 				break
 
 			self.tab_notify_sent(emails_done, emails_total)

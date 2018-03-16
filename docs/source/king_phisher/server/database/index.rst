@@ -1,5 +1,5 @@
-:mod:`server.database`
-======================
+:mod:`database`
+===============
 
 .. toctree::
    :maxdepth: 2

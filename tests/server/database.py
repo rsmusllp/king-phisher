@@ -56,14 +56,13 @@ class DatabaseRPCTests(testing.KingPhisherServerTestCase):
 	def assertRPCPermissionDenied(self, db_method, *args, **kwargs):
 		super(DatabaseRPCTests, self).assertRPCPermissionDenied('db/table/' + db_method, *args, **kwargs)
 
-	def test_meta_data_is_private(self):
+	def test_storage_data_is_private(self):
 		# ensure that meta_data is kept private and that private tables can't be accessed via rpc
-		self.assertTrue(db_models.MetaData.is_private)
-		self.assertIsNone(self.rpc('db/table/view', 'meta_data'))
-		self.assertRPCPermissionDenied('get', 'meta_data', 'schema_version')
-		self.assertRPCPermissionDenied('set', 'meta_data', 'schema_version', ('value', 'value_type'), ('test', 'str'))
-		self.assertRPCPermissionDenied('insert', 'meta_data', ('id', 'value', 'value_type'), ('test', 'test', 'str'))
-		self.assertRPCPermissionDenied('delete', 'meta_data', 'schema_version')
+		self.assertTrue(db_models.StorageData.is_private)
+		self.assertIsNone(self.rpc('db/table/view', 'storage_data'))
+		self.assertRPCPermissionDenied('get', 'storage_data', 1)
+		self.assertRPCPermissionDenied('set', 'storage_data', 1, ('namespace',), ('test',))
+		self.assertRPCPermissionDenied('delete', 'storage_data', 1)
 
 class DatabaseSchemaTests(testing.KingPhisherTestCase):
 	def test_get_tables_id(self):
@@ -80,7 +79,6 @@ class DatabaseSchemaTests(testing.KingPhisherTestCase):
 			'industries',
 			'landing_pages',
 			'messages',
-			'meta_data',
 			'storage_data',
 			'users',
 			'visits'
@@ -90,29 +88,29 @@ class DatabaseSchemaTests(testing.KingPhisherTestCase):
 	def test_public_table_column_types(self):
 		# this test is to ensure that the data types of public tables are
 		# suitable for serialization, i.e. not binary
-		for table_name, table in db_models.database_table_objects.items():
-			if table.is_private:
+		for metatable in db_models.database_tables.values():
+			if metatable.model.is_private:
 				continue
-			for column in table.__table__.columns:
+			for column in metatable.model.__table__.columns:
 				self.assertIsInstance(
 					column.type,
 					(sqlalchemy.Boolean, sqlalchemy.DateTime, sqlalchemy.Integer, sqlalchemy.String),
-					msg="{0}.{1} is not an acceptable data type for a public table".format(table_name, column.name)
+					msg="{0}.{1} is not an acceptable data type for a public table".format(metatable.name, column.name)
 				)
 
 	def test_public_tables_str_id_has_default_func(self):
 		# this test is to ensure that public tables that use strings as their
 		# id column have a default function to generate them
-		for table_name, table in db_models.database_table_objects.items():
-			if table.is_private:
+		for metatable in db_models.database_tables.values():
+			if metatable.model.is_private:
 				continue
-			id_column = getattr(table, 'id', None)
+			id_column = getattr(metatable.model, 'id', None)
 			if id_column is None:
 				continue
 			for column in id_column.property.columns:
 				if not isinstance(column.type, sqlalchemy.String):
 					continue
-				self.assertIsNotNone(column.default, msg="{0}.id must have a default function defined".format(table_name))
+				self.assertIsNotNone(column.default, msg="{0}.id must have a default function defined".format(metatable.name))
 
 	def test_table_names(self):
 		for table_name in db_models.database_tables.keys():
@@ -173,19 +171,19 @@ class DatabaseTests(DatabaseTestBase):
 
 	def test_get_meta_data(self):
 		self._init_db()
-		database_driver = db_manager.get_meta_data('database_driver')
+		database_driver = db_manager.get_metadata('database_driver')
 		self.assertEqual(database_driver, 'sqlite')
 
-		schema_version = db_manager.get_meta_data('schema_version')
+		schema_version = db_manager.get_metadata('schema_version')
 		self.assertEqual(schema_version, db_models.SCHEMA_VERSION)
 
 	def test_get_row_by_id(self):
 		self._init_db()
 		session = db_manager.Session()
-		user = db_models.User(id='alice')
+		user = db_models.User(name='alice')
 		session.add(user)
 		campaign_name = random_string(10)
-		campaign = db_models.Campaign(name=campaign_name, user_id=user.id)
+		campaign = db_models.Campaign(name=campaign_name, user=user)
 		session.add(campaign)
 		session.commit()
 		self.assertIsNotNone(campaign.id)
@@ -201,13 +199,13 @@ class DatabaseTests(DatabaseTestBase):
 		# set a new value
 		key = random_string(10)
 		value = random_string(20)
-		db_manager.set_meta_data(key, value)
-		self.assertEqual(db_manager.get_meta_data(key), value)
+		db_manager.set_metadata(key, value)
+		self.assertEqual(db_manager.get_metadata(key), value)
 
 		# update an existing value
 		value = random_string(30)
-		db_manager.set_meta_data(key, value)
-		self.assertEqual(db_manager.get_meta_data(key), value)
+		db_manager.set_metadata(key, value)
+		self.assertEqual(db_manager.get_metadata(key), value)
 
 if __name__ == '__main__':
 	unittest.main()

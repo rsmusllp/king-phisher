@@ -15,7 +15,9 @@
 GITHUB_BRANCH = 'dev'
 GITHUB_REPO = 'securestate/king-phisher'
 
+import copy
 import os
+import re
 import ssl
 import sys
 
@@ -35,6 +37,10 @@ import king_phisher.its
 import king_phisher.utilities
 import king_phisher.version
 
+import sphinx
+import sphinx.domains.python
+import sphinx.util.docfields
+
 # -- General configuration ------------------------------------------------
 needs_sphinx = '1.6'
 
@@ -44,6 +50,7 @@ needs_sphinx = '1.6'
 extensions = [
 	'king_phisher.rpc_docs',
 	'sphinx.ext.autodoc',
+	'sphinx.ext.coverage',
 	'sphinx.ext.extlinks',
 	'sphinx.ext.intersphinx',
 	'sphinx.ext.linkcode',
@@ -64,6 +71,20 @@ def linkcode_resolve(domain, info):
 	file_name = info['module'].replace('.', '/') + '.py'
 	return "https://github.com/{0}/blob/{1}/{2}".format(GITHUB_REPO, GITHUB_BRANCH, file_name)
 
+def gobject_signal_parse(env, sig, signode):
+	match = re.match(r'([a-z\-]+)\((([a-zA-Z_]+, *)*[a-zA-Z_]+)?\)', sig)
+	signode += sphinx.addnodes.desc_name(sig, sig)
+	return match.group(1)
+
+def setup(app):
+	app.add_stylesheet('theme_overrides.css')
+	doc_field_types = list(copy.copy(sphinx.domains.python.PyObject.doc_field_types))
+	doc_field_types.append(sphinx.util.docfields.Field('flags', label='Signal flags', names=['flag', 'flags'], has_arg=False))
+	app.add_object_type(
+		'gobject-signal', 'gsig',
+		doc_field_types=doc_field_types,
+		parse_node=gobject_signal_parse
+	)
 
 intersphinx_mapping = {
 	'advancedhttpserver': ('https://advancedhttpserver.readthedocs.io/en/latest/', None),
@@ -74,6 +95,7 @@ intersphinx_mapping = {
 	'gtk': ('http://lazka.github.io/pgi-docs/Gtk-3.0/', None),
 	'jsonschema': ('https://python-jsonschema.readthedocs.io/en/latest/', None),
 	'paramiko': ('http://docs.paramiko.org/en/latest/', None),
+	'python': ('https://docs.python.org/3', None),
 	'smokezephyr': ('https://smoke-zephyr.readthedocs.io/en/latest/', None),
 	'sqlalchemy': ('http://docs.sqlalchemy.org/en/latest/', None),
 	'webkit2': ('http://lazka.github.io/pgi-docs/WebKit2-4.0/', None)
@@ -119,7 +141,7 @@ http_index_localname = "{0} REST API".format(project)
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#add_module_names = True
+add_module_names = False
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -169,7 +191,7 @@ if not king_phisher.its.on_rtd:
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -224,14 +246,14 @@ htmlhelp_basename = 'king_phisher_doc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
+	# The paper size ('letterpaper' or 'a4paper').
+	#'papersize': 'letterpaper',
 
-    # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
+	# The font size ('10pt', '11pt' or '12pt').
+	#'pointsize': '10pt',
 
-    # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+	# Additional stuff for the LaTeX preamble.
+	#'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

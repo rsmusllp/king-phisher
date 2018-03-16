@@ -1,7 +1,7 @@
 :mod:`find`
 ===========
 
-.. module:: find
+.. module:: king_phisher.find
    :synopsis:
 
 This module provides a means by which data files distributed with the
@@ -11,17 +11,17 @@ directories.
 Data
 ----
 
-.. autodata:: king_phisher.find.DATA_DIRECTORY_NAME
+.. autodata:: DATA_DIRECTORY_NAME
 
-.. autodata:: king_phisher.find.ENV_VAR
+.. autodata:: ENV_VAR
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.find.data_path_append
+.. autofunction:: data_path_append
 
-.. autofunction:: king_phisher.find.data_directory
+.. autofunction:: data_directory
 
-.. autofunction:: king_phisher.find.data_file
+.. autofunction:: data_file
 
-.. autofunction:: king_phisher.find.init_data_path
+.. autofunction:: init_data_path

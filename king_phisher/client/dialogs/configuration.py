@@ -35,6 +35,7 @@ import logging
 import string
 
 from king_phisher import its
+from king_phisher import utilities
 from king_phisher.client import graphs
 from king_phisher.client import gui_utilities
 
@@ -182,7 +183,8 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		self.application.rpc(remote_method, self.config['campaign_id'])
 
 	def signal_toggle_reject_after_credentials(self, cbutton):
-		self.application.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'reject_after_credentials', cbutton.get_property('active'))
+		max_credentials = (1 if cbutton.get_property('active') else None)
+		self.application.rpc('db/table/set', 'campaigns', self.config['campaign_id'], 'max_credentials', max_credentials)
 
 	def signal_changed_spf_check_level(self, combobox):
 		ti = combobox.get_active_iter()
@@ -230,23 +232,12 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		# older versions of GObject.signal_handler_find seem to have a bug which cause a segmentation fault in python
 		if GObject.pygobject_version < (3, 10):
 			cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-			cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['rejectAfterCredentials'])
+			cb_reject_after_creds.set_property('active', self.application.get_graphql_campaign()['maxCredentials'])
 		else:
 			with gui_utilities.gobject_signal_blocked(cb_subscribed, 'toggled'):
 				cb_subscribed.set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.config['campaign_id']))
-				cb_reject_after_creds.set_property('active', self._get_graphql_campaign()['rejectAfterCredentials'])
+				cb_reject_after_creds.set_property('active', self.application.get_graphql_campaign()['maxCredentials'])
 		cb_reject_after_creds.set_sensitive(self.config['server_config']['server.require_id'])
-
-	def _get_graphql_campaign(self, campaign_id=None):
-		results = self.application.rpc.graphql("""\
-		query getCampaign($id: String!) {
-			db {
-				campaign(id: $id) {
-					rejectAfterCredentials
-				}
-			}
-		}""", {'id': campaign_id or self.config['campaign_id']})
-		return results['db']['campaign']
 
 	def _finialize_settings_dashboard(self):
 		dashboard_changed = False
@@ -294,12 +285,12 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 	def save_sms_settings(self):
 		phone_number = gui_utilities.gobject_get_value(self.gobjects['entry_sms_phone_number'])
 		sms_carrier = gui_utilities.gobject_get_value(self.gobjects['combobox_sms_carrier'])
-		username = self.config['server_username']
+		server_user = self.application.server_user
 		if phone_number:
 			phone_number = ''.join(d for d in phone_number if d in string.digits)
 			if len(phone_number) > 11:
 				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must not contain more than 11 digits')
 				return
-		phone_number = phone_number if phone_number else None
-		sms_carrier = sms_carrier if sms_carrier else None
-		self.application.rpc('db/table/set', 'users', username, ('phone_number', 'phone_carrier'), (phone_number, sms_carrier))
+		phone_number = utilities.nonempty_string(phone_number)
+		sms_carrier = utilities.nonempty_string(sms_carrier)
+		self.application.rpc('db/table/set', 'users', server_user.id, ('phone_number', 'phone_carrier'), (phone_number, sms_carrier))

@@ -1,55 +1,60 @@
 :mod:`plugins`
 ==============
 
-.. module:: plugins
+.. module:: king_phisher.plugins
    :synopsis:
 
 This module provides the core functionality necessary to support user provided
 plugins.
 
+Functions
+---------
+
+.. autofunction:: recursive_reload
+
 Classes
 -------
 
-.. autoclass:: king_phisher.plugins.OptionBase
+.. autoclass:: OptionBase
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.plugins.OptionBoolean
-   :show-inheritance:
-   :members:
-   :inherited-members:
-   :special-members: __init__
-
-.. autoclass:: king_phisher.plugins.OptionEnum
+.. autoclass:: OptionBoolean
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.plugins.OptionInteger
+.. autoclass:: OptionEnum
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.plugins.OptionString
+.. autoclass:: OptionInteger
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.plugins.PluginBase
+.. autoclass:: OptionString
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :special-members: __init__
+
+.. autoclass:: PluginBase
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.plugins.PluginBaseMeta
+.. autoclass:: PluginBaseMeta
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.plugins.PluginManagerBase
+.. autoclass:: PluginManagerBase
    :show-inheritance:
    :members:
    :special-members: __init__

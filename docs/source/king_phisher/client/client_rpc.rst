@@ -1,7 +1,7 @@
-:mod:`client.client_rpc`
-========================
+:mod:`client_rpc`
+=================
 
-.. module:: client.client_rpc
+.. module:: king_phisher.client.client_rpc
    :synopsis:
 
 This module facilitates communication with the server application over the RPC

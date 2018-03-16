@@ -1,20 +1,20 @@
-:mod:`dialogs.exception`
-========================
+:mod:`exception`
+================
 
-.. module:: dialogs.exception
+.. module:: king_phisher.client.dialogs.exception
    :synopsis:
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.dialogs.exception.format_exception_details
+.. autofunction:: format_exception_details
 
-.. autofunction:: king_phisher.client.dialogs.exception.format_exception_name
+.. autofunction:: format_exception_name
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.dialogs.exception.ExceptionDialog
+.. autoclass:: ExceptionDialog
    :show-inheritance:
    :members:
    :special-members: __init__

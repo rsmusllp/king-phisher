@@ -1,7 +1,7 @@
-:mod:`server.signals`
-=====================
+:mod:`signals`
+==============
 
-.. module:: server.signals
+.. module:: king_phisher.server.signals
    :synopsis:
 
 This module contains the signals which are used by the server to dispatch
@@ -11,64 +11,64 @@ available in the :ref:`server-signals-label` documentation.
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.signals.send_safe
+.. autofunction:: send_safe
 
 Signals
 -------
 
-.. autodata:: king_phisher.server.signals.campaign_alert
+.. autodata:: campaign_alert
    :annotation:
 
-.. autodata:: king_phisher.server.signals.credentials_received
+.. autodata:: credentials_received
    :annotation:
 
-.. autodata:: king_phisher.server.signals.db_initialized
+.. autodata:: db_initialized
    :annotation:
 
-.. autodata:: king_phisher.server.signals.db_session_deleted
+.. autodata:: db_session_deleted
    :annotation:
 
-.. autodata:: king_phisher.server.signals.db_session_inserted
+.. autodata:: db_session_inserted
    :annotation:
 
-.. autodata:: king_phisher.server.signals.db_session_updated
+.. autodata:: db_session_updated
    :annotation:
 
-.. autodata:: king_phisher.server.signals.db_table_delete
+.. autodata:: db_table_delete
    :annotation:
 
-.. autodata:: king_phisher.server.signals.db_table_insert
+.. autodata:: db_table_insert
    :annotation:
 
-.. autodata:: king_phisher.server.signals.db_table_update
+.. autodata:: db_table_update
    :annotation:
 
-.. autodata:: king_phisher.server.signals.email_opened
+.. autodata:: email_opened
    :annotation:
 
-.. autodata:: king_phisher.server.signals.request_handle
+.. autodata:: request_handle
    :annotation:
 
-.. autodata:: king_phisher.server.signals.request_received
+.. autodata:: request_received
    :annotation:
 
-.. autodata:: king_phisher.server.signals.response_sent
+.. autodata:: response_sent
    :annotation:
 
-.. autodata:: king_phisher.server.signals.rpc_method_call
+.. autodata:: rpc_method_call
    :annotation:
 
-.. autodata:: king_phisher.server.signals.rpc_method_called
+.. autodata:: rpc_method_called
    :annotation:
 
-.. autodata:: king_phisher.server.signals.rpc_user_logged_in
+.. autodata:: rpc_user_logged_in
    :annotation:
 
-.. autodata:: king_phisher.server.signals.rpc_user_logged_out
+.. autodata:: rpc_user_logged_out
    :annotation:
 
-.. autodata:: king_phisher.server.signals.server_initialized
+.. autodata:: server_initialized
    :annotation:
 
-.. autodata:: king_phisher.server.signals.visit_received
+.. autodata:: visit_received
    :annotation:

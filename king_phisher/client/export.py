@@ -43,11 +43,11 @@ import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
 
 from king_phisher import archive
+from king_phisher import errors
 from king_phisher import ipaddress
 from king_phisher import serializers
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
-from king_phisher.errors import KingPhisherInputValidationError
 
 from boltons import iterutils
 import dateutil.tz
@@ -155,7 +155,11 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 
 	campaign = ET.SubElement(root, 'campaign')
 	logger.info('gathering campaign information for export')
-	campaign_info = _get_graphql_campaignexport(rpc, campaign_id)
+	try:
+		campaign_info = _get_graphql_campaignexport(rpc, campaign_id)
+	except errors.KingPhisherGraphQLQueryError as error:
+		logger.error('graphql error: ' + error.message)
+		raise
 	gui_utilities.gtk_sync()
 	for key, value in campaign_info.items():
 		if key in ('landingPages', 'messages', 'visits', 'credentials', 'deaddropDeployments', 'deaddropConnections'):
@@ -213,7 +217,7 @@ def _get_graphql_campaignexport(rpc, campaign_id, cursor=None, page=1000):
 				description
 				userId
 				created
-				rejectAfterCredentials
+				maxCredentials
 				expiration
 				campaignTypeId
 				companyId
@@ -259,11 +263,11 @@ def _get_graphql_campaignexport(rpc, campaign_id, cursor=None, page=1000):
 							id
 							messageId
 							campaignId
-							visitCount
-							visitorIp
-							visitorDetails
-							firstVisit
-							lastVisit
+							count
+							ip
+							firstSeen
+							lastSeen
+							userAgent
 						}
 					}
 					pageInfo {
@@ -310,13 +314,13 @@ def _get_graphql_campaignexport(rpc, campaign_id, cursor=None, page=1000):
 							id
 							deploymentId
 							campaignId
-							visitCount
-							visitorIp
+							count
+							ip
 							localUsername
 							localHostname
 							localIpAddresses
-							firstVisit
-							lastVisit
+							firstSeen
+							lastSeen
 						}
 					}
 					pageInfo {
@@ -377,16 +381,16 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	ip_counter = collections.Counter()
 	for visit_node in _get_graphql_campaign_visits(rpc, campaign_id):
 		visit = visit_node['node']
-		ip_counter.update((visit['visitorIp'],))
-		visitor_ip = ipaddress.ip_address(visit['visitorIp'])
+		ip_counter.update((visit['ip'],))
+		visitor_ip = ipaddress.ip_address(visit['ip'])
 		if not isinstance(visitor_ip, ipaddress.IPv4Address):
 			continue
 		if visitor_ip.is_loopback or visitor_ip.is_private:
 			continue
 		if not visitor_ip in ips_for_georesolution:
-			ips_for_georesolution[visitor_ip] = visit['firstVisit']
-		elif ips_for_georesolution[visitor_ip] > visit['firstVisit']:
-			ips_for_georesolution[visitor_ip] = visit['firstVisit']
+			ips_for_georesolution[visitor_ip] = visit['firstSeen']
+		elif ips_for_georesolution[visitor_ip] > visit['firstSeen']:
+			ips_for_georesolution[visitor_ip] = visit['firstSeen']
 	ips_for_georesolution = [ip for (ip, _) in sorted(ips_for_georesolution.items(), key=lambda x: x[1])]
 	locations = {}
 	for ip_addresses in iterutils.chunked(ips_for_georesolution, 50):
@@ -408,8 +412,8 @@ def _get_graphql_campaign_visits(rpc, campaign_id):
 				visits {
 					edges {
 						node {
-							visitorIp
-							firstVisit
+							firstSeen
+							ip
 						}
 					}
 				}
@@ -431,7 +435,7 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 	"""
 	if not archive.is_archive(target_file):
 		logger.warning('the file is not recognized as a valid archive')
-		raise KingPhisherInputValidationError('file is not in the correct format')
+		raise errors.KingPhisherInputValidationError('file is not in the correct format')
 	kpm = archive.ArchiveFile(target_file, 'r')
 
 	attachment_member_names = [n for n in kpm.file_names if n.startswith('attachments' + os.path.sep)]
@@ -439,7 +443,7 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 
 	if not kpm.has_file('message_config.json'):
 		logger.warning('the kpm archive is missing the message_config.json file')
-		raise KingPhisherInputValidationError('data is missing from the message archive')
+		raise errors.KingPhisherInputValidationError('data is missing from the message archive')
 	message_config = kpm.get_data('message_config.json')
 	message_config = message_config.decode(encoding)
 	message_config = serializers.JSON.loads(message_config)
@@ -460,11 +464,11 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 		if not file_name in kpm.file_names:
 			if config_name in message_config:
 				logger.warning("the kpm archive is missing the {0} file".format(file_name))
-				raise KingPhisherInputValidationError('data is missing from the message archive')
+				raise errors.KingPhisherInputValidationError('data is missing from the message archive')
 			continue
 		if not message_config.get(config_name):
 			logger.warning("the kpm message configuration is missing the {0} setting".format(config_name))
-			raise KingPhisherInputValidationError('data is missing from the message archive')
+			raise errors.KingPhisherInputValidationError('data is missing from the message archive')
 		arcfile_h = kpm.get_file(file_name)
 		file_path = os.path.join(dest_dir, os.path.basename(message_config[config_name]))
 		with open(file_path, 'wb') as file_h:
@@ -472,9 +476,9 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 		message_config[config_name] = file_path
 
 	if 'message_content.html' in kpm.file_names:
-		if not 'html_file' in message_config:
+		if 'html_file' not in message_config:
 			logger.warning('the kpm message configuration is missing the html_file setting')
-			raise KingPhisherInputValidationError('data is missing from the message archive')
+			raise errors.KingPhisherInputValidationError('data is missing from the message archive')
 		arcfile_h = kpm.get_file('message_content.html')
 		file_path = os.path.join(dest_dir, os.path.basename(message_config['html_file']))
 		with open(file_path, 'wb') as file_h:
@@ -482,7 +486,7 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 		message_config['html_file'] = file_path
 	elif 'html_file' in message_config:
 		logger.warning('the kpm archive is missing the message_content.html file')
-		raise KingPhisherInputValidationError('data is missing from the message archive')
+		raise errors.KingPhisherInputValidationError('data is missing from the message archive')
 	kpm.close()
 	return message_config
 
@@ -610,7 +614,7 @@ def liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_op
 	utilities.assert_arg_type(worksheet, xlsxwriter.worksheet.Worksheet, 2)
 	utilities.assert_arg_type(columns, dict, 3)
 	utilities.assert_arg_type(title_format, xlsxwriter.format.Format, 4)
-	utilities.assert_arg_type(xlsx_options, XLSXWorksheetOptions, 5)
+	utilities.assert_arg_type(xlsx_options, (type(None), XLSXWorksheetOptions), 5)
 
 	if xlsx_options is None:
 		worksheet.set_column(0, len(columns), 30)

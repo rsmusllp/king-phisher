@@ -1,7 +1,7 @@
 :mod:`version`
 ==============
 
-.. module:: version
+.. module:: king_phisher.version
    :synopsis:
 
 This module collects all import version information for the application. This
@@ -11,19 +11,19 @@ be used anywhere the version is required.
 Data
 ----
 
-.. autodata:: king_phisher.version.distutils_version
+.. autodata:: distutils_version
 
-.. autodata:: king_phisher.version.revision
+.. autodata:: revision
 
-.. autodata:: king_phisher.version.rpc_api_version
+.. autodata:: rpc_api_version
 
-.. autodata:: king_phisher.version.version
+.. autodata:: version
 
-.. autodata:: king_phisher.version.version_info
+.. autodata:: version_info
 
-.. autodata:: king_phisher.version.version_label
+.. autodata:: version_label
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.version.get_revision
+.. autofunction:: get_revision

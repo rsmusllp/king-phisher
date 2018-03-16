@@ -106,6 +106,10 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		top_level=('StockMediaPlayImage',)
 	)
 	top_gobject = 'box'
+	precheck_routines = ('settings', 'attachment', 'required-files', 'campaign', 'url', 'source', 'spf')
+	"""The built-in precheck routines that are executed before sending messages."""
+	# precheck routines should be able to be executed in an arbitrary order and
+	# must return whether or not sending should proceed
 	def __init__(self, *args, **kwargs):
 		self.label = Gtk.Label(label='Send')
 		"""The :py:class:`Gtk.Label` representing this tabs name."""
@@ -160,22 +164,19 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		return True
 
 	def _sender_precheck_campaign(self):
-		expiration = self._get_graphql_campaign_expiration()
+		expiration = self.application.get_graphql_campaign()['expiration']
 		if expiration and expiration < datetime.datetime.utcnow():
 			gui_utilities.show_dialog_warning('Campaign Is Expired', self.parent, 'The current campaign has already expired.')
 			return False
 		return True
 
-	def _get_graphql_campaign_expiration(self, campaign_id=None):
-		results = self.application.rpc.graphql("""\
-		query getCampaignExpiration($id: String!) {
-			db {
-				campaign(id: $id) {
-					expiration
-				}
-			}
-		}""", {'id': campaign_id or self.config['campaign_id']})
-		return results['db']['campaign']['expiration']
+	def _sender_precheck_required_files(self):
+		missing_files = self.sender_thread.missing_files()
+		if not missing_files:
+			return True
+		text = ''.join("Missing required file: '{0}'\n".format(f) for f in missing_files)
+		self.text_insert(text)
+		return False
 
 	def _sender_precheck_settings(self):
 		required_settings = {
@@ -184,7 +185,7 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			'mailer.html_file': 'Message HTML File'
 		}
 		target_field = self.config.get('mailer.target_field')
-		if not target_field in ('to', 'cc', 'bcc'):
+		if target_field not in ('to', 'cc', 'bcc'):
 			gui_utilities.show_dialog_warning('Invalid Target Field', self.parent, 'Please select a valid target field.')
 			return False
 		target_type = self.config.get('mailer.target_type')
@@ -194,23 +195,26 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 			required_settings['mailer.target_email_address'] = 'Target Email Address'
 			required_settings['mailer.target_name'] = 'Target Name'
 		else:
+			self.text_insert("Invalid target type: '{0}'\n".format(target_type))
 			gui_utilities.show_dialog_warning('Invalid Target Type', self.parent, 'Please specify a target file or name and email address.')
 			return False
 		message_type = self.config.get('mailer.message_type')
-		if not message_type in ('email', 'calendar_invite'):
+		if message_type not in ('email', 'calendar_invite'):
 			gui_utilities.show_dialog_warning('Invalid Message Type', self.parent, 'Please select a valid message type.')
 			return False
 		if message_type == 'email' and target_field != 'to':
 			required_settings['mailer.recipient_email_to'] = 'Recipient \'To\' Email Address'
 		for setting, setting_name in required_settings.items():
 			if not self.config.get(setting):
+				self.text_insert("Missing required option: '{0}'\n".format(setting_name))
 				gui_utilities.show_dialog_warning("Missing Required Option: '{0}'".format(setting_name), self.parent, 'Return to the Config tab and set all required options')
 				return
 			if not setting.endswith('_file'):
 				continue
 			file_path = self.config[setting]
 			if not (os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
-				gui_utilities.show_dialog_warning('Invalid Option Configuration', self.parent, "Setting: '{0}'\nReason: the file could not be read.".format(setting_name))
+				self.text_insert("Missing required file: '{0}'\n".format(file_path))
+				gui_utilities.show_dialog_warning('Invalid Configuration Option', self.parent, "Setting: '{0}'\nReason: the file could not be read.".format(setting_name))
 				return False
 		if not self.config.get('smtp_server'):
 			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
@@ -300,41 +304,30 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		self.textbuffer_iter = self.textbuffer.get_start_iter()
 
 	def signal_button_clicked_sender_start(self, button):
-		if not self._sender_precheck_settings():
-			return
-		if not self._sender_precheck_campaign():
-			return
-		if not self._sender_precheck_url():
-			return
-		if not self._sender_precheck_source():
-			return
-		if not self._sender_precheck_spf():
-			return
-		if not self._sender_precheck_attachment():
-			return
-		mailer_tab = self.application.main_tabs['mailer']
-		if not all(mailer_tab.emit('send-precheck')):
-			self.text_insert('Message pre-check conditions failed, aborting.\n')
-			return
-
-		self.text_insert("Sending messages started at: {:%A %B %d, %Y %H:%M:%S}\n".format(datetime.datetime.now()))
-		self.text_insert("Message mode is: {0}\n".format(self.config['mailer.message_type'].replace('_', ' ').title()))
-
+		self.application.emit('config-save')
 		# after this the operation needs to call self.sender_start_failure to quit
 		if self.sender_thread:
 			return
-		self.application.emit('config-save')
 		self.gobjects['button_mail_sender_start'].set_sensitive(False)
 		self.gobjects['button_mail_sender_stop'].set_sensitive(True)
 		self.progressbar.set_fraction(0)
 		self.sender_thread = mailer.MailSenderThread(self.application, self.config['mailer.target_file'], self.application.rpc, self)
 
-		# verify settings
-		missing_files = self.sender_thread.missing_files()
-		if missing_files:
-			text = ''.join("Missing required file: '{0}'\n".format(f) for f in missing_files)
-			self.sender_start_failure('Missing required files', text)
+		for precheck_routine in self.precheck_routines:
+			method = getattr(self, '_sender_precheck_' + precheck_routine.replace('-', '_'))
+			self.logger.debug('running precheck-routine: ' + precheck_routine)
+			if not method():
+				self.sender_start_failure()
+				return
+			gui_utilities.gtk_sync()
+
+		mailer_tab = self.application.main_tabs['mailer']
+		if not all(mailer_tab.emit('send-precheck')):
+			self.sender_start_failure(text='Message pre-check conditions failed, aborting.\n')
 			return
+
+		self.text_insert("Sending messages started at: {:%A %B %d, %Y %H:%M:%S}\n".format(datetime.datetime.now()))
+		self.text_insert("Message mode is: {0}\n".format(self.config['mailer.message_type'].replace('_', ' ').title()))
 
 		# connect to the smtp server
 		if self.config['smtp_ssh_enable']:
@@ -602,6 +595,13 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		self.textview.set_property('indent-width', self.config.get('text_source.tab_width', 4))
 		self.textview.set_property('insert-spaces-instead-of-tabs', not self.config.get('text_source.hardtabs', False))
 		self.textview.set_property('tab-width', self.config.get('text_source.tab_width', 4))
+		wrap_mode = self.config.get('text_source.wrap_mode', 'NONE')
+		if wrap_mode.startswith('GTK_WRAP_'):
+			wrap_mode = wrap_mode[9:]
+		if wrap_mode.upper() in ('CHAR', 'NONE', 'WORD', 'WORD_CHAR'):
+			self.textview.set_property('wrap-mode', getattr(Gtk.WrapMode, wrap_mode.upper()))
+		else:
+			self.logger.warning("invalid GtkWrapMode: {0!r}".format(wrap_mode))
 
 		self.toolbutton_save_html_file = self.gobjects['toolbutton_save_html_file']
 		self.textview.connect('populate-popup', self.signal_textview_populate_popup)
@@ -860,25 +860,12 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self._update_target_count()
 
 	def _campaign_load(self, campaign_id):
-		company = self._get_graphql_campaign_company()
-		if company is None:
+		campaign = self.application.get_graphql_campaign(campaign_id=campaign_id)
+		if campaign['company'] is None:
 			self.config['mailer.company_name'] = None
 		else:
-			self.config['mailer.company_name'] = company['name']
+			self.config['mailer.company_name'] = campaign['company']['name']
 		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
-
-	def _get_graphql_campaign_company(self, campaign_id=None):
-		results = self.application.rpc.graphql("""\
-		query getCampaignCompanyName($id: String!) {
-			db {
-				campaign(id: $id) {
-					company {
-						name
-					}
-				}
-			}
-		}""", {'id': campaign_id or self.config['campaign_id']})
-		return results['db']['campaign']['company']
 
 	def _update_target_count(self):
 		if not hasattr(self, 'target_type'):
@@ -1076,12 +1063,14 @@ class MailSenderTab(_GObject_GObject):
 	:GObject Signals: :ref:`gobject-signals-mail-tab-label`
 	"""
 	__gsignals__ = {
+		'message-create': (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
 		'message-data-export': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, bool, (str,)),
 		'message-data-import': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, bool, (str, str)),
+		'message-send': (GObject.SIGNAL_RUN_LAST, object, (object, object), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r)),
 		'send-finished': (GObject.SIGNAL_RUN_FIRST, None, ()),
 		'send-precheck': (GObject.SIGNAL_RUN_LAST, object, (), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r)),
-		'send-message': (GObject.SIGNAL_RUN_FIRST, None, (object, object)),
-		'send-target': (GObject.SIGNAL_RUN_FIRST, None, (object,))
+		'target-create': (GObject.SIGNAL_RUN_FIRST, None, (object,)),
+		'target-send': (GObject.SIGNAL_RUN_LAST, object, (object,), gui_utilities.gobject_signal_accumulator(test=lambda r, a: r)),
 	}
 	def __init__(self, parent, application):
 		"""
@@ -1287,5 +1276,11 @@ class MailSenderTab(_GObject_GObject):
 		config_tab.objects_load_from_config()
 		return True
 
+	def do_message_send(self, target, message):
+		return True
+
 	def do_send_precheck(self):
+		return True
+
+	def do_target_send(self, target):
 		return True

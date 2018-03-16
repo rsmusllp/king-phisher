@@ -60,6 +60,7 @@ class ColoredLogFormatter(logging.Formatter):
 			orig_levelname = record.levelname
 			record.levelname = termcolor.colored("{0:<8}".format(record.levelname), *LEVEL_COLORS[record.levelno], attrs=['bold'])
 		value = super(ColoredLogFormatter, self).format(record)
+		record.exc_text = None
 		if orig_levelname is not None:
 			record.levelname = orig_levelname
 		return value
@@ -67,7 +68,8 @@ class ColoredLogFormatter(logging.Formatter):
 	@staticmethod
 	def formatException(exc_info):
 		tb_lines = traceback.format_exception(*exc_info)
-		for line_no, line in enumerate(tb_lines):
+		tb_lines[0] = termcolor.colored(tb_lines[0], 'red', attrs=['bold'])
+		for line_no, line in enumerate(tb_lines[1:], 1):
 			search = re.search(r'File \"([^"]+)", line ([\d,]+), in', line)
 			if search:
 				new_line = line[:search.start(1)]

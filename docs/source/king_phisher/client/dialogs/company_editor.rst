@@ -1,12 +1,12 @@
-:mod:`dialogs.company_editor`
-=============================
+:mod:`company_editor`
+=====================
 
-.. module:: dialogs.company_editor
+.. module:: king_phisher.client.dialogs.company_editor
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.dialogs.company_editor.CompanyEditorDialog
+.. autoclass:: CompanyEditorDialog
    :show-inheritance:
    :members:

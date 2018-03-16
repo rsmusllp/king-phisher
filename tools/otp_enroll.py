@@ -85,12 +85,12 @@ def main():
 
 	manager.init_database(database_connection_url)
 	session = manager.Session()
-	user = session.query(models.User).filter_by(id=arguments.user).first()
+	user = session.query(models.User).filter_by(name=arguments.user).first()
 	if not user:
 		if not arguments.force:
 			color.print_error("invalid user id: {0}".format(arguments.user))
 			return
-		user = models.User(id=arguments.user)
+		user = models.User(name=arguments.user)
 		session.add(user)
 		color.print_status('the specified user was created')
 
@@ -113,9 +113,9 @@ def main():
 			break
 
 	if user.otp_secret:
-		color.print_status("user: {0} otp: {1}".format(user.id, user.otp_secret))
+		color.print_status("user: {0} otp: {1}".format(user.name, user.otp_secret))
 		totp = pyotp.TOTP(user.otp_secret)
-		uri = totp.provisioning_uri(user.id + '@king-phisher') + '&issuer=King%20Phisher'
+		uri = totp.provisioning_uri(user.name + '@king-phisher') + '&issuer=King%20Phisher'
 		color.print_status("provisioning uri: {0}".format(uri))
 		if has_qrcode and arguments.qrcode_filename:
 			img = qrcode.make(uri)

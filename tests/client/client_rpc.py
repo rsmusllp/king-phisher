@@ -39,7 +39,7 @@ from king_phisher.server.database import models
 class ClientRPCRemoteRowTests(testing.KingPhisherTestCase):
 	def test_table_row_classes_are_populated(self):
 		self.assertGreater(len(client_rpc.database_table_objects), 0)
-		public_tables = tuple(table for table in models.database_table_objects.values() if not table.is_private)
+		public_tables = tuple(metatable.model for metatable in models.database_tables.values() if not metatable.model.is_private)
 		self.assertEqual(len(client_rpc.database_table_objects), len(public_tables))
 		for remote_row in client_rpc.database_table_objects.values():
 			self.assertTrue(issubclass(remote_row, client_rpc.RemoteRow))
@@ -47,16 +47,6 @@ class ClientRPCRemoteRowTests(testing.KingPhisherTestCase):
 	def test_table_row_classes_are_named(self):
 		for table_name, remote_row in client_rpc.database_table_objects.items():
 			self.assertEqual(table_name, remote_row.__table__)
-
-	def test_table_row_classes_xrefs_are_valid(self):
-		all_xrefs = tuple(row.__xref_attr__ for row in client_rpc.database_table_objects.values() if row.__xref_attr__ is not None)
-		self.assertEqual(len(all_xrefs), len(set(all_xrefs)), 'all xrefs must be unique')
-		for remote_row in client_rpc.database_table_objects.values():
-			for xref_attr in remote_row.__slots__:
-				if not xref_attr.endswith('_id'):
-					continue
-				xref_attr = xref_attr[:-3]
-				self.assertIn(xref_attr, all_xrefs)
 
 	def test_table_row_classes_all_have_ids(self):
 		for remote_row in client_rpc.database_table_objects.values():

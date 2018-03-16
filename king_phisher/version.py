@@ -66,7 +66,7 @@ revision = get_revision()
 version_info = collections.namedtuple('version_info', ('major', 'minor', 'micro'))(1, 10, 0)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
 
-version_label = 'beta'
+version_label = ''
 """A version label such as alpha or beta."""
 
 version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)
@@ -87,7 +87,7 @@ if version_label:
 if revision:
 	version += " (rev: {0})".format(revision[:12])
 
-rpc_api_version = collections.namedtuple('rpc_api_version', ('major', 'minor'))(5, 5)
+rpc_api_version = collections.namedtuple('rpc_api_version', ('major', 'minor'))(6, 0)
 """
 A tuple representing the local version of the RPC API for use with compatibility
 checks. The major version is incremented when backwards incompatible changes are

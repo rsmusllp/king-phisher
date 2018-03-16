@@ -1,5 +1,5 @@
-:mod:`client.dialogs`
-=====================
+:mod:`dialogs`
+==============
 
 .. toctree::
    :maxdepth: 2

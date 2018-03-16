@@ -1,7 +1,7 @@
 :mod:`utilities`
 ================
 
-.. module:: utilities
+.. module:: king_phisher.utilities
    :synopsis:
 
 This module collects various useful utility functions that are used throughout
@@ -10,46 +10,48 @@ the application.
 Functions
 ---------
 
-.. autofunction:: king_phisher.utilities.argp_add_args
+.. autofunction:: argp_add_args
 
-.. autofunction:: king_phisher.utilities.assert_arg_type
+.. autofunction:: assert_arg_type
 
-.. autofunction:: king_phisher.utilities.configure_stream_logger
+.. autofunction:: configure_stream_logger
 
-.. autofunction:: king_phisher.utilities.datetime_local_to_utc
+.. autofunction:: datetime_local_to_utc
 
-.. autofunction:: king_phisher.utilities.datetime_utc_to_local
+.. autofunction:: datetime_utc_to_local
 
-.. autofunction:: king_phisher.utilities.format_datetime
+.. autofunction:: format_datetime
 
-.. autofunction:: king_phisher.utilities.is_valid_email_address
+.. autofunction:: is_valid_email_address
 
-.. autofunction:: king_phisher.utilities.make_message_uid
+.. autofunction:: make_message_uid
 
-.. autofunction:: king_phisher.utilities.make_visit_uid
+.. autofunction:: make_visit_uid
 
-.. autofunction:: king_phisher.utilities.open_uri
+.. autofunction:: nonempty_string
 
-.. autofunction:: king_phisher.utilities.parse_datetime
+.. autofunction:: open_uri
 
-.. autofunction:: king_phisher.utilities.password_is_complex
+.. autofunction:: parse_datetime
 
-.. autofunction:: king_phisher.utilities.random_string
+.. autofunction:: password_is_complex
 
-.. autofunction:: king_phisher.utilities.random_string_lower_numeric
+.. autofunction:: random_string
 
-.. autofunction:: king_phisher.utilities.start_process
+.. autofunction:: random_string_lower_numeric
 
-.. autofunction:: king_phisher.utilities.switch
+.. autofunction:: start_process
 
-.. autofunction:: king_phisher.utilities.validate_json_schema
+.. autofunction:: switch
+
+.. autofunction:: validate_json_schema
 
 Classes
 -------
 
-.. autoclass:: king_phisher.utilities.FreezableDict
+.. autoclass:: FreezableDict
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.utilities.Mock
+.. autoclass:: Mock
    :show-inheritance:

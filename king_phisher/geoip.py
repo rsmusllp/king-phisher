@@ -165,8 +165,8 @@ class GeoLocation(object):
 		self.ip_address = ip
 		"""The :py:class:`~ipaddress.IPv4Address` which this geographic location data describes."""
 		for field in DB_RESULT_FIELDS:
-			if not field in result:
-				raise RuntimeError('the retrieved information is missing required data')
+			if field not in result:
+				raise RuntimeError('the retrieved information is missing required data field: ' + field)
 			if field in ('coordinates',):
 				continue
 			setattr(self, field, result[field])
@@ -193,3 +193,10 @@ class GeoLocation(object):
 		if self.city:
 			return "{0}, {1}".format(_normalize_encoding(self.city), country)
 		return country or ''
+
+	@classmethod
+	def from_graphql(cls, ip, result, lang='en'):
+		# update these camel case fields from GQL
+		result['postal_code'] = result.pop('postalCode')
+		result['time_zone'] = result.pop('timeZone')
+		return cls(ip, lang=lang, result=result)

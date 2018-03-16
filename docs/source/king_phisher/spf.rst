@@ -1,7 +1,7 @@
 :mod:`spf`
 ==========
 
-.. module:: spf
+.. module:: king_phisher.spf
    :synopsis:
 
 This module provides functionality for checking published Sender Policy
@@ -10,69 +10,69 @@ Framework (SPF) records. SPF is defined in :rfc:`7208`.
 Data
 ----
 
-.. autodata:: king_phisher.spf.DEFAULT_DNS_TIMEOUT
+.. autodata:: DEFAULT_DNS_TIMEOUT
 
-.. autodata:: king_phisher.spf.MACRO_REGEX
+.. autodata:: MACRO_REGEX
    :annotation:
 
-.. autodata:: king_phisher.spf.MAX_QUERIES
+.. autodata:: MAX_QUERIES
 
-.. autodata:: king_phisher.spf.MAX_QUERIES_VOID
+.. autodata:: MAX_QUERIES_VOID
 
-.. autodata:: king_phisher.spf.QUALIFIERS
+.. autodata:: QUALIFIERS
    :annotation:
 
 Functions
 ---------
 
-.. autofunction:: king_phisher.spf.check_host
+.. autofunction:: check_host
 
-.. autofunction:: king_phisher.spf.validate_record
+.. autofunction:: validate_record
 
 Classes
 -------
 
-.. autoclass:: king_phisher.spf.SenderPolicyFramework
+.. autoclass:: SenderPolicyFramework
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.spf.SPFDirective
+.. autoclass:: SPFDirective
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.spf.SPFMatch
+.. autoclass:: SPFMatch
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.spf.SPFRecord
+.. autoclass:: SPFRecord
    :special-members: __init__
    :undoc-members:
 
 Exceptions
 ----------
 
-.. autoexception:: king_phisher.spf.SPFError
+.. autoexception:: SPFError
    :members:
    :show-inheritance:
    :undoc-members:
 
-.. autoexception:: king_phisher.spf.SPFTempError
+.. autoexception:: SPFTempError
    :members:
    :show-inheritance:
    :undoc-members:
 
-.. autoexception:: king_phisher.spf.SPFTimeOutError
+.. autoexception:: SPFTimeOutError
    :members:
    :show-inheritance:
    :undoc-members:
 
-.. autoexception:: king_phisher.spf.SPFParseError
+.. autoexception:: SPFParseError
    :members:
    :show-inheritance:
    :undoc-members:
 
-.. autoexception:: king_phisher.spf.SPFPermError
+.. autoexception:: SPFPermError
    :members:
    :show-inheritance:
    :undoc-members:

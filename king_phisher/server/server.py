@@ -33,7 +33,6 @@
 import base64
 import binascii
 import collections
-import datetime
 import json
 import logging
 import os
@@ -119,8 +118,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		"""
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
-		now = datetime.datetime.utcnow()
-		alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if subscription.mute_timestamp is None or subscription.mute_timestamp > now)
+		now = db_models.current_timestamp()
+		alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
 		if not alert_subscriptions:
 			self.server.logger.debug("no active alert subscriptions are present for campaign id: {0} ({1})".format(campaign.id, campaign.name))
 			session.close()
@@ -138,7 +137,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			results = signals.send_safe('campaign-alert', self.server.logger, table, alert_subscription=subscription, count=count)
 			if any((result for (_, result) in results)):
 				continue
-			self.server.logger.warning("user {0} is subscribed to campaign alerts, and no signal handlers succeeded to send an alert".format(subscription.user.id))
+			self.server.logger.warning("user {0} is subscribed to campaign alerts, and no signal handlers succeeded to send an alert".format(subscription.user.name))
 		session.close()
 		return
 
@@ -337,7 +336,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if self.visit_id:
 			visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
 			client_vars['visit_id'] = visit.id
-			visit_count = visit.visit_count
+			visit_count = visit.count
 
 		# increment some counters preemptively
 		if not expired_campaign and self.get_query_creds()[0] is not None:
@@ -553,7 +552,15 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			file_name = os.path.basename(file_path)
 			self.send_header('Content-Disposition', 'attachment; filename=' + file_name)
 		self.send_header('Last-Modified', self.date_time_string(fs.st_mtime))
+		self.semaphore_acquire()
+		try:
+			self.handle_page_visit()
+		except Exception as error:
+			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
+		finally:
+			self.semaphore_release()
 		self.end_headers()
+
 		shutil.copyfileobj(file_obj, self.wfile)
 		file_obj.close()
 		return
@@ -590,13 +597,13 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.semaphore_release()
 			self.server.logger.warning('denying request because the campaign has expired')
 			raise errors.KingPhisherAbortRequestError()
-		if campaign.reject_after_credentials and self.visit_id is None:
+		if campaign.max_credentials is not None and self.visit_id is None:
 			query = session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
-			if query.count():
+			if query.count() >= campaign.max_credentials:
 				session.close()
 				self.semaphore_release()
-				self.server.logger.warning('denying request because credentials were already harvested')
+				self.server.logger.warning('denying request because the maximum number of credentials have already been harvested')
 				raise errors.KingPhisherAbortRequestError()
 		session.close()
 		self.semaphore_release()
@@ -673,11 +680,12 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		query = query.filter_by(deployment_id=deployment.id, local_username=local_username, local_hostname=local_hostname)
 		connection = query.first()
 		if connection:
-			connection.visit_count += 1
+			connection.count += 1
+			connection.last_seen = db_models.current_timestamp()
 			new_connection = False
 		else:
 			connection = db_models.DeaddropConnection(campaign_id=deployment.campaign_id, deployment_id=deployment.id)
-			connection.visitor_ip = self.get_client_ip()
+			connection.ip = self.get_client_ip()
 			connection.local_username = local_username
 			connection.local_hostname = local_hostname
 			connection.local_ip_addresses = local_ip_addresses
@@ -768,18 +776,21 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			message.opener_ip = self.get_client_ip()
 			message.opener_user_agent = self.headers.get('user-agent', None)
 
+		query = session.query(db_models.LandingPage)
+		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
+		landing_page = query.first()
+
 		set_new_visit = True
 		visit_id = None
 		if self.visit_id:
 			visit_id = self.visit_id
 			set_new_visit = False
-			query = session.query(db_models.LandingPage)
-			query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
-			if query.count():
+			if landing_page:
 				visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
 				if visit.message_id == self.message_id:
-					visit.visit_count += 1
-					visit.last_visit = db_models.current_timestamp()
+					visit.count += 1
+					visit.last_seen = db_models.current_timestamp()
+					session.commit()
 				else:
 					set_new_visit = True
 					visit_id = None
@@ -787,27 +798,26 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if visit_id is None:
 			visit_id = utilities.make_visit_uid()
 
-		if set_new_visit:
+		if landing_page and set_new_visit:
 			kp_cookie_name = self.config.get('server.cookie_name')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
 			self.send_header('Set-Cookie', cookie)
 			visit = db_models.Visit(id=visit_id, campaign_id=self.campaign_id, message_id=self.message_id)
-			visit.visitor_ip = client_ip
-			visit.visitor_details = self.headers.get('user-agent', '')
+			visit.ip = client_ip
+			visit.first_landing_page_id = landing_page.id
+			visit.user_agent = self.headers.get('user-agent', '')
 			session.add(visit)
+			session.commit()
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
 				self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'visits', visit_count))
 			signals.send_safe('visit-received', self.logger, self)
 
-		if visit_id is None:
-			self.logger.error('the visit id has not been set')
-			raise RuntimeError('the visit id has not been set')
 		self._handle_page_visit_creds(session, visit_id)
 		trained = self.get_query('trained')
 		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
 			message.trained = True
-		session.commit()
+			session.commit()
 		session.close()
 
 	def _handle_page_visit_creds(self, session, visit_id):
@@ -822,6 +832,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			cred.username = username
 			cred.password = password
 			session.add(cred)
+			session.commit()
 			campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 			cred_count = len(campaign.credentials)
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):

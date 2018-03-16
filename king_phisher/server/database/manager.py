@@ -32,6 +32,7 @@
 
 import collections
 import contextlib
+import datetime
 import logging
 import os
 import re
@@ -42,6 +43,7 @@ from king_phisher import archive
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
+from king_phisher import serializers
 from king_phisher.server import signals
 
 import alembic.command
@@ -65,7 +67,8 @@ _flush_signal_map = (
 	('db-session-inserted', 'new'),
 	('db-session-updated', 'dirty')
 )
-_meta_data_type_map = {'int': int, 'str': str}
+_metadata_namespace = 'metadata'
+_metadata_serializer = serializers.MsgPack
 _popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 
 @sqlalchemy.event.listens_for(Session, 'after_flush')
@@ -119,8 +122,8 @@ def export_database(target_file):
 	kpdb.metadata['database-schema'] = models.SCHEMA_VERSION
 	for table in models.metadata.sorted_tables:
 		table_name = table.name
-		table = models.database_table_objects[table_name]
-		kpdb.add_data('tables/' + table_name, sqlalchemy.ext.serializer.dumps(session.query(table).all()))
+		model = models.database_table[table_name].model
+		kpdb.add_data('tables/' + table_name, sqlalchemy.ext.serializer.dumps(session.query(model).all()))
 	kpdb.close()
 
 def import_database(target_file, clear=True):
@@ -155,22 +158,29 @@ def import_database(target_file, clear=True):
 	session.commit()
 	kpdb.close()
 
-def get_meta_data(key, session=None):
+def get_metadata(key, session=None):
 	"""
-	Retrieve the value from the database's metadata storage.
+	Store a piece of metadata regarding the King Phisher database.
 
-	:param str key: The name of the value to retrieve.
-	:param session: The session to use to retrieve the value.
-	:return: The meta data value.
+	:param str key: The name of the data.
+	:param value: The value to store.
+	:type value: int, str
+	:param session: The session to use to store the value.
 	"""
+	if not isinstance(key, str):
+		raise TypeError('key must be a str instance')
 	close_session = session is None
 	session = (session or Session())
-	result = get_row_by_id(session, models.MetaData, key)
+	obj = session.query(models.StorageData).filter_by(namespace=_metadata_namespace, key=key).first()
+	if obj is None:
+		raise KeyError(key)
+	value = obj.value
+	if value is not None:
+		value = _metadata_serializer.loads(value)
 	if close_session:
+		session.commit()
 		session.close()
-	if result is None:
-		return None
-	return _meta_data_type_map[result.value_type](result.value)
+	return value
 
 def get_row_by_id(session, table, row_id):
 	"""
@@ -183,13 +193,38 @@ def get_row_by_id(session, table, row_id):
 	:return: The object representing the specified row or None if it does not exist.
 	"""
 	if not issubclass(table, models.Base):
-		table = models.database_table_objects[table]
+		table = models.database_tables[table].model
 	query = session.query(table)
 	query = query.filter_by(id=row_id)
 	result = query.first()
 	return result
 
-def set_meta_data(key, value, session=None):
+def get_schema_version(engine):
+	results = None
+	# try the new style storage
+	try:
+		results = engine.execute(
+			sqlalchemy.text("SELECT value FROM storage_data WHERE namespace = :namespace AND key = 'schema_version'"),
+			namespace=_metadata_namespace
+		).fetchone()
+	except sqlalchemy.exc.DatabaseError:
+		pass
+	if results:
+		return _metadata_serializer.loads(results[0])
+
+	# try the old style storage
+	try:
+		results = engine.execute(sqlalchemy.text("SELECT value_type, value FROM meta_data WHERE id = 'schema_version'")).fetchone()
+	except sqlalchemy.exc.DatabaseError:
+		pass
+	if results:
+		value_type, value = results
+		if value_type != 'int':
+			raise TypeError('the value is not of type: int')
+		return int(value)
+	return models.SCHEMA_VERSION
+
+def set_metadata(key, value, session=None):
 	"""
 	Store a piece of metadata regarding the King Phisher database.
 
@@ -198,18 +233,20 @@ def set_meta_data(key, value, session=None):
 	:type value: int, str
 	:param session: The session to use to store the value.
 	"""
-	value_type = type(value).__name__
-	if value_type not in _meta_data_type_map:
-		raise ValueError('incompatible data type:' + value_type)
+	if not isinstance(key, str):
+		raise TypeError('key must be a str instance')
 	close_session = session is None
 	session = (session or Session())
-	result = get_row_by_id(session, models.MetaData, key)
-	if result:
-		session.delete(result)
-	md = models.MetaData(id=key)
-	md.value_type = value_type
-	md.value = str(value)
-	session.add(md)
+	if value is not None:
+		value = _metadata_serializer.dumps(value)
+	obj = session.query(models.StorageData).filter_by(namespace=_metadata_namespace, key=key).first()
+	if obj is None:
+		obj = models.StorageData(namespace=_metadata_namespace, key=key)
+	elif obj.value != value:
+		obj.value = value
+		obj.modified = datetime.datetime.utcnow()
+	obj.value = value
+	session.add(obj)
 	if close_session:
 		session.commit()
 		session.close()
@@ -297,24 +334,20 @@ def init_database(connection_url, extra_init=False):
 	Session.remove()
 	Session.configure(bind=engine)
 	inspector = sqlalchemy.inspect(engine)
-	if not 'meta_data' in inspector.get_table_names():
-		logger.debug('meta_data table not found, creating all new tables')
+	if 'campaigns' not in inspector.get_table_names():
+		logger.debug('campaigns table not found, creating all new tables')
 		try:
 			models.Base.metadata.create_all(engine)
 		except sqlalchemy.exc.SQLAlchemyError as error:
 			error_lines = (line.strip() for line in error.message.split('\n'))
 			raise errors.KingPhisherDatabaseError('SQLAlchemyError: ' + ' '.join(error_lines).strip())
 
-	session = Session()
-	set_meta_data('database_driver', connection_url.drivername, session=session)
-	schema_version = (get_meta_data('schema_version', session=session) or models.SCHEMA_VERSION)
-	session.commit()
-	session.close()
-
+	schema_version = get_schema_version(engine)
 	logger.debug("current database schema version: {0} ({1})".format(schema_version, ('latest' if schema_version == models.SCHEMA_VERSION else 'obsolete')))
-	if not 'alembic_version' in inspector.get_table_names():
+	if 'alembic_version' not in inspector.get_table_names():
 		logger.debug('alembic version table not found, attempting to create and set version')
 		init_alembic(engine, schema_version)
+
 	if schema_version > models.SCHEMA_VERSION:
 		raise errors.KingPhisherDatabaseError('the database schema is for a newer version, automatic downgrades are not supported')
 	elif schema_version < models.SCHEMA_VERSION:
@@ -341,8 +374,9 @@ def init_database(connection_url, extra_init=False):
 		# reset it because it may have been altered by alembic
 		Session.remove()
 		Session.configure(bind=engine)
-		session = Session()
-	set_meta_data('schema_version', models.SCHEMA_VERSION)
+	set_metadata('database_driver', connection_url.drivername)
+	set_metadata('last_started', datetime.datetime.utcnow())
+	set_metadata('schema_version', models.SCHEMA_VERSION)
 
 	logger.debug("connected to {0} database: {1}".format(connection_url.drivername, connection_url.database))
 	signals.db_initialized.send(connection_url)
@@ -388,7 +422,7 @@ def init_database_postgresql(connection_url):
 			logger.debug('postgresql service successfully started via systemctl')
 
 	rows = _popen_psql('SELECT usename FROM pg_user')
-	if not connection_url.username in rows:
+	if connection_url.username not in rows:
 		logger.info('the specified postgresql user does not exist, adding it now')
 		if not is_sanitary(connection_url.username):
 			raise errors.KingPhisherInputValidationError('will not create the postgresql user (username contains bad characters)')
@@ -401,7 +435,7 @@ def init_database_postgresql(connection_url):
 		logger.debug('the specified postgresql user was successfully created')
 
 	rows = _popen_psql('SELECT datname FROM pg_database')
-	if not connection_url.database in rows:
+	if connection_url.database not in rows:
 		logger.info('the specified postgresql database does not exist, adding it now')
 		if not is_sanitary(connection_url.database):
 			raise errors.KingPhisherInputValidationError('will not create the postgresql database (name contains bad characters)')

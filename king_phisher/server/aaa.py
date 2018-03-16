@@ -32,6 +32,7 @@
 
 import base64
 import contextlib
+import datetime
 import grp
 import hashlib
 import json
@@ -91,7 +92,7 @@ class AuthenticatedSession(object):
 		:param user: The unique identifier for the authenticated user.
 		"""
 		self.user = user
-		self.created = time.time()
+		self.created = db_models.current_timestamp()
 		self.last_seen = self.created
 		self._event_socket = None
 
@@ -137,15 +138,16 @@ class AuthenticatedSessionManager(object):
 		"""
 		self.logger = logging.getLogger('KingPhisher.Server.SessionManager')
 		timeout = smoke_zephyr.utilities.parse_timespan(timeout)
-		self.session_timeout = timeout
+		self.session_timeout = datetime.timedelta(seconds=timeout)
 		self._sessions = {}
 		self._lock = threading.Lock()
 
 		# get valid sessions from the database
 		expired = 0
 		session = db_manager.Session()
+		oldest = db_models.current_timestamp() - self.session_timeout
 		for stored_session in session.query(db_models.AuthenticatedSession):
-			if stored_session.last_seen < time.time() - self.session_timeout:
+			if stored_session.last_seen < oldest:
 				expired += 1
 				continue
 			auth_session = AuthenticatedSession.from_db_authenticated_session(stored_session)
@@ -158,14 +160,14 @@ class AuthenticatedSessionManager(object):
 		return len(self._sessions)
 
 	def __repr__(self):
-		return "<{0} sessions={1} session_timeout={2} >".format(self.__class__.__name__, len(self._sessions), self.session_timeout)
+		return "<{0} sessions={1} session_timeout={2!r} >".format(self.__class__.__name__, len(self._sessions), self.session_timeout)
 
 	def clean(self):
 		"""Remove sessions which have expired."""
 		should_lock = not self._lock.locked()
 		if should_lock:
 			self._lock.acquire()
-		oldest = time.time() - self.session_timeout
+		oldest = db_models.current_timestamp() - self.session_timeout
 		remove = []
 		for session_id, session in self._sessions.items():
 			if session.last_seen < oldest:
@@ -182,6 +184,7 @@ class AuthenticatedSessionManager(object):
 		specified user id. Any previously existing sessions for the specified
 		user are removed from the manager.
 
+		:param user: The unique identifier for the authenticated user.
 		:return: The unique identifier for this session.
 		:rtype: str
 		"""
@@ -219,15 +222,16 @@ class AuthenticatedSessionManager(object):
 		"""
 		if session_id is None:
 			return None
+		now = db_models.current_timestamp()
 		with self._lock:
 			session = self._sessions.get(session_id)
 			if session is None:
 				return None
-			if session.last_seen < time.time() - self.session_timeout:
+			if session.last_seen < now - self.session_timeout:
 				del self._sessions[session_id]
 				return None
 			if update_timestamp:
-				session.last_seen = time.time()
+				session.last_seen = now
 		return session
 
 	def remove(self, session_id):

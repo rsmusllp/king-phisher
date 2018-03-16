@@ -1,13 +1,13 @@
-:mod:`dialogs.about`
-====================
+:mod:`about`
+============
 
-.. module:: dialogs.about
+.. module:: king_phisher.client.dialogs.about
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.dialogs.about.AboutDialog
+.. autoclass:: AboutDialog
    :show-inheritance:
    :members:
    :special-members: __init__

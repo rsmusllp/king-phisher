@@ -7,6 +7,18 @@ compatibility restraints. The base :py:class:`~king_phisher.plugins.PluginBase`
 class offers a number of attributes which can be defined to indicate it's
 compatibility requirements.
 
+Minimum Python Version
+----------------------
+
+A minimum required version of Python can be specified in the
+:py:attr:`~king_phisher.plugins.PluginBase.req_min_py_version` attribute. This
+allows the plugin to specify that it needs libraries that, for example require
+version 3.5 at least. The version is defined as a point separated string such
+as ``"3.5.1"``.
+
+The default class value is ``None`` which causes the plugin to be compatible
+with all versions of Python supported by King Phisher.
+
 Minimum King Phisher Version
 ----------------------------
 
@@ -39,6 +51,23 @@ allowing it to correctly alert the user in the event that the "foo" package can
 not be loaded. It's highly recommended that the required packages be described
 in the plugins description.
 
+The default class value is an empty dictionary meaning that now additional
+packages or modules are required. This is only suitable for use with plugins
+that do not need any additional packages or modules beyond what Python, King
+Phisher itself and King Phisher's direct dependencies provide.
+
+Supported Platforms
+-------------------
+
+Plugins that only work on specific platforms such as Windows or Linux can
+specify which platforms they support using the
+:py:attr:`~king_phisher.plugins.PluginBase.req_platforms` attribute. This is a
+string of tuples that correspond to Python's :py:func:`platform.system`
+function. When defined, the plugin will only be compatible if the current
+platform is contained within the whitelist.
+
+The default class value is compatible with all platforms.
+
 Example
 -------
 
@@ -64,8 +93,10 @@ requirements.
        A basic plugin which has compatibility requirements. It needs the 'foobar'
        Python package to be installed.
        """
+       req_min_py_version = '4.0'  # this is the required minimum version of Python
        req_min_version = '1337.0'  # this is the required minimum version of King Phisher
        req_packages {
            'foobar': has_foobar    # whether or not foobar was able to be imported
        }
+       req_platforms = ('Linux',)  # this module is only compatible with Linux
        # plugin method definitions continue

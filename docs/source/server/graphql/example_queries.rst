@@ -1,49 +1,5 @@
-.. _graphql-label:
-
-GraphQL
-=======
-
-Overview
---------
-
-The RPC API provides a function for executing GraphQL_ queries against the
-server. The schema the server supports allows accessing the database models
-through the ``db`` type as well as some additional information such as the
-server plugins.
-
-.. note::
-   For consistencies within the GraphQL API and with GraphQL best practices, it
-   is important to note that names are ``camelCase`` and not ``snake_case``.
-
-Interface Extensions
---------------------
-
-The GraphQL schema supported by King Phisher implements the Relay_ connection
-interface allowing easier pagination using a cursor. As an extension to this
-interface, the King Phisher schema also includes a ``total`` attribute to the
-connection object. This attribute allows a query to access the number of
-nodes available for a specific connection.
-
-Additional Database Model Attributes
-------------------------------------
-
-Database objects which have an IP address string attribute associated with
-their model have an additional attribute containing the corresponding geo
-location information. This geo location attribute uses the same naming prefix,
-for example the geo location information for a ``visitorIp`` attribute can be
-accessed from the ``visitorGeoloc`` attribute.
-
-Executing Raw Queries
----------------------
-
-Raw GraphQL queries can be executed using the ``tools/database_console.py``
-utility. This console provides a ``graphql_query`` function which takes a query
-string parameter and optional query variables. This can be used for easily
-testing queries. It should be noted however that using this utility directly on
-the server does not restrict access to data as the RPC interface does.
-
 Example Queries
----------------
+===============
 
 The following query is an example of retrieving the first 3 users from the
 users table. The query includes the necessary information to perform subsequent
@@ -79,6 +35,10 @@ queries to iterate over all entries.
       }
    }
 
+This query returns a summary of all of the campaigns, including basic
+information such has when it was created, who by and the number of messages
+sent and visits received.
+
 .. code-block:: none
 
    # Get a summary of all of the campaigns
@@ -111,11 +71,20 @@ queries to iterate over all entries.
       }
    }
 
+This query demonstrates how whitespace is not necessary in GraphQL and the
+entire query can be on a single line.
+
 .. code-block:: none
 
    # This query does not define the operation type or an operation name
    # and is condensed to a single line
    { plugins { total edges { node { name title authors } } } }
+
+Queries With Variables
+----------------------
+
+The following two queries show how variables and arguments can be used in
+GraphQL.
 
 .. code-block:: none
 
@@ -145,5 +114,48 @@ queries to iterate over all entries.
       }
    }
 
-.. _GraphQL: http://graphql.org/
-.. _Relay: https://facebook.github.io/relay/graphql/connections.htm
+Database Connections
+--------------------
+
+This query uses the ``filter`` and ``sort`` arguments to process the queried
+data. See :ref:`graphql-db-connection-args-label` for more details.
+
+.. code-block:: none
+
+   query getFilteredCampaigns {
+      db {
+         campaigns(
+            # define a filter for the campaigns
+            filter: {
+               # the following conditions must be met
+               and: [
+                  # created on or after January 1st, 2017 (created GE "2017-01-01")
+                  {field: "created", operator: GE, value: "2017-01-01"},
+                  # and with either...
+                  {
+                     or: [
+                        # no expiration set (expiration EQ Null)
+                        {field: "expiration"},
+                        # or expiring before April 1st, 2018 (expiration LT "2018-04-01")
+                        {field: "expiration", operator: LT, value: "2018-04-01"}
+                     ]
+                  }
+               ]
+            },
+            # sort the campaigns by the created timestamp
+            sort: [{field: "created", direction: AESC}]
+         ) {
+            total
+            edges {
+               node {
+                  id
+                  name
+                  # count the number of messages that were opened (opened NE Null)
+                  messages(filter: {field: "opened", operator: NE}) {
+                     total
+                  }
+               }
+            }
+         }
+      }
+   }

@@ -1,23 +1,23 @@
-:mod:`server.web_sockets`
-=========================
+:mod:`web_sockets`
+==================
 
-.. module:: server.web_sockets
+.. module:: king_phisher.server.web_sockets
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.server.web_sockets.Event
+.. autoclass:: Event
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.server.web_sockets.EventSocket
+.. autoclass:: EventSocket
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.server.web_sockets.WebSocketsManager
+.. autoclass:: WebSocketsManager
    :show-inheritance:
    :members:
    :special-members: __init__

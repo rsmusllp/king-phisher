@@ -35,6 +35,7 @@ import logging
 import threading
 import time
 
+from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
 from king_phisher import utilities
@@ -201,6 +202,17 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 						model[ti][idx] = self.format_cell_data(cell_data)
 					break
 
+	def _export_lock(self):
+		show_dialog_warning = lambda: gui_utilities.show_dialog_warning('Export Failed', self.parent, 'Can not export data while loading.')
+		if not self.loader_thread_lock.acquire(False):
+			show_dialog_warning()
+			return False
+		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
+			self.loader_thread_lock.release()
+			show_dialog_warning()
+			return False
+		return True
+
 	def _prompt_to_delete_row(self, treeview, _):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
@@ -268,15 +280,14 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""
 		if not force and ((time.time() - self.last_load_time) < self.refresh_frequency):
 			return
-		self.loader_thread_lock.acquire()
-		self._sync_loader_thread()
-		self.loader_thread_stop.clear()
-		store = self.gobjects['treeview_campaign'].get_model()
-		store.clear()
-		self.loader_thread = threading.Thread(target=self.loader_thread_routine, args=(store,))
-		self.loader_thread.daemon = True
-		self.loader_thread.start()
-		self.loader_thread_lock.release()
+		with self.loader_thread_lock:
+			self._sync_loader_thread()
+			self.loader_thread_stop.clear()
+			store = self.gobjects['treeview_campaign'].get_model()
+			store.clear()
+			self.loader_thread = utilities.Thread(target=self.loader_thread_routine, args=(store,))
+			self.loader_thread.daemon = True
+			self.loader_thread.start()
 		return
 
 	def loader_thread_routine(self, store):
@@ -293,7 +304,11 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		while page_info['hasNextPage']:
 			if self.rpc is None:
 				break
-			results = self.rpc.graphql(self.table_query, {'campaign': campaign_id, 'count': count, 'cursor': page_info['endCursor']})
+			try:
+				results = self.rpc.graphql(self.table_query, {'campaign': campaign_id, 'count': count, 'cursor': page_info['endCursor']})
+			except errors.KingPhisherGraphQLQueryError as error:
+				self.logger.error('graphql error: ' + error.message)
+				raise
 			if self.loader_thread_stop.is_set():
 				break
 			if self.is_destroyed.is_set():
@@ -315,8 +330,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 
 	def export_table_to_csv(self):
 		"""Export the data represented by the view to a CSV file."""
-		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
-			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
+		if not self._export_lock():
 			return
 		dialog = extras.FileChooserDialog('Export Data', self.parent)
 		file_name = self.config['campaign_name'] + '.csv'
@@ -340,8 +354,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		:param title_format: The formatting to use for the title row.
 		:type title_format: :py:class:`xlsxwriter.format.Format`
 		"""
-		if not self.loader_thread_lock.acquire(False) or (isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive()):
-			gui_utilities.show_dialog_warning('Can Not Export Rows While Loading', self.parent)
+		if not self._export_lock():
 			return
 		store = self.gobjects['treeview_campaign'].get_model()
 		columns = dict(enumerate(('UID',) + self.view_columns))
@@ -358,13 +371,13 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			node: deaddropConnection(id: $id) {
 				id
 				deaddropDeployment { destination }
-				visitCount
-				visitorIp
+				count
+				ip
 				localUsername
 				localHostname
 				localIpAddresses
-				firstVisit
-				lastVisit
+				firstSeen
+				lastSeen
 			}
 		}
 	}
@@ -382,13 +395,13 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 								id
 								destination
 							}
-							visitCount
-							visitorIp
+							count
+							ip
 							localUsername
 							localHostname
 							localIpAddresses
-							firstVisit
-							lastVisit
+							firstSeen
+							lastSeen
 						}
 					}
 					pageInfo {
@@ -416,26 +429,15 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			return None
 		row = (
 			deaddrop_destination,
-			connection['visitCount'],
-			connection['visitorIp'],
+			connection['count'],
+			connection['ip'],
 			connection['localUsername'],
 			connection['localHostname'],
 			connection['localIpAddresses'],
-			connection['firstVisit'],
-			connection['lastVisit']
+			connection['firstSeen'],
+			connection['lastSeen']
 		)
 		return row
-
-	def _get_graphql_deaddrop_deployments(self, deployment_id):
-		results = self.rpc.graphql("""\
-		query getDeaddropDeploymentsDestination($id: String!) {
-			db {
-				deaddropDeployment(id: $id) {
-					destination
-				}
-			}
-		}""", {'id': deployment_id})
-		return results['db']['deaddropDeployment'].get('destination', None)
 
 class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding submitted credentials."""
@@ -569,7 +571,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		with self.loader_thread_lock:
 			self._sync_loader_thread()
 			self.loader_thread_stop.clear()
-			self.loader_thread = threading.Thread(target=self.loader_thread_routine)
+			self.loader_thread = utilities.Thread(target=self.loader_thread_routine)
 			self.loader_thread.daemon = True
 			self.loader_thread.start()
 
@@ -584,7 +586,7 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		"""The loading routine to be executed within a thread."""
 		if not 'campaign_id' in self.config:
 			return
-		if not self._get_graphql_campaign():
+		if not self.application.get_graphql_campaign():
 			return
 		info_cache = {}
 		for graph in self.graphs:
@@ -596,17 +598,6 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		else:
 			self.last_load_time = time.time()
 
-	def _get_graphql_campaign(self, campaign_id=None):
-		results = self.rpc.graphql("""\
-		query getCampaign($id: String!) {
-			db {
-				campaign(id: $id) {
-					name
-				}
-			}
-		}""", {'id': campaign_id or self.config['campaign_id']})
-		return results['db'].get('campaign', None)
-
 class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding incoming visitors."""
 	table_name = 'visits'
@@ -617,12 +608,12 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 			node: visit(id: $id) {
 				id
 				message { targetEmail }
-				visitorIp
-				visitCount
-				visitorDetails
-				visitorGeoloc { city }
-				firstVisit
-				lastVisit
+				ip
+				count
+				userAgent
+				ipGeoloc { city }
+				firstSeen
+				lastSeen
 			}
 		}
 	}
@@ -637,12 +628,12 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 						node {
 							id
 							message { targetEmail }
-							visitorIp
-							visitCount
-							visitorDetails
-							visitorGeoloc { city }
-							firstVisit
-							lastVisit
+							ip
+							count
+							userAgent
+							ipGeoloc { city }
+							firstSeen
+							lastSeen
 						}
 					}
 					pageInfo {
@@ -669,7 +660,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	)
 	def format_node_data(self, node):
 		geo_location = UNKNOWN_LOCATION_STRING
-		visitor_ip = node['visitorIp']
+		visitor_ip = node['ip']
 		if visitor_ip is None:
 			visitor_ip = ''
 		else:
@@ -680,16 +671,16 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 				geo_location = 'N/A (Private)'
 			elif isinstance(visitor_ip, ipaddress.IPv6Address):
 				geo_location = 'N/A (IPv6 Address)'
-			elif node['visitorGeoloc']:
-				geo_location = node['visitorGeoloc']['city']
+			elif node['ipGeoloc']:
+				geo_location = node['ipGeoloc']['city']
 		row = (
 			node['message']['targetEmail'],
 			str(visitor_ip),
-			node['visitCount'],
-			node['visitorDetails'],
+			node['count'],
+			node['userAgent'],
 			geo_location,
-			node['firstVisit'],
-			node['lastVisit']
+			node['firstSeen'],
+			node['lastSeen']
 		)
 		return row
 

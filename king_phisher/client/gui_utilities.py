@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import calendar
 import contextlib
 import copy
 import datetime
@@ -209,32 +210,37 @@ def gobject_signal_accumulator(test=None):
 		return (stop, accumulated)
 	return _accumulator
 
-def gtk_calendar_get_pydate(calendar):
+def gtk_calendar_get_pydate(gtk_calendar):
 	"""
-	Get the Python date from a :py:class:`Gtk.Calendar` instance.
+	Get the Python date from a :py:class:`Gtk.Calendar` instance. If the day
+	in *gtk_calendar* is not within the valid range for the specified month, it
+	will be rounded to the closest value (i.e. 0 for unset will become 1 etc.).
 
-	:param calendar: The calendar to get the date from.
-	:type calendar: :py:class:`Gtk.Calendar`
+	:param gtk_calendar: The calendar to get the date from.
+	:type gtk_calendar: :py:class:`Gtk.Calendar`
 	:return: The date as returned by the calendar's :py:meth:`~Gtk.Calendar.get_date` method.
 	:rtype: :py:class:`datetime.date`
 	"""
-	if not isinstance(calendar, Gtk.Calendar):
+	if not isinstance(gtk_calendar, Gtk.Calendar):
 		raise ValueError('calendar must be a Gtk.Calendar instance')
-	calendar_day = calendar.get_date()
-	return datetime.date(calendar_day[0], calendar_day[1] + 1, calendar_day[2])
+	year, month, day = calendar_day = gtk_calendar.get_date()
+	month += 1  # account for Gtk.Calendar starting at 0
+	_, last_day_of_month = calendar.monthrange(2018, month)
+	day = max(1, min(day, last_day_of_month))
+	return datetime.date(year, month, day)
 
-def gtk_calendar_set_pydate(calendar, pydate):
+def gtk_calendar_set_pydate(gtk_calendar, pydate):
 	"""
 	Set the date on a :py:class:`Gtk.Calendar` instance from a Python
 	:py:class:`datetime.date` object.
 
-	:param calendar: The calendar to set the date for.
-	:type calendar: :py:class:`Gtk.Calendar`
-	:param pydate: The date to set on the calendar.
+	:param gtk_calendar: The gtk_calendar to set the date for.
+	:type gtk_calendar: :py:class:`Gtk.Calendar`
+	:param pydate: The date to set on the gtk_calendar.
 	:type pydate: :py:class:`datetime.date`
 	"""
-	calendar.select_month(pydate.month - 1, pydate.year)
-	calendar.select_day(pydate.day)
+	gtk_calendar.select_month(pydate.month - 1, pydate.year)
+	gtk_calendar.select_day(pydate.day)
 
 GOBJECT_PROPERTY_MAP['calendar'] = (
 	gtk_calendar_set_pydate,
@@ -748,13 +754,13 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 		from the corresponding value in the :py:attr:`~.GladeGObject.config`.
 		"""
 		for gobject_id, gobject in self.gobjects.items():
-			if not '_' in gobject_id:
+			if '_' not in gobject_id:
 				continue
 			gtype, config_name = gobject_id.split('_', 1)
 			config_name = self.config_prefix + config_name
-			if not gtype in GOBJECT_PROPERTY_MAP or not config_name in self.config:
+			if gtype not in GOBJECT_PROPERTY_MAP:
 				continue
-			value = self.config[config_name]
+			value = self.config.get(config_name)
 			if value is None:
 				continue
 			if isinstance(GOBJECT_PROPERTY_MAP[gtype], (list, tuple)):

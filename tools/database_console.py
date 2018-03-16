@@ -43,11 +43,12 @@ import king_phisher.color as color
 import king_phisher.utilities as utilities
 import king_phisher.server.aaa as aaa
 import king_phisher.server.configuration as configuration
-import king_phisher.server.graphql as graphql
 import king_phisher.server.database.manager as manager
 import king_phisher.server.database.models as models
+import king_phisher.server.graphql.schema as schema
 
 history_file = os.path.expanduser('~/.config/king-phisher/database_console.his')
+graphql_schema = schema.Schema()
 
 try:
 	import readline
@@ -67,7 +68,7 @@ def graphql_query(query, query_vars=None, context=None):
 	if 'session' not in context:
 		session = manager.Session()
 		context['session'] = session
-	result = graphql.schema.execute(query, context_value=context, variable_values=query_vars)
+	result = graphql_schema.execute(query, context_value=context, variable_values=query_vars)
 	if session is not None:
 		session.close()
 	if result.errors:
@@ -103,7 +104,6 @@ def main():
 	rpc_session = aaa.AuthenticatedSession(user=getpass.getuser())
 	console = code.InteractiveConsole(dict(
 		engine=engine,
-		graphql=graphql,
 		graphql_query=graphql_query,
 		manager=manager,
 		models=models,

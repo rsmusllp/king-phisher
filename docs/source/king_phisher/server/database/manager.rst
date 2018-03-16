@@ -1,7 +1,7 @@
-:mod:`database.manager`
-=======================
+:mod:`manager`
+==============
 
-.. module:: database.manager
+.. module:: king_phisher.server.database.manager
    :synopsis:
 
 This module provides the functionality to manage the server application's
@@ -10,22 +10,22 @@ database connection.
 Functions
 ---------
 
-.. autofunction:: king_phisher.server.database.manager.clear_database
+.. autofunction:: clear_database
 
-.. autofunction:: king_phisher.server.database.manager.export_database
+.. autofunction:: export_database
 
-.. autofunction:: king_phisher.server.database.manager.import_database
+.. autofunction:: import_database
 
-.. autofunction:: king_phisher.server.database.manager.normalize_connection_url
+.. autofunction:: normalize_connection_url
 
-.. autofunction:: king_phisher.server.database.manager.get_meta_data
+.. autofunction:: get_metadata
 
-.. autofunction:: king_phisher.server.database.manager.get_row_by_id
+.. autofunction:: get_row_by_id
 
-.. autofunction:: king_phisher.server.database.manager.init_alembic
+.. autofunction:: init_alembic
 
-.. autofunction:: king_phisher.server.database.manager.init_database
+.. autofunction:: init_database
 
-.. autofunction:: king_phisher.server.database.manager.init_database_postgresql
+.. autofunction:: init_database_postgresql
 
-.. autofunction:: king_phisher.server.database.manager.set_meta_data
+.. autofunction:: set_metadata

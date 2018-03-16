@@ -59,19 +59,63 @@ context as to how the data is intended to be used and what parts of the
 application may be interested in using it.
 """
 
-CollectionItemFile = collections.namedtuple('CollectionItemFile', ('path_destination', 'path_source', 'signed_by', 'signature'))
-"""
-An object representing a single remote file and the necessary data to validate
-it's integrity.
-"""
+class CollectionItemFile(object):
+	"""
+	An object representing a single remote file and the necessary data to
+	validate it's integrity. In order to validate the data integrity both the
+	:py:attr:`.signature` and :py:attr:`.signed_by` attributes must be
+	available. These attributes must either both be present or absent, i.e.
+	one can not be set without the other.
+	"""
+	__slots__ = ('__weakref__', 'path_destination', 'path_source', 'signature', 'signed_by')
+	def __init__(self, path_destination, path_source, signature=None, signed_by=None):
+		if bool(signature) ^ bool(signed_by):
+			raise ValueError('collection item file must either have both signature and signed-by keys or neither')
+		self.path_destination = path_destination
+		"""The relative path of where this file should be placed."""
+		self.path_source = path_source
+		"""The relative path of where this file should be retrieved from."""
+		self.signed_by = signed_by
+		"""The identity of the :py:class:`~king_phisher.security_keys.SigningKey` which generated the :py:attr:`.signature`"""
+		self.signature = signature
+		"""The signature data used for integrity verification of the represented resource."""
+
+	@classmethod
+	def from_dict(cls, value):
+		"""
+		Load the collection item file from the specified dict object.
+
+		:param dict value: The dictionary to load the data from.
+		:return:
+		"""
+		# make sure both keys are present or neither are present
+		return cls(value.get('path-destination', value['path-source']), value['path-source'], signature=value.get('signature'), signed_by=value.get('signed-by'))
+
+	def to_dict(self):
+		"""
+		Dump the instance to a dictionary suitable for being reloaded with
+		:py:meth:`.from_dict`.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
+		data = {
+			'path-destination': self.path_destination,
+			'path-source': self.path_source
+		}
+		if self.signature and self.signed_by:
+			data['signature'] = self.signature
+			data['signed-by'] = self.signed_by
+		return data
+
 class Collection(_Mapping):
 	"""
-	An object representing a set of individual pieces of add on data that are
-	all of the same type. A collection is also a logical domain where the items
-	contained within it must each have a unique identity in the form of it's
-	name attribute.
+	An object representing a set of :py:class:`CollectionItemFile` instances,
+	each of which represent a piece of of add on data that are all of the same
+	type (see :py:data:`.COLLECTION_TYPES`). A collection is also a logical
+	domain where the items contained within it must each have a unique identity
+	in the form of its name attribute.
 	"""
-	# this breaks the docs which must run on Python 2.7 due to the sphinxcontrib-domaintools package
 	#__slots__ = ('__weakref__', '__repo_ref', '_storage', 'type')
 	logger = logging.getLogger('KingPhisher.Catalog.Collection')
 	def __init__(self, repo, type, items):
@@ -97,6 +141,39 @@ class Collection(_Mapping):
 	def __len__(self):
 		return len(self._storage)
 
+	@classmethod
+	def from_dict(cls, value, repo):
+		"""
+		Load the collection item file from the specified dict object.
+
+		:param dict value: The dictionary to load the data from.
+		:return:
+		"""
+		items = utilities.FreezableDict()
+		for item in value['items']:
+			item['files'] = tuple(CollectionItemFile.from_dict(file) for file in item['files'])
+			items[item['title']] = item
+		items.freeze()
+		return cls(repo, value['type'], items)
+
+	def to_dict(self):
+		"""
+		Dump the instance to a dictionary suitable for being reloaded with
+		:py:meth:`.from_dict`.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
+		data = {'type': self.type}
+		items = []
+		for item in self.values():
+			item = dict(item)
+			item['authors'] = list(item['authors'])
+			item['files'] = [cif.to_dict() for cif in item['files']]
+			items.append(item)
+		data['items'] = items
+		return data
+
 	@property
 	def _repo_ref(self):
 		repo = self.__repo_ref()
@@ -105,12 +182,25 @@ class Collection(_Mapping):
 		return repo
 
 	def get_file(self, *args, **kwargs):
+		"""
+		A simple convenience method which forwards to the associated
+		:py:class:`~.Repository`'s :py:meth:`~.Repository.get_file` method.
+		"""
 		return self._repo_ref.get_file(*args, **kwargs)
 
 	def get_item(self, *args, **kwargs):
+		"""
+		A simple convenience method which forwards to the associated
+		:py:class:`~.Repository`'s :py:meth:`~.Repository.get_item` method.
+		"""
 		return self._repo_ref.get_item(self.type, *args, **kwargs)
 
 	def get_item_files(self, *args, **kwargs):
+		"""
+		A simple convenience method which forwards to the associated
+		:py:class:`~.Repository`'s :py:meth:`~.Repository.get_item_files`
+		method.
+		"""
 		return self._repo_ref.get_item_files(self.type, *args, **kwargs)
 
 class Repository(object):
@@ -186,13 +276,7 @@ class Repository(object):
 					item_file['signature'] = None
 				if not item_file.get('signed-by'):
 					item_file['signed-by'] = None
-				# make sure both keys are present or neither are present
-				if bool(item_file['signature']) ^ bool(item_file['signed-by']):
-					raise ValueError('collection item file must either have both signature and signed-by keys or neither')
-				item_file['path_destination'] = item_file.pop('path-destination')
-				item_file['path_source'] = item_file.pop('path-source')
-				item_file['signed_by'] = item_file.pop('signed-by')
-				item_files.append(CollectionItemFile(**item_file))
+				item_files.append(CollectionItemFile.from_dict(item_file))
 			item['files'] = tuple(item_files)
 			item = utilities.FreezableDict(sorted(item.items(), key=lambda i: i[0]))
 			item.freeze()
@@ -201,12 +285,7 @@ class Repository(object):
 
 	def _fetch(self, item_file, encoding=None, verify=True):
 		if isinstance(item_file, dict):
-			item_file = CollectionItemFile(
-				path_destination=item_file.get('path-destination', item_file['path-source']),
-				path_source=item_file['path-source'],
-				signature=item_file.get('signature'),
-				signed_by=item_file.get('signed-by')
-			)
+			item_file = CollectionItemFile.from_dict(item_file)
 		url = self.url_base + '/' + item_file.path_source
 		self.logger.debug("fetching repository data item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
 		data = self._fetch_url(url)
@@ -239,6 +318,27 @@ class Repository(object):
 			self.logger.warning("request to {0} failed with status {1} {2}".format(url, resp.status_code, resp.reason))
 			raise RuntimeError('failed to fetch data from: ' + url)
 		return resp.content
+
+	def to_dict(self):
+		"""
+		Dump the instance to a dictionary suitable for being reloaded with
+		:py:meth:`.__init__`.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
+		data = {
+			'id': self.id,
+			'title': self.title,
+			'url-base': self.url_base
+		}
+		if self.collections:
+			data['collections'] = {key: value.to_dict()['items'] for key, value in self.collections.items()}
+		if self.description:
+			data['description'] = self.description
+		if self.homepage:
+			data['homepage'] = self.homepage
+		return data
 
 	def get_file(self, item_file, encoding=None):
 		"""
@@ -299,7 +399,7 @@ class Catalog(object):
 	data for the application. This information can then be loaded from an
 	arbitrary source.
 	"""
-	__slots__ = ('__weakref__', 'id', 'created', 'maintainers', 'repositories', 'security_keys')
+	__slots__ = ('__weakref__', 'id', 'created', 'created_by', 'maintainers', 'repositories', 'security_keys')
 	logger = logging.getLogger('KingPhisher.Catalog')
 	def __init__(self, data, keys=None):
 		"""
@@ -307,12 +407,11 @@ class Catalog(object):
 		:param keys: The keys to use for verifying remote data.
 		:type keys: :py:class:`~king_phisher.security_keys.SecurityKeys`
 		"""
-		utilities.validate_json_schema(data, 'king-phisher.catalog')
-
 		self.security_keys = keys or security_keys.SecurityKeys()
 		"""The :py:class:`~king_phisher.security_keys.SecurityKeys` used for verifying remote data."""
 		self.created = dateutil.parser.parse(data['created'])
 		"""The timestamp of when the remote data was generated."""
+		self.created_by = data['created-by']
 		self.id = data['id']
 		"""The unique identifier of this catalog."""
 		self.maintainers = tuple(maintainer['id'] for maintainer in data['maintainers'])
@@ -329,7 +428,9 @@ class Catalog(object):
 	def from_url(cls, url, keys=None, encoding='utf-8'):
 		"""
 		Initialize a new :py:class:`.Catalog` object from a resource at the
-		specified URL.
+		specified URL. The resulting data is validated against a schema file
+		with :py:func:`~king_phisher.utilities.validate_json_schema` before
+		being passed to :py:meth:`~.__init__`.
 
 		:param str url: The URL to the catalog data to load.
 		:param keys: The keys to use for verifying remote data.
@@ -345,12 +446,30 @@ class Catalog(object):
 		resp = req_sess.get(url)
 		data = resp.content.decode(encoding)
 		data = serializers.JSON.loads(data)
+		utilities.validate_json_schema(data, 'king-phisher.catalog')
 		keys.verify_dict(data, signature_encoding='base64')
 		return cls(data, keys=keys)
 
+	def to_dict(self):
+		"""
+		Dump the instance to a dictionary suitable for being reloaded with
+		:py:meth:`.__init__`.
+
+		:return: The instance represented as a dictionary.
+		:rtype: dict
+		"""
+		data = {
+			'created': self.created.isoformat(),
+			'created-by': self.created_by,
+			'id': self.id,
+			'maintainers': [{'id': maintainer} for maintainer in self.maintainers],
+			'repositories': [repo.to_dict() for repo in self.repositories.values()]
+		}
+		return data
+
 class CatalogManager(object):
 	"""
-	Base manager for handling multiple :py:class:`.Catalogs`.
+	Base manager for handling multiple :py:class:`.Catalog` instances.
 	"""
 	logger = logging.getLogger('KingPhisher.Catalog.Manager')
 	def __init__(self, catalog_url=None):
@@ -360,12 +479,12 @@ class CatalogManager(object):
 
 	def catalog_ids(self):
 		"""
-		The key names of the catalogs in the manager
+		The key names of the catalogs in the manager.
 
 		:return: The catalogs IDs in the manager instance.
-		:rtype: dict_keys
+		:rtype: tuple
 		"""
-		return self.catalogs.keys()
+		return tuple(self.catalogs.keys())
 
 	def get_repositories(self, catalog_id):
 		"""
@@ -376,20 +495,16 @@ class CatalogManager(object):
 		"""
 		return tuple(self.catalogs[catalog_id].repositories.values())
 
-	def add_catalog_url(self, url):
+	def add_catalog(self, catalog):
 		"""
-		Adds catalog to the manager by its URL.
+		Adds the specified catalog to the manager.
 
-		:param str url: The URL of the catalog to load.
+		:param catalog: Add the specified catalog to the manager.
+		:type catalog: :py:class:`.Catalog`
 		:return: The catalog.
-		:rtype: :py:class: `.Catalog`
+		:rtype: :py:class:`.Catalog`
 		"""
-		try:
-			catalog = Catalog.from_url(url)
-			self.catalogs[catalog.id] = catalog
-		except Exception as error:
-			self.logger.warning("failed to load catalog from url {0} due to {1}".format(url, error))
-			return
+		self.catalogs[catalog.id] = catalog
 		return catalog
 
 def sign_item_files(local_path, signing_key, repo_path=None):

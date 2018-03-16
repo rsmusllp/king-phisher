@@ -1,7 +1,7 @@
-:mod:`tabs.mail`
-================
+:mod:`mail`
+===========
 
-.. module:: tabs.mail
+.. module:: king_phisher.client.tabs.mail
    :synopsis:
 
 This module provides the contents of the tab used to create and send messages
@@ -10,30 +10,30 @@ as part of a campaign.
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.tabs.mail.test_webserver_url
+.. autofunction:: test_webserver_url
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.tabs.mail.MailSenderConfigurationTab
+.. autoclass:: MailSenderConfigurationTab
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.tabs.mail.MailSenderEditTab
+.. autoclass:: MailSenderEditTab
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.tabs.mail.MailSenderPreviewTab
+.. autoclass:: MailSenderPreviewTab
    :show-inheritance:
    :members:
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: king_phisher.client.tabs.mail.MailSenderSendTab
+.. autoclass:: MailSenderSendTab
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.tabs.mail.MailSenderTab
+.. autoclass:: MailSenderTab
    :show-inheritance:
    :members:
    :special-members: __init__

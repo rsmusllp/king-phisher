@@ -2,10 +2,11 @@ The King Phisher Server
 =======================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :titlesonly:
 
-   graphql.rst
+   graphql/index.rst
+
    published_events.rst
    rest_api.rst
    rpc_api.rst

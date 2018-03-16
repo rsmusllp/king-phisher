@@ -1,7 +1,7 @@
-:mod:`client.windows.main`
-==========================
+:mod:`main`
+===========
 
-.. module:: client.windows.main
+.. module:: king_phisher.client.windows.main
    :synopsis:
 
 This module provides the main window used by the client application.
@@ -9,12 +9,12 @@ This module provides the main window used by the client application.
 Classes
 -------
 
-.. autoclass:: king_phisher.client.windows.main.MainAppWindow
+.. autoclass:: MainAppWindow
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.windows.main.MainMenuBar
+.. autoclass:: MainMenuBar
    :show-inheritance:
    :members:
    :special-members: __init__

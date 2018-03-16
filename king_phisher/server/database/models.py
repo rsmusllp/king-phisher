@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import datetime
 import logging
 import operator
@@ -45,13 +46,27 @@ import sqlalchemy.orm
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 """The schema version of the database, used for compatibility checks."""
 
+MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name'))
+"""Table metadata.
+
+.. py:attribute:: column_names
+
+   A tuple of strings representing the table's column names.
+
+.. py:attribute:: model
+
+   The SQLAlchemy model class associated with this table.
+
+.. py:attribute:: name
+
+   The name of this table.
+"""
+
 database_tables = {}
-"""A dictionary which contains all the database tables and their column names."""
-database_table_objects = {}
-"""A dictionary which contains all the database tables and their primitive objects."""
+"""A dictionary which contains all the database tables and their :py:class:`.MetaTable` instances."""
 logger = logging.getLogger('KingPhisher.Server.Database.Models')
 
 def current_timestamp(*args, **kwargs):
@@ -71,7 +86,7 @@ def get_tables_with_column_id(column_id):
 	:return: The list of matching tables.
 	:rtype: set
 	"""
-	return set(x[0] for x in database_tables.items() if column_id in x[1])
+	return set(name for (name, metatable) in database_tables.items() if column_id in metatable.column_names)
 
 def forward_signal_delete(mapper, connection, target):
 	signals.send_safe('db-table-delete', logger, target.__tablename__, mapper=mapper, connection=connection, target=target)
@@ -90,9 +105,8 @@ def register_table(table):
 
 	:param cls table: The table to register.
 	"""
-	columns = tuple(col.name for col in table.__table__.columns)
-	database_tables[table.__tablename__] = columns
-	database_table_objects[table.__tablename__] = table
+	metatable = table.metatable()
+	database_tables[metatable.name] = metatable
 
 	sqlalchemy.event.listen(table, 'before_delete', forward_signal_delete)
 	sqlalchemy.event.listen(table, 'before_insert', forward_signal_insert)
@@ -137,46 +151,67 @@ class BaseRowCls(object):
 		:return: Whether the session has the desired permissions.
 		:rtype: bool
 		"""
-		if self.is_private:
+		cls = self.__class__
+		if cls.is_private:
 			return False
 		access = access.lower()
 		for case in utilities.switch(access, comp=operator.contains, swapped=True):
-			if case('c') and not self.session_has_create_access(session):
+			if case('c') and not cls.session_has_create_access(session, instance=self):
 				break
-			if case('r') and not self.session_has_read_access(session):
+			if case('r') and not cls.session_has_read_access(session, instance=self):
 				break
-			if case('u') and not self.session_has_update_access(session):
+			if case('u') and not cls.session_has_update_access(session, instance=self):
 				break
-			if case('d') and not self.session_has_delete_access(session):
+			if case('d') and not cls.session_has_delete_access(session, instance=self):
 				break
 		else:
 			return True
 		return False
 
-	def session_has_create_access(self, session):
-		if self.is_private:
-			return False
-		return True
+	@classmethod
+	def session_has_create_access(cls, session, instance=None):
+		return not cls.is_private
 
-	def session_has_delete_access(self, session):
-		if self.is_private:
-			return False
-		return True
+	@classmethod
+	def session_has_delete_access(cls, session, instance=None):
+		return not cls.is_private
 
-	def session_has_read_access(self, session):
-		if self.is_private:
-			return False
-		return True
+	@classmethod
+	def session_has_read_access(cls, session, instance=None):
+		return not cls.is_private
 
-	def session_has_read_prop_access(self, session, prop):
-		return self.session_has_read_access(session)
+	@classmethod
+	def session_has_read_prop_access(cls, session, prop, instance=None):
+		return cls.session_has_read_access(session, instance=instance)
 
-	def session_has_update_access(self, session):
-		if self.is_private:
-			return False
-		return True
+	@classmethod
+	def session_has_update_access(cls, session, instance=None):
+		return not cls.is_private
+
+	@classmethod
+	def metatable(cls):
+		"""
+		Generate a :py:class:`.MetaTable` instance for this model class.
+
+		:return: The appropriate metadata for the table represented by this model.
+		:rtype: :py:class:`.MetaTable`
+		"""
+		columns = tuple(col.name for col in cls.__table__.columns)
+		return MetaTable(column_names=columns, model=cls, name=cls.__tablename__)
+
 Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
 metadata = Base.metadata
+
+class ExpireMixIn(object):
+	expiration = sqlalchemy.Column(sqlalchemy.DateTime)
+
+	@property
+	def has_expired(self):
+		if self.expiration is None:
+			return False
+		if self.expiration > current_timestamp():
+			return False
+		return True
 
 class TagMixIn(object):
 	__repr_attributes__ = ('name',)
@@ -185,26 +220,28 @@ class TagMixIn(object):
 	description = sqlalchemy.Column(sqlalchemy.String)
 
 @register_table
-class AlertSubscription(Base):
+class AlertSubscription(ExpireMixIn, Base):
 	__repr_attributes__ = ('campaign_id', 'user_id')
 	__tablename__ = 'alert_subscriptions'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
+	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
-	type = sqlalchemy.Column(sqlalchemy.Enum('email', 'sms', name='alert_subscription_type'), default='sms', server_default='sms', nullable=False)
-	mute_timestamp = sqlalchemy.Column(sqlalchemy.DateTime)
 
-	def session_has_create_access(self, session):
-		return session.user == self.user_id
+	@classmethod
+	def session_has_create_access(cls, session, instance=None):
+		return instance and session.user == instance.user_id
 
-	def session_has_delete_access(self, session):
-		return session.user == self.user_id
+	@classmethod
+	def session_has_delete_access(cls, session, instance=None):
+		return instance and session.user == instance.user_id
 
-	def session_has_read_access(self, session):
-		return session.user == self.user_id
+	@classmethod
+	def session_has_read_access(cls, session, instance=None):
+		return instance and session.user == instance.user_id
 
-	def session_has_update_access(self, session):
-		return session.user == self.user_id
+	@classmethod
+	def session_has_update_access(cls, session, instance=None):
+		return instance and session.user == instance.user_id
 
 @register_table
 class AuthenticatedSession(Base):
@@ -212,21 +249,20 @@ class AuthenticatedSession(Base):
 	__tablename__ = 'authenticated_sessions'
 	is_private = True
 	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
-	created = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-	last_seen = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
+	created = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
+	last_seen = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
+	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 
 @register_table
-class Campaign(Base):
+class Campaign(ExpireMixIn, Base):
 	__repr_attributes__ = ('name',)
 	__tablename__ = 'campaigns'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
 	description = sqlalchemy.Column(sqlalchemy.String)
-	user_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('users.id'), nullable=False)
+	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
 	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
-	reject_after_credentials = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
-	expiration = sqlalchemy.Column(sqlalchemy.DateTime)
+	max_credentials = sqlalchemy.Column(sqlalchemy.Integer)
 	campaign_type_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaign_types.id'))
 	company_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('companies.id'))
 	# relationships
@@ -237,14 +273,6 @@ class Campaign(Base):
 	landing_pages = sqlalchemy.orm.relationship('LandingPage', backref='campaign', cascade='all, delete-orphan')
 	messages = sqlalchemy.orm.relationship('Message', backref='campaign', cascade='all, delete-orphan')
 	visits = sqlalchemy.orm.relationship('Visit', backref='campaign', cascade='all, delete-orphan')
-
-	@property
-	def has_expired(self):
-		if self.expiration is None:
-			return False
-		if self.expiration > current_timestamp():
-			return False
-		return True
 
 @register_table
 class CampaignType(TagMixIn, Base):
@@ -296,18 +324,18 @@ class DeaddropDeployment(Base):
 
 @register_table
 class DeaddropConnection(Base):
-	__repr_attributes__ = ('campaign_id', 'deployment_id', 'visitor_ip')
+	__repr_attributes__ = ('campaign_id', 'deployment_id', 'ip')
 	__tablename__ = 'deaddrop_connections'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	deployment_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('deaddrop_deployments.id'), nullable=False)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
-	visit_count = sqlalchemy.Column(sqlalchemy.Integer, default=1)
-	visitor_ip = sqlalchemy.Column(sqlalchemy.String)
+	count = sqlalchemy.Column(sqlalchemy.Integer, default=1)
+	ip = sqlalchemy.Column(sqlalchemy.String)
 	local_username = sqlalchemy.Column(sqlalchemy.String)
 	local_hostname = sqlalchemy.Column(sqlalchemy.String)
 	local_ip_addresses = sqlalchemy.Column(sqlalchemy.String)
-	first_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
-	last_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	first_seen = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	last_seen = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 
 @register_table
 class Industry(TagMixIn, Base):
@@ -323,6 +351,7 @@ class LandingPage(Base):
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 	hostname = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 	page = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+	first_visits = sqlalchemy.orm.relationship('Visit', backref='first_landing_page', cascade='all, delete-orphan')
 
 @register_table
 class StorageData(Base):
@@ -331,6 +360,7 @@ class StorageData(Base):
 	is_private = True
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	modified = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	namespace = sqlalchemy.Column(sqlalchemy.String)
 	key = sqlalchemy.Column(sqlalchemy.String, nullable=False)
 	value = sqlalchemy.Column(sqlalchemy.Binary)
@@ -348,49 +378,53 @@ class Message(Base):
 	opener_ip = sqlalchemy.Column(sqlalchemy.String)
 	opener_user_agent = sqlalchemy.Column(sqlalchemy.String)
 	sent = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	reported = sqlalchemy.Column(sqlalchemy.DateTime)
 	trained = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
+	delivery_status = sqlalchemy.Column(sqlalchemy.String)
+	delivery_details = sqlalchemy.Column(sqlalchemy.String)
+	testing = sqlalchemy.Column(sqlalchemy.Boolean, default=False, nullable=False)
 	company_department_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('company_departments.id'))
 	# relationships
 	credentials = sqlalchemy.orm.relationship('Credential', backref='message', cascade='all, delete-orphan')
 	visits = sqlalchemy.orm.relationship('Visit', backref='message', cascade='all, delete-orphan')
 
 @register_table
-class MetaData(Base):
-	__repr_attributes__ = ('value_type', 'value')
-	__tablename__ = 'meta_data'
-	is_private = True
-	id = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
-	value_type = sqlalchemy.Column(sqlalchemy.String, default='str')
-	value = sqlalchemy.Column(sqlalchemy.String)
-
-@register_table
-class User(Base):
+class User(ExpireMixIn, Base):
+	__repr_attributes__ = ('name',)
 	__tablename__ = 'users'
-	id = sqlalchemy.Column(sqlalchemy.String, default=lambda: utilities.random_string(16), primary_key=True)
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
+	description = sqlalchemy.Column(sqlalchemy.String)
 	phone_carrier = sqlalchemy.Column(sqlalchemy.String)
 	phone_number = sqlalchemy.Column(sqlalchemy.String)
 	email_address = sqlalchemy.Column(sqlalchemy.String)
 	otp_secret = sqlalchemy.Column(sqlalchemy.String(16))
+	last_login = sqlalchemy.Column(sqlalchemy.DateTime)
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')
 
-	def session_has_create_access(self, session):
+	@classmethod
+	def session_has_create_access(cls, session, instance=None):
 		return False
 
-	def session_has_delete_access(self, session):
+	@classmethod
+	def session_has_delete_access(cls, session, instance=None):
 		return False
 
-	def session_has_read_access(self, session):
-		return session.user == self.id
+	@classmethod
+	def session_has_read_access(cls, session, instance=None):
+		return instance and session.user == instance.id
 
-	def session_has_read_prop_access(self, session, prop):
-		if prop in ('id', 'campaigns'):  # everyone can read the id
+	@classmethod
+	def session_has_read_prop_access(cls, session, prop, instance=None):
+		if prop in ('id', 'campaigns', 'name'):  # everyone can read the id
 			return True
-		return self.session_has_read_access(session)
+		return cls.session_has_read_access(session, instance=instance)
 
-	def session_has_update_access(self, session):
-		return session.user == self.id
+	@classmethod
+	def session_has_update_access(cls, session, instance=None):
+		return instance and session.user == instance.id
 
 @register_table
 class Visit(Base):
@@ -399,10 +433,12 @@ class Visit(Base):
 	id = sqlalchemy.Column(sqlalchemy.String, default=utilities.make_visit_uid, primary_key=True)
 	message_id = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey('messages.id'), nullable=False)
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
-	visit_count = sqlalchemy.Column(sqlalchemy.Integer, default=1)
-	visitor_ip = sqlalchemy.Column(sqlalchemy.String)
-	visitor_details = sqlalchemy.Column(sqlalchemy.String)
-	first_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
-	last_visit = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	count = sqlalchemy.Column(sqlalchemy.Integer, default=1)
+	ip = sqlalchemy.Column(sqlalchemy.String)
+	details = sqlalchemy.Column(sqlalchemy.String)
+	user_agent = sqlalchemy.Column(sqlalchemy.String)
+	first_landing_page_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('landing_pages.id'))
+	first_seen = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	last_seen = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	# relationships
 	credentials = sqlalchemy.orm.relationship('Credential', backref='visit', cascade='all, delete-orphan')

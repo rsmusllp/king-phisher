@@ -1,7 +1,7 @@
 :mod:`testing`
 ==============
 
-.. module:: testing
+.. module:: king_phisher.testing
    :synopsis:
 
 This module provides supporting functionality for the included application unit
@@ -10,19 +10,19 @@ tests.
 Data
 ----
 
-.. autodata:: king_phisher.testing.TEST_MESSAGE_TEMPLATE
+.. autodata:: TEST_MESSAGE_TEMPLATE
    :annotation:
 
-.. autodata:: king_phisher.testing.TEST_MESSAGE_TEMPLATE_INLINE_IMAGE
+.. autodata:: TEST_MESSAGE_TEMPLATE_INLINE_IMAGE
    :annotation:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.testing.KingPhisherTestCase
+.. autoclass:: KingPhisherTestCase
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.testing.KingPhisherServerTestCase
+.. autoclass:: KingPhisherServerTestCase
    :show-inheritance:
    :members:

@@ -32,7 +32,6 @@
 
 import datetime
 
-from king_phisher import errors
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import resources
@@ -159,26 +158,26 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 		if self.campaign_id is None:
 			return
-		campaign = self._get_graphql_campaign_info()
+		campaign = self.application.get_graphql_campaign()
 
 		self.gobjects['entry_campaign_name'].set_text(campaign['name'])
 		if campaign['description'] is not None:
 			self.gobjects['entry_campaign_description'].set_text(campaign['description'])
-		if campaign['campaignTypeId'] is not None:
+		if campaign['campaignType'] is not None:
 			combobox = self.gobjects['combobox_campaign_type']
 			model = combobox.get_model()
-			model_iter = gui_utilities.gtk_list_store_search(model, campaign['campaignTypeId'], column=0)
+			model_iter = gui_utilities.gtk_list_store_search(model, campaign['campaignType']['id'], column=0)
 			if model_iter is not None:
 				combobox.set_active_iter(model_iter)
 
 		self.gobjects['checkbutton_alert_subscribe'].set_property('active', self.application.rpc('campaign/alerts/is_subscribed', self.campaign_id))
-		self.gobjects['checkbutton_reject_after_credentials'].set_property('active', campaign['rejectAfterCredentials'])
+		self.gobjects['checkbutton_reject_after_credentials'].set_property('active', bool(campaign['maxCredentials']))
 
-		if campaign['companyId'] is not None:
+		if campaign['company'] is not None:
 			self.gobjects['radiobutton_company_existing'].set_active(True)
 			combobox = self.gobjects['combobox_company_existing']
 			model = combobox.get_model()
-			model_iter = gui_utilities.gtk_list_store_search(model, campaign['companyId'], column=0)
+			model_iter = gui_utilities.gtk_list_store_search(model, campaign['company']['id'], column=0)
 			if model_iter is not None:
 				combobox.set_active_iter(model_iter)
 
@@ -188,22 +187,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration)
 			self.gobjects['spinbutton_campaign_expiration_hour'].set_value(expiration.hour)
 			self.gobjects['spinbutton_campaign_expiration_minute'].set_value(expiration.minute)
-
-	def _get_graphql_campaign_info(self, campaign_id=None):
-		results = self.application.rpc.graphql("""\
-		query getCampaignInfo($id: String!) {
-			db {
-				campaign(id: $id) {
-					name
-					campaignTypeId
-					companyId
-					description
-					expiration
-					rejectAfterCredentials
-				}
-			}
-		}""", {'id': campaign_id or self.config['campaign_id']})
-		return results['db']['campaign']
 
 	def _get_tag_from_combobox(self, combobox, db_table):
 		model = combobox.get_model()
@@ -256,17 +239,14 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		return company_id
 
 	def _get_graphql_company(self, company_name):
-		try:
-			results = self.application.rpc.graphql("""\
-			query getCompany($name: String!) {
-				db {
-					company(name: $name) {
-						id
-					}
+		results = self.application.rpc.graphql("""\
+		query getCompany($name: String!) {
+			db {
+				company(name: $name) {
+					id
 				}
-			}""", {'name': company_name})
-		except errors.KingPhisherGraphQLQueryError:
-			return None
+			}
+		}""", {'name': company_name})
 		return results['db']['company']
 
 	def signal_assistant_apply(self, _):
@@ -338,7 +318,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		properties['campaign_type_id'] = self._get_tag_from_combobox(self.gobjects['combobox_campaign_type'], 'campaign_types')
 		properties['company_id'] = company_id
 		properties['expiration'] = expiration
-		properties['reject_after_credentials'] = self.gobjects['checkbutton_reject_after_credentials'].get_property('active')
+		properties['max_credentials'] = (1 if self.gobjects['checkbutton_reject_after_credentials'].get_property('active') else None)
 		self.application.rpc('db/table/set', 'campaigns', cid, tuple(properties.keys()), tuple(properties.values()))
 
 		should_subscribe = self.gobjects['checkbutton_alert_subscribe'].get_property('active')

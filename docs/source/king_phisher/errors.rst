@@ -1,7 +1,7 @@
 :mod:`errors`
 =============
 
-.. module:: errors
+.. module:: king_phisher.errors
    :synopsis:
 
 This module provides the custom exceptions that are used throughout the package.
@@ -9,37 +9,37 @@ This module provides the custom exceptions that are used throughout the package.
 Exceptions
 ----------
 
-.. autoexception:: king_phisher.errors.KingPhisherError
+.. autoexception:: KingPhisherError
    :show-inheritance:
 
-.. autoexception:: king_phisher.errors.KingPhisherAbortError
-   :show-inheritance:
-   :members:
-
-.. autoexception:: king_phisher.errors.KingPhisherAbortRequestError
+.. autoexception:: KingPhisherAbortError
    :show-inheritance:
    :members:
-   :special-members: __init__
 
-.. autoexception:: king_phisher.errors.KingPhisherDatabaseError
-   :show-inheritance:
-
-.. autoexception:: king_phisher.errors.KingPhisherGraphQLQueryError
-   :show-inheritance:
-
-.. autoexception:: king_phisher.errors.KingPhisherInputValidationError
-   :show-inheritance:
-
-.. autoexception:: king_phisher.errors.KingPhisherPermissionError
-   :show-inheritance:
-
-.. autoexception:: king_phisher.errors.KingPhisherPluginError
+.. autoexception:: KingPhisherAbortRequestError
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoexception:: king_phisher.errors.KingPhisherResourceError
+.. autoexception:: KingPhisherDatabaseError
    :show-inheritance:
 
-.. autoexception:: king_phisher.errors.KingPhisherTimeoutError
+.. autoexception:: KingPhisherGraphQLQueryError
+   :show-inheritance:
+
+.. autoexception:: KingPhisherInputValidationError
+   :show-inheritance:
+
+.. autoexception:: KingPhisherPermissionError
+   :show-inheritance:
+
+.. autoexception:: KingPhisherPluginError
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
+.. autoexception:: KingPhisherResourceError
+   :show-inheritance:
+
+.. autoexception:: KingPhisherTimeoutError
    :show-inheritance:

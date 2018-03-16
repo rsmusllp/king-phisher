@@ -1,69 +1,75 @@
-:mod:`client.plugins`
-=====================
+:mod:`plugins`
+==============
 
-.. module:: client.plugins
+.. module:: king_phisher.client.plugins
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.plugins.ClientCatalogManager
+.. autoclass:: CatalogCacheManager
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.plugins.ClientOptionBoolean
+.. autoclass:: ClientCatalogManager
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.plugins.ClientOptionEnum
+.. autoclass:: ClientOptionBoolean
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.plugins.ClientOptionInteger
+.. autoclass:: ClientOptionEnum
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.plugins.ClientOptionMixin
+.. autoclass:: ClientOptionInteger
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.plugins.ClientOptionPath
+.. autoclass:: ClientOptionMixin
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.plugins.ClientOptionPort
+.. autoclass:: ClientOptionPath
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.plugins.ClientOptionString
+.. autoclass:: ClientOptionPort
    :show-inheritance:
    :members:
    :inherited-members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.plugins.ClientPlugin
+.. autoclass:: ClientOptionString
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :special-members: __init__
+
+.. autoclass:: ClientPlugin
    :show-inheritance:
    :members:
 
-.. autoclass:: king_phisher.client.plugins.ClientPluginMailerAttachment
+.. autoclass:: ClientPluginMailerAttachment
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.plugins.ClientPluginManager
+.. autoclass:: ClientPluginManager
    :show-inheritance:
    :members:

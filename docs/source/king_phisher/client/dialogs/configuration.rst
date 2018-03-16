@@ -1,13 +1,13 @@
-:mod:`dialogs.configuration`
-============================
+:mod:`configuration`
+====================
 
-.. module:: dialogs.configuration
+.. module:: king_phisher.client.dialogs.configuration
    :synopsis:
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.dialogs.configuration.ConfigurationDialog
+.. autoclass:: ConfigurationDialog
    :show-inheritance:
    :members:
    :special-members: __init__

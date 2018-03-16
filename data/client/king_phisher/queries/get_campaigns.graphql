@@ -1,0 +1,28 @@
+# retrieve information about all the campaigns
+query getCampaigns {
+  db {
+    campaigns {
+      edges {
+        node {
+          id
+          created
+          description
+          expiration
+          name
+          company {
+            name
+          }
+          campaignType {
+            name
+          }
+          messages {
+            total
+          }
+          user {
+            name
+          }
+        }
+      }
+    }
+  }
+}

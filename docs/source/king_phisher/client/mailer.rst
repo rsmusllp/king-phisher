@@ -1,34 +1,51 @@
-:mod:`client.mailer`
-====================
+:mod:`mailer`
+=============
 
-.. module:: client.mailer
+.. module:: king_phisher.client.mailer
    :synopsis:
 
 This module provides the functionality used to create and sending messages from
 the client application.
 
+Data
+----
+
+.. autodata:: MIME_TEXT_PLAIN
+
 Functions
 ---------
 
-.. autofunction:: king_phisher.client.mailer.guess_smtp_server_address
+.. autofunction:: count_targets_file
 
-.. autofunction:: king_phisher.client.mailer.render_message_template
+.. autofunction:: get_invite_start_from_config
+
+.. autofunction:: guess_smtp_server_address
+
+.. autofunction:: render_message_template
+
+.. autofunction:: rfc2282_timestamp
 
 Classes
 -------
 
-.. autoclass:: king_phisher.client.mailer.MailSenderThread
+.. autoclass:: MailSenderThread
    :show-inheritance:
    :members:
    :special-members: __init__
 
-.. autoclass:: king_phisher.client.mailer.MessageAttachments
-   :members:
+.. autoclass:: MessageAttachments
 
-.. autoclass:: king_phisher.client.mailer.MessageTarget
+.. autoclass:: MessageTarget
+   :show-inheritance:
    :members:
+   :special-members: __init__
 
-.. autoclass:: king_phisher.client.mailer.TopMIMEMultipart
+.. autoclass:: MessageTargetPlaceholder
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
+.. autoclass:: TopMIMEMultipart
    :show-inheritance:
    :members:
    :special-members: __init__

@@ -1,7 +1,7 @@
 :mod:`ipaddress`
 ================
 
-.. module:: ipaddress
+.. module:: king_phisher.ipaddress
    :synopsis:
 
 This module provides functionality for dealing with an external "ipaddress"
@@ -12,27 +12,27 @@ addresses as packed binary strings.
 Functions
 ---------
 
-.. autofunction:: king_phisher.ipaddress.ip_address
+.. autofunction:: ip_address
 
-.. autofunction:: king_phisher.ipaddress.ip_network
+.. autofunction:: ip_network
 
-.. autofunction:: king_phisher.ipaddress.ip_interface
+.. autofunction:: ip_interface
 
-.. autofunction:: king_phisher.ipaddress.is_loopback
+.. autofunction:: is_loopback
 
-.. autofunction:: king_phisher.ipaddress.is_valid
+.. autofunction:: is_valid
 
 Classes
 -------
 
-.. autoclass:: king_phisher.ipaddress.IPv4Address
+.. autoclass:: IPv4Address
    :members:
 
-.. autoclass:: king_phisher.ipaddress.IPv4Network
+.. autoclass:: IPv4Network
    :members:
 
-.. autoclass:: king_phisher.ipaddress.IPv6Address
+.. autoclass:: IPv6Address
    :members:
 
-.. autoclass:: king_phisher.ipaddress.IPv6Network
+.. autoclass:: IPv6Network
    :members:

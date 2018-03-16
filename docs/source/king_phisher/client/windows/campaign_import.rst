@@ -1,7 +1,7 @@
-:mod:`client.windows.campaign_import`
-=====================================
+:mod:`campaign_import`
+======================
 
-.. module:: client.windows.campaign_import
+.. module:: king_phisher.client.windows.campaign_import
    :synopsis:
 
 This module provides the window through which the user can import King Phisher
@@ -11,7 +11,7 @@ campaigns from xml files previously exported with the
 Classes
 -------
 
-.. autoclass:: king_phisher.client.windows.campaign_import.ImportCampaignWindow
+.. autoclass:: ImportCampaignWindow
    :show-inheritance:
    :members:
    :special-members: __init__

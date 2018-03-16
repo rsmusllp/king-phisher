@@ -168,35 +168,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
 		hlfg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlfg', default=ColorHexCode.BLACK)
 		now = datetime.datetime.now()
-		campaigns = self.application.rpc.graphql("""\
-		query getCampaigns {
-			db {
-				campaigns {
-					edges {
-						node {
-							id
-							name
-							description
-							company {
-								name
-							}
-							campaignType {
-								name
-							}
-							messages {
-								total
-							}
-							user {
-								id
-							}
-							created
-							expiration
-						}
-					}
-				}
-			}
-		}
-		""")
+		campaigns = self.application.rpc.graphql_find_file('get_campaigns.graphql')
 		for campaign in campaigns['db']['campaigns']['edges']:
 			campaign = campaign['node']
 			created_ts = utilities.datetime_utc_to_local(campaign['created'])
@@ -214,7 +186,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 				(campaign['company']['name'] if campaign['company'] is not None else None),
 				(campaign['campaignType']['name'] if campaign['campaignType'] is not None else None),
 				"{0:,}".format(campaign['messages']['total']),
-				campaign['user']['id'],
+				campaign['user']['name'],
 				created_ts,
 				expiration_ts,
 				(hlbg_color if is_expired else bg_color),
