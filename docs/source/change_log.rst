@@ -10,7 +10,7 @@ Version 1.x.x
 Version 1.10.x
 ^^^^^^^^^^^^^^
 
-*In progress*
+Released :release:`1.10.0` on March 16th, 2018
 
 * Added a ``campaign-alert`` server signal for custom alert delivery mechanisms
 * Use GraphQL for loading data instead of the legacy table-based API
