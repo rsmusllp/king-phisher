@@ -114,6 +114,7 @@
       <tbody>
     </table>
 
+    {% if request.user_agent -%}
     {{ header('h3', 'Request User Agent Information') }}
     {% set ua_info = parse_user_agent(request.user_agent) %}
     <table class="table">
@@ -127,6 +128,7 @@
         <tr class="row"><td class="col-md-4">os_arch</td><td class="col-md-8">{{ ua_info.os_arch }}</td></tr>
       <tbody>
     </table>
+    {% endif %}
 
     {{ header('h2', 'Server Variables') }}
     <table class="table">

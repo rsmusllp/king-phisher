@@ -55,6 +55,7 @@ request.parameters:
 {% else %}
 request.parameters:     N/A
 {% endif %}
+{% if request.user_agent %}
 
 ### Request User Agent Information
 request.user_agent:     {{ request.user_agent }}
@@ -62,6 +63,7 @@ request.user_agent:     {{ request.user_agent }}
 os_name:                {{ ua_info.os_name }}
 os_version:             {{ ua_info.os_version }}
 os_arch:                {{ ua_info.os_arch }}
+{% endif %}
 
 # Server Variables
 server.address:         {{ server.address }}

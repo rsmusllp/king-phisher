@@ -338,8 +338,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def signal_popup_menu_activate_reload_all(self, _):
 		if not self.load_thread.is_alive():
-			refresh = True
-			self.load_thread = utilities.Thread(target=self._load_catalogs, args=[refresh])
+			self.load_thread = utilities.Thread(target=self._load_catalogs, kwargs={'refresh': True})
 			self.load_thread.start()
 
 	def signal_destory(self, _):
