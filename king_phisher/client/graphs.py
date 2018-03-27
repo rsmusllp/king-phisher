@@ -457,7 +457,7 @@ class CampaignBarGraph(CampaignGraph):
 		:return:
 		"""
 		# define the necessary colors
-		ax.set_axis_bgcolor(self.get_color('bg', ColorHexCode.WHITE))
+		ax.set_facecolor(self.get_color('bg', ColorHexCode.WHITE))
 		self.resize(height=60 + 20 * len(bars))
 
 		bar_count = len(bars)
@@ -730,7 +730,7 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 			top='off',
 			bottom='off'
 		)
-		ax.set_axis_bgcolor(color_line_bg)
+		ax.set_facecolor(color_line_bg)
 		ax.set_ylabel('Number of Visits', color=self.get_color('fg', ColorHexCode.WHITE), size=10)
 		self._ax_hide_ticks(ax)
 		self._ax_set_spine_color(ax, color_bg)

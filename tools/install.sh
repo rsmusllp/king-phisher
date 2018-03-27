@@ -393,7 +393,7 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		fi
 	fi
 	# try to install basemap directly from it's sourceforge tarball
-	if python3 -m pip install http://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz &> /dev/null ; then
+	if python3 -m pip install https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz &> /dev/null; then
 		echo "Successfully installed basemap with pip"
 	else
 		echo "Failed to install basemap with PIP, this is not a required dependency for King Phisher"
