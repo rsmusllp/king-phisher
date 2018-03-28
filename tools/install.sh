@@ -81,6 +81,23 @@ function show_help {
 	return 0;
 }
 
+function select_nix_distro {
+	read answer
+	case $answer in
+		1) LINUX_VERSION="Debian";;
+		2) LINUX_VERSION="Ubuntu";;
+		3) LINUX_VERSION="Kali";;
+		4) LINUX_VERSION="Fedora";;
+		5) LINUX_VERSION="Arch";;
+		6) LINUX_VERSION="CentOS"
+			KING_PHISHER_SKIP_CLIENT="x";;
+		7) LINUX_VERSION="RedHat"
+			KING_PHISHER_SKIP_CLIENT="x";;
+		*) echo "Invalid Linux selection, must be 1-7"
+			exit 0;;
+	esac
+}
+
 while :; do
 	case $1 in
 		-h|-\?|--help)
@@ -165,22 +182,36 @@ if [[ ! $LINUX_VERSION ]] && grep -E "Arch Linux" /etc/issue &> /dev/null; then
 fi
 
 if [ -z "$LINUX_VERSION" ]; then
-	echo "Failed to detect the version of Linux"
-	echo "This installer only supports the following Linux distributions:"
-	echo "  - BackBox"
-	echo "  - CentOS"
-	echo "  - Debian"
-	echo "  - Fedora"
-	echo "  - Kali"
-	echo "  - Red Hat"
-	echo "  - Ubuntu"
-	echo "  - Arch"
 	echo ""
-	echo "If the current version of Linux is one of these flavors but it is"
+	echo "Failed to autodetect the version of Linux"
+	echo "If the current version of Linux is one supported by King Phisher is"
 	echo "not recognized, please open a support ticket and include the version."
-	exit 1
+	echo "Supported Operating systems and versions: bit.ly/kp-advanced-install"
+	echo ""
+	echo "To continue please select the number closets to your Linux system."
+	echo "No guarantee can me made that King Phisher will install "
+	echo "  utilizing this method. This method is not supported."
+	echo ""
+	echo "Linux distributions options to attempt to force install:"
+	echo "  1  - Debian"
+	echo "  2  - Ubuntu"
+	echo "  3  - Kali"
+	echo "  4  - Fedora"
+	echo "  5  - Arch"
+	echo "  6  - CentOS (Server Support Only)"
+	echo "  7  - Red Hat (Sever Support Only)"
+	echo ""
+	echo -n "Select 1-7: "
+	select_nix_distro
+	echo "Selected Linux version is $LINUX_VERSION"
+	prompt_yes_or_no "Continue? (There is no guarantee or support beyond this point)" select_nix_continue
+	if [ $select_nix_continue == "no" ]; then
+		echo "Installation aborted by user"
+		exit 0
+	fi
+else
+	echo "Linux version detected as $LINUX_VERSION"
 fi
-echo "Linux version detected as $LINUX_VERSION"
 
 if [ ! -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 	echo "Skipping installing King Phisher Client components"
