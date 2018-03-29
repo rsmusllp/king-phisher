@@ -140,7 +140,7 @@ while :; do
 done
 
 if [ "$(id -u)" != "0" ]; then
-	echo "This must be run as root"
+	echo "ERROR: This must be run as root"
 	exit $E_NOTROOT
 fi
 
@@ -184,14 +184,14 @@ fi
 
 if [ -z "$LINUX_VERSION" ]; then
 	echo ""
-	echo "WARNING: Failed to autodetect the version of Linux"
-	echo "If the current version of Linux is supported by King Phisher and is"
-	echo "not being recognized, open a support ticket and include the version."
-	echo "Supported Operating Systems and versions: bit.ly/kp-advanced-install"
+	echo "WARNING: Failed to autodetect the version of Linux. If the current version of"
+	echo "WARNING: Linux is supported by King Phisher and is not being recognized, open a"
+	echo "WARNING: support ticket and include the version."
 	echo ""
-	echo "To continue please select the number closets to your Linux system."
-	echo "No guarantee can me made that King Phisher will install"
-	echo "utilizing this method."
+	echo "Supported Operating Systems and Versions: https://bit.ly/kp-advanced-install"
+	echo ""
+	echo "To continue, please select the number closest to your Linux system. No guarantee"
+	echo "can me made that King Phisher will install utilizing this method."
 	echo ""
 	echo "Linux distributions options to attempt to force install:"
 	echo "  1  - Debian"
@@ -200,33 +200,33 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo "  4  - Fedora"
 	echo "  5  - Arch"
 	echo "  6  - CentOS (Server Support Only)"
-	echo "  7  - Red Hat (Sever Support Only)"
+	echo "  7  - Red Hat (Server Support Only)"
 	echo ""
 	echo -n "Select 1-7: "
 	select_nix_distro
 	echo "Selected Linux version is $LINUX_VERSION"
 	prompt_yes_or_no "Continue? (There is no guarantee or support beyond this point)" select_nix_continue
 	if [ $select_nix_continue == "no" ]; then
-		echo "Installation aborted by user"
+		echo "INFO: Installation aborted by user"
 		exit 0
 	fi
 else
-	echo "Linux version detected as $LINUX_VERSION"
+	echo "INFO: Linux version detected as $LINUX_VERSION"
 fi
 
 if [ ! -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-	echo "Skipping installing King Phisher Client components"
+	echo "INFO: Skipping installing King Phisher Client components"
 fi
 if [ ! -z "$KING_PHISHER_SKIP_SERVER" ]; then
-	echo "Skipping installing King Phisher Server components"
+	echo "INFO: Skipping installing King Phisher Server components"
 else
 	prompt_yes_or_no "Install and use PostgreSQL? (Highly recommended and required for upgrading)" KING_PHISHER_USE_POSTGRESQL
 	if [ $KING_PHISHER_USE_POSTGRESQL == "yes" ]; then
-		echo "Will install and configure PostgreSQL for the server"
+		echo "INFO: Will install and configure PostgreSQL for the server"
 	fi
 	if [ -e server_config.yml ]; then
-		echo "Found previous server configuration, backing up to server_config.yml.bck.~{numbered}~"
-		prompt_yes_or_no "Use same database? (Highly recommended)" SAVE_DATABASE
+		echo "INFO: Backing up the previous server configuration to server_config.yml.bck.~#~"
+		prompt_yes_or_no "Use the same database connection? (recommended)" SAVE_DATABASE
 		if [ $SAVE_DATABASE ]; then
 			POSTGRES_BACKUP=$(cat server_config.yml| grep postgresql: | awk '{print $2}')
 		fi
@@ -237,9 +237,9 @@ fi
 
 # update apt-get package information and only continue if successful
 if [ "$(command -v apt-get)" ]; then
-	echo "Attempting to update apt-get cache package information"
+	echo "INFO: Attempting to update apt-get cache package information"
 	if ! apt-get update; then
-		echo "Command 'apt-get update' failed, please correct the issues and try again"
+		echo "ERROR: Command 'apt-get update' failed, please correct the issues and try again"
 		exit
 	fi
 fi
@@ -259,33 +259,33 @@ fi
 
 if git status &> /dev/null; then
 	KING_PHISHER_DIR="$(git rev-parse --show-toplevel)"
-	echo "Git repo found at $KING_PHISHER_DIR"
+	echo "INFO: Git repo found at $KING_PHISHER_DIR"
 elif [ -d "$(dirname $(dirname $FILE_NAME))/king_phisher" ]; then
 	KING_PHISHER_DIR="$(dirname $(dirname $FILE_NAME))"
-	echo "Project directory found at $KING_PHISHER_DIR"
+	echo "INFO: Project directory found at $KING_PHISHER_DIR"
 else
-	echo "Downloading and installing the King Phisher server to $KING_PHISHER_DIR"
+	echo "INFO: Downloading and installing the King Phisher server to $KING_PHISHER_DIR"
 	if [ ! -d "$KING_PHISHER_DIR" ]; then
 		if ! git clone $GIT_CLONE_URL $KING_PHISHER_DIR &> /dev/null; then
 			echo "Failed to clone the Git repo"
 			exit $E_SOFTWARE
 		fi
-		echo "Successfully cloned the git repo"
+		echo "INFO: Successfully cloned the git repo"
 	fi
 fi
 cd $KING_PHISHER_DIR
 if [ -n "$KING_PHISHER_DEV" ] && [ -d ".git" ]; then
 	git fetch origin
 	git checkout -b dev origin/dev
-	echo "Switched to the dev branch"
+	echo "INFO: Switched to the dev branch"
 fi
 
 if [ "$LINUX_VERSION" == "Kali" ]; then
 	if ! grep -i 'rolling' /etc/debian_version &> /dev/null; then
 		echo "Checking Kali 2 apt sources"
 		if ! grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null; then
-			echo "Standard Kali 2 apt sources are missing, now adding them"
-			echo "See http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
+			echo "INFO: Standard Kali 2 apt sources are missing, now adding them, see"
+			echo "INFO: http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
 			echo "deb http://http.kali.org/kali sana main non-free contrib" >> /etc/apt/sources.list
 			apt-get update
 		fi
@@ -295,14 +295,14 @@ fi
 echo "Installing $LINUX_VERSION dependencies"
 if [ "$LINUX_VERSION" == "RedHat" ]; then
 	if [ ! "$(command -v python3)" ]; then
-		echo "Installing Python3.5 for Red Hat 7"
+		echo "INFO: Installing Python3.5 for Red Hat 7"
 		# manually add rpms for easy python35 install
 		yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 		rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 		yum -y install https://rhel7.iuscommunity.org/ius-release.rpm
 		rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
 		yum install -y python35u python35u-devel python35u-pip
-		echo "Symlinking $(which python3.5) -> /usr/bin/python3"
+		echo "INFO: Symlinking $(which python3.5) -> /usr/bin/python3"
 		ln -s $(which python3.5) /usr/bin/python3
 	fi
 	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
@@ -316,10 +316,10 @@ fi
 if [ "$LINUX_VERSION" == "CentOS" ]; then
 	if [ ! "$(command -v python3)" ]; then
 		# manually install python3.5 on CentOS 7 and symlink it to python3
-		echo "Installing Python3.5 for CentOS 7"
+		echo "INFO: Installing Python3.5 for CentOS 7"
 		yum install -y https://centos7.iuscommunity.org/ius-release.rpm
 		yum install -y python35u python35u-devel python35u-pip
-		echo "Symlinking $(which python3.5) -> /usr/bin/python3"
+		echo "INFO: Symlinking $(which python3.5) -> /usr/bin/python3"
 		ln -s $(which python3.5) /usr/bin/python3
 	fi
 	yum install -y epel-release
@@ -353,7 +353,7 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 		if ! apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
 			gir1.2-webkit-3.0 python3-cairo libgeos++-dev \
 			libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev; then
-				echo -e "\nFailed to install dependencies with apt-get\n"
+				echo "ERROR: Failed to install dependencies with apt-get"
 				exit
 		fi
 
@@ -363,18 +363,18 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 
 		if apt-cache search gir1.2-vte-2.91 &> /dev/null; then
 			if ! apt-get -y install gir1.2-vte-2.91; then
-				echo "Failed to install gir1.2-vte-2.91"
+				echo "ERROR: Failed to install gir1.2-vte-2.91"
 			fi
 		else
 			if ! apt-get -y install gir1.2-vte-2.90; then
-				echo "Failed to install gir1.2-vte-2.90"
+				echo "ERROR: Failed to install gir1.2-vte-2.90"
 			fi
 		fi
 
 		if apt-get install -y gir1.2-webkit2-3.0 &> /dev/null; then
-			echo "Successfully installed gir1.2-webkit2-3.0 with apt-get"
+			echo "INFO: Successfully installed gir1.2-webkit2-3.0 with apt-get"
 		else
-			echo "Failed to install gir1.2-webkit2-3.0 with apt-get"
+			echo "ERROR: Failed to install gir1.2-webkit2-3.0 with apt-get"
 		fi
 	fi
 
@@ -390,7 +390,7 @@ elif [ "$LINUX_VERSION" == "Arch" ]; then
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		if ! pacman --noconfirm -S gobject-introspection python-cairo geos gtk3 \
 			gtksourceview3 webkit2gtk vte3 postgresql-libs python-gobject; then
-			echo -e "\nFailed to install dependencies with pacman\n"
+			echo "ERROR: Failed to install dependencies with pacman"
 			exit
 		fi
 		if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
@@ -399,7 +399,7 @@ elif [ "$LINUX_VERSION" == "Arch" ]; then
 	fi
 fi
 
-echo "Installing Python package dependencies from PyPi"
+echo "INFO: Installing Python package dependencies from PyPi"
 # six needs to be installed before requirements.txt for matplotlib
 PIP_VERSION=$(pip --version)
 python3 -m pip install --upgrade pip
@@ -410,7 +410,7 @@ fi
 python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade six
 if ! python3 -m pip install -r requirements.txt; then
-	echo "Failed to install python requirements with pip"
+	echo "ERROR: Failed to install python requirements with pip"
 	exit $E_SOFTWARE
 fi
 
@@ -422,29 +422,30 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		DESKTOP_APPLICATIONS_DIR="/usr/share/applications"
 	fi
 	if [ -n "$DESKTOP_APPLICATIONS_DIR" ]; then
-		echo "Installing the client desktop application file"
+		echo "INFO: Installing the client desktop application file"
 		cp data/client/king-phisher.desktop $DESKTOP_APPLICATIONS_DIR
 		sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" $DESKTOP_APPLICATIONS_DIR/king-phisher.desktop
 		if [ -d "/usr/share/icons/hicolor/scalable/apps" ]; then
 			cp data/client/king_phisher/king-phisher-icon.svg /usr/share/icons/hicolor/scalable/apps
 		fi
 		if [ -f "/usr/share/icons/hicolor/index.theme" -a "$(command -v gtk-update-icon-cache)" ]; then
-			echo "Updating the GTK icon cache"
+			echo "INFO: Updating the GTK icon cache"
 			gtk-update-icon-cache --force /usr/share/icons/hicolor
 		fi
 	fi
 	# try to install basemap directly from it's sourceforge tarball
 	if python3 -m pip install https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz &> /dev/null; then
-		echo "Successfully installed basemap with pip"
+		echo "INFO: Successfully installed basemap with pip"
 	else
-		echo "Failed to install basemap with PIP, this is not a required dependency for King Phisher"
-		echo "See https://github.com/securestate/king-phisher/wiki/Graphs#installing-basemap-with-pip for more information."
+		echo "WARNING: Failed to install basemap with pip, this is not a required dependency"
+		echo "WARNING: for King Phisher. See https://bit.ly/kp-pip-basemaps for more"
+		echo "WARNING: information."
 	fi
 fi
 
 if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	if ! egrep "^${KING_PHISHER_GROUP}:" /etc/group &> /dev/null; then
-		echo "Creating King Phisher admin group: '$KING_PHISHER_GROUP'"
+		echo "INFO: Creating King Phisher admin group: '$KING_PHISHER_GROUP'"
 		groupadd $KING_PHISHER_GROUP
 		chown -R :$KING_PHISHER_GROUP $KING_PHISHER_DIR
 	fi
@@ -484,9 +485,9 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 				fi
 			fi
 		fi
-		echo "Configuring the PostgreSQL server"
+		echo "INFO: Configuring the PostgreSQL server"
 		PG_CONFIG_LOCATION=$(su postgres -c "psql -t -P format=unaligned -c 'show hba_file';")
-		echo "PostgreSQL configuration file found at $PG_CONFIG_LOCATION"
+		echo "INFO: PostgreSQL configuration file found at $PG_CONFIG_LOCATION"
 		if ! grep -E "king_phisher" $PG_CONFIG_LOCATION &> /dev/null; then
 			# put the king_phisher first in the line for localhost connects with md5
 			sed -i '/# IPv4 local connections:/a\host    king_phisher    king_phisher    127.0.0.1/32            md5' $PG_CONFIG_LOCATION
@@ -499,12 +500,12 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 			sed -i -re "s|#\\s?database: postgresql://.*$|database: postgresql://king_phisher:$PG_KP_PASSWORD@localhost/king_phisher|" ./server_config.yml
 			if [[ -z "$(su postgres -c "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='king_phisher'\"")" ]]; then
 				su postgres -c "psql -c \"CREATE USER king_phisher WITH PASSWORD '$PG_KP_PASSWORD';\"" &> /dev/null
-				echo "Created the PostgreSQL user 'king_phisher' with a random password"
+				echo "INFO: Created the PostgreSQL user 'king_phisher' with a random password"
 			else
 				echo "WARNING: The PostgreSQL king_phisher user already exists! The password will need"
 				echo "WARNING: to be manually updated to match the one automatically generated by this"
-				echo "WARNING: installation script by using the ALTER ROLE PostgreSQL command"
-				echo "WARNING: or restore a server configuration file from backup with the correct password."
+				echo "WARNING: installation script (by using the ALTER ROLE PostgreSQL command) or"
+				echo "WARNING: restored from a previously backed up server configuration file."
 			fi
 		else
 			sed -i -re "s|#\\s?database: postgresql://.*$|database: $POSTGRES_BACKUP|" ./server_config.yml
@@ -520,37 +521,37 @@ if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	fi
 
 	if [ -d "/lib/systemd/system" -a "$(command -v systemctl)" ]; then
-		echo "Installing the King Phisher systemd service file in /lib/systemd/system/"
+		echo "INFO: Installing the King Phisher systemd service file in /lib/systemd/system/"
 		cp data/server/service_files/king-phisher.service /lib/systemd/system
 		sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" /lib/systemd/system/king-phisher.service
 
-		echo "Starting the King Phisher service"
+		echo "INFO: Starting the King Phisher service"
 		systemctl daemon-reload
 		systemctl enable king-phisher.service
 		systemctl start king-phisher.service
 	elif [ "$LINUX_VERSION" == "Ubuntu" ]; then
-		echo "Installing the King Phisher upstart service file in /etc/init/"
+		echo "INFO: Installing the King Phisher upstart service file in /etc/init/"
 		cp data/server/service_files/king-phisher.conf /etc/init
 		sed -i -re "s|/opt\/king-phisher|$KING_PHISHER_DIR|g" /etc/init/king-phisher.conf
 
-		echo "Starting the King Phisher service"
+		echo "INFO: Starting the King Phisher service"
 		start king-phisher
 	else
 		echo "-----------------------------------------------------------------------------------------------"
-		echo "Start the King Phisher server with the following command prior to starting the client:"
+		echo "INFO: Start the King Phisher server with the following command prior to starting the client:"
 		echo "sudo $KING_PHISHER_DIR/KingPhisherServer -L INFO -f $KING_PHISHER_DIR/server_config.yml"
 	fi
 fi
 if [ "$BACKUP" == "true" ]; then
-	echo "-----------------------------------------------------------------------------------------------"
-	echo "WARNING: A previous server_config.yml file was found."
-	echo "WARNING: Default settings were applied in the new configuration file."
-	echo "WARNING: The server_config.yml gets incrementally backed up."
-	echo "WARNING: Previous settings by restored by coping the desired version backup"
+	echo "--------------------------------------------------------------------------------"
+	echo "WARNING: A previous server_config.yml file was found. Default settings were"
+	echo "WARNING: applied in the new configuration file. The server_config.yml gets"
+	echo "WARNING: incrementally backed up. Previous settings can be restored by"
+	echo "WARNING: copying the desired version's backup to the current file."
 fi
 
 if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-	echo "-----------------------------------------------------------------------------------------------"
-	echo "You can start the King Phisher client with the following command:"
+	echo "--------------------------------------------------------------------------------"
+	echo "INFO: You can start the King Phisher client with the following command:"
 	echo "$KING_PHISHER_DIR/KingPhisher"
 fi
