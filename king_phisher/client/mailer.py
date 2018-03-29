@@ -767,10 +767,12 @@ class MailSenderThread(threading.Thread):
 		with codecs.open(self.config['mailer.html_file'], 'r', encoding='utf-8') as file_h:
 			msg_template = file_h.read()
 		formatted_msg = render_message_template(msg_template, self.config, target=target)
-		msg_body = MIMEText(formatted_msg, 'html')
-		msg_alt.attach(msg_body)
+		# RFC-1341 page 35 states friendliest part must be attached first
 		msg_body = MIMEText(MIME_TEXT_PLAIN, 'plain')
 		msg_alt.attach(msg_body)
+		msg_body = MIMEText(formatted_msg, 'html')
+		msg_alt.attach(msg_body)
+		msg_alt.set_default_type('html')
 
 		# process attachments
 		for attach in attachments.files:
