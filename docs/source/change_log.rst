@@ -9,8 +9,12 @@ Version 1.11.x
 
 *In progress*
 
-* updated to support matplotlib version 2.2.0
-* removed docker server support
+* Updated to support matplotlib version 2.2.0
+* Removed docker server support
+* Multiple improvements to the installation script
+
+   * Users can now specify a supported Linux distro when it is not automatically detected
+   * The database connection string is kept to avoid PostgreSQL password resets
 
 Version 1.10.x
 ^^^^^^^^^^^^^^
