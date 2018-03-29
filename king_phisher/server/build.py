@@ -149,7 +149,7 @@ def server_from_config(config, handler_klass=None, plugin_manager=None):
 		if error_number == 98:
 			logger.error('failed to bind server to address (socket error #98)')
 		logger.error(error_message, exc_info=True)
-		raise errors.KingPhisherError(error_message)
+		raise errors.KingPhisherError(error_message) from None
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
 		logger.info("setting the server version to the custom header: '{0}'".format(config.get('server.server_header')))

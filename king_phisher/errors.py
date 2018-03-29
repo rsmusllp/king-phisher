@@ -73,6 +73,15 @@ class KingPhisherDatabaseError(KingPhisherError):
 	"""
 	pass
 
+class KingPhisherDatabaseAuthenticationError(KingPhisherDatabaseError):
+	"""
+	An exception that is raised when King Phisher can not authenticate to the
+	database. This is usually due to the configured password being incorrect.
+	"""
+	def __init__(self, message, username=None):
+		super(KingPhisherDatabaseAuthenticationError, self).__init__(message)
+		self.username = username
+
 class KingPhisherGraphQLQueryError(KingPhisherError):
 	"""
 	An exception raised when a GraphQL query fails to execute correctly.

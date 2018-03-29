@@ -331,9 +331,18 @@ def init_database(connection_url, extra_init=False):
 	else:
 		raise errors.KingPhisherDatabaseError('only sqlite and postgresql database drivers are supported')
 
-	Session.remove()
-	Session.configure(bind=engine)
-	inspector = sqlalchemy.inspect(engine)
+	try:
+		Session.remove()
+		Session.configure(bind=engine)
+		inspector = sqlalchemy.inspect(engine)
+	except sqlalchemy.exc.OperationalError as error:
+		logger.debug('encountered a sqlalchemy OperationalError while initializing the database', exc_info=True)
+		if error.args:
+			match = re.match(r'\(psycopg2\.OperationalError\) FATAL:\s+password authentication failed for user \"(?P<username>\w+)\"$', error.args[0])
+			if match:
+				raise errors.KingPhisherDatabaseAuthenticationError('initialization failed', username=match.group('username')) from None
+		raise errors.KingPhisherDatabaseError('initialization failed') from error
+
 	if 'campaigns' not in inspector.get_table_names():
 		logger.debug('campaigns table not found, creating all new tables')
 		try:
