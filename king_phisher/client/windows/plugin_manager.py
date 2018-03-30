@@ -185,6 +185,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._load_plugins()
 
 	def _load_catalog_from_url(self, catalog_url):
+		catalog = None
 		try:
 			catalog = Catalog.from_url(catalog_url)
 		except requests.exceptions.ConnectionError:
@@ -285,10 +286,32 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._update_status_bar('Loading completed', idle=True)
 
 	def _add_catalog_to_tree(self, catalog_id, store):
-		model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
+		model = self._named_model(
+			id=catalog_id,
+			installed=None,
+			enabled=True,
+			title=catalog_id,
+			compatibility=None,
+			version=None,
+			visible_enabled=False,
+			visible_installed=False,
+			sensitive_installed=False,
+			type=_ROW_TYPE_CATALOG
+		)
 		catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
 		for repo in self.catalog_plugins.get_repositories(catalog_id):
-			model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
+			model = self._named_model(
+				id=repo.id,
+				installed=None,
+				enabled=True,
+				title=repo.title,
+				compatibility=None,
+				version=None,
+				visible_enabled=False,
+				visible_installed=False,
+				sensitive_installed=False,
+				type=_ROW_TYPE_REPOSITORY
+			)
 			repo_row = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_row, model)
 			plugin_collections = self.catalog_plugins.get_collection(catalog_id, repo.id)
 			if not plugin_collections:
@@ -428,41 +451,59 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			model_row = self._model[tree_iter]
 			# only reloading installed plugins is currently supported
 			named_row = self._named_model(*model_row)
-			if named_row.type != _ROW_TYPE_PLUGIN:
-				if model_row.parent is None:
-					self._model.remove(tree_iter)
-					catalog_url = self.catalog_plugins.get_cache().get_catalog_by_id(named_row.id)['url']
-				else:
-					parent_row = self._named_model(*model_row.parent)
-					self._model.remove(model_row.parent.iter)
-					catalog_url = self.catalog_plugins.get_cache().get_catalog_by_id(parent_row.id)['url']
-				catalog = self._load_catalog_from_url(catalog_url)
-				if not catalog:
+			if named_row.type == _ROW_TYPE_CATALOG and named_row.id != _LOCAL_REPOSITORY_ID:
+				self._reload_catalog(named_row, tree_iter)
+			elif named_row.type == _ROW_TYPE_REPOSITORY:
+				self._reload_repository(model_row)
+			elif named_row.type == _ROW_TYPE_PLUGIN:
+				self._update_status_bar("Cannot reload a plugin that is not installed.")
+				if not named_row.installed:
 					continue
-				self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
-				self._load_plugins()
+				self._reload_plugin(named_row, model_row, pm, tree_iter, selected_plugin)
+			else:
+				self._update_status_bar("Cannot Reload selected row")
 
-			if not named_row.installed:
-				continue
-			enabled = named_row.id in pm.enabled_plugins
-			pm.unload(named_row.id)
-			try:
-				klass = pm.load(named_row.id, reload_module=True)
-			except Exception as error:
-				self._on_plugin_load_error(named_row.id, error)
-				if named_row.id == selected_plugin:
-					self._set_info(model_row)
-				self._set_model_item(tree_iter, 'title', "{0} (Reload Failed)".format(named_row.id))
-				continue
-			if named_row.id in self._module_errors:
-				del self._module_errors[named_row.id]
-			self._set_model_item(tree_iter, 'title', klass.title)
-			self._set_model_item(tree_iter, 'compatibility', 'Yes' if klass.is_compatible else 'No')
-			self._set_model_item(tree_iter, 'version', klass.version)
+	def _reload_plugin(self, named_row, model_row, pm, tree_iter, selected_plugin):
+		enabled = named_row.id in pm.enabled_plugins
+		pm.unload(named_row.id)
+		try:
+			klass = pm.load(named_row.id, reload_module=True)
+		except Exception as error:
+			self._on_plugin_load_error(named_row.id, error)
 			if named_row.id == selected_plugin:
-				self._set_info(self._model[tree_iter])
-			if enabled:
-				pm.enable(named_row.id)
+				self._set_info(model_row)
+			self._set_model_item(tree_iter, 'title', "{0} (Reload Failed)".format(named_row.id))
+			return
+		if named_row.id in self._module_errors:
+			del self._module_errors[named_row.id]
+		self._set_model_item(tree_iter, 'title', klass.title)
+		self._set_model_item(tree_iter, 'compatibility', 'Yes' if klass.is_compatible else 'No')
+		self._set_model_item(tree_iter, 'version', klass.version)
+		if named_row.id == selected_plugin:
+			self._set_info(self._model[tree_iter])
+		if enabled:
+			pm.enable(named_row.id)
+
+	def _reload_catalog(self, named_row, tree_iter):
+		self._model.remove(tree_iter)
+		catalog_url = self.catalog_plugins.get_cache().get_catalog_by_id(named_row.id)['url']
+		if not catalog_url:
+			return
+		catalog = self._load_catalog_from_url(catalog_url)
+		if not catalog:
+			return
+		self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
+		self._load_plugins()
+
+	def _reload_repository(self, model_row):
+		parent_row = self._named_model(*model_row.parent)
+		self._model.remove(model_row.parent.iter)
+		catalog_url = self.catalog_plugins.get_cache().get_catalog_by_id(parent_row.id)['url']
+		catalog = self._load_catalog_from_url(catalog_url)
+		if not catalog:
+			return
+		self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
+		self._load_plugins()
 
 	def signal_renderer_toggled_enable(self, _, path):
 		pm = self.application.plugin_manager
