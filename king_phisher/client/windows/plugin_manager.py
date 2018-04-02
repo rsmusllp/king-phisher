@@ -456,12 +456,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			elif named_row.type == _ROW_TYPE_REPOSITORY:
 				self._reload_repository(model_row)
 			elif named_row.type == _ROW_TYPE_PLUGIN:
-				self._update_status_bar("Cannot reload a plugin that is not installed.")
 				if not named_row.installed:
+					self._update_status_bar('Cannot reload a plugin that is not installed.')
 					continue
 				self._reload_plugin(named_row, model_row, pm, tree_iter, selected_plugin)
 			else:
-				self._update_status_bar("Cannot Reload selected row")
+				self.logger.warning('reload selected for an unsupported row type')
 
 	def _reload_plugin(self, named_row, model_row, pm, tree_iter, selected_plugin):
 		enabled = named_row.id in pm.enabled_plugins
@@ -496,14 +496,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._load_plugins()
 
 	def _reload_repository(self, model_row):
-		parent_row = self._named_model(*model_row.parent)
-		self._model.remove(model_row.parent.iter)
-		catalog_url = self.catalog_plugins.get_cache().get_catalog_by_id(parent_row.id)['url']
-		catalog = self._load_catalog_from_url(catalog_url)
-		if not catalog:
+		parent_row = model_row.parent
+		parent_named_row = self._named_model(*parent_row)
+		if parent_named_row.type != _ROW_TYPE_CATALOG:
+			self.logger.warning('repository treeview row\'s parent is not a catalog')
 			return
-		self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
-		self._load_plugins()
+		return self._reload_catalog(parent_named_row, parent_row.iter)
 
 	def signal_renderer_toggled_enable(self, _, path):
 		pm = self.application.plugin_manager
@@ -531,13 +529,13 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		repo_model, catalog_model = self._get_plugin_model_parents(self._model[path])
 		named_row = self._named_model(*self._model[path])
 		if named_row.installed:
-			self._update_status_bar("Uninstalling: {}".format(named_row.id))
+			self._update_status_bar("Uninstalling plugin {}...".format(named_row.id))
 			if named_row.enabled:
-				if not gui_utilities.show_dialog_yes_no('Plugin is enabled', self.window, 'This will disable the plugin, do you want to continue?'):
+				if not gui_utilities.show_dialog_yes_no('Plugin is Enabled', self.window, 'This will disable the plugin, do you want to continue?'):
 					return
 				self._disable_plugin(path)
 			self._uninstall_plugin(path)
-			self._update_status_bar("Completed uninstalling: {}".format(named_row.id))
+			self._update_status_bar("Uninstalling plugin {} completed.".format(named_row.id))
 			return
 
 		if named_row.id in self.config['plugins.installed']:
@@ -550,7 +548,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					self.logger.warning("failed to uninstall plugin {0}".format(named_row.id))
 					return
 
-		self._update_status_bar("Installing plugin: {}".format(named_row.title))
+		self._update_status_bar("Installing plugin {}...".format(named_row.title))
 		try:
 			self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
 		except requests.exceptions.ConnectionError:
@@ -560,14 +558,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		except Exception:
 			self.logger.warning("failed to install plugin {}".format(named_row.id), exc_info=True)
 			gui_utilities.show_dialog_error('Failed To Install', self.window, "Failed to install {} plugin.".format(named_row.id))
-			self._update_status_bar("Failed To Install".format(named_row.id))
+			self._update_status_bar("Installing plugin {} failed.".format(named_row.title))
 			return
 
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
 		self._set_model_item(path, 'installed', True)
 		self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
 		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
-		self._update_status_bar("Completed installing plugin: {}".format(named_row.title))
+		self._update_status_bar("Installing plugin {} completed.".format(named_row.title))
 		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error)
 
 	def _disable_plugin(self, path, is_path=True):
