@@ -282,20 +282,7 @@ def rpc_campaign_landing_page_new(handler, session, campaign_id, hostname, page)
 		session.add(landing_page)
 		session.commit()
 
-@register_rpc('/campaign/message/new', database_access=True, log_call=True)
-def rpc_campaign_message_new(handler, session, campaign_id, email_id, target_email, first_name, last_name, department_name=None):
-	"""
-	Record a message that has been sent as part of a campaign. These
-	details can be retrieved later for value substitution in template
-	pages.
-
-	:param int campaign_id: The ID of the campaign.
-	:param str email_id: The message id of the sent email.
-	:param str target_email: The email address that the message was sent to.
-	:param str first_name: The first name of the message's recipient.
-	:param str last_name: The last name of the message's recipient.
-	:param str department_name: The name of the company department that the message's recipient belongs to.
-	"""
+def _message_new(handler, session, campaign_id, email_id, target_email, first_name, last_name, department_name=None):
 	department = None
 	if department_name is not None:
 		department = session.query(db_models.CompanyDepartment).filter_by(name=department_name).first()
@@ -312,6 +299,41 @@ def rpc_campaign_message_new(handler, session, campaign_id, email_id, target_ema
 	message.last_name = last_name
 	if department is not None:
 		message.company_department_id = department.id
+	return message
+
+@register_rpc('/campaign/message/new', database_access=True, log_call=True)
+def rpc_campaign_message_new(handler, session, campaign_id, email_id, target_email, first_name, last_name, department_name=None):
+	"""
+	Record a message that has been sent as part of a campaign. These details can
+	be retrieved later for value substitution in template pages.
+
+	:param int campaign_id: The ID of the campaign.
+	:param str email_id: The message id of the sent email.
+	:param str target_email: The email address that the message was sent to.
+	:param str first_name: The first name of the message's recipient.
+	:param str last_name: The last name of the message's recipient.
+	:param str department_name: The name of the company department that the message's recipient belongs to.
+	"""
+	message = _message_new(handler, session, campaign_id, email_id, target_email, first_name, last_name, department_name=department_name)
+	message.assert_session_has_permissions('c', handler.rpc_session)
+	session.add(message)
+	session.commit()
+
+@register_rpc('/campaign/message/new/deferred', database_access=True, log_call=True)
+def rpc_campaign_message_new(handler, session, campaign_id, email_id, target_email, first_name, last_name, department_name=None):
+	"""
+	Record a message that has been sent as part of a campaign. These details can
+	be retrieved later for value substitution in template pages.
+
+	:param int campaign_id: The ID of the campaign.
+	:param str email_id: The message id of the sent email.
+	:param str target_email: The email address that the message was sent to.
+	:param str first_name: The first name of the message's recipient.
+	:param str last_name: The last name of the message's recipient.
+	:param str department_name: The name of the company department that the message's recipient belongs to.
+	"""
+	message = _message_new(handler, session, campaign_id, email_id, target_email, first_name, last_name, department_name=department_name)
+	message.sent = db_models.sql_null()
 	message.assert_session_has_permissions('c', handler.rpc_session)
 	session.add(message)
 	session.commit()

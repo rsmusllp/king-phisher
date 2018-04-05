@@ -856,12 +856,21 @@ class MailSenderThread(threading.Thread):
 			if not all(mailer_tab.emit('message-send', target, message)):
 				self.logger.info("message-send signal subscriber vetoed message to target: {0!r}".format(target))
 				continue
+			self.rpc(
+				'campaign/message/new/deferred',
+				self.config['campaign_id'],
+				target.uid,
+				target.email_address,
+				target.first_name,
+				target.last_name,
+				target.department
+			)
 			if not self._try_send_message(target.email_address, message):
+				self.rpc('db/table/delete', 'messages', target.uid)
 				break
+			self.rpc('db/table/set', 'messages', target.uid, ('sent',), (datetime.datetime.utcnow(),))
 
 			self.tab_notify_sent(emails_done, emails_total)
-			campaign_id = self.config['campaign_id']
-			self.rpc('campaign/message/new', campaign_id, target.uid, target.email_address, target.first_name, target.last_name, target.department)
 			self.application.emit('message-sent', target.uid, target.email_address)
 
 			if self.max_messages_per_minute:
