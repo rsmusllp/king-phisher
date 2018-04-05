@@ -43,6 +43,7 @@ import sqlalchemy
 import sqlalchemy.event
 import sqlalchemy.ext.declarative
 import sqlalchemy.orm
+import sqlalchemy.sql.expression
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
@@ -68,6 +69,14 @@ MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name'
 database_tables = {}
 """A dictionary which contains all the database tables and their :py:class:`.MetaTable` instances."""
 logger = logging.getLogger('KingPhisher.Server.Database.Models')
+
+sql_null = sqlalchemy.sql.expression.null
+"""
+Return a literal SQL NULL expression. This can be used, for example, to
+explicitly set a model property to NULL even if it has a default value.
+
+:return: A literal SQL NULL expression.
+"""
 
 def current_timestamp(*args, **kwargs):
 	"""

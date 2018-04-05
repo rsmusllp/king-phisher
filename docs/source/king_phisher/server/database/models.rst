@@ -25,6 +25,8 @@ Functions
 
 .. autofunction:: register_table
 
+.. autofunction:: sql_null
+
 Classes
 -------
 

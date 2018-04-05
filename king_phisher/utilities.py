@@ -376,14 +376,27 @@ def password_is_complex(password, min_len=12):
 			return True
 	return False
 
-def make_message_uid():
+def make_message_uid(upper=True, lower=True, digits=True):
 	"""
-	Creates a random string of characters and numbers to be used as a message id.
+	Creates a random string of specified character set to be used as a message
+	id. At least one of *upper*, *lower*, or *digits* must be ``True``.
 
+	:param bool upper: Include upper case characters in the UID.
+	:param bool lower: Include lower case characters in the UID.
+	:param bool digits: Include digits in the UID.
 	:return: String of characters from the random_string function.
 	:rtype: str
 	"""
-	return random_string(16)
+	charset = ''
+	if upper:
+		charset += string.ascii_uppercase
+	if lower:
+		charset += string.ascii_lowercase
+	if digits:
+		charset += string.digits
+	if not charset:
+		raise ValueError('at least one of upper, lower, or digits must be True')
+	return random_string(16, charset=charset)
 
 def make_visit_uid():
 	"""
@@ -407,7 +420,7 @@ def nonempty_string(value):
 	value = value.strip()
 	return value if value else None
 
-def random_string(size):
+def random_string(size, charset=None):
 	"""
 	Generate a random string consisting of uppercase letters, lowercase letters
 	and numbers of the specified size.
@@ -416,7 +429,8 @@ def random_string(size):
 	:return: The string containing the random characters.
 	:rtype: str
 	"""
-	return ''.join(random.choice(string.ascii_letters + string.digits) for x in range(size))
+	charset = charset or string.ascii_letters + string.digits
+	return ''.join(random.choice(charset) for _ in range(size))
 
 def random_string_lower_numeric(size):
 	"""
