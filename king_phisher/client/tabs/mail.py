@@ -219,6 +219,9 @@ class MailSenderSendTab(gui_utilities.GladeGObject):
 		if not self.config.get('smtp_server'):
 			gui_utilities.show_dialog_warning('Missing SMTP Server Setting', self.parent, 'Please configure the SMTP server')
 			return False
+		if not any(self.config['mailer.message_uid.charset'].values()):
+			gui_utilities.show_dialog_warning('Invalid Message UID', self.parent, 'At least one character set must be enabled for the message UID')
+			return False
 		return True
 
 	def _sender_precheck_source(self):
@@ -800,6 +803,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			'calendar_calendar_invite_date',
 			'checkbutton_calendar_invite_all_day',
 			'checkbutton_calendar_request_rsvp',
+			'checkbutton_message_uid_charset_digits',
+			'checkbutton_message_uid_charset_lower',
+			'checkbutton_message_uid_charset_upper',
 			'combobox_importance',
 			'combobox_sensitivity',
 			'entry_webserver_url',
@@ -857,6 +863,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.target_field.set_active(self.config['mailer.target_field'])
 		self.target_type = managers.RadioButtonGroupManager(self, 'target_type')
 		self.target_type.set_active(self.config['mailer.target_type'])
+		self.message_uid_charset = managers.ToggleButtonGroupManager(self, 'checkbutton', 'message_uid_charset')
+		self.message_uid_charset.set_active(self.config['mailer.message_uid.charset'])
 		self._update_target_count()
 
 	def _campaign_load(self, campaign_id):
@@ -896,6 +904,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		# these are called in the super class's __init__ method so they may not exist yet
 		if hasattr(self, 'message_type'):
 			self.message_type.set_active(self.config['mailer.message_type'])
+		if hasattr(self, 'message_uid_charset'):
+			self.message_uid_charset.set_active(self.config['mailer.message_uid.charset'])
 		if hasattr(self, 'target_field'):
 			self.target_field.set_active(self.config['mailer.target_field'])
 		if hasattr(self, 'target_type'):
@@ -904,6 +914,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	def objects_save_to_config(self):
 		super(MailSenderConfigurationTab, self).objects_save_to_config()
 		self.config['mailer.message_type'] = self.message_type.get_active()
+		self.config['mailer.message_uid.charset'] = self.message_uid_charset.get_active()
 		self.config['mailer.target_field'] = self.target_field.get_active()
 		self.config['mailer.target_type'] = self.target_type.get_active()
 

@@ -26,6 +26,11 @@
   "mailer.importance": "Normal",
   "mailer.max_messages_per_connection": 5,
   "mailer.message_type": "email",
+  "mailer.message_uid.charset": {
+    "digits": true,
+    "lower": true,
+    "upper": true
+  },
   "mailer.recipient_email_cc": "",
   "mailer.recipient_email_to": "",
   "mailer.reply_to_email": "",

@@ -101,9 +101,10 @@ A named tuple for holding both image and file attachments for a message.
 MIME_TEXT_PLAIN = 'This message requires an HTML aware email agent to be properly viewed.\r\n\r\n'
 """The static string to place in MIME message as a text/plain part. This is shown by email clients that do not support HTML."""
 
-def _iterate_targets_file(target_file):
+def _iterate_targets_file(target_file, config=None):
 	target_file_h = open(target_file, 'rU')
 	csv_reader = csv.DictReader(target_file_h, ('first_name', 'last_name', 'email_address', 'department'))
+	uid_charset = None if config is None else config['mailer.message_uid.charset']
 	for line_no, raw_target in enumerate(csv_reader, 1):
 		if None in raw_target:
 			# remove the additional fields
@@ -112,6 +113,12 @@ def _iterate_targets_file(target_file):
 			# this will intentionally cause a UnicodeDecodeError to be raised as is the behaviour in python 3.x
 			# when csv.DictReader is initialized
 			raw_target = dict((k, (v if v is None else v.decode('utf-8'))) for k, v in raw_target.items())
+		if uid_charset is not None:
+			raw_target['uid'] = utilities.make_message_uid(
+				upper=uid_charset['upper'],
+				lower=uid_charset['lower'],
+				digits=uid_charset['digits']
+			)
 		target = MessageTarget(line=line_no, **raw_target)
 		# the caller needs to catch and process the missing fields appropriately
 		yield target
@@ -589,16 +596,22 @@ class MailSenderThread(threading.Thread):
 			target_name = self.config['mailer.target_name'].split(' ')
 			while len(target_name) < 2:
 				target_name.append('')
+			uid_charset = self.config['mailer.message_uid.charset']
 			target = MessageTarget(
 				first_name=target_name[0].strip(),
 				last_name=target_name[1].strip(),
-				email_address=self.config['mailer.target_email_address'].strip()
+				email_address=self.config['mailer.target_email_address'].strip(),
+				uid=utilities.make_message_uid(
+					upper=uid_charset['upper'],
+					lower=uid_charset['lower'],
+					digits=uid_charset['digits']
+				)
 			)
 			if not counting:
 				mailer_tab.emit('target-create', target)
 			yield target
 		elif target_type == 'file':
-			for target in _iterate_targets_file(self.target_file):
+			for target in _iterate_targets_file(self.target_file, config=self.config):
 				missing_fields = target.missing_fields
 				if missing_fields:
 					if counting:

@@ -38,7 +38,27 @@ from king_phisher.client import gui_utilities
 from gi.repository import Gdk
 from gi.repository import Gtk
 
-class RadioButtonGroupManager(object):
+class ButtonGroupManager(object):
+	def __init__(self, glade_gobject, widget_type, button_group_name):
+		"""
+		:param glade_gobject: The gobject which has the radio buttons set.
+		:type glade_gobject: :py:class:`.GladeGObject`
+		:param str button_group_name: The name of the group of buttons.
+		"""
+		utilities.assert_arg_type(glade_gobject, gui_utilities.GladeGObject)
+		self.group_name = button_group_name
+		name_prefix = widget_type + '_' + self.group_name + '_'
+		self.buttons = utilities.FreezableDict()
+		for gobj_name in glade_gobject.dependencies.children:
+			if not gobj_name.startswith(name_prefix):
+				continue
+			button_name = gobj_name[len(name_prefix):]
+			self.buttons[button_name] = glade_gobject.gobjects[gobj_name]
+		if not len(self.buttons):
+			raise ValueError('found no ' + widget_type + ' of group: ' + self.group_name)
+		self.buttons.freeze()
+
+class RadioButtonGroupManager(ButtonGroupManager):
 	"""
 	Manage a group of :py:class:`Gtk.RadioButton` objects together to allow the
 	active one to be easily set and identified. The buttons are retrieved from a
@@ -52,18 +72,7 @@ class RadioButtonGroupManager(object):
 		:type glade_gobject: :py:class:`.GladeGObject`
 		:param str button_group_name: The name of the group of buttons.
 		"""
-		utilities.assert_arg_type(glade_gobject, gui_utilities.GladeGObject)
-		self.group_name = button_group_name
-		name_prefix = 'radiobutton_' + self.group_name + '_'
-		self.buttons = utilities.FreezableDict()
-		for gobj_name in glade_gobject.dependencies.children:
-			if not gobj_name.startswith(name_prefix):
-				continue
-			button_name = gobj_name[len(name_prefix):]
-			self.buttons[button_name] = glade_gobject.gobjects[gobj_name]
-		if not len(self.buttons):
-			raise ValueError('found no radiobuttons of group: ' + self.group_name)
-		self.buttons.freeze()
+		super(RadioButtonGroupManager, self).__init__(glade_gobject, 'radiobutton', button_group_name)
 
 	def __repr__(self):
 		return "<{0} group={1!r} active={2!r} >".format(self.__class__.__name__, self.group_name, self.get_active())
@@ -93,6 +102,24 @@ class RadioButtonGroupManager(object):
 		button = self.buttons[button]
 		button.set_active(True)
 		button.toggled()
+
+class ToggleButtonGroupManager(ButtonGroupManager):
+	"""
+	Return a mapping of button names to a boolean value indicating whether they
+	are active or not.
+	"""
+	def __str__(self):
+		return ', '.join(name for name, active in self.get_active() if active)
+
+	def get_active(self):
+		return {name: button.get_active() for name, button in self.buttons.items()}
+
+	def set_active(self, buttons):
+		for name, active in buttons.items():
+			button = self.buttons.get(name)
+			if button is None:
+				raise ValueError('invalid button name: ' + name)
+			button.set_active(active)
 
 class TreeViewManager(object):
 	"""

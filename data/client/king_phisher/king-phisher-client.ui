@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.2 
+<!-- Generated with glade 3.20.4 
 
 Copyright (c) 2013-2017, SecureState LLC
 All rights reserved.
@@ -1641,6 +1641,9 @@ Spencer McIntyre</property>
         <property name="complete">True</property>
         <property name="has_padding">False</property>
       </packing>
+    </child>
+    <child>
+      <placeholder/>
     </child>
     <child>
       <placeholder/>
@@ -6938,7 +6941,7 @@ your communications. Please contact the system administrator.</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -7194,6 +7197,82 @@ your communications. Please contact the system administrator.</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Settings specific to sending calendar invite messages.</property>
                     <property name="label" translatable="yes">Calendar Invite Settings</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFrame" id="MailSenderConfigurationTab.frame_message_uid_charset">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label_xalign">0</property>
+                <property name="shadow_type">none</property>
+                <child>
+                  <object class="GtkAlignment">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="left_padding">12</property>
+                    <child>
+                      <object class="GtkBox" id="MailSenderConfigurationTab.box_message_uid_charset">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkCheckButton" id="MailSenderConfigurationTab.checkbutton_message_uid_charset_upper">
+                            <property name="label" translatable="yes">Upper Case</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="MailSenderConfigurationTab.checkbutton_message_uid_charset_lower">
+                            <property name="label" translatable="yes">Lower Case</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="MailSenderConfigurationTab.checkbutton_message_uid_charset_digits">
+                            <property name="label" translatable="yes">Digits</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Message UID Characters</property>
                   </object>
                 </child>
               </object>
