@@ -17,6 +17,7 @@ Version 1.11.x
    * The database connection string is kept to avoid PostgreSQL password resets
 
 * Added support for setting message UID character set options
+* Bumped the required minimum version of Python to 3.4 and GTK to 3.14
 
 Version 1.10.x
 ^^^^^^^^^^^^^^

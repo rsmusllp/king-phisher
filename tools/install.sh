@@ -90,11 +90,12 @@ function select_nix_distro {
 		3) LINUX_VERSION="Kali";;
 		4) LINUX_VERSION="Fedora";;
 		5) LINUX_VERSION="Arch";;
-		6) LINUX_VERSION="CentOS"
+		6) LINUX_VERSION="BackBox";;
+		7) LINUX_VERSION="CentOS"
 			KING_PHISHER_SKIP_CLIENT="x";;
-		7) LINUX_VERSION="RedHat"
+		8) LINUX_VERSION="RedHat"
 			KING_PHISHER_SKIP_CLIENT="x";;
-		*) echo "Invalid Linux selection, must be 1-7"
+		*) echo "Invalid Linux selection, must be 1-8"
 			exit 0;;
 	esac
 }
@@ -144,7 +145,7 @@ if [ "$(id -u)" != "0" ]; then
 	exit $E_NOTROOT
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "BackBox Linux 4\.[5-9]" /etc/issue &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "BackBox Linux 5(\.[0-9]+)?" /etc/issue &> /dev/null; then
 	LINUX_VERSION="BackBox"
 fi
 
@@ -170,7 +171,7 @@ if [[ ! $LINUX_VERSION ]] && grep -Ei "kali( linux |-)rolling" /etc/debian_versi
 	LINUX_VERSION="Kali"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu 1[45678]\.(04|10)" /etc/issue &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu 1[6789]\.(04|10)" /etc/issue &> /dev/null; then
 	LINUX_VERSION="Ubuntu"
 fi
 
@@ -199,10 +200,11 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo "  3  - Kali"
 	echo "  4  - Fedora"
 	echo "  5  - Arch"
-	echo "  6  - CentOS (Server Support Only)"
-	echo "  7  - Red Hat (Server Support Only)"
+	echo "  6  - BackBox"
+	echo "  7  - CentOS (Server Support Only)"
+	echo "  8  - Red Hat (Server Support Only)"
 	echo ""
-	echo -n "Select 1-7: "
+	echo -n "Select 1-8: "
 	select_nix_distro
 	echo "Selected Linux version is $LINUX_VERSION"
 	prompt_yes_or_no "Continue? (There is no guarantee or support beyond this point)" select_nix_continue

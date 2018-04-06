@@ -63,10 +63,7 @@ class PluginsConfigurationFrame(_Gtk_Frame):
 
 		grid = Gtk.Grid()
 		self.add(grid)
-		if Gtk.check_version(3, 12, 0):
-			grid.set_property('margin-left', 12)
-		else:
-			grid.set_property('margin-start', 12)
+		grid.set_property('margin-start', 12)
 		grid.set_property('column-spacing', 3)
 		grid.set_property('hexpand', True)
 		grid.set_property('row-spacing', 3)

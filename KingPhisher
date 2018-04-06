@@ -60,9 +60,17 @@ def main():
 	parser.add_argument('--no-style', dest='use_style', default=True, action='store_false', help='disable interface styling')
 	arguments = parser.parse_args()
 
-	if its.py_v2:
-		color.print_error('king phisher no longer supports python 2.7')
-		color.print_error('see https://github.com/securestate/king-phisher/wiki/Python-3 for details')
+	# basic runtime checks
+	if sys.version_info < (3, 4):
+		color.print_error('the Python version is too old (minimum required is 3.4)')
+		return 0
+
+	if Gtk.check_version(3, 14, 0):
+		color.print_error('the GTK+ version is too old (minimum required is 3.14)')
+		return 0
+
+	if sys.platform.startswith('linux') and not os.environ.get('DISPLAY'):
+		color.print_error('no display was detected, this must be run with an interactive X session')
 		return 0
 
 	config_file = arguments.config_file
@@ -70,14 +78,6 @@ def main():
 	use_style = arguments.use_style
 	del arguments, parser
 	logger = logging.getLogger('KingPhisher.Client.CLI')
-
-	if sys.platform.startswith('linux') and not os.environ.get('DISPLAY'):
-		color.print_error('no display was detected, this must be run with an interactive X session')
-		return 0
-
-	if Gtk.check_version(3, 10, 0):
-		color.print_error('the GTK+ version is too old (minimum required is 3.10)')
-		return 0
 
 	if sys.platform.startswith('linux') and not os.getuid():
 		logger.warning('it is not necessary to run the king phisher client as root')
