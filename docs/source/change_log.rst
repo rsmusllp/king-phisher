@@ -16,6 +16,8 @@ Version 1.11.x
    * Users can now specify a supported Linux distro when it is not automatically detected
    * The database connection string is kept to avoid PostgreSQL password resets
 
+* Added support for setting message UID character set options
+
 Version 1.10.x
 ^^^^^^^^^^^^^^
 

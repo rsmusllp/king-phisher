@@ -112,6 +112,7 @@ class ClientOptionMixin(object):
 class ClientOptionBoolean(ClientOptionMixin, plugins.OptionBoolean):
 	def get_widget(self, _, value):
 		widget = Gtk.Switch()
+		widget.set_hexpand(True)
 		widget.set_property('halign', Gtk.Align.START)
 		self.set_widget_value(widget, value)
 		return widget
