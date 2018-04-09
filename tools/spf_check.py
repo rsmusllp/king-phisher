@@ -94,7 +94,7 @@ def main():
 			record.domain
 		))
 		for directive_id, directive in enumerate(record.directives, 1):
-			color.print_status("    #{0}.{1} {2: <10} {3}".format(
+			color.print_status("    #{0}.{1: <2} {2: <10} {3}".format(
 				record_id,
 				directive_id,
 				('(matched)' if match.record == record and match.directive == directive else ''),
