@@ -534,8 +534,14 @@ class MailSenderPreviewTab(object):
 		html_file = self.config.get('mailer.html_file')
 		if not (html_file and os.path.isfile(html_file) and os.access(html_file, os.R_OK)):
 			return
-		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
-			html_data = file_h.read()
+
+		try:
+			with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
+				html_data = file_h.read()
+		except UnicodeDecodeError:
+			self.info_bar_label.set_text("Source file is not UTF-8 encoded.")
+			return
+
 		try:
 			html_data = mailer.render_message_template(html_data, self.config)
 		except jinja2.TemplateSyntaxError as error:
@@ -637,8 +643,16 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 			self.toolbutton_save_html_file.set_sensitive(False)
 			return
 		self.toolbutton_save_html_file.set_sensitive(True)
-		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
-			html_data = file_h.read()
+		try:
+			with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
+				html_data = file_h.read()
+		except UnicodeDecodeError:
+			gui_utilities.show_dialog_error(
+				"Error Opening File",
+				self.parent,
+				"Source file is not UTF-8 encoded"
+			)
+			return
 		current_text = self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False)
 		if html_data == current_text:
 			return
