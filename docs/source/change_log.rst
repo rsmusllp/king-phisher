@@ -4,6 +4,11 @@ Change Log
 This document contains notes on the major changes for each version of King
 Phisher.
 
+Version 1.12.0
+-------------
+
+*In Progress*
+
 Version 1.11.0
 -------------
 
