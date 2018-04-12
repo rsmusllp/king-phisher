@@ -18,6 +18,8 @@ Version 1.11.x
 
 * Added support for setting message UID character set options
 * Bumped the required minimum version of Python to 3.4 and GTK to 3.14
+* Update Windows build to use pygi-aio-3.24.1_rev1 PyGObjects
+* Multiple bug fixes.
 
 Version 1.10.x
 ^^^^^^^^^^^^^^

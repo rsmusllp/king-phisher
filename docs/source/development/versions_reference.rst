@@ -8,7 +8,7 @@ regarding dropping support for legacy systems.
 Reference Table
 ---------------
 
-**Last Updated:** April 6\ :sup:`th`, 2018 by Spencer McIntyre
+**Last Updated:** April 12\ :sup:`th`, 2018 by Erik Daguerre
 
 +-----------------------------+-------------------------+------------+
 | Flavor                      | Software                | Version    |
@@ -61,7 +61,7 @@ Reference Table
 |                             +-------------------------+------------+
 | April 21\ :sup:`st` 2016    | Python3                 | 3.5.2      |
 +-----------------------------+-------------------------+------------+
-| Windows                     | GTK3                    | 3.14.15    |
+| Windows                     | GTK3                    | 3.18.9     |
 |                             +-------------------------+------------+
 |                             | Python3                 | 3.4.4      |
 +-----------------------------+-------------------------+------------+
@@ -85,3 +85,15 @@ Fedora
    koji latest-pkg --all f24 | grep -i gtk3
 
 .. _packages.debian.com: https://packages.debian.org/search
+
+Windows
+~~~~~~
+
+.. code-block:: shell
+   # run KingPhisher in debug mode
+   cd king-phisher
+   python KingPhisher -L DEBUG
+   # The first 7 lines of out put will contain gi.repository version informaiton.
+   # Get python version
+   python --version
+..
