@@ -4,10 +4,10 @@ Change Log
 This document contains notes on the major changes for each version of King
 Phisher.
 
-Version 1.11.x
+Version 1.11.0
 -------------
 
-*In progress*
+Released :release:`1.11.0` on April 12th, 2018
 
 * Updated to support matplotlib version 2.2.0
 * Removed docker server support
