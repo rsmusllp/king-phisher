@@ -124,6 +124,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			# Server Tab
 			'entry_server',
 			'entry_server_username',
+			'entry_email_address',
 			'entry_sms_phone_number',
 			'combobox_sms_carrier',
 			# SMTP Server Tab
@@ -263,7 +264,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
 			self.save_plugin_options()
-			self.save_sms_settings()
+			self.save_alert_settings()
 			entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
 			self.application.rpc('config/set', {'beef.hook_url': entry_beef_hook.get_property('text').strip()})
 			if graphs.has_matplotlib:
@@ -279,15 +280,20 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			for option_name, option_widget in option_widgets.items():
 				plugin_config[option_name] = option_widget.option.get_widget_value(option_widget.widget)
 
-	def save_sms_settings(self):
+	def save_alert_settings(self):
+		email_address = gui_utilities.gobject_get_value(self.gobjects['entry_email_address'])
 		phone_number = gui_utilities.gobject_get_value(self.gobjects['entry_sms_phone_number'])
 		sms_carrier = gui_utilities.gobject_get_value(self.gobjects['combobox_sms_carrier'])
 		server_user = self.application.server_user
+		if email_address and not utilities.is_valid_email_address(email_address):
+			gui_utilities.show_dialog_warning('Invalid Email Address', self.parent, 'The email address you have entered is not valid.')
+			return
 		if phone_number:
 			phone_number = ''.join(d for d in phone_number if d in string.digits)
 			if len(phone_number) > 11:
 				gui_utilities.show_dialog_warning('Invalid Phone Number', self.parent, 'The phone number must not contain more than 11 digits')
 				return
+		email_address = utilities.nonempty_string(email_address)
 		phone_number = utilities.nonempty_string(phone_number)
 		sms_carrier = utilities.nonempty_string(sms_carrier)
-		self.application.rpc('db/table/set', 'users', server_user.id, ('phone_number', 'phone_carrier'), (phone_number, sms_carrier))
+		self.application.rpc('db/table/set', 'users', server_user.id, ('email_address', 'phone_number', 'phone_carrier'), (email_address, phone_number, sms_carrier))
