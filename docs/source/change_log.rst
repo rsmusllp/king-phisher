@@ -9,6 +9,8 @@ Version 1.12.0
 
 *In Progress*
 
+* Added support for users to set their email address for campaign alerts via email
+
 Version 1.11.0
 -------------
 

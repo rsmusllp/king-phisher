@@ -1107,11 +1107,11 @@ Spencer McIntyre</property>
             <property name="orientation">vertical</property>
             <child>
               <object class="GtkCheckButton" id="CampaignAssistant.checkbutton_alert_subscribe">
-                <property name="label" translatable="yes">Subscribe To SMS Alerts</property>
+                <property name="label" translatable="yes">Subscribe To Event Alerts</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="tooltip_text" translatable="yes">Receive SMS messages for events regarding this campaign.</property>
+                <property name="tooltip_text" translatable="yes">Receive messages for events regarding this campaign.</property>
                 <property name="halign">start</property>
                 <property name="draw_indicator">True</property>
               </object>
@@ -1641,6 +1641,9 @@ Spencer McIntyre</property>
         <property name="complete">True</property>
         <property name="has_padding">False</property>
       </packing>
+    </child>
+    <child>
+      <placeholder/>
     </child>
     <child>
       <placeholder/>
@@ -3707,7 +3710,7 @@ Spencer McIntyre</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">0</property>
+                                <property name="top_attach">1</property>
                               </packing>
                             </child>
                             <child>
@@ -3719,7 +3722,7 @@ Spencer McIntyre</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">1</property>
+                                <property name="top_attach">2</property>
                               </packing>
                             </child>
                             <child>
@@ -3733,7 +3736,7 @@ Spencer McIntyre</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">0</property>
+                                <property name="top_attach">1</property>
                               </packing>
                             </child>
                             <child>
@@ -3752,7 +3755,32 @@ Spencer McIntyre</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">1</property>
+                                <property name="top_attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label28">
+                                <property name="width_request">120</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Email Address</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="ConfigurationDialog.entry_email_address">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">The email address to send alerts to.</property>
+                                <property name="hexpand">True</property>
+                                <property name="placeholder_text" translatable="yes">user.email@domain.com</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">0</property>
                               </packing>
                             </child>
                           </object>
