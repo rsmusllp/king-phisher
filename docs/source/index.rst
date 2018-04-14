@@ -26,7 +26,6 @@ be found in the King Phisher `GitHub wiki`_.
    server/index.rst
    plugins/index.rst
    development/index.rst
-   environment_vars.rst
    change_log.rst
 
 Indices and tables

@@ -1,6 +1,9 @@
 Client Plugins
 ==============
 
+For information on how client plugins are installed, see the
+:wiki:`Client Plugins<Client-Plugins>` wiki page.
+
 Client plugins need to inherit from the
 :py:class:`~king_phisher.client.plugins.ClientPlugin` class which provides the
 basic outline. Client plugins have access to a dictionary for persistent

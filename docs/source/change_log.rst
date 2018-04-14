@@ -2,17 +2,21 @@ Change Log
 ==========
 
 This document contains notes on the major changes for each version of King
-Phisher.
+Phisher. In comparison to the git log, this list is curated by the development
+team for note worthy changes.
+
+Version 1.x.x
+-------------
 
 Version 1.12.0
--------------
+^^^^^^^^^^^^^^
 
 *In Progress*
 
 * Added support for users to set their email address for campaign alerts via email
 
 Version 1.11.0
--------------
+^^^^^^^^^^^^^^
 
 Released :release:`1.11.0` on April 12th, 2018
 
@@ -28,7 +32,7 @@ Released :release:`1.11.0` on April 12th, 2018
 * Update Windows build to use pygi-aio-3.24.1_rev1 PyGObjects
 * Multiple bug fixes.
 
-Version 1.10.x
+Version 1.10.0
 ^^^^^^^^^^^^^^
 
 Released :release:`1.10.0` on March 16th, 2018
@@ -51,7 +55,7 @@ Released :release:`1.10.0` on March 16th, 2018
    * Added ``message-send`` and ``target-send`` to allow skipping the message and target
    * Removed the ``send-message`` and ``send-target`` signals in favor of the new ones
 
-Version 1.9.x
+Version 1.9.0
 ^^^^^^^^^^^^^
 
 Released :release:`1.9.0` on November 22nd, 2017

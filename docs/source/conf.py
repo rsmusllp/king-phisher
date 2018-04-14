@@ -60,7 +60,8 @@ extensions = [
 tab_width = 4
 
 extlinks = {
-	'release': ("https://github.com/{0}/releases/tag/v%s".format(GITHUB_REPO), 'v')
+	'release': ("https://github.com/{0}/releases/tag/v%s".format(GITHUB_REPO), 'v'),
+	'wiki':    ("https://github.com/{0}/wiki/%s".format(GITHUB_REPO), ''),
 }
 
 def linkcode_resolve(domain, info):
