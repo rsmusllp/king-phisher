@@ -84,16 +84,16 @@ Fedora
    # check the version of GTK3 for Fedora24
    koji latest-pkg --all f24 | grep -i gtk3
 
-.. _packages.debian.com: https://packages.debian.org/search
-
 Windows
-~~~~~~
+~~~~~~~
 
 .. code-block:: shell
+
    # run KingPhisher in debug mode
    cd king-phisher
    python KingPhisher -L DEBUG
    # The first 7 lines of out put will contain gi.repository version informaiton.
    # Get python version
    python --version
-..
+
+.. _packages.debian.com: https://packages.debian.org/search

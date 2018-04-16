@@ -71,11 +71,19 @@ def send_safe(signal, logger, sender, **kwargs):
 campaign_alert = blinker.signal(
 	'campaign-alert',
 	"""
-	Emitted for each user who is subscribed to alerts for a particular
-	campaign.
+	Emitted for each user who is subscribed to alerts for a particular campaign.
+	Users subscribe to campaign alerts through the GUI by enabling the
+	"Subscribe To Event Alerts" setting. Alerts are for either the "credentials"
+	or "visits" table.
+	
+	.. note::
+		This signal is not emitted for every entry into the respective tables
+		but rather at progressively longer intervals to prevent the user from
+		receiving an excessive amount of messages within a short period of time.
 	
 	:param str table: The table name that the alert is for.
 	:param alert_subscription: The alert subscription.
+	:type alert_subscription: :py:class:`king_phisher.server.database.models.AlertSubscription`
 	:param int count: The number associated with the alert event per the specified sender.
 	"""
 )

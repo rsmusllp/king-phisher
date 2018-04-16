@@ -118,7 +118,6 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		"""
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
-		now = db_models.current_timestamp()
 		alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
 		if not alert_subscriptions:
 			self.server.logger.debug("no active alert subscriptions are present for campaign id: {0} ({1})".format(campaign.id, campaign.name))
