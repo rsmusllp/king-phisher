@@ -409,11 +409,20 @@ python3 -m pip install --upgrade pip
 if echo $PIP_VERSION | grep "python 2.7"; then
 	python -m pip install -U pip -I &> /dev/null
 fi
+
 python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade six
-if ! python3 -m pip install -r requirements.txt; then
-	echo "ERROR: Failed to install python requirements with pip"
-	exit $E_SOFTWARE
+
+if [ "$LINUX_VERSION" == "Kali" ]; then
+	if ! python3 -m pip install -I -r requirements.txt; then
+		echo "ERROR: Failed to install python requirements with pip"
+		exit $E_SOFTWARE
+	fi
+else
+	if ! python3 -m pip install -r requirements.txt; then
+		echo "ERROR: Failed to install python requirements with pip"
+		exit $E_SOFTWARE
+	fi
 fi
 
 if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
