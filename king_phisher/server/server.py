@@ -176,6 +176,10 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if self.command == 'RPC':
 			self.semaphore_acquire()
 		else:
+			# delete cached properties so they are handled per request instead of connection.
+			for cache_prop in ('_campaign_id', '_message_id', '_visit_id'):
+				if hasattr(self, cache_prop):
+					delattr(self, cache_prop)
 			self.adjust_path()
 
 		http_method_handler = None
