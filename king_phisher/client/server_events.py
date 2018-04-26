@@ -150,6 +150,9 @@ class ServerEventSubscriber(_GObject_GObject):
 			return
 		self._reconnect_event_id = GLib.timeout_add_seconds(30, self._ws_reconnect)
 
+	def _on_error(self, _, exception):
+		self.logger.error('encountered a web socket exception', exc_info=True)
+
 	def _on_message(self, _, message):
 		if isinstance(message, bytes):
 			message.decode(self._encoding)
@@ -192,6 +195,7 @@ class ServerEventSubscriber(_GObject_GObject):
 			"ws{0}://{1}:{2}/_/ws/events/json".format('s' if self.rpc.use_ssl else '', self.rpc.host, self.rpc.port),
 			header=self.rpc.headers,
 			on_close=self._on_close,
+			on_error=self._on_error,
 			on_message=self._on_message,
 			on_open=self._on_open
 		)

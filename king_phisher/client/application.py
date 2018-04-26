@@ -644,12 +644,12 @@ class KingPhisherClientApplication(_Gtk_Application):
 		rpc.username = username
 		self.logger.debug('successfully authenticated to the remote king phisher service')
 
-		self.rpc = rpc
 		event_subscriber = server_events.ServerEventSubscriber(rpc)
 		if not event_subscriber.is_connected:
 			event_subscriber.reconnect = False
 			event_subscriber.shutdown()
 			return False, ConnectionErrorReason.ERROR_UNKNOWN
+		self.rpc = rpc
 		self.server_events = event_subscriber
 		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), rpc.ping)
 		user = self.rpc.graphql("""\
