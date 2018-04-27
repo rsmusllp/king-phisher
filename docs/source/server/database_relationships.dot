@@ -1,0 +1,40 @@
+// diagram of database table relationships
+digraph {
+    AlertSubscription
+    AuthenticatedSession
+    Campaign
+    CampaignType
+    Company
+    CompanyDepartment
+    Credential
+    DeaddropConnection
+    DeaddropDeployment
+    Industry
+    LandingPage
+    StorageData
+    Message
+    User
+    Visit
+
+    // style=bold for one to one relationships
+    // style=dashed for foreign key constraints which are nullable
+    Campaign            ->  AlertSubscription
+    Campaign            ->  Credential
+    Campaign            ->  DeaddropDeployment
+    Campaign            ->  DeaddropConnection
+    Campaign            ->  LandingPage
+    Campaign            ->  Message
+    Campaign            ->  Visit
+    CampaignType        ->  Campaign              [style=dashed]
+    Company             ->  Campaign              [style=dashed]
+    CompanyDepartment   ->  Message               [style=dashed]
+    DeaddropDeployment  ->  DeaddropConnection
+    Industry            ->  Company               [style=dashed]
+    LandingPage         ->  Visit                 [style=dashed]
+    Message             ->  Credential
+    Message             ->  Visit
+    User                ->  AlertSubscription
+    User                ->  AuthenticatedSession  [style=bold]
+    User                ->  Campaign
+    Visit               ->  Credential
+}

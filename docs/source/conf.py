@@ -52,6 +52,7 @@ extensions = [
 	'sphinx.ext.autodoc',
 	'sphinx.ext.coverage',
 	'sphinx.ext.extlinks',
+	'sphinx.ext.graphviz',
 	'sphinx.ext.intersphinx',
 	'sphinx.ext.linkcode',
 	'sphinxcontrib.httpdomain'

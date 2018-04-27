@@ -7,6 +7,7 @@ The King Phisher Server
 
    graphql/index.rst
 
+   database.rst
    published_events.rst
    rest_api.rst
    rpc_api.rst
