@@ -146,12 +146,15 @@ class ServerEventSubscriber(_GObject_GObject):
 		if self._worker_thread != threading.current_thread():
 			return
 		self._worker_thread = None
-		if not self.reconnect:
-			return
-		self._reconnect_event_id = GLib.timeout_add_seconds(30, self._ws_reconnect)
+		if self.reconnect:
+			self._reconnect_event_id = GLib.timeout_add_seconds(30, self._ws_reconnect)
 
 	def _on_error(self, _, exception):
-		self.logger.error('encountered a web socket exception', exc_info=True)
+		# only print exception info when either connected or intending to
+		# reconnect this effectively suppresses a stack trace caused by
+		# https://github.com/websocket-client/websocket-client/blob/6c3d49c943796fd5d84f5df64806972f565ab10a/websocket/_app.py#L47-L52
+		if self.is_connected or self.reconnect:
+			self.logger.error('encountered a web socket exception', exc_info=True)
 
 	def _on_message(self, _, message):
 		if isinstance(message, bytes):
@@ -199,7 +202,10 @@ class ServerEventSubscriber(_GObject_GObject):
 			on_message=self._on_message,
 			on_open=self._on_open
 		)
-		new_thread = threading.Thread(target=self.ws.run_forever, kwargs={'sslopt': {'cert_reqs': ssl.CERT_NONE}})
+		new_thread = utilities.Thread(
+			target=self.ws.run_forever,
+			kwargs={'http_no_proxy': (self.rpc.host,), 'sslopt': {'cert_reqs': ssl.CERT_NONE}}
+		)
 		new_thread.daemon = True
 		new_thread.start()
 		if not self._connect_event.wait(10):
