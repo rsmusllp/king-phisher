@@ -62,11 +62,11 @@ class Query(graphene.ObjectType):
 		for _, plugin in plugin_manager:
 			if plugin.name != kwargs.get('name'):
 				continue
-			return Plugin.from_plugin(plugin)
+			return gql_types.Plugin.from_plugin(plugin)
 
 	def resolve_plugins(self, info, **kwargs):
 		plugin_manager = info.context.get('plugin_manager', {})
-		return [Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
+		return [gql_types.Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
 
 	def resolve_version(self, info, **kwargs):
 		return version.version
