@@ -21,6 +21,42 @@ interface, the King Phisher schema also includes a ``total`` attribute to the
 connection object. This attribute allows a query to access the number of
 nodes available for a specific connection.
 
+Schema
+------
+
+The following table represents the top-level objects available in the GraphQL
+schema and their various sub-object types as applicable.
+
++-------------+------------+----------------------------------------------------------+
+| Object Name | Sub-Object | Description                                              |
+|             | Type       |                                                          |
++=============+============+==========================================================+
+| ``db``      | Objects    | Database models. See :ref:`db-table-relationships-label` |
+|             |            | for information on available sub-objects.                |
++-------------+------------+----------------------------------------------------------+
+| ``geoloc``  | Objects    | Geolocation information.                                 |
++-------------+------------+----------------------------------------------------------+
+| ``plugin``  | Objects    | Specific information for a loaded plugin.                |
++-------------+------------+----------------------------------------------------------+
+| ``plugins`` | Connection | Information on all loaded plugins.                       |
++-------------+------------+----------------------------------------------------------+
+| ``version`` | N/A        | The :py:data:`~king_phisher.version.version` of the King |
+|             |            | Phisher server.                                          |
++-------------+------------+----------------------------------------------------------+
+
+Connection
+  A connection sub-object is a special object providing a defined interface used
+  to refer to an array of objects. The connection sub-object has a ``total``
+  attribute which is an integer as well as an ``edges`` attribute. See
+  `Connection Types`_ for more information.
+
+Objects
+  Sub-objects can in turn have their own attributes which can be a combination
+  of additional sub-objects or scalars.
+
+N/A
+  Objects with no sub-type return a scalar type such as a string or an integer.
+
 Additional Database Model Attributes
 ------------------------------------
 
@@ -95,5 +131,6 @@ string parameter and optional query variables. This can be used for easily
 testing queries. It should be noted however that using this utility directly on
 the server does not restrict access to data as the RPC interface does.
 
+.. _Connection Types: https://facebook.github.io/relay/graphql/connections.htm#sec-Connection-Types
 .. _GraphQL: http://graphql.org/
 .. _Relay: https://facebook.github.io/relay/graphql/connections.htm
