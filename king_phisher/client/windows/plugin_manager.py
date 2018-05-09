@@ -66,19 +66,23 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			'expander_info',
 			'grid_catalog_repo_info',
 			'grid_plugin_info',
-			'label_catalog_repo_info_title',
 			'label_catalog_repo_info_description',
 			'label_catalog_repo_info_for_description',
+			'label_catalog_repo_info_for_maintainers',
 			'label_catalog_repo_info_homepage',
 			'label_catalog_repo_info_maintainers',
-			'label_catalog_repo_info_for_maintainers',
+			'label_catalog_repo_info_title',
 			'label_plugin_info_authors',
-			'label_plugin_info_for_compatible',
 			'label_plugin_info_compatible',
 			'label_plugin_info_description',
+			'label_plugin_info_for_classifiers',
+			'label_plugin_info_for_compatible',
+			'label_plugin_info_for_references',
 			'label_plugin_info_homepage',
 			'label_plugin_info_title',
 			'label_plugin_info_version',
+			'listbox_plugin_info_classifiers',
+			'listbox_plugin_info_references',
 			'paned_plugins',
 			'scrolledwindow_plugins',
 			'stack_info',
@@ -435,7 +439,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.load_thread.start()
 
 	def _reload(self):
-		self._update_status_bar("Reloading... ")
+		self._update_status_bar('Reloading...')
 		treeview = self.gobjects['treeview_plugins']
 		pm = self.application.plugin_manager
 		selected_plugin = None
@@ -457,6 +461,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					self._update_status_bar('Cannot reload a plugin that is not installed.')
 					continue
 				self._reload_plugin(named_row, model_row, pm, tree_iter, selected_plugin)
+				self._update_status_bar('Reloading plugin completed')
 			else:
 				self.logger.warning('reload selected for an unsupported row type')
 
@@ -690,6 +695,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.gobjects['label_plugin_info_authors'].set_text('\n'.join(plugin['authors']))
 		self.gobjects['label_plugin_info_description'].set_text(plugin['description'])
 		self._set_homepage_url(plugin['homepage'])
+		self._set_reference_urls(plugin['reference_urls'])
+		self._set_classifiers(plugin['classifiers'])
 
 	def _set_info_plugin_error(self, model_instance):
 		id_ = self._RowModel(*model_instance).id
@@ -706,6 +713,25 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.gobjects['label_catalog_repo_info_for_description'].set_property('visible', False)
 		self.gobjects['label_catalog_repo_info_homepage'].set_property('visible', False)
 
+	def _set_classifiers(self, classifiers):
+		label = self.gobjects['label_plugin_info_for_classifiers']
+		listbox = self.gobjects['listbox_plugin_info_classifiers']
+		gui_utilities.gtk_widget_destroy_children(listbox)
+		if not classifiers:
+			label.set_property('visible', False)
+			listbox.set_property('visible', False)
+			return
+		label.set_property('visible', True)
+		listbox.set_property('visible', True)
+		for classifier in classifiers:
+			label = Gtk.Label()
+			label.set_markup("<tt>{0}</tt>".format(classifier))
+			label.set_property('halign', Gtk.Align.START)
+			label.set_property('use-markup', True)
+			label.set_property('valign', Gtk.Align.START)
+			label.set_property('visible', True)
+			listbox.add(label)
+
 	def _set_homepage_url(self, url=None):
 		label_homepage = self.gobjects['label_plugin_info_homepage']
 		if url is None:
@@ -714,3 +740,24 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(url))
 		label_homepage.set_property('tooltip-text', url)
 		label_homepage.set_property('visible', True)
+
+	def _set_reference_urls(self, reference_urls):
+		label = self.gobjects['label_plugin_info_for_references']
+		listbox = self.gobjects['listbox_plugin_info_references']
+		gui_utilities.gtk_widget_destroy_children(listbox)
+		if not reference_urls:
+			label.set_property('visible', False)
+			listbox.set_property('visible', False)
+			return
+		label.set_property('visible', True)
+		listbox.set_property('visible', True)
+		for reference_url in reference_urls:
+			label = Gtk.Label()
+			label.connect('activate-link', self.signal_label_activate_link)
+			label.set_markup("<a href=\"{0}\">{0}</a>".format(reference_url))
+			label.set_property('halign', Gtk.Align.START)
+			label.set_property('track-visited-links', False)
+			label.set_property('use-markup', True)
+			label.set_property('valign', Gtk.Align.START)
+			label.set_property('visible', True)
+			listbox.add(label)

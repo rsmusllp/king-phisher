@@ -33,6 +33,7 @@ import collections
 import copy
 import distutils.version
 import functools
+import importlib
 import inspect
 import logging
 import platform
@@ -44,26 +45,14 @@ import threading
 import smoke_zephyr.requirements
 
 from king_phisher import errors
-from king_phisher import its
 from king_phisher import version
 
 import pluginbase
 
-if its.py_v2:
-	_reload = reload  # pylint: disable=E0602
-else:
-	import importlib
-	_reload = importlib.reload
-
-if sys.version_info[:3] >= (3, 3, 0):
-	_Mapping = collections.abc.Mapping
-else:
-	_Mapping = collections.Mapping
-
 StrictVersion = distutils.version.StrictVersion
 
 def _recursive_reload(package, package_name, completed):
-	_reload(package)
+	importlib.reload(package)
 	completed.append(package)
 	for module in dir(package):
 		module = getattr(package, module)
@@ -91,7 +80,7 @@ class OptionBase(object):
 	"""
 	A base class for options which can be configured for plugins.
 	"""
-	_type = (unicode if its.py_v2 else str)  # pylint: disable=E0602
+	_type = str
 	def __init__(self, name, description, default=None):
 		"""
 		:param str name: The name of this option.
@@ -127,7 +116,7 @@ class OptionString(OptionBase):
 	"""A plugin option which is represented with a string value."""
 	pass
 
-class Requirements(_Mapping):
+class Requirements(collections.abc.Mapping):
 	_package_regex = re.compile(r'^(?P<name>[\w\-]+)(([<>=]=)(\d+(\.\d+)*))?$')
 	def __init__(self, items):
 		"""
@@ -277,13 +266,15 @@ class PluginBaseMeta(type):
 	def metadata(cls):
 		metadata = {
 			'authors': cls.authors,
-			'title': cls.title,
+			'classifiers': cls.classifiers,
 			'description': cls.description,
 			'homepage': cls.homepage,
-			'name': cls.name,
 			'is_compatible': cls.is_compatible,
+			'name': cls.name,
+			'reference_urls': cls.reference_urls,
 			'requirements': cls.requirements.to_dict(),
-			'version': cls.version
+			'title': cls.title,
+			'version': cls.version,
 		}
 		return metadata
 
@@ -297,6 +288,8 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""
 	authors = ()
 	"""The tuple of authors who have provided this plugin."""
+	classifiers = ()
+	"""An array containing optional classifier strings. These are free-formatted strings used to identify functionality."""
 	title = None
 	"""The title of the plugin."""
 	description = None
@@ -305,6 +298,8 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""An optional homepage for the plugin."""
 	options = []
 	"""A list of configurable option definitions for the plugin."""
+	reference_urls = ()
+	"""An array containing optional reference URL strings."""
 	req_min_py_version = None
 	"""The required minimum Python version for compatibility."""
 	req_min_version = '1.3.0b0'
