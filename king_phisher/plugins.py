@@ -267,16 +267,18 @@ class PluginBaseMeta(type):
 	def metadata(cls):
 		metadata = {
 			'authors': cls.authors,
-			'classifiers': cls.classifiers,
 			'description': cls.description,
 			'homepage': cls.homepage,
 			'is_compatible': cls.is_compatible,
 			'name': cls.name,
-			'reference_urls': cls.reference_urls,
 			'requirements': cls.requirements.to_dict(),
 			'title': cls.title,
 			'version': cls.version,
 		}
+		if cls.classifiers:
+			metadata['classifiers'] = cls.classifiers
+		if cls.reference_urls:
+			metadata['reference_urls'] = cls.reference_urls
 		return metadata
 
 # stylized metaclass definition to be Python 2.7 and 3.x compatible
