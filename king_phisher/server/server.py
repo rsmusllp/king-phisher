@@ -62,18 +62,10 @@ import jinja2
 import smoke_zephyr.job
 import smoke_zephyr.utilities
 
-class LoggerAdapter(logging.LoggerAdapter):
-	def process(self, message, kwargs):
-		message = "{0} {message}".format(self.extra['client_address'], message=message)
-		return message, kwargs
-
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	_logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 	def __init__(self, request, client_address, server, **kwargs):
-		self.logger = LoggerAdapter(
-			self._logger,
-			{'client_address': client_address[0]}
-		)
+		self.logger = utilities.PrefixLoggerAdapter("{0}:{1}".format(client_address[0], client_address[1]), self._logger, {})
 		self.logger.debug("tid: 0x{0:x} running http request handler".format(threading.current_thread().ident))
 		# this is for attribute documentation
 		self.config = None

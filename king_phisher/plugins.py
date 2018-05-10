@@ -45,6 +45,7 @@ import threading
 import smoke_zephyr.requirements
 
 from king_phisher import errors
+from king_phisher import utilities
 from king_phisher import version
 
 import pluginbase
@@ -312,7 +313,8 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""The version identifier of this plugin."""
 	_logging_prefix = 'KingPhisher.Plugins.'
 	def __init__(self):
-		self.logger = logging.getLogger(self._logging_prefix + self.__class__.__name__)
+		logger = logging.getLogger(self._logging_prefix + self.name + '.' + self.__class__.__name__)
+		self.logger = utilities.PrefixLoggerAdapter("[plugin: {0}]".format(self.name), logger, {})
 		if getattr(self, 'config') is None:  # hasattr will return False with subclass properties
 			self.config = {}
 			"""The plugins configuration dictionary for storing the values of it's options."""

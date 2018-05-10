@@ -514,7 +514,7 @@ def validate_json_schema(data, schema_file_id):
 
 class Thread(threading.Thread):
 	"""
-	King Phishers base threading class with two way event.
+	King Phisher's base threading class with two way events.
 	"""
 	logger = logging.getLogger('KingPhisher.Thread')
 	def __init__(self, target=None, name=None, args=(), kwargs={}, **_kwargs):
@@ -569,3 +569,18 @@ class Event(getattr(threading, ('_Event' if hasattr(threading, '_Event') else 'E
 	def wait_clear(self, timeout=None):
 		if self.__event.wait(timeout=timeout):
 			super(Event, self).set()
+
+class PrefixLoggerAdapter(logging.LoggerAdapter):
+	"""
+	A log adapter that simply prefixes the specified string to all messages. A
+	single space will be inserted between the prefix and the message.
+	"""
+	def __init__(self, prefix, *args, **kwargs):
+		"""
+		:param str prefix: The string to prefix all messages with.
+		"""
+		self.prefix = prefix + ' '
+		super(PrefixLoggerAdapter, self).__init__(*args, **kwargs)
+
+	def process(self, message, kwargs):
+		return self.prefix + message, kwargs
