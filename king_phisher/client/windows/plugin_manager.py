@@ -36,6 +36,7 @@ import os
 import shutil
 import sys
 import traceback
+import xml.sax.saxutils as saxutils
 
 from king_phisher import utilities
 from king_phisher.catalog import Catalog
@@ -170,20 +171,27 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		for catalog_url in self.config['catalogs']:
 			catalog_cache_dict = catalog_cache.pop_catalog_by_url(catalog_url, None)
 			if not refresh and catalog_cache_dict and catalog_cache_dict['created'] + expiration > now:
-				try:
-					catalog = Catalog(catalog_cache_dict['value'])
-				except (KeyError, TypeError) as error:
-					self.logger.warning("{0} error when trying to add catalog dict to manager".format(error.__class__.__name))
-				else:
-					self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_cache_dict['url'], cache=False)
+				catalog = self._load_catalog_from_cache(catalog_cache_dict)
+				if catalog is not None:
 					continue
+				catalog_cache_dict = None
 			self.logger.debug("downloading catalog: {}".format(catalog_url))
 			self._update_status_bar("Loading, downloading catalog: {}".format(catalog_url))
 			catalog = self._load_catalog_from_url(catalog_url)
-			if not catalog:
-				continue
-			self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
+			if catalog is None and catalog_cache_dict is not None:
+				self.logger.warning('failing over to loading the catalog from the cache')
+				self._load_catalog_from_cache(catalog_cache_dict)
 		self._load_plugins()
+
+	def _load_catalog_from_cache(self, catalog_cache_dict):
+		catalog = None
+		try:
+			catalog = Catalog(catalog_cache_dict['value'])
+		except (KeyError, TypeError) as error:
+			self.logger.warning("{0} error when trying to add catalog dict to manager".format(error.__class__.__name))
+		else:
+			self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_cache_dict['url'], cache=False)
+		return catalog
 
 	def _load_catalog_from_url(self, catalog_url):
 		catalog = None
@@ -195,6 +203,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		except Exception:
 			self.logger.warning('failed to add catalog by url: ' + catalog_url, exc_info=True)
 			self.idle_show_dialog_error('Catalog Loading Error', 'Failed to add catalog')
+		else:
+			self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
 		return catalog
 
 	def idle_show_dialog_error(self, title, message):
@@ -673,7 +683,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.gobjects['label_catalog_repo_info_for_description'].set_property('visible', True)
 		if getattr(obj, 'homepage', None) or getattr(obj, 'url', None):
 			url = getattr(obj, 'homepage', getattr(obj, 'url', None))
-			self.gobjects['label_catalog_repo_info_homepage'].set_markup("<a href=\"{0}\">Homepage</a>".format(url))
+			self.gobjects['label_catalog_repo_info_homepage'].set_markup("<a href=\"{0}\">Homepage</a>".format(url.replace('"', '&quot;')))
 			self.gobjects['label_catalog_repo_info_homepage'].set_property('tooltip-text', url)
 			self.gobjects['label_catalog_repo_info_homepage'].set_property('visible', True)
 
@@ -725,7 +735,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		listbox.set_property('visible', True)
 		for classifier in classifiers:
 			label = Gtk.Label()
-			label.set_markup("<tt>{0}</tt>".format(classifier))
+			label.set_markup("<span font=\"smaller\"><tt>{0}</tt></span>".format(saxutils.escape(classifier)))
 			label.set_property('halign', Gtk.Align.START)
 			label.set_property('use-markup', True)
 			label.set_property('valign', Gtk.Align.START)
@@ -737,7 +747,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if url is None:
 			label_homepage.set_property('visible', False)
 			return
-		label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(url))
+		label_homepage.set_markup("<a href=\"{0}\">Homepage</a>".format(url.replace('"', '&quot;')))
 		label_homepage.set_property('tooltip-text', url)
 		label_homepage.set_property('visible', True)
 
@@ -754,7 +764,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		for reference_url in reference_urls:
 			label = Gtk.Label()
 			label.connect('activate-link', self.signal_label_activate_link)
-			label.set_markup("<a href=\"{0}\">{0}</a>".format(reference_url))
+			label.set_markup("<a href=\"{0}\">{1}</a>".format(reference_url.replace('"', '&quot;'), saxutils.escape(reference_url)))
 			label.set_property('halign', Gtk.Align.START)
 			label.set_property('track-visited-links', False)
 			label.set_property('use-markup', True)

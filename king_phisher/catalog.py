@@ -286,7 +286,7 @@ class Repository(object):
 	def _fetch(self, item_file, encoding=None, verify=True):
 		if isinstance(item_file, dict):
 			item_file = CollectionItemFile.from_dict(item_file)
-		url = self.url_base + '/' + item_file.path_source
+		url = self.url_base.rstrip('/') + '/' + item_file.path_source.lstrip('/')
 		self.logger.debug("fetching repository data item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
 		data = self._fetch_url(url)
 		if verify:
@@ -297,11 +297,11 @@ class Repository(object):
 		return data
 
 	def _fetch_json(self, item_file, encoding='utf-8', verify=True):
-		url = self.url_base + '/'
+		url = self.url_base.rstrip('/') + '/'
 		if isinstance(item_file, dict):
-			url += item_file['path-source']
+			url += item_file['path-source'].lstrip('/')
 		else:
-			url += item_file.path_source
+			url += item_file.path_source.lstrip('/')
 		self.logger.debug("fetching repository json item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
 		data = self._fetch_url(url)
 		if encoding:
