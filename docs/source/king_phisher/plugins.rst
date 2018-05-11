@@ -58,3 +58,8 @@ Classes
    :show-inheritance:
    :members:
    :special-members: __init__
+
+.. autoclass:: Requirements
+   :show-inheritance:
+   :members:
+   :special-members: __init__

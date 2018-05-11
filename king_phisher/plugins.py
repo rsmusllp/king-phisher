@@ -118,10 +118,16 @@ class OptionString(OptionBase):
 	pass
 
 class Requirements(collections.abc.Mapping):
+	"""
+	This object servers to map requirements specified as strings to their
+	respective values. Once the requirements are defined, this class can then be
+	used to evaluate them in an effort to determine which requirements are met
+	and which are not.
+	"""
 	_package_regex = re.compile(r'^(?P<name>[\w\-]+)(([<>=]=)(\d+(\.\d+)*))?$')
 	def __init__(self, items):
 		"""
-		:param dict items: The items that are members of this collection, keyed by their name.
+		:param dict items: A dictionary or two-dimensional array mapping requirement names to their respective values.
 		"""
 		# call dict here to allow items to be a two dimensional array suitable for passing to dict
 		items = dict(items)
@@ -150,12 +156,17 @@ class Requirements(collections.abc.Mapping):
 
 	@property
 	def is_compatible(self):
+		"""Whether or not all requirements are met."""
 		for req_type, req_details, req_met in self.compatibility_iter():
 			if not req_met:
 				return False
 		return True
 
 	def compatibility_iter(self):
+		"""
+		Iterate over each of the requirements, evaluate them and yield a tuple
+		regarding them.
+		"""
 		StrictVersion = distutils.version.StrictVersion
 		if self._storage.get('minimum-python-version'):
 			# platform.python_version() cannot be used with StrictVersion because it returns letters in the version number.
@@ -195,6 +206,9 @@ class Requirements(collections.abc.Mapping):
 		return tuple(self.compatibility_iter())
 
 	def to_dict(self):
+		"""
+		Return a dictionary representing the requirements.
+		"""
 		# this method always returns 'packages' as an iterable
 		storage = copy.deepcopy(self._storage)
 		if 'packages' in storage:

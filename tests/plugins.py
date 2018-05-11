@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/sms.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,30 +30,53 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
-logging.captureWarnings(True)
+import platform
+import sys
+import unittest
 
-from .client import *
-from .server import *
+from king_phisher import plugins
+from king_phisher import testing
+from king_phisher import version
 
-from .color import ColorConversionTests
-from .find import FindTests
-from .find import JSONSchemaDataTests
-from .geoip import GeoIPTests
-from .geoip import GeoIPRPCTests
-from .ics import ICSTests
-from .ipaddress import IPAddressTests
-from .plugins import PluginRequirementsTests
-from .security_keys import SigningKeyTests
-from .serializers import ElementTreeTests
-from .serializers import JSONSerializerTests
-from .serializers import MsgPackSerializerTests
-from .sms import SMSTests
-from .spf import SPFTests
-from .templates import TemplatesTests
-from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
-from .version import VersionTests
-from .xor import XORTests
+class PluginRequirementsTests(testing.KingPhisherTestCase):
+	def _test_requirement(self, requirement, case_true, case_false):
+		requirements = plugins.Requirements([(requirement, case_true)])
+		self.assertTrue(requirements.is_compatible)
+
+		requirements = plugins.Requirements([(requirement, case_false)])
+		self.assertFalse(requirements.is_compatible)
+
+	def test_empty_requirements(self):
+		requirements = plugins.Requirements({})
+		self.assertTrue(requirements.is_compatible, 'no requirements means compatible')
+
+	def test_req_minimum_python_version(self):
+		version_info = sys.version_info
+		self._test_requirement(
+			'minimum-python-version',
+			"{0}.{1}".format(version_info.major, version_info.minor),
+			"{0}.{1}".format(version_info.major, version_info.minor + 1)
+		)
+
+	def test_req_minimum_version(self):
+		version_info = version.version_info
+		self._test_requirement(
+			'minimum-version',
+			version.distutils_version,
+			"{0}.{1}".format(version_info.major, version_info.minor + 1)
+		)
+
+	def test_req_platforms(self):
+		self._test_requirement(
+			'platforms',
+			[],
+			['Foobar']
+		)
+		self._test_requirement(
+			'platforms',
+			[platform.system().lower()],
+			['Foobar']
+		)
+
+if __name__ == '__main__':
+	unittest.main()
