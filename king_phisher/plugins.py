@@ -197,7 +197,8 @@ class Requirements(collections.abc.Mapping):
 	def to_dict(self):
 		# this method always returns 'packages' as an iterable
 		storage = copy.deepcopy(self._storage)
-		storage['packages'] = tuple(storage.get('packages', {}).keys())
+		if 'packages' in storage:
+			storage['packages'] = tuple(storage['packages'].keys())
 		return storage
 
 class PluginBaseMeta(type):
@@ -227,12 +228,18 @@ class PluginBaseMeta(type):
 
 	@staticmethod
 	def _update_requirements(bases, dct, requirements, property, requirement):
+		value = None
 		if property in dct:
-			requirements[requirement] = dct[property]
+			value = dct[property]
 		else:
 			base = next((base for base in bases if hasattr(base, property)), None)
 			if base is not None:
-				requirements[requirement] = getattr(base, property)
+				value = getattr(base, property)
+		if value is None:
+			return
+		if hasattr(value, '__len__') and not len(value):
+			return
+		requirements[requirement] = value
 
 	@property
 	def compatibility(cls):

@@ -695,8 +695,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.gobjects['label_plugin_info_authors'].set_text('\n'.join(plugin['authors']))
 		self.gobjects['label_plugin_info_description'].set_text(plugin['description'])
 		self._set_homepage_url(plugin['homepage'])
-		self._set_reference_urls(plugin.get('reference_urls', [])
-		self._set_classifiers(plugin.get('classifiers', [])
+		self._set_reference_urls(plugin.get('reference_urls', []))
+		self._set_classifiers(plugin.get('classifiers', []))
 
 	def _set_info_plugin_error(self, model_instance):
 		id_ = self._RowModel(*model_instance).id

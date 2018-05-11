@@ -127,6 +127,10 @@
                     "requirements": {
                       "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements",
                       "properties": {
+                        "minimum-python-version": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/minimum-python-version",
+                          "type": "string"
+                        },
                         "minimum-version": {
                           "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/minimum-version",
                           "type": "string"
@@ -137,6 +141,16 @@
                             "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/packages/items",
                             "type": "string"
                           },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "platforms": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/platforms",
+                          "items": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/platforms/items",
+                            "type": "string"
+                          },
+                          "minItems": 1,
                           "type": "array"
                         }
                       },
@@ -242,6 +256,10 @@
                     "requirements": {
                       "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements",
                       "properties": {
+                        "minimum-python-version": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/minimum-python-version",
+                          "type": "string"
+                        },
                         "minimum-version": {
                           "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/minimum-version",
                           "type": "string"
@@ -252,6 +270,16 @@
                             "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/packages/items",
                             "type": "string"
                           },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "platforms": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/platforms",
+                          "items": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/platforms/items",
+                            "type": "string"
+                          },
+                          "minItems": 1,
                           "type": "array"
                         }
                       },
