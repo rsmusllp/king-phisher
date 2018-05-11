@@ -168,7 +168,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		catalog_cache = self.catalog_plugins.get_cache()
 		now = datetime.datetime.utcnow()
 		for catalog_url in self.config['catalogs']:
-			catalog_cache_dict = catalog_cache.get_catalog_by_url(catalog_url)
+			catalog_cache_dict = catalog_cache.pop_catalog_by_url(catalog_url, None)
 			if not refresh and catalog_cache_dict and catalog_cache_dict['created'] + expiration > now:
 				try:
 					catalog = Catalog(catalog_cache_dict['value'])
@@ -193,7 +193,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.logger.warning("connection error trying to download catalog url: {}".format(catalog_url))
 			self.idle_show_dialog_error('Catalog Loading Error', 'Failed to download catalog, check your internet connection.')
 		except Exception:
-			self.logger.warning("failed to add catalog by url", exc_info=True)
+			self.logger.warning('failed to add catalog by url: ' + catalog_url, exc_info=True)
 			self.idle_show_dialog_error('Catalog Loading Error', 'Failed to add catalog')
 		return catalog
 
