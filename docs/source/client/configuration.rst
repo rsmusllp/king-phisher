@@ -5,7 +5,7 @@ The following configuration settings will be honored but can not be set from
 within the client's user interface.
 
 .. note::
-   The King Phisher client will over write its configuration file when it exits
+   The King Phisher client will overwrite its configuration file when it exits
    to store the latest values. This means that the client should not be running
    when the configuration file is being manually edited so the changes are not
    overwritten.
@@ -18,6 +18,8 @@ within the client's user interface.
 | gui.show_deaddrop                  | ``false``                                              |
 +------------------------------------+--------------------------------------------------------+
 | mailer.max_messages_per_connection | ``5``                                                  |
++------------------------------------+--------------------------------------------------------+
+| plugins.path                       | ``[]`` (No additional plugin paths)                    |
 +------------------------------------+--------------------------------------------------------+
 | rpc.serializer                     | ``null`` (Automatically determined)                    |
 +------------------------------------+--------------------------------------------------------+

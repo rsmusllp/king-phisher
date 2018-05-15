@@ -201,7 +201,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self.logger.warning('Failed to create user plugins folder')
 
 		self.plugin_manager = plugins.ClientPluginManager(
-			[os.path.join(self.user_data_path, 'plugins'), find.data_directory('plugins')],
+			[os.path.join(self.user_data_path, 'plugins'), find.data_directory('plugins')] + self.config.get('plugins.path', []),
 			self
 		)
 		if use_plugins:

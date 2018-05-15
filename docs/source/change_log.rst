@@ -14,6 +14,7 @@ Version 1.12.0
 *In Progress*
 
 * Added support for users to set their email address for campaign alerts via email
+* Added additional plugin metadata fields for reference URLs and categoryre classifiers
 
 Version 1.11.0
 ^^^^^^^^^^^^^^
