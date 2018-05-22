@@ -85,7 +85,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			'label_plugin_info_version',
 			'listbox_plugin_info_classifiers',
 			'listbox_plugin_info_references',
-			'notebook_plugin_info',
 			'paned_plugins',
 			'scrolledwindow_plugins',
 			'stack_info',
@@ -650,7 +649,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				stack.set_visible_child(textview)
 				self._set_info_plugin_error(model_instance)
 			else:
-				stack.set_visible_child(self.gobjects['notebook_plugin_info'])
+				stack.set_visible_child(self.gobjects['grid_plugin_info'])
 				self._set_info_plugin(model_instance)
 		else:
 			self._set_info_nonplugin(model_instance)
