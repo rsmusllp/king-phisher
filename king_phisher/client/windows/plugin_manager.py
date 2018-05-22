@@ -47,6 +47,7 @@ from king_phisher.client.widget import managers
 from gi.repository import Gdk
 from gi.repository import Gtk
 import requests.exceptions
+import smoke_zephyr.utilities
 
 __all__ = ('PluginManagerWindow',)
 
@@ -84,6 +85,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			'label_plugin_info_version',
 			'listbox_plugin_info_classifiers',
 			'listbox_plugin_info_references',
+			'notebook_plugin_info',
 			'paned_plugins',
 			'scrolledwindow_plugins',
 			'stack_info',
@@ -163,7 +165,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		pass
 
 	def _load_catalogs(self, refresh=False):
-		expiration = datetime.timedelta(hours=4)
+		expiration = datetime.timedelta(seconds=smoke_zephyr.utilities.parse_timespan(self.config.get('cache.age', '4h')))
 		self._update_status_bar('Loading, catalogs...', idle=True)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
 		catalog_cache = self.catalog_plugins.get_cache()
@@ -648,7 +650,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				stack.set_visible_child(textview)
 				self._set_info_plugin_error(model_instance)
 			else:
-				stack.set_visible_child(self.gobjects['grid_plugin_info'])
+				stack.set_visible_child(self.gobjects['notebook_plugin_info'])
 				self._set_info_plugin(model_instance)
 		else:
 			self._set_info_nonplugin(model_instance)
