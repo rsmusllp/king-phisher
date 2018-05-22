@@ -39,6 +39,8 @@ from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
 import boltons.strutils
+import markdown
+import mdx_gfm
 from gi.repository import Gdk
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -250,6 +252,13 @@ class WebKitHTMLView(_WebKitX_WebView):
 		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
 		self.load_html_data(html_data, html_file)
+
+	def load_markdown_data(self, md_data, html_file_uri=None, gh_flavor=True):
+		extensions = []
+		if gh_flavor:
+			extensions = [mdx_gfm.GithubFlavoredMarkdownExtension()]
+		html = markdown.markdown(md_data, extensions=extensions)
+		return self.load_html_data(html, html_file_uri=html_file_uri)
 
 	def signal_button_pressed(self, _, event):
 		if event.button == Gdk.BUTTON_SECONDARY:

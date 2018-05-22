@@ -1669,6 +1669,18 @@ Spencer McIntyre</property>
     <child>
       <placeholder/>
     </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="action_area">
       <object class="GtkBox" id="CampaignAssistant.action_area">
         <property name="can_focus">False</property>
@@ -2830,238 +2842,6 @@ Spencer McIntyre</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
-                              <object class="GtkGrid" id="PluginManagerWindow.grid_plugin_info">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="row_spacing">3</property>
-                                <property name="column_spacing">3</property>
-                                <property name="column_homogeneous">True</property>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_title">
-                                    <property name="visible">True</property>
-                                    <property name="sensitive">False</property>
-                                    <property name="can_focus">False</property>
-                                    <attributes>
-                                      <attribute name="weight" value="bold"/>
-                                      <attribute name="scale" value="1.25"/>
-                                    </attributes>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">0</property>
-                                    <property name="top_attach">0</property>
-                                    <property name="width">4</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_authors">
-                                    <property name="visible">True</property>
-                                    <property name="sensitive">False</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="halign">end</property>
-                                    <property name="valign">start</property>
-                                    <property name="label" translatable="yes">Authors:</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">0</property>
-                                    <property name="top_attach">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_authors">
-                                    <property name="visible">True</property>
-                                    <property name="sensitive">False</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="tooltip_text" translatable="yes">The contributors who have written and provided this plugin.</property>
-                                    <property name="halign">start</property>
-                                    <property name="valign">start</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="top_attach">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_version">
-                                    <property name="visible">True</property>
-                                    <property name="sensitive">False</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="tooltip_text" translatable="yes">The version identifier of this plugin.</property>
-                                    <property name="halign">start</property>
-                                    <property name="valign">start</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">3</property>
-                                    <property name="top_attach">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_description">
-                                    <property name="visible">True</property>
-                                    <property name="sensitive">False</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="halign">end</property>
-                                    <property name="valign">start</property>
-                                    <property name="label" translatable="yes">Description:</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">0</property>
-                                    <property name="top_attach">3</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_description">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="tooltip_text" translatable="yes">The description of this plugin and the features it provides.</property>
-                                    <property name="halign">start</property>
-                                    <property name="valign">start</property>
-                                    <property name="wrap">True</property>
-                                    <property name="selectable">True</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="top_attach">3</property>
-                                    <property name="width">3</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_version">
-                                    <property name="visible">True</property>
-                                    <property name="sensitive">False</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="halign">end</property>
-                                    <property name="valign">start</property>
-                                    <property name="label" translatable="yes">Version:</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">2</property>
-                                    <property name="top_attach">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_compatible">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="tooltip_text" translatable="yes">Whether or not this plugin is compatible with this environment.</property>
-                                    <property name="halign">start</property>
-                                    <property name="valign">start</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="top_attach">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_homepage">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="label" translatable="yes">&lt;a href=""&gt;Homepage&lt;/a&gt;</property>
-                                    <property name="use_markup">True</property>
-                                    <property name="track_visited_links">False</property>
-                                    <signal name="activate-link" handler="signal_label_activate_link" swapped="no"/>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">2</property>
-                                    <property name="top_attach">2</property>
-                                    <property name="width">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkEventBox" id="PluginManagerWindow.eventbox_plugin_info_for_compatible">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <signal name="button-press-event" handler="signal_eventbox_button_press" swapped="no"/>
-                                    <child>
-                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_compatible">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="halign">end</property>
-                                        <property name="valign">start</property>
-                                        <property name="label" translatable="yes">Compatible:</property>
-                                        <attributes>
-                                          <attribute name="underline" value="True"/>
-                                        </attributes>
-                                      </object>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">0</property>
-                                    <property name="top_attach">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_references">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="halign">end</property>
-                                    <property name="valign">start</property>
-                                    <property name="label" translatable="yes">References:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">0</property>
-                                    <property name="top_attach">4</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkListBox" id="PluginManagerWindow.listbox_plugin_info_references">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="top_attach">4</property>
-                                    <property name="width">3</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_classifiers">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="halign">end</property>
-                                    <property name="valign">start</property>
-                                    <property name="label" translatable="yes">Classifiers:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">0</property>
-                                    <property name="top_attach">5</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkListBox" id="PluginManagerWindow.listbox_plugin_info_classifiers">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="top_attach">5</property>
-                                    <property name="width">3</property>
-                                  </packing>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="name">page0</property>
-                                <property name="title" translatable="yes">page0</property>
-                              </packing>
-                            </child>
-                            <child>
                               <object class="GtkTextView" id="PluginManagerWindow.textview_plugin_info">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -3069,7 +2849,6 @@ Spencer McIntyre</property>
                               <packing>
                                 <property name="name">page1</property>
                                 <property name="title" translatable="yes">page1</property>
-                                <property name="position">1</property>
                               </packing>
                             </child>
                             <child>
@@ -3176,15 +2955,292 @@ Spencer McIntyre</property>
                                   <packing>
                                     <property name="left_attach">2</property>
                                     <property name="top_attach">1</property>
+                                    <property name="width">2</property>
                                   </packing>
-                                </child>
-                                <child>
-                                  <placeholder/>
                                 </child>
                               </object>
                               <packing>
                                 <property name="name">page2</property>
                                 <property name="title" translatable="yes">page2</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkNotebook" id="PluginManagerWindow.notebook_plugin_info">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <child>
+                                  <object class="GtkGrid" id="PluginManagerWindow.grid_plugin_info_about">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="vexpand">True</property>
+                                    <property name="row_spacing">3</property>
+                                    <property name="column_spacing">3</property>
+                                    <property name="column_homogeneous">True</property>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_title">
+                                        <property name="visible">True</property>
+                                        <property name="sensitive">False</property>
+                                        <property name="can_focus">False</property>
+                                        <attributes>
+                                          <attribute name="weight" value="bold"/>
+                                          <attribute name="scale" value="1.25"/>
+                                        </attributes>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">0</property>
+                                        <property name="top_attach">0</property>
+                                        <property name="width">4</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_authors">
+                                        <property name="visible">True</property>
+                                        <property name="sensitive">False</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="halign">end</property>
+                                        <property name="valign">start</property>
+                                        <property name="label" translatable="yes">Authors:</property>
+                                        <attributes>
+                                          <attribute name="scale" value="0.90000000000000002"/>
+                                        </attributes>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">0</property>
+                                        <property name="top_attach">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_authors">
+                                        <property name="visible">True</property>
+                                        <property name="sensitive">False</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="tooltip_text" translatable="yes">The contributors who have written and provided this plugin.</property>
+                                        <property name="halign">start</property>
+                                        <property name="valign">start</property>
+                                        <attributes>
+                                          <attribute name="scale" value="0.90000000000000002"/>
+                                        </attributes>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">1</property>
+                                        <property name="top_attach">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_version">
+                                        <property name="visible">True</property>
+                                        <property name="sensitive">False</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="tooltip_text" translatable="yes">The version identifier of this plugin.</property>
+                                        <property name="halign">start</property>
+                                        <property name="valign">start</property>
+                                        <attributes>
+                                          <attribute name="scale" value="0.90000000000000002"/>
+                                        </attributes>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">3</property>
+                                        <property name="top_attach">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_description">
+                                        <property name="visible">True</property>
+                                        <property name="sensitive">False</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="halign">end</property>
+                                        <property name="valign">start</property>
+                                        <property name="label" translatable="yes">Description:</property>
+                                        <attributes>
+                                          <attribute name="scale" value="0.90000000000000002"/>
+                                        </attributes>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">0</property>
+                                        <property name="top_attach">3</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_description">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="tooltip_text" translatable="yes">The description of this plugin and the features it provides.</property>
+                                        <property name="halign">start</property>
+                                        <property name="valign">start</property>
+                                        <property name="wrap">True</property>
+                                        <property name="selectable">True</property>
+                                        <attributes>
+                                          <attribute name="scale" value="0.90000000000000002"/>
+                                        </attributes>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">1</property>
+                                        <property name="top_attach">3</property>
+                                        <property name="width">3</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_version">
+                                        <property name="visible">True</property>
+                                        <property name="sensitive">False</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="halign">end</property>
+                                        <property name="valign">start</property>
+                                        <property name="label" translatable="yes">Version:</property>
+                                        <attributes>
+                                          <attribute name="scale" value="0.90000000000000002"/>
+                                        </attributes>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">2</property>
+                                        <property name="top_attach">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_compatible">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="tooltip_text" translatable="yes">Whether or not this plugin is compatible with this environment.</property>
+                                        <property name="halign">start</property>
+                                        <property name="valign">start</property>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">1</property>
+                                        <property name="top_attach">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_homepage">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="label" translatable="yes">&lt;a href=""&gt;Homepage&lt;/a&gt;</property>
+                                        <property name="use_markup">True</property>
+                                        <property name="track_visited_links">False</property>
+                                        <signal name="activate-link" handler="signal_label_activate_link" swapped="no"/>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">2</property>
+                                        <property name="top_attach">2</property>
+                                        <property name="width">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkEventBox" id="PluginManagerWindow.eventbox_plugin_info_for_compatible">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <signal name="button-press-event" handler="signal_eventbox_button_press" swapped="no"/>
+                                        <child>
+                                          <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_compatible">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="halign">end</property>
+                                            <property name="valign">start</property>
+                                            <property name="label" translatable="yes">Compatible:</property>
+                                            <attributes>
+                                              <attribute name="underline" value="True"/>
+                                            </attributes>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">0</property>
+                                        <property name="top_attach">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_references">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="halign">end</property>
+                                        <property name="valign">start</property>
+                                        <property name="label" translatable="yes">References:</property>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">0</property>
+                                        <property name="top_attach">4</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkListBox" id="PluginManagerWindow.listbox_plugin_info_references">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">1</property>
+                                        <property name="top_attach">4</property>
+                                        <property name="width">3</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_classifiers">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="halign">end</property>
+                                        <property name="valign">start</property>
+                                        <property name="label" translatable="yes">Classifiers:</property>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">0</property>
+                                        <property name="top_attach">5</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkListBox" id="PluginManagerWindow.listbox_plugin_info_classifiers">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">1</property>
+                                        <property name="top_attach">5</property>
+                                        <property name="width">3</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_about">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="label" translatable="yes">About</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkBox" id="PluginManagerWindow.box_plugin_info_documentation">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="vexpand">True</property>
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="menu_label">PluginManagerWindow.box_plugin_info</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_documentation">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="label" translatable="yes">Documentation</property>
+                                  </object>
+                                  <packing>
+                                    <property name="position">1</property>
+                                    <property name="tab_fill">False</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                                <child type="tab">
+                                  <placeholder/>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="name">page0</property>
+                                <property name="title" translatable="yes">page0</property>
                                 <property name="position">2</property>
                               </packing>
                             </child>

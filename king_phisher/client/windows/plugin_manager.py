@@ -43,6 +43,7 @@ from king_phisher import utilities
 from king_phisher.catalog import Catalog
 from king_phisher.client import plugins
 from king_phisher.client import gui_utilities
+from king_phisher.client.widget import extras
 from king_phisher.client.widget import managers
 
 from gi.repository import Gdk
@@ -66,18 +67,21 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
+			'box_plugin_info_documentation',
 			'expander_info',
 			'grid_catalog_repo_info',
-			'grid_plugin_info',
+			'grid_plugin_info_about',
 			'label_catalog_repo_info_description',
 			'label_catalog_repo_info_for_description',
 			'label_catalog_repo_info_for_maintainers',
 			'label_catalog_repo_info_homepage',
 			'label_catalog_repo_info_maintainers',
 			'label_catalog_repo_info_title',
+			'label_plugin_info_about',
 			'label_plugin_info_authors',
 			'label_plugin_info_compatible',
 			'label_plugin_info_description',
+			'label_plugin_info_documentation',
 			'label_plugin_info_for_classifiers',
 			'label_plugin_info_for_compatible',
 			'label_plugin_info_for_references',
@@ -86,6 +90,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			'label_plugin_info_version',
 			'listbox_plugin_info_classifiers',
 			'listbox_plugin_info_references',
+			'notebook_plugin_info',
 			'paned_plugins',
 			'scrolledwindow_plugins',
 			'stack_info',
@@ -158,6 +163,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		selection.unselect_all()
 		paned = self.gobjects['paned_plugins']
 		self._paned_offset = paned.get_allocation().height - paned.get_position()
+
+		self.documentation_htmlview = extras.WebKitHTMLView()
+		self.documentation_htmlview.show()
+		self.documentation_htmlview.set_property('expand', True)
+		self.gobjects['box_plugin_info_documentation'].pack_start(self.documentation_htmlview, True, True, 0)
 
 	def _treeview_unselect(self):
 		treeview = self.gobjects['treeview_plugins']
@@ -635,7 +645,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				stack.set_visible_child(textview)
 				self._set_info_plugin_error(model_instance)
 			else:
-				stack.set_visible_child(self.gobjects['grid_plugin_info'])
+				stack.set_visible_child(self.gobjects['notebook_plugin_info'])
 				self._set_info_plugin(model_instance)
 		else:
 			self._set_info_nonplugin(model_instance)
@@ -694,6 +704,24 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._set_homepage_url(plugin['homepage'])
 		self._set_reference_urls(plugin.get('reference_urls', []))
 		self._set_classifiers(plugin.get('classifiers', []))
+		self._set_info_plugin_documentation(named_model)
+
+	def _set_info_plugin_documentation(self, named_model):
+		notebook = self.gobjects['notebook_plugin_info']
+		notebook.set_current_page(0)
+		widget = notebook.get_nth_page(1)
+		if not named_model.installed:
+			widget.hide()
+			return
+		pm = self.application.plugin_manager
+		plugin = pm.loaded_plugins[named_model.id].metadata
+		try:
+			readme = pm.plugin_source.open_resource(plugin['name'], 'README.md')
+		except FileNotFoundError:
+			widget.hide()
+		else:
+			self.documentation_htmlview.load_markdown_data(readme.read().decode('utf-8'))
+			widget.show()
 
 	def _set_info_plugin_error(self, model_instance):
 		id_ = self._RowModel(*model_instance).id
