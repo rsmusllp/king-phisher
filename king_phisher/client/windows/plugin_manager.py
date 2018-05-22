@@ -342,31 +342,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			))
 		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
 
-	def _add_plugins_offline(self, catalog_id, repo_id, store, parent):
-		models = []
-		for plugin_name, plugin_src in self.config['plugins.installed'].items():
-			if plugin_src is None:
-				continue
-			if plugin_name not in self.application.plugin_manager:
-				continue
-			if plugin_src['catalog_id'] != catalog_id:
-				continue
-			if plugin_src['repo_id'] != repo_id:
-				continue
-			models.append(self._RowModel(
-				id=plugin_name,
-				installed=True,
-				enabled=plugin_name in self.config['plugins.enabled'],
-				title=self.application.plugin_manager[plugin_name].title,
-				compatibility='Yes' if self.application.plugin_manager[plugin_name].is_compatible else 'No',
-				version=self.application.plugin_manager[plugin_name].version,
-				visible_enabled=True,
-				visible_installed=True,
-				sensitive_installed=False,
-				type=_ROW_TYPE_PLUGIN
-			))
-		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
-
 	def signal_popup_menu_activate_reload_all(self, _):
 		if not self.load_thread.is_alive():
 			self.load_thread = utilities.Thread(target=self._load_catalogs, kwargs={'refresh': True})
