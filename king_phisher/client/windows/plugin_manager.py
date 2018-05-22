@@ -282,18 +282,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		for catalog_id in self.catalog_plugins.catalog_ids():
 			self._add_catalog_to_tree(catalog_id, store)
 
-		catalog_cache = self.catalog_plugins.get_cache()
-		for catalog_id in catalog_cache:
-			if self.catalog_plugins.catalogs.get(catalog_id, None):
-				continue
-			named_catalog = catalog_cache[catalog_id]['value']
-			model = (catalog_id, None, True, catalog_id, None, None, False, False, False, _ROW_TYPE_CATALOG)
-			catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
-			for repo in named_catalog.repositories:
-				model = (repo.id, None, True, repo.title, None, None, False, False, False, _ROW_TYPE_REPOSITORY)
-				repo_row = gui_utilities.glib_idle_add_wait(self._store_append, store, catalog_row, model)
-				self._add_plugins_offline(catalog_id, repo.id, store, repo_row)
-
 		gui_utilities.glib_idle_add_once(self._treeview_unselect)
 		self._update_status_bar('Loading completed', idle=True)
 
