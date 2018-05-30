@@ -35,6 +35,7 @@ data/client/king_phisher/style/.sass-cache/*
 !data/server/king_phisher/server_config_verification.yml
 !data/server/king_phisher/service_files/*
 !data/*/king_phisher/*/*.html
+!.github/*.yml
 
 # ignore mprofile output
 mprofile_*.dat
