@@ -423,6 +423,7 @@ class Module(TagMixIn, Base):
 @register_table
 class PossibleAnswerLink(Base):
 	__repr_attributes__ = ('group_id', 'answer_id')
+	__tablename__ = 'possible_answer_link'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	question_answer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('question_answers.id'), nullable=False)
 	group_id = sqlalchemy.Column(sqlalchemy.Integer)
@@ -481,6 +482,7 @@ class TestSubmission(Base):
 @register_table
 class TestModuleLink(Base):
 	__repr_attributes__ = ('test_id', 'module_id')
+	__tablename__ = 'test_module_link'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	test_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('tests.id'), nullable=False)
 	module_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('modules.id'), nullable=False)
