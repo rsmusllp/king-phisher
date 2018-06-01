@@ -47,7 +47,7 @@ import sqlalchemy.sql.expression
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 """The schema version of the database, used for compatibility checks."""
 
 MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name'))
@@ -418,7 +418,6 @@ class TestModule(TagMixIn, Base):
 	__tablename__ = 'test_modules'
 	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	# relationships
-	module_question = sqlalchemy.orm.relationship('TestQuestion', backref='test_modules', cascade='all, delete-orphan')
 	test_link_test_module = sqlalchemy.orm.relationship('TestLinkTestModule', backref='test_modules', cascade='all, delete-orphan')
 
 @register_table
@@ -438,7 +437,7 @@ class TestAnswer(Base):
 	case_sensitive = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 	# relationships
 	module_question = sqlalchemy.orm.relationship('TestQuestion', backref='test_answers', cascade='all, delete-orphan')
-	submission_answers = sqlalchemy.orm.relationship('SubmissionAnswersLink', backref='test_answers', cascade='all, delete-orphan')
+	test_submission_link_test_answer = sqlalchemy.orm.relationship('TestSubmissionLinkTestAnswer', backref='test_answers', cascade='all, delete-orphan')
 	test_question_link_test_answer = sqlalchemy.orm.relationship('TestQuestionLinkTestAnswer', backref='test_answers', cascade='all, delete-orphan')
 
 @register_table
@@ -472,7 +471,7 @@ class TestSubmission(Base):
 	test_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('tests.id'), nullable=False)
 	visit_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('visits.id'), nullable=False)
 	# relationships
-	test_submission_link_test_answer = sqlalchemy.orm.relationship('SubmissionAnswersLink', backref='test_submissions', cascade='all, delete-orphan')
+	test_submission_link_test_answer = sqlalchemy.orm.relationship('TestSubmissionLinkTestAnswer', backref='test_submissions', cascade='all, delete-orphan')
 
 	"""
 	Need to-do instance methods
@@ -503,7 +502,7 @@ class User(ExpireMixIn, Base):
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')
-	tests = sqlalchemy.orm.relationship('Tests', backref='user', cascade='all, delete-orphan')
+	tests = sqlalchemy.orm.relationship('Test', backref='user', cascade='all, delete-orphan')
 
 	@classmethod
 	def session_has_create_access(cls, session, instance=None):
