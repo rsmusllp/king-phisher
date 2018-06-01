@@ -188,7 +188,7 @@ class BaseRowCls(object):
 	@classmethod
 	def session_has_read_access(cls, session, instance=None):
 		return not cls.is_private
-possible_answer_group
+
 	@classmethod
 	def session_has_read_prop_access(cls, session, prop, instance=None):
 		return cls.session_has_read_access(session, instance=instance)
@@ -443,7 +443,7 @@ class TestAnswer(Base):
 
 @register_table
 class TestSubmissionLinkTestAnswer(Base):
-	__repr_attributes__ = ('test_sub_id', 'module_question_id', 'answer_id')
+	__repr_attributes__ = ('test_submission_id', 'module_question_id', 'answer_id')
 	__tablename__ = 'test_submission_link_test_answer'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	test_submission_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_submissions.id'), nullable=False)
