@@ -408,10 +408,10 @@ class TestQuestion(Base):
 	description = sqlalchemy.Column(sqlalchemy.String)
 	hint = sqlalchemy.Column(sqlalchemy.String)
 	url_reference = sqlalchemy.Column(sqlalchemy.String)
-	test_question_link_test_answer_group = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 	test_answer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'))
 	# relationships
 	submission_answer_link = sqlalchemy.orm.relationship('TestSubmissionLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
+	test_question_link_test_answer = sqlalchemy.orm.relationship('TestQuestionLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
 
 @register_table
 class TestModule(TagMixIn, Base):
@@ -427,7 +427,7 @@ class TestQuestionLinkTestAnswer(Base):
 	__tablename__ = 'test_question_link_test_answer'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	test_answer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'), nullable=False)
-	group_id = sqlalchemy.Column(sqlalchemy.Integer)
+	test_question_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_questions.id'), nullable=False)
 
 @register_table
 class TestAnswer(Base):
