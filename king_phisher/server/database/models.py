@@ -47,7 +47,7 @@ import sqlalchemy.sql.expression
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 """The schema version of the database, used for compatibility checks."""
 
 MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name'))
@@ -274,6 +274,7 @@ class Campaign(ExpireMixIn, Base):
 	max_credentials = sqlalchemy.Column(sqlalchemy.Integer)
 	campaign_type_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaign_types.id'))
 	company_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('companies.id'))
+	test_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('tests.id'))
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='campaign', cascade='all, delete-orphan')
 	credentials = sqlalchemy.orm.relationship('Credential', backref='campaign', cascade='all, delete-orphan')
@@ -398,6 +399,105 @@ class Message(Base):
 	visits = sqlalchemy.orm.relationship('Visit', backref='message', cascade='all, delete-orphan')
 
 @register_table
+class TestQuestion(Base):
+	__repr_attributes__ = ('question',)
+	__tablename__ = 'test_questions'
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	question = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+	question_type = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+	description = sqlalchemy.Column(sqlalchemy.String)
+	hint = sqlalchemy.Column(sqlalchemy.String)
+	url_reference = sqlalchemy.Column(sqlalchemy.String)
+	url_hint = sqlalchemy.Column(sqlalchemy.String)
+	# relationships
+	submission_answer_link = sqlalchemy.orm.relationship('TestSubmissionLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
+	test_question_link_test_answer = sqlalchemy.orm.relationship('TestQuestionLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
+	actual_answer_link_test_answer = sqlalchemy.orm.relationship('ActualAnswersLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
+
+@register_table
+class TestModule(TagMixIn, Base):
+	__tablename__ = 'test_modules'
+	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	# relationships
+	test_link_test_module = sqlalchemy.orm.relationship('TestLinkTestModule', backref='test_modules', cascade='all, delete-orphan')
+
+@register_table
+class TestQuestionLinkTestAnswer(Base):
+	__repr_attributes__ = ('test_answer_id', 'test_question_id')
+	__tablename__ = 'test_question_link_test_answer'
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	test_answer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'), nullable=False)
+	test_question_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_questions.id'), nullable=False)
+
+@register_table
+class ActualAnswersLinkTestAnswer(Base):
+	__repr_attributes__ = ('test_question_id', 'test_answer_id')
+	__tablename__ = 'actual_answers'
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	test_answer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'), nullable=False)
+	test_question_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_questions.id'), nullable=False)
+
+@register_table
+class TestAnswer(Base):
+	__repr_attributes__ = ('answer',)
+	__tablename__ = 'test_answers'
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	answer = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+	case_sensitive = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
+	# relationships
+	module_question = sqlalchemy.orm.relationship('TestQuestion', backref='test_answers', cascade='all, delete-orphan')
+	test_submission_link_test_answer = sqlalchemy.orm.relationship('TestSubmissionLinkTestAnswer', backref='test_answers', cascade='all, delete-orphan')
+	test_question_link_test_answer = sqlalchemy.orm.relationship('TestQuestionLinkTestAnswer', backref='test_answers', cascade='all, delete-orphan')
+	actual_answer_link_test_answer = sqlalchemy.orm.relationship('ActualAnswerLinkTestAnswer', backref='test_answers', cascade='all, delete-orphan')
+
+@register_table
+class TestSubmissionLinkTestAnswer(Base):
+	__repr_attributes__ = ('test_submission_id', 'module_question_id', 'answer_id')
+	__tablename__ = 'test_submission_link_test_answer'
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	test_submission_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_submissions.id'), nullable=False)
+	test_question_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_questions.id'), nullable=False)
+	test_answer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'), nullable=False)
+
+@register_table
+class Test(TagMixIn, Base):
+	__repr_attributes__ = ('name', 'minimum_score')
+	__tablename__ = 'tests'
+	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	minimum_score = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+	max_attempts = sqlalchemy.Column(sqlalchemy.Integer, default=1)
+	user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), nullable=False)
+	# relationships
+	test_submissions = sqlalchemy.orm.relationship('TestSubmission', backref='tests', cascade='all, delete-orphan')
+	test_link_test_module = sqlalchemy.orm.relationship('TestLinkTestModule', backref='tests', cascade='all, delete-orphan')
+
+@register_table
+class TestSubmission(Base):
+	__repr_attributes__ = ('visit_id', 'test_id')
+	__tablename__ = 'test_submissions'
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaign.id'), nullable=False)
+	created = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	test_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('tests.id'), nullable=False)
+	visit_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('visits.id'), nullable=False)
+	# relationships
+	test_submission_link_test_answer = sqlalchemy.orm.relationship('TestSubmissionLinkTestAnswer', backref='test_submissions', cascade='all, delete-orphan')
+
+	"""
+	Need to-do instance methods
+		grade (calculates test score)
+		pass (returns true or false if grade was passing)
+	"""
+
+@register_table
+class TestLinkTestModule(Base):
+	__repr_attributes__ = ('test_id', 'module_id')
+	__tablename__ = 'test_link_test_module'
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	test_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('tests.id'), nullable=False)
+	test_module_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_modules.id'), nullable=False)
+
+@register_table
 class User(ExpireMixIn, Base):
 	__repr_attributes__ = ('name',)
 	__tablename__ = 'users'
@@ -412,6 +512,7 @@ class User(ExpireMixIn, Base):
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')
+	tests = sqlalchemy.orm.relationship('Test', backref='user', cascade='all, delete-orphan')
 
 	@classmethod
 	def session_has_create_access(cls, session, instance=None):
@@ -451,3 +552,4 @@ class Visit(Base):
 	last_seen = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
 	# relationships
 	credentials = sqlalchemy.orm.relationship('Credential', backref='visit', cascade='all, delete-orphan')
+	test_submissions = sqlalchemy.orm.relationship('TestSubmission', backref='visit', cascade='all, delete-orphan')
