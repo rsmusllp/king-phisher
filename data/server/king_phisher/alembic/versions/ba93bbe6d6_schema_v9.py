@@ -16,7 +16,6 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), *['..
 
 from alembic import op
 from king_phisher.server.database import manager as db_manager
-from king_phisher.server.database import schema_migration as db_schema_migration
 import sqlalchemy
 
 
