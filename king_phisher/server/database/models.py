@@ -408,10 +408,11 @@ class TestQuestion(Base):
 	description = sqlalchemy.Column(sqlalchemy.String)
 	hint = sqlalchemy.Column(sqlalchemy.String)
 	url_reference = sqlalchemy.Column(sqlalchemy.String)
-	test_answer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'))
+	url_hint = sqlalchemy.Column(sqlalchemy.String)
 	# relationships
 	submission_answer_link = sqlalchemy.orm.relationship('TestSubmissionLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
 	test_question_link_test_answer = sqlalchemy.orm.relationship('TestQuestionLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
+	actual_answers = sqlalchemy.orm.relationship('ActualAnswers', backref='test_questions', cascade='all, delete-orphan')
 
 @register_table
 class TestModule(TagMixIn, Base):
@@ -422,8 +423,16 @@ class TestModule(TagMixIn, Base):
 
 @register_table
 class TestQuestionLinkTestAnswer(Base):
-	__repr_attributes__ = ('group_id', 'answer_id')
+	__repr_attributes__ = ('test_answer_id', 'test_question_id')
 	__tablename__ = 'test_question_link_test_answer'
+	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+	test_answer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'), nullable=False)
+	test_question_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_questions.id'), nullable=False)
+
+@register_table
+class ActualAnswers(Base):
+	__repr_attributes__ = ('test_question_id', 'test_answer_id')
+	__tablename__ = 'actual_answers'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
 	test_answer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'), nullable=False)
 	test_question_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_questions.id'), nullable=False)

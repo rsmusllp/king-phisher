@@ -67,6 +67,7 @@ def upgrade():
 		sqlalchemy.Column('description', sqlalchemy.String),
 		sqlalchemy.Column('hint', sqlalchemy.String),
 		sqlalchemy.Column('url_reference', sqlalchemy.String),
+		sqlalchemy.Column('url_hint', sqlalchemy.String),
 		sqlalchemy.Column('test_answer_id', sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'))
 	)
 
@@ -92,6 +93,13 @@ def upgrade():
 		sqlalchemy.Column('test_module_id', sqlalchemy.Integer, sqlalchemy.ForeignKey('test_modules.id'), nullable=False)
 	)
 
+	op.create_table(
+		'actual_answers',
+		sqlalchemy.Column('id', sqlalchemy.Integer, primary_key=True),
+		sqlalchemy.Column('test_question_id', sqlalchemy.Integer, sqlalchemy.ForeignKey('test_questions.id'), nullable=False),
+		sqlalchemy.Column('test_answers.id', sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'), nullable=False)
+	)
+
 	db_manager.Session.remove()
 	db_manager.Session.configure(bind=op.get_bind())
 	session = db_manager.Session()
@@ -108,7 +116,8 @@ def downgrade():
 		'test_submissions',
 		'tests',
 		'test_modules',
-		'test_answers'
+		'test_answers',
+		'actual_answers'
 	]
 
 	for table in tables:
