@@ -412,7 +412,7 @@ class TestQuestion(Base):
 	# relationships
 	submission_answer_link = sqlalchemy.orm.relationship('TestSubmissionLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
 	test_question_link_test_answer = sqlalchemy.orm.relationship('TestQuestionLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
-	actual_answers = sqlalchemy.orm.relationship('ActualAnswers', backref='test_questions', cascade='all, delete-orphan')
+	actual_answer_link_test_answer = sqlalchemy.orm.relationship('ActualAnswersLinkTestAnswer', backref='test_questions', cascade='all, delete-orphan')
 
 @register_table
 class TestModule(TagMixIn, Base):
@@ -430,7 +430,7 @@ class TestQuestionLinkTestAnswer(Base):
 	test_question_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('test_questions.id'), nullable=False)
 
 @register_table
-class ActualAnswers(Base):
+class ActualAnswersLinkTestAnswer(Base):
 	__repr_attributes__ = ('test_question_id', 'test_answer_id')
 	__tablename__ = 'actual_answers'
 	id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -448,6 +448,7 @@ class TestAnswer(Base):
 	module_question = sqlalchemy.orm.relationship('TestQuestion', backref='test_answers', cascade='all, delete-orphan')
 	test_submission_link_test_answer = sqlalchemy.orm.relationship('TestSubmissionLinkTestAnswer', backref='test_answers', cascade='all, delete-orphan')
 	test_question_link_test_answer = sqlalchemy.orm.relationship('TestQuestionLinkTestAnswer', backref='test_answers', cascade='all, delete-orphan')
+	actual_answer_link_test_answer = sqlalchemy.orm.relationship('ActualAnswerLinkTestAnswer', backref='test_answers', cascade='all, delete-orphan')
 
 @register_table
 class TestSubmissionLinkTestAnswer(Base):

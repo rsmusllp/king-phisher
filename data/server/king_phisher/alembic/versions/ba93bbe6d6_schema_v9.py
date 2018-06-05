@@ -94,7 +94,7 @@ def upgrade():
 	)
 
 	op.create_table(
-		'actual_answers',
+		'actual_answers_link_test_answers',
 		sqlalchemy.Column('id', sqlalchemy.Integer, primary_key=True),
 		sqlalchemy.Column('test_question_id', sqlalchemy.Integer, sqlalchemy.ForeignKey('test_questions.id'), nullable=False),
 		sqlalchemy.Column('test_answers.id', sqlalchemy.Integer, sqlalchemy.ForeignKey('test_answers.id'), nullable=False)
@@ -117,7 +117,7 @@ def downgrade():
 		'tests',
 		'test_modules',
 		'test_answers',
-		'actual_answers'
+		'actual_answers_link_test_answers'
 	]
 
 	for table in tables:
