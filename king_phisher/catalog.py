@@ -513,6 +513,11 @@ def sign_item_files(local_path, signing_key, repo_path=None):
 	iterator from the specified source to be included in either a catalog file
 	or one of it's included files.
 
+	.. warning::
+		This function contains a black list of file extensions which will be
+		skipped. This is to avoid signing files originating from the development
+		process.
+
 	:param str local_path: The real location of where the files exist on disk.
 	:param signing_key: The key with which to sign the files for verification.
 	:param str repo_path: The path of the repository as it exists on disk.
@@ -526,6 +531,11 @@ def sign_item_files(local_path, signing_key, repo_path=None):
 			raise ValueError('local_path must be a sub-directory of repo_path')
 	walker = smoke_zephyr.utilities.FileWalker(local_path, absolute_path=True, skip_dirs=True)
 	for local_file_path in walker:
+		# first skip black listed files that shouldn't be included
+		_, file_extension = os.path.splitext(local_file_path)
+		if file_extension in ('.pyc', '.ui~'):
+			continue
+
 		with open(local_file_path, 'rb') as file_h:
 			signature = signing_key.sign(file_h.read())
 
