@@ -33,25 +33,35 @@
 import binascii
 import unittest
 
+from king_phisher import find
 from king_phisher import security_keys
+from king_phisher import serializers
 from king_phisher import testing
-from king_phisher.utilities import random_string
+from king_phisher import utilities
 
 import ecdsa
 import ecdsa.keys
+import jsonschema
+
+class SecurityKeysTests(testing.KingPhisherTestCase):
+	def test_schema(self):
+		file_path = find.data_file('security.json')
+		self.assertIsNotNone(file_path, msg='failed to find the security.json file')
+		with open(file_path, 'r') as file_h:
+			key_store = serializers.JSON.load(file_h)
+		try:
+			utilities.validate_json_schema(key_store, 'king-phisher.security')
+		except jsonschema.ValidationError:
+			self.fail('the security.json file failed validation')
 
 class SigningKeyTests(testing.KingPhisherTestCase):
 	def setUp(self):
 		self.sk = security_keys.SigningKey.generate(curve=ecdsa.NIST521p)
 
-	def test_verifying_key(self):
-		vk = self.sk.get_verifying_key()
-		self.assertIsInstance(vk, security_keys.VerifyingKey)
-
 	def test_dictionary_verification(self):
 		test_data = {}
 		for _ in range(5):
-			test_data['_' + random_string(10)] = random_string(10)
+			test_data['_' + utilities.random_string(10)] = utilities.random_string(10)
 		self.sk = security_keys.SigningKey.generate(curve=ecdsa.NIST521p)
 		test_data = self.sk.sign_dict(test_data, signature_encoding='base64')
 		self.assertIsInstance(test_data, dict)
@@ -67,10 +77,13 @@ class SigningKeyTests(testing.KingPhisherTestCase):
 		vk = self.sk.get_verifying_key()
 		vk.verify_dict(test_data, signature_encoding='base64')
 
-		test_data['_' + random_string(10)] = random_string(10)
+		test_data['_' + utilities.random_string(10)] = utilities.random_string(10)
 		with self.assertRaises(ecdsa.keys.BadSignatureError):
 			vk.verify_dict(test_data, signature_encoding='base64')
 
+	def test_verifying_key(self):
+		vk = self.sk.get_verifying_key()
+		self.assertIsInstance(vk, security_keys.VerifyingKey)
 
 if __name__ == '__main__':
 	unittest.main()

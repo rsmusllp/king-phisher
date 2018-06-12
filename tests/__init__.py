@@ -46,6 +46,7 @@ from .geoip import GeoIPRPCTests
 from .ics import ICSTests
 from .ipaddress import IPAddressTests
 from .plugins import PluginRequirementsTests
+from .security_keys import SecurityKeysTests
 from .security_keys import SigningKeyTests
 from .serializers import ElementTreeTests
 from .serializers import JSONSerializerTests
