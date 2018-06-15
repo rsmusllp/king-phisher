@@ -112,7 +112,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		treeview = self.gobjects['treeview_plugins']
 		self.status_bar = self.gobjects['statusbar']
 		self._module_errors = {}
-		tvm = managers.TreeViewManager(treeview, cb_refresh=self._load_plugins)
+		tvm = managers.TreeViewManager(treeview, cb_refresh=self._load_catalog_local)
 		toggle_renderer_enable = Gtk.CellRendererToggle()
 		toggle_renderer_enable.connect('toggled', self.signal_renderer_toggled_enable)
 		toggle_renderer_install = Gtk.CellRendererToggle()
@@ -182,7 +182,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if catalog is None and catalog_cache_dict is not None:
 				self.logger.warning('failing over to loading the catalog from the cache')
 				self._load_catalog_from_cache(catalog_cache_dict)
-		self._load_plugins()
+		self._load_catalog_local()
 
 	def _load_catalog_from_cache(self, catalog_cache_dict):
 		catalog = None
@@ -208,39 +208,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
 		return catalog
 
-	def idle_show_dialog_error(self, title, message):
-		gui_utilities.glib_idle_add_once(gui_utilities.show_dialog_error, title, self.window, message)
-
-	def __update_status_bar(self, string_to_set):
-		self.status_bar.pop(0)
-		self.status_bar.push(0, string_to_set)
-
-	def _update_status_bar(self, string_to_set, idle=False):
-		if idle:
-			gui_utilities.glib_idle_add_once(self.__update_status_bar, string_to_set)
-		else:
-			self.__update_status_bar(string_to_set)
-
-	def _set_model_item(self, model_path, item, item_value):
-		self._model[model_path][self._RowModel._fields.index(item)] = item_value
-
-	def _on_plugin_load_error(self, name, error):
-		self._module_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
-
-	def _toggle_cell_data_func(self, column, cell, model, tree_iter, _):
-		if model.get_value(tree_iter, 0) in self._module_errors:
-			cell.set_property('inconsistent', True)
-		else:
-			cell.set_property('inconsistent', False)
-
-	def _store_append(self, store, parent, model):
-			return store.append(parent, model)
-
-	def _store_extend(self, store, parent, models):
-		for model in models:
-			store.append(parent, model)
-
-	def _load_plugins(self):
+	def _load_catalog_local(self):
 		"""
 		Load the plugins which are available into the treeview to make them
 		visible to the user.
@@ -284,6 +252,38 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 		gui_utilities.glib_idle_add_once(self._treeview_unselect)
 		self._update_status_bar('Loading completed', idle=True)
+
+	def idle_show_dialog_error(self, title, message):
+		gui_utilities.glib_idle_add_once(gui_utilities.show_dialog_error, title, self.window, message)
+
+	def __update_status_bar(self, string_to_set):
+		self.status_bar.pop(0)
+		self.status_bar.push(0, string_to_set)
+
+	def _update_status_bar(self, string_to_set, idle=False):
+		if idle:
+			gui_utilities.glib_idle_add_once(self.__update_status_bar, string_to_set)
+		else:
+			self.__update_status_bar(string_to_set)
+
+	def _set_model_item(self, model_path, item, item_value):
+		self._model[model_path][self._RowModel._fields.index(item)] = item_value
+
+	def _on_plugin_load_error(self, name, error):
+		self._module_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
+
+	def _toggle_cell_data_func(self, column, cell, model, tree_iter, _):
+		if model.get_value(tree_iter, 0) in self._module_errors:
+			cell.set_property('inconsistent', True)
+		else:
+			cell.set_property('inconsistent', False)
+
+	def _store_append(self, store, parent, model):
+			return store.append(parent, model)
+
+	def _store_extend(self, store, parent, models):
+		for model in models:
+			store.append(parent, model)
 
 	def _add_catalog_to_tree(self, catalog_id, store):
 		model = self._RowModel(
@@ -426,7 +426,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			model_row = self._model[tree_iter]
 			# only reloading installed plugins is currently supported
 			named_row = self._RowModel(*model_row)
-			if named_row.type == _ROW_TYPE_CATALOG and named_row.id != _LOCAL_REPOSITORY_ID:
+			if named_row.type == _ROW_TYPE_CATALOG:
 				self._reload_catalog(named_row, tree_iter)
 			elif named_row.type == _ROW_TYPE_REPOSITORY:
 				self._reload_repository(model_row)
@@ -462,6 +462,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def _reload_catalog(self, named_row, tree_iter):
 		self._model.remove(tree_iter)
+		if named_row.id == _LOCAL_REPOSITORY_ID:
+			self._load_catalog_local()
+			return
 		catalog_url = self.catalog_plugins.get_cache().get_catalog_by_id(named_row.id)['url']
 		if not catalog_url:
 			return
@@ -469,7 +472,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if not catalog:
 			return
 		self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
-		self._load_plugins()
 
 	def _reload_repository(self, model_row):
 		parent_row = model_row.parent
