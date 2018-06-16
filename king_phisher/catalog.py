@@ -34,7 +34,6 @@ import binascii
 import collections
 import logging
 import os
-import sys
 import weakref
 
 from king_phisher import security_keys
@@ -45,11 +44,6 @@ import dateutil.parser
 import requests
 import requests_file
 import smoke_zephyr.utilities
-
-if sys.version_info[:3] >= (3, 3, 0):
-	_Mapping = collections.abc.Mapping
-else:
-	_Mapping = collections.Mapping
 
 COLLECTION_TYPES = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
 """
@@ -108,7 +102,7 @@ class CollectionItemFile(object):
 			data['signed-by'] = self.signed_by
 		return data
 
-class Collection(_Mapping):
+class Collection(collections.abc.Mapping):
 	"""
 	An object representing a set of :py:class:`CollectionItemFile` instances,
 	each of which represent a piece of of add on data that are all of the same

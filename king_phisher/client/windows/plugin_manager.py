@@ -32,6 +32,7 @@
 
 import collections
 import datetime
+import functools
 import os
 import shutil
 import sys
@@ -111,7 +112,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_plugins']
 		self.status_bar = self.gobjects['statusbar']
-		self._module_errors = {}
+		self.__load_errors = {}
+		self.__installing_plugin = None
 		tvm = managers.TreeViewManager(treeview, cb_refresh=self._load_catalog_local)
 		toggle_renderer_enable = Gtk.CellRendererToggle()
 		toggle_renderer_enable.connect('toggled', self.signal_renderer_toggled_enable)
@@ -128,17 +130,18 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				Gtk.CellRendererText()
 			)
 		)
-		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer_enable, self._toggle_cell_data_func)
+		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer_enable, self._toggle_enabled_cell_data_func)
 		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'visible', 6)
 		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'sensitive', 1)
+		tvm.column_views['Installed'].set_cell_data_func(toggle_renderer_install, self._toggle_install_cell_data_func)
 		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'visible', 7)
 		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'sensitive', 8)
 		self._model = Gtk.TreeStore(str, bool, bool, str, str, str, bool, bool, bool, str)
 		self._model.set_sort_column_id(3, Gtk.SortType.ASCENDING)
 		treeview.set_model(self._model)
 		self.plugin_path = os.path.join(self.application.user_data_path, 'plugins')
-		self.load_thread = utilities.Thread(target=self._load_catalogs)
-		self.load_thread.start()
+		self._worker_thread = None
+		self._worker_thread_start(self._load_catalogs)
 		self.popup_menu = tvm.get_popup_menu()
 		self.popup_menu.append(Gtk.SeparatorMenuItem())
 		menu_item = Gtk.MenuItem.new_with_label('Reload')
@@ -218,7 +221,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		store = self._model
 		store.clear()
 		pm = self.application.plugin_manager
-		self._module_errors = {}
+		self.__load_errors = {}
 		pm.load_all(on_error=self._on_plugin_load_error)
 		model = (_LOCAL_REPOSITORY_ID, None, True, _LOCAL_REPOSITORY_TITLE, None, None, False, False, False, _ROW_TYPE_CATALOG)
 		catalog_row = gui_utilities.glib_idle_add_wait(self._store_append, store, None, model)
@@ -242,7 +245,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		gui_utilities.glib_idle_add_once(self._store_extend, store, catalog_row, models)
 		del models
 
-		for name in self._module_errors.keys():
+		for name in self.__load_errors.keys():
 			model = (name, True, False, "{0} (Load Failed)".format(name), 'No', 'Unknown', True, True, False, _ROW_TYPE_PLUGIN)
 			gui_utilities.glib_idle_add_once(self._store_append, store, catalog_row, model)
 
@@ -270,13 +273,17 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._model[model_path][self._RowModel._fields.index(item)] = item_value
 
 	def _on_plugin_load_error(self, name, error):
-		self._module_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
+		# WARNING: this may not be called from the GUI thread
+		self.__load_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
 
-	def _toggle_cell_data_func(self, column, cell, model, tree_iter, _):
-		if model.get_value(tree_iter, 0) in self._module_errors:
+	def _toggle_enabled_cell_data_func(self, column, cell, model, tree_iter, _):
+		if model.get_value(tree_iter, 0) in self.__load_errors:
 			cell.set_property('inconsistent', True)
 		else:
 			cell.set_property('inconsistent', False)
+
+	def _toggle_install_cell_data_func(self, column, cell, model, tree_iter, _):
+		cell.set_property('inconsistent', model.get_value(tree_iter, 0) == self.__installing_plugin)
 
 	def _store_append(self, store, parent, model):
 			return store.append(parent, model)
@@ -343,9 +350,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		gui_utilities.glib_idle_add_once(self._store_extend, store, parent, models)
 
 	def signal_popup_menu_activate_reload_all(self, _):
-		if not self.load_thread.is_alive():
-			self.load_thread = utilities.Thread(target=self._load_catalogs, kwargs={'refresh': True})
-			self.load_thread.start()
+		self._worker_thread_start(self._load_catalog, kwargs={'refresh': True})
 
 	def signal_destory(self, _):
 		pass
@@ -408,9 +413,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		return not self.gobjects['expander_info'].get_property('expanded')
 
 	def signal_popup_menu_activate_reload(self, _):
-		if not self.load_thread.is_alive():
-			self.load_thread = utilities.Thread(target=self._reload)
-			self.load_thread.start()
+		self._worker_thread_start(self._reload)
 
 	def _reload(self):
 		self._update_status_bar('Reloading...')
@@ -450,8 +453,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				self._set_info(model_row)
 			self._set_model_item(tree_iter, 'title', "{0} (Reload Failed)".format(named_row.id))
 			return
-		if named_row.id in self._module_errors:
-			del self._module_errors[named_row.id]
+		if named_row.id in self.__load_errors:
+			del self.__load_errors[named_row.id]
 		self._set_model_item(tree_iter, 'title', klass.title)
 		self._set_model_item(tree_iter, 'compatibility', 'Yes' if klass.is_compatible else 'No')
 		self._set_model_item(tree_iter, 'version', klass.version)
@@ -489,7 +492,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if named_row.id not in pm.loaded_plugins:
 			return
 
-		if named_row.id in self._module_errors:
+		if named_row.id in self.__load_errors:
 			gui_utilities.show_dialog_error('Can Not Enable Plugin', self.window, 'Can not enable a plugin which failed to load.')
 			return
 		if named_row.enabled:
@@ -504,6 +507,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.config['plugins.enabled'].append(named_row.id)
 
 	def signal_renderer_toggled_install(self, _, path):
+		show_dialog_busy = lambda: gui_utilities.show_dialog_warning('Currently Busy', self.window, 'An operation is already running.')
+		if not self._worker_thread_is_ready:
+			# check it here to fail fast, then check it again later
+			show_dialog_busy()
+			return
 		repo_model, catalog_model = self._get_plugin_model_parents(self._model[path])
 		named_row = self._RowModel(*self._model[path])
 		if named_row.installed:
@@ -526,23 +534,36 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					self.logger.warning("failed to uninstall plugin {0}".format(named_row.id))
 					return
 
-		self._update_status_bar("Installing plugin {}...".format(named_row.title))
+		if not self._worker_thread_start(self._install_plugin, args=(path, catalog_model, repo_model, named_row)):
+			show_dialog_busy()
+
+	def _install_plugin(self, path, catalog_model, repo_model, named_row):
+		self.__installing_plugin = named_row.id
+		self._update_status_bar("Installing plugin {}...".format(named_row.title), idle=True)
+		_show_dialog_error = functools.partial(gui_utilities.glib_idle_add_once, gui_utilities.show_dialog_error, 'Failed To Install', self.window)
 		try:
 			self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
 		except requests.exceptions.ConnectionError:
 			self.logger.warning("failed to download plugin {}".format(named_row.id))
-			gui_utilities.show_dialog_error('Failed To Install', self.window, "Failed to download {} plugin, check your internet connection.".format(named_row.id))
+			_show_dialog_error("Failed to download {} plugin, check your internet connection.".format(named_row.id))
+			self._update_status_bar("Installing plugin {} failed.".format(named_row.title), idle=True)
 			return
 		except Exception:
 			self.logger.warning("failed to install plugin {}".format(named_row.id), exc_info=True)
-			gui_utilities.show_dialog_error('Failed To Install', self.window, "Failed to install {} plugin.".format(named_row.id))
-			self._update_status_bar("Installing plugin {} failed.".format(named_row.title))
+			_show_dialog_error("Failed to install {} plugin.".format(named_row.id))
+			self._update_status_bar("Installing plugin {} failed.".format(named_row.title), idle=True)
 			return
+		finally:
+			self.__installing_plugin = None
 
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
+		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
+		gui_utilities.glib_idle_add_once(self.__install_plugin_post, path, catalog_model, repo_model, named_row)
+
+	def __install_plugin_post(self, path, catalog_model, repo_model, named_row):
+		# handles GUI related updates after data has been fetched from the internet
 		self._set_model_item(path, 'installed', True)
 		self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
-		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
 		self._update_status_bar("Installing plugin {} completed.".format(named_row.title))
 		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error)
 
@@ -610,7 +631,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		buf.delete(buf.get_start_iter(), buf.get_end_iter())
 		model_id = named_model.id
 		if named_model.type == _ROW_TYPE_PLUGIN:
-			if model_id in self._module_errors:
+			if model_id in self.__load_errors:
 				stack.set_visible_child(textview)
 				self._set_info_plugin_error(model_instance)
 			else:
@@ -678,7 +699,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		id_ = self._RowModel(*model_instance).id
 		textview = self.gobjects['textview_plugin_info']
 		buf = textview.get_buffer()
-		exc, formatted_exc = self._module_errors[id_]
+		exc, formatted_exc = self.__load_errors[id_]
 		buf.insert(buf.get_end_iter(), "{0!r}\n\n".format(exc), -1)
 		buf.insert(buf.get_end_iter(), ''.join(formatted_exc), -1)
 
@@ -737,3 +758,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			label.set_property('valign', Gtk.Align.START)
 			label.set_property('visible', True)
 			listbox.add(label)
+
+	def _worker_thread_start(self, target, args=(), kwargs=None):
+		if not self._worker_thread_is_ready:
+			self.logger.debug('plugin manager worker thread is alive, can not start a new one')
+			return False
+		self._worker_thread = utilities.Thread(target=target, args=args, kwargs=kwargs)
+		self._worker_thread.start()
+		return True
+
+	@property
+	def _worker_thread_is_ready(self):
+		return self._worker_thread is None or not self._worker_thread.is_alive()
