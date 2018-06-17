@@ -32,24 +32,33 @@
 
 import argparse
 import binascii
+import getpass
 import os
 import sys
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 import king_phisher.color as color
+import king_phisher.find as find
+import king_phisher.security_keys as security_keys
 import king_phisher.serializers as serializers
 import king_phisher.utilities as utilities
 
 import ecdsa
 
-def main():
-	parser = argparse.ArgumentParser(description='King Phisher Signing-Key Generation Utility', conflict_handler='resolve')
-	utilities.argp_add_args(parser)
-	parser.add_argument('id', help='this key\'s identifier')
-	parser.add_argument('file', type=argparse.FileType('w'), help='the destination to write the PEM file to')
-	arguments = parser.parse_args()
+def action_display(arguments):
+	if arguments.file is None:
+		print('must specify a key file to display')
+		return
+	signing_key = security_keys.SigningKey.from_file(
+		arguments.file,
+		password=(getpass.getpass('password: ') if arguments.file.endswith('.enc') else None)
+	)
+	print('Key Information:')
+	print('ID:    ' + signing_key.id)
+	print('Curve: ' + signing_key.curve.name)
 
+def action_generate(arguments):
 	curve = ecdsa.NIST521p
 	color.print_status('generating a new ecdsa singing key')
 	signing_key = ecdsa.SigningKey.generate(curve=curve)
@@ -74,6 +83,24 @@ def main():
 	}
 	serializers.JSON.dump(key_info, arguments.file)
 
+def main():
+	parser = argparse.ArgumentParser(description='King Phisher Signing-Key Generation Utility', conflict_handler='resolve')
+	utilities.argp_add_args(parser)
+	subparsers = parser.add_subparsers(dest='subcommand')
+	subparsers.required = True
+
+	parser_display = subparsers.add_parser('display')
+	parser_display.set_defaults(action=action_display)
+	parser_display.add_argument('file', default=os.getenv('KING_PHISHER_DEV_KEY'), nargs='?', help='the key file to display')
+
+	parser_generate = subparsers.add_parser('generate')
+	parser_generate.set_defaults(action=action_generate)
+	parser_generate.add_argument('id', help='this key\'s identifier')
+	parser_generate.add_argument('file', type=argparse.FileType('w'), help='the destination to write the key to')
+	arguments = parser.parse_args()
+
+	find.init_data_path()
+	arguments.action(arguments)
 
 if __name__ == '__main__':
 	sys.exit(main())
