@@ -466,7 +466,7 @@ def gtk_widget_destroy_children(widget):
 	for child in widget.get_children():
 		child.destroy()
 
-def show_dialog(message_type, message, parent, secondary_text=None, message_buttons=Gtk.ButtonsType.OK, use_markup=False, secondary_use_markup=False):
+def show_dialog(message_type, message, parent, secondary_text=None, entry_text=None, entry_text_storage=None, message_buttons=Gtk.ButtonsType.OK, use_markup=False, secondary_use_markup=False):
 	"""
 	Display a dialog and return the response. The response is dependent on
 	the value of *message_buttons*.
@@ -477,6 +477,8 @@ def show_dialog(message_type, message, parent, secondary_text=None, message_butt
 	:param parent: The parent window that the dialog should belong to.
 	:type parent: :py:class:`Gtk.Window`
 	:param str secondary_text: Optional subtext for the dialog.
+	:param str entry_text: Optional description for an optional entry box.
+	:param str entry_text_storage: Optional array type for entry box response.
 	:param message_buttons: The buttons to display in the dialog box.
 	:type message_buttons: :py:class:`Gtk.ButtonsType`
 	:param bool use_markup: Whether or not to treat the message text as markup.
@@ -495,8 +497,16 @@ def show_dialog(message_type, message, parent, secondary_text=None, message_butt
 			if not isinstance(label, Gtk.Label):
 				continue
 			label.connect('activate-link', signal_label_activate_link)
+
+	if entry_text:
+		dialog_area = dialog.get_content_area()
+		entry = Gtk.Entry()
+		dialog_area.pack_end(entry, False, False, 0)
+
 	dialog.show_all()
 	response = dialog.run()
+	if entry_text and type(entry_text_storage) == list:
+		entry_text_storage.append(entry.get_text())
 	dialog.destroy()
 	return response
 
