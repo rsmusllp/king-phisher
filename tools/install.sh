@@ -419,7 +419,7 @@ if [ "$LINUX_VERSION" == "Kali" ]; then
 		exit $E_SOFTWARE
 	fi
 else
-	if ! python3 -m pip install -r requirements.txt; then
+	if ! python3 -m pip install -I -r requirements.txt; then
 		echo "ERROR: Failed to install python requirements with pip"
 		exit $E_SOFTWARE
 	fi
