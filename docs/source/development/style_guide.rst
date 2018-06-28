@@ -60,8 +60,8 @@ messages are to be entirely lowercase with the exception of acronyms which are
 currently inconsistently cased. Either all capital letters or all lower case
 letters are acceptable for acronyms within log messages.
 
-Documenation
-------------
+Documentation
+-------------
 
 When documenting a function, use the grammar provided by Sphinx_. Documentation
 strings should be surrounded by triple double quotes (``"""``). There should be
@@ -90,6 +90,77 @@ Sphinx documentation for the `Python Domain`_.
 
    :param foo: The widget this function uses.
    :type foo: :py:class:`~the_full.module_path_to.Foo`
+
+CLI Arguments
+-------------
+
+For utilities which take arguments on the command line, the following default
+values should be supported.
+
++----------------------+-------------------------------+
+| Argument Flag        | Meaning                       |
++----------------------+-------------------------------+
+| ``-h / --help``      | Display help information      |
++----------------------+-------------------------------+
+| ``-v / --version``   | Display version information   |
++----------------------+-------------------------------+
+| ``-V / --verbose`` * | Enable verbose output         |
++----------------------+-------------------------------+
+| ``-L / --log`` *     | Set the log level to use      |
++----------------------+-------------------------------+
+
+\* These values are optional, but should not be overridden.
+
+Log Levels
+----------
+When logging messages, the following levels should be used as described.
+
+CRITICAL
+   Reserved for when an unrecoverable error has occurred that stops the
+   application from running.
+
+   Examples:
+
+   * A required library, module or resource file is missing.
+   * An unknown exception occurs which is raised to the main method of an
+     application.
+
+ERROR
+   A recoverable error has occurred that stops the process from functioning as
+   intended.
+
+   Examples:
+
+   * On a client, the user fails to authenticate successfully.
+   * A network socket failed to connect to a server.
+
+WARNING
+   A recoverable error has occurred that does not stop the process from
+   functioning as intended.
+
+   Examples:
+
+   * On a server, a user fails to authenticate successfully.
+   * When information provided by the user is invalid and the user can be
+     prompted for new information.
+
+INFO
+   High level information regarding what is happening in an application, should
+   be use sparingly within loops.
+
+   Examples:
+
+   * Listing resources that are being loaded and processed.
+   * The child pid when ``fork()`` is used.
+
+DEBUG
+   Low level information regarding what is happening in an application including
+   the values of variables, this may be used more frequently within loops.
+
+   Examples:
+
+   * Printing identifying information for threads that are spawned.
+   * Printing the value of arguments that are passed into functions.
 
 .. _PEP-8: https://www.python.org/dev/peps/pep-0008/
 .. _Python Domain: http://www.sphinx-doc.org/en/stable/domains.html#the-python-domain

@@ -517,7 +517,8 @@ class Thread(threading.Thread):
 	King Phisher's base threading class with two way events.
 	"""
 	logger = logging.getLogger('KingPhisher.Thread')
-	def __init__(self, target=None, name=None, args=(), kwargs={}, **_kwargs):
+	def __init__(self, target=None, name=None, args=(), kwargs=None, **_kwargs):
+		kwargs = kwargs or {}
 		super(Thread, self).__init__(target=target, name=name, args=args, kwargs=kwargs, **_kwargs)
 		self.target_name = None
 		if target is not None:
