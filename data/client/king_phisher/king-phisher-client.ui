@@ -2206,7 +2206,6 @@ Spencer McIntyre</property>
     <property name="margin_bottom">5</property>
     <property name="default_width">600</property>
     <property name="default_height">500</property>
-    <property name="destroy_with_parent">True</property>
     <child>
       <placeholder/>
     </child>
@@ -2783,7 +2782,6 @@ Spencer McIntyre</property>
     <property name="title" translatable="yes">Plugin Manager</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
-    <signal name="destroy-event" handler="signal_destory" swapped="no"/>
     <child type="titlebar">
       <placeholder/>
     </child>
