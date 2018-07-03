@@ -14,6 +14,11 @@ Classes
    :members:
    :special-members: __init__
 
+.. autoclass:: MenuManager
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
 .. autoclass:: RadioButtonGroupManager
    :show-inheritance:
    :members:

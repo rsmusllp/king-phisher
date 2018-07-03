@@ -10,6 +10,7 @@ client application.
 
    campaign_import.rst
    compare_campaigns.rst
+   html.rst
    main.rst
    plugin_manager.rst
    rpc_terminal.rst

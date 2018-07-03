@@ -36,9 +36,14 @@ from king_phisher.client.widget import extras
 __all__ = ('HTMLWindow',)
 
 class HTMLWindow(gui_utilities.GladeGObject):
+	"""
+	This basic window contains a :py:class:`~.extras.WebKitHTMLView` widget for
+	rendering and displaying HTML content.
+	"""
 	top_gobject = 'window'
 	def __init__(self, *args, **kwargs):
 		super(HTMLWindow, self).__init__(*args, **kwargs)
 		self.webview = extras.WebKitHTMLView()
+		"""The :py:class:`~.extras.WebKitHTMLView` widget instance."""
 		self.webview.show()
 		self.window.add(self.webview)

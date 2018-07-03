@@ -139,8 +139,18 @@ class ToggleButtonGroupManager(ButtonGroupManager):
 			button.set_active(active)
 
 class MenuManager(object):
+	"""
+	A class that wraps :py:class:`Gtk.Menu` objects and facilitates managing
+	their respective items.
+	"""
 	__slots__ = ('menu', 'items')
 	def __init__(self, menu=None):
+		"""
+		:param menu: An optional menu to start with. If a menu is specified it
+			is used as is, otherwise a new instance is used and is set to be
+			visible using :py:meth:`~Gtk.Widget.show`.
+		:type menu: :py:class:`Gtk.Menu`
+		"""
 		if menu is None:
 			menu = Gtk.Menu()
 			menu.show()
@@ -154,6 +164,14 @@ class MenuManager(object):
 		return self.append_item(menu_item, set_show=False)
 
 	def append(self, label, activate=None):
+		"""
+		Create and append a new :py:class:`Gtk.MenuItem` with the specified
+		label to the menu.
+
+		:param str label: The label for the new menu item.
+		:param activate: An optional callback function to connect to the new
+			menu item's ``activate`` signal.
+		"""
 		if label in self.items:
 			raise RuntimeError('label already exists in menu items')
 		menu_item = Gtk.MenuItem.new_with_label(label)
@@ -163,12 +181,17 @@ class MenuManager(object):
 			menu_item.connect('activate', activate)
 
 	def append_item(self, menu_item, set_show=True):
+		"""
+		Append the specified menu item to the menu.
+
+		:param menu_item: The item to append to the menu.
+		:type menu_item: :py:class:`Gtk.MenuItem`
+		:param bool set_show: Whether to set the item to being visible or leave
+			it as is.
+		"""
 		if set_show:
 			menu_item.show()
 		self.menu.append(menu_item)
-
-	def append_separator(self):
-		self.append_item(Gtk.SeparatorMenuItem())
 
 class TreeViewManager(object):
 	"""
