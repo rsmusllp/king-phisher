@@ -110,7 +110,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		'sensitive_installed',
 		'type'
 	))
-	_PluginMenuItems = collections.namedtuple('PluginMenuItems', ('reload', 'reload_all', 'show_documentation', 'update'))
 	def __init__(self, *args, **kwargs):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_plugins']
@@ -146,47 +145,27 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._worker_thread = None
 		self._worker_thread_start(self._load_catalogs)
 
-		self._tv_popup_menu = tvm.get_popup_menu()
-		self._tv_popup_menu_items = self._PluginMenuItems(
-			reload=Gtk.MenuItem.new_with_label('Reload'),
-			reload_all=Gtk.MenuItem.new_with_label('Reload All'),
-			show_documentation=Gtk.MenuItem.new_with_label('Show documentation'),
-			update=Gtk.MenuItem.new_with_label('Update')
-		)
+		self._tv_popup_menu = managers.MenuManager(tvm.get_popup_menu())
+		self._tv_popup_menu.append_separator()
+		self._tv_popup_menu.append('Reload', self.signal_popup_menu_activate_reload)
+		self._tv_popup_menu.append('Reload All', self.signal_popup_menu_activate_reload_all)
+		self._tv_popup_menu.append_separator()
+		self._tv_popup_menu.append('Show Documentation', self.signal_popup_menu_activate_show_documentation)
+		self._tv_popup_menu.append('Update')
 
-		self._tv_popup_menu.append(Gtk.SeparatorMenuItem())
-		self._tv_popup_menu_items.reload.connect('activate', self.signal_popup_menu_activate_reload)
-		self._tv_popup_menu.append(self._tv_popup_menu_items.reload)
-		self._tv_popup_menu_items.reload_all.connect('activate', self.signal_popup_menu_activate_reload_all)
-		self._tv_popup_menu.append(self._tv_popup_menu_items.reload_all)
+		self._info_popup_menu = managers.MenuManager()
+		self._info_popup_menu.append('Reload', self.signal_popup_menu_activate_reload)
+		self._info_popup_menu.append_separator()
+		self._info_popup_menu.append('Show Documentation', self.signal_popup_menu_activate_show_documentation)
+		self._info_popup_menu.append('Update')
+		self.gobjects['menubutton_plugin_info'].set_popup(self._info_popup_menu.menu)
 
-		self._tv_popup_menu.append(Gtk.SeparatorMenuItem())
-		self._tv_popup_menu_items.show_documentation.connect('activate', self.signal_popup_menu_activate_show_documentation)
-		self._tv_popup_menu.append(self._tv_popup_menu_items.show_documentation)
-		#self._tv_popup_menu_items.update.connect('activate',
-		self._tv_popup_menu.append(self._tv_popup_menu_items.update)
-
-		self._tv_popup_menu.show_all()
-		self._get_plugin_popup_menu()
 		self._update_status_bar('Loading...')
 		self.window.show()
 
-		selection = treeview.get_selection()
-		selection.unselect_all()
+		self._treeview_unselect()
 		paned = self.gobjects['paned_plugins']
 		self._paned_offset = paned.get_allocation().height - paned.get_position()
-
-	def _get_plugin_popup_menu(self):
-		self._info_popup_menu = Gtk.Menu()
-		self._info_popup_menu_items = {
-			'Show Documentation': Gtk.MenuItem.new_with_label('Show Documentation'),
-			'Update': Gtk.MenuItem.new_with_label('Update')
-		}
-		self._info_popup_menu_items['Show Documentation'].connect('activate', self.signal_popup_menu_activate_show_documentation)
-		self._info_popup_menu.append(self._info_popup_menu_items['Show Documentation'])
-		self._info_popup_menu.append(self._info_popup_menu_items['Update'])
-		self._info_popup_menu.show_all()
-		self.gobjects['menubutton_plugin_info'].set_popup(self._info_popup_menu)
 
 	def _treeview_unselect(self):
 		treeview = self.gobjects['treeview_plugins']
@@ -406,12 +385,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		model_instance = self._model[path]
 		self._set_info(model_instance)
 		named_row = self._RowModel(*model_instance)
-		if named_row.type == _ROW_TYPE_PLUGIN and named_row.installed:
-			self._tv_popup_menu_items.show_documentation.set_property('sensitive', True)
-			self._tv_popup_menu_items.update.set_property('sensitive', True)
-		else:
-			self._tv_popup_menu_items.show_documentation.set_property('sensitive', False)
-			self._tv_popup_menu_items.update.set_property('sensitive', False)
+		if named_row.type != _ROW_TYPE_PLUGIN:
+			return
+		sensitive = named_row.installed
+		self._info_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
+		self._tv_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
+		sensitive = named_row.installed and named_row.sensitive_installed
+		self._info_popup_menu['Update'].set_property('sensitive', sensitive)
+		self._tv_popup_menu['Update'].set_property('sensitive', sensitive)
 
 	def signal_label_activate_link(self, _, uri):
 		utilities.open_uri(uri)
@@ -471,13 +452,18 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._worker_thread_start(self._reload)
 
 	@property
-	def _selected_row(self):
+	def _selected_path(self):
 		treeview = self.gobjects['treeview_plugins']
 		selection = treeview.get_selection()
 		if not selection.count_selected_rows():
 			return None
 		(model, tree_paths) = selection.get_selected_rows()
-		return self._RowModel(*model[tree_paths[0]])
+		return model[tree_paths[0]]
+
+	@property
+	def _selected_row(self):
+		selected_path = self._selected_path
+		return self._RowModel(*selected_path) if selected_path else None
 
 	def _reload(self):
 		self._update_status_bar('Reloading...')
@@ -575,13 +561,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		repo_model, catalog_model = self._get_plugin_model_parents(self._model[path])
 		named_row = self._RowModel(*self._model[path])
 		if named_row.installed:
-			self._update_status_bar("Uninstalling plugin {}...".format(named_row.id))
-			if named_row.enabled:
-				if not gui_utilities.show_dialog_yes_no('Plugin is Enabled', self.window, 'This will disable the plugin, do you want to continue?'):
-					return
-				self._disable_plugin(path)
 			self._uninstall_plugin(path)
-			self._update_status_bar("Uninstalling plugin {} completed.".format(named_row.id))
 			return
 
 		if named_row.id in self.config['plugins.installed']:
@@ -626,6 +606,17 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
 		self._update_status_bar("Installing plugin {} completed.".format(named_row.title))
 		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error)
+
+	def _uninstall_plugin(self, path):
+		named_row = self._RowModel(*self._model[path])
+		self._update_status_bar("Uninstalling plugin {}...".format(named_row.id))
+		if named_row.enabled:
+			if not gui_utilities.show_dialog_yes_no('Plugin is Enabled', self.window, 'This will disable the plugin, do you want to continue?'):
+				return False
+			self._disable_plugin(path)
+		self._uninstall_plugin(path)
+		self._update_status_bar("Uninstalling plugin {} completed.".format(named_row.id))
+		return True
 
 	def _disable_plugin(self, path, is_path=True):
 		named_row = self._RowModel(*(self._model[path] if is_path else path))

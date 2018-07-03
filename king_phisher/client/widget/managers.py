@@ -138,6 +138,38 @@ class ToggleButtonGroupManager(ButtonGroupManager):
 				raise ValueError('invalid button name: ' + name)
 			button.set_active(active)
 
+class MenuManager(object):
+	__slots__ = ('menu', 'items')
+	def __init__(self, menu=None):
+		if menu is None:
+			menu = Gtk.Menu()
+			menu.show()
+		self.menu = menu
+		self.items = collections.OrderedDict()
+
+	def __getitem__(self, label):
+		return self.items[label]
+
+	def __setitem__(self, label, menu_item):
+		return self.append_item(menu_item, set_show=False)
+
+	def append(self, label, activate=None):
+		if label in self.items:
+			raise RuntimeError('label already exists in menu items')
+		menu_item = Gtk.MenuItem.new_with_label(label)
+		self.items[label] = menu_item
+		self.append_item(menu_item)
+		if activate:
+			menu_item.connect('activate', activate)
+
+	def append_item(self, menu_item, set_show=True):
+		if set_show:
+			menu_item.show()
+		self.menu.append(menu_item)
+
+	def append_separator(self):
+		self.append_item(Gtk.SeparatorMenuItem())
+
 class TreeViewManager(object):
 	"""
 	A class that wraps :py:class:`Gtk.TreeView` objects that use `Gtk.ListStore`
