@@ -260,6 +260,11 @@ class WebKitHTMLView(_WebKitX_WebView):
 		html = markdown.markdown(md_data, extensions=extensions)
 		return self.load_html_data(html, html_file_uri=html_file_uri)
 
+	def load_markdown_file(self, md_file, gh_flavor=True):
+		with codecs.open(md_file, 'r', encoding='utf-8') as file_h:
+			md_data = file_h.read()
+		self.load_markdown_data(md_data, md_file, gh_flavor=gh_flavor)
+
 	def signal_button_pressed(self, _, event):
 		if event.button == Gdk.BUTTON_SECONDARY:
 			# disable right click altogether

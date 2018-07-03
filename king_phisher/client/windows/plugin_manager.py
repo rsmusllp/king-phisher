@@ -44,6 +44,7 @@ from king_phisher.catalog import Catalog
 from king_phisher.client import plugins
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
+from king_phisher.client.windows import html
 
 from gi.repository import Gdk
 from gi.repository import Gtk
@@ -109,6 +110,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		'sensitive_installed',
 		'type'
 	))
+	_PluginMenuItems = collections.namedtuple('PluginMenuItems', ('reload', 'reload_all', 'show_documentation', 'update'))
 	def __init__(self, *args, **kwargs):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_plugins']
@@ -143,15 +145,28 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.plugin_path = os.path.join(self.application.user_data_path, 'plugins')
 		self._worker_thread = None
 		self._worker_thread_start(self._load_catalogs)
-		self.popup_menu = tvm.get_popup_menu()
-		self.popup_menu.append(Gtk.SeparatorMenuItem())
-		menu_item = Gtk.MenuItem.new_with_label('Reload')
-		menu_item.connect('activate', self.signal_popup_menu_activate_reload)
-		self.popup_menu.append(menu_item)
-		menu_item_reload_all = Gtk.MenuItem.new_with_label('Reload All')
-		menu_item_reload_all.connect('activate', self.signal_popup_menu_activate_reload_all)
-		self.popup_menu.append(menu_item_reload_all)
-		self.popup_menu.show_all()
+
+		self._tv_popup_menu = tvm.get_popup_menu()
+		self._tv_popup_menu_items = self._PluginMenuItems(
+			reload=Gtk.MenuItem.new_with_label('Reload'),
+			reload_all=Gtk.MenuItem.new_with_label('Reload All'),
+			show_documentation=Gtk.MenuItem.new_with_label('Show documentation'),
+			update=Gtk.MenuItem.new_with_label('Update')
+		)
+
+		self._tv_popup_menu.append(Gtk.SeparatorMenuItem())
+		self._tv_popup_menu_items.reload.connect('activate', self.signal_popup_menu_activate_reload)
+		self._tv_popup_menu.append(self._tv_popup_menu_items.reload)
+		self._tv_popup_menu_items.reload_all.connect('activate', self.signal_popup_menu_activate_reload_all)
+		self._tv_popup_menu.append(self._tv_popup_menu_items.reload_all)
+
+		self._tv_popup_menu.append(Gtk.SeparatorMenuItem())
+		self._tv_popup_menu_items.show_documentation.connect('activate', self.signal_popup_menu_activate_show_documentation)
+		self._tv_popup_menu.append(self._tv_popup_menu_items.show_documentation)
+		#self._tv_popup_menu_items.update.connect('activate',
+		self._tv_popup_menu.append(self._tv_popup_menu_items.update)
+
+		self._tv_popup_menu.show_all()
 		self._get_plugin_popup_menu()
 		self._update_status_bar('Loading...')
 		self.window.show()
@@ -162,14 +177,16 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._paned_offset = paned.get_allocation().height - paned.get_position()
 
 	def _get_plugin_popup_menu(self):
-		plugin_menu = Gtk.Menu()
-		menu_item = Gtk.MenuItem('Show documentation')
-		menu_item.show()
-		plugin_menu.append(menu_item)
-		menu_item = Gtk.MenuItem('Update')
-		menu_item.show()
-		plugin_menu.append(menu_item)
-		self.gobjects['menubutton_plugin_info'].set_popup(plugin_menu)
+		self._info_popup_menu = Gtk.Menu()
+		self._info_popup_menu_items = {
+			'Show Documentation': Gtk.MenuItem.new_with_label('Show Documentation'),
+			'Update': Gtk.MenuItem.new_with_label('Update')
+		}
+		self._info_popup_menu_items['Show Documentation'].connect('activate', self.signal_popup_menu_activate_show_documentation)
+		self._info_popup_menu.append(self._info_popup_menu_items['Show Documentation'])
+		self._info_popup_menu.append(self._info_popup_menu_items['Update'])
+		self._info_popup_menu.show_all()
+		self.gobjects['menubutton_plugin_info'].set_popup(self._info_popup_menu)
 
 	def _treeview_unselect(self):
 		treeview = self.gobjects['treeview_plugins']
@@ -364,11 +381,37 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def signal_popup_menu_activate_reload_all(self, _):
 		self._worker_thread_start(self._load_catalog, kwargs={'refresh': True})
 
+	def signal_popup_menu_activate_show_documentation(self, _):
+		named_row = self._selected_row
+		if named_row is None or named_row.type != _ROW_TYPE_PLUGIN:
+			return
+		md_file = None
+		if named_row.installed:
+			plugin_path = self.application.plugin_manager.get_plugin_path(named_row.id)
+			if plugin_path is None:
+				gui_utilities.show_dialog_warning('No Documentation', self.window, 'Failed to identify the plugin data path.')
+				return
+			md_file = os.path.join(plugin_path, 'README.md')
+		if md_file is None or not os.path.isfile(md_file):
+			gui_utilities.show_dialog_warning('No Documentation', self.window, 'This plugin has no documentation.')
+			return
+		window = html.HTMLWindow(self.application)
+		window.webview.load_markdown_file(md_file)
+		window.window.set_title('Plugin Documentation')
+
 	def signal_destory(self, _):
 		pass
 
 	def signal_treeview_row_activated(self, treeview, path, column):
-		self._set_info(self._model[path])
+		model_instance = self._model[path]
+		self._set_info(model_instance)
+		named_row = self._RowModel(*model_instance)
+		if named_row.type == _ROW_TYPE_PLUGIN and named_row.installed:
+			self._tv_popup_menu_items.show_documentation.set_property('sensitive', True)
+			self._tv_popup_menu_items.update.set_property('sensitive', True)
+		else:
+			self._tv_popup_menu_items.show_documentation.set_property('sensitive', False)
+			self._tv_popup_menu_items.update.set_property('sensitive', False)
 
 	def signal_label_activate_link(self, _, uri):
 		utilities.open_uri(uri)
@@ -427,15 +470,20 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def signal_popup_menu_activate_reload(self, _):
 		self._worker_thread_start(self._reload)
 
+	@property
+	def _selected_row(self):
+		treeview = self.gobjects['treeview_plugins']
+		selection = treeview.get_selection()
+		if not selection.count_selected_rows():
+			return None
+		(model, tree_paths) = selection.get_selected_rows()
+		return self._RowModel(*model[tree_paths[0]])
+
 	def _reload(self):
 		self._update_status_bar('Reloading...')
 		treeview = self.gobjects['treeview_plugins']
 		pm = self.application.plugin_manager
-		selected_plugin = None
-		selection = treeview.get_selection()
-		if selection.count_selected_rows():
-			(model, tree_paths) = selection.get_selected_rows()
-			selected_plugin = model[tree_paths[0]][0]
+		selected_plugin = self._selected_row
 
 		for tree_iter in gui_utilities.gtk_treeview_selection_iterate(treeview):
 			model_row = self._model[tree_iter]
@@ -449,7 +497,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				if not named_row.installed:
 					self._update_status_bar('Cannot reload a plugin that is not installed.')
 					continue
-				self._reload_plugin(named_row, model_row, pm, tree_iter, selected_plugin)
+				self._reload_plugin(named_row, model_row, pm, tree_iter, selected_plugin.id)
 				self._update_status_bar('Reloading plugin completed')
 			else:
 				self.logger.warning('reload selected for an unsupported row type')
