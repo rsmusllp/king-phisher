@@ -34,7 +34,6 @@ import collections
 import datetime
 import functools
 import os
-import shutil
 import sys
 import traceback
 import xml.sax.saxutils as saxutils
@@ -173,7 +172,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 		self._update_status_bar('Loading...')
 		self.window.show()
-
 		paned = self.gobjects['paned_plugins']
 		self._paned_offset = paned.get_allocation().height - paned.get_position()
 
@@ -287,6 +285,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
 		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
+		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error_tsafe)
 		gui_utilities.glib_idle_add_once(self.__install_plugin_post, path, catalog_model, repo_model, named_row)
 
 	def __install_plugin_post(self, path, catalog_model, repo_model, named_row):
@@ -294,14 +293,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._set_model_item(path, 'installed', True)
 		self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
 		self._update_status_bar("Installing plugin {} completed.".format(named_row.title))
-		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error_tsafe)
 
 	def _on_plugin_load_error_tsafe(self, name, error):
 		# WARNING: this may not be called from the GUI thread
 		self.__load_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
 
 	def _reload(self):
-		self._update_status_bar('Reloading...')
 		model_row = self._selected_path
 		named_row = _ModelRow(*model_row)
 		if named_row.type == _ROW_TYPE_CATALOG:
@@ -317,13 +314,13 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self._worker_thread_start(self._reload_catalog_tsafe, parent_model_row, parent_named_row)
 		elif named_row.type == _ROW_TYPE_PLUGIN:
 			if not named_row.installed:
-				self._update_status_bar('Cannot reload a plugin that is not installed.')
 				return
 			self._worker_thread_start(self._reload_plugin_tsafe, model_row, named_row)
 		else:
 			self.logger.warning('reload selected for an unsupported row type')
 
 	def _reload_catalog_tsafe(self, model_row, named_row):
+		self._update_status_bar_tsafe('Reloading catalog...')
 		self._model.remove(model_row.iter)
 		if named_row.id == _LOCAL_REPOSITORY_ID:
 			self._load_catalog_local_tsafe()
@@ -331,8 +328,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			catalog_url = self.catalog_plugins.get_cache().get_catalog_by_id(named_row.id)['url']
 			if catalog_url:
 				self._load_catalog_from_url_tsafe(catalog_url)
+		self._update_status_bar_tsafe('Reloading catalog... completed.')
 
 	def _reload_plugin_tsafe(self, model_row, named_row):
+		self._update_status_bar_tsafe('Reloading plugin...')
 		pm = self.application.plugin_manager
 		enabled = named_row.id in pm.enabled_plugins
 		pm.unload(named_row.id)
@@ -356,6 +355,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self._set_model_item(model_row.iter, 'title', klass.title)
 			self._set_model_item(model_row.iter, 'compatibility', 'Yes' if klass.is_compatible else 'No')
 			self._set_model_item(model_row.iter, 'version', klass.version)
+		self._update_status_bar('Reloading plugin... completed.')
 
 	def _remove_matching_plugin(self, path, plugin_src):
 		named_row = _ModelRow(*self._model[path])
@@ -552,16 +552,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def _uninstall_plugin(self, model_path):
 		model_row = self._model[model_path]
 		plugin_id = _ModelRow(*model_row).id
-		if os.path.isfile(os.path.join(self.plugin_path, plugin_id, '__init__.py')):
-			shutil.rmtree(os.path.join(self.plugin_path, plugin_id))
-		elif os.path.isfile(os.path.join(self.plugin_path, plugin_id + '.py')):
-			os.remove(os.path.join(self.plugin_path, plugin_id + '.py'))
-		else:
-			self.logger.warning("failed to find plugin {0} on disk for removal".format(plugin_id))
+		if not self.application.plugin_manager.uninstall(plugin_id):
 			return False
-		self.application.plugin_manager.unload(plugin_id)
 		del self.config['plugins.installed'][plugin_id]
-
 		if model_row.parent and model_row.parent[_ModelRow._fields.index('id')] == _LOCAL_REPOSITORY_ID:
 			del self._model[model_path]
 		else:
@@ -620,6 +613,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if catalog is None and catalog_cache_dict is not None:
 				self.logger.warning('failing over to loading the catalog from the cache')
 				self._load_catalog_from_cache_tsafe(catalog_cache_dict)
+		self._update_status_bar_tsafe('Loading completed')
 
 	def _load_catalog_from_cache_tsafe(self, catalog_cache_dict):
 		catalog = None
@@ -652,8 +646,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		Load the plugins which are available into the treeview to make them
 		visible to the user.
 		"""
-		self.logger.debug('loading plugins')
-		self._update_status_bar_tsafe('Loading plugins...')
+		self.logger.debug('loading the local catalog')
 		pm = self.application.plugin_manager
 		self.__load_errors = {}
 		pm.load_all(on_error=self._on_plugin_load_error_tsafe)
@@ -688,9 +681,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				sensitive_installed=False,
 				type=_ROW_TYPE_PLUGIN
 			))
-
 		gui_utilities.glib_idle_add_once(self.__store_add_node, node)
-		self._update_status_bar_tsafe('Loading completed')
 
 	#
 	# Signal Handlers

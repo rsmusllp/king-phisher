@@ -39,6 +39,7 @@ import logging
 import os
 import platform
 import re
+import shutil
 import sys
 import textwrap
 import threading
@@ -566,6 +567,27 @@ class PluginManagerBase(object):
 		if reload_module:
 			recursive_reload(module)
 		return module
+
+	def uninstall(self, name):
+		"""
+		Uninstall a plugin by first unloading it and then delete it's data on
+		disk. The plugin data on disk is found with the
+		:py:meth:`.get_plugin_path` method.
+
+		:param str name: The name of the plugin to uninstall.
+		:return: Whether or not the plugin was successfully uninstalled.
+		:rtype: bool
+		"""
+		plugin_path = self.get_plugin_path(name)
+		if os.path.isfile(plugin_path) or os.path.islink(plugin_path):
+			os.remove(plugin_path)
+		elif os.path.isdir(plugin_path):
+			shutil.rmtree(plugin_path)
+		else:
+			self.logger.warning('failed to identify the data path for plugin: ' + name)
+			return False
+		self.unload(name)
+		return True
 
 	def unload(self, name):
 		"""
