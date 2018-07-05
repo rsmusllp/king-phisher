@@ -320,8 +320,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def __plugin_install_post(self, catalog_model, repo_model, model_row, named_row):
 		# handles GUI related updates after data has been fetched from the internet
-		self._set_model_item(model_row.path, 'installed', True)
-		self._set_model_item(model_row.path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
+		if model_row.path is not None:
+			self._set_model_item(model_row.path, 'installed', True)
+			self._set_model_item(model_row.path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
 		self._update_status_bar("Installing plugin {} completed.".format(named_row.title))
 
 	def _plugin_uninstall(self, model_row):
@@ -386,14 +387,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		gui_utilities.glib_idle_add_once(self.__reload_plugin_post, model_row, named_row, klass)
 
 	def __reload_plugin_post(self, model_row, named_row, klass=None):
-		if named_row.id == self._selected_named_row.id:
-			self._set_info(model_row)
-		if klass is None:
-			self._set_model_item(model_row.path, 'title', "{0} (Reload Failed)".format(named_row.id))
-		else:
-			self._set_model_item(model_row.path, 'title', klass.title)
-			self._set_model_item(model_row.path, 'compatibility', 'Yes' if klass.is_compatible else 'No')
-			self._set_model_item(model_row.path, 'version', klass.version)
+		if model_row.path is not None:
+			if named_row.id == self._selected_named_row.id:
+				self._set_info(model_row)
+			if klass is None:
+				self._set_model_item(model_row.path, 'title', "{0} (Reload Failed)".format(named_row.id))
+			else:
+				self._set_model_item(model_row.path, 'title', klass.title)
+				self._set_model_item(model_row.path, 'compatibility', 'Yes' if klass.is_compatible else 'No')
+				self._set_model_item(model_row.path, 'version', klass.version)
 		self._update_status_bar('Reloading plugin... completed.')
 
 	def _remove_matching_plugin(self, named_row, plugin_src):
