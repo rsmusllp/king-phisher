@@ -389,11 +389,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if named_row.id == self._selected_named_row.id:
 			self._set_info(model_row)
 		if klass is None:
-			self._set_model_item(model_row.iter, 'title', "{0} (Reload Failed)".format(named_row.id))
+			self._set_model_item(model_row.path, 'title', "{0} (Reload Failed)".format(named_row.id))
 		else:
-			self._set_model_item(model_row.iter, 'title', klass.title)
-			self._set_model_item(model_row.iter, 'compatibility', 'Yes' if klass.is_compatible else 'No')
-			self._set_model_item(model_row.iter, 'version', klass.version)
+			self._set_model_item(model_row.path, 'title', klass.title)
+			self._set_model_item(model_row.path, 'compatibility', 'Yes' if klass.is_compatible else 'No')
+			self._set_model_item(model_row.path, 'version', klass.version)
 		self._update_status_bar('Reloading plugin... completed.')
 
 	def _remove_matching_plugin(self, named_row, plugin_src):
