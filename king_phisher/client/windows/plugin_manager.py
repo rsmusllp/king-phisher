@@ -58,7 +58,7 @@ _ROW_TYPE_CATALOG = 'catalog'
 _LOCAL_REPOSITORY_ID = 'local'
 _LOCAL_REPOSITORY_TITLE = '[Locally Installed]'
 
-_ModelRow = collections.namedtuple('RowModel', (
+_ModelNamedRow = collections.namedtuple('RowModel', (
 	'id',
 	'installed',
 	'enabled',
@@ -73,7 +73,7 @@ _ModelRow = collections.namedtuple('RowModel', (
 class _ModelNode(object):
 	__slots__ = ('children', 'row')
 	def __init__(self, *args, **kwargs):
-		self.row = _ModelRow(*args, **kwargs)
+		self.row = _ModelNamedRow(*args, **kwargs)
 		self.children = collections.deque()
 
 class PluginManagerWindow(gui_utilities.GladeGObject):
@@ -161,13 +161,13 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._tv_popup_menu.append('Reload All', self.signal_popup_menu_activate_reload_all)
 		self._tv_popup_menu.append_item(Gtk.SeparatorMenuItem())
 		self._tv_popup_menu.append('Show Documentation', self.signal_popup_menu_activate_show_documentation)
-		#self._tv_popup_menu.append('Update')
+		self._tv_popup_menu.append('Update', self.signal_popup_menu_activate_update)
 
 		self._info_popup_menu = managers.MenuManager()
 		self._info_popup_menu.append('Reload', self.signal_popup_menu_activate_reload)
 		self._info_popup_menu.append_item(Gtk.SeparatorMenuItem())
 		self._info_popup_menu.append('Show Documentation', self.signal_popup_menu_activate_show_documentation)
-		#self._info_popup_menu.append('Update')
+		self._info_popup_menu.append('Update', self.signal_popup_menu_activate_update)
 		self.gobjects['menubutton_plugin_info'].set_popup(self._info_popup_menu.menu)
 
 		self._update_status_bar('Loading...')
@@ -178,7 +178,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def __store_add_node(self, node, parent=None):
 		"""
 		Add a :py:class:`._ModelNode` to :py:attr:`._model`, recursively adding
-		child :py:class:`._ModelNode` or :py:class:`._ModelRow` instances as
+		child :py:class:`._ModelNode` or :py:class:`._ModelNamedRow` instances as
 		necessary. This is *not* tsafe.
 
 		:param node: The node to add to the TreeView model.
@@ -189,7 +189,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		for child in node.children:
 			if isinstance(child, _ModelNode):
 				self.__store_add_node(child, parent=row)
-			elif isinstance(child, _ModelRow):
+			elif isinstance(child, _ModelNamedRow):
 				self._model.append(row, child)
 			else:
 				raise TypeError('unsupported node child type')
@@ -238,7 +238,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				if install_src and repo.id == install_src['repo_id'] and catalog.id == install_src['catalog_id']:
 					installed = True
 					enabled = plugin_name in self.config['plugins.enabled']
-				repo_node.children.append(_ModelRow(
+				repo_node.children.append(_ModelNamedRow(
 					id=plugin_name,
 					installed=installed,
 					enabled=enabled,
@@ -253,18 +253,40 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		gui_utilities.glib_idle_add_once(self.__store_add_node, catalog_node)
 
 	def _disable_plugin(self, path, is_path=True):
-		named_row = _ModelRow(*(self._model[path] if is_path else path))
+		named_row = _ModelNamedRow(*(self._model[path] if is_path else path))
 		self.application.plugin_manager.disable(named_row.id)
 		self.config['plugins.enabled'].remove(named_row.id)
 		if is_path:
 			self._set_model_item(path, 'enabled', False)
 		else:
-			path[_ModelRow._fields.index('enabled')] = False
+			path[_ModelNamedRow._fields.index('enabled')] = False
 
-	def _get_plugin_model_parents(self, plugin_model):
-		return _ModelRow(*plugin_model.parent), _ModelRow(*plugin_model.parent.parent)
+	def _get_plugin_model_parents(self, plugin_model_row):
+		return _ModelNamedRow(*plugin_model_row.parent), _ModelNamedRow(*plugin_model_row.parent.parent)
 
-	def _install_plugin_tsafe(self, path, catalog_model, repo_model, named_row):
+	def _on_plugin_load_error_tsafe(self, name, error):
+		# WARNING: this may not be called from the GUI thread
+		self.__load_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
+
+	def _plugin_install(self, model_row):
+		if not self._worker_thread_is_ready:
+			# check it here to fail fast, then self._worker_thread_start checks it again later
+			self._show_dialog_busy()
+			return
+		named_row = _ModelNamedRow(*model_row)
+		repo_model, catalog_model = self._get_plugin_model_parents(model_row)
+		if named_row.id in self.config['plugins.installed']:
+			plugin_src = self.config['plugins.installed'].get(named_row.id)
+			if plugin_src != {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}:
+				window_question = 'A plugin with this name is already installed from another\nrepository. Do you want to replace it with this one?'
+				if not gui_utilities.show_dialog_yes_no('Plugin installed from another source', self.window, window_question):
+					return
+				if not self._remove_matching_plugin(named_row, plugin_src):
+					self.logger.warning("failed to uninstall plugin {0}".format(named_row.id))
+					return
+		self._worker_thread_start(self._plugin_install_tsafe, catalog_model, repo_model, model_row, named_row)
+
+	def _plugin_install_tsafe(self, catalog_model, repo_model, model_row, named_row):
 		self.__installing_plugin = named_row.id
 		self._update_status_bar_tsafe("Installing plugin {}...".format(named_row.title))
 		_show_dialog_error_tsafe = functools.partial(gui_utilities.glib_idle_add_once, gui_utilities.show_dialog_error, 'Failed To Install', self.window)
@@ -286,28 +308,36 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
 		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
 		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error_tsafe)
-		gui_utilities.glib_idle_add_once(self.__install_plugin_post, path, catalog_model, repo_model, named_row)
+		gui_utilities.glib_idle_add_once(self.__plugin_install_post, catalog_model, repo_model, model_row, named_row)
 
-	def __install_plugin_post(self, path, catalog_model, repo_model, named_row):
+	def __plugin_install_post(self, catalog_model, repo_model, model_row, named_row):
 		# handles GUI related updates after data has been fetched from the internet
-		self._set_model_item(path, 'installed', True)
-		self._set_model_item(path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
+		self._set_model_item(model_row.path, 'installed', True)
+		self._set_model_item(model_row.path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
 		self._update_status_bar("Installing plugin {} completed.".format(named_row.title))
 
-	def _on_plugin_load_error_tsafe(self, name, error):
-		# WARNING: this may not be called from the GUI thread
-		self.__load_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
+	def _plugin_uninstall(self, model_row):
+		plugin_id = _ModelNamedRow(*model_row).id
+		if not self.application.plugin_manager.uninstall(plugin_id):
+			return False
+		del self.config['plugins.installed'][plugin_id]
+		if model_row.parent and model_row.parent[_ModelNamedRow._fields.index('id')] == _LOCAL_REPOSITORY_ID:
+			del self._model[model_row.path]
+		else:
+			self._set_model_item(model_row.path, 'installed', False)
+		self.logger.info("successfully uninstalled plugin {0}".format(plugin_id))
+		return True
 
 	def _reload(self):
-		model_row = self._selected_path
-		named_row = _ModelRow(*model_row)
+		model_row = self._selected_model_row
+		named_row = _ModelNamedRow(*model_row)
 		if named_row.type == _ROW_TYPE_CATALOG:
 			self._worker_thread_start(self._reload_catalog_tsafe, model_row, named_row)
 		elif named_row.type == _ROW_TYPE_REPOSITORY:
 			# this just reloads the entire parent catalog, individual repositories
 			# can not be reloaded at this time
 			parent_model_row = model_row.parent
-			parent_named_row = _ModelRow(*parent_model_row)
+			parent_named_row = _ModelNamedRow(*parent_model_row)
 			if parent_named_row.type != _ROW_TYPE_CATALOG:
 				self.logger.warning('repository treeview row\'s parent is not a catalog')
 				return
@@ -347,7 +377,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		gui_utilities.glib_idle_add_once(self.__reload_plugin_post, model_row, named_row, klass)
 
 	def __reload_plugin_post(self, model_row, named_row, klass=None):
-		if named_row.id == self._selected_row.id:
+		if named_row.id == self._selected_named_row.id:
 			self._set_info(model_row)
 		if klass is None:
 			self._set_model_item(model_row.iter, 'title', "{0} (Reload Failed)".format(named_row.id))
@@ -357,13 +387,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self._set_model_item(model_row.iter, 'version', klass.version)
 		self._update_status_bar('Reloading plugin... completed.')
 
-	def _remove_matching_plugin(self, path, plugin_src):
-		named_row = _ModelRow(*self._model[path])
+	def _remove_matching_plugin(self, named_row, plugin_src):
 		repo_model = None
 		for catalog_model in self._model:
-			catalog_id = _ModelRow(*catalog_model).id
+			catalog_id = _ModelNamedRow(*catalog_model).id
 			if plugin_src and catalog_id == plugin_src['catalog_id']:
-				repo_model = next((rm for rm in catalog_model.iterchildren() if _ModelRow(*rm).id == plugin_src['repo_id']), None)
+				repo_model = next((rm for rm in catalog_model.iterchildren() if _ModelNamedRow(*rm).id == plugin_src['repo_id']), None)
 				break
 			elif plugin_src is None and catalog_id == _LOCAL_REPOSITORY_ID:
 				# local installation acts as a pseudo-repository
@@ -372,17 +401,17 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if not repo_model:
 			return False
 		for plugin_model in repo_model.iterchildren():
-			named_model = _ModelRow(*plugin_model)
+			named_model = _ModelNamedRow(*plugin_model)
 			if named_model.id != named_row.id:
 				continue
 			if named_model.enabled:
 				self._disable_plugin(plugin_model, is_path=False)
-			self._uninstall_plugin(plugin_model.path)
+			self._plugin_uninstall(plugin_model.path)
 			return True
 		return False
 
 	@property
-	def _selected_path(self):
+	def _selected_model_row(self):
 		treeview = self.gobjects['treeview_plugins']
 		selection = treeview.get_selection()
 		if not selection.count_selected_rows():
@@ -391,15 +420,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		return model[tree_paths[0]]
 
 	@property
-	def _selected_row(self):
-		selected_path = self._selected_path
-		return _ModelRow(*selected_path) if selected_path else None
+	def _selected_named_row(self):
+		model_row = self._selected_model_row
+		return _ModelNamedRow(*model_row) if model_row else None
 
 	def _set_model_item(self, model_path, item, item_value):
-		self._model[model_path][_ModelRow._fields.index(item)] = item_value
+		self._model[model_path][_ModelNamedRow._fields.index(item)] = item_value
 
 	def _set_info(self, model_instance):
-		named_model = _ModelRow(*model_instance)
+		named_model = _ModelNamedRow(*model_instance)
 		stack = self.gobjects['stack_info']
 		textview = self.gobjects['textview_plugin_info']
 		buf = textview.get_buffer()
@@ -418,7 +447,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def _set_info_nonplugin(self, model_instance):
 		stack = self.gobjects['stack_info']
 		stack.set_visible_child(self.gobjects['grid_catalog_repo_info'])
-		named_model = _ModelRow(*model_instance)
+		named_model = _ModelNamedRow(*model_instance)
 		obj_catalog = None
 
 		# hide catalog repo labels
@@ -436,10 +465,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if not obj:
 				return
 		else:
-			obj_catalog = self.catalog_plugins.catalogs.get(_ModelRow(*model_instance.parent).id, None)
+			obj_catalog = self.catalog_plugins.catalogs.get(_ModelNamedRow(*model_instance.parent).id, None)
 			if not obj_catalog:
 				return
-			obj = self.catalog_plugins.catalogs[_ModelRow(*model_instance.parent).id].repositories[named_model.id]
+			obj = self.catalog_plugins.catalogs[_ModelNamedRow(*model_instance.parent).id].repositories[named_model.id]
 
 		maintainers = getattr(obj, 'maintainers', getattr(obj_catalog, 'maintainers', None))
 		if maintainers:
@@ -457,7 +486,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.gobjects['label_catalog_repo_info_homepage'].set_property('visible', True)
 
 	def _set_info_plugin(self, plugin_model):
-		named_model = _ModelRow(*plugin_model)
+		named_model = _ModelNamedRow(*plugin_model)
 		pm = self.application.plugin_manager
 		self._last_plugin_selected = plugin_model
 		if named_model.id in pm.loaded_plugins:
@@ -497,7 +526,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			listbox.add(label)
 
 	def _set_info_plugin_error(self, model_instance):
-		id_ = _ModelRow(*model_instance).id
+		id_ = _ModelNamedRow(*model_instance).id
 		textview = self.gobjects['textview_plugin_info']
 		buf = textview.get_buffer()
 		exc, formatted_exc = self.__load_errors[id_]
@@ -548,19 +577,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def _toggle_install_cell_data_func(self, column, cell, model, tree_iter, _):
 		cell.set_property('inconsistent', model.get_value(tree_iter, 0) == self.__installing_plugin)
-
-	def _uninstall_plugin(self, model_path):
-		model_row = self._model[model_path]
-		plugin_id = _ModelRow(*model_row).id
-		if not self.application.plugin_manager.uninstall(plugin_id):
-			return False
-		del self.config['plugins.installed'][plugin_id]
-		if model_row.parent and model_row.parent[_ModelRow._fields.index('id')] == _LOCAL_REPOSITORY_ID:
-			del self._model[model_path]
-		else:
-			self._set_model_item(model_path, 'installed', False)
-		self.logger.info("successfully uninstalled plugin {0}".format(plugin_id))
-		return True
 
 	def _update_status_bar(self, string_to_set):
 		self.status_bar.pop(0)
@@ -656,7 +672,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if self.config['plugins.installed'].get(name):
 				continue
 			self.config['plugins.installed'][name] = None
-			node.children.append(_ModelRow(
+			node.children.append(_ModelNamedRow(
 				id=plugin.name,
 				installed=True,
 				enabled=plugin.name in pm.enabled_plugins,
@@ -669,7 +685,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				type=_ROW_TYPE_PLUGIN
 			))
 		for name in self.__load_errors.keys():
-			node.children.append(_ModelRow(
+			node.children.append(_ModelNamedRow(
 				id=name,
 				installed=True,
 				enabled=False,
@@ -691,7 +707,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		if not self._last_plugin_selected:
 			return
-		named_plugin = _ModelRow(*self._last_plugin_selected)
+		named_plugin = _ModelNamedRow(*self._last_plugin_selected)
 		plugin_id = named_plugin.id
 		if plugin_id is None:
 			return
@@ -747,7 +763,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._worker_thread_start(self._load_catalogs_tsafe, refresh=True)
 
 	def signal_popup_menu_activate_show_documentation(self, _):
-		named_row = self._selected_row
+		named_row = self._selected_named_row
 		if named_row is None or named_row.type != _ROW_TYPE_PLUGIN:
 			return
 		md_file = None
@@ -764,9 +780,21 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		window.webview.load_markdown_file(md_file)
 		window.window.set_title('Plugin Documentation')
 
+	def signal_popup_menu_activate_update(self, _):
+		model_row = self._selected_model_row
+		named_row = _ModelNamedRow(*model_row)
+		if named_row is None:
+			return
+		if not (named_row.type == _ROW_TYPE_PLUGIN and named_row.installed and named_row.sensitive_installed):
+			return
+		if not self._plugin_uninstall(model_row):
+			gui_utilities.show_dialog_error('Update Failed', self.window, 'Failed to uninstall the existing plugin data.')
+			return
+		self._plugin_install(model_row)
+
 	def signal_renderer_toggled_enable(self, _, path):
 		pm = self.application.plugin_manager
-		named_row = _ModelRow(*self._model[path])
+		named_row = _ModelNamedRow(*self._model[path])
 		if named_row.type != _ROW_TYPE_PLUGIN:
 			return
 		if named_row.id not in pm.loaded_plugins:
@@ -787,35 +815,21 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.config['plugins.enabled'].append(named_row.id)
 
 	def signal_renderer_toggled_install(self, _, path):
-		if not self._worker_thread_is_ready:
-			# check it here to fail fast, then check it again later
-			self._show_dialog_busy()
-			return
-		repo_model, catalog_model = self._get_plugin_model_parents(self._model[path])
-		named_row = _ModelRow(*self._model[path])
+		model_row = self._selected_model_row
+		named_row = _ModelNamedRow(*model_row)
 		if named_row.installed:
-			self._uninstall_plugin(path)
-			return
-
-		if named_row.id in self.config['plugins.installed']:
-			plugin_src = self.config['plugins.installed'].get(named_row.id)
-			if plugin_src != {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}:
-				window_question = 'A plugin with this name is already installed from another\nrepository. Do you want to replace it with this one?'
-				if not gui_utilities.show_dialog_yes_no('Plugin installed from another source', self.window, window_question):
-					return
-				if not self._remove_matching_plugin(path, plugin_src):
-					self.logger.warning("failed to uninstall plugin {0}".format(named_row.id))
-					return
-		self._worker_thread_start(self._install_plugin_tsafe, path, catalog_model, repo_model, named_row)
+			self._plugin_uninstall(model_row)
+		else:
+			self._plugin_install(model_row)
 
 	def signal_treeview_row_activated(self, treeview, path, column):
 		model_instance = self._model[path]
 		self._set_info(model_instance)
-		named_row = _ModelRow(*model_instance)
+		named_row = _ModelNamedRow(*model_instance)
 
 		sensitive = named_row.type == _ROW_TYPE_PLUGIN and named_row.installed
 		self._info_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
 		self._tv_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
-		#sensitive = named_row.installed and named_row.sensitive_installed
-		#self._info_popup_menu['Update'].set_property('sensitive', sensitive)
-		#self._tv_popup_menu['Update'].set_property('sensitive', sensitive)
+		sensitive = named_row.type == _ROW_TYPE_PLUGIN and named_row.installed and named_row.sensitive_installed
+		self._info_popup_menu['Update'].set_property('sensitive', sensitive)
+		self._tv_popup_menu['Update'].set_property('sensitive', sensitive)
