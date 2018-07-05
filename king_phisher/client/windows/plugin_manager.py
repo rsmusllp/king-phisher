@@ -252,21 +252,29 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				))
 		gui_utilities.glib_idle_add_once(self.__store_add_node, catalog_node)
 
-	def _disable_plugin(self, path, is_path=True):
-		named_row = _ModelNamedRow(*(self._model[path] if is_path else path))
-		self.application.plugin_manager.disable(named_row.id)
-		self.config['plugins.enabled'].remove(named_row.id)
-		if is_path:
-			self._set_model_item(path, 'enabled', False)
-		else:
-			path[_ModelNamedRow._fields.index('enabled')] = False
-
 	def _get_plugin_model_parents(self, plugin_model_row):
 		return _ModelNamedRow(*plugin_model_row.parent), _ModelNamedRow(*plugin_model_row.parent.parent)
 
 	def _on_plugin_load_error_tsafe(self, name, error):
 		# WARNING: this may not be called from the GUI thread
 		self.__load_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
+
+	def _plugin_disable(self, model_row):
+		named_row = _ModelNamedRow(*model_row)
+		self.application.plugin_manager.disable(named_row.id)
+		self.config['plugins.enabled'].remove(named_row.id)
+		model_row[_ModelNamedRow._fields.index('enabled')] = False
+
+	def _plugin_enable(self, model_row):
+		named_row = _ModelNamedRow(*model_row)
+		pm = self.application.plugin_manager
+		if not pm.loaded_plugins[named_row.id].is_compatible:
+			gui_utilities.show_dialog_error('Incompatible Plugin', self.window, 'This plugin is not compatible.')
+			return
+		if not pm.enable(named_row.id):
+			return
+		self._set_model_item(model_row.path, 'enabled', True)
+		self.config['plugins.enabled'].append(named_row.id)
 
 	def _plugin_install(self, model_row):
 		if not self._worker_thread_is_ready:
@@ -307,7 +315,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
 		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
-		self.application.plugin_manager.load_all(on_error=self._on_plugin_load_error_tsafe)
+		self._reload_plugin_tsafe(model_row, named_row)
 		gui_utilities.glib_idle_add_once(self.__plugin_install_post, catalog_model, repo_model, model_row, named_row)
 
 	def __plugin_install_post(self, catalog_model, repo_model, model_row, named_row):
@@ -360,10 +368,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				self._load_catalog_from_url_tsafe(catalog_url)
 		self._update_status_bar_tsafe('Reloading catalog... completed.')
 
-	def _reload_plugin_tsafe(self, model_row, named_row):
+	def _reload_plugin_tsafe(self, model_row, named_row, enabled=None):
 		self._update_status_bar_tsafe('Reloading plugin...')
 		pm = self.application.plugin_manager
-		enabled = named_row.id in pm.enabled_plugins
+		if enabled is None:
+			enabled = named_row.id in pm.enabled_plugins
 		pm.unload(named_row.id)
 		try:
 			klass = pm.load(named_row.id, reload_module=True)
@@ -400,13 +409,13 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				break
 		if not repo_model:
 			return False
-		for plugin_model in repo_model.iterchildren():
-			named_model = _ModelNamedRow(*plugin_model)
+		for plugin_model_row in repo_model.iterchildren():
+			named_model = _ModelNamedRow(*plugin_model_row)
 			if named_model.id != named_row.id:
 				continue
 			if named_model.enabled:
-				self._disable_plugin(plugin_model, is_path=False)
-			self._plugin_uninstall(plugin_model.path)
+				self._plugin_disable(plugin_model_row)
+			self._plugin_uninstall(plugin_model_row)
 			return True
 		return False
 
@@ -782,7 +791,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def signal_popup_menu_activate_update(self, _):
 		model_row = self._selected_model_row
-		named_row = _ModelNamedRow(*model_row)
+		named_row = None if model_row is None else _ModelNamedRow(*model_row)
 		if named_row is None:
 			return
 		if not (named_row.type == _ROW_TYPE_PLUGIN and named_row.installed and named_row.sensitive_installed):
@@ -793,34 +802,30 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._plugin_install(model_row)
 
 	def signal_renderer_toggled_enable(self, _, path):
-		pm = self.application.plugin_manager
-		named_row = _ModelNamedRow(*self._model[path])
+		model_row = self._model[path]
+		named_row = _ModelNamedRow(*model_row)
 		if named_row.type != _ROW_TYPE_PLUGIN:
 			return
-		if named_row.id not in pm.loaded_plugins:
+		if named_row.id not in self.application.plugin_manager.loaded_plugins:
 			return
 
 		if named_row.id in self.__load_errors:
 			gui_utilities.show_dialog_error('Can Not Enable Plugin', self.window, 'Can not enable a plugin which failed to load.')
 			return
 		if named_row.enabled:
-			self._disable_plugin(path)
+			self._plugin_disable(model_row)
 		else:
-			if not pm.loaded_plugins[named_row.id].is_compatible:
-				gui_utilities.show_dialog_error('Incompatible Plugin', self.window, 'This plugin is not compatible.')
-				return
-			if not pm.enable(named_row.id):
-				return
-			self._set_model_item(path, 'enabled', True)
-			self.config['plugins.enabled'].append(named_row.id)
+			self._plugin_enable(model_row)
 
 	def signal_renderer_toggled_install(self, _, path):
-		model_row = self._selected_model_row
+		model_row = self._model[path]
 		named_row = _ModelNamedRow(*model_row)
-		if named_row.installed:
+		if named_row.type == _ROW_TYPE_PLUGIN and named_row.installed:
 			self._plugin_uninstall(model_row)
 		else:
 			self._plugin_install(model_row)
+		if named_row.enabled:
+			self._plugin_enable(model_row)
 
 	def signal_treeview_row_activated(self, treeview, path, column):
 		model_instance = self._model[path]
