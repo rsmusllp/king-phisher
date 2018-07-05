@@ -480,15 +480,6 @@ class CatalogManager(object):
 		"""
 		return tuple(self.catalogs.keys())
 
-	def get_repositories(self, catalog_id):
-		"""
-		Returns repositories from the requested catalog.
-
-		:param str catalog_id: The name of the catalog in which to get names of repositories from.
-		:return: tuple
-		"""
-		return tuple(self.catalogs[catalog_id].repositories.values())
-
 	def add_catalog(self, catalog):
 		"""
 		Adds the specified catalog to the manager.

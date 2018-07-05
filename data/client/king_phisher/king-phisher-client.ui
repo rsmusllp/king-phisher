@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.4 
+<!-- Generated with glade 3.22.1 
 
 Copyright (c) 2013-2017, SecureState LLC
 All rights reserved.
@@ -88,6 +88,9 @@ Spencer McIntyre</property>
     <property name="documenters">Spencer McIntyre</property>
     <property name="artists">Emily Gundry</property>
     <property name="logo_icon_name">image-missing</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="aboutdialog-vbox1">
         <property name="can_focus">False</property>
@@ -116,14 +119,14 @@ Spencer McIntyre</property>
         </child>
       </object>
     </child>
-    <child>
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkWindow" id="CampaignCompWindow">
     <property name="can_focus">False</property>
     <property name="default_width">750</property>
     <property name="default_height">500</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
     <child>
       <object class="GtkBox" id="box1">
         <property name="visible">True</property>
@@ -221,9 +224,6 @@ Spencer McIntyre</property>
         </child>
       </object>
     </child>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkDialog" id="CampaignSelectionDialog">
     <property name="width_request">650</property>
@@ -232,6 +232,9 @@ Spencer McIntyre</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">King Phisher Campaigns</property>
     <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="CampaignSelectionDialog.dialog-vbox4">
         <property name="visible">True</property>
@@ -411,9 +414,6 @@ Spencer McIntyre</property>
       <action-widget response="-6">CampaignSelectionDialog.button_cancel</action-widget>
       <action-widget response="-10">CampaignSelectionDialog.button_select</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkBox" id="CampaignViewCredentialsTab">
     <property name="width_request">400</property>
@@ -1669,14 +1669,6 @@ Spencer McIntyre</property>
     <child>
       <placeholder/>
     </child>
-    <child internal-child="action_area">
-      <object class="GtkBox" id="CampaignAssistant.action_area">
-        <property name="can_focus">False</property>
-      </object>
-      <packing>
-        <property name="has_padding">False</property>
-      </packing>
-    </child>
   </object>
   <object class="GtkDialog" id="CompanyEditorDialog">
     <property name="width_request">500</property>
@@ -1684,6 +1676,9 @@ Spencer McIntyre</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher Company Editor</property>
     <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox13">
         <property name="can_focus">False</property>
@@ -1825,9 +1820,6 @@ Spencer McIntyre</property>
       <action-widget response="-6">CompanyEditorDialog.button_cancel</action-widget>
       <action-widget response="-10">CompanyEditorDialog.button_apply</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkGrid" id="CompanyEditorGrid">
     <property name="visible">True</property>
@@ -2011,6 +2003,9 @@ Spencer McIntyre</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <property name="urgency_hint">True</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox8">
         <property name="can_focus">False</property>
@@ -2201,6 +2196,19 @@ Spencer McIntyre</property>
     <action-widgets>
       <action-widget response="-5">button1</action-widget>
     </action-widgets>
+  </object>
+  <object class="GtkApplicationWindow" id="HTMLWindow">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="margin_left">5</property>
+    <property name="margin_right">5</property>
+    <property name="margin_top">5</property>
+    <property name="margin_bottom">5</property>
+    <property name="default_width">600</property>
+    <property name="default_height">500</property>
+    <child>
+      <placeholder/>
+    </child>
     <child>
       <placeholder/>
     </child>
@@ -2211,6 +2219,9 @@ Spencer McIntyre</property>
     <property name="title" translatable="yes">Import Campaign</property>
     <property name="window_position">center-on-parent</property>
     <signal name="delete-event" handler="signal_window_delete_event" swapped="no"/>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
     <child>
       <object class="GtkBox" id="ImportCampaignWindow.box">
         <property name="visible">True</property>
@@ -2399,9 +2410,6 @@ Spencer McIntyre</property>
         </child>
       </object>
     </child>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkDialog" id="LoginDialogBase">
     <property name="can_focus">False</property>
@@ -2409,6 +2417,9 @@ Spencer McIntyre</property>
     <property name="default_height">225</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="LoginDialogBase.dialog-vbox5">
         <property name="can_focus">False</property>
@@ -2578,9 +2589,6 @@ Spencer McIntyre</property>
       <action-widget response="-6">LoginDialogBase.button_cancel</action-widget>
       <action-widget response="-10">LoginDialogBase.button_connect</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
     <style>
       <class name="background-add"/>
     </style>
@@ -2774,7 +2782,9 @@ Spencer McIntyre</property>
     <property name="title" translatable="yes">Plugin Manager</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
-    <signal name="destroy-event" handler="signal_destory" swapped="no"/>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
     <child>
       <object class="GtkBox" id="PluginManagerWindow.box">
         <property name="visible">True</property>
@@ -2829,6 +2839,7 @@ Spencer McIntyre</property>
                           <object class="GtkStack" id="PluginManagerWindow.stack_info">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_right">10</property>
                             <child>
                               <object class="GtkGrid" id="PluginManagerWindow.grid_plugin_info">
                                 <property name="visible">True</property>
@@ -2836,22 +2847,6 @@ Spencer McIntyre</property>
                                 <property name="row_spacing">3</property>
                                 <property name="column_spacing">3</property>
                                 <property name="column_homogeneous">True</property>
-                                <child>
-                                  <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_title">
-                                    <property name="visible">True</property>
-                                    <property name="sensitive">False</property>
-                                    <property name="can_focus">False</property>
-                                    <attributes>
-                                      <attribute name="weight" value="bold"/>
-                                      <attribute name="scale" value="1.25"/>
-                                    </attributes>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">0</property>
-                                    <property name="top_attach">0</property>
-                                    <property name="width">4</property>
-                                  </packing>
-                                </child>
                                 <child>
                                   <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_for_authors">
                                     <property name="visible">True</property>
@@ -3055,6 +3050,54 @@ Spencer McIntyre</property>
                                     <property name="width">3</property>
                                   </packing>
                                 </child>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="spacing">5</property>
+                                    <child>
+                                      <object class="GtkMenuButton" id="PluginManagerWindow.menubutton_plugin_info">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <child>
+                                          <object class="GtkImage">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="stock">gtk-go-down</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="PluginManagerWindow.label_plugin_info_title">
+                                        <property name="visible">True</property>
+                                        <property name="sensitive">False</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="halign">start</property>
+                                        <attributes>
+                                          <attribute name="weight" value="bold"/>
+                                          <attribute name="scale" value="1.25"/>
+                                        </attributes>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">0</property>
+                                    <property name="width">4</property>
+                                  </packing>
+                                </child>
                               </object>
                               <packing>
                                 <property name="name">page0</property>
@@ -3236,9 +3279,6 @@ Spencer McIntyre</property>
         </child>
       </object>
     </child>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkAdjustment" id="PortAdjustment">
     <property name="lower">1</property>
@@ -3255,6 +3295,9 @@ Spencer McIntyre</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <signal name="button-press-event" handler="signal_button_pressed" swapped="no"/>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="LoginDialog.dialog-vbox5">
         <property name="can_focus">False</property>
@@ -3529,9 +3572,6 @@ Spencer McIntyre</property>
       <action-widget response="-6">LoginDialog.button_cancel</action-widget>
       <action-widget response="-10">LoginDialog.button_connect</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
     <style>
       <class name="background-add"/>
     </style>
@@ -3606,6 +3646,9 @@ Spencer McIntyre</property>
     <property name="resizable">False</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="ConfigurationDialog.dialog-vbox3">
         <property name="visible">True</property>
@@ -4549,9 +4592,6 @@ Spencer McIntyre</property>
       <action-widget response="-6">ConfigurationDialog.button_cancel</action-widget>
       <action-widget response="-10">ConfigurationDialog.button_apply</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkImage" id="StockAddImage">
     <property name="visible">True</property>
@@ -4587,6 +4627,9 @@ Spencer McIntyre</property>
     <property name="default_height">400</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox6">
         <property name="can_focus">False</property>
@@ -4787,9 +4830,6 @@ Spencer McIntyre</property>
       <action-widget response="-6">ClonePageDialog.button_cancel</action-widget>
       <action-widget response="-10">ClonePageDialog.button_clone</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkImage" id="StockHelpImage">
     <property name="visible">True</property>
@@ -4800,6 +4840,9 @@ Spencer McIntyre</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher RPC</property>
     <property name="destroy_with_parent">True</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
     <child>
       <object class="GtkBox" id="RPCTerminalAppWindow.box_main">
         <property name="width_request">-1</property>
@@ -4903,9 +4946,6 @@ Spencer McIntyre</property>
           <placeholder/>
         </child>
       </object>
-    </child>
-    <child type="titlebar">
-      <placeholder/>
     </child>
   </object>
   <object class="GtkImage" id="StockMediaPlayImage">
@@ -5467,6 +5507,9 @@ Spencer McIntyre</property>
     <property name="default_width">450</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox12">
         <property name="can_focus">False</property>
@@ -5638,9 +5681,6 @@ host key will store it for identification verification of future connections.</p
       <action-widget response="-2">HostKeyAcceptDialog.button_reject</action-widget>
       <action-widget response="-3">HostKeyAcceptDialog.button_accept</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkDialog" id="HostKeyWarnDialog">
     <property name="width_request">450</property>
@@ -5650,6 +5690,9 @@ host key will store it for identification verification of future connections.</p
     <property name="default_width">450</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox15">
         <property name="can_focus">False</property>
@@ -5855,9 +5898,6 @@ your communications. Please contact the system administrator.</property>
       <action-widget response="-3">HostKeyWarnDialog.button_accept</action-widget>
       <action-widget response="-2">HostKeyWarnDialog.button_reject</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkDialog" id="TagEditorDialog">
     <property name="width_request">450</property>
@@ -5865,6 +5905,9 @@ your communications. Please contact the system administrator.</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">King Phisher Tag Editor</property>
     <property name="type_hint">normal</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox10">
         <property name="can_focus">False</property>
@@ -6004,9 +6047,6 @@ your communications. Please contact the system administrator.</property>
     <action-widgets>
       <action-widget response="-7">TagEditorDialog.button_close</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkDialog" id="TextEntryDialog">
     <property name="can_focus">False</property>
@@ -6014,6 +6054,9 @@ your communications. Please contact the system administrator.</property>
     <property name="default_height">125</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="TextEntryDialog.dialog-vbox5">
         <property name="can_focus">False</property>
@@ -6108,9 +6151,6 @@ your communications. Please contact the system administrator.</property>
       <action-widget response="-6">TextEntryDialog.button_cancel</action-widget>
       <action-widget response="-10">TextEntryDialog.button_apply</action-widget>
     </action-widgets>
-    <child>
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkAdjustment" id="TimeDuration">
     <property name="lower">1</property>

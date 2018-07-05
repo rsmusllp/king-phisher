@@ -36,8 +36,10 @@ import functools
 import importlib
 import inspect
 import logging
+import os
 import platform
 import re
+import shutil
 import sys
 import textwrap
 import threading
@@ -414,6 +416,26 @@ class PluginManagerBase(object):
 		"""Return a tuple of all available plugins that can be loaded."""
 		return tuple(self.plugin_source.list_plugins())
 
+	def get_plugin_path(self, name):
+		"""
+		Get the path at which the plugin data resides. This is either the path
+		to the single plugin file or a folder in the case that the plugin is a
+		module. In either case, the path is an absolute path.
+
+		:param str name: The name of the plugin to get the path for.
+		:return: The path of the plugin data.
+		:rtype: str
+		"""
+		module = self.load_module(name)
+		path = getattr(module, '__file__', None)
+		if path is None:
+			return
+		if path.endswith(('.pyc', '.pyo')):
+			path = path[:-1]
+		if path.endswith(os.path.sep + '__init__.py'):
+			path = path[:-11]
+		return path
+
 	def shutdown(self):
 		"""
 		Unload all plugins and perform additional clean up operations.
@@ -545,6 +567,27 @@ class PluginManagerBase(object):
 		if reload_module:
 			recursive_reload(module)
 		return module
+
+	def uninstall(self, name):
+		"""
+		Uninstall a plugin by first unloading it and then delete it's data on
+		disk. The plugin data on disk is found with the
+		:py:meth:`.get_plugin_path` method.
+
+		:param str name: The name of the plugin to uninstall.
+		:return: Whether or not the plugin was successfully uninstalled.
+		:rtype: bool
+		"""
+		plugin_path = self.get_plugin_path(name)
+		if os.path.isfile(plugin_path) or os.path.islink(plugin_path):
+			os.remove(plugin_path)
+		elif os.path.isdir(plugin_path):
+			shutil.rmtree(plugin_path)
+		else:
+			self.logger.warning('failed to identify the data path for plugin: ' + name)
+			return False
+		self.unload(name)
+		return True
 
 	def unload(self, name):
 		"""
