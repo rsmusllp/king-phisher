@@ -35,6 +35,7 @@ import functools
 from king_phisher.client import gui_utilities
 from king_phisher.client.dialogs import about
 from king_phisher.client.widget import extras
+from king_phisher.client.widget import managers
 
 from gi.repository import Gdk
 from gi.repository import Gtk
@@ -99,22 +100,14 @@ class LoginDialog(LoginDialogBase):
 	)
 	def __init__(self, *args, **kwargs):
 		super(LoginDialog, self).__init__(*args, **kwargs)
-		self.popup_menu = Gtk.Menu.new()
-
-		menu_item = Gtk.MenuItem.new_with_label('About')
-		menu_item.connect('activate', lambda x: about.AboutDialog(self.application).interact())
-		self.popup_menu.append(menu_item)
-
-		menu_item = Gtk.MenuItem.new_with_label('Import Configuration')
-		menu_item.connect('activate', self.signal_menuitem_activate_import_config)
-		self.popup_menu.append(menu_item)
-
-		self.popup_menu.show_all()
+		self.popup_menu = managers.MenuManager()
+		self.popup_menu.append('About', lambda x: about.AboutDialog(self.application).interact())
+		self.popup_menu.append('Import Configuration', self.signal_menuitem_activate_import_config)
 
 	def signal_button_pressed(self, _, event):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY):
 			return
-		self.popup_menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
+		self.popup_menu.menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
 		return True
 
 	def signal_menuitem_activate_import_config(self, _):

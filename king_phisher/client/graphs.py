@@ -40,6 +40,7 @@ from king_phisher import ua_parser
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
+from king_phisher.client.widget import managers
 from king_phisher.constants import ColorHexCode
 
 from gi.repository import Gtk
@@ -159,21 +160,16 @@ class GraphBase(object):
 		self.canvas.mpl_connect('button_press_event', self.mpl_signal_canvas_button_pressed)
 		self.canvas.show()
 		self.navigation_toolbar = NavigationToolbar(self.canvas, self.application.get_active_window())
-		self.popup_menu = Gtk.Menu.new()
 
-		menu_item = Gtk.MenuItem.new_with_label('Export')
-		menu_item.connect('activate', self.signal_activate_popup_menu_export)
-		self.popup_menu.append(menu_item)
-
-		menu_item = Gtk.MenuItem.new_with_label('Refresh')
-		menu_item.connect('activate', self.signal_activate_popup_refresh)
-		self.popup_menu.append(menu_item)
+		self.popup_menu = managers.MenuManager()
+		self.popup_menu.append('Export', self.signal_activate_popup_menu_export)
+		self.popup_menu.append('Refresh', self.signal_activate_popup_refresh)
 
 		menu_item = Gtk.CheckMenuItem.new_with_label('Show Toolbar')
 		menu_item.connect('toggled', self.signal_toggled_popup_menu_show_toolbar)
 		self._menu_item_show_toolbar = menu_item
-		self.popup_menu.append(menu_item)
-		self.popup_menu.show_all()
+		self.popup_menu.append_item(menu_item)
+
 		self.navigation_toolbar.hide()
 		self._legend = None
 
@@ -265,7 +261,7 @@ class GraphBase(object):
 	def mpl_signal_canvas_button_pressed(self, event):
 		if event.button != 3:
 			return
-		self.popup_menu.popup(None, None, None, None, event.button, Gtk.get_current_event_time())
+		self.popup_menu.menu.popup(None, None, None, None, event.button, Gtk.get_current_event_time())
 		return True
 
 	def signal_activate_popup_menu_export(self, action):
