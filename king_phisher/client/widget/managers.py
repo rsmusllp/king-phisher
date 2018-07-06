@@ -163,7 +163,7 @@ class MenuManager(object):
 	def __setitem__(self, label, menu_item):
 		return self.append_item(menu_item, set_show=False)
 
-	def append(self, label, activate=None):
+	def append(self, label, activate=None, activate_args=()):
 		"""
 		Create and append a new :py:class:`Gtk.MenuItem` with the specified
 		label to the menu.
@@ -171,6 +171,8 @@ class MenuManager(object):
 		:param str label: The label for the new menu item.
 		:param activate: An optional callback function to connect to the new
 			menu item's ``activate`` signal.
+		:return: Returns the newly created and added menu item.
+		:rtype: :py:class:`Gtk.MenuItem`
 		"""
 		if label in self.items:
 			raise RuntimeError('label already exists in menu items')
@@ -178,7 +180,8 @@ class MenuManager(object):
 		self.items[label] = menu_item
 		self.append_item(menu_item)
 		if activate:
-			menu_item.connect('activate', activate)
+			menu_item.connect('activate', activate, *activate_args)
+		return menu_item
 
 	def append_item(self, menu_item, set_show=True):
 		"""
@@ -192,6 +195,22 @@ class MenuManager(object):
 		if set_show:
 			menu_item.show()
 		self.menu.append(menu_item)
+		return menu_item
+
+	def append_submenu(self, label):
+		"""
+		Create and append a submenu item, then return a new menu manager
+		instance for it.
+
+		:param str label: The label for the new menu item.
+		:return: Returns the newly created and added menu item.
+		:rtype: :py:class:`Gtk.MenuManager`
+		"""
+		submenu = self.__class__()
+		submenu_item = Gtk.MenuItem.new_with_label(label)
+		submenu_item.set_submenu(submenu.menu)
+		self.append_item(submenu_item)
+		return submenu
 
 class TreeViewManager(object):
 	"""
