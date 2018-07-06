@@ -14,7 +14,12 @@ Version 1.12.0
 *In Progress*
 
 * Added support for users to set their email address for campaign alerts via email
-* Added additional plugin metadata fields for reference URLs and categoryre classifiers
+* Added additional plugin metadata fields for reference URLs and category classifiers
+* Multiple improvements to the client plugin manager
+
+   * There is now an option to update plugins in the menu
+   * Plugins can ship with dedicated documentation in markdown files that will be displayed
+   * The GUI no longer locks up while tasks like downloading plugins are taking place
 
 Version 1.11.0
 ^^^^^^^^^^^^^^

@@ -323,6 +323,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if model_row.path is not None:
 			self._set_model_item(model_row.path, 'installed', True)
 			self._set_model_item(model_row.path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
+			if self._selected_model_row.path == model_row.path:
+				self._popup_menu_refresh(model_row)
 		self._update_status_bar("Installing plugin {} completed.".format(named_row.title))
 
 	def _plugin_uninstall(self, model_row):
@@ -336,6 +338,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self._set_model_item(model_row.path, 'installed', False)
 		self.logger.info("successfully uninstalled plugin {0}".format(plugin_id))
 		return True
+
+	def _popup_menu_refresh(self, model_row):
+		named_row = _ModelNamedRow(*model_row)
+		sensitive = named_row.type == _ROW_TYPE_PLUGIN and named_row.installed
+		self._info_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
+		self._tv_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
+		sensitive = named_row.type == _ROW_TYPE_PLUGIN and named_row.installed and named_row.sensitive_installed
+		self._info_popup_menu['Update'].set_property('sensitive', sensitive)
+		self._tv_popup_menu['Update'].set_property('sensitive', sensitive)
 
 	def _reload(self):
 		model_row = self._selected_model_row
@@ -830,13 +841,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self._plugin_enable(model_row)
 
 	def signal_treeview_row_activated(self, treeview, path, column):
-		model_instance = self._model[path]
-		self._set_info(model_instance)
-		named_row = _ModelNamedRow(*model_instance)
-
-		sensitive = named_row.type == _ROW_TYPE_PLUGIN and named_row.installed
-		self._info_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
-		self._tv_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
-		sensitive = named_row.type == _ROW_TYPE_PLUGIN and named_row.installed and named_row.sensitive_installed
-		self._info_popup_menu['Update'].set_property('sensitive', sensitive)
-		self._tv_popup_menu['Update'].set_property('sensitive', sensitive)
+		model_row = self._model[path]
+		self._set_info(model_row)
+		self._popup_menu_refresh(model_row)
