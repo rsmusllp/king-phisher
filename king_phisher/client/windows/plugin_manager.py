@@ -32,6 +32,7 @@
 
 import collections
 import datetime
+import errno
 import functools
 import os
 import sys
@@ -75,6 +76,19 @@ class _ModelNode(object):
 	def __init__(self, *args, **kwargs):
 		self.row = _ModelNamedRow(*args, **kwargs)
 		self.children = collections.deque()
+
+class PluginDocumentationWindow(html.HTMLWindow):
+	def __init__(self, application, plugin_id):
+		super(PluginDocumentationWindow, self).__init__(application)
+		plugin_path = self.application.plugin_manager.get_plugin_path(plugin_id)
+		if plugin_path is None:
+			raise FileNotFoundError(errno.ENOENT, "could not find the data path for plugin '{0}'".format(plugin_id))
+		md_file = os.path.join(plugin_path, 'README.md')
+		if md_file is None or not os.path.isfile(md_file):
+			raise FileNotFoundError(errno.ENOENT, "plugin '{0}' has no documentation".format(plugin_id), md_file)
+		plugin = application.plugin_manager[plugin_id]
+		self.webview.load_markdown_file(md_file, template='plugin-documentation.html', template_vars={'plugin': plugin})
+		self.window.set_title('Plugin Documentation')
 
 class PluginManagerWindow(gui_utilities.GladeGObject):
 	"""
@@ -788,20 +802,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		named_row = self._selected_named_row
 		if named_row is None or named_row.type != _ROW_TYPE_PLUGIN:
 			return
-		md_file = None
-		if named_row.installed:
-			plugin_path = self.application.plugin_manager.get_plugin_path(named_row.id)
-			if plugin_path is None:
-				gui_utilities.show_dialog_warning('No Documentation', self.window, 'Failed to identify the plugin data path.')
-				return
-			md_file = os.path.join(plugin_path, 'README.md')
-		if md_file is None or not os.path.isfile(md_file):
+		if not named_row.installed:
 			gui_utilities.show_dialog_warning('No Documentation', self.window, 'This plugin has no documentation.')
 			return
-		plugin = self.application.plugin_manager[named_row.id]
-		window = html.HTMLWindow(self.application)
-		window.webview.load_markdown_file(md_file, template='plugin-documentation.html', template_vars={'plugin': plugin})
-		window.window.set_title('Plugin Documentation')
+		try:
+			PluginDocumentationWindow(self.application, named_row.id)
+		except FileNotFoundError as error:
+			self.logger.warning(error.strerror)
+			gui_utilities.show_dialog_warning('No Documentation', self.window, error.strerror.capitalize() + '.')
 
 	def signal_popup_menu_activate_update(self, _):
 		model_row = self._selected_model_row

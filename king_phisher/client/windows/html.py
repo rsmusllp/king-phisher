@@ -40,9 +40,10 @@ class HTMLWindow(gui_utilities.GladeGObject):
 	This basic window contains a :py:class:`~.extras.WebKitHTMLView` widget for
 	rendering and displaying HTML content.
 	"""
+	dependencies = gui_utilities.GladeDependencies(name='HTMLWindow')
 	top_gobject = 'window'
-	def __init__(self, *args, **kwargs):
-		super(HTMLWindow, self).__init__(*args, **kwargs)
+	def __init__(self, application):
+		super(HTMLWindow, self).__init__(application)
 		self.webview = extras.WebKitHTMLView()
 		"""The :py:class:`~.extras.WebKitHTMLView` widget instance."""
 		self.webview.show()
