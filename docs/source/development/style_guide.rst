@@ -49,6 +49,20 @@ This same style is applied to multi-line list, tuple and dictionary
 definitions with the bracket, or curly-brace taking the place of the
 opening and closing parenthesis as appropriate.
 
+Special Method Names
+--------------------
+
+Some functions (and methods) have special prefixes or suffixes to denote
+specific compatibility.
+
++-------------+--------+--------------------------+
+| Name        | Type   | Details                  |
++-------------+--------+--------------------------+
+| ``_tsafe``  | Suffix | Non-Main GUI thread safe |
++-------------+--------+--------------------------+
+| ``signal_`` | Prefix | GTK signal handler       |
++-------------+--------+--------------------------+
+
 English Verbiage
 ----------------
 

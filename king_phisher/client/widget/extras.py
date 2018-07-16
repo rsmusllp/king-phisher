@@ -34,13 +34,15 @@ import codecs
 import logging
 import os
 
+from king_phisher import find
 from king_phisher import its
+from king_phisher import templates
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
 import boltons.strutils
 import markdown
-import mdx_gfm
+import mdx_partial_gfm
 from gi.repository import Gdk
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -215,7 +217,7 @@ class WebKitHTMLView(_WebKitX_WebView):
 	__gsignals__ = {
 		'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, (WebKitX.NavigationPolicyDecision if has_webkit2 else WebKitX.WebPolicyDecision)))
 	}
-
+	template_env = templates.TemplateEnvironmentBase()
 	def __init__(self):
 		super(WebKitHTMLView, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
@@ -253,17 +255,26 @@ class WebKitHTMLView(_WebKitX_WebView):
 			html_data = file_h.read()
 		self.load_html_data(html_data, html_file)
 
-	def load_markdown_data(self, md_data, html_file_uri=None, gh_flavor=True):
+	def load_markdown_data(self, md_data, html_file_uri=None, gh_flavor=True, template=None, template_vars=None):
 		extensions = []
 		if gh_flavor:
-			extensions = [mdx_gfm.GithubFlavoredMarkdownExtension()]
-		html = markdown.markdown(md_data, extensions=extensions)
+			extensions = [mdx_partial_gfm.PartialGithubFlavoredMarkdownExtension()]
+		md_data = markdown.markdown(md_data, extensions=extensions)
+		if template:
+			template = find.data_file(template, os.R_OK)
+			if template is None:
+				raise ValueError('unable to find the specified template file')
+			template_vars = template_vars or {}
+			template_vars['markdown'] = md_data
+			html = self.template_env.from_file(template).render(template_vars)
+		else:
+			html = md_data
 		return self.load_html_data(html, html_file_uri=html_file_uri)
 
-	def load_markdown_file(self, md_file, gh_flavor=True):
+	def load_markdown_file(self, md_file, **kwargs):
 		with codecs.open(md_file, 'r', encoding='utf-8') as file_h:
 			md_data = file_h.read()
-		self.load_markdown_data(md_data, md_file, gh_flavor=gh_flavor)
+		self.load_markdown_data(md_data, md_file, **kwargs)
 
 	def signal_button_pressed(self, _, event):
 		if event.button == Gdk.BUTTON_SECONDARY:

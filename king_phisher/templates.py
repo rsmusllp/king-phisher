@@ -102,6 +102,11 @@ class TemplateEnvironmentBase(jinja2.Environment):
 			for key, value in global_vars.items():
 				self.globals[key] = value
 
+	def from_file(self, path, **kwargs):
+		with open(path, 'r') as file_h:
+			template = file_h.read()
+		return self.from_string(template, **kwargs)
+
 	def join_path(self, template, parent):
 		"""
 		Over ride the default :py:meth:`jinja2.Environment.join_path` method to

@@ -798,8 +798,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if md_file is None or not os.path.isfile(md_file):
 			gui_utilities.show_dialog_warning('No Documentation', self.window, 'This plugin has no documentation.')
 			return
+		plugin = self.application.plugin_manager[named_row.id]
 		window = html.HTMLWindow(self.application)
-		window.webview.load_markdown_file(md_file)
+		window.webview.load_markdown_file(md_file, template='plugin-documentation.html', template_vars={'plugin': plugin})
 		window.window.set_title('Plugin Documentation')
 
 	def signal_popup_menu_activate_update(self, _):

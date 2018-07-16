@@ -27,8 +27,10 @@ notes.txt
 
 data/client/king_phisher/#king-phisher-client.ui#
 data/client/king_phisher/king-phisher-client.ui~
-data/server/king_phisher/plugins/*
 data/client/king_phisher/style/.sass-cache/*
+data/server/king_phisher/plugins/*
+
+!data/client/king_phisher/plugin-documentation.html
 !data/server/docker/docker-compose.yml
 !data/server/king_phisher/error_*.html
 !data/server/king_phisher/server_config.yml
