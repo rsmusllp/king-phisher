@@ -78,7 +78,24 @@ class _ModelNode(object):
 		self.children = collections.deque()
 
 class PluginDocumentationWindow(html.HTMLWindow):
+	"""
+	A window for displaying plugin documentation from their respective README.md
+	files. If the documentation file can not be found a
+	:py:exc:`.FileNotFoundError` exception will be raised on initialization. The
+	contents of the README.md file is then rendered as markdown data and
+	displayed using an :py:class:`~king_phisher.client.windows.html.HTMLWindow`.
+	The plugin must be loaded into the
+	:py:attr:`~king_phisher.client.application.KingPhisherClientApplication.plugin_manager`
+	but does not have to be enabled for documentation to be displayed.
+	"""
+	template = 'plugin-documentation.html'
+	"""The Jinja2 HTML template to load for hosting the rendered markdown documentation."""
 	def __init__(self, application, plugin_id):
+		"""
+		:param application: The parent application for this object.
+		:type application: :py:class:`Gtk.Application`
+		:param str plugin_id: The identifier of this plugin.
+		"""
 		super(PluginDocumentationWindow, self).__init__(application)
 		plugin_path = self.application.plugin_manager.get_plugin_path(plugin_id)
 		if plugin_path is None:
@@ -94,7 +111,11 @@ class PluginDocumentationWindow(html.HTMLWindow):
 		self.window.set_title('Plugin Documentation')
 
 	def refresh(self):
-		self.webview.load_markdown_file(self._md_file, template='plugin-documentation.html', template_vars={'plugin': self._plugin})
+		"""
+		Refresh the contents of the documentation. This will reload both the
+		markdown content from README.md as well as the HTML template file.
+		"""
+		self.webview.load_markdown_file(self._md_file, template=self.template, template_vars={'plugin': self._plugin})
 
 	def signal_webview_open_remote_uri(self, webview, uri, decision):
 		utilities.open_uri(uri)

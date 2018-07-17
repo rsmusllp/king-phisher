@@ -49,9 +49,14 @@ from king_phisher import version
 import boltons.strutils
 import jinja2
 
-__all__ = ('TemplateEnvironmentBase', 'MessageTemplateEnvironment')
+__all__ = ('FindFileSystemLoader', 'TemplateEnvironmentBase', 'MessageTemplateEnvironment')
 
 class FindFileSystemLoader(jinja2.BaseLoader):
+	"""
+	A :py:class:`~jinja2.BaseLoader` which loads templates by name from the file
+	system. Templates are searched for using the
+	:py:func:`~king_phisher.find.data_file` function.
+	"""
 	def get_source(self, environment, template):
 		template_path = find.data_file(template, os.R_OK)
 		if template_path is None:
@@ -62,7 +67,10 @@ class FindFileSystemLoader(jinja2.BaseLoader):
 		return source, template_path, lambda: mtime == os.path.getmtime(template_path)
 
 class TemplateEnvironmentBase(jinja2.Environment):
-	"""A configured Jinja2 environment with additional filters."""
+	"""
+	A configured Jinja2 :py:class:`~jinja2.Environment` with additional filters
+	and default settings.
+	"""
 	def __init__(self, loader=None, global_vars=None):
 		"""
 		:param loader: The loader to supply to the environment.
@@ -110,9 +118,22 @@ class TemplateEnvironmentBase(jinja2.Environment):
 				self.globals[key] = value
 
 	def from_file(self, path, **kwargs):
-		with open(path, 'r') as file_h:
-			template = file_h.read()
-		return self.from_string(template, **kwargs)
+		"""
+		A convenience method to load template data from a specified file,
+		passing it to :py:meth:`~jinja2.Environment.from_string`.
+
+		.. warning::
+			Because this method ultimately passes the template data to the
+			:py:meth:`~jinja2.Environment.from_string` method, the data will not
+			be automatically escaped based on the file extension as it would be
+			when using :py:meth:`~jinja2.Environment.get_template`.
+
+		:param str path: The path from which to load the template data.
+		:param kwargs: Additional keyword arguments to pass to :py:meth:`~jinja2.Environment.from_string`.
+		"""
+		with codecs.open(path, 'r', encoding='utf-8') as file_h:
+			source = file_h.read()
+		return self.from_string(source, **kwargs)
 
 	def join_path(self, template, parent):
 		"""
@@ -132,7 +153,9 @@ class TemplateEnvironmentBase(jinja2.Environment):
 
 	@property
 	def standard_variables(self):
-		"""Additional standard variables that can optionally be used for templates."""
+		"""
+		Additional standard variables that can optionally be used in templates.
+		"""
 		std_vars = {
 			'time': {
 				'local': datetime.datetime.now(),

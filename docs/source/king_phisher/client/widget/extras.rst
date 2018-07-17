@@ -21,10 +21,8 @@ Classes
    :show-inheritance:
    :members:
    :special-members: __init__
-   :undoc-members:
 
 .. autoclass:: WebKitHTMLView
    :show-inheritance:
    :members:
    :special-members: __init__
-   :undoc-members:
