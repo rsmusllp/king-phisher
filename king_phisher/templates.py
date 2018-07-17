@@ -34,11 +34,13 @@ import base64
 import codecs
 import datetime
 import hashlib
+import html
 import logging
 import os
 import random
 import re
 
+from king_phisher import find
 from king_phisher import its
 from king_phisher import ua_parser
 from king_phisher import utilities
@@ -47,12 +49,17 @@ from king_phisher import version
 import boltons.strutils
 import jinja2
 
-if its.py_v2:
-	import cgi as html
-else:
-	import html
-
 __all__ = ('TemplateEnvironmentBase', 'MessageTemplateEnvironment')
+
+class FindFileSystemLoader(jinja2.BaseLoader):
+	def get_source(self, environment, template):
+		template_path = find.data_file(template, os.R_OK)
+		if template_path is None:
+			raise jinja2.TemplateNotFound(template)
+		mtime = os.path.getmtime(template_path)
+		with codecs.open(template_path, 'r', encoding='utf-8') as file_h:
+			source = file_h.read()
+		return source, template_path, lambda: mtime == os.path.getmtime(template_path)
 
 class TemplateEnvironmentBase(jinja2.Environment):
 	"""A configured Jinja2 environment with additional filters."""
@@ -63,7 +70,7 @@ class TemplateEnvironmentBase(jinja2.Environment):
 		:param dict global_vars: Additional global variables for the environment.
 		"""
 		self.logger = logging.getLogger('KingPhisher.TemplateEnvironment')
-		autoescape = lambda name: isinstance(name, str) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
+		autoescape = jinja2.select_autoescape(['html', 'htm', 'xml'], default_for_string=False)
 		extensions = ['jinja2.ext.autoescape', 'jinja2.ext.do']
 		super(TemplateEnvironmentBase, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
 

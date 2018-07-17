@@ -41,6 +41,7 @@ from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
 import boltons.strutils
+import jinja2
 import markdown
 import mdx_partial_gfm
 from gi.repository import Gdk
@@ -217,7 +218,7 @@ class WebKitHTMLView(_WebKitX_WebView):
 	__gsignals__ = {
 		'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, (WebKitX.NavigationPolicyDecision if has_webkit2 else WebKitX.WebPolicyDecision)))
 	}
-	template_env = templates.TemplateEnvironmentBase()
+	template_env = templates.TemplateEnvironmentBase(loader=templates.FindFileSystemLoader())
 	def __init__(self):
 		super(WebKitHTMLView, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
@@ -261,12 +262,10 @@ class WebKitHTMLView(_WebKitX_WebView):
 			extensions = [mdx_partial_gfm.PartialGithubFlavoredMarkdownExtension()]
 		md_data = markdown.markdown(md_data, extensions=extensions)
 		if template:
-			template = find.data_file(template, os.R_OK)
-			if template is None:
-				raise ValueError('unable to find the specified template file')
+			template = self.template_env.get_template(template)
 			template_vars = template_vars or {}
-			template_vars['markdown'] = md_data
-			html = self.template_env.from_file(template).render(template_vars)
+			template_vars['markdown'] = jinja2.Markup(md_data)
+			html = template.render(template_vars)
 		else:
 			html = md_data
 		return self.load_html_data(html, html_file_uri=html_file_uri)
