@@ -1,0 +1,10 @@
+# readthedocs.yml
+# https://king-phisher.readthedocs.io/en/latest/
+
+build:
+  image: latest
+
+python:
+  version: 3.6
+
+requirements_file: docs/requirements.txt

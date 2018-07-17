@@ -37,6 +37,7 @@ data/server/king_phisher/plugins/*
 !data/server/king_phisher/server_config_verification.yml
 !data/server/king_phisher/service_files/*
 !data/*/king_phisher/*/*.html
+!readthedocs.yml
 
 # ignore mprofile output
 mprofile_*.dat
