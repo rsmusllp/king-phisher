@@ -242,7 +242,7 @@ class TreeViewManager(object):
 		"""An ordered dictionary of storage data columns keyed by their respective column titles."""
 		self.column_views = {}
 		"""A dictionary of column treeview's keyed by their column titles."""
-		self.treeview.connect('key-press-event', self.signal_key_pressed)
+		self.treeview.connect('key-press-event', self.signal_key_press_event)
 		if selection_mode is None:
 			selection_mode = Gtk.SelectionMode.SINGLE
 		treeview.get_selection().set_mode(selection_mode)
@@ -356,7 +356,7 @@ class TreeViewManager(object):
 		popup_menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
 		return True
 
-	def signal_key_pressed(self, treeview, event):
+	def signal_key_press_event(self, treeview, event):
 		if event.type != Gdk.EventType.KEY_PRESS:
 			return
 		keyval = event.get_keyval()[1]

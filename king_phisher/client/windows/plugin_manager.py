@@ -86,9 +86,25 @@ class PluginDocumentationWindow(html.HTMLWindow):
 		md_file = os.path.join(plugin_path, 'README.md')
 		if md_file is None or not os.path.isfile(md_file):
 			raise FileNotFoundError(errno.ENOENT, "plugin '{0}' has no documentation".format(plugin_id), md_file)
-		plugin = application.plugin_manager[plugin_id]
-		self.webview.load_markdown_file(md_file, template='plugin-documentation.html', template_vars={'plugin': plugin})
+		self._md_file = md_file
+		self._plugin = self.application.plugin_manager[plugin_id]
+		self.refresh()
+		self.webview.connect('key-press-event', self.signal_key_press_event)
+		self.webview.connect('open-remote-uri', self.signal_webview_open_remote_uri)
 		self.window.set_title('Plugin Documentation')
+
+	def refresh(self):
+		self.webview.load_markdown_file(self._md_file, template='plugin-documentation.html', template_vars={'plugin': self._plugin})
+
+	def signal_webview_open_remote_uri(self, webview, uri, decision):
+		utilities.open_uri(uri)
+
+	def signal_key_press_event(self, webview, event):
+		if event.type != Gdk.EventType.KEY_PRESS:
+			return
+		keyval = event.get_keyval()[1]
+		if keyval == Gdk.KEY_F5:
+			self.refresh()
 
 class PluginManagerWindow(gui_utilities.GladeGObject):
 	"""
