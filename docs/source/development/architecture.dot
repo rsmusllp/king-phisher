@@ -1,0 +1,30 @@
+// diagram overview of the king phisher architecture
+digraph {
+    {rank=same; KingPhisherClient; SMTPServer}
+    {rank=same; Database; PhishingTargets}
+
+    Database
+    KingPhisherClient
+    KingPhisherClient  [label="King Phisher Client"];
+    KingPhisherServer  [label="King Phisher Server"]
+    PhishingTargets    [label="Phishing Targets"]
+    RPC                [color=white; shape=box; style=filled; label="Remote Procedure Call"]
+    SMTPServer         [label="SMTP Server"]
+    WebSocket          [color=white; shape=box; style=filled]
+
+
+    subgraph cluster_0 {
+        color = lightgray;
+        label = "SSH Tunnel";
+        style = filled;
+        RPC WebSocket;
+    }
+
+    KingPhisherClient       -> SMTPServer
+    KingPhisherClient       -> WebSocket         [arrowhead=none]
+    WebSocket               -> KingPhisherServer
+    KingPhisherClient       -> RPC               [arrowhead=none]
+    KingPhisherServer       -> Database
+    PhishingTargets         -> KingPhisherServer
+    RPC                     -> KingPhisherServer
+}

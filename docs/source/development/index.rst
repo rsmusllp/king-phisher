@@ -5,6 +5,7 @@ Development References
    :maxdepth: 1
    :titlesonly:
 
+   architecture_overview.rst
    environment_vars.rst
    style_guide.rst
    release_steps.rst
