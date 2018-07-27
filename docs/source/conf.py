@@ -160,6 +160,10 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
+# -- Options for Graphviz -------------------------------------------------
+graphviz_dot = 'dot'
+graphviz_dot_args = ['-Tsvg']
+graphviz_output_format = 'svg'
 
 # -- Options for HTML output ----------------------------------------------
 

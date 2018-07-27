@@ -44,17 +44,17 @@ schema and their various sub-object types as applicable.
 |             |            | Phisher server.                                          |
 +-------------+------------+----------------------------------------------------------+
 
-Connection
+:Connection:
   A connection sub-object is a special object providing a defined interface used
   to refer to an array of objects. The connection sub-object has a ``total``
   attribute which is an integer as well as an ``edges`` attribute. See
   `Connection Types`_ for more information.
 
-Objects
+:Objects:
   Sub-objects can in turn have their own attributes which can be a combination
   of additional sub-objects or scalars.
 
-N/A
+:N/A:
   Objects with no sub-type return a scalar type such as a string or an integer.
 
 Additional Database Model Attributes
