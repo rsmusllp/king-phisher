@@ -162,8 +162,6 @@ pygments_style = 'sphinx'
 
 # -- Options for Graphviz -------------------------------------------------
 graphviz_dot = 'dot'
-graphviz_dot_args = ['-Tsvg']
-graphviz_output_format = 'svg'
 
 # -- Options for HTML output ----------------------------------------------
 
