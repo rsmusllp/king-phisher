@@ -90,6 +90,8 @@ class ServerPlugin(plugins.PluginBase):
 			This resource can be reached by any user whether or not they
 			are authenticated and or associated with a campaign.
 
+		.. versionadded:: 1.7.0
+
 		:param str path: The path to register the method at.
 		:param method: The handler for the HTTP method.
 		"""
@@ -98,7 +100,7 @@ class ServerPlugin(plugins.PluginBase):
 		path = "_/plugins/{0}/{1}".format(self.name, path)
 		advancedhttpserver.RegisterPath(path)(method)
 
-	def register_rpc(self, path, method):
+	def register_rpc(self, path, method, database_access=False):
 		"""
 		Register a new RPC function at *path* that is handled by *method*. This
 		RPC function can only be called by authenticated users. A single
@@ -108,13 +110,17 @@ class ServerPlugin(plugins.PluginBase):
 		specified path is added within the plugins private RPC handler
 		namespace at ``plugins/$PLUGIN_NAME/$PATH``.
 
+		.. versionadded:: 1.7.0
+		.. versionchanged:: 1.12.0
+			Added the *database_access* parameter.
+
 		:param str path: The path to register the method at.
 		:param method: The handler for the RPC method.
 		"""
 		if path.startswith('/'):
 			path = path[1:]
 		path = "/plugins/{0}/{1}".format(self.name, path)
-		server_rpc.register_rpc(path, database_access=False, log_call=True)(method)
+		server_rpc.register_rpc(path, database_access=database_access, log_call=True)(method)
 
 class ServerPluginManager(plugins.PluginManagerBase):
 	"""

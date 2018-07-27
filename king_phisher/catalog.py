@@ -34,7 +34,6 @@ import binascii
 import collections
 import logging
 import os
-import sys
 import weakref
 
 from king_phisher import security_keys
@@ -45,11 +44,6 @@ import dateutil.parser
 import requests
 import requests_file
 import smoke_zephyr.utilities
-
-if sys.version_info[:3] >= (3, 3, 0):
-	_Mapping = collections.abc.Mapping
-else:
-	_Mapping = collections.Mapping
 
 COLLECTION_TYPES = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
 """
@@ -108,7 +102,7 @@ class CollectionItemFile(object):
 			data['signed-by'] = self.signed_by
 		return data
 
-class Collection(_Mapping):
+class Collection(collections.abc.Mapping):
 	"""
 	An object representing a set of :py:class:`CollectionItemFile` instances,
 	each of which represent a piece of of add on data that are all of the same
@@ -286,7 +280,7 @@ class Repository(object):
 	def _fetch(self, item_file, encoding=None, verify=True):
 		if isinstance(item_file, dict):
 			item_file = CollectionItemFile.from_dict(item_file)
-		url = self.url_base + '/' + item_file.path_source
+		url = self.url_base.rstrip('/') + '/' + item_file.path_source.lstrip('/')
 		self.logger.debug("fetching repository data item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
 		data = self._fetch_url(url)
 		if verify:
@@ -297,11 +291,11 @@ class Repository(object):
 		return data
 
 	def _fetch_json(self, item_file, encoding='utf-8', verify=True):
-		url = self.url_base + '/'
+		url = self.url_base.rstrip('/') + '/'
 		if isinstance(item_file, dict):
-			url += item_file['path-source']
+			url += item_file['path-source'].lstrip('/')
 		else:
-			url += item_file.path_source
+			url += item_file.path_source.lstrip('/')
 		self.logger.debug("fetching repository json item from: {0} (integrity check: {1})".format(url, ('enabled' if verify else 'disabled')))
 		data = self._fetch_url(url)
 		if encoding:
@@ -486,15 +480,6 @@ class CatalogManager(object):
 		"""
 		return tuple(self.catalogs.keys())
 
-	def get_repositories(self, catalog_id):
-		"""
-		Returns repositories from the requested catalog.
-
-		:param str catalog_id: The name of the catalog in which to get names of repositories from.
-		:return: tuple
-		"""
-		return tuple(self.catalogs[catalog_id].repositories.values())
-
 	def add_catalog(self, catalog):
 		"""
 		Adds the specified catalog to the manager.
@@ -513,6 +498,11 @@ def sign_item_files(local_path, signing_key, repo_path=None):
 	iterator from the specified source to be included in either a catalog file
 	or one of it's included files.
 
+	.. warning::
+		This function contains a black list of file extensions which will be
+		skipped. This is to avoid signing files originating from the development
+		process.
+
 	:param str local_path: The real location of where the files exist on disk.
 	:param signing_key: The key with which to sign the files for verification.
 	:param str repo_path: The path of the repository as it exists on disk.
@@ -526,6 +516,11 @@ def sign_item_files(local_path, signing_key, repo_path=None):
 			raise ValueError('local_path must be a sub-directory of repo_path')
 	walker = smoke_zephyr.utilities.FileWalker(local_path, absolute_path=True, skip_dirs=True)
 	for local_file_path in walker:
+		# first skip black listed files that shouldn't be included
+		_, file_extension = os.path.splitext(local_file_path)
+		if file_extension in ('.pyc', '.ui~'):
+			continue
+
 		with open(local_file_path, 'rb') as file_h:
 			signature = signing_key.sign(file_h.read())
 

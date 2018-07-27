@@ -721,30 +721,15 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 
 	def signal_textview_populate_popup(self, textview, menu):
 		# create and populate the 'Insert' submenu
-		insert_submenu = Gtk.Menu.new()
-		menu_item = Gtk.MenuItem.new_with_label('Insert')
-		menu_item.set_submenu(insert_submenu)
-		menu.append(menu_item)
-		menu_item.show()
+		menu = managers.MenuManager(menu)
+		insert_submenu = menu.append_submenu('Insert')
 
-		menu_item = Gtk.MenuItem.new_with_label('Inline Image')
-		menu_item.connect('activate', self.signal_activate_popup_menu_insert_image)
-		insert_submenu.append(menu_item)
-
-		menu_item = Gtk.MenuItem.new_with_label('Tracking Image Tag')
-		menu_item.connect('activate', self.signal_activate_popup_menu_insert, '{{ tracking_dot_image_tag }}')
-		insert_submenu.append(menu_item)
-
-		menu_item = Gtk.MenuItem.new_with_label('Webserver URL')
-		menu_item.connect('activate', self.signal_activate_popup_menu_insert, '{{ url.webserver }}')
-		insert_submenu.append(menu_item)
+		insert_submenu.append('Inline Image', self.signal_activate_popup_menu_insert_image)
+		insert_submenu.append('Tracking Image Tag', self.signal_activate_popup_menu_insert, activate_args=('{{ tracking_dot_image_tag }}',))
+		insert_submenu.append('Webserver URL', self.signal_activate_popup_menu_insert, activate_args=('{{ url.webserver }}',))
 
 		# create and populate the 'Date & Time' submenu
-		insert_datetime_submenu = Gtk.Menu.new()
-		menu_item = Gtk.MenuItem.new_with_label('Date & Time')
-		menu_item.set_submenu(insert_datetime_submenu)
-		insert_submenu.append(menu_item)
-		menu_item.show()
+		insert_datetime_submenu = insert_submenu.append_submenu('Date & Time')
 
 		formats = [
 			'%a %B %d, %Y',
@@ -757,13 +742,13 @@ class MailSenderEditTab(gui_utilities.GladeGObject):
 		dt_now = datetime.datetime.now()
 		for fmt in formats:
 			if fmt:
-				menu_item = Gtk.MenuItem.new_with_label(dt_now.strftime(fmt))
-				menu_item.connect('activate', self.signal_activate_popup_menu_insert, "{{{{ time.local | strftime('{0}') }}}}".format(fmt))
+				insert_datetime_submenu.append(
+					dt_now.strftime(fmt),
+					self.signal_activate_popup_menu_insert,
+					activate_args=("{{{{ time.local | strftime('{0}') }}}}".format(fmt),)
+				)
 			else:
-				menu_item = Gtk.SeparatorMenuItem()
-			insert_datetime_submenu.append(menu_item)
-
-		insert_submenu.show_all()
+				insert_datetime_submenu.append_item(Gtk.SeparatorMenuItem())
 		return True
 
 	def signal_textview_key_pressed(self, textview, event):

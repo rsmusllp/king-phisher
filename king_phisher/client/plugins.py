@@ -38,6 +38,7 @@ import tempfile
 import weakref
 
 from king_phisher import catalog
+from king_phisher import constants
 from king_phisher import plugins
 from king_phisher.client import gui_utilities
 from king_phisher.client import mailer
@@ -605,6 +606,9 @@ class CatalogCacheManager(object):
 		"""
 		return self._data.get(catalog_id)
 
+	def pop_catalog_by_id(self, catalog_id):
+		return self._data.pop(catalog_id)
+
 	def get_catalog_by_url(self, catalog_url):
 		"""
 		Return the catalog cache data for the specified catalog URL.
@@ -614,6 +618,17 @@ class CatalogCacheManager(object):
 		:rtype: dict
 		"""
 		return next((catalog_ for catalog_ in self._data.values() if catalog_.get('url') == catalog_url), None)
+
+	def pop_catalog_by_url(self, catalog_url, default=constants.DISABLED):
+		for key, catalog_ in self._data.items():
+			if catalog_.get('url') == catalog_url:
+				break
+		else:
+			if default is not constants.DISABLED:
+				return default
+			raise KeyError(catalog_url)
+		del self._data[key]
+		return catalog_
 
 	def save(self):
 		self._cache_dict['catalogs']['value'] = self._data

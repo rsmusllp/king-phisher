@@ -138,6 +138,80 @@ class ToggleButtonGroupManager(ButtonGroupManager):
 				raise ValueError('invalid button name: ' + name)
 			button.set_active(active)
 
+class MenuManager(object):
+	"""
+	A class that wraps :py:class:`Gtk.Menu` objects and facilitates managing
+	their respective items.
+	"""
+	__slots__ = ('menu', 'items')
+	def __init__(self, menu=None):
+		"""
+		:param menu: An optional menu to start with. If a menu is specified it
+			is used as is, otherwise a new instance is used and is set to be
+			visible using :py:meth:`~Gtk.Widget.show`.
+		:type menu: :py:class:`Gtk.Menu`
+		"""
+		if menu is None:
+			menu = Gtk.Menu()
+			menu.show()
+		self.menu = menu
+		self.items = collections.OrderedDict()
+
+	def __getitem__(self, label):
+		return self.items[label]
+
+	def __setitem__(self, label, menu_item):
+		return self.append_item(menu_item, set_show=False)
+
+	def append(self, label, activate=None, activate_args=()):
+		"""
+		Create and append a new :py:class:`Gtk.MenuItem` with the specified
+		label to the menu.
+
+		:param str label: The label for the new menu item.
+		:param activate: An optional callback function to connect to the new
+			menu item's ``activate`` signal.
+		:return: Returns the newly created and added menu item.
+		:rtype: :py:class:`Gtk.MenuItem`
+		"""
+		if label in self.items:
+			raise RuntimeError('label already exists in menu items')
+		menu_item = Gtk.MenuItem.new_with_label(label)
+		self.items[label] = menu_item
+		self.append_item(menu_item)
+		if activate:
+			menu_item.connect('activate', activate, *activate_args)
+		return menu_item
+
+	def append_item(self, menu_item, set_show=True):
+		"""
+		Append the specified menu item to the menu.
+
+		:param menu_item: The item to append to the menu.
+		:type menu_item: :py:class:`Gtk.MenuItem`
+		:param bool set_show: Whether to set the item to being visible or leave
+			it as is.
+		"""
+		if set_show:
+			menu_item.show()
+		self.menu.append(menu_item)
+		return menu_item
+
+	def append_submenu(self, label):
+		"""
+		Create and append a submenu item, then return a new menu manager
+		instance for it.
+
+		:param str label: The label for the new menu item.
+		:return: Returns the newly created and added menu item.
+		:rtype: :py:class:`Gtk.MenuManager`
+		"""
+		submenu = self.__class__()
+		submenu_item = Gtk.MenuItem.new_with_label(label)
+		submenu_item.set_submenu(submenu.menu)
+		self.append_item(submenu_item)
+		return submenu
+
 class TreeViewManager(object):
 	"""
 	A class that wraps :py:class:`Gtk.TreeView` objects that use `Gtk.ListStore`
@@ -168,7 +242,7 @@ class TreeViewManager(object):
 		"""An ordered dictionary of storage data columns keyed by their respective column titles."""
 		self.column_views = {}
 		"""A dictionary of column treeview's keyed by their column titles."""
-		self.treeview.connect('key-press-event', self.signal_key_pressed)
+		self.treeview.connect('key-press-event', self.signal_key_press_event)
 		if selection_mode is None:
 			selection_mode = Gtk.SelectionMode.SINGLE
 		treeview.get_selection().set_mode(selection_mode)
@@ -282,7 +356,7 @@ class TreeViewManager(object):
 		popup_menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
 		return True
 
-	def signal_key_pressed(self, treeview, event):
+	def signal_key_press_event(self, treeview, event):
 		if event.type != Gdk.EventType.KEY_PRESS:
 			return
 		keyval = event.get_keyval()[1]

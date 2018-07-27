@@ -62,18 +62,10 @@ import jinja2
 import smoke_zephyr.job
 import smoke_zephyr.utilities
 
-class LoggerAdapter(logging.LoggerAdapter):
-	def process(self, message, kwargs):
-		message = "{0} {message}".format(self.extra['client_address'], message=message)
-		return message, kwargs
-
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	_logger = logging.getLogger('KingPhisher.Server.RequestHandler')
 	def __init__(self, request, client_address, server, **kwargs):
-		self.logger = LoggerAdapter(
-			self._logger,
-			{'client_address': client_address[0]}
-		)
+		self.logger = utilities.PrefixLoggerAdapter("{0}:{1}".format(client_address[0], client_address[1]), self._logger, {})
 		self.logger.debug("tid: 0x{0:x} running http request handler".format(threading.current_thread().ident))
 		# this is for attribute documentation
 		self.config = None
@@ -118,7 +110,6 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		"""
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
-		now = db_models.current_timestamp()
 		alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
 		if not alert_subscriptions:
 			self.server.logger.debug("no active alert subscriptions are present for campaign id: {0} ({1})".format(campaign.id, campaign.name))
@@ -812,6 +803,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			visit.user_agent = self.headers.get('user-agent', '')
 			session.add(visit)
 			session.commit()
+			self.logger.debug("visit id: {0} created for message id: {1}".format(visit_id, self.message_id))
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
 				self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'visits', visit_count))
@@ -837,6 +829,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			cred.password = password
 			session.add(cred)
 			session.commit()
+			self.logger.debug("credential id: {0} created for message id: {1}".format(cred.id, cred.message_id))
 			campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 			cred_count = len(campaign.credentials)
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):

@@ -29,13 +29,15 @@ data/client/king_phisher/#king-phisher-client.ui#
 data/client/king_phisher/king-phisher-client.ui~
 data/server/king_phisher/plugins/*
 data/client/king_phisher/style/.sass-cache/*
+!.github/*.yml
+!data/client/king_phisher/plugin-documentation.html
 !data/server/docker/docker-compose.yml
 !data/server/king_phisher/error_*.html
 !data/server/king_phisher/server_config.yml
 !data/server/king_phisher/server_config_verification.yml
 !data/server/king_phisher/service_files/*
 !data/*/king_phisher/*/*.html
-!.github/*.yml
+!readthedocs.yml
 
 # ignore mprofile output
 mprofile_*.dat

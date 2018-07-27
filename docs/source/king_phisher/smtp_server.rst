@@ -11,5 +11,5 @@ Classes
 
 .. autoclass:: BaseSMTPServer
    :show-inheritance:
-   :members:
+   :members: serve_forever
    :special-members: __init__

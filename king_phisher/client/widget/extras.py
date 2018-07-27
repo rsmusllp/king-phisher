@@ -34,11 +34,16 @@ import codecs
 import logging
 import os
 
+from king_phisher import find
 from king_phisher import its
+from king_phisher import templates
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 
 import boltons.strutils
+import jinja2
+import markdown
+import mdx_partial_gfm
 from gi.repository import Gdk
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -213,7 +218,12 @@ class WebKitHTMLView(_WebKitX_WebView):
 	__gsignals__ = {
 		'open-remote-uri': (GObject.SIGNAL_RUN_FIRST, None, (str, (WebKitX.NavigationPolicyDecision if has_webkit2 else WebKitX.WebPolicyDecision)))
 	}
-
+	template_env = templates.TemplateEnvironmentBase(loader=templates.FindFileSystemLoader())
+	"""
+	The :py:class:`~king_phisher.templates.TemplateEnvironmentBase` instance to
+	use when rendering template content. The environment uses the
+	:py:class:`~king_phisher.templates.FindFileSystemLoader` loader.
+	"""
 	def __init__(self):
 		super(WebKitHTMLView, self).__init__()
 		self.logger = logging.getLogger('KingPhisher.Client.' + self.__class__.__name__)
@@ -247,9 +257,58 @@ class WebKitHTMLView(_WebKitX_WebView):
 			self.load_string(html_data, 'text/html', 'UTF-8', html_file_uri)
 
 	def load_html_file(self, html_file):
+		"""
+		Load arbitrary HTML data from a file into the WebKit engine to be
+		rendered.
+
+		:param str html_file: The path to the file to load HTML data from.
+		"""
 		with codecs.open(html_file, 'r', encoding='utf-8') as file_h:
 			html_data = file_h.read()
 		self.load_html_data(html_data, html_file)
+
+	def load_markdown_data(self, md_data, html_file_uri=None, gh_flavor=True, template=None, template_vars=None):
+		"""
+		Load markdown data, render it into HTML and then load it in to the
+		WebKit engine. When *gh_flavor* is enabled, the markdown data is
+		rendered using partial GitHub flavor support as provided by
+		:py:class:`~mdx_partial_gfm.PartialGithubFlavoredMarkdownExtension`. If
+		*template* is specified, it is used to load a Jinja2 template using
+		:py:attr:`.template_env` into which the markdown data is passed in the
+		variable ``markdown`` along with any others specified in the
+		*template_vars* dictionary.
+
+		:param str md_data: The markdown data to render into HTML for displaying.
+		:param str html_file_uri: The URI of the file where the HTML data came from.
+		:param bool gh_flavor: Whether or not to enable partial GitHub markdown syntax support.
+		:param str template: The name of a Jinja2 HTML template to load for hosting the rendered markdown.
+		:param template_vars: Additional variables to pass to the Jinja2 :py:class:`~jinja2.Template` when rendering it.
+		:return:
+		"""
+		extensions = []
+		if gh_flavor:
+			extensions = [mdx_partial_gfm.PartialGithubFlavoredMarkdownExtension()]
+		md_data = markdown.markdown(md_data, extensions=extensions)
+		if template:
+			template = self.template_env.get_template(template)
+			template_vars = template_vars or {}
+			template_vars['markdown'] = jinja2.Markup(md_data)
+			html = template.render(template_vars)
+		else:
+			html = md_data
+		return self.load_html_data(html, html_file_uri=html_file_uri)
+
+	def load_markdown_file(self, md_file, **kwargs):
+		"""
+		Load markdown data from a file and render it using
+		:py:meth:`~.load_markdown_data`.
+
+		:param str md_file: The path to the file to load markdown data from.
+		:param kwargs: Additional keyword arguments to pass to :py:meth:`~.load_markdown_data`.
+		"""
+		with codecs.open(md_file, 'r', encoding='utf-8') as file_h:
+			md_data = file_h.read()
+		return self.load_markdown_data(md_data, md_file, **kwargs)
 
 	def signal_button_pressed(self, _, event):
 		if event.button == Gdk.BUTTON_SECONDARY:

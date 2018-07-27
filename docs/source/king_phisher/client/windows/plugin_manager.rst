@@ -10,6 +10,11 @@ plugins.
 Classes
 -------
 
+.. autoclass:: PluginDocumentationWindow
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
 .. autoclass:: PluginManagerWindow
    :show-inheritance:
    :members:

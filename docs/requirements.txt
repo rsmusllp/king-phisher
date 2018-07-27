@@ -1,0 +1,5 @@
+# this is a pip requirements file specifically for the ReadTheDocs environment
+-r ../requirements.txt                 # include the core requirements
+
+# additional sphinx-specific requirements
+sphinxcontrib-httpdomain>=1.5.0

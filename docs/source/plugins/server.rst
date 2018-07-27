@@ -1,6 +1,9 @@
 Server Plugins
 ==============
 
+For information on how client plugins are installed, see the
+:wiki:`Server Plugins<Server-Plugins>` wiki page.
+
 Server plugins need to inherit from the
 :py:class:`~king_phisher.server.plugins.ServerPlugin` class which provides the
 basic outline. Server plugins have access to their respective configurations

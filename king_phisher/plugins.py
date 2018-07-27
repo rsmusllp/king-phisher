@@ -33,10 +33,13 @@ import collections
 import copy
 import distutils.version
 import functools
+import importlib
 import inspect
 import logging
+import os
 import platform
 import re
+import shutil
 import sys
 import textwrap
 import threading
@@ -44,26 +47,15 @@ import threading
 import smoke_zephyr.requirements
 
 from king_phisher import errors
-from king_phisher import its
+from king_phisher import utilities
 from king_phisher import version
 
 import pluginbase
 
-if its.py_v2:
-	_reload = reload  # pylint: disable=E0602
-else:
-	import importlib
-	_reload = importlib.reload
-
-if sys.version_info[:3] >= (3, 3, 0):
-	_Mapping = collections.abc.Mapping
-else:
-	_Mapping = collections.Mapping
-
 StrictVersion = distutils.version.StrictVersion
 
 def _recursive_reload(package, package_name, completed):
-	_reload(package)
+	importlib.reload(package)
 	completed.append(package)
 	for module in dir(package):
 		module = getattr(package, module)
@@ -91,7 +83,7 @@ class OptionBase(object):
 	"""
 	A base class for options which can be configured for plugins.
 	"""
-	_type = (unicode if its.py_v2 else str)  # pylint: disable=E0602
+	_type = str
 	def __init__(self, name, description, default=None):
 		"""
 		:param str name: The name of this option.
@@ -127,11 +119,17 @@ class OptionString(OptionBase):
 	"""A plugin option which is represented with a string value."""
 	pass
 
-class Requirements(_Mapping):
+class Requirements(collections.abc.Mapping):
+	"""
+	This object servers to map requirements specified as strings to their
+	respective values. Once the requirements are defined, this class can then be
+	used to evaluate them in an effort to determine which requirements are met
+	and which are not.
+	"""
 	_package_regex = re.compile(r'^(?P<name>[\w\-]+)(([<>=]=)(\d+(\.\d+)*))?$')
 	def __init__(self, items):
 		"""
-		:param dict items: The items that are members of this collection, keyed by their name.
+		:param dict items: A dictionary or two-dimensional array mapping requirement names to their respective values.
 		"""
 		# call dict here to allow items to be a two dimensional array suitable for passing to dict
 		items = dict(items)
@@ -160,12 +158,17 @@ class Requirements(_Mapping):
 
 	@property
 	def is_compatible(self):
+		"""Whether or not all requirements are met."""
 		for req_type, req_details, req_met in self.compatibility_iter():
 			if not req_met:
 				return False
 		return True
 
 	def compatibility_iter(self):
+		"""
+		Iterate over each of the requirements, evaluate them and yield a tuple
+		regarding them.
+		"""
 		StrictVersion = distutils.version.StrictVersion
 		if self._storage.get('minimum-python-version'):
 			# platform.python_version() cannot be used with StrictVersion because it returns letters in the version number.
@@ -205,9 +208,13 @@ class Requirements(_Mapping):
 		return tuple(self.compatibility_iter())
 
 	def to_dict(self):
+		"""
+		Return a dictionary representing the requirements.
+		"""
 		# this method always returns 'packages' as an iterable
 		storage = copy.deepcopy(self._storage)
-		storage['packages'] = tuple(storage.get('packages', {}).keys())
+		if 'packages' in storage:
+			storage['packages'] = tuple(storage['packages'].keys())
 		return storage
 
 class PluginBaseMeta(type):
@@ -237,12 +244,18 @@ class PluginBaseMeta(type):
 
 	@staticmethod
 	def _update_requirements(bases, dct, requirements, property, requirement):
+		value = None
 		if property in dct:
-			requirements[requirement] = dct[property]
+			value = dct[property]
 		else:
 			base = next((base for base in bases if hasattr(base, property)), None)
 			if base is not None:
-				requirements[requirement] = getattr(base, property)
+				value = getattr(base, property)
+		if value is None:
+			return
+		if hasattr(value, '__len__') and not len(value):
+			return
+		requirements[requirement] = value
 
 	@property
 	def compatibility(cls):
@@ -277,14 +290,18 @@ class PluginBaseMeta(type):
 	def metadata(cls):
 		metadata = {
 			'authors': cls.authors,
-			'title': cls.title,
 			'description': cls.description,
 			'homepage': cls.homepage,
-			'name': cls.name,
 			'is_compatible': cls.is_compatible,
+			'name': cls.name,
 			'requirements': cls.requirements.to_dict(),
-			'version': cls.version
+			'title': cls.title,
+			'version': cls.version,
 		}
+		if cls.classifiers:
+			metadata['classifiers'] = cls.classifiers
+		if cls.reference_urls:
+			metadata['reference_urls'] = cls.reference_urls
 		return metadata
 
 # stylized metaclass definition to be Python 2.7 and 3.x compatible
@@ -297,6 +314,8 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""
 	authors = ()
 	"""The tuple of authors who have provided this plugin."""
+	classifiers = ()
+	"""An array containing optional classifier strings. These are free-formatted strings used to identify functionality."""
 	title = None
 	"""The title of the plugin."""
 	description = None
@@ -305,6 +324,8 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""An optional homepage for the plugin."""
 	options = []
 	"""A list of configurable option definitions for the plugin."""
+	reference_urls = ()
+	"""An array containing optional reference URL strings."""
 	req_min_py_version = None
 	"""The required minimum Python version for compatibility."""
 	req_min_version = '1.3.0b0'
@@ -317,7 +338,8 @@ class PluginBase(PluginBaseMeta('PluginBaseMeta', (object,), {})):
 	"""The version identifier of this plugin."""
 	_logging_prefix = 'KingPhisher.Plugins.'
 	def __init__(self):
-		self.logger = logging.getLogger(self._logging_prefix + self.__class__.__name__)
+		logger = logging.getLogger(self._logging_prefix + self.name + '.' + self.__class__.__name__)
+		self.logger = utilities.PrefixLoggerAdapter("[plugin: {0}]".format(self.name), logger, {})
 		if getattr(self, 'config') is None:  # hasattr will return False with subclass properties
 			self.config = {}
 			"""The plugins configuration dictionary for storing the values of it's options."""
@@ -393,6 +415,26 @@ class PluginManagerBase(object):
 	def available(self):
 		"""Return a tuple of all available plugins that can be loaded."""
 		return tuple(self.plugin_source.list_plugins())
+
+	def get_plugin_path(self, name):
+		"""
+		Get the path at which the plugin data resides. This is either the path
+		to the single plugin file or a folder in the case that the plugin is a
+		module. In either case, the path is an absolute path.
+
+		:param str name: The name of the plugin to get the path for.
+		:return: The path of the plugin data.
+		:rtype: str
+		"""
+		module = self.load_module(name)
+		path = getattr(module, '__file__', None)
+		if path is None:
+			return
+		if path.endswith(('.pyc', '.pyo')):
+			path = path[:-1]
+		if path.endswith(os.path.sep + '__init__.py'):
+			path = path[:-11]
+		return path
 
 	def shutdown(self):
 		"""
@@ -525,6 +567,27 @@ class PluginManagerBase(object):
 		if reload_module:
 			recursive_reload(module)
 		return module
+
+	def uninstall(self, name):
+		"""
+		Uninstall a plugin by first unloading it and then delete it's data on
+		disk. The plugin data on disk is found with the
+		:py:meth:`.get_plugin_path` method.
+
+		:param str name: The name of the plugin to uninstall.
+		:return: Whether or not the plugin was successfully uninstalled.
+		:rtype: bool
+		"""
+		plugin_path = self.get_plugin_path(name)
+		if os.path.isfile(plugin_path) or os.path.islink(plugin_path):
+			os.remove(plugin_path)
+		elif os.path.isdir(plugin_path):
+			shutil.rmtree(plugin_path)
+		else:
+			self.logger.warning('failed to identify the data path for plugin: ' + name)
+			return False
+		self.unload(name)
+		return True
 
 	def unload(self, name):
 		"""

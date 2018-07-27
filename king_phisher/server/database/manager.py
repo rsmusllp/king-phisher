@@ -340,8 +340,8 @@ def init_database(connection_url, extra_init=False):
 		if error.args:
 			match = re.match(r'\(psycopg2\.OperationalError\) FATAL:\s+password authentication failed for user \"(?P<username>\w+)\"$', error.args[0])
 			if match:
-				raise errors.KingPhisherDatabaseAuthenticationError('initialization failed', username=match.group('username')) from None
-		raise errors.KingPhisherDatabaseError('initialization failed') from error
+				raise errors.KingPhisherDatabaseAuthenticationError('database initialization failed', username=match.group('username')) from None
+		raise errors.KingPhisherDatabaseError('database initialization failed') from error
 
 	if 'campaigns' not in inspector.get_table_names():
 		logger.debug('campaigns table not found, creating all new tables')

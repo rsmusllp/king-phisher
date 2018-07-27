@@ -32,6 +32,7 @@
 
 import collections
 import copy
+import http.client
 import logging
 import os
 import shlex
@@ -72,11 +73,6 @@ import paramiko
 from smoke_zephyr.utilities import parse_server
 from smoke_zephyr.utilities import parse_timespan
 from smoke_zephyr.utilities import which
-
-if its.py_v2:
-	from httplib import BadStatusLine
-else:
-	from http.client import BadStatusLine
 
 DISABLED = constants.DISABLED
 
@@ -201,9 +197,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self.logger.warning('Failed to create user plugins folder')
 
 		self.plugin_manager = plugins.ClientPluginManager(
-			[os.path.join(self.user_data_path, 'plugins'), find.data_directory('plugins')],
+			[os.path.join(self.user_data_path, 'plugins'), find.data_directory('plugins')] + self.config.get('plugins.path', []),
 			self
 		)
+		"""The :py:class:`~king_phisher.client.plugins.ClientPluginManager` instance to manage the installed client plugins."""
 		if use_plugins:
 			self.plugin_manager.load_all()
 
@@ -593,7 +590,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		except advancedhttpserver.RPCError as error:
 			self.logger.warning('failed to connect to the remote rpc service due to http status: ' + str(error.status))
 			gui_utilities.show_dialog_error(title_rpc_error, window, "The server responded with HTTP status: {0}.".format(str(error.status)))
-		except BadStatusLine as error:
+		except http.client.BadStatusLine as error:
 			self.logger.warning('failed to connect to the remote rpc service due to http bad status line: ' + error.line)
 			gui_utilities.show_dialog_error(title_rpc_error, window, generic_message)
 		except socket.error as error:
@@ -643,24 +640,18 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return False, login_reason
 		rpc.username = username
 		self.logger.debug('successfully authenticated to the remote king phisher service')
-		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), rpc.ping)
 
-		self.rpc = rpc
 		event_subscriber = server_events.ServerEventSubscriber(rpc)
 		if not event_subscriber.is_connected:
-			self.logger.error('failed to connect the server event socket')
 			event_subscriber.reconnect = False
 			event_subscriber.shutdown()
 			return False, ConnectionErrorReason.ERROR_UNKNOWN
+		self.rpc = rpc
 		self.server_events = event_subscriber
+		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), rpc.ping)
 		user = self.rpc.graphql("""\
 		query getUser($name: String!) {
-			db {
-				user(name: $name) {
-					id
-					name
-				}
-			}
+			db { user(name: $name) { id name } }
 		}""", {'name': self.config['server_username']})['db']['user']
 		self.server_user = ServerUser(id=user['id'], name=user['name'])
 		self.emit('server-connected')

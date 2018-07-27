@@ -1,4 +1,5 @@
 {
+  "cache.age": "4h",
   "catalogs": [
     "https://raw.githubusercontent.com/securestate/king-phisher-plugins/master/catalog.json"
   ],

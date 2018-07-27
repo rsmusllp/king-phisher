@@ -53,5 +53,10 @@ Classes
    :show-inheritance:
    :members:
 
+.. autoclass:: PrefixLoggerAdapter
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
 .. autoclass:: Mock
    :show-inheritance:

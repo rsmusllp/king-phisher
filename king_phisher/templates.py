@@ -34,11 +34,13 @@ import base64
 import codecs
 import datetime
 import hashlib
+import html
 import logging
 import os
 import random
 import re
 
+from king_phisher import find
 from king_phisher import its
 from king_phisher import ua_parser
 from king_phisher import utilities
@@ -47,15 +49,28 @@ from king_phisher import version
 import boltons.strutils
 import jinja2
 
-if its.py_v2:
-	import cgi as html
-else:
-	import html
+__all__ = ('FindFileSystemLoader', 'TemplateEnvironmentBase', 'MessageTemplateEnvironment')
 
-__all__ = ('TemplateEnvironmentBase', 'MessageTemplateEnvironment')
+class FindFileSystemLoader(jinja2.BaseLoader):
+	"""
+	A :py:class:`~jinja2.BaseLoader` which loads templates by name from the file
+	system. Templates are searched for using the
+	:py:func:`~king_phisher.find.data_file` function.
+	"""
+	def get_source(self, environment, template):
+		template_path = find.data_file(template, os.R_OK)
+		if template_path is None:
+			raise jinja2.TemplateNotFound(template)
+		mtime = os.path.getmtime(template_path)
+		with codecs.open(template_path, 'r', encoding='utf-8') as file_h:
+			source = file_h.read()
+		return source, template_path, lambda: mtime == os.path.getmtime(template_path)
 
 class TemplateEnvironmentBase(jinja2.Environment):
-	"""A configured Jinja2 environment with additional filters."""
+	"""
+	A configured Jinja2 :py:class:`~jinja2.Environment` with additional filters
+	and default settings.
+	"""
 	def __init__(self, loader=None, global_vars=None):
 		"""
 		:param loader: The loader to supply to the environment.
@@ -63,7 +78,7 @@ class TemplateEnvironmentBase(jinja2.Environment):
 		:param dict global_vars: Additional global variables for the environment.
 		"""
 		self.logger = logging.getLogger('KingPhisher.TemplateEnvironment')
-		autoescape = lambda name: isinstance(name, str) and os.path.splitext(name)[1][1:] in ('htm', 'html', 'xml')
+		autoescape = jinja2.select_autoescape(['html', 'htm', 'xml'], default_for_string=False)
 		extensions = ['jinja2.ext.autoescape', 'jinja2.ext.do']
 		super(TemplateEnvironmentBase, self).__init__(autoescape=autoescape, extensions=extensions, loader=loader, trim_blocks=True)
 
@@ -102,6 +117,24 @@ class TemplateEnvironmentBase(jinja2.Environment):
 			for key, value in global_vars.items():
 				self.globals[key] = value
 
+	def from_file(self, path, **kwargs):
+		"""
+		A convenience method to load template data from a specified file,
+		passing it to :py:meth:`~jinja2.Environment.from_string`.
+
+		.. warning::
+			Because this method ultimately passes the template data to the
+			:py:meth:`~jinja2.Environment.from_string` method, the data will not
+			be automatically escaped based on the file extension as it would be
+			when using :py:meth:`~jinja2.Environment.get_template`.
+
+		:param str path: The path from which to load the template data.
+		:param kwargs: Additional keyword arguments to pass to :py:meth:`~jinja2.Environment.from_string`.
+		"""
+		with codecs.open(path, 'r', encoding='utf-8') as file_h:
+			source = file_h.read()
+		return self.from_string(source, **kwargs)
+
 	def join_path(self, template, parent):
 		"""
 		Over ride the default :py:meth:`jinja2.Environment.join_path` method to
@@ -120,7 +153,9 @@ class TemplateEnvironmentBase(jinja2.Environment):
 
 	@property
 	def standard_variables(self):
-		"""Additional standard variables that can optionally be used for templates."""
+		"""
+		Additional standard variables that can optionally be used in templates.
+		"""
 		std_vars = {
 			'time': {
 				'local': datetime.datetime.now(),

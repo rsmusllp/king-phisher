@@ -62,6 +62,15 @@
                       "minItems": 1,
                       "type": "array"
                     },
+                    "classifiers": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/classifiers",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/classifiers/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
                     "description": {
                       "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/description",
                       "type": "string"
@@ -106,9 +115,22 @@
                       "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/name",
                       "type": "string"
                     },
+                    "reference_urls": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/reference_urls",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/reference_urls/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
                     "requirements": {
                       "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements",
                       "properties": {
+                        "minimum-python-version": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/minimum-python-version",
+                          "type": "string"
+                        },
                         "minimum-version": {
                           "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/minimum-version",
                           "type": "string"
@@ -119,6 +141,16 @@
                             "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/packages/items",
                             "type": "string"
                           },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "platforms": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/platforms",
+                          "items": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/client/items/properties/requirements/properties/platforms/items",
+                            "type": "string"
+                          },
+                          "minItems": 1,
                           "type": "array"
                         }
                       },
@@ -154,6 +186,15 @@
                       "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/authors",
                       "items": {
                         "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/authors/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "classifiers": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/classifiers",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/classifiers/items",
                         "type": "string"
                       },
                       "minItems": 1,
@@ -203,9 +244,22 @@
                       "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/name",
                       "type": "string"
                     },
+                    "reference_urls": {
+                      "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/reference_urls",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/reference_urls/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
                     "requirements": {
                       "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements",
                       "properties": {
+                        "minimum-python-version": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/minimum-python-version",
+                          "type": "string"
+                        },
                         "minimum-version": {
                           "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/minimum-version",
                           "type": "string"
@@ -216,6 +270,16 @@
                             "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/packages/items",
                             "type": "string"
                           },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "platforms": {
+                          "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/platforms",
+                          "items": {
+                            "id": "/properties/repositories/items/properties/collections/properties/plugins/server/items/properties/requirements/properties/platforms/items",
+                            "type": "string"
+                          },
+                          "minItems": 1,
                           "type": "array"
                         }
                       },
@@ -251,6 +315,15 @@
                       "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/authors",
                       "items": {
                         "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/authors/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "classifiers": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/classifiers",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/classifiers/items",
                         "type": "string"
                       },
                       "minItems": 1,
@@ -300,6 +373,15 @@
                       "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/name",
                       "type": "string"
                     },
+                    "reference_urls": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/reference_urls",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/reference_urls/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
                     "title": {
                       "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/title",
                       "type": "string"
@@ -330,6 +412,15 @@
                       "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/authors",
                       "items": {
                         "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/authors/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "classifiers": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/classifiers",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/classifiers/items",
                         "type": "string"
                       },
                       "minItems": 1,
@@ -378,6 +469,15 @@
                     "name": {
                       "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/name",
                       "type": "string"
+                    },
+                    "reference_urls": {
+                      "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/reference_urls",
+                      "items": {
+                        "id": "/properties/repositories/items/properties/collections/properties/templates/client/items/properties/reference_urls/items",
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
                     },
                     "title": {
                       "id": "/properties/repositories/items/properties/collections/properties/templates/server/items/properties/title",

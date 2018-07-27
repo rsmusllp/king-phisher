@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tools/development/keygen.py
+#  king_phisher/client/windows/html.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,50 +30,21 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import argparse
-import binascii
-import os
-import sys
+from king_phisher.client import gui_utilities
+from king_phisher.client.widget import extras
 
-sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+__all__ = ('HTMLWindow',)
 
-import king_phisher.color as color
-import king_phisher.serializers as serializers
-import king_phisher.utilities as utilities
-
-import ecdsa
-
-def main():
-	parser = argparse.ArgumentParser(description='King Phisher Signing-Key Generation Utility', conflict_handler='resolve')
-	utilities.argp_add_args(parser)
-	parser.add_argument('id', help='this key\'s identifier')
-	parser.add_argument('file', type=argparse.FileType('w'), help='the destination to write the PEM file to')
-	arguments = parser.parse_args()
-
-	curve = ecdsa.NIST521p
-	color.print_status('generating a new ecdsa singing key')
-	signing_key = ecdsa.SigningKey.generate(curve=curve)
-	verifying_key = signing_key.get_verifying_key()
-
-	signing_key = binascii.b2a_base64(signing_key.to_string()).decode('utf-8').strip()
-	verifying_key = binascii.b2a_base64(verifying_key.to_string()).decode('utf-8').strip()
-
-	print('public key information for inclusion in security.json:')
-	key_info = {
-		'id': arguments.id,
-		'verifying-key': {
-			'data': verifying_key,
-			'type': curve.openssl_name
-		}
-	}
-	print(serializers.JSON.dumps(key_info))
-
-	key_info['signing-key'] = {
-		'data': signing_key,
-		'type': curve.openssl_name
-	}
-	serializers.JSON.dump(key_info, arguments.file)
-
-
-if __name__ == '__main__':
-	sys.exit(main())
+class HTMLWindow(gui_utilities.GladeGObject):
+	"""
+	This basic window contains a :py:class:`~.extras.WebKitHTMLView` widget for
+	rendering and displaying HTML content.
+	"""
+	dependencies = gui_utilities.GladeDependencies(name='HTMLWindow')
+	top_gobject = 'window'
+	def __init__(self, application):
+		super(HTMLWindow, self).__init__(application)
+		self.webview = extras.WebKitHTMLView()
+		"""The :py:class:`~.extras.WebKitHTMLView` widget instance."""
+		self.webview.show()
+		self.window.add(self.webview)

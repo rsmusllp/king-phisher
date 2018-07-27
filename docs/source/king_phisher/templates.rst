@@ -4,11 +4,15 @@
 .. module:: king_phisher.templates
    :synopsis:
 
-This module provides base classes for the Jinja environments used throughout the
-application.
+This module provides base classes for the Jinja2 environments used throughout
+the application.
 
 Classes
 -------
+
+.. autoclass:: FindFileSystemLoader
+   :show-inheritance:
+   :members:
 
 .. autoclass:: TemplateEnvironmentBase
    :show-inheritance:
