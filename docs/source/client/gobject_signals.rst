@@ -8,6 +8,42 @@ value to be returned by their handlers as noted.
 
 .. _gobject-signals-application-label:
 
+Signal Flags
+------------
+
+The "Signal flags" attribute of each of the signals describes certain attributes
+of their respective signals. See the `GObject Signals`_ documentation for more
+information including a detailed description of the signal emission process.
+
+:SIGNAL_ACTION:
+   Signals with the ``SIGNAL_ACTION`` flag are safe to be emitted from arbitrary
+   components within the application. These signals have default handlers which
+   perform their action and are not stateful.
+
+:SIGNAL_RUN_FIRST:
+   Signals with the ``SIGNAL_RUN_FIRST`` flag execute the default handler before
+   handlers which are connected with either the
+   :py:meth:`~GObject.Object.connect` or
+   :py:meth:`~GObject.Object.connect_after` methods. These signals therefor do
+   not provide connected handlers with an opportunity to block the emission of
+   the signal from the default handler.
+
+:SIGNAL_RUN_LAST:
+   Signals with the ``SIGNAL_RUN_LAST`` flag execute the default function after
+   handlers which are connected with the :py:meth:`~GObject.Object.connect`
+   method but before handlers which are connected with the
+   :py:meth:`~GObject.Object.connect_after` method. This provides connected
+   handlers with an opportunity to block the default function by halting
+   emissionof the signal by using the
+   :py:meth:`~GObject.Object.emit_stop_by_name` method.
+
+.. note::
+   Plugins which connect to signals should use the
+   :py:meth:`~king_phisher.client.plugins.ClientPlugin.signal_connect` method
+   which by defaults uses :py:meth:`~GObject.Object.connect` to connect the
+   signal. Alternatively :py:meth:`~GObject.Object.connect_after` can be used by
+   setting the **after** keyword argument to ``True``.
+
 Application Signals
 -------------------
 
@@ -359,3 +395,5 @@ GObject signal is emitted for consumption by the client. See the section on
    :flags: ``SIGNAL_RUN_FIRST``
    :param str event_type: The type of event, one of either deleted, inserted or updated.
    :param list objects: The objects from the server. The available attributes depend on the subscription.
+
+.. _GObject Signals: https://developer.gnome.org/gobject/stable/signal.html
