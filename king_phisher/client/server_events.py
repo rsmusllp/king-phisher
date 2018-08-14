@@ -136,7 +136,7 @@ class ServerEventSubscriber(_GObject_GObject):
 		self.logger.info('connecting to the server event socket')
 		self._ws_connect()
 
-	def _on_close(self, _):
+	def _on_close(self):
 		if self._worker_thread is None:  # the socket was never successfully opened
 			return
 		getattr(self.logger, 'warning' if self.reconnect else 'info')('the server event socket has been closed')
@@ -149,7 +149,7 @@ class ServerEventSubscriber(_GObject_GObject):
 		if self.reconnect:
 			self._reconnect_event_id = GLib.timeout_add_seconds(30, self._ws_reconnect)
 
-	def _on_error(self, _, exception):
+	def _on_error(self, exception):
 		# only print exception info when either connected or intending to
 		# reconnect, this effectively suppresses a stack trace caused by
 		# https://github.com/websocket-client/websocket-client/blob/6c3d49c943796fd5d84f5df64806972f565ab10a/websocket/_app.py#L47-L52
@@ -158,7 +158,7 @@ class ServerEventSubscriber(_GObject_GObject):
 		else:
 			self.logger.info('encountered a web socket exception while disconnected')
 
-	def _on_message(self, _, message):
+	def _on_message(self, message):
 		if isinstance(message, bytes):
 			message.decode(self._encoding)
 		try:
@@ -191,7 +191,7 @@ class ServerEventSubscriber(_GObject_GObject):
 			new_objects.append(klass(self.rpc, **obj))
 		self.emit(event_id, event_type, new_objects)
 
-	def _on_open(self, _):
+	def _on_open(self):
 		self._connect_event.set()
 
 	def _ws_connect(self):

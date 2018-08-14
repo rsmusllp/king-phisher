@@ -1,5 +1,11 @@
+---
+name: Bug Report
+about: Report an issue that you're experiencing
+
+---
+
 ## Issue Description
-I get a stack trace when I...
+I experience an issue when I... and the results I expected are...
 
 ## Reproduction Steps
 1. Start King Phisher
@@ -7,7 +13,7 @@ I get a stack trace when I...
 
 ## Environment Details
 <!-- DO NOT SKIP THIS -->
-Host OS: Ubuntu 15.10 GNOME, Kali 2, etc.
+Host OS: Ubuntu 18.04 GNOME, Kali 2, etc.
 King Phisher Version: x.y.z
 
 ## Error Details / Stack Trace
