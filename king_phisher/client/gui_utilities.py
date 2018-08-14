@@ -710,10 +710,6 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 			self.logger.debug("setting proxied widget {0} via {1}.{2}".format(child.name, dest.widget, dest.method))
 			method(src_widget, *dest.args, **dest.kwargs)
 
-	def destroy(self):
-		"""Destroy the top-level GObject."""
-		getattr(self, self.top_gobject).destroy()
-
 	@property
 	def parent(self):
 		return self.application.get_active_window()
@@ -777,6 +773,23 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 			if not gtype in GOBJECT_PROPERTY_MAP:
 				continue
 			self.config[config_name] = gobject_get_value(gobject, gtype)
+
+	# forwarded methods
+	def destroy(self):
+		"""Call :py:meth:`~Gtk.Widget.destroy` on the top-level GTK Widget."""
+		getattr(self, self.top_gobject).destroy()
+
+	def hide(self):
+		"""Call :py:meth:`~Gtk.Widget.hide` on the top-level GTK Widget."""
+		getattr(self, self.top_gobject).hide()
+
+	def show(self):
+		"""Call :py:meth:`~Gtk.Widget.show` on the top-level GTK Widget."""
+		getattr(self, self.top_gobject).show()
+
+	def show_all(self):
+		"""Call :py:meth:`~Gtk.Widget.show_all` on the top-level GTK Widget."""
+		getattr(self, self.top_gobject).show_all()
 
 class FileMonitor(object):
 	"""Monitor a file for changes."""
