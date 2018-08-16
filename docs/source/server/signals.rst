@@ -1,3 +1,4 @@
+.. py:currentmodule:: king_phisher.server.signals
 .. _server-signals-label:
 
 Server Signals
@@ -17,7 +18,11 @@ particular event occurs. These signals are defined in the
 Campaign Signals
 ----------------
 
-.. autodata:: king_phisher.server.signals.campaign_alert
+.. autodata:: campaign_alert
+   :annotation:
+   :noindex:
+
+.. autodata:: campaign_expired
    :annotation:
    :noindex:
 
@@ -26,31 +31,31 @@ Campaign Signals
 Database Signals
 ----------------
 
-.. autodata:: king_phisher.server.signals.db_initialized
+.. autodata:: db_initialized
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.db_session_deleted
+.. autodata:: db_session_deleted
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.db_session_inserted
+.. autodata:: db_session_inserted
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.db_session_updated
+.. autodata:: db_session_updated
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.db_table_delete
+.. autodata:: db_table_delete
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.db_table_insert
+.. autodata:: db_table_insert
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.db_table_update
+.. autodata:: db_table_update
    :annotation:
    :noindex:
 
@@ -63,43 +68,43 @@ Signals which are emitted for events specific to individual HTTP requests. These
 signals use the respective instance of
 :py:class:`~king_phisher.server.server.KingPhisherRequestHandler` as the sender.
 
-.. autodata:: king_phisher.server.signals.credentials_received
+.. autodata:: credentials_received
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.email_opened
+.. autodata:: email_opened
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.request_handle
+.. autodata:: request_handle
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.request_received
+.. autodata:: request_received
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.response_sent
+.. autodata:: response_sent
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.rpc_method_call
+.. autodata:: rpc_method_call
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.rpc_method_called
+.. autodata:: rpc_method_called
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.rpc_user_logged_in
+.. autodata:: rpc_user_logged_in
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.rpc_user_logged_out
+.. autodata:: rpc_user_logged_out
    :annotation:
    :noindex:
 
-.. autodata:: king_phisher.server.signals.visit_received
+.. autodata:: visit_received
    :annotation:
    :noindex:
 
@@ -111,6 +116,6 @@ Server Signals
 Signals which are emitted for a
 :py:class:`~king_phisher.server.server.KingPhisherServer` instance.
 
-.. autodata:: king_phisher.server.signals.server_initialized
+.. autodata:: server_initialized
    :annotation:
    :noindex:

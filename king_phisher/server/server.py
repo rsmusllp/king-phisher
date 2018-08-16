@@ -33,6 +33,7 @@
 import base64
 import binascii
 import collections
+import datetime
 import json
 import logging
 import os
@@ -883,6 +884,9 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self.job_manager = smoke_zephyr.job.JobManager(logger_name='KingPhisher.Server.JobManager')
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
+		maintenance_interval = 900  # 15 minutes
+		self._maintenance_job = self.job_manager.job_add(self._maintenance, parameters=(maintenance_interval,), seconds=maintenance_interval)
+
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
 		global_vars = {}
 		if config.has_section('server.page_variables'):
@@ -925,6 +929,25 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			header = header.strip()
 			self.headers[header] = value
 		self.logger.info("including {0} custom http headers".format(len(self.headers)))
+
+	def _maintenance(self, interval):
+		"""
+		Execute periodic maintenance related tasks.
+
+		:param int interval: The interval of time (in seconds) at which this method is being executed.
+		"""
+		self.logger.debug('running periodic maintenance tasks')
+		now = db_models.current_timestamp()
+		session = db_manager.Session()
+		campaigns = session.query(db_models.Campaign).filter(
+			db_models.Campaign.expiration != None
+		).filter(
+			db_models.Campaign.expiration < now
+		).filter(
+			db_models.Campaign.expiration >= now - datetime.timedelta(seconds=interval)
+		)
+		for campaign in campaigns:
+			signals.send_safe('campaign-expired', self.server.logger, campaign)
 
 	def shutdown(self, *args, **kwargs):
 		"""

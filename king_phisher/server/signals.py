@@ -88,6 +88,18 @@ campaign_alert = blinker.signal(
 	"""
 )
 
+campaign_expired = blinker.signal(
+	'campaign-expired',
+	"""
+	Emitted after a campaign has expired as determined by the
+	:py:class:`~king_phisher.server.database.models.Campaign.expiration` field.
+	The server periodically checks for newly expired campaigns at an arbitrary
+	interval. If a campaign is updated to expire at a time less than the next
+	check minus the interval, then this signal will not be emitted for the
+	campaign.
+	"""
+)
+
 # database signals
 db_initialized = blinker.signal(
 	'db-initialized',
