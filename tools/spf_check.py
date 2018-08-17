@@ -41,12 +41,27 @@ import king_phisher.ipaddress as ipaddress
 import king_phisher.spf as spf
 import king_phisher.utilities as utilities
 
+PARSER_DESCRIPTION = """\
+King Phisher SPF Check Utility
+"""
+PARSER_EPILOG = """
+Example usage:
+  # check if an SMTP server at 1.2.3.4 is authorized to send on behalf of
+  # king-phisher.com
+  ./spf_check.py 1.2.3.4 test@king-phisher.com
+"""
+
 def main():
-	parser = argparse.ArgumentParser(description='King Phisher SPF Check Utility', conflict_handler='resolve')
+	parser = argparse.ArgumentParser(
+		conflict_handler='resolve',
+		description=PARSER_DESCRIPTION,
+		epilog=PARSER_EPILOG,
+		formatter_class=argparse.RawTextHelpFormatter
+	)
 	utilities.argp_add_args(parser)
 	parser.add_argument('smtp_server_ip', help='the ip address of the sending smtp server')
 	parser.add_argument('target_email', help='the email address that messages are from')
-	parser.add_argument('--dns-timeout', dest='dns_timeout', default=spf.DEFAULT_DNS_TIMEOUT, type=int, help='the timeout for dns queries')
+	parser.add_argument('--dns-timeout', dest='dns_timeout', default=spf.DEFAULT_DNS_TIMEOUT, metavar='TIMEOUT', type=int, help='the timeout for dns queries')
 	arguments = parser.parse_args()
 
 	server_ip = arguments.smtp_server_ip

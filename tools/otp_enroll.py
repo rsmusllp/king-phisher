@@ -51,17 +51,33 @@ except ImportError:
 else:
 	has_qrcode = True
 
-PARSER_EPILOG = """
+PARSER_DESCRIPTION = """\
+King Phisher TOTP Enrollment Utility
+"""
+PARSER_EPILOG = """\
 If --otp is set then it must be a valid base32 encoded secret otherwise a random
 one will be used. Also note that unless the --force flag is specified, the user
 that is selected to be managed must already exist within the database, i.e. they
 should have logged in at least once before.
+
+Example usage (managing user "alice"):
+  # set a new OTP secret (enable OTP) for the user, creating them if necessary
+  ./otp_enroll.py -c ../server_config.yml --force alice set
+
+  # remove the user's OTP secret (disable OTP)
+  ./otp_enroll.py -c ../server_config.yml alice remove
+
+  # show the user's current OTP secret and provisioning URL
+  ./otp_enroll.py -c ../server_config.yml alice show
 """
-PARSER_EPILOG = PARSER_EPILOG.replace('\n', ' ')
-PARSER_EPILOG = PARSER_EPILOG.strip()
 
 def main():
-	parser = argparse.ArgumentParser(description='King Phisher TOTP Enrollment Utility', conflict_handler='resolve')
+	parser = argparse.ArgumentParser(
+		conflict_handler='resolve',
+		description=PARSER_DESCRIPTION,
+		epilog=PARSER_EPILOG,
+		formatter_class=argparse.RawTextHelpFormatter
+	)
 	utilities.argp_add_args(parser)
 	config_group = parser.add_mutually_exclusive_group(required=True)
 	config_group.add_argument('-c', '--config', dest='server_config', help='the server configuration file')
