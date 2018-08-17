@@ -88,6 +88,17 @@ campaign_alert = blinker.signal(
 	"""
 )
 
+campaign_alert_expired = blinker.signal(
+	'campaign-alert-expired',
+	"""
+	Emitted for each user who is subscribed to alerts for a particular campaign
+	after it has expired.
+
+	:param alert_subscription: The alert subscription.
+	:type alert_subscription: :py:class:`king_phisher.server.database.models.AlertSubscription`
+	"""
+)
+
 campaign_expired = blinker.signal(
 	'campaign-expired',
 	"""

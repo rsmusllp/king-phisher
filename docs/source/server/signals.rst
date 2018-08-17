@@ -22,6 +22,10 @@ Campaign Signals
    :annotation:
    :noindex:
 
+.. autodata:: campaign_alert_expired
+   :annotation:
+   :noindex:
+
 .. autodata:: campaign_expired
    :annotation:
    :noindex:

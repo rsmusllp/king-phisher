@@ -948,6 +948,18 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		)
 		for campaign in campaigns:
 			signals.send_safe('campaign-expired', self.server.logger, campaign)
+			alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
+			if not alert_subscriptions:
+				continue
+			if not signals.campaign_alert.receivers:
+				self.server.logger.warning('users are subscribed to campaign expiration alerts, and no signal handlers are connected')
+				continue
+			for subscription in alert_subscriptions:
+				results = signals.send_safe('campaign-alert-expired', self.server.logger, alert_subscription=subscription)
+				if any((result for (_, result) in results)):
+					continue
+				self.server.logger.warning("user {0} is subscribed to campaign alerts, and no signal handlers succeeded to send an alert".format(subscription.user.name))
+		session.close()
 
 	def shutdown(self, *args, **kwargs):
 		"""

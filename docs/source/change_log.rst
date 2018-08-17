@@ -22,7 +22,7 @@ Version 1.12.0
    * Plugins can ship with dedicated documentation in markdown files that will be displayed
    * The GUI no longer locks up while tasks like downloading plugins are taking place
 
-* Added a ``campaign-expired`` server signal
+* Added ``campaign-alert-expired`` and ``campaign-expired`` server signals
 
 Version 1.11.0
 ^^^^^^^^^^^^^^
