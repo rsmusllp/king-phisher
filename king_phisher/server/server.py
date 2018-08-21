@@ -495,7 +495,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			template_module = template.make_module(template_vars)
 		except (TypeError, jinja2.TemplateError) as error:
 			self.semaphore_release()
-			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
+			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, getattr(error, 'message', '')))
 			raise errors.KingPhisherAbortRequestError()
 
 		require_basic_auth = getattr(template_module, 'require_basic_auth', False)
@@ -506,15 +506,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.send_response(401)
 			headers.append(('WWW-Authenticate', "Basic realm=\"{0}\"".format(getattr(template_module, 'basic_auth_realm', 'Authentication Required'))))
 		else:
-			try:
-				template_data = template.render(template_vars)
-			except (TypeError, jinja2.TemplateError) as error:
-				self.semaphore_release()
-				self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
-				raise errors.KingPhisherAbortRequestError()
 			self.send_response(200)
 			headers.append(('Last-Modified', self.date_time_string(os.stat(template.filename).st_mtime)))
-			template_data = template_data.encode('utf-8', 'ignore')
+			template_data = str(template_module).encode('utf-8', 'ignore')
 
 		if mime_type.startswith('text'):
 			mime_type += '; charset=utf-8'
