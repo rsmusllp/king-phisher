@@ -48,6 +48,10 @@ from king_phisher import version
 
 import boltons.strutils
 import jinja2
+import json
+import requests
+import requests.exceptions
+import requests_file
 
 __all__ = ('FindFileSystemLoader', 'TemplateEnvironmentBase', 'MessageTemplateEnvironment')
 
@@ -91,6 +95,8 @@ class TemplateEnvironmentBase(jinja2.Environment):
 		self.filters['encode'] = self._filter_encode
 		self.filters['decode'] = self._filter_decode
 		self.filters['hash'] = self._filter_hash
+		# counter part to https://jinja.readthedocs.io/en/stable/templates.html#tojson
+		self.filters['fromjson'] = self._filter_json
 
 		# time filters
 		self.filters['strftime'] = self._filter_strftime
@@ -108,14 +114,13 @@ class TemplateEnvironmentBase(jinja2.Environment):
 		self.globals['version'] = version.version
 
 		# global functions
-		self.globals['random_integer'] = random.randint
+		self.globals['fetch'] = self._func_fetch
 		self.globals['parse_user_agent'] = ua_parser.parse_user_agent
 		self.globals['password_is_complex'] = utilities.password_is_complex
+		self.globals['random_integer'] = random.randint
 
 		# additional globals
-		if global_vars:
-			for key, value in global_vars.items():
-				self.globals[key] = value
+		self.globals.update(global_vars or {})
 
 	def from_file(self, path, **kwargs):
 		"""
@@ -213,6 +218,14 @@ class TemplateEnvironmentBase(jinja2.Environment):
 		hash_obj = hashlib.new(hash_type, data)
 		return hash_obj.digest()
 
+	def _filter_json(self, data):
+		try:
+			data = json.loads(data)
+		except json.JSONDecodeError:
+			self.logger.error('template failed to load json data')
+			data = None
+		return data
+
 	def _filter_strftime(self, dt, fmt):
 		try:
 			result = dt.strftime(fmt)
@@ -228,6 +241,17 @@ class TemplateEnvironmentBase(jinja2.Environment):
 			self.logger.error('invalid timedelta specification')
 			result = ''
 		return result
+
+	def _func_fetch(self, url, allow_file=False):
+		session = requests.Session()
+		if allow_file:
+			session.mount('file://', requests_file.FileAdapter())
+		try:
+			response = session.get(url)
+		except requests.exceptions.RequestException:
+			self.logger.error('template failed to load url: ' + url)
+			return None
+		return response.text
 
 class MessageTemplateEnvironment(TemplateEnvironmentBase):
 	"""A configured Jinja2 environment for formatting messages."""
