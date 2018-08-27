@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import collections
+import datetime
 import functools
 
 from king_phisher import utilities
@@ -373,3 +374,63 @@ class TreeViewManager(object):
 
 	def signal_activate_popup_menu_delete(self, menuitem):
 		self._call_cb_delete()
+
+class TimeSelector(gui_utilities.GladeGObject):
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'spinbutton_hour',
+			'spinbutton_minute'
+		),
+		top_level=(
+			'ClockHourAdjustment',
+			'ClockMinuteAdjustment'
+		)
+	)
+	top_gobject = 'popover'
+
+class TimeSelectorButtonManager(object):
+	def __init__(self, button, application, value=None):
+		"""
+		:param button: The button to activate TimeSelectorPopover()
+		:type button: :py:class:`Gtk.ToggleButton`
+		:param application: The application instance which this object belongs to.
+		:param value: The present datetime value (initialized to 00:00)
+		:type datetime.time: The value, (initialized to NoneType) will always return datetime.time(hr, min)
+		"""
+		self.popover = TimeSelector(application)
+		self.button = button
+		self.application = application
+		self._hour_spin = self.popover.gobjects['spinbutton_hour']
+		self._minute_spin = self.popover.gobjects['spinbutton_minute']
+
+		self.popover.popover.set_relative_to(self.button)
+		self.button.connect('toggled', self.signal_button_toggled)
+		self.time = value or datetime.time(0, 0)
+
+		self.button.set_label(f"{0:02}:{0:02}")
+
+	def __repr__(self):
+		return "<{0} time='{1:%H:%M}' >".format(self.__class__.__name__, self.time)
+
+	def signal_button_toggled(self, _):
+		if not self.button.get_active():
+			self.popover.popover.popup()
+		else:
+			self.popover.popover.popdown()
+		self.button.set_label(f"{self.time.hour:02}:{self.time.minute:02}")
+
+	@property
+	def time(self):
+		"""
+		:return: The current time value.
+		:rtype: :py:class:`datetime.time`
+		"""
+		return datetime.time(self._hour_spin.get_value_as_int(), self._minute_spin.get_value_as_int())
+
+	@time.setter
+	def time(self, value):
+		if not isinstance(value, datetime.time):
+			raise TypeError('argument 1 must be a datetime.time instance')
+		self._hour_spin.set_value(value.hour)
+		self._minute_spin.set_value(value.minute)
+		self.button.set_label(f"{value.hour:02}:{value.minute:02}")

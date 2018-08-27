@@ -35,6 +35,7 @@ import datetime
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import resources
+from king_phisher.client.widget import managers
 
 import advancedhttpserver
 
@@ -73,8 +74,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'radiobutton_company_existing',
 			'radiobutton_company_new',
 			'radiobutton_company_none',
-			'spinbutton_campaign_expiration_hour',
-			'spinbutton_campaign_expiration_minute'
+			'togglebutton_expiration_time'
 		),
 		top_level=(
 			'ClockHourAdjustment',
@@ -99,6 +99,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			if page_title:
 				self._page_titles[page_title] = page_n
 
+		self.time_selector = managers.TimeSelectorButtonManager(self.gobjects['togglebutton_expiration_time'], self.application)
 		self._set_comboboxes()
 		self._set_defaults()
 
@@ -117,6 +118,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['label_confirm_body'].set_text(confirm_preamble + ', then hit "Apply" to create the new King Phisher campaign.')
 			self.gobjects['label_intro_body'].set_text('This assistant will walk you through creating and configuring a new King Phisher campaign.')
 			self.gobjects['label_intro_title'].set_text('New Campaign')
+
 
 	@property
 	def campaign_name(self):
@@ -184,9 +186,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if campaign['expiration'] is not None:
 			expiration = utilities.datetime_utc_to_local(campaign['expiration'])
 			self.gobjects['checkbutton_expire_campaign'].set_active(True)
-			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration)
-			self.gobjects['spinbutton_campaign_expiration_hour'].set_value(expiration.hour)
-			self.gobjects['spinbutton_campaign_expiration_minute'].set_value(expiration.minute)
+			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration.date())
+
+			
 
 	def _get_tag_from_combobox(self, combobox, db_table):
 		model = combobox.get_model()
@@ -249,6 +251,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		}""", {'name': company_name})
 		return results['db']['company']
 
+	def signal_toggle_time(self, _):
+		return self.time_selector.signal_button_toggled(_)
+
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
 		# have to do it this way because the next page will be selected when the apply signal is complete
@@ -282,10 +287,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if self.gobjects['checkbutton_expire_campaign'].get_property('active'):
 			expiration = datetime.datetime.combine(
 				gui_utilities.gtk_calendar_get_pydate(self.gobjects['calendar_campaign_expiration']),
-				datetime.time(
-					int(self.gobjects['spinbutton_campaign_expiration_hour'].get_value()),
-					int(self.gobjects['spinbutton_campaign_expiration_minute'].get_value())
-				)
+				self.time_selector.time
 			)
 			expiration = utilities.datetime_local_to_utc(expiration)
 			if self.is_new_campaign and expiration <= datetime.datetime.now():
