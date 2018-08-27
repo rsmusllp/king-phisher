@@ -402,11 +402,9 @@ class TimeSelectorButtonManager(object):
 		self.application = application
 		self._hour_spin = self.popover.gobjects['spinbutton_hour']
 		self._minute_spin = self.popover.gobjects['spinbutton_minute']
-
-		self.popover.popover.set_relative_to(self.button)
-		self.button.connect('toggled', self.signal_button_toggled)
 		self.time = value or datetime.time(0, 0)
-
+		self.button.connect('toggled', self.signal_button_toggled)
+		self.popover.popover.set_relative_to(self.button)
 		self.button.set_label(f"{0:02}:{0:02}")
 
 	def __repr__(self):
