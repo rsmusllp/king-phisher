@@ -119,7 +119,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['label_intro_body'].set_text('This assistant will walk you through creating and configuring a new King Phisher campaign.')
 			self.gobjects['label_intro_title'].set_text('New Campaign')
 
-
 	@property
 	def campaign_name(self):
 		"""
@@ -187,8 +186,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			expiration = utilities.datetime_utc_to_local(campaign['expiration'])
 			self.gobjects['checkbutton_expire_campaign'].set_active(True)
 			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration.date())
-
-			
 
 	def _get_tag_from_combobox(self, combobox, db_table):
 		model = combobox.get_model()
