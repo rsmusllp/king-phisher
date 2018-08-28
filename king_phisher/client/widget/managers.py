@@ -376,6 +376,16 @@ class TreeViewManager(object):
 		self._call_cb_delete()
 
 class TimeSelector(gui_utilities.GladeGObject):
+	"""
+	This is the TimeSelector Popover object containing the spinbutton
+	widgets. This class should be treated as private, as it is created
+	by the TimeSelectorButtonManager() Class. It should not be used
+	directly.
+
+	:param GTK.Popover: The popover TimeSelector Glade object
+	:type TimeSelector: An empty GTK.Popover class reserved for time selections
+	:return TimeSelector:
+	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
 			'spinbutton_hour',
@@ -391,11 +401,17 @@ class TimeSelector(gui_utilities.GladeGObject):
 class TimeSelectorButtonManager(object):
 	def __init__(self, button, application, value=None):
 		"""
+		Button Manager digests the GTK.ToggleButton to be used to show
+		the TimeSelector <GTK.Popover()> object. This should be
+		instantiated within the window where the TimeSelector widget is
+		desired as an attribute of the window class.
+
 		:param button: The button to activate TimeSelectorPopover()
 		:type button: :py:class:`Gtk.ToggleButton`
-		:param application: The application instance which this object belongs to.
+		:param application: The application instance which owns this object.
 		:param value: The present datetime value (initialized to 00:00)
-		:type datetime.time: The value, (initialized to NoneType) will always return datetime.time(hr, min)
+		:type datetime.time: The value; initialized to NoneType but will always return datetime.time()
+		:return: <TimeSelectorButtonManager> (GTK.ToggleButton, GTK.Popover, datetime.time)
 		"""
 		self.popover = TimeSelector(application)
 		self.button = button
@@ -405,7 +421,7 @@ class TimeSelectorButtonManager(object):
 		self.time = value or datetime.time(0, 0)
 		self.button.connect('toggled', self.signal_button_toggled)
 		self.popover.popover.set_relative_to(self.button)
-		self.button.set_label(f"{0:02}:{0:02}")
+		self.button.set_label(f"{self.time.hour:02}:{self.time.minute:02}")
 
 	def __repr__(self):
 		return "<{0} time='{1:%H:%M}' >".format(self.__class__.__name__, self.time)
@@ -427,6 +443,10 @@ class TimeSelectorButtonManager(object):
 
 	@time.setter
 	def time(self, value):
+		"""
+		:param value: value from self.popover.gobjects['spinbutton_xx']
+		:return: The new time value to self.time
+		"""
 		if not isinstance(value, datetime.time):
 			raise TypeError('argument 1 must be a datetime.time instance')
 		self._hour_spin.set_value(value.hour)
