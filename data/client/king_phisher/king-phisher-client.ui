@@ -724,15 +724,19 @@ Spencer McIntyre</property>
                       <object class="GtkBox" id="box14">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="halign">end</property>
                         <property name="spacing">5</property>
                         <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Expiration Time:</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
                         </child>
                         <child>
                           <object class="GtkToggleButton" id="CampaignAssistant.togglebutton_expiration_time">
@@ -740,7 +744,6 @@ Spencer McIntyre</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <signal name="toggled" handler="signal_toggle_time" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -779,7 +782,7 @@ Spencer McIntyre</property>
               <object class="GtkLabel" id="label35">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Expiration Date</property>
+                <property name="label" translatable="yes">Campaign Expiration</property>
               </object>
             </child>
           </object>
@@ -1634,6 +1637,7 @@ Spencer McIntyre</property>
   <object class="GtkPopover" id="TimeSelector">
     <property name="name">TimeSelector</property>
     <property name="can_focus">False</property>
+    <property name="position">bottom</property>
     <child>
       <object class="GtkGrid">
         <property name="name">TimeSelector</property>
@@ -1641,6 +1645,7 @@ Spencer McIntyre</property>
         <property name="can_focus">False</property>
         <child>
           <object class="GtkSpinButton" id="TimeSelector.spinbutton_hour">
+            <property name="width_request">40</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="tooltip_text" translatable="yes">The hour for the campaign expiration time on a 24-hour clock.</property>
@@ -1654,6 +1659,7 @@ Spencer McIntyre</property>
             <property name="adjustment">ClockHourAdjustment</property>
             <property name="numeric">True</property>
             <property name="value">1</property>
+            <signal name="output" handler="signal_spinbutton_output" swapped="no"/>
           </object>
           <packing>
             <property name="left_attach">0</property>
@@ -1666,7 +1672,6 @@ Spencer McIntyre</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="tooltip_text" translatable="yes">The minute for the campaign expiration time.</property>
-            <property name="hexpand">True</property>
             <property name="max_length">2</property>
             <property name="text" translatable="yes">00</property>
             <property name="xalign">0.5</property>
@@ -1676,6 +1681,7 @@ Spencer McIntyre</property>
             <property name="orientation">vertical</property>
             <property name="adjustment">ClockMinuteAdjustment</property>
             <property name="numeric">True</property>
+            <signal name="output" handler="signal_spinbutton_output" swapped="no"/>
           </object>
           <packing>
             <property name="left_attach">2</property>

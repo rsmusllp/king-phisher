@@ -99,7 +99,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			if page_title:
 				self._page_titles[page_title] = page_n
 
-		self.time_selector = managers.TimeSelectorButtonManager(self.gobjects['togglebutton_expiration_time'], self.application)
+		self._expiration_time = managers.TimeSelectorButtonManager(self.application, self.gobjects['togglebutton_expiration_time'])
 		self._set_comboboxes()
 		self._set_defaults()
 
@@ -185,6 +185,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if campaign['expiration'] is not None:
 			expiration = utilities.datetime_utc_to_local(campaign['expiration'])
 			self.gobjects['checkbutton_expire_campaign'].set_active(True)
+			self._expiration_time.time = expiration.time()
 			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration.date())
 
 	def _get_tag_from_combobox(self, combobox, db_table):
@@ -248,9 +249,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		}""", {'name': company_name})
 		return results['db']['company']
 
-	def signal_toggle_time(self, _):
-		return self.time_selector.signal_button_toggled(_)
-
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
 		# have to do it this way because the next page will be selected when the apply signal is complete
@@ -284,7 +282,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if self.gobjects['checkbutton_expire_campaign'].get_property('active'):
 			expiration = datetime.datetime.combine(
 				gui_utilities.gtk_calendar_get_pydate(self.gobjects['calendar_campaign_expiration']),
-				self.time_selector.time
+				self._expiration_time.time
 			)
 			expiration = utilities.datetime_local_to_utc(expiration)
 			if self.is_new_campaign and expiration <= datetime.datetime.now():
