@@ -35,6 +35,7 @@ import codecs
 import datetime
 import hashlib
 import html
+import json
 import logging
 import os
 import random
@@ -48,7 +49,6 @@ from king_phisher import version
 
 import boltons.strutils
 import jinja2
-import json
 import requests
 import requests.exceptions
 import requests_file
