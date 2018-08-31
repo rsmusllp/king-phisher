@@ -24,6 +24,13 @@ Classes
    :members:
    :special-members: __init__
 
+.. autoclass:: TimeSelectorButtonManager
+   :show-inheritance:
+   :members:
+   :special-members: __init__
+
+   .. py:attribute:: time
+
 .. autoclass:: ToggleButtonGroupManager
    :show-inheritance:
    :members:
