@@ -35,5 +35,5 @@ smoke-zephyr>=1.2.0
 SQLAlchemy>=1.2.6
 termcolor>=1.1.0
 tzlocal>=1.5.1
-websocket-client>=0.49.0
+websocket-client==0.49.0
 XlsxWriter>=0.9.6             # dpkg kali
