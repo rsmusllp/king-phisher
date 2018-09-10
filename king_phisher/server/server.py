@@ -59,9 +59,29 @@ from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
 import advancedhttpserver
+import blinker
 import jinja2
 import smoke_zephyr.job
 import smoke_zephyr.utilities
+
+def _send_safe_campaign_alerts(campaign, signal_name, sender, **kwargs):
+	alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
+	logger = logging.getLogger('KingPhisher.Server.CampaignAlerts')
+	logger.debug("dispatching campaign alerts for '{0}' (sender: {1!r}) to {2:,} active subscriptions".format(signal_name, sender, len(alert_subscriptions)))
+	if not alert_subscriptions:
+		return
+	signal = blinker.signal(signal_name)
+	if not signal.receivers:
+		logger.warning("users are subscribed to '{0}', and no signal handlers are connected".format(signal_name))
+		return
+	if not signal.has_receivers_for(sender):
+		logger.info("users are subscribed to '{0}', and no signal handlers are connected for sender: {1}".format(signal_name, sender))
+		return
+	for subscription in alert_subscriptions:
+		results = signals.send_safe(signal_name, logger, sender, alert_subscription=subscription, **kwargs)
+		if any((result for (_, result) in results)):
+			continue
+		logger.warning("user {0} is subscribed to '{1}', and no signal handlers succeeded to send an alert".format(subscription.user.name, signal_name))
 
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	_logger = logging.getLogger('KingPhisher.Server.RequestHandler')
@@ -111,25 +131,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		"""
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
-		alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
-		if not alert_subscriptions:
-			self.server.logger.debug("no active alert subscriptions are present for campaign id: {0} ({1})".format(campaign.id, campaign.name))
-			session.close()
-			return
-		if not signals.campaign_alert.receivers:
-			self.server.logger.warning('users are subscribed to campaign alerts, and no signal handlers are connected')
-			session.close()
-			return
-		if not signals.campaign_alert.has_receivers_for(table):
-			self.server.logger.info('users are subscribed to campaign alerts, and no signal handlers are connected for sender: ' + table)
-			session.close()
-			return
-
-		for subscription in alert_subscriptions:
-			results = signals.send_safe('campaign-alert', self.server.logger, table, alert_subscription=subscription, count=count)
-			if any((result for (_, result) in results)):
-				continue
-			self.server.logger.warning("user {0} is subscribed to campaign alerts, and no signal handlers succeeded to send an alert".format(subscription.user.name))
+		_send_safe_campaign_alerts(campaign, 'campaign-alert', table, count=count)
 		session.close()
 		return
 
@@ -885,6 +887,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
 		maintenance_interval = 900  # 15 minutes
+		maintenance_interval = 20
 		self._maintenance_job = self.job_manager.job_add(self._maintenance, parameters=(maintenance_interval,), seconds=maintenance_interval)
 
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
@@ -947,18 +950,8 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			db_models.Campaign.expiration >= now - datetime.timedelta(seconds=interval)
 		)
 		for campaign in campaigns:
-			signals.send_safe('campaign-expired', self.server.logger, campaign)
-			alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
-			if not alert_subscriptions:
-				continue
-			if not signals.campaign_alert.receivers:
-				self.server.logger.warning('users are subscribed to campaign expiration alerts, and no signal handlers are connected')
-				continue
-			for subscription in alert_subscriptions:
-				results = signals.send_safe('campaign-alert-expired', self.server.logger, alert_subscription=subscription)
-				if any((result for (_, result) in results)):
-					continue
-				self.server.logger.warning("user {0} is subscribed to campaign alerts, and no signal handlers succeeded to send an alert".format(subscription.user.name))
+			signals.send_safe('campaign-expired', self.logger, campaign)
+			_send_safe_campaign_alerts(campaign, 'campaign-alert-expired', campaign)
 		session.close()
 
 	def shutdown(self, *args, **kwargs):

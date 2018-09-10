@@ -12,6 +12,13 @@ This allows plugins to subscribe specific functions to be executed when a
 particular event occurs. These signals are defined in the
 :py:mod:`~server.signals` module.
 
+Signal Sender
+-------------
+
+The first parameter of each signal is the `signal sender`_. It can be used by
+subscribers to only receive signal when emitted by a particular sender,
+effectively providing a filter. See the `blinker documentation`_ for more
+information.
 
 .. _server-signals-campaign-label:
 
@@ -123,3 +130,6 @@ Signals which are emitted for a
 .. autodata:: server_initialized
    :annotation:
    :noindex:
+
+.. _blinker documentation: https://pythonhosted.org/blinker/
+.. _signal sender: https://pythonhosted.org/blinker/#subscribing-to-specific-senders

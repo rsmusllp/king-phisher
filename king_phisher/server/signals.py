@@ -94,6 +94,8 @@ campaign_alert_expired = blinker.signal(
 	Emitted for each user who is subscribed to alerts for a particular campaign
 	after it has expired.
 
+	:param campaign: The campaign which is expiring.
+	:type campaign: :py:class:`king_phisher.server.database.models.Campaign`
 	:param alert_subscription: The alert subscription.
 	:type alert_subscription: :py:class:`king_phisher.server.database.models.AlertSubscription`
 	"""
@@ -108,6 +110,9 @@ campaign_expired = blinker.signal(
 	interval. If a campaign is updated to expire at a time less than the next
 	check minus the interval, then this signal will not be emitted for the
 	campaign.
+	
+	:param campaign: The campaign which is expiring.
+	:type campaign: :py:class:`king_phisher.server.database.models.Campaign`
 	"""
 )
 
