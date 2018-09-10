@@ -23,6 +23,7 @@ Version 1.12.0
    * The GUI no longer locks up while tasks like downloading plugins are taking place
 
 * Added the new ``fetch`` Jinja function and ``fromjson`` Jinja filter
+* Added ``campaign-alert-expired`` and ``campaign-expired`` server signals
 
 Version 1.11.0
 ^^^^^^^^^^^^^^
