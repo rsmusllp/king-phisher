@@ -501,7 +501,7 @@ def sign_item_files(local_path, signing_key, repo_path=None):
 	.. warning::
 		This function contains a black list of file extensions which will be
 		skipped. This is to avoid signing files originating from the development
-		process.
+		process such as ``.pyc`` and ``.ui~``.
 
 	:param str local_path: The real location of where the files exist on disk.
 	:param signing_key: The key with which to sign the files for verification.

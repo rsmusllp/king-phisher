@@ -881,7 +881,6 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
 		maintenance_interval = 900  # 15 minutes
-		maintenance_interval = 20
 		self._maintenance_job = self.job_manager.job_add(self._maintenance, parameters=(maintenance_interval,), seconds=maintenance_interval)
 
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
