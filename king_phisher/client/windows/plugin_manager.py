@@ -177,6 +177,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.plugin_path = os.path.join(self.application.user_data_path, 'plugins')
 		self.status_bar = self.gobjects['statusbar']
 		self._installed_plugins_treeview_tracker = None
+		"""This is used to track and make sure all plugins make it into the treeview. It is set each time catalogs are loaded or refreshed."""
 		self._worker_thread = None
 		self._worker_thread_start(self._load_catalogs_tsafe)
 		self.__load_errors = {}
@@ -685,13 +686,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	# Each of these functions loads the catalog and handles add it to the
 	# TreeView as necessary.
 	#
-	# self._installed_plugins_treeview_tracker is a temporary copy of the list
-	# of installed plugins from the users configuration file.
-	# Plugins are removed from it as they are added to the treeview.
-	# If there any plugins left over, their associated catalog was not found
-	# and the plugin is then moved to local.
-	# The users config is then updated accordingly.
-	#
 	def _load_catalogs_tsafe(self, refresh=False):
 		self._installed_plugins_treeview_tracker = copy.deepcopy(self.config['plugins.installed'])
 		if refresh:
@@ -722,15 +716,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def _load_missing_plugins_tsafe(self):
 		local_model_row = None
 		for plugin in self._installed_plugins_treeview_tracker.keys():
-			self.logger.warning("plugin {} was not found in any catalog or repo loaded, moving to locally installed.".format(plugin))
+			self.logger.warning("plugin {} was not found in any loaded catalog or repo, moving to locally installed".format(plugin))
 			self.config['plugins.installed'][plugin] = None
 			self._installed_plugins_treeview_tracker[plugin] = None
-		# must wait for gtktree view to finish loading all nodes
-		while not local_model_row:
-			for model_row in self._model:
-				if _ModelNamedRow(*model_row).id == _LOCAL_REPOSITORY_ID:
-					local_model_row = model_row
-		gui_utilities.glib_idle_add_once(self._model.remove, local_model_row.iter)
+		for model_row in self._model:
+			if _ModelNamedRow(*model_row).id == _LOCAL_REPOSITORY_ID:
+				gui_utilities.glib_idle_add_wait(self._model.remove, model_row.iter)
+				break
+		else:
+			raise RuntimeError('failed to find the local plugin repository')
 		self._load_catalog_local_tsafe()
 
 	def _load_catalog_from_cache_tsafe(self, catalog_cache_dict):
@@ -799,7 +793,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				sensitive_installed=False,
 				type=_ROW_TYPE_PLUGIN
 			))
-		gui_utilities.glib_idle_add_once(self.__store_add_node, node)
+		gui_utilities.glib_idle_add_wait(self.__store_add_node, node)
 
 	#
 	# Signal Handlers
