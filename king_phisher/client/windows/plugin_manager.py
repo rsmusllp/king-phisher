@@ -688,6 +688,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	#
 	def _load_catalogs_tsafe(self, refresh=False):
 		self._installed_plugins_treeview_tracker = copy.deepcopy(self.config['plugins.installed'])
+		for plugin in self._installed_plugins_treeview_tracker:
+			# Remove plugins already found to be locally installed.
+			if not self._installed_plugins_treeview_tracker[plugin]:
+				self._installed_plugins_treeview_tracker.pop(plugin)
 		if refresh:
 			gui_utilities.glib_idle_add_once(self._model.clear)
 		expiration = datetime.timedelta(seconds=smoke_zephyr.utilities.parse_timespan(self.config.get('cache.age', '4h')))
