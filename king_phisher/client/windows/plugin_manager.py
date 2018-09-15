@@ -31,6 +31,7 @@
 #
 
 import collections
+import copy
 import datetime
 import errno
 import functools
@@ -175,6 +176,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
 		self.plugin_path = os.path.join(self.application.user_data_path, 'plugins')
 		self.status_bar = self.gobjects['statusbar']
+		self._installed_plugins_treeview_tracker = None
+		"""
+		This is used to track and make sure all plugins make it into the
+		treeview. It is set each time catalogs are loaded or refreshed. Once the
+		loading operation is complete, plugins that remain were not loaded due
+		their data (repo or id) missing from the catalog, likely due to it
+		having been removed.
+		"""
 		self._worker_thread = None
 		self._worker_thread_start(self._load_catalogs_tsafe)
 		self.__load_errors = {}
@@ -288,6 +297,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				install_src = self.config['plugins.installed'].get(plugin_name)
 				if install_src and repo.id == install_src['repo_id'] and catalog.id == install_src['catalog_id']:
 					installed = True
+					# plugin was added to treeview so it is removed from the temporary tracking dict
+					self._installed_plugins_treeview_tracker.pop(plugin_name)
 					enabled = plugin_name in self.config['plugins.enabled']
 				repo_node.children.append(_ModelNamedRow(
 					id=plugin_name,
@@ -682,6 +693,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	# TreeView as necessary.
 	#
 	def _load_catalogs_tsafe(self, refresh=False):
+		self._installed_plugins_treeview_tracker = copy.deepcopy(self.config['plugins.installed'])
+		for plugin in self._installed_plugins_treeview_tracker:
+			# Remove plugins already found to be locally installed.
+			if not self._installed_plugins_treeview_tracker[plugin]:
+				self._installed_plugins_treeview_tracker.pop(plugin)
 		if refresh:
 			gui_utilities.glib_idle_add_once(self._model.clear)
 		expiration = datetime.timedelta(seconds=smoke_zephyr.utilities.parse_timespan(self.config.get('cache.age', '4h')))
@@ -702,7 +718,24 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if catalog is None and catalog_cache_dict is not None:
 				self.logger.warning('failing over to loading the catalog from the cache')
 				self._load_catalog_from_cache_tsafe(catalog_cache_dict)
+		if self._installed_plugins_treeview_tracker:
+			self._load_missing_plugins_tsafe()
 		self._update_status_bar_tsafe('Loading completed')
+		self._installed_plugins_treeview_tracker = None
+
+	def _load_missing_plugins_tsafe(self):
+		local_model_row = None
+		for plugin in self._installed_plugins_treeview_tracker.keys():
+			self.logger.warning("plugin {} was not found in any loaded catalog or repo, moving to locally installed".format(plugin))
+			self.config['plugins.installed'][plugin] = None
+			self._installed_plugins_treeview_tracker[plugin] = None
+		for model_row in self._model:
+			if _ModelNamedRow(*model_row).id == _LOCAL_REPOSITORY_ID:
+				gui_utilities.glib_idle_add_wait(self._model.remove, model_row.iter)
+				break
+		else:
+			raise RuntimeError('failed to find the local plugin repository')
+		self._load_catalog_local_tsafe()
 
 	def _load_catalog_from_cache_tsafe(self, catalog_cache_dict):
 		catalog = None
@@ -770,7 +803,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				sensitive_installed=False,
 				type=_ROW_TYPE_PLUGIN
 			))
-		gui_utilities.glib_idle_add_once(self.__store_add_node, node)
+		gui_utilities.glib_idle_add_wait(self.__store_add_node, node)
 
 	#
 	# Signal Handlers
