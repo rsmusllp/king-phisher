@@ -177,7 +177,13 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.plugin_path = os.path.join(self.application.user_data_path, 'plugins')
 		self.status_bar = self.gobjects['statusbar']
 		self._installed_plugins_treeview_tracker = None
-		"""This is used to track and make sure all plugins make it into the treeview. It is set each time catalogs are loaded or refreshed."""
+		"""
+		This is used to track and make sure all plugins make it into the
+		treeview. It is set each time catalogs are loaded or refreshed. Once the
+		loading operation is complete, plugins that remain were not loaded due
+		their data (repo or id) missing from the catalog, likely due to it
+		having been removed.
+		"""
 		self._worker_thread = None
 		self._worker_thread_start(self._load_catalogs_tsafe)
 		self.__load_errors = {}
