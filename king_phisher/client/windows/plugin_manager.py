@@ -694,7 +694,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	#
 	def _load_catalogs_tsafe(self, refresh=False):
 		self._installed_plugins_treeview_tracker = copy.deepcopy(self.config['plugins.installed'])
-		for plugin in self._installed_plugins_treeview_tracker:
+		for plugin in list(self._installed_plugins_treeview_tracker.keys()):
 			# Remove plugins already found to be locally installed.
 			if not self._installed_plugins_treeview_tracker[plugin]:
 				self._installed_plugins_treeview_tracker.pop(plugin)
