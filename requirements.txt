@@ -15,7 +15,7 @@ icalendar>=4.0.1
 ipaddress>=1.0.19              ; python_version < '3.3'
 jsonschema>=2.6.0
 jinja2>=2.10
-markdown>=2.6.11
+markdown==2.6.11
 markupsafe>=1.0
 matplotlib>=2.2.2
 msgpack-python>=0.5.6
