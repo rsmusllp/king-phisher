@@ -37,6 +37,7 @@ import datetime
 import king_phisher.geoip as geoip
 import king_phisher.ipaddress as ipaddress
 
+import geoip2.errors
 import graphene.types.utils
 import graphql.language.ast
 
@@ -110,7 +111,10 @@ class GeoLocation(graphene.ObjectType):
 		ip_address = ipaddress.ip_address(ip_address)
 		if ip_address.is_private:
 			return
-		result = geoip.lookup(ip_address)
+		try:
+			result = geoip.lookup(ip_address)
+		except geoip2.errors.AddressNotFoundError:
+			result = None
 		if result is None:
 			return
 		return cls(**result)
