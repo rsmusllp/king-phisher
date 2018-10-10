@@ -32,11 +32,13 @@
 
 import platform
 import sys
+import textwrap
 import threading
 import traceback
 import tzlocal
 import uuid
 
+from king_phisher import errors
 from king_phisher import its
 from king_phisher import utilities
 from king_phisher import version
@@ -61,9 +63,11 @@ Gtk Version: {gtk_version}
 Timezone: {timezone}
 
 Thread Information:
+===================
 {thread_info}
 
 Stack Trace:
+============
 {stack_trace}
 """
 
@@ -123,6 +127,14 @@ def format_exception_details(exc_type, exc_value, exc_traceback, error_uid=None)
 		timezone=tzlocal.get_localzone().zone
 	)
 	details = details.strip() + '\n'
+	# add on additional details for context as necessary
+	if isinstance(exc_value, errors.KingPhisherGraphQLQueryError):
+		details += '\nGraphQL Exception Information:\n=============================\n\n'
+		if exc_value.errors:
+			details += 'GraphQL Errors:\n---------------\n'
+			details += '\n'.join(error.strip() for error in exc_value.errors) + '\n\n'
+		details += 'GraphQL Query:\n--------------\n'
+		details += textwrap.dedent(exc_value.query) + '\n'
 	return details
 
 def format_exception_name(exc_type):
