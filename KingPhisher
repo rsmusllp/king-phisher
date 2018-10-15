@@ -33,75 +33,75 @@
 import argparse
 import logging
 import os
+import subprocess
 import sys
-import threading
-import time
 
-if getattr(sys, 'frozen', False):
-	# set the basemap data directory for frozen builds
-	os.environ['BASEMAPDATA'] = os.path.join(os.path.dirname(sys.executable), 'mpl-basemap-data')
-
-from king_phisher import color
-from king_phisher import find
-from king_phisher import utilities
-from king_phisher import version
-from king_phisher.client import application
-from king_phisher.client import gui_utilities
-
-from gi.repository import GObject
-from gi.repository import Gtk
+from king_phisher import startup
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Client GUI', conflict_handler='resolve')
-	utilities.argp_add_args(parser, default_root='KingPhisher')
-	parser.add_argument('-c', '--config', dest='config_file', required=False, help='specify a configuration file to use')
-	parser.add_argument('--no-plugins', dest='use_plugins', default=True, action='store_false', help='disable all plugins')
-	parser.add_argument('--no-style', dest='use_style', default=True, action='store_false', help='disable interface styling')
-	arguments = parser.parse_args()
+	startup.argp_add_wrapper(parser)
+	startup.argp_add_client(parser)
+	startup.argb_add_default_args(parser)
 
-	# basic runtime checks
+	arguments, unknown_args = parser.parse_known_args()
+	sys_argv = sys.argv
+	sys_argv.pop(0)
+
 	if sys.version_info < (3, 4):
-		color.print_error('the Python version is too old (minimum required is 3.4)')
+		print('[-] the Python version is too old (minimum required is 3.4)')
+		return 0
+	logger = logging.getLogger('KingPhisher.wrapper')
+	logger.setLevel(arguments.loglvl if arguments.loglvl else 'WARNING')
+	console_log_handler = logging.StreamHandler()
+	console_log_handler.setLevel(arguments.loglvl if arguments.loglvl else 'WARNING')
+	console_log_handler.setFormatter(logging.Formatter('%(levelname)-8s %(message)s'))
+	logger.addHandler(console_log_handler)
+
+	target_directory = os.path.abspath(os.path.dirname(__file__))
+	logger.debug("target diretory: {}".format(target_directory))
+	os.environ['PIPENV_VENV_IN_PROJECT'] = os.environ.get('PIPENV_VENV_IN_PROJECT', 'True')
+	os.environ['PIPENV_PIPFILE'] = os.environ.get('PIPENV_PIPFILE', os.path.join(target_directory, 'Pipfile'))
+	logger.info('checking for pipenv for environment')
+	if not startup.which('pipenv'):
+		logger.info('installing pipenv')
+		process_output, return_code = startup.run_process([sys.executable, '-m', 'pip', 'install', 'pipenv'], cwd=target_directory)
+		if return_code:
+			logger.warning("the following issue occurred during installation of pipenv: {}".format(process_output))
+			return 0
+	pipenv_path = startup.which('pipenv')
+	logger.debug('pipenv path: {}'.format(pipenv_path))
+	if not pipenv_path:
+		logger.exception("failed to find pipenv")
 		return 0
 
-	if Gtk.check_version(3, 14, 0):
-		color.print_error('the GTK+ version is too old (minimum required is 3.14)')
+	if arguments.pipenv_install:
+		logger.info("installing King Phisher's pipenv environment")
+		process_output, return_code = startup.run_process([pipenv_path, '--site-packages', 'install'], cwd=target_directory)
+		if return_code:
+			logger.warning("the following error occurred during pipenv environment setup: {}".format(process_output))
+			return 0
 		return 0
 
-	if sys.platform.startswith('linux') and not os.environ.get('DISPLAY'):
-		color.print_error('no display was detected, this must be run with an interactive X session')
+	if arguments.pipenv_update:
+		logger.info("updating King Phisher's pipenv")
+		process_output, return_code = startup.run_process([pipenv_path, '--site-packages', 'update'], cwd=target_directory)
+		if return_code:
+			logger.warning("the following error occurred during pipenv environment update: {}".format(process_output))
+			return 0
+		logger.info('pipenv environment updated')
 		return 0
 
-	config_file = arguments.config_file
-	use_plugins = arguments.use_plugins
-	use_style = arguments.use_style
-	del arguments, parser
-	logger = logging.getLogger('KingPhisher.Client.CLI')
+	if not os.path.isdir(os.path.join(target_directory, '.venv')):
+		logger.info("installing King Phisher's pipenv environment")
+		process_output, return_code = startup.run_process([pipenv_path, '--site-packages', 'install'], cwd=target_directory)
+		if return_code:
+			logger.warning("the following error occurred during pipenv environment setup: {}".format(process_output))
+			return 0
+	logger.debug('pipenv Pipfile: {}'.format(os.environ['PIPENV_PIPFILE']))
+	passing_argv = [' ', 'run', os.path.basename(__file__)] + sys_argv
 
-	if sys.platform.startswith('linux') and not os.getuid():
-		logger.warning('it is not necessary to run the king phisher client as root')
-
-	find.init_data_path('client')
-
-	if not gui_utilities.which_glade():
-		color.print_error('unable to locate the glade ui data file')
-		return 0
-
-	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-	logger.debug("client running in process: {0} main tid: 0x{1:x}".format(os.getpid(), threading.current_thread().ident))
-
-	start_time = time.time()
-	logger.debug('using ui data from glade file: ' + gui_utilities.which_glade())
-	try:
-		app = application.KingPhisherClientApplication(config_file=config_file, use_plugins=use_plugins, use_style=use_style)
-	except Exception as error:
-		logger.critical("initialization error: {0} ({1})".format(error.__class__.__name__, getattr(error, 'message', 'n/a')))
-		color.print_error('failed to initialize the King Phisher client')
-		return 0
-	logger.debug("client loaded in {0:.2f} seconds".format(time.time() - start_time))
-
-	GObject.threads_init()
-	return app.run([])
+	os.execve(pipenv_path, passing_argv, os.environ)
 
 if __name__ == '__main__':
 	sys.exit(main())

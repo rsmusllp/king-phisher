@@ -337,7 +337,7 @@ elif [ "$LINUX_VERSION" == "Fedora" ]; then
 		libpng-devel postgresql-devel python3-devel python3-pip \
 		libffi-devel openssl-devel
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-		dnf install -y geos geos-devel gtksourceview3 vte3
+		dnf install -y geos geos-devel gtksourceview3 vte3 gobject-introspection-devel
 	fi
 	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 		dnf install -y postgresql-server
@@ -353,7 +353,7 @@ elif [ "$LINUX_VERSION" == "BackBox" ] || \
 	apt-get install -y libfreetype6-dev python3-dev python3-pip pkg-config
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		if ! apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
-			gir1.2-webkit-3.0 python3-cairo libgeos++-dev \
+			gir1.2-webkit-3.0 python3-cairo libgeos++-dev libgirepository1.0-dev \
 			libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev; then
 				echo "ERROR: Failed to install dependencies with apt-get"
 				exit
@@ -391,7 +391,8 @@ elif [ "$LINUX_VERSION" == "Arch" ]; then
 	pacman --noconfirm -S freetype2 python python-pip pkg-config
 	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 		if ! pacman --noconfirm -S gobject-introspection python-cairo geos gtk3 \
-			gtksourceview3 webkit2gtk vte3 postgresql-libs python-gobject; then
+			gtksourceview3 webkit2gtk vte3 postgresql-libs \
+			python-gobject gobject-introspection; then
 			echo "ERROR: Failed to install dependencies with pacman"
 			exit
 		fi
@@ -412,18 +413,10 @@ fi
 
 python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade six
+python3 -m pip install pipenv
 
-if [ "$LINUX_VERSION" == "Kali" ]; then
-	if ! python3 -m pip install -I -r requirements.txt; then
-		echo "ERROR: Failed to install python requirements with pip"
-		exit $E_SOFTWARE
-	fi
-else
-	if ! python3 -m pip install -I -r requirements.txt; then
-		echo "ERROR: Failed to install python requirements with pip"
-		exit $E_SOFTWARE
-	fi
-fi
+cd $KING_PHISHER_DIR
+./KingPhisher --env-install
 
 if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 	DESKTOP_APPLICATIONS_DIR=""
@@ -443,14 +436,6 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 			echo "INFO: Updating the GTK icon cache"
 			gtk-update-icon-cache --force /usr/share/icons/hicolor
 		fi
-	fi
-	# try to install basemap directly from it's sourceforge tarball
-	if python3 -m pip install https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz &> /dev/null; then
-		echo "INFO: Successfully installed basemap with pip"
-	else
-		echo "WARNING: Failed to install basemap with pip, this is not a required dependency"
-		echo "WARNING: for King Phisher. See https://bit.ly/kp-pip-basemaps for more"
-		echo "WARNING: information."
 	fi
 fi
 
