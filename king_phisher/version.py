@@ -34,7 +34,7 @@ import collections
 import os
 import subprocess
 
-import smoke_zephyr.utilities
+from king_phisher import startup
 
 def get_revision():
 	"""
@@ -44,7 +44,7 @@ def get_revision():
 	:return: The git revision tag if it's available.
 	:rtype: str
 	"""
-	git_bin = smoke_zephyr.utilities.which('git')
+	git_bin = startup.which('git')
 	if not git_bin:
 		return None
 	proc_h = subprocess.Popen(

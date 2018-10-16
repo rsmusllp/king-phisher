@@ -24,6 +24,7 @@ Version 1.12.0
 
 * Added the new ``fetch`` Jinja function and ``fromjson`` Jinja filter
 * Added ``campaign-alert-expired`` and ``campaign-expired`` server signals
+* Switched to using `Pipenv`_ to manage the environment and dependencies
 
 Version 1.11.0
 ^^^^^^^^^^^^^^
@@ -334,3 +335,5 @@ Released :release:`0.1.3` on June 4th, 2014
 
 * Jinja2 templates for both the client and server
 * API version checking to warn when the client and server versions are incompatible
+
+.. _Pipenv: https://pipenv.readthedocs.io/en/latest/
