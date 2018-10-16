@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  server/__main__.py
+#  king_phisher/server/__main__.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -44,7 +44,6 @@ from king_phisher import constants
 from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
-from king_phisher import its
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import build

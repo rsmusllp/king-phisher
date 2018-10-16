@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  client/__main__.py
+#  king_phisher/client/__main__.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are

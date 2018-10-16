@@ -51,7 +51,7 @@ def which(program):
 		return os.path.abspath(program)
 	return None
 
-def argb_add_default_args(parser, default_root=''):
+def argp_add_default_args(parser, default_root=''):
 	"""
 	Add standard arguments to a new :py:class:`argparse.ArgumentParser` instance
 	Used to add the utilities argparse options to the wrapper for display
@@ -85,6 +85,6 @@ def argp_add_server(parser):
 
 def argp_add_wrapper(parser):
 	kpw_group = parser.add_argument_group('King Phisher pipenv wrapper')
-	kpw_group.add_argument('--env-update', dest='pipenv_update', default=False, action='store_true', help='update pipenv requirments and exit')
+	kpw_group.add_argument('--env-update', dest='pipenv_update', default=False, action='store_true', help='update pipenv requirements and exit')
 	kpw_group.add_argument('--env-install', dest='pipenv_install', default=False, action='store_true', help='install pipenv environment and exit')
 	return parser
