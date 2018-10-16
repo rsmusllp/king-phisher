@@ -34,31 +34,31 @@ import collections
 import os
 import subprocess
 
-from king_phisher import startup
-
-def get_revision():
+def get_revision(encoding='utf-8'):
 	"""
 	Retrieve the current git revision identifier. If the git binary can not be
 	found or the repository information is unavailable, None will be returned.
 
+	:param str encoding: The encoding to use for strings.
 	:return: The git revision tag if it's available.
 	:rtype: str
 	"""
-	git_bin = startup.which('git')
-	if not git_bin:
+	# use error handling instead of startup.which to avoid a circular dependency
+	try:
+		proc_h = subprocess.Popen(
+			('git', 'rev-parse', 'HEAD'),
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE,
+			close_fds=True,
+			cwd=os.path.dirname(os.path.abspath(__file__))
+		)
+	except OSError:
 		return None
-	proc_h = subprocess.Popen(
-		(git_bin, 'rev-parse', 'HEAD'),
-		stdout=subprocess.PIPE,
-		stderr=subprocess.PIPE,
-		close_fds=True,
-		cwd=os.path.dirname(os.path.abspath(__file__))
-	)
 	rev = proc_h.stdout.read().strip()
 	proc_h.wait()
 	if not len(rev):
 		return None
-	return rev.decode('utf-8')
+	return rev.decode(encoding)
 
 revision = get_revision()
 """The git revision identifying the latest commit if available."""

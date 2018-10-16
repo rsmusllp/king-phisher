@@ -44,6 +44,7 @@ ProcessResults = collections.namedtuple('ProcessResults', ('stdout', 'stderr', '
 
 def pipenv_entry(parser, entrypoint):
 	if its.on_windows:
+		# this is because of the os.exec call and os.EX_* status codes
 		raise RuntimeError('pipenv_entry is incompatible with windows')
 	argp_add_wrapper(parser)
 	argp_add_default_args(parser)
@@ -85,13 +86,22 @@ def pipenv_entry(parser, entrypoint):
 		logger.exception('failed to find pipenv')
 		return os.EX_UNAVAILABLE
 
-	if arguments.pipenv_install:
-		logger.info('installing the pipenv environment')
-		results = run_pipenv([pipenv_path, '--site-packages', 'install'], cwd=target_directory)
+	if arguments.pipenv_install or not os.path.isdir(os.path.join(target_directory, '.venv')):
+		if arguments.pipenv_install:
+			logger.info('installing the pipenv environment')
+		else:
+			logger.warning('no pre-existing pipenv environment was found, installing it now')
+		results = run_pipenv(('--site-packages', 'install'), cwd=target_directory)
 		if results.status:
-			logger.warning("the following error occurred during pipenv environment setup: {}".format(process_output))
+			logger.error('failed to install the pipenv environment')
+			logger.info('removing the incomplete .venv directory')
+			try:
+				shutil.rmtree(os.path.join(target_directory, '.venv'))
+			except OSError:
+				logger.error('failed to remove the incomplete .venv directory', exc_info=True)
 			return results.status
-		return os.EX_OK
+		if arguments.pipenv_install:
+			return os.EX_OK
 
 	if arguments.pipenv_update:
 		logger.info('updating the pipenv environment')
@@ -101,15 +111,6 @@ def pipenv_entry(parser, entrypoint):
 			return results.status
 		logger.info('the pipenv environment has been updated')
 		return os.EX_OK
-
-	if not os.path.isdir(os.path.join(target_directory, '.venv')):
-		logger.warning('no pre-existing pipenv environment was found, installing it now')
-		results = run_pipenv(('--site-packages', 'install'), cwd=target_directory)
-		if results.status:
-			logger.error('failed to install the pipenv environment')
-			logger.info('removing the incomplete .venv directory')
-			shutil.rmtree(os.path.join(target_directory, '.venv'))
-			return results.status
 
 	logger.debug('pipenv Pipfile: {}'.format(os.environ['PIPENV_PIPFILE']))
 	# the blank arg being passed is required for pipenv
@@ -129,6 +130,16 @@ def run_pipenv(args, cwd=None):
 	return results
 
 def run_process(process_args, cwd=None, encoding='utf-8'):
+	"""
+	Start a process, wait for it to complete and return a
+	:py:class:`~.ProcessResults` object.
+
+	:param process_args: The arguments for the processes including the binary.
+	:param cwd: An optional current working directory to use for the process.
+	:param str encoding: The encoding to use for strings.
+	:return: The results of the process including the status code and any text printed to stdout or stderr.
+	:rtype: :py:class:`~.ProcessResults`
+	"""
 	cwd = cwd or os.getcwd()
 	process_handle = subprocess.Popen(process_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 	process_handle.wait()
