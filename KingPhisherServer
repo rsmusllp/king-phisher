@@ -39,8 +39,8 @@ from king_phisher import startup
 
 def main():
 	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
-	startup.argp_add_wrapper(parser)
 	startup.argp_add_server(parser)
+	startup.argp_add_wrapper(parser)
 	startup.argp_add_default_args(parser)
 
 	arguments, unknown_args = parser.parse_known_args()
@@ -61,37 +61,43 @@ def main():
 	logger.debug("target diretory: {}".format(target_directory))
 	os.environ['PIPENV_VENV_IN_PROJECT'] = os.environ.get('PIPENV_VENV_IN_PROJECT', 'True')
 	os.environ['PIPENV_PIPFILE'] = os.environ.get('PIPENV_PIPFILE', os.path.join(target_directory, 'Pipfile'))
+	logger.info('checking for the pipenv environment')
 	if not startup.which('pipenv'):
 		logger.info('installing pipenv')
-		process_output, return_code = startup.run_process([sys.executable, '-m', 'pip', 'install', 'pipenv'], cwd=target_directory)
-		if return_code:
-			logger.warning("the following issue occurred during installation of pipenv: {}".format(process_output))
-			return return_code
+		results = startup.run_process([sys.executable, '-m', 'pip', 'install', 'pipenv'], cwd=target_directory)
+		if results.status:
+			sys.stderr.write('the following issue occurred during installation of pipenv:\n')
+			sys.stderr.write(results.stdout)
+			return results.status
 	pipenv_path = startup.which('pipenv')
-	logger.debug('pipenv path: {}'.format(pipenv_path))
+	logger.debug("pipenv path: {0!r}".format(pipenv_path))
+	if not pipenv_path:
+		logger.exception('failed to find pipenv')
+		return 0
 
 	if arguments.pipenv_install:
-		logger.info('installing pipenv environment')
-		process_output, return_code = startup.run_process([pipenv_path, '--site-packages', 'install'], cwd=target_directory)
-		if return_code:
+		logger.info('installing the pipenv environment')
+		results = startup.run_pipenv([pipenv_path, '--site-packages', 'install'], cwd=target_directory)
+		if results.status:
 			logger.warning("the following error occurred during pipenv environment setup: {}".format(process_output))
-			return return_code
+			return results.status
 		return 0
 
 	if arguments.pipenv_update:
-		process_output, return_code = startup.run_process([pipenv_path, '--site-packages', 'update'], cwd=target_directory)
-		if return_code:
-			logger.warning("the following error occurred during pipenv environment update: {}".format(process_output))
-			return return_code
-		logger.info('pipenv environment successfully updated')
+		logger.info('updating the pipenv environment')
+		results = startup.run_pipenv(('--site-packages', 'update'), cwd=target_directory)
+		if results.status:
+			logger.error('failed to update the pipenv environment')
+			return results.status
+		logger.info('the pipenv environment has been updated')
 		return 0
 
 	if not os.path.isdir(os.path.join(target_directory, '.venv')):
-		logger.info('installing pipenv environment')
-		process_output, return_code = startup.run_process([pipenv_path, '--site-packages', 'install'], cwd=target_directory)
-		if return_code:
-			logger.warning("the following error occurred during pipenv environment setup: {}".format(process_output))
-			return return_code
+		logger.warning('no pre-existing pipenv environment was found, installing it now')
+		results = startup.run_pipenv(('--site-packages', 'install'), cwd=target_directory)
+		if results.status:
+			logger.error('failed to install the pipenv environment')
+			return results.status
 	logger.debug('pipenv Pipfile: {}'.format(os.environ['PIPENV_PIPFILE']))
 	# the blank arg being passed is required for pipenv
 	passing_argv = [' ', 'run', os.path.basename(__file__)] + sys_argv

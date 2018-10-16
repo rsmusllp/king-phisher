@@ -29,16 +29,38 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import collections
 import os
 import gc
 import subprocess
+import sys
 
 from king_phisher import version
 
-def run_process(process_args, cwd=os.getcwd()):
+ProcessResults = collections.namedtuple('ProcessResults', ('stdout', 'stderr', 'status'))
+
+def run_pipenv(args, cwd=None):
+	path = which('pipenv')
+	if path is None:
+		return RuntimeError('pipenv could not be found')
+	args = (path,) + tuple(args)
+	results = run_process(args, cwd=cwd)
+	if results.status:
+		sys.stderr.write('pipenv encountered the following error:\n')
+		sys.stderr.write(results.stdout)
+		sys.stderr.flush()
+	return results
+
+def run_process(process_args, cwd=None, encoding='utf-8'):
+	cwd = cwd or os.getcwd()
 	process_handle = subprocess.Popen(process_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 	process_handle.wait()
-	return process_handle.stdout.read().decode('utf-8'), process_handle.returncode
+	results = ProcessResults(
+		process_handle.stdout.read().decode(encoding),
+		process_handle.stderr.read().decode(encoding),
+		process_handle.returncode
+	)
+	return results
 
 def which(program):
 	is_exe = lambda fpath: (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
@@ -53,8 +75,9 @@ def which(program):
 
 def argp_add_default_args(parser, default_root=''):
 	"""
-	Add standard arguments to a new :py:class:`argparse.ArgumentParser` instance
-	Used to add the utilities argparse options to the wrapper for display
+	Add standard arguments to a new :py:class:`argparse.ArgumentParser`
+	instance. Used to add the utilities argparse options to the wrapper for
+	display.
 
 	:param parser: The parser to add arguments to.
 	:type parser: :py:class:`argparse.ArgumentParser`
@@ -69,14 +92,14 @@ def argp_add_default_args(parser, default_root=''):
 	return parser
 
 def argp_add_client(parser):
-	kpc_group = parser.add_argument_group('King Phisher Client')
+	kpc_group = parser.add_argument_group('client specific options')
 	kpc_group.add_argument('-c', '--config', dest='config_file', required=False, help='specify a configuration file to use')
 	kpc_group.add_argument('--no-plugins', dest='use_plugins', default=True, action='store_false', help='disable all plugins')
 	kpc_group.add_argument('--no-style', dest='use_style', default=True, action='store_false', help='disable interface styling')
 	return parser
 
 def argp_add_server(parser):
-	kps_group = parser.add_argument_group('King Phisher Server')
+	kps_group = parser.add_argument_group('server specific options')
 	kps_group.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in the foreground (do not fork)')
 	kps_group.add_argument('--update-geoip-db', dest='update_geoip_db', action='store_true', default=False, help='update the geoip database and exit')
 	kps_group.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
@@ -84,7 +107,7 @@ def argp_add_server(parser):
 	return parser
 
 def argp_add_wrapper(parser):
-	kpw_group = parser.add_argument_group('King Phisher pipenv wrapper')
-	kpw_group.add_argument('--env-update', dest='pipenv_update', default=False, action='store_true', help='update pipenv requirements and exit')
+	kpw_group = parser.add_argument_group('environment wrapper options')
 	kpw_group.add_argument('--env-install', dest='pipenv_install', default=False, action='store_true', help='install pipenv environment and exit')
+	kpw_group.add_argument('--env-update', dest='pipenv_update', default=False, action='store_true', help='update pipenv requirements and exit')
 	return parser

@@ -230,7 +230,7 @@ else
 		echo "INFO: Backing up the previous server configuration to server_config.yml.bck.~#~"
 		prompt_yes_or_no "Use the same database connection? (recommended)" SAVE_DATABASE
 		if [ $SAVE_DATABASE ]; then
-			POSTGRES_BACKUP=$(cat server_config.yml| grep postgresql: | awk '{print $2}')
+			POSTGRES_BACKUP=$(awk ' /postgresql:/ {print $2}' server_config.yml)
 		fi
 		cp --backup=numbered server_config.yml ./server_config.yml.bck
 		BACKUP=true
