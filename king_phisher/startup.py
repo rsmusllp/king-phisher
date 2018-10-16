@@ -30,14 +30,91 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import collections
-import os
 import gc
+import logging
+import os
+import shutil
 import subprocess
 import sys
 
+from king_phisher import its
 from king_phisher import version
 
 ProcessResults = collections.namedtuple('ProcessResults', ('stdout', 'stderr', 'status'))
+
+def pipenv_entry(parser, entrypoint):
+	if its.on_windows:
+		raise RuntimeError('pipenv_entry is incompatible with windows')
+	argp_add_wrapper(parser)
+	argp_add_default_args(parser)
+
+	arguments, _ = parser.parse_known_args()
+	sys_argv = sys.argv
+	sys_argv.pop(0)
+
+	if sys.version_info < (3, 4):
+		print('[-] the Python version is too old (minimum required is 3.4)')
+		return os.EX_SOFTWARE
+
+	# initialize basic stream logging
+	logger = logging.getLogger('KingPhisher.wrapper')
+	logger.setLevel(arguments.loglvl if arguments.loglvl else 'WARNING')
+	console_log_handler = logging.StreamHandler()
+	console_log_handler.setLevel(arguments.loglvl if arguments.loglvl else 'WARNING')
+	console_log_handler.setFormatter(logging.Formatter('%(levelname)-8s %(message)s'))
+	logger.addHandler(console_log_handler)
+
+	target_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+	logger.debug("target diretory: {}".format(target_directory))
+
+	os.environ['PIPENV_VENV_IN_PROJECT'] = os.environ.get('PIPENV_VENV_IN_PROJECT', 'True')
+	os.environ['PIPENV_PIPFILE'] = os.environ.get('PIPENV_PIPFILE', os.path.join(target_directory, 'Pipfile'))
+
+	logger.info('checking for the pipenv environment')
+	if which('pipenv') is None:
+		logger.info('installing pipenv from PyPi using pip')
+		results = run_process([sys.executable, '-m', 'pip', 'install', 'pipenv'], cwd=target_directory)
+		if results.status:
+			sys.stderr.write('the following issue occurred during installation of pipenv:\n')
+			sys.stderr.write(results.stdout)
+			return results.status
+
+	pipenv_path = which('pipenv')
+	logger.debug("pipenv path: {0!r}".format(pipenv_path))
+	if not pipenv_path:
+		logger.exception('failed to find pipenv')
+		return os.EX_UNAVAILABLE
+
+	if arguments.pipenv_install:
+		logger.info('installing the pipenv environment')
+		results = run_pipenv([pipenv_path, '--site-packages', 'install'], cwd=target_directory)
+		if results.status:
+			logger.warning("the following error occurred during pipenv environment setup: {}".format(process_output))
+			return results.status
+		return os.EX_OK
+
+	if arguments.pipenv_update:
+		logger.info('updating the pipenv environment')
+		results = run_pipenv(('--site-packages', 'update'), cwd=target_directory)
+		if results.status:
+			logger.error('failed to update the pipenv environment')
+			return results.status
+		logger.info('the pipenv environment has been updated')
+		return os.EX_OK
+
+	if not os.path.isdir(os.path.join(target_directory, '.venv')):
+		logger.warning('no pre-existing pipenv environment was found, installing it now')
+		results = run_pipenv(('--site-packages', 'install'), cwd=target_directory)
+		if results.status:
+			logger.error('failed to install the pipenv environment')
+			logger.info('removing the incomplete .venv directory')
+			shutil.rmtree(os.path.join(target_directory, '.venv'))
+			return results.status
+
+	logger.debug('pipenv Pipfile: {}'.format(os.environ['PIPENV_PIPFILE']))
+	# the blank arg being passed is required for pipenv
+	passing_argv = [' ', 'run', entrypoint] + sys_argv
+	os.execve(pipenv_path, passing_argv, os.environ)
 
 def run_pipenv(args, cwd=None):
 	path = which('pipenv')
