@@ -25,6 +25,7 @@ The King Phisher Package
    smtp_server.rst
    spf.rst
    ssh_forward.rst
+   startup.rst
    templates.rst
    testing.rst
    ua_parser.rst

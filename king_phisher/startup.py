@@ -41,12 +41,68 @@ from king_phisher import its
 from king_phisher import version
 
 ProcessResults = collections.namedtuple('ProcessResults', ('stdout', 'stderr', 'status'))
+"""
+A named tuple for holding the results of an executed external process.
 
-def pipenv_entry(parser, entrypoint):
+.. py:attribute:: stdout
+
+	A string containing the data the process wrote to stdout.
+
+.. py:attribute:: stderr
+
+	A string containing the data the process wrote to stderr.
+
+.. py:attribute:: status
+
+	An integer representing the process's exit code.
+"""
+
+def _run_pipenv(args, cwd=None):
+	"""
+	Execute Pipenv with the supplied arguments and return the
+	:py:class:`~.ProcessResults`. If the exit status is non-zero, then the
+	stdout buffer from the Pipenv execution will be written to stderr.
+
+	:param tuple args: The arguments for the Pipenv.
+	:param str cwd: An optional current working directory to use for the
+		process.
+	:return: The results of the execution.
+	:rtype: :py:class:`~.ProcessResults`
+	"""
+	path = which('pipenv')
+	if path is None:
+		return RuntimeError('pipenv could not be found')
+	args = (path,) + tuple(args)
+	results = run_process(args, cwd=cwd)
+	if results.status:
+		sys.stderr.write('pipenv encountered the following error:\n')
+		sys.stderr.write(results.stdout)
+		sys.stderr.flush()
+	return results
+
+def pipenv_entry(parser, entry_point):
+	"""
+	Run through startup logic for a Pipenv script. This sets up a basic stream
+	logging configuration, establishes the Pipenv environment and finally calls
+	the actual entry point using :py:func:`os.execve`.
+
+	.. note::
+		Due to the use of :py:func:`os.execve`, this function does not return.
+
+	.. note::
+		Due to the use of :py:func:`os.execve` and ``os.EX_*`` exit codes, this
+		function is not available on Windows.
+
+	:param parser: The argument parser to use. Arguments are added to it and
+		extracted before passing the remainder to the entry point.
+	:param str entry_point: The name of the entry point using Pipenv.
+	"""
 	if its.on_windows:
 		# this is because of the os.exec call and os.EX_* status codes
 		raise RuntimeError('pipenv_entry is incompatible with windows')
-	argp_add_wrapper(parser)
+	env_group = parser.add_argument_group('environment wrapper options')
+	env_group.add_argument('--env-install', dest='pipenv_install', default=False, action='store_true', help='install pipenv environment and exit')
+	env_group.add_argument('--env-update', dest='pipenv_update', default=False, action='store_true', help='update pipenv requirements and exit')
 	argp_add_default_args(parser)
 
 	arguments, _ = parser.parse_known_args()
@@ -91,7 +147,7 @@ def pipenv_entry(parser, entrypoint):
 			logger.info('installing the pipenv environment')
 		else:
 			logger.warning('no pre-existing pipenv environment was found, installing it now')
-		results = run_pipenv(('--site-packages', 'install'), cwd=target_directory)
+		results = _run_pipenv(('--site-packages', 'install'), cwd=target_directory)
 		if results.status:
 			logger.error('failed to install the pipenv environment')
 			logger.info('removing the incomplete .venv directory')
@@ -105,7 +161,7 @@ def pipenv_entry(parser, entrypoint):
 
 	if arguments.pipenv_update:
 		logger.info('updating the pipenv environment')
-		results = run_pipenv(('--site-packages', 'update'), cwd=target_directory)
+		results = _run_pipenv(('--site-packages', 'update'), cwd=target_directory)
 		if results.status:
 			logger.error('failed to update the pipenv environment')
 			return results.status
@@ -114,20 +170,8 @@ def pipenv_entry(parser, entrypoint):
 
 	logger.debug('pipenv Pipfile: {}'.format(os.environ['PIPENV_PIPFILE']))
 	# the blank arg being passed is required for pipenv
-	passing_argv = [' ', 'run', entrypoint] + sys_argv
+	passing_argv = [' ', 'run', entry_point] + sys_argv
 	os.execve(pipenv_path, passing_argv, os.environ)
-
-def run_pipenv(args, cwd=None):
-	path = which('pipenv')
-	if path is None:
-		return RuntimeError('pipenv could not be found')
-	args = (path,) + tuple(args)
-	results = run_process(args, cwd=cwd)
-	if results.status:
-		sys.stderr.write('pipenv encountered the following error:\n')
-		sys.stderr.write(results.stdout)
-		sys.stderr.flush()
-	return results
 
 def run_process(process_args, cwd=None, encoding='utf-8'):
 	"""
@@ -137,7 +181,8 @@ def run_process(process_args, cwd=None, encoding='utf-8'):
 	:param process_args: The arguments for the processes including the binary.
 	:param cwd: An optional current working directory to use for the process.
 	:param str encoding: The encoding to use for strings.
-	:return: The results of the process including the status code and any text printed to stdout or stderr.
+	:return: The results of the process including the status code and any text
+		printed to stdout or stderr.
 	:rtype: :py:class:`~.ProcessResults`
 	"""
 	cwd = cwd or os.getcwd()
@@ -151,6 +196,15 @@ def run_process(process_args, cwd=None, encoding='utf-8'):
 	return results
 
 def which(program):
+	"""
+	Examine the ``PATH`` environment variable to determine the location for the
+	specified program. If it can not be found None is returned. This is
+	fundamentally similar to the Unix utility of the same name.
+
+	:param str program: The name of the program to search for.
+	:return: The absolute path to the program if found.
+	:rtype: str
+	"""
 	is_exe = lambda fpath: (os.path.isfile(fpath) and os.access(fpath, os.X_OK))
 	for path in os.environ['PATH'].split(os.pathsep):
 		path = path.strip('"')
@@ -180,6 +234,13 @@ def argp_add_default_args(parser, default_root=''):
 	return parser
 
 def argp_add_client(parser):
+	"""
+	Add client-specific arguments to a new :py:class:`argparse.ArgumentParser`
+	instance.
+
+	:param parser: The parser to add arguments to.
+	:type parser: :py:class:`argparse.ArgumentParser`
+	"""
 	kpc_group = parser.add_argument_group('client specific options')
 	kpc_group.add_argument('-c', '--config', dest='config_file', required=False, help='specify a configuration file to use')
 	kpc_group.add_argument('--no-plugins', dest='use_plugins', default=True, action='store_false', help='disable all plugins')
@@ -187,15 +248,16 @@ def argp_add_client(parser):
 	return parser
 
 def argp_add_server(parser):
+	"""
+	Add server-specific arguments to a new :py:class:`argparse.ArgumentParser`
+	instance.
+
+	:param parser: The parser to add arguments to.
+	:type parser: :py:class:`argparse.ArgumentParser`
+	"""
 	kps_group = parser.add_argument_group('server specific options')
 	kps_group.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in the foreground (do not fork)')
 	kps_group.add_argument('--update-geoip-db', dest='update_geoip_db', action='store_true', default=False, help='update the geoip database and exit')
 	kps_group.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
 	kps_group.add_argument('config_file', action='store', help='configuration file to use')
-	return parser
-
-def argp_add_wrapper(parser):
-	kpw_group = parser.add_argument_group('environment wrapper options')
-	kpw_group.add_argument('--env-install', dest='pipenv_install', default=False, action='store_true', help='install pipenv environment and exit')
-	kpw_group.add_argument('--env-update', dest='pipenv_update', default=False, action='store_true', help='update pipenv requirements and exit')
 	return parser
