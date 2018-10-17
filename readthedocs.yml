@@ -7,4 +7,4 @@ build:
 python:
   version: 3.6
 
-requirements_file: docs/requirements.txt
+requirements_file: docs/requirements.rtd.txt
