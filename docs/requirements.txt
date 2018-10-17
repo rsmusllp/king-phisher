@@ -19,7 +19,7 @@ graphene-sqlalchemy==2.0.0
 graphene==2.0.1
 graphql-core==2.1
 graphql-relay==0.4.5
-https://github.com/matplotlib/basemap/archive/v1.2.0rel.tar.gz#egg=basemap -i https://pypi.org/simple
+# https://github.com/matplotlib/basemap/archive/v1.2.0rel.tar.gz#egg=basemap -i https://pypi.org/simple
 icalendar==4.0.1
 idna==2.6
 ipaddress==1.0.19
