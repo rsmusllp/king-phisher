@@ -82,9 +82,10 @@ def _run_pipenv(args, cwd=None):
 
 def pipenv_entry(parser, entry_point):
 	"""
-	Run through startup logic for a Pipenv script. This sets up a basic stream
-	logging configuration, establishes the Pipenv environment and finally calls
-	the actual entry point using :py:func:`os.execve`.
+	Run through startup logic for a Pipenv script (see Pipenv: `Custom Script
+	Shortcuts`_ for more information). This sets up a basic stream logging
+	configuration, establishes the Pipenv environment and finally calls the
+	actual entry point using :py:func:`os.execve`.
 
 	.. note::
 		Due to the use of :py:func:`os.execve`, this function does not return.
@@ -96,6 +97,8 @@ def pipenv_entry(parser, entry_point):
 	:param parser: The argument parser to use. Arguments are added to it and
 		extracted before passing the remainder to the entry point.
 	:param str entry_point: The name of the entry point using Pipenv.
+
+	.. _Custom Script Shortcuts: https://pipenv.readthedocs.io/en/latest/advanced/#custom-script-shortcuts
 	"""
 	if its.on_windows:
 		# this is because of the os.exec call and os.EX_* status codes
