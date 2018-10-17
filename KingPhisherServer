@@ -32,6 +32,7 @@
 
 import argparse
 import os
+import shutil
 import sys
 
 from king_phisher import startup
