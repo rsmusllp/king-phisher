@@ -42,7 +42,7 @@ py-gfm==0.1.3
 pyasn1==0.4.4
 pycairo==1.17.1
 pycparser==2.19
-pygobject==3.28.3
+# pygobject==3.28.3
 pynacl==1.3.0
 pyotp==2.2.6
 pyparsing==2.2.2
