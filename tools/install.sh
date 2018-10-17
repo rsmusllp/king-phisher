@@ -75,11 +75,11 @@ function show_help {
 	echo ""
 	echo "optional arguments"
 	echo "  -h, --help            show this help message and exit"
+	echo "  -u, --update          update an existing installation"
 	echo "  -n, --no              answer no to all questions"
 	echo "  -y, --yes             answer yes to all questions"
 	echo "  --skip-client         skip installing client components"
 	echo "  --skip-server         skip installing server components"
-	echo "  --update              update King Phisher requirements"
 	return 0;
 }
 
@@ -96,16 +96,16 @@ function select_nix_distro {
 			KING_PHISHER_SKIP_CLIENT="x";;
 		8) LINUX_VERSION="RedHat"
 			KING_PHISHER_SKIP_CLIENT="x";;
-		*) echo "Invalid Linux selection, must be 1-8"
+		*) echo "ERROR: Invalid Linux selection, must be 1-8"
 			exit 0;;
 	esac
 }
 
-function install_dependencies {
-	echo "Installing $LINUX_VERSION dependencies"
+function sync_dependencies {
+	echo "INFO: Synchronizing $LINUX_VERSION OS dependencies"
 	if [ "$LINUX_VERSION" == "RedHat" ]; then
 		if [ ! "$(command -v python3)" ]; then
-			echo "INFO: Installing Python3.5 for Red Hat 7"
+			echo "INFO: Synchronizing Python3.5 for Red Hat 7"
 			# manually add rpms for easy python35 install
 			yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 			rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
@@ -126,7 +126,7 @@ function install_dependencies {
 	if [ "$LINUX_VERSION" == "CentOS" ]; then
 		if [ ! "$(command -v python3)" ]; then
 			# manually install python3.5 on CentOS 7 and symlink it to python3
-			echo "INFO: Installing Python3.5 for CentOS 7"
+			echo "INFO: Synchronizing Python3.5 for CentOS 7"
 			yum install -y https://centos7.iuscommunity.org/ius-release.rpm
 			yum install -y python35u python35u-devel python35u-pip
 			echo "INFO: Symlinking $(which python3.5) -> /usr/bin/python3"
@@ -196,7 +196,7 @@ function install_dependencies {
 		fi
 	fi
 
-	echo "INFO: Installing Python package dependencies from PyPi"
+	echo "INFO: Synchronizing Python package dependencies from PyPi"
 	# six needs to be installed before requirements.txt for matplotlib
 	PIP_VERSION=$(pip --version)
 	python3 -m pip install --upgrade pip
@@ -210,7 +210,7 @@ function install_dependencies {
 	python3 -m pip install pipenv
 
 	cd $KING_PHISHER_DIR
-	echo "Setting up King Phisher's pipenv environment"
+	echo "INFO: Synchronizing King Phisher's pipenv environment"
 	./KingPhisher --env-install
 }
 
@@ -247,14 +247,14 @@ while :; do
 			;;
 		-n|--no)
 			if [ "$answer_all_yes" == "true" ]; then
-				echo "Can not use -n and -y together"
+				echo "ERROR: Can not use -n and -y together"
 				exit $E_USAGE
 			fi
 			answer_all_no=true
 			;;
 		-y|--yes)
 			if [ "$answer_all_no" == "true" ]; then
-				echo "Can not use -n and -y together"
+				echo "ERROR: Can not use -n and -y together"
 				exit $E_USAGE
 			fi
 			answer_all_yes=true
@@ -265,15 +265,15 @@ while :; do
 		--skip-server)
 			KING_PHISHER_SKIP_SERVER="x"
 			;;
-		--update)
-			UPDATE='x'
+		-u|--update)
+			UPDATE="x"
 			;;
 		--)
 			shift
 			break
 			;;
 		-?*)
-			printf "Unknown option: %s\n" "$1" >&2
+			printf "ERROR: Unknown option: %s\n" "$1" >&2
 			exit $E_USAGE
 			;;
 		*)
@@ -348,7 +348,7 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo ""
 	echo -n "Select 1-8: "
 	select_nix_distro
-	echo "Selected Linux version is $LINUX_VERSION"
+	echo "INFO: Selected Linux version is $LINUX_VERSION"
 	prompt_yes_or_no "Continue? (There is no guarantee or support beyond this point)" select_nix_continue
 	if [ $select_nix_continue == "no" ]; then
 		echo "INFO: Installation aborted by user"
@@ -373,8 +373,7 @@ if [ ! -z "$UPDATE" ]; then
 		KING_PHISHER_DIR="$(dirname $(dirname $FILE_NAME))"
 		echo "INFO: Project directory found at $KING_PHISHER_DIR"
 	fi
-	echo "installing King Phisher dependencies"
-	install_dependencies
+	sync_dependencies
 	exit 0
 fi
 
@@ -426,7 +425,7 @@ else
 	echo "INFO: Downloading and installing the King Phisher server to $KING_PHISHER_DIR"
 	if [ ! -d "$KING_PHISHER_DIR" ]; then
 		if ! git clone $GIT_CLONE_URL $KING_PHISHER_DIR &> /dev/null; then
-			echo "Failed to clone the Git repo"
+			echo "ERROR: Failed to clone the Git repo"
 			exit $E_SOFTWARE
 		fi
 		echo "INFO: Successfully cloned the git repo"
@@ -441,7 +440,7 @@ fi
 
 if [ "$LINUX_VERSION" == "Kali" ]; then
 	if ! grep -i 'rolling' /etc/debian_version &> /dev/null; then
-		echo "Checking Kali 2 apt sources"
+		echo "INFO: Checking Kali 2 apt sources"
 		if ! grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null; then
 			echo "INFO: Standard Kali 2 apt sources are missing, now adding them, see"
 			echo "INFO: http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
@@ -451,7 +450,7 @@ if [ "$LINUX_VERSION" == "Kali" ]; then
 	fi
 fi
 
-install_dependencies
+sync_dependencies
 if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 	install_postgres
 fi
