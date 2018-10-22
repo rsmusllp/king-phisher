@@ -7,12 +7,40 @@ Overview
 --------
 
 The RPC API is used by the King Phisher client to communicate with the server.
-It uses the RPC capabilities provided by the
-:py:mod:`AdvancedHTTPServer` module for the underlying communications. The RPC
-API provides a way for the client to retrieve and set information regarding
-campaigns as well as the server's configuration. RPC requests must be
-authenticated and are only permitted from the loopback interface. The client is
-responsible for using SSH to set up a port forward for requests.
+It uses the RPC capabilities provided by the :py:mod:`AdvancedHTTPServer` module
+for the underlying communications. The RPC API provides a way for the client to
+retrieve and set information regarding campaigns as well as the server's
+configuration. RPC requests must be authenticated and are only permitted from
+the loopback interface. The client is responsible for using SSH to set up a port
+forward for requests. See the :ref:`Login Process <login-process>` documentation
+for more information.
+
+RPC API Versioning
+------------------
+
+It's important for the client and server components to have a compatible RPC
+version. The version each understands is described in the
+:py:data:`~king_phisher.version.rpc_api_version` object. This object contains
+both a major and minor version identifier. The major version is incremented when
+backwards-incompatible changes are made such as an argument or method is
+removed. The minor version is incremented when backwards-compatible changes are
+made such as when a new method is added or when a keyword argument is added
+whose default value maintains the original behavior.
+
+In this way, it is possible for the server to support a newer RPC version than
+the client. This would be the case when the server is newer and provides more
+functionality than the older client requires.
+
+Since version :release:`1.10.0`, the GraphQL API loosens the interdependency
+between the RPC API version and the database's
+:ref:`schema version <schema-versioning>`. Since GraphQL allows the client to
+specify only the fields it requires, new fields can be added to the database
+without incrementing the major RPC API version. **It is still important to
+increment the minor RPC API version** so the client knows that those fields are
+available to be requested through the :rpc:func:`graphql` endpoint. If database
+fields are removed, columns are renamed, columns types are changed, or columns
+have additional restrictions placed on them, the major RPC API version must be
+incremented.
 
 .. _rpc-api-general-api-label:
 

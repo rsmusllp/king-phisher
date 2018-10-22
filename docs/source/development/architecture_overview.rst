@@ -53,6 +53,8 @@ Server Responsibilities
   King Phisher client can also subscribe to a subset of events which are
   forwarded over websockets.
 
+.. _login-process:
+
 Login Process
 -------------
 

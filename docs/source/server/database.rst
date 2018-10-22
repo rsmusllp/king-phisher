@@ -12,6 +12,8 @@ references the object which has the constraint.
 
 .. graphviz:: database_relationships.dot
 
+.. _schema-versioning:
+
 Schema Versioning
 -----------------
 
@@ -22,7 +24,6 @@ the initialization code to determine whether or not the stored database schema
 in the source code). When the schemas are not the same, the database is
 considered to be incompatible. The King Phisher process will then attempt to
 upgrade the stored database schema.
-
 
 If the stored database schema is newer than the running schema, the King Phisher
 process can not downgrade it. This would happen for example if a developer were
