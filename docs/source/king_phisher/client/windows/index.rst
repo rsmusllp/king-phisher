@@ -1,6 +1,8 @@
 :mod:`windows`
 ==============
 
+.. module:: king_phisher.client.windows
+
 This package contains modules for providing GTK Window objects used by the
 client application.
 

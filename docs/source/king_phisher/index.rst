@@ -1,6 +1,8 @@
 The King Phisher Package
 ========================
 
+.. module:: king_phisher
+
 .. toctree::
    :maxdepth: 3
    :titlesonly:
@@ -18,6 +20,7 @@ The King Phisher Package
    geoip.rst
    ics.rst
    ipaddress.rst
+   its.rst
    plugins.rst
    security_keys.rst
    serializers.rst

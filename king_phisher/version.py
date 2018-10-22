@@ -30,6 +30,17 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+################################################################################
+#
+# CLEAN ROOM MODULE
+#
+# This module is classified as a "Clean Room" module and is subject to
+# restrictions on what it may import.
+#
+# See: https://king-phisher.readthedocs.io/en/latest/development/modules.html#clean-room-modules
+#
+################################################################################
+
 import collections
 import os
 import subprocess
