@@ -180,8 +180,10 @@ function sync_dependencies {
 
 			if apt-get install -y gir1.2-webkit2-3.0 &> /dev/null; then
 				echo "INFO: Successfully installed gir1.2-webkit2-3.0 with apt-get"
+			elif apt-get install -y gir1.2-webkit2-4.0 &> /dev/null; then
+				echo "INFO: Successfully installed gir1.2-webkit2-4.0 with apt-get"
 			else
-				echo "ERROR: Failed to install gir1.2-webkit2-3.0 with apt-get"
+				echo "ERROR: Failed to install gir1.2-webkit2 3.0 or 4.0 with apt-get"
 			fi
 		fi
 	elif [ "$LINUX_VERSION" == "Arch" ]; then
