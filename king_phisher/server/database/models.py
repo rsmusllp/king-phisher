@@ -274,6 +274,9 @@ class Campaign(ExpireMixIn, Base):
 	max_credentials = sqlalchemy.Column(sqlalchemy.Integer)
 	campaign_type_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaign_types.id'))
 	company_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('companies.id'))
+	credential_regex_username = sqlalchemy.Column(sqlalchemy.String)
+	credential_regex_password = sqlalchemy.Column(sqlalchemy.String)
+	credential_regex_mfa_token = sqlalchemy.Column(sqlalchemy.String)
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='campaign', cascade='all, delete-orphan')
 	credentials = sqlalchemy.orm.relationship('Credential', backref='campaign', cascade='all, delete-orphan')
@@ -319,7 +322,9 @@ class Credential(Base):
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 	username = sqlalchemy.Column(sqlalchemy.String)
 	password = sqlalchemy.Column(sqlalchemy.String)
+	mfa_token = sqlalchemy.Column(sqlalchemy.String)
 	submitted = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	regex_validated = sqlalchemy.Column(sqlalchemy.Boolean)
 
 @register_table
 class DeaddropDeployment(Base):
@@ -409,9 +414,14 @@ class User(ExpireMixIn, Base):
 	email_address = sqlalchemy.Column(sqlalchemy.String)
 	otp_secret = sqlalchemy.Column(sqlalchemy.String(16))
 	last_login = sqlalchemy.Column(sqlalchemy.DateTime)
+	access_level = sqlalchemy.Column(sqlalchemy.Integer, default=1000, nullable=False)
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')
+
+	@property
+	def is_admin(self):
+		return self.access_level == 0
 
 	@classmethod
 	def session_has_create_access(cls, session, instance=None):
