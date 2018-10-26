@@ -29,7 +29,9 @@ whose default value maintains the original behavior.
 
 In this way, it is possible for the server to support a newer RPC version than
 the client. This would be the case when the server is newer and provides more
-functionality than the older client requires.
+functionality than the older client requires. It is not possible for the client
+to support a newer RPC version than the server. This would imply that the client
+requires functionality that the server is unable to provide.
 
 Since version :release:`1.10.0`, the GraphQL API loosens the interdependency
 between the RPC API version and the database's
@@ -39,8 +41,24 @@ without incrementing the major RPC API version. **It is still important to
 increment the minor RPC API version** so the client knows that those fields are
 available to be requested through the :rpc:func:`graphql` endpoint. If database
 fields are removed, columns are renamed, columns types are changed, or columns
-have additional restrictions placed on them, the major RPC API version must be
-incremented.
+have additional restrictions placed on them (such as being nullable), the major
+RPC API version must be incremented.
+
+The Table Fetch API
+^^^^^^^^^^^^^^^^^^^
+
+The RPC functions responsible for fetching table data through the ``db/table/*``
+API endpoints (:rpc:func:`db/table/get` and :rpc:func:`db/table/view`) use a
+hard coded data set located in ``data/server/king_phisher/table-api.json`` to
+maintain backwards compatibility. This is required since the RPC client can not
+specify the columns and order of the columns that it is requesting as it can do
+with the :rpc:func:`graphql` API endpoint. This data set effectively allows the
+table fetch RPC API endpoints to be artificially  pinned to a specific database
+schema version. The other table API endpoints do not need to be pinned in such a
+fashion due to them taking the columns to work with as parameters. This means
+that an older but still compatible client (same major version but a lesser minor
+version as the server) would not be specifying columns which do not exist since
+renaming and removing columns require incrementing the major RPC API version.
 
 .. _rpc-api-general-api-label:
 
