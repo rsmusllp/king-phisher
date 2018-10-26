@@ -64,6 +64,7 @@ renaming and removing columns require incrementing the major RPC API version.
 
 General API
 -----------
+
 .. rpc:function:: graphql(query, query_vars=None)
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_graphql`

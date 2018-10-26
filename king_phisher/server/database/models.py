@@ -47,7 +47,7 @@ import sqlalchemy.sql.expression
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 """The schema version of the database, used for compatibility checks."""
 
 MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name'))
