@@ -155,11 +155,17 @@ class BaseRowCls(object):
 		*access*. The permissions in *access* are abbreviated with the first
 		letter of create, read, update, and delete.
 
+		.. note::
+			This will always return ``True`` for sessions which are for
+			administrative users.
+
 		:param str access: The desired permissions.
 		:param session: The authenticated session to check access for.
 		:return: Whether the session has the desired permissions.
 		:rtype: bool
 		"""
+		if session.user_is_admin:
+			return True
 		cls = self.__class__
 		if cls.is_private:
 			return False
@@ -417,10 +423,12 @@ class User(ExpireMixIn, Base):
 	access_level = sqlalchemy.Column(sqlalchemy.Integer, default=1000, nullable=False)
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
+	authenticated_sessions = sqlalchemy.orm.relationship('AuthenticatedSession', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')
 
 	@property
 	def is_admin(self):
+		"""True when the user is an administrative user as determined by checking the :py:attr:`.User.access_level` is ``0``."""
 		return self.access_level == 0
 
 	@classmethod

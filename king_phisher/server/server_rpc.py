@@ -737,7 +737,7 @@ def rpc_login(handler, session, username, password, otp=None):
 	user.last_login = db_models.current_timestamp()
 	session.add(user)
 	session.commit()
-	session_id = handler.server.session_manager.put(user.id)
+	session_id = handler.server.session_manager.put(user)
 	logger.info("successful login request from {0} for user {1}".format(handler.client_address[0], username))
 	signals.send_safe('rpc-user-logged-in', logger, handler, session=session_id, name=username)
 	return True, ConnectionErrorReason.SUCCESS, session_id

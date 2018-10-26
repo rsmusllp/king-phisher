@@ -37,6 +37,7 @@ import threading
 import time
 import urllib
 
+from king_phisher import constants
 from king_phisher import find
 from king_phisher.client import client_rpc
 from king_phisher.server import build
@@ -44,6 +45,8 @@ from king_phisher.server import configuration
 from king_phisher.server import plugins
 from king_phisher.server import rest_api
 from king_phisher.server import server
+from king_phisher.server.database import manager as db_manager
+from king_phisher.server.database import models as db_models
 
 import advancedhttpserver
 import smoke_zephyr.utilities
@@ -122,7 +125,16 @@ class KingPhisherRequestHandlerTest(server.KingPhisherRequestHandler):
 		self.rpc_handler_map['^/login$'] = self.rpc_test_login
 
 	def rpc_test_login(self, username, password, otp=None):
-		return True, 'success', self.server.session_manager.put(username)
+		session = db_manager.Session()
+		user = session.query(db_models.User).filter_by(name=username).first()
+		if not user:
+			user = db_models.User(name=username)
+		user.last_login = db_models.current_timestamp()
+		session.add(user)
+		session.commit()
+		session_id = self.server.session_manager.put(user)
+		session.close()
+		return True, constants.ConnectionErrorReason.SUCCESS, session_id
 
 class KingPhisherTestCase(smoke_zephyr.utilities.TestCase):
 	"""
