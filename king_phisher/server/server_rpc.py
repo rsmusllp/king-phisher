@@ -394,7 +394,7 @@ def rpc_database_view_rows(handler, session, table_name, page=0, query_filter=No
 	:return: A dictionary with columns and rows keys.
 	:rtype: dict
 	"""
-	metatable = database_tables.get(table_name)
+	metatable = handler.server.tables_api.get(table_name)
 	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	query_filter = query_filter or {}
@@ -476,7 +476,7 @@ def rpc_database_get_row_by_id(handler, session, table_name, row_id):
 	:return: The specified row data.
 	:rtype: dict
 	"""
-	metatable = database_tables.get(table_name)
+	metatable = handler.server.tables_api.get(table_name)
 	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	row = db_manager.get_row_by_id(session, metatable.model, row_id)

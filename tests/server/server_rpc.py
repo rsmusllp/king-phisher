@@ -129,7 +129,8 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		campaign = list(self.rpc.remote_table('campaigns'))[0]
 		campaign = campaign._asdict()
 		self.assertTrue(isinstance(campaign, dict))
-		self.assertEqual(sorted(campaign.keys()), sorted(db_models.database_tables['campaigns'].column_names))
+		meta_table = self.server.tables_api['campaigns']
+		self.assertEqual(sorted(campaign.keys()), sorted(meta_table.column_names))
 
 	def test_rpc_shutdown(self):
 		self.assertIsNone(self.rpc('shutdown'))
@@ -147,8 +148,9 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		campaign = self.rpc('db/table/view', 'campaigns')
 		self.assertTrue(bool(campaign))
 		self.assertEqual(len(campaign['rows']), 1)
-		self.assertEqual(len(campaign['rows'][0]), len(db_models.database_tables['campaigns'].column_names))
-		self.assertEqual(sorted(campaign['columns']), sorted(db_models.database_tables['campaigns'].column_names))
+		meta_table = self.server.tables_api['campaigns']
+		self.assertEqual(len(campaign['rows'][0]), len(meta_table.column_names))
+		self.assertEqual(sorted(campaign['columns']), sorted(meta_table.column_names))
 
 	def test_rpc_set_value(self):
 		campaign_name = random_string(10)

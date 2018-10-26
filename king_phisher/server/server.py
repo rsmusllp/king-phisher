@@ -46,6 +46,7 @@ from king_phisher import errors
 from king_phisher import find
 from king_phisher import geoip
 from king_phisher import ipaddress
+from king_phisher import serializers
 from king_phisher import templates
 from king_phisher import utilities
 from king_phisher import xor
@@ -891,6 +892,9 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
 		self.ws_manager = web_sockets.WebSocketsManager(config, self.job_manager)
 
+		self.tables_api = {}
+		self._init_tables_api()
+
 		for http_server in self.sub_servers:
 			http_server.config = config
 			http_server.plugin_manager = plugin_manager
@@ -902,6 +906,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			http_server.kp_shutdown = self.shutdown
 			http_server.ws_manager = self.ws_manager
 			http_server.headers = self.headers
+			http_server.tables_api = self.tables_api
 
 		if not config.has_option('server.secret_id'):
 			config.set('server.secret_id', rest_api.generate_token())
@@ -925,6 +930,20 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			header = header.strip()
 			self.headers[header] = value
 		self.logger.info("including {0} custom http headers".format(len(self.headers)))
+
+	def _init_tables_api(self):
+		# initialize the tables api dataset, this is to effectively pin the schema exposed allowing new columns to be
+		# added without breaking rpc compatibility
+		file_path = find.data_file('table-api.json')
+		if file_path is None:
+			raise errors.KingPhisherResourceError('missing the table-api.json data file')
+		with open(file_path, 'r') as file_h:
+			tables_api_data = serializers.JSON.load(file_h)
+		if tables_api_data['schema'] > db_models.SCHEMA_VERSION:
+			raise errors.KingPhisherInputValidationError('the table-api.json data file\'s schema version is incompatible')
+		for table, columns in tables_api_data['tables'].items():
+			self.tables_api[table] = db_models.MetaTable(column_names=columns, model=db_models.database_tables[table].model, name=table)
+		self.logger.debug("initialized the table api dataset (schema version: {0})".format(tables_api_data['schema']))
 
 	def _maintenance(self, interval):
 		"""
