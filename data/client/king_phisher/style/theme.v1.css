@@ -442,10 +442,13 @@ GtkWindow:hover {
   padding: 5px 5px 6px; }
   .multilineentry:insensitive {
     background-color: alpha(darkgray, 0.8); }
-  .multilineentry > GtkTextView {
+  .multilineentry GtkTextView {
     background-color: transparent;
     background-image: none;
     color: @theme_color_0; }
-    .multilineentry > GtkTextView:selected {
+    .multilineentry GtkTextView:selected {
       background-color: @theme_color_1;
       color: white; }
+    .multilineentry GtkTextView:insensitive {
+      background-color: alpha(darkgray, 0.8);
+      background-image: none; }
