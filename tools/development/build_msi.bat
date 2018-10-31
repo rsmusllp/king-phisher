@@ -4,7 +4,7 @@
 :Variables
 set start=%time%
 
-:: make entry point for King Phisher client build
+:: make the entry point for the King Phisher client build
 copy king_phisher\client\__main__.py .\KingPhisher
 if %ERRORLEVEL% NEQ 0 (
 	echo Failed to copy client entry point
@@ -15,13 +15,13 @@ if %ERRORLEVEL% NEQ 0 (
 :: perform the build
 python tools\development\cx_freeze.py build
 if %ERRORLEVEL% NEQ 0 (
-	echo Failed to build King Phisher exe
+	echo Failed to build the King Phisher exe
 	echo Error level: %ERRORLEVEL%
 	exit /b %ERRORLEVEL%
 )
 python tools\development\cx_freeze.py bdist_msi
 if %ERRORLEVEL% NEQ 0 (
-	echo Failed to build King Phisher msi package
+	echo Failed to build the King Phisher msi package
 	echo Error level: %ERRORLEVEL%
 	exit /b %ERRORLEVEL%
 )

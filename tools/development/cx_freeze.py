@@ -192,12 +192,12 @@ build_exe_options = dict(
 	excludes=['jinja2.asyncfilters', 'jinja2.asyncsupport'], # not supported with python 3.4
 )
 
-version_build = '.'.join((str(version.version_info[0]), str(version.version_info[1]), str(version.version_info[2])))
+version_build = '.'.join(map(str, version.version_info))
 setup(
 	name='KingPhisher',
 	author='SecureState',
 	version=version_build,
-	comments="build version: {}".format(version.distutils_version),
+	comments="Version: {}".format(version.distutils_version),
 	description='King Phisher Client',
 	options=dict(build_exe=build_exe_options),
 	executables=executables
