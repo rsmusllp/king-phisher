@@ -45,6 +45,8 @@ import collections
 import os
 import subprocess
 
+from king_phisher import its
+
 def get_revision(encoding='utf-8'):
 	"""
 	Retrieve the current git revision identifier. If the git binary can not be
@@ -60,7 +62,7 @@ def get_revision(encoding='utf-8'):
 			('git', 'rev-parse', 'HEAD'),
 			stdout=subprocess.PIPE,
 			stderr=subprocess.PIPE,
-			close_fds=True,
+			close_fds=False if its.on_windows else True,
 			cwd=os.path.dirname(os.path.abspath(__file__))
 		)
 	except OSError:
