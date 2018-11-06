@@ -146,6 +146,7 @@ function sync_dependencies {
 			libffi-devel openssl-devel
 		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 			dnf install -y geos geos-devel gtksourceview3 gobject-introspection-devel
+			# vte3 not available in Fedora29. Try to install it in case its an older versions.
 			dnf install -y vte3
 		fi
 		# Fedora 23 is missing an rpm lib required, check to see if it has been installed.
