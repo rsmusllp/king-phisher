@@ -145,7 +145,8 @@ function sync_dependencies {
 			libpng-devel postgresql-devel python3-devel python3-pip \
 			libffi-devel openssl-devel
 		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-			dnf install -y geos geos-devel gtksourceview3 vte3 gobject-introspection-devel
+			dnf install -y geos geos-devel gtksourceview3 gobject-introspection-devel
+			dnf install -y vte3
 		fi
 		# Fedora 23 is missing an rpm lib required, check to see if it has been installed.
 		if [ ! -d "$/usr/lib/rpm/redhat/redhat-hardened-cc1" ]; then
@@ -155,7 +156,16 @@ function sync_dependencies {
 		 [ "$LINUX_VERSION" == "Debian"  ] || \
 		 [ "$LINUX_VERSION" == "Kali"    ] || \
 		 [ "$LINUX_VERSION" == "Ubuntu"  ]; then
-		apt-get install -y libfreetype6-dev python3-dev python3-pip pkg-config
+		apt-get install -y libfreetype6-dev python3-dev pkg-config
+		if ! python3 -m pip --version; then
+			if apt-get install python3-pip; then
+				echo "Installed python3-pip via apt-get"
+			else
+				curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+				python3 get-pip.py
+				echo "Installed pip via get-pip.py"
+			fi
+		fi
 		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 			if ! apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
 				gir1.2-webkit-3.0 python3-cairo libgeos++-dev libgirepository1.0-dev \
@@ -200,6 +210,10 @@ function sync_dependencies {
 
 	echo "INFO: Synchronizing Python package dependencies from PyPi"
 	# six needs to be installed before requirements.txt for matplotlib
+	if ! python3 -m pip --version; then
+		echo "ERROR: Failed to find pip package for python3"
+		exit
+	fi
 	PIP_VERSION=$(pip --version)
 	python3 -m pip install --upgrade pip
 	# set pip back to python2 if python2 was default
