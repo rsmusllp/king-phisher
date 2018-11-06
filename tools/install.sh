@@ -159,11 +159,10 @@ function sync_dependencies {
 		apt-get install -y libfreetype6-dev python3-dev pkg-config
 		if ! python3 -m pip --version; then
 			if apt-get install python3-pip; then
-				echo "Installed python3-pip via apt-get"
+				echo "INFO: Installed python3-pip via apt-get"
 			else
-				curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-				python3 get-pip.py
-				echo "Installed pip via get-pip.py"
+				curl https://bootstrap.pypa.io/get-pip.py | python3
+				echo "INFO: Installed pip via get-pip.py"
 			fi
 		fi
 		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
