@@ -35,6 +35,7 @@ import datetime
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import resources
+from king_phisher.client.widget import managers
 
 import advancedhttpserver
 
@@ -73,8 +74,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'radiobutton_company_existing',
 			'radiobutton_company_new',
 			'radiobutton_company_none',
-			'spinbutton_campaign_expiration_hour',
-			'spinbutton_campaign_expiration_minute'
+			'togglebutton_expiration_time'
 		),
 		top_level=(
 			'ClockHourAdjustment',
@@ -99,6 +99,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			if page_title:
 				self._page_titles[page_title] = page_n
 
+		self._expiration_time = managers.TimeSelectorButtonManager(self.application, self.gobjects['togglebutton_expiration_time'])
 		self._set_comboboxes()
 		self._set_defaults()
 
@@ -184,9 +185,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if campaign['expiration'] is not None:
 			expiration = utilities.datetime_utc_to_local(campaign['expiration'])
 			self.gobjects['checkbutton_expire_campaign'].set_active(True)
-			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration)
-			self.gobjects['spinbutton_campaign_expiration_hour'].set_value(expiration.hour)
-			self.gobjects['spinbutton_campaign_expiration_minute'].set_value(expiration.minute)
+			self._expiration_time.time = expiration.time()
+			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration.date())
 
 	def _get_tag_from_combobox(self, combobox, db_table):
 		model = combobox.get_model()
@@ -282,10 +282,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if self.gobjects['checkbutton_expire_campaign'].get_property('active'):
 			expiration = datetime.datetime.combine(
 				gui_utilities.gtk_calendar_get_pydate(self.gobjects['calendar_campaign_expiration']),
-				datetime.time(
-					int(self.gobjects['spinbutton_campaign_expiration_hour'].get_value()),
-					int(self.gobjects['spinbutton_campaign_expiration_minute'].get_value())
-				)
+				self._expiration_time.time
 			)
 			expiration = utilities.datetime_local_to_utc(expiration)
 			if self.is_new_campaign and expiration <= datetime.datetime.now():

@@ -33,6 +33,7 @@
 import base64
 import binascii
 import collections
+import datetime
 import json
 import logging
 import os
@@ -58,9 +59,29 @@ from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
 import advancedhttpserver
+import blinker
 import jinja2
 import smoke_zephyr.job
 import smoke_zephyr.utilities
+
+def _send_safe_campaign_alerts(campaign, signal_name, sender, **kwargs):
+	alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
+	logger = logging.getLogger('KingPhisher.Server.CampaignAlerts')
+	logger.debug("dispatching campaign alerts for '{0}' (sender: {1!r}) to {2:,} active subscriptions".format(signal_name, sender, len(alert_subscriptions)))
+	if not alert_subscriptions:
+		return
+	signal = blinker.signal(signal_name)
+	if not signal.receivers:
+		logger.warning("users are subscribed to '{0}', and no signal handlers are connected".format(signal_name))
+		return
+	if not signal.has_receivers_for(sender):
+		logger.info("users are subscribed to '{0}', and no signal handlers are connected for sender: {1}".format(signal_name, sender))
+		return
+	for subscription in alert_subscriptions:
+		results = signals.send_safe(signal_name, logger, sender, alert_subscription=subscription, **kwargs)
+		if any((result for (_, result) in results)):
+			continue
+		logger.warning("user {0} is subscribed to '{1}', and no signal handlers succeeded to send an alert".format(subscription.user.name, signal_name))
 
 class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	_logger = logging.getLogger('KingPhisher.Server.RequestHandler')
@@ -110,25 +131,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		"""
 		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
-		alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
-		if not alert_subscriptions:
-			self.server.logger.debug("no active alert subscriptions are present for campaign id: {0} ({1})".format(campaign.id, campaign.name))
-			session.close()
-			return
-		if not signals.campaign_alert.receivers:
-			self.server.logger.warning('users are subscribed to campaign alerts, and no signal handlers are connected')
-			session.close()
-			return
-		if not signals.campaign_alert.has_receivers_for(table):
-			self.server.logger.info('users are subscribed to campaign alerts, and no signal handlers are connected for sender: ' + table)
-			session.close()
-			return
-
-		for subscription in alert_subscriptions:
-			results = signals.send_safe('campaign-alert', self.server.logger, table, alert_subscription=subscription, count=count)
-			if any((result for (_, result) in results)):
-				continue
-			self.server.logger.warning("user {0} is subscribed to campaign alerts, and no signal handlers succeeded to send an alert".format(subscription.user.name))
+		_send_safe_campaign_alerts(campaign, 'campaign-alert', table, count=count)
 		session.close()
 		return
 
@@ -495,7 +498,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			template_module = template.make_module(template_vars)
 		except (TypeError, jinja2.TemplateError) as error:
 			self.semaphore_release()
-			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
+			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, getattr(error, 'message', '')))
 			raise errors.KingPhisherAbortRequestError()
 
 		require_basic_auth = getattr(template_module, 'require_basic_auth', False)
@@ -506,15 +509,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.send_response(401)
 			headers.append(('WWW-Authenticate', "Basic realm=\"{0}\"".format(getattr(template_module, 'basic_auth_realm', 'Authentication Required'))))
 		else:
-			try:
-				template_data = template.render(template_vars)
-			except (TypeError, jinja2.TemplateError) as error:
-				self.semaphore_release()
-				self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, error.message))
-				raise errors.KingPhisherAbortRequestError()
 			self.send_response(200)
 			headers.append(('Last-Modified', self.date_time_string(os.stat(template.filename).st_mtime)))
-			template_data = template_data.encode('utf-8', 'ignore')
+			template_data = str(template_module).encode('utf-8', 'ignore')
 
 		if mime_type.startswith('text'):
 			mime_type += '; charset=utf-8'
@@ -883,6 +880,9 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self.job_manager = smoke_zephyr.job.JobManager(logger_name='KingPhisher.Server.JobManager')
 		"""A :py:class:`~smoke_zephyr.job.JobManager` instance for scheduling tasks."""
 		self.job_manager.start()
+		maintenance_interval = 900  # 15 minutes
+		self._maintenance_job = self.job_manager.job_add(self._maintenance, parameters=(maintenance_interval,), seconds=maintenance_interval)
+
 		loader = jinja2.FileSystemLoader(config.get('server.web_root'))
 		global_vars = {}
 		if config.has_section('server.page_variables'):
@@ -925,6 +925,27 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			header = header.strip()
 			self.headers[header] = value
 		self.logger.info("including {0} custom http headers".format(len(self.headers)))
+
+	def _maintenance(self, interval):
+		"""
+		Execute periodic maintenance related tasks.
+
+		:param int interval: The interval of time (in seconds) at which this method is being executed.
+		"""
+		self.logger.debug('running periodic maintenance tasks')
+		now = db_models.current_timestamp()
+		session = db_manager.Session()
+		campaigns = session.query(db_models.Campaign).filter(
+			db_models.Campaign.expiration != None
+		).filter(
+			db_models.Campaign.expiration < now
+		).filter(
+			db_models.Campaign.expiration >= now - datetime.timedelta(seconds=interval)
+		)
+		for campaign in campaigns:
+			signals.send_safe('campaign-expired', self.logger, campaign)
+			_send_safe_campaign_alerts(campaign, 'campaign-alert-expired', campaign)
+		session.close()
 
 	def shutdown(self, *args, **kwargs):
 		"""

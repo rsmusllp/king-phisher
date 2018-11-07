@@ -8,6 +8,7 @@ After=syslog.target network.target auditd.service
 [Service]
 Type=forking
 PIDFile=/var/run/king-phisher.pid
+WorkingDirectory=/opt/king-phisher
 # Installed Together In /opt/king-phisher
 ExecStart=/usr/bin/python3 /opt/king-phisher/KingPhisherServer /opt/king-phisher/server_config.yml
 ExecStop=/bin/kill -INT $MAINPID

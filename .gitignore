@@ -11,6 +11,7 @@
 
 .pylintrc
 .python-version
+.venv/*
 build/*
 configs/*
 dist/*

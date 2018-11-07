@@ -34,7 +34,7 @@ import os
 import site
 import sys
 
-sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from king_phisher import version
 
@@ -127,14 +127,6 @@ for path in os.listdir(site.getsitepackages()[1]):
 	if os.path.isdir(os.path.join(site.getsitepackages()[1], path)):
 		include_files.append((os.path.join(site.getsitepackages()[1], path), path))
 
-# include windows complied version of geos for basemaps
-include_files.append((os.path.join(site.getsitepackages()[1], 'geos.dll'), 'geos.dll'))
-include_files.append((os.path.join(site.getsitepackages()[1], 'geos_c.dll'), 'geos_c.dll'))
-include_files.append((os.path.join(site.getsitepackages()[1], '_geoslib.pyd'), '_geoslib.pyd'))
-include_files.append((os.path.join(site.getsitepackages()[0], 'libs', 'geos_c.lib'), os.path.join('libs', 'geos_c.lib')))
-include_files.append((os.path.join(site.getsitepackages()[0], 'libs', 'geos.lib'), os.path.join('libs', 'geos.lib')))
-
-
 include_files.append((matplotlib.get_data_path(), 'mpl-data'))
 include_files.append((basemap.basemap_datadir, 'mpl-basemap-data'))
 include_files.append(('data/client/king_phisher', 'king_phisher'))
@@ -200,10 +192,12 @@ build_exe_options = dict(
 	excludes=['jinja2.asyncfilters', 'jinja2.asyncsupport'], # not supported with python 3.4
 )
 
+version_build = '.'.join(map(str, version.version_info))
 setup(
 	name='KingPhisher',
 	author='SecureState',
-	version=version.distutils_version,
+	version=version_build,
+	comments="Version: {}".format(version.distutils_version),
 	description='King Phisher Client',
 	options=dict(build_exe=build_exe_options),
 	executables=executables

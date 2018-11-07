@@ -75,6 +75,7 @@ function show_help {
 	echo ""
 	echo "optional arguments"
 	echo "  -h, --help            show this help message and exit"
+	echo "  -u, --update          update an existing installation"
 	echo "  -n, --no              answer no to all questions"
 	echo "  -y, --yes             answer yes to all questions"
 	echo "  --skip-client         skip installing client components"
@@ -95,9 +96,163 @@ function select_nix_distro {
 			KING_PHISHER_SKIP_CLIENT="x";;
 		8) LINUX_VERSION="RedHat"
 			KING_PHISHER_SKIP_CLIENT="x";;
-		*) echo "Invalid Linux selection, must be 1-8"
+		*) echo "ERROR: Invalid Linux selection, must be 1-8"
 			exit 0;;
 	esac
+}
+
+function sync_dependencies {
+	echo "INFO: Synchronizing $LINUX_VERSION OS dependencies"
+	if [ "$LINUX_VERSION" == "RedHat" ]; then
+		if [ ! "$(command -v python3)" ]; then
+			echo "INFO: Synchronizing Python3.5 for Red Hat 7"
+			# manually add rpms for easy python35 install
+			yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+			rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+			yum -y install https://rhel7.iuscommunity.org/ius-release.rpm
+			rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
+			yum install -y python35u python35u-devel python35u-pip
+			echo "INFO: Symlinking $(which python3.5) -> /usr/bin/python3"
+			ln -s $(which python3.5) /usr/bin/python3
+		fi
+		yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
+			openssl-devel postgresql-devel
+		if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
+			yum install -y postgresql-server
+			# manually init the database
+			postgresql-setup initdb
+		fi
+	fi
+	if [ "$LINUX_VERSION" == "CentOS" ]; then
+		if [ ! "$(command -v python3)" ]; then
+			# manually install python3.5 on CentOS 7 and symlink it to python3
+			echo "INFO: Synchronizing Python3.5 for CentOS 7"
+			yum install -y https://centos7.iuscommunity.org/ius-release.rpm
+			yum install -y python35u python35u-devel python35u-pip
+			echo "INFO: Symlinking $(which python3.5) -> /usr/bin/python3"
+			ln -s $(which python3.5) /usr/bin/python3
+		fi
+		yum install -y epel-release
+		yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
+			openssl-devel postgresql-devel
+		if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
+			yum install -y postgresql-server
+			# manually init the database
+			postgresql-setup initdb
+		fi
+	elif [ "$LINUX_VERSION" == "Fedora" ]; then
+		dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
+			libpng-devel postgresql-devel python3-devel python3-pip \
+			libffi-devel openssl-devel
+		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
+			dnf install -y geos geos-devel gtksourceview3 gobject-introspection-devel
+			# vte3 is not available in Fedora 29, try to install it in case it's an older version.
+			dnf install -y vte3
+		fi
+		# Fedora 23 is missing an rpm lib required, check to see if it has been installed.
+		if [ ! -d "$/usr/lib/rpm/redhat/redhat-hardened-cc1" ]; then
+			dnf install -y rpm-build
+		fi
+	elif [ "$LINUX_VERSION" == "BackBox" ] || \
+		 [ "$LINUX_VERSION" == "Debian"  ] || \
+		 [ "$LINUX_VERSION" == "Kali"    ] || \
+		 [ "$LINUX_VERSION" == "Ubuntu"  ]; then
+		apt-get install -y libfreetype6-dev python3-dev pkg-config
+		if ! python3 -m pip --version; then
+			if apt-get install python3-pip; then
+				echo "INFO: Installed python3-pip via apt-get"
+			else
+				curl https://bootstrap.pypa.io/get-pip.py | python3
+				echo "INFO: Installed pip via get-pip.py"
+			fi
+		fi
+		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
+			if ! apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
+				gir1.2-webkit-3.0 python3-cairo libgeos++-dev libgirepository1.0-dev \
+				libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev; then
+					echo "ERROR: Failed to install dependencies with apt-get"
+					exit
+			fi
+
+			if [ "$LINUX_VERSION" == "Ubuntu" ]; then
+				apt-get install -y adwaita-icon-theme-full
+			fi
+
+			if apt-cache search gir1.2-vte-2.91 &> /dev/null; then
+				if ! apt-get -y install gir1.2-vte-2.91; then
+					echo "ERROR: Failed to install gir1.2-vte-2.91"
+				fi
+			else
+				if ! apt-get -y install gir1.2-vte-2.90; then
+					echo "ERROR: Failed to install gir1.2-vte-2.90"
+				fi
+			fi
+
+			if apt-get install -y gir1.2-webkit2-3.0 &> /dev/null; then
+				echo "INFO: Successfully installed gir1.2-webkit2-3.0 with apt-get"
+			elif apt-get install -y gir1.2-webkit2-4.0 &> /dev/null; then
+				echo "INFO: Successfully installed gir1.2-webkit2-4.0 with apt-get"
+			else
+				echo "ERROR: Failed to install gir1.2-webkit2 3.0 or 4.0 with apt-get"
+			fi
+		fi
+	elif [ "$LINUX_VERSION" == "Arch" ]; then
+		pacman --noconfirm -S freetype2 python python-pip pkg-config
+		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
+			if ! pacman --noconfirm -S gobject-introspection python-cairo geos gtk3 \
+				gtksourceview3 webkit2gtk vte3 postgresql-libs \
+				python-gobject gobject-introspection; then
+				echo "ERROR: Failed to install dependencies with pacman"
+				exit
+			fi
+		fi
+	fi
+
+	echo "INFO: Synchronizing Python package dependencies from PyPi"
+	# six needs to be installed before requirements.txt for matplotlib
+	if ! python3 -m pip --version; then
+		echo "ERROR: Failed to find pip package for python3"
+		exit
+	fi
+	PIP_VERSION=$(pip --version)
+	python3 -m pip install --upgrade pip
+	# set pip back to python2 if python2 was default
+	if echo $PIP_VERSION | grep "python 2.7"; then
+		python -m pip install -U pip -I &> /dev/null
+	fi
+
+	python3 -m pip install --upgrade setuptools
+	python3 -m pip install --upgrade six
+	python3 -m pip install pipenv
+
+	cd $KING_PHISHER_DIR
+	echo "INFO: Synchronizing King Phisher's pipenv environment"
+	./KingPhisher --env-install
+}
+
+function install_postgres {
+	if [ "$LINUX_VERSION" == "RedHat" ]; then
+		yum install -y postgresql-server
+		# manually init the database
+		postgresql-setup initdb
+	elif [ "$LINUX_VERSION" == "CentOS" ]; then
+		yum install -y postgresql-server
+		# manually init the database
+		postgresql-setup initdb
+	elif [ "$LINUX_VERSION" == "Fedora" ]; then
+		dnf install -y postgresql-server
+	elif [ "$LINUX_VERSION" == "BackBox" ] || \
+		 [ "$LINUX_VERSION" == "Debian"  ] || \
+		 [ "$LINUX_VERSION" == "Kali"    ] || \
+		 [ "$LINUX_VERSION" == "Ubuntu"  ]; then
+		apt-get install -y postgresql postgresql-server-dev-all &> /dev/null
+		if [ "$LINUX_VERSION" == "Kali" ]; then
+			easy_install -U distribute
+			apt-get install -y postgresql-server-dev-all &> /dev/null
+		fi
+	elif [ "$LINUX_VERSION" == "Arch" ]; then
+		pacman --noconfirm -S postgresql &> /dev/null
+	fi
 }
 
 while :; do
@@ -108,14 +263,14 @@ while :; do
 			;;
 		-n|--no)
 			if [ "$answer_all_yes" == "true" ]; then
-				echo "Can not use -n and -y together"
+				echo "ERROR: Can not use -n and -y together"
 				exit $E_USAGE
 			fi
 			answer_all_no=true
 			;;
 		-y|--yes)
 			if [ "$answer_all_no" == "true" ]; then
-				echo "Can not use -n and -y together"
+				echo "ERROR: Can not use -n and -y together"
 				exit $E_USAGE
 			fi
 			answer_all_yes=true
@@ -126,12 +281,15 @@ while :; do
 		--skip-server)
 			KING_PHISHER_SKIP_SERVER="x"
 			;;
+		-u|--update)
+			UPDATE="x"
+			;;
 		--)
 			shift
 			break
 			;;
 		-?*)
-			printf "Unknown option: %s\n" "$1" >&2
+			printf "ERROR: Unknown option: %s\n" "$1" >&2
 			exit $E_USAGE
 			;;
 		*)
@@ -206,7 +364,7 @@ if [ -z "$LINUX_VERSION" ]; then
 	echo ""
 	echo -n "Select 1-8: "
 	select_nix_distro
-	echo "Selected Linux version is $LINUX_VERSION"
+	echo "INFO: Selected Linux version is $LINUX_VERSION"
 	prompt_yes_or_no "Continue? (There is no guarantee or support beyond this point)" select_nix_continue
 	if [ $select_nix_continue == "no" ]; then
 		echo "INFO: Installation aborted by user"
@@ -221,7 +379,21 @@ if [ ! -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 fi
 if [ ! -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	echo "INFO: Skipping installing King Phisher Server components"
-else
+fi
+
+if [ ! -z "$UPDATE" ]; then
+	if git status &> /dev/null; then
+		KING_PHISHER_DIR="$(git rev-parse --show-toplevel)"
+		echo "INFO: Git repo found at $KING_PHISHER_DIR"
+	elif [ -d "$(dirname $(dirname $FILE_NAME))/king_phisher" ]; then
+		KING_PHISHER_DIR="$(dirname $(dirname $FILE_NAME))"
+		echo "INFO: Project directory found at $KING_PHISHER_DIR"
+	fi
+	sync_dependencies
+	exit 0
+fi
+
+if [ -z "$KING_PHISHER_SKIP_SERVER" ]; then
 	prompt_yes_or_no "Install and use PostgreSQL? (Highly recommended and required for upgrading)" KING_PHISHER_USE_POSTGRESQL
 	if [ $KING_PHISHER_USE_POSTGRESQL == "yes" ]; then
 		echo "INFO: Will install and configure PostgreSQL for the server"
@@ -230,7 +402,7 @@ else
 		echo "INFO: Backing up the previous server configuration to server_config.yml.bck.~#~"
 		prompt_yes_or_no "Use the same database connection? (recommended)" SAVE_DATABASE
 		if [ $SAVE_DATABASE ]; then
-			POSTGRES_BACKUP=$(cat server_config.yml| grep postgresql: | awk '{print $2}')
+			POSTGRES_BACKUP=$(awk ' /postgresql:/ {print $2}' server_config.yml)
 		fi
 		cp --backup=numbered server_config.yml ./server_config.yml.bck
 		BACKUP=true
@@ -269,7 +441,7 @@ else
 	echo "INFO: Downloading and installing the King Phisher server to $KING_PHISHER_DIR"
 	if [ ! -d "$KING_PHISHER_DIR" ]; then
 		if ! git clone $GIT_CLONE_URL $KING_PHISHER_DIR &> /dev/null; then
-			echo "Failed to clone the Git repo"
+			echo "ERROR: Failed to clone the Git repo"
 			exit $E_SOFTWARE
 		fi
 		echo "INFO: Successfully cloned the git repo"
@@ -284,7 +456,7 @@ fi
 
 if [ "$LINUX_VERSION" == "Kali" ]; then
 	if ! grep -i 'rolling' /etc/debian_version &> /dev/null; then
-		echo "Checking Kali 2 apt sources"
+		echo "INFO: Checking Kali 2 apt sources"
 		if ! grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null; then
 			echo "INFO: Standard Kali 2 apt sources are missing, now adding them, see"
 			echo "INFO: http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
@@ -294,135 +466,9 @@ if [ "$LINUX_VERSION" == "Kali" ]; then
 	fi
 fi
 
-echo "Installing $LINUX_VERSION dependencies"
-if [ "$LINUX_VERSION" == "RedHat" ]; then
-	if [ ! "$(command -v python3)" ]; then
-		echo "INFO: Installing Python3.5 for Red Hat 7"
-		# manually add rpms for easy python35 install
-		yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-		rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
-		yum -y install https://rhel7.iuscommunity.org/ius-release.rpm
-		rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
-		yum install -y python35u python35u-devel python35u-pip
-		echo "INFO: Symlinking $(which python3.5) -> /usr/bin/python3"
-		ln -s $(which python3.5) /usr/bin/python3
-	fi
-	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
-		openssl-devel postgresql-devel
-	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
-		yum install -y postgresql-server
-		# manually init the database
-		postgresql-setup initdb
-	fi
-fi
-if [ "$LINUX_VERSION" == "CentOS" ]; then
-	if [ ! "$(command -v python3)" ]; then
-		# manually install python3.5 on CentOS 7 and symlink it to python3
-		echo "INFO: Installing Python3.5 for CentOS 7"
-		yum install -y https://centos7.iuscommunity.org/ius-release.rpm
-		yum install -y python35u python35u-devel python35u-pip
-		echo "INFO: Symlinking $(which python3.5) -> /usr/bin/python3"
-		ln -s $(which python3.5) /usr/bin/python3
-	fi
-	yum install -y epel-release
-	yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
-		openssl-devel postgresql-devel
-	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
-		yum install -y postgresql-server
-		# manually init the database
-		postgresql-setup initdb
-	fi
-elif [ "$LINUX_VERSION" == "Fedora" ]; then
-	dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
-		libpng-devel postgresql-devel python3-devel python3-pip \
-		libffi-devel openssl-devel
-	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-		dnf install -y geos geos-devel gtksourceview3 vte3
-	fi
-	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
-		dnf install -y postgresql-server
-	fi
-	# Fedora 23 is missing an rpm lib required, check to see if it has been installed.
-	if [ ! -d "$/usr/lib/rpm/redhat/redhat-hardened-cc1" ]; then
-		dnf install -y rpm-build
-	fi
-elif [ "$LINUX_VERSION" == "BackBox" ] || \
-	 [ "$LINUX_VERSION" == "Debian"  ] || \
-	 [ "$LINUX_VERSION" == "Kali"    ] || \
-	 [ "$LINUX_VERSION" == "Ubuntu"  ]; then
-	apt-get install -y libfreetype6-dev python3-dev python3-pip pkg-config
-	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-		if ! apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
-			gir1.2-webkit-3.0 python3-cairo libgeos++-dev \
-			libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev; then
-				echo "ERROR: Failed to install dependencies with apt-get"
-				exit
-		fi
-
-		if [ "$LINUX_VERSION" == "Ubuntu" ]; then
-			apt-get install -y adwaita-icon-theme-full
-		fi
-
-		if apt-cache search gir1.2-vte-2.91 &> /dev/null; then
-			if ! apt-get -y install gir1.2-vte-2.91; then
-				echo "ERROR: Failed to install gir1.2-vte-2.91"
-			fi
-		else
-			if ! apt-get -y install gir1.2-vte-2.90; then
-				echo "ERROR: Failed to install gir1.2-vte-2.90"
-			fi
-		fi
-
-		if apt-get install -y gir1.2-webkit2-3.0 &> /dev/null; then
-			echo "INFO: Successfully installed gir1.2-webkit2-3.0 with apt-get"
-		else
-			echo "ERROR: Failed to install gir1.2-webkit2-3.0 with apt-get"
-		fi
-	fi
-
-	if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
-		apt-get install -y postgresql postgresql-server-dev-all &> /dev/null
-	fi
-	if [ "$LINUX_VERSION" == "Kali" ]; then
-		easy_install -U distribute
-		apt-get install -y postgresql-server-dev-all &> /dev/null
-	fi
-elif [ "$LINUX_VERSION" == "Arch" ]; then
-	pacman --noconfirm -S freetype2 python python-pip pkg-config
-	if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-		if ! pacman --noconfirm -S gobject-introspection python-cairo geos gtk3 \
-			gtksourceview3 webkit2gtk vte3 postgresql-libs python-gobject; then
-			echo "ERROR: Failed to install dependencies with pacman"
-			exit
-		fi
-		if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
-			pacman --noconfirm -S postgresql &> /dev/null
-		fi
-	fi
-fi
-
-echo "INFO: Installing Python package dependencies from PyPi"
-# six needs to be installed before requirements.txt for matplotlib
-PIP_VERSION=$(pip --version)
-python3 -m pip install --upgrade pip
-# set pip back to python2 if python2 was default
-if echo $PIP_VERSION | grep "python 2.7"; then
-	python -m pip install -U pip -I &> /dev/null
-fi
-
-python3 -m pip install --upgrade setuptools
-python3 -m pip install --upgrade six
-
-if [ "$LINUX_VERSION" == "Kali" ]; then
-	if ! python3 -m pip install -I -r requirements.txt; then
-		echo "ERROR: Failed to install python requirements with pip"
-		exit $E_SOFTWARE
-	fi
-else
-	if ! python3 -m pip install -I -r requirements.txt; then
-		echo "ERROR: Failed to install python requirements with pip"
-		exit $E_SOFTWARE
-	fi
+sync_dependencies
+if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
+	install_postgres
 fi
 
 if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
@@ -443,14 +489,6 @@ if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 			echo "INFO: Updating the GTK icon cache"
 			gtk-update-icon-cache --force /usr/share/icons/hicolor
 		fi
-	fi
-	# try to install basemap directly from it's sourceforge tarball
-	if python3 -m pip install https://github.com/matplotlib/basemap/archive/v1.1.0.tar.gz &> /dev/null; then
-		echo "INFO: Successfully installed basemap with pip"
-	else
-		echo "WARNING: Failed to install basemap with pip, this is not a required dependency"
-		echo "WARNING: for King Phisher. See https://bit.ly/kp-pip-basemaps for more"
-		echo "WARNING: information."
 	fi
 fi
 

@@ -271,7 +271,7 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 
 		self.login_dialog = dialogs.LoginDialog(self.application)
 		self.login_dialog.dialog.connect('response', self.signal_login_dialog_response)
-		self.login_dialog.dialog.show()
+		self.login_dialog.show()
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		#previous_page = notebook.get_nth_page(self.last_page_id)

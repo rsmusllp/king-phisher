@@ -6,6 +6,7 @@ Development References
    :titlesonly:
 
    architecture_overview.rst
+   modules.rst
    environment_vars.rst
    style_guide.rst
    release_steps.rst

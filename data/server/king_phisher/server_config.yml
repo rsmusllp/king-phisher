@@ -25,11 +25,16 @@ logging:
     path: /var/log/king-phisher.log
 
 server:
-  # Bind address information, multiple ports can be
+  # Bind address information, multiple ports can be specified through additional entries under "addresses"
   addresses:
+    # bind to port 80 on all IPv4 interfaces without SSL (http)
     - host: 0.0.0.0
       port: 80
       ssl: false
+    # bind to port 443 on all IPv4 interfaces with SSL (https)
+    #- host: 0.0.0.0
+    #  port: 443
+    #  ssl: true
 
   # Server RPC authentication related settings
   #authentication:

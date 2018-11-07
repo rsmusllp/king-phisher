@@ -52,7 +52,7 @@ from king_phisher import color
 from king_phisher import constants
 from king_phisher import find
 from king_phisher import its
-from king_phisher import version
+from king_phisher import startup
 
 import dateutil
 import dateutil.tz
@@ -177,12 +177,7 @@ def argp_add_args(parser, default_root=''):
 	:type parser: :py:class:`argparse.ArgumentParser`
 	:param str default_root: The default root logger to specify.
 	"""
-	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'), help='set the logging level')
-	parser.add_argument('--logger', default=default_root, help='specify the root logger')
-	gc_group = parser.add_argument_group('garbage collector options')
-	gc_group.add_argument('--gc-debug-leak', action='store_const', const=gc.DEBUG_LEAK, default=0, help='set the DEBUG_LEAK flag')
-	gc_group.add_argument('--gc-debug-stats', action='store_const', const=gc.DEBUG_STATS, default=0, help='set the DEBUG_STATS flag')
+	startup.argp_add_default_args(parser, default_root='')
 
 	@functools.wraps(parser.parse_args)
 	def parse_args_hook(*args, **kwargs):

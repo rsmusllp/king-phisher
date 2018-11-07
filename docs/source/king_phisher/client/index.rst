@@ -1,6 +1,8 @@
 :mod:`client`
 =============
 
+.. module:: king_phisher.client
+
 This package contains all packages and modules specific to the client
 application.
 

@@ -1,6 +1,8 @@
 :mod:`server`
 =============
 
+.. module:: king_phisher.server
+
 This package contains all packages and modules specific to the server
 application.
 

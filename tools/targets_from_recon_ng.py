@@ -42,18 +42,20 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import king_phisher.color as color
 import king_phisher.version as version
 
-PROG_DESCRIPTION = """King Phisher Recon-ng CSV Converter
+PROG_DESCRIPTION = """\
+King Phisher Recon-ng CSV Converter
 
 This tool is used to convert the output from the recon-ng reporting/csv module
 to a CSV file for use with King Phisher.
 """
 
-PROG_EPILOG = """The format string uses Python's native .format syntax.
+PROG_EPILOG = """\
+The format string uses Python's native .format syntax.
 
 Format string examples:
-  first initial followed by the last name (default)
+  First initial followed by the last name (default)
     {first:.1}{last}
-  first name dot last name
+  First name dot last name
     {first}.{last}
 """
 

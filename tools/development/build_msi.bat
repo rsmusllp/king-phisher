@@ -1,11 +1,30 @@
 @echo off
 @setlocal
 
+:Variables
 set start=%time%
+
+:: make the entry point for the King Phisher client build
+copy king_phisher\client\__main__.py .\KingPhisher
+if %ERRORLEVEL% NEQ 0 (
+	echo Failed to copy client entry point
+	echo Error level: %ERRORLEVEL%
+	exit /b %ERRORLEVEL%
+)
 
 :: perform the build
 python tools\development\cx_freeze.py build
+if %ERRORLEVEL% NEQ 0 (
+	echo Failed to build the King Phisher exe
+	echo Error level: %ERRORLEVEL%
+	exit /b %ERRORLEVEL%
+)
 python tools\development\cx_freeze.py bdist_msi
+if %ERRORLEVEL% NEQ 0 (
+	echo Failed to build the King Phisher msi package
+	echo Error level: %ERRORLEVEL%
+	exit /b %ERRORLEVEL%
+)
 
 :: build complete, calculate the time elapsed
 set end=%time%

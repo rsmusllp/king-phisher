@@ -30,35 +30,48 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+################################################################################
+#
+# CLEAN ROOM MODULE
+#
+# This module is classified as a "Clean Room" module and is subject to
+# restrictions on what it may import.
+#
+# See: https://king-phisher.readthedocs.io/en/latest/development/modules.html#clean-room-modules
+#
+################################################################################
+
 import collections
 import os
 import subprocess
 
-import smoke_zephyr.utilities
+from king_phisher import its
 
-def get_revision():
+def get_revision(encoding='utf-8'):
 	"""
 	Retrieve the current git revision identifier. If the git binary can not be
 	found or the repository information is unavailable, None will be returned.
 
+	:param str encoding: The encoding to use for strings.
 	:return: The git revision tag if it's available.
 	:rtype: str
 	"""
-	git_bin = smoke_zephyr.utilities.which('git')
-	if not git_bin:
+	# use error handling instead of startup.which to avoid a circular dependency
+	try:
+		proc_h = subprocess.Popen(
+			('git', 'rev-parse', 'HEAD'),
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE,
+			close_fds=False if its.on_windows else True,
+			cwd=os.path.dirname(os.path.abspath(__file__))
+		)
+	except OSError:
 		return None
-	proc_h = subprocess.Popen(
-		(git_bin, 'rev-parse', 'HEAD'),
-		stdout=subprocess.PIPE,
-		stderr=subprocess.PIPE,
-		close_fds=True,
-		cwd=os.path.dirname(os.path.abspath(__file__))
-	)
 	rev = proc_h.stdout.read().strip()
 	proc_h.wait()
 	if not len(rev):
 		return None
-	return rev.decode('utf-8')
+	return rev.decode(encoding)
 
 revision = get_revision()
 """The git revision identifying the latest commit if available."""
@@ -66,7 +79,7 @@ revision = get_revision()
 version_info = collections.namedtuple('version_info', ('major', 'minor', 'micro'))(1, 12, 0)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
 
-version_label = 'beta'
+version_label = ''
 """A version label such as alpha or beta."""
 
 version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)

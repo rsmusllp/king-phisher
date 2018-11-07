@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import collections
+import datetime
 import functools
 
 from king_phisher import utilities
@@ -373,3 +374,86 @@ class TreeViewManager(object):
 
 	def signal_activate_popup_menu_delete(self, menuitem):
 		self._call_cb_delete()
+
+class _TimeSelector(gui_utilities.GladeGObject):
+	"""
+	This is the TimeSelector :py:class:`~Gtk.Popover` object containing the
+	:py:class:`~Gtk.SpinButton` widgets. This class should be treated as
+	private, as it is created by the :py:class:`~TimeSelectorButtonManager`
+	class. It should not be used directly.
+	"""
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'spinbutton_hour',
+			'spinbutton_minute'
+		),
+		top_level=(
+			'ClockHourAdjustment',
+			'ClockMinuteAdjustment'
+		),
+		name='TimeSelector'
+	)
+	top_gobject = 'popover'
+	def signal_spinbutton_output(self, spinbutton):
+		adjustment = spinbutton.get_adjustment()
+		value = adjustment.get_value()
+		spinbutton.set_text("{0:02.0f}".format(value))
+		return True
+
+class TimeSelectorButtonManager(object):
+	"""
+	A manager class to convert a :py:class:`~Gtk.ToggleButton` to be used for
+	showing a time selector py:class:`~.Gtk.Popover` object with inputs for
+	setting the hour and minutes. This then exposes the selected time through
+	the :py:attr:`.time` attribute.
+	"""
+	def __init__(self, application, button, value=None):
+		"""
+		:param button: The button used for activation.
+		:type button: :py:class:`Gtk.ToggleButton`
+		:param application: The application instance which owns this object.
+		:param value: The present datetime value (defaults to 00:00).
+		:type value: :py:class:`datetime.time`
+		"""
+		self.popover = _TimeSelector(application)
+		self.button = button
+		self.application = application
+		self._time_format = "{time.hour:02}:{time.minute:02}"
+		self._hour_spin = self.popover.gobjects['spinbutton_hour']
+		self._hour_spin.connect('value-changed', lambda _: self.button.set_label(self._time_format.format(time=self.time)))
+		self._minute_spin = self.popover.gobjects['spinbutton_minute']
+		self._minute_spin.connect('value-changed', lambda _: self.button.set_label(self._time_format.format(time=self.time)))
+		self.time = value or datetime.time(0, 0)
+		self.popover.popover.set_relative_to(self.button)
+		self.popover.popover.connect('closed', lambda _: self.button.set_active(False))
+		self.button.connect('toggled', self.signal_button_toggled)
+
+	def __repr__(self):
+		return "<{0} time='{1:%H:%M}' >".format(self.__class__.__name__, self.time)
+
+	def signal_button_toggled(self, _):
+		if self.button.get_active():
+			self.popover.popover.popup()
+
+	@property
+	def time(self):
+		"""
+		This property represents the current time value and when set, updates
+		the associated button.
+
+		:return: The current time value.
+		:rtype: :py:class:`datetime.time`
+		"""
+		return datetime.time(self._hour_spin.get_value_as_int(), self._minute_spin.get_value_as_int())
+
+	@time.setter
+	def time(self, value):
+		"""
+		:param value: value from self.popover.gobjects['spinbutton_xx']
+		:return: The new time value to self.time
+		"""
+		if not isinstance(value, datetime.time):
+			raise TypeError('argument 1 must be a datetime.time instance')
+		self._hour_spin.set_value(value.hour)
+		self._minute_spin.set_value(value.minute)
+		self.button.set_label(self._time_format.format(time=value))

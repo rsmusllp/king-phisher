@@ -49,15 +49,32 @@ import advancedhttpserver
 import smoke_zephyr.utilities
 
 LETS_ENCRYPT_LIVE_PATH = '/etc/letsencrypt/live'
-PARSER_EPILOG = """
-This tool facilitates issuing certificates with the certbot utility while the
-King Phisher server is running.
+PARSER_DESCRIPTION = """\
+King Phisher Certbot Wrapper Utility
+
+This tool facilitates issuing certificates with the certbot Let's Encrypt client
+utility while the King Phisher server is running.
 """
-PARSER_EPILOG = PARSER_EPILOG.replace('\n', ' ')
-PARSER_EPILOG = PARSER_EPILOG.strip()
+PARSER_EPILOG = """\
+Example usage (issuing a certificate for "test.king-phisher.com"):
+  # standard configuration output
+  sudo ./certbot_wrapper.py ../server_config.yml test.king-phisher.com
+  
+  # use json configuration output (for use with the config file's include
+  # directive) and then restart the service
+  sudo ./certbot_wrapper.py \\
+    --json-output ../configs/ssl_hosts.json \\
+    --restart-service \\
+    ../server_config.yml test.king-phisher.com
+"""
 
 def main():
-	parser = argparse.ArgumentParser(description='King Phisher Certbot Wrapper Utility', conflict_handler='resolve')
+	parser = argparse.ArgumentParser(
+		conflict_handler='resolve',
+		description=PARSER_DESCRIPTION,
+		epilog=PARSER_EPILOG,
+		formatter_class=argparse.RawTextHelpFormatter
+	)
 	utilities.argp_add_args(parser)
 	parser.add_argument('--certbot', dest='certbot_bin', help='the path to the certbot binary to use')
 	parser.add_argument('--json-output', dest='json_file', help='update a json formatted file with the details')

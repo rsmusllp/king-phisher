@@ -2,7 +2,14 @@ Additional Configuration
 ========================
 
 The following configuration settings will be honored but can not be set from
-within the client's user interface.
+within the client's user interface. The client configuration file is usually
+located in the following locations depending on the host operating system:
+
+:Linux:
+  ``~/.config/king-phisher/config.json``
+
+:Windows:
+  ``%LOCALAPPDATA%\king-phisher\config.json``
 
 .. note::
    The King Phisher client will overwrite its configuration file when it exits
