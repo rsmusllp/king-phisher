@@ -8,6 +8,11 @@ team for note worthy changes.
 Version 1.x.x
 -------------
 
+Version 1.13.0
+^^^^^^^^^^^^^^
+
+*In Progress*
+
 Version 1.12.0
 ^^^^^^^^^^^^^^
 
