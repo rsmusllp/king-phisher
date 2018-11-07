@@ -11,7 +11,7 @@ Version 1.x.x
 Version 1.12.0
 ^^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.12.0` on November 7th, 2018
 
 * Added support for users to set their email address for campaign alerts via email
 * Added additional plugin metadata fields for reference URLs and category classifiers
