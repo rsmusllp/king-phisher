@@ -9,6 +9,7 @@ alembic = "==0.9.7"
 blinker = "==1.4"
 boltons = "==18.0.0"
 cryptography = "==2.1.4"
+Cython = "==0.29"
 dnspython = "==1.15.0"
 ecdsa = "==0.13"
 "geoip2" = "==2.8.0"
@@ -47,6 +48,7 @@ SQLAlchemy = "==1.2.6"
 XlsxWriter = "==0.9.6"
 numpy = "==1.14.5"
 "basemap" = {file = "https://github.com/matplotlib/basemap/archive/v1.2.0rel.tar.gz"}
+pyproj = {git = "https://github.com/jswhit/pyproj.git"}
 
 [dev-packages]
 
