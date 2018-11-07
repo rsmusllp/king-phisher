@@ -32,11 +32,8 @@ Post Release Steps
 ------------------
 
 #. Increment the version number on the dev branch and re-set the version label
-#. Update Python packages list for pip in requirements.txt with piprot
+#. Update Python packages list in Pipefile
 
 .. code-block:: shell
 
-   python3 -m pip install -U piprot
-   sed -e 's/>=/==/g' requirements.txt | \
-   piprot -x - | \
-   awk '/# Latest/ {print substr($1, 0, index($1, "==") + 1) $4 }'
+   pipenv update --outdated
