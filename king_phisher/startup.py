@@ -143,18 +143,11 @@ def pipenv_entry(parser, entry_point):
 
 	logger.info('checking for the pipenv environment')
 	if which('pipenv') is None:
-		logger.info('installing pipenv from PyPi using pip')
-		results = run_process([sys.executable, '-m', 'pip', 'install', 'pipenv'], cwd=target_directory)
-		if results.status:
-			sys.stderr.write('the following issue occurred during installation of pipenv:\n')
-			sys.stderr.write(results.stdout)
-			return results.status
+		logger.exception('pipenv not found, run tools/install.sh --update')
+		return os.EX_UNAVAILABLE
 
 	pipenv_path = which('pipenv')
 	logger.debug("pipenv path: {0!r}".format(pipenv_path))
-	if not pipenv_path:
-		logger.exception('failed to find pipenv')
-		return os.EX_UNAVAILABLE
 
 	if arguments.pipenv_install or not os.path.isdir(os.path.join(target_directory, '.venv')):
 		if arguments.pipenv_install:
