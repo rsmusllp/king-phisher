@@ -157,7 +157,9 @@ class BaseRowCls(object):
 
 		.. note::
 			This will always return ``True`` for sessions which are for
-			administrative users.
+			administrative users. To maintain this logic, this method **should
+			not** be overridden in subclasses. Instead override the specific
+			``_session_has_*_access`` methods as necessary.
 
 		:param str access: The desired permissions.
 		:param session: The authenticated session to check access for.
@@ -185,22 +187,52 @@ class BaseRowCls(object):
 
 	@classmethod
 	def session_has_create_access(cls, session, instance=None):
-		return not cls.is_private
+		if session.user_is_admin:
+			return True
+		return cls._session_has_create_access(session, instance=instance)
 
 	@classmethod
 	def session_has_delete_access(cls, session, instance=None):
-		return not cls.is_private
+		if session.user_is_admin:
+			return True
+		return cls._session_has_delete_access(session, instance=instance)
 
 	@classmethod
 	def session_has_read_access(cls, session, instance=None):
-		return not cls.is_private
+		if session.user_is_admin:
+			return True
+		return cls._session_has_read_access(session, instance=instance)
 
 	@classmethod
 	def session_has_read_prop_access(cls, session, prop, instance=None):
-		return cls.session_has_read_access(session, instance=instance)
+		if session.user_is_admin:
+			return True
+		return cls._session_has_read_prop_access(session, prop, instance=instance)
 
 	@classmethod
 	def session_has_update_access(cls, session, instance=None):
+		if session.user_is_admin:
+			return True
+		return cls._session_has_update_access(session, instance=instance)
+
+	@classmethod
+	def _session_has_create_access(cls, session, instance=None):
+		return not cls.is_private
+
+	@classmethod
+	def _session_has_delete_access(cls, session, instance=None):
+		return not cls.is_private
+
+	@classmethod
+	def _session_has_read_access(cls, session, instance=None):
+		return not cls.is_private
+
+	@classmethod
+	def _session_has_read_prop_access(cls, session, prop, instance=None):
+		return cls._session_has_read_access(session, instance=instance)
+
+	@classmethod
+	def _session_has_update_access(cls, session, instance=None):
 		return not cls.is_private
 
 	@classmethod
@@ -243,19 +275,19 @@ class AlertSubscription(ExpireMixIn, Base):
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 
 	@classmethod
-	def session_has_create_access(cls, session, instance=None):
+	def _session_has_create_access(cls, session, instance=None):
 		return instance and session.user == instance.user_id
 
 	@classmethod
-	def session_has_delete_access(cls, session, instance=None):
+	def _session_has_delete_access(cls, session, instance=None):
 		return instance and session.user == instance.user_id
 
 	@classmethod
-	def session_has_read_access(cls, session, instance=None):
+	def _session_has_read_access(cls, session, instance=None):
 		return instance and session.user == instance.user_id
 
 	@classmethod
-	def session_has_update_access(cls, session, instance=None):
+	def _session_has_update_access(cls, session, instance=None):
 		return instance and session.user == instance.user_id
 
 @register_table
@@ -432,25 +464,25 @@ class User(ExpireMixIn, Base):
 		return self.access_level == 0
 
 	@classmethod
-	def session_has_create_access(cls, session, instance=None):
+	def _session_has_create_access(cls, session, instance=None):
 		return False
 
 	@classmethod
-	def session_has_delete_access(cls, session, instance=None):
+	def _session_has_delete_access(cls, session, instance=None):
 		return False
 
 	@classmethod
-	def session_has_read_access(cls, session, instance=None):
+	def _session_has_read_access(cls, session, instance=None):
 		return instance and session.user == instance.id
 
 	@classmethod
-	def session_has_read_prop_access(cls, session, prop, instance=None):
+	def _session_has_read_prop_access(cls, session, prop, instance=None):
 		if prop in ('id', 'campaigns', 'name'):  # everyone can read the id
 			return True
 		return cls.session_has_read_access(session, instance=instance)
 
 	@classmethod
-	def session_has_update_access(cls, session, instance=None):
+	def _session_has_update_access(cls, session, instance=None):
 		return instance and session.user == instance.id
 
 @register_table
