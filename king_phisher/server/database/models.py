@@ -51,7 +51,7 @@ SCHEMA_VERSION = 9
 """The schema version of the database, used for compatibility checks."""
 
 MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name'))
-"""Table metadata.
+"""Metadata describing a table and its various attributes.
 
 .. py:attribute:: column_names
 
@@ -127,6 +127,14 @@ class BaseRowCls(object):
 	The base class from which other database table objects inherit from.
 	Provides a standard ``__repr__`` method and default permission checks which
 	are to be overridden as desired by subclasses.
+
+	.. warning::
+		Subclasses should not directly override the ``session_has_*_access``
+		methods. These contain wrapping logic to do things like checking if the
+		session is an administrator, etc. Instead subclasses looking to control
+		access should override the individual private variants
+		``_session_has_*_access``. Each of these use the same call signature as
+		their public counterparts.
 	"""
 	__repr_attributes__ = ()
 	"""Attributes which should be included in the __repr__ method."""
@@ -153,7 +161,8 @@ class BaseRowCls(object):
 		"""
 		Check that the authenticated session has the permissions specified in
 		*access*. The permissions in *access* are abbreviated with the first
-		letter of create, read, update, and delete.
+		letter of create, read, update, and delete. For example, to check for
+		read and update permissions, *access* would be ``'ru'``.
 
 		.. note::
 			This will always return ``True`` for sessions which are for
@@ -187,30 +196,76 @@ class BaseRowCls(object):
 
 	@classmethod
 	def session_has_create_access(cls, session, instance=None):
+		"""
+		Check that the authenticated *session* has access to create the
+		specified model *instance*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
 		if session.user_is_admin:
 			return True
 		return cls._session_has_create_access(session, instance=instance)
 
 	@classmethod
 	def session_has_delete_access(cls, session, instance=None):
+		"""
+		Check that the authenticated *session* has access to delete the
+		specified model *instance*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
 		if session.user_is_admin:
 			return True
 		return cls._session_has_delete_access(session, instance=instance)
 
 	@classmethod
 	def session_has_read_access(cls, session, instance=None):
+		"""
+		Check that the authenticated *session* has access to read the
+		specified model *instance*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
 		if session.user_is_admin:
 			return True
 		return cls._session_has_read_access(session, instance=instance)
 
 	@classmethod
 	def session_has_read_prop_access(cls, session, prop, instance=None):
+		"""
+		Check that the authenticated *session* has access to read the property
+		of the specified model *instance*. This allows models to only explicitly
+		control which of their attributes can be read by a particular *session*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
 		if session.user_is_admin:
 			return True
 		return cls._session_has_read_prop_access(session, prop, instance=instance)
 
 	@classmethod
 	def session_has_update_access(cls, session, instance=None):
+		"""
+		Check that the authenticated *session* has access to update the
+		specified model *instance*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
 		if session.user_is_admin:
 			return True
 		return cls._session_has_update_access(session, instance=instance)
