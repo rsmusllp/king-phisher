@@ -43,6 +43,7 @@ from .database import DatabaseSchemaTests
 from .database import DatabaseStorageTests
 from .database import DatabaseTests
 from .graphql import ServerGraphQLTests
+from .graphql import ServerGraphQLDatabaseTests
 from .rest_api import ServerRESTAPITests
 from .server import CampaignWorkflowTests
 from .server import ServerTests

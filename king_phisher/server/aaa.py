@@ -85,13 +85,15 @@ def get_groups_for_user(username):
 
 class AuthenticatedSession(object):
 	"""A container to store information associated with an authenticated session."""
-	__slots__ = ('_event_socket', 'user', 'created', 'last_seen')
+	__slots__ = ('_event_socket', 'created', 'last_seen', 'user', 'user_is_admin')
 	# also used in tools/database_console for mocking a live session
 	def __init__(self, user):
 		"""
-		:param user: The unique identifier for the authenticated user.
+		:param user: The user object of the authenticated user.
+		:type user: :py:class:`~king_phisher.server.database.models.User`
 		"""
-		self.user = user
+		self.user = user.id
+		self.user_is_admin = user.is_admin
 		self.created = db_models.current_timestamp()
 		self.last_seen = self.created
 		self._event_socket = None
@@ -124,7 +126,7 @@ class AuthenticatedSession(object):
 		:return: A new :py:class:`.AuthenticatedSession` instance.
 		"""
 		utilities.assert_arg_type(stored_session, db_models.AuthenticatedSession)
-		session = cls(stored_session.user_id)
+		session = cls(stored_session.user)
 		session.created = stored_session.created
 		session.last_seen = stored_session.last_seen
 		return session
@@ -184,7 +186,8 @@ class AuthenticatedSessionManager(object):
 		specified user id. Any previously existing sessions for the specified
 		user are removed from the manager.
 
-		:param user: The unique identifier for the authenticated user.
+		:param user: The user object of the authenticated user.
+		:type user: :py:class:`~king_phisher.server.database.models.User`
 		:return: The unique identifier for this session.
 		:rtype: str
 		"""
@@ -198,7 +201,7 @@ class AuthenticatedSessionManager(object):
 			# limit users to one valid session
 			remove = []
 			for old_session_id, old_session in self._sessions.items():
-				if old_session.user == user:
+				if old_session.user == user.id:
 					remove.append(old_session_id)
 			for old_session_id in remove:
 				del self._sessions[old_session_id]

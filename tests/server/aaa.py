@@ -36,6 +36,8 @@ import unittest
 from king_phisher import testing
 from king_phisher import utilities
 from king_phisher.server import aaa
+from king_phisher.server.database import manager as db_manager
+from king_phisher.server.database import models as db_models
 
 class ServerAuthenticationTests(testing.KingPhisherTestCase):
 	def test_authenticator_bad_credentials(self):
@@ -45,18 +47,29 @@ class ServerAuthenticationTests(testing.KingPhisherTestCase):
 		auth.stop()
 
 class ServerAuthenticatedSessionManagerTests(testing.KingPhisherTestCase):
+	def setUp(self):
+		username = 'alice'
+		self._session = db_manager.Session()
+		self.user = self._session.query(db_models.User).filter_by(name=username).first()
+		if self.user is None:
+			self.user = db_models.User(name=username)
+			self._session.add(self.user)
+			self._session.commit()
+
+	def tearDown(self):
+		self._session.close()
+
 	def test_session_creation(self):
 		manager = aaa.AuthenticatedSessionManager()
 		original_session_count = len(manager)
-		username = 'alice'
-		manager.put(username)
+		manager.put(self.user)
 		self.assertEqual(len(manager), original_session_count + 1)
-		manager.put(username)
+		manager.put(self.user)
 		self.assertEqual(len(manager), original_session_count + 1)
 
 	def test_session_expiration(self):
 		manager = aaa.AuthenticatedSessionManager(timeout=1)
-		session_id = manager.put('alice')
+		session_id = manager.put(self.user)
 		self.assertIsNotNone(manager.get(session_id))
 		time.sleep(1.5)
 		self.assertIsNone(manager.get(session_id))

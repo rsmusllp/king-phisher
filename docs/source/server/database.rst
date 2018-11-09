@@ -22,8 +22,8 @@ The King Phisher database uses an internal version number defined as
 the initialization code to determine whether or not the stored database schema
 (the one existing in the database) matches the running schema (the one defined
 in the source code). When the schemas are not the same, the database is
-considered to be incompatible. The King Phisher process will then attempt to
-upgrade the stored database schema.
+considered to be incompatible. The King Phisher server process will then
+automatically attempt to upgrade the stored database schema.
 
 If the stored database schema is newer than the running schema, the King Phisher
 process can not downgrade it. This would happen for example if a developer were
@@ -31,20 +31,20 @@ to use version control to revert the project code to an older version. In this
 case the older version would have no knowledge of the newer schema and would
 therefor be unable to "downgrade" it to a compatible version. In this case the
 developer must use the included database schema migration utilities to update
-the stored database schema to a compatible version before checkout out the older
+the stored database schema to a compatible version before switchign to the older
 project revision.
 
 Alembic
 ~~~~~~~
 
-King Phisher uses `Alembic`_ to manage it's database schema versions. This can
-be used to explicitly upgrade and downgrade the schema version from the command
+King Phisher uses `Alembic`_ to manage its database schema versions. This can be
+used to explicitly upgrade and downgrade the schema version from the command
 line. The Alembic environment files are stored with the server data files at
 ``data/server/king_phisher/alembic``.
 
 The King Phisher version of the Alembic ``env`` file is modified to support two
 ways for the database connection string to be passed from the command line. This
-removes the need to store the credentials the ``alembic.ini`` file. The two
+removes the need to store the credentials int the ``alembic.ini`` file. The two
 supported options are "config" and "database". Both are supplied as settings to
 the ``-x`` option in the form ``-x SETTING=VALUE`` with no spaces between the
 settings and their values.
@@ -63,6 +63,7 @@ string taken from the server's configuration file.
 
 .. code-block:: shell
 
+   # run from data/server/king_phisher
    alembic -x config=../../../server_config.yml current
 
 Schema Version Identifiers

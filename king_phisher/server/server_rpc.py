@@ -394,7 +394,7 @@ def rpc_database_view_rows(handler, session, table_name, page=0, query_filter=No
 	:return: A dictionary with columns and rows keys.
 	:rtype: dict
 	"""
-	metatable = database_tables.get(table_name)
+	metatable = handler.server.tables_api.get(table_name)
 	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	query_filter = query_filter or {}
@@ -476,7 +476,7 @@ def rpc_database_get_row_by_id(handler, session, table_name, row_id):
 	:return: The specified row data.
 	:rtype: dict
 	"""
-	metatable = database_tables.get(table_name)
+	metatable = handler.server.tables_api.get(table_name)
 	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	row = db_manager.get_row_by_id(session, metatable.model, row_id)
@@ -737,7 +737,7 @@ def rpc_login(handler, session, username, password, otp=None):
 	user.last_login = db_models.current_timestamp()
 	session.add(user)
 	session.commit()
-	session_id = handler.server.session_manager.put(user.id)
+	session_id = handler.server.session_manager.put(user)
 	logger.info("successful login request from {0} for user {1}".format(handler.client_address[0], username))
 	signals.send_safe('rpc-user-logged-in', logger, handler, session=session_id, name=username)
 	return True, ConnectionErrorReason.SUCCESS, session_id

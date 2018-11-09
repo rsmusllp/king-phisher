@@ -41,22 +41,35 @@ from king_phisher.testing import KingPhisherTestCase
 graphql_schema = schema.Schema()
 
 class ServerGraphQLTests(KingPhisherTestCase):
-	def _init_db(self):
+	def test_query_plugins(self):
+		result = graphql_schema.execute("{ plugins { edges { node { name } } } }")
+		self.assertIn('plugins', result.data)
+		plugins = result.data['plugins']['edges']
+		self.assertIsInstance(plugins, list)
+		self.assertEqual(len(plugins), 0)
+
+	def test_query_version(self):
+		result = graphql_schema.execute("{ version }")
+		self.assertEquals(result.data['version'], version.version)
+
+class ServerGraphQLDatabaseTests(ServerGraphQLTests):
+	def setUp(self):
 		try:
 			db_manager.init_database('sqlite://')
 		except Exception as error:
 			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
 		alice = db_models.User(name='alice', otp_secret='secret')
 		calie = db_models.User(name='calie', otp_secret='secret')
-		session = db_manager.Session()
-		session.add(alice)
-		session.add(calie)
-		session.commit()
-		self.users = {'alice': alice.id, 'calie': calie.id}
-		session.close()
+		self._session = db_manager.Session()
+		self._session.add(alice)
+		self._session.add(calie)
+		self._session.commit()
+		self.users = {'alice': alice, 'calie': calie}
+
+	def tearDown(self):
+		self._session.close()
 
 	def test_query_auth_middleware_no_session(self):
-		self._init_db()
 		session = db_manager.Session()
 		result = graphql_schema.execute(
 			"{ db { users { edges { node { id otpSecret } } } } }",
@@ -68,22 +81,21 @@ class ServerGraphQLTests(KingPhisherTestCase):
 		self.assertEquals(users[1]['node']['otpSecret'], 'secret')
 
 	def test_query_auth_middleware_session(self):
-		self._init_db()
 		session = db_manager.Session()
-		rpc_session = aaa.AuthenticatedSession(self.users['alice'])
+		db_user = self.users['alice']
+		rpc_session = aaa.AuthenticatedSession(db_user)
 		result = graphql_schema.execute(
 			"{ db { users { edges { node { id name otpSecret } } } } }",
 			context_value={'rpc_session': rpc_session, 'session': session}
 		)
 		users = result.data['db']['users']['edges']
 		self.assertEquals(len(users), 2)
-		self.assertEquals(users[0]['node']['id'], str(self.users['alice']))
-		self.assertEquals(users[0]['node']['name'], 'alice')
+		self.assertEquals(users[0]['node']['id'], str(db_user.id))
+		self.assertEquals(users[0]['node']['name'], db_user.name)
 		self.assertEquals(users[0]['node']['otpSecret'], 'secret')
 		self.assertIsNone(users[1]['node']['otpSecret'])
 
 	def test_query_get_node(self):
-		self._init_db()
 		session = db_manager.Session()
 		result = graphql_schema.execute(
 			"{ db { users(first: 1) { total edges { cursor node { id } } } } }",
@@ -100,7 +112,6 @@ class ServerGraphQLTests(KingPhisherTestCase):
 		self.assertIsInstance(edge['node'], dict)
 
 	def test_query_get_total(self):
-		self._init_db()
 		session = db_manager.Session()
 		result = graphql_schema.execute(
 			"{ db { users { total } } }",
@@ -109,7 +120,6 @@ class ServerGraphQLTests(KingPhisherTestCase):
 		self.assertEquals(result.data['db']['users']['total'], 2)
 
 	def test_query_get_pageinfo(self):
-		self._init_db()
 		session = db_manager.Session()
 		result = graphql_schema.execute(
 			"{ db { users(first: 1) { total pageInfo { hasNextPage } } } }",
@@ -119,14 +129,3 @@ class ServerGraphQLTests(KingPhisherTestCase):
 		self.assertEquals(users['total'], 2)
 		self.assertIn('pageInfo', users)
 		self.assertTrue(users['pageInfo'].get('hasNextPage', False))
-
-	def test_query_plugins(self):
-		result = graphql_schema.execute("{ plugins { edges { node { name } } } }")
-		self.assertIn('plugins', result.data)
-		plugins = result.data['plugins']['edges']
-		self.assertIsInstance(plugins, list)
-		self.assertEqual(len(plugins), 0)
-
-	def test_query_version(self):
-		result = graphql_schema.execute("{ version }")
-		self.assertEquals(result.data['version'], version.version)

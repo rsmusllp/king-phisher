@@ -1,0 +1,263 @@
+{
+  "alert_subscriptions": [
+    "id",
+    "user_id",
+    "campaign_id",
+    "expiration"
+  ],
+  "authenticated_sessions": [
+    "id",
+    "created",
+    "last_seen",
+    "user_id"
+  ],
+  "campaign_types": [
+    "id",
+    "name",
+    "description"
+  ],
+  "campaigns": [
+    "id",
+    "name",
+    "description",
+    "user_id",
+    "created",
+    "max_credentials",
+    "expiration",
+    "campaign_type_id",
+    "company_id"
+  ],
+  "companies": [
+    "id",
+    "name",
+    "description",
+    "industry_id",
+    "url_main",
+    "url_email",
+    "url_remote_access"
+  ],
+  "company_departments": [
+    "id",
+    "name",
+    "description"
+  ],
+  "created": "2018-10-25T20:53:07.134659+00:00",
+  "credentials": [
+    "id",
+    "visit_id",
+    "message_id",
+    "campaign_id",
+    "username",
+    "password",
+    "submitted"
+  ],
+  "deaddrop_connections": [
+    "id",
+    "deployment_id",
+    "campaign_id",
+    "count",
+    "ip",
+    "local_username",
+    "local_hostname",
+    "local_ip_addresses",
+    "first_seen",
+    "last_seen"
+  ],
+  "deaddrop_deployments": [
+    "id",
+    "campaign_id",
+    "destination"
+  ],
+  "industries": [
+    "id",
+    "name",
+    "description"
+  ],
+  "landing_pages": [
+    "id",
+    "campaign_id",
+    "hostname",
+    "page"
+  ],
+  "messages": [
+    "id",
+    "campaign_id",
+    "target_email",
+    "first_name",
+    "last_name",
+    "opened",
+    "opener_ip",
+    "opener_user_agent",
+    "reported",
+    "delivery_status",
+    "delivery_details",
+    "testing",
+    "sent",
+    "trained",
+    "company_department_id"
+  ],
+  "schema": 8,
+  "storage_data": [
+    "created",
+    "id",
+    "key",
+    "modified",
+    "namespace",
+    "value"
+  ],
+  "tables": {
+    "alert_subscriptions": [
+      "expiration",
+      "id",
+      "user_id",
+      "campaign_id"
+    ],
+    "authenticated_sessions": [
+      "id",
+      "created",
+      "last_seen",
+      "user_id"
+    ],
+    "campaign_types": [
+      "id",
+      "name",
+      "description"
+    ],
+    "campaigns": [
+      "expiration",
+      "id",
+      "name",
+      "description",
+      "user_id",
+      "created",
+      "max_credentials",
+      "campaign_type_id",
+      "company_id"
+    ],
+    "companies": [
+      "id",
+      "name",
+      "description",
+      "industry_id",
+      "url_main",
+      "url_email",
+      "url_remote_access"
+    ],
+    "company_departments": [
+      "id",
+      "name",
+      "description"
+    ],
+    "credentials": [
+      "id",
+      "visit_id",
+      "message_id",
+      "campaign_id",
+      "username",
+      "password",
+      "mfa_token",
+      "submitted",
+      "regex_validated"
+    ],
+    "deaddrop_connections": [
+      "id",
+      "deployment_id",
+      "campaign_id",
+      "count",
+      "ip",
+      "local_username",
+      "local_hostname",
+      "local_ip_addresses",
+      "first_seen",
+      "last_seen"
+    ],
+    "deaddrop_deployments": [
+      "id",
+      "campaign_id",
+      "destination"
+    ],
+    "industries": [
+      "id",
+      "name",
+      "description"
+    ],
+    "landing_pages": [
+      "id",
+      "campaign_id",
+      "hostname",
+      "page"
+    ],
+    "messages": [
+      "id",
+      "campaign_id",
+      "target_email",
+      "first_name",
+      "last_name",
+      "opened",
+      "opener_ip",
+      "opener_user_agent",
+      "sent",
+      "reported",
+      "trained",
+      "delivery_status",
+      "delivery_details",
+      "testing",
+      "company_department_id"
+    ],
+    "storage_data": [
+      "id",
+      "created",
+      "modified",
+      "namespace",
+      "key",
+      "value"
+    ],
+    "users": [
+      "expiration",
+      "id",
+      "name",
+      "description",
+      "phone_carrier",
+      "phone_number",
+      "email_address",
+      "otp_secret",
+      "last_login",
+      "access_level"
+    ],
+    "visits": [
+      "id",
+      "message_id",
+      "campaign_id",
+      "count",
+      "ip",
+      "details",
+      "user_agent",
+      "first_landing_page_id",
+      "first_seen",
+      "last_seen"
+    ]
+  },
+  "users": [
+    "id",
+    "phone_carrier",
+    "phone_number",
+    "email_address",
+    "otp_secret",
+    "last_login",
+    "name",
+    "expiration",
+    "description"
+  ],
+  "visits": [
+    "id",
+    "message_id",
+    "campaign_id",
+    "first_landing_page_id",
+    "count",
+    "ip",
+    "details",
+    "first_seen",
+    "last_seen",
+    "user_agent"
+  ]
+}
