@@ -32,7 +32,7 @@ Post Release Steps
 ------------------
 
 #. Increment the version number on the dev branch and re-set the version label
-#. Update Python packages list in Pipefile
+#. Update Python packages list in Pipfile
 
 .. code-block:: shell
 
