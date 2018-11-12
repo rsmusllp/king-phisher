@@ -32,8 +32,7 @@ Post Release Steps
 ------------------
 
 #. Increment the version number on the dev branch and re-set the version label
-#. Update Python packages list in Pipfile
+#. Update the Python packages list in Pipfile
 
-.. code-block:: shell
-
-   pipenv update --outdated
+   #. List the outdated packages with: ``pipenv update --outdated``
+   #. Update each one with: ``pipenv install PACKAGE==VERSION``
