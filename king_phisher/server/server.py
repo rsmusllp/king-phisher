@@ -65,6 +65,8 @@ import jinja2
 import smoke_zephyr.job
 import smoke_zephyr.utilities
 
+QueryCredentials = collections.namedtuple('QueryCredentials', ('username', 'password', 'mfa_token'))
+
 def _send_safe_campaign_alerts(campaign, signal_name, sender, **kwargs):
 	alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
 	logger = logging.getLogger('KingPhisher.Server.CampaignAlerts')
@@ -224,10 +226,11 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 		:param bool check_query: Whether or not to check the query data in addition to an Authorization header.
 		:return: The submitted credentials.
-		:rtype: tuple
+		:rtype: :py:class:`~.QueryCredentials`
 		"""
 		username = None
 		password = ''
+		mfa_token = None
 
 		for pname in ('username', 'user', 'u', 'login'):
 			username = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
@@ -238,22 +241,26 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				password = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
 				if password:
 					break
-			return username, (password or '')
+			for pname in ('mfa', 'mfa-token', 'otp', 'otp-token', 'token'):
+				mfa_token = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
+				if mfa_token:
+					break
+			return QueryCredentials(username, (password or ''), mfa_token)
 
 		basic_auth = self.headers.get('authorization')
 		if basic_auth is None:
-			return None, ''
+			return QueryCredentials(None, '', None)
 		basic_auth = basic_auth.split()
 		if len(basic_auth) == 2 and basic_auth[0] == 'Basic':
 			try:
 				basic_auth = base64.b64decode(basic_auth[1])
 			except TypeError:
-				return None, ''
+				return QueryCredentials(None, '', None)
 			basic_auth = basic_auth.decode('utf-8')
 			basic_auth = basic_auth.split(':', 1)
 			if len(basic_auth) == 2 and len(basic_auth[0]):
 				username, password = basic_auth
-		return username, password
+		return QueryCredentials(username, password, mfa_token)
 
 	def get_template_vars(self):
 		template_vars = {
@@ -338,7 +345,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			visit_count = visit.count
 
 		# increment some counters preemptively
-		if not expired_campaign and self.get_query_creds()[0] is not None:
+		# todo: this logic should be updated to check more thoroughly if the count is incremented
+		if not expired_campaign and self.get_query_creds().username is not None:
 			credential_count += 1
 		client_vars['credential_count'] = credential_count
 		client_vars['visit_count'] = visit_count + (0 if expired_campaign else 1)
@@ -502,8 +510,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.server.logger.error("jinja2 template {0} render failed: {1} {2}".format(template.filename, error.__class__.__name__, getattr(error, 'message', '')))
 			raise errors.KingPhisherAbortRequestError()
 
+		query_creds = self.get_query_creds(check_query=False)
 		require_basic_auth = getattr(template_module, 'require_basic_auth', False)
-		require_basic_auth &= not all(self.get_query_creds(check_query=False))
+		require_basic_auth &= not (query_creds.username and query_creds.password)
 		require_basic_auth &= self.message_id != self.config.get('server.secret_id')
 		if require_basic_auth:
 			mime_type = 'text/html'
@@ -815,16 +824,19 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		session.close()
 
 	def _handle_page_visit_creds(self, session, visit_id):
-		username, password = self.get_query_creds()
-		if username is None:
+		query_creds = self.get_query_creds()
+		if query_creds.username is None:
 			return
 		cred_count = 0
 		query = session.query(db_models.Credential)
-		query = query.filter_by(message_id=self.message_id, username=username, password=password)
+		query = query.filter_by(message_id=self.message_id, **query_creds._asdict())
 		if query.count() == 0:
-			cred = db_models.Credential(campaign_id=self.campaign_id, message_id=self.message_id, visit_id=visit_id)
-			cred.username = username
-			cred.password = password
+			cred = db_models.Credential(
+				campaign_id=self.campaign_id,
+				message_id=self.message_id,
+				visit_id=visit_id,
+				**query_creds._asdict()
+			)
 			session.add(cred)
 			session.commit()
 			self.logger.debug("credential id: {0} created for message id: {1}".format(cred.id, cred.message_id))
@@ -832,7 +844,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			cred_count = len(campaign.credentials)
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
 			self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'credentials', cred_count))
-		signals.send_safe('credentials-received', self.logger, self, username=username, password=password)
+		signals.send_safe('credentials-received', self.logger, self, username=query_creds.username, password=query_creds.password)
 
 class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 	"""
