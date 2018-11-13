@@ -435,11 +435,11 @@ class CampaignBarGraph(CampaignGraph):
 		ax = self.axes[0]
 		ax.tick_params(
 			axis='both',
-			top='off',
-			right='off',
-			bottom='off',
-			left='off',
-			labelbottom='off'
+			top=False,
+			right=False,
+			bottom=False,
+			left=False,
+			labelbottom=False
 		)
 		ax.invert_yaxis()
 		self.axes.append(ax.twinx())
@@ -723,8 +723,8 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 			axis='both',
 			which='both',
 			colors=color_fg,
-			top='off',
-			bottom='off'
+			top=False,
+			bottom=False
 		)
 		ax.set_facecolor(color_line_bg)
 		ax.set_ylabel('Number of Visits', color=self.get_color('fg', ColorHexCode.WHITE), size=10)
@@ -940,15 +940,15 @@ class CampaignCompGraph(GraphBase):
 			axis='both',
 			which='both',
 			colors=color_fg,
-			top='off',
-			bottom='off'
+			top=False,
+			bottom=False
 		)
 		ax2.tick_params(
 			axis='both',
 			which='both',
 			colors=color_fg,
-			top='off',
-			bottom='off'
+			top=False,
+			bottom=False
 		)
 		ax.set_axis_bgcolor(color_line_bg)
 		ax2.set_axis_bgcolor(color_line_bg)
