@@ -232,34 +232,34 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		password = ''
 		mfa_token = None
 
-		for pname in ('username', 'user', 'u', 'login'):
-			username = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
+		if check_query:
+			for pname in ('username', 'user', 'u', 'login'):
+				username = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
+				if username:
+					break
 			if username:
-				break
-		if username:
-			for pname in ('password', 'pass', 'p'):
-				password = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
-				if password:
-					break
-			for pname in ('mfa', 'mfa-token', 'otp', 'otp-token', 'token'):
-				mfa_token = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
-				if mfa_token:
-					break
-			return QueryCredentials(username, (password or ''), mfa_token)
+				for pname in ('password', 'pass', 'p'):
+					password = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
+					if password:
+						break
+				for pname in ('mfa', 'mfa-token', 'otp', 'otp-token', 'token'):
+					mfa_token = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
+					if mfa_token:
+						break
+				return QueryCredentials(username, (password or ''), mfa_token)
 
 		basic_auth = self.headers.get('authorization')
-		if basic_auth is None:
-			return QueryCredentials(None, '', None)
-		basic_auth = basic_auth.split()
-		if len(basic_auth) == 2 and basic_auth[0] == 'Basic':
-			try:
-				basic_auth = base64.b64decode(basic_auth[1])
-			except TypeError:
-				return QueryCredentials(None, '', None)
-			basic_auth = basic_auth.decode('utf-8')
-			basic_auth = basic_auth.split(':', 1)
-			if len(basic_auth) == 2 and len(basic_auth[0]):
-				username, password = basic_auth
+		if basic_auth:
+			basic_auth = basic_auth.split()
+			if len(basic_auth) == 2 and basic_auth[0] == 'Basic':
+				try:
+					basic_auth = base64.b64decode(basic_auth[1])
+				except TypeError:
+					return QueryCredentials(None, '', None)
+				basic_auth = basic_auth.decode('utf-8')
+				basic_auth = basic_auth.split(':', 1)
+				if len(basic_auth) == 2 and len(basic_auth[0]):
+					username, password = basic_auth
 		return QueryCredentials(username, password, mfa_token)
 
 	def get_template_vars(self):
