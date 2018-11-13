@@ -47,7 +47,6 @@ from king_phisher import errors
 from king_phisher import ipaddress
 from king_phisher import serializers
 from king_phisher import utilities
-from king_phisher.client import gui_utilities
 
 from boltons import iterutils
 import dateutil.tz
@@ -160,42 +159,28 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 	except errors.KingPhisherGraphQLQueryError as error:
 		logger.error('graphql error: ' + error.message)
 		raise
-	gui_utilities.gtk_sync()
 	for key, value in campaign_info.items():
 		if key in ('landingPages', 'messages', 'visits', 'credentials', 'deaddropDeployments', 'deaddropConnections'):
 			continue
 		if isinstance(value, datetime.datetime):
 			value = value.replace(tzinfo=tzutc)
 		serializers.to_elementtree_subelement(campaign, key, value)
-		gui_utilities.gtk_sync()
 
-	# Tables with a campaign_id field
-	table_names = ['landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']
-	cursor = None
-	last_cursor = None
+	cursor = True
 	table_elements = {}
-	while True:
-		gui_utilities.gtk_sync()
-		if not cursor and last_cursor:
-			break
-		if cursor:
-			last_cursor = cursor
-			campaign_info = _get_graphql_campaignexport(rpc, campaign_id, cursor)
-			cursor = None
-			gui_utilities.gtk_sync()
-		for table_name in table_names:
-			gui_utilities.gtk_sync()
-			if campaign_info[parse_case_snake_to_camel(table_name, upper_first=False)]['pageInfo']['hasNextPage']:
-				cursor = campaign_info[parse_case_snake_to_camel(table_name, upper_first=False)]['pageInfo']['endCursor']
-			table = campaign_info[parse_case_snake_to_camel(table_name, upper_first=False)]['edges']
+	while cursor:
+		campaign_info = _get_graphql_campaignexport(rpc, campaign_id, cursor)
+		cursor = None  # set later if any table hasNextPage
+		for table_name in ('landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections'):
+			gql_table_name = parse_case_snake_to_camel(table_name, upper_first=False)
+			if campaign_info[gql_table_name]['pageInfo']['hasNextPage']:
+				cursor = campaign_info[gql_table_name]['pageInfo']['endCursor']
+			table = campaign_info[gql_table_name]['edges']
 			if table_name not in table_elements:
 				table_elements[table_name] = ET.SubElement(campaign, table_name)
 			for node in table:
-				gui_utilities.gtk_sync()
-				row = node['node']
 				table_row_element = ET.SubElement(table_elements[table_name], table_name[:-1])
-				for key, value in row.items():
-					gui_utilities.gtk_sync()
+				for key, value in node['node'].items():
 					if isinstance(value, datetime.datetime):
 						value = value.replace(tzinfo=tzutc)
 					serializers.to_elementtree_subelement(table_row_element, key, value)
