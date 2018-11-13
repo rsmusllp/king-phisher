@@ -154,8 +154,9 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 
 	campaign = ET.SubElement(root, 'campaign')
 	logger.info('gathering campaign information for export')
+	page_size = 2
 	try:
-		campaign_info = _get_graphql_campaignexport(rpc, campaign_id)
+		campaign_info = rpc.graphql_find_file('get_campaign_export.graphql', id=campaign_id, page=page_size)['db']['campaign']
 	except errors.KingPhisherGraphQLQueryError as error:
 		logger.error('graphql error: ' + error.message)
 		raise
@@ -166,10 +167,8 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 			value = value.replace(tzinfo=tzutc)
 		serializers.to_elementtree_subelement(campaign, key, value)
 
-	cursor = True
 	table_elements = {}
-	while cursor:
-		campaign_info = _get_graphql_campaignexport(rpc, campaign_id, cursor)
+	while True:
 		cursor = None  # set later if any table hasNextPage
 		for table_name in ('landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections'):
 			gql_table_name = parse_case_snake_to_camel(table_name, upper_first=False)
@@ -184,140 +183,15 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 					if isinstance(value, datetime.datetime):
 						value = value.replace(tzinfo=tzutc)
 					serializers.to_elementtree_subelement(table_row_element, key, value)
+		if cursor is None:
+			break
+		campaign_info = rpc.graphql_find_file('get_campaign_export.graphql', id=campaign_id, cursor=cursor, page=page_size)['db']['campaign']
 	logger.info('completed processing campaign information for export')
 
 	document = minidom.parseString(ET.tostring(root))
 	with open(xml_file, 'wb') as file_h:
 		file_h.write(document.toprettyxml(indent='  ', encoding=encoding))
 	logger.info('campaign export complete')
-
-def _get_graphql_campaignexport(rpc, campaign_id, cursor=None, page=1000):
-	options = {'campaign': campaign_id, 'cursor': cursor, 'page': page}
-	results = rpc.graphql("""\
-	query getCampaignExport($campaign: String!, $cursor: String, $page: Int) {
-		db {
-			campaign(id: $campaign) {
-				id
-				name
-				description
-				userId
-				created
-				maxCredentials
-				expiration
-				campaignTypeId
-				companyId
-				landingPages(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							campaignId
-							hostname
-							page
-						}
-					}
-					pageInfo {
-						hasNextPage
-						endCursor
-					}
-				}
-				messages(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							campaignId
-							targetEmail
-							firstName
-							lastName
-							opened
-							openerIp
-							openerUserAgent
-							sent
-							trained
-							companyDepartmentId
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-				visits(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							messageId
-							campaignId
-							count
-							ip
-							firstSeen
-							lastSeen
-							userAgent
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-				credentials(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							visitId
-							messageId
-							campaignId
-							username
-							password
-							submitted
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-				deaddropDeployments(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							campaignId
-							destination
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-				deaddropConnections(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							deploymentId
-							campaignId
-							count
-							ip
-							localUsername
-							localHostname
-							localIpAddresses
-							firstSeen
-							lastSeen
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-			}
-		}
-	}""", options)
-	return results['db']['campaign']
 
 def campaign_credentials_to_msf_txt(rpc, campaign_id, target_file):
 	"""
