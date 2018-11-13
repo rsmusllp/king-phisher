@@ -453,6 +453,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 				username
 				password
 				mfaToken
+				regexValidated
 			}
 		}
 	}
@@ -471,6 +472,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 							username
 							password
 							mfaToken
+							regexValidated
 						}
 					}
 					pageInfo {
@@ -486,10 +488,11 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	view_columns = (
 		'Email Address',
 		'Submitted',
+		'Validated',
 		'Username',
 	) + secret_columns
 	xlsx_worksheet_options = export.XLSXWorksheetOptions(
-		column_widths=(20, 30, 25, 30, 30, 30),
+		column_widths=(20, 30, 25, 30, 30, 30, 20),
 		title=label_text
 	)
 	def __init__(self, *args, **kwargs):
@@ -499,9 +502,13 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 			treeview.get_column(self.view_columns.index(column_name)).set_property('visible', False)
 
 	def format_node_data(self, node):
+		regex_validated = ''
+		if node['regexValidated'] is not None:
+			regex_validated = 'Yes' if node['regexValidated'] else 'No'
 		row = (
 			node['message']['targetEmail'],
 			node['submitted'],
+			regex_validated,
 			node['username'],
 			node['password'],
 			node['mfaToken']

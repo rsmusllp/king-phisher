@@ -11,6 +11,11 @@ query getCampaignExport($id: String!, $cursor: String, $page: Int) {
       expiration
       campaignTypeId
       companyId
+
+      credentialRegexUsername
+      credentialRegexPassword
+      credentialRegexMfaToken
+
       landingPages(first: $page, after: $cursor) {
         edges {
           node {
@@ -77,6 +82,7 @@ query getCampaignExport($id: String!, $cursor: String, $page: Int) {
             password
             submitted
             mfaToken
+            regexValidated
           }
         }
         pageInfo {

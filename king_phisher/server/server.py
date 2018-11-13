@@ -816,14 +816,14 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'visits', visit_count))
 			signals.send_safe('visit-received', self.logger, self)
 
-		self._handle_page_visit_creds(session, visit_id)
+		self._handle_page_visit_creds(session, campaign, visit_id)
 		trained = self.get_query('trained')
 		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
 			message.trained = True
 			session.commit()
 		session.close()
 
-	def _handle_page_visit_creds(self, session, visit_id):
+	def _handle_page_visit_creds(self, session, campaign, visit_id):
 		query_creds = self.get_query_creds()
 		if query_creds.username is None:
 			return
@@ -832,11 +832,33 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		query = query.filter_by(message_id=self.message_id, **query_creds._asdict())
 		if query.count() == 0:
 			cred = db_models.Credential(
-				campaign_id=self.campaign_id,
+				campaign_id=campaign.id,
 				message_id=self.message_id,
 				visit_id=visit_id,
 				**query_creds._asdict()
 			)
+			any_regexes = False
+			validated = True
+			for field in ('username', 'password', 'mfa_token'):
+				regex = getattr(campaign, 'credential_regex_' + field, None)
+				if regex is None:
+					continue
+				try:
+					regex = re.compile(regex)
+				except re.error:
+					self.logger.warning("regex compile error while validating credential field: {0}".format(field), exc_info=True)
+					continue
+				any_regexes = True
+				value = getattr(query_creds, field)
+				if value is None:
+					validated = False
+				else:
+					validated = validated and regex.match(value) is not None
+				if not validated:
+					self.logger.debug("credential failed regex validation on field: {0}".format(field))
+					break
+			if any_regexes:
+				cred.regex_validated = validated
 			session.add(cred)
 			session.commit()
 			self.logger.debug("credential id: {0} created for message id: {1}".format(cred.id, cred.message_id))

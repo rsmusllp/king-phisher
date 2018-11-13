@@ -154,7 +154,7 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 
 	campaign = ET.SubElement(root, 'campaign')
 	logger.info('gathering campaign information for export')
-	page_size = 2
+	page_size = 1000
 	try:
 		campaign_info = rpc.graphql_find_file('get_campaign_export.graphql', id=campaign_id, page=page_size)['db']['campaign']
 	except errors.KingPhisherGraphQLQueryError as error:

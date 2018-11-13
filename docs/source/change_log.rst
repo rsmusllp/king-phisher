@@ -13,6 +13,9 @@ Version 1.13.0
 
 *In Progress*
 
+* Added support for logging MFA tokens with credentials
+* Added support for using regular expressions to validate credentials
+
 Version 1.12.0
 ^^^^^^^^^^^^^^
 
