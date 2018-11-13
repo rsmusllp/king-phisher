@@ -1232,12 +1232,12 @@ Spencer McIntyre</property>
         <property name="margin_top">5</property>
         <property name="margin_bottom">5</property>
         <child>
-          <object class="GtkToggleButton" id="CampaignViewCredentialsTab.togglebutton_show_passwords">
-            <property name="label" translatable="yes">Show Passwords</property>
+          <object class="GtkToggleButton" id="CampaignViewCredentialsTab.togglebutton_show_secrets">
+            <property name="label" translatable="yes">Show Secrets</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <signal name="toggled" handler="signal_button_toggled_show_passwords" swapped="no"/>
+            <signal name="toggled" handler="signal_button_toggled_show_secrets" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>

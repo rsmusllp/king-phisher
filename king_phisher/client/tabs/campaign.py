@@ -448,10 +448,11 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		db {
 			node: credential(id: $id) {
 				id
+				submitted
 				message { targetEmail }
 				username
 				password
-				submitted
+				mfaToken
 			}
 		}
 	}
@@ -466,9 +467,10 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 						node {
 							id
 							message { targetEmail }
+							submitted
 							username
 							password
-							submitted
+							mfaToken
 						}
 					}
 					pageInfo {
@@ -480,35 +482,37 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		}
 	}
 	"""
+	secret_columns = ('Password', 'MFA Token')
 	view_columns = (
 		'Email Address',
+		'Submitted',
 		'Username',
-		'Password',
-		'Submitted'
-	)
+	) + secret_columns
 	xlsx_worksheet_options = export.XLSXWorksheetOptions(
-		column_widths=(20, 30, 30, 30, 25),
+		column_widths=(20, 30, 25, 30, 30, 30),
 		title=label_text
 	)
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
-		pwd_column_id = self.view_columns.index('Password')
-		treeview.get_column(pwd_column_id).set_property('visible', False)
+		for column_name in self.secret_columns:
+			treeview.get_column(self.view_columns.index(column_name)).set_property('visible', False)
 
 	def format_node_data(self, node):
 		row = (
 			node['message']['targetEmail'],
+			node['submitted'],
 			node['username'],
 			node['password'],
-			node['submitted']
+			node['mfaToken']
 		)
 		return row
 
-	def signal_button_toggled_show_passwords(self, button):
+	def signal_button_toggled_show_secrets(self, button):
 		treeview = self.gobjects['treeview_campaign']
-		pwd_column_id = self.view_columns.index('Password')
-		treeview.get_column(pwd_column_id).set_property('visible', button.get_property('active'))
+		visible = button.get_property('active')
+		for column_name in self.secret_columns:
+			treeview.get_column(self.view_columns.index(column_name)).set_property('visible', visible)
 
 class CampaignViewDashboardTab(CampaignViewGenericTab):
 	"""Display campaign information on a graphical dash board."""
