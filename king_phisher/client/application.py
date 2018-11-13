@@ -133,7 +133,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def __init__(self, config_file=None, use_plugins=True, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
 		if use_style:
-			if Gtk.check_version(3, 18, 0) or its.on_windows:
+			# 3.20+ use theme.v2.css
+			if Gtk.check_version(3, 20, 0) or its.on_windows:
 				self._theme_file = 'theme.v1.css'
 			else:
 				self._theme_file = 'theme.v2.css'
