@@ -65,6 +65,7 @@ import jinja2
 import smoke_zephyr.job
 import smoke_zephyr.utilities
 
+# it is important for all of the field names to also be valid for a database Credential object
 QueryCredentials = collections.namedtuple('QueryCredentials', ('username', 'password', 'mfa_token'))
 
 def _send_safe_campaign_alerts(campaign, signal_name, sender, **kwargs):

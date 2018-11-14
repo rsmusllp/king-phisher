@@ -31,6 +31,7 @@
 #
 
 import datetime
+import re
 
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
@@ -63,6 +64,10 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'combobox_company_existing',
 			'entry_campaign_name',
 			'entry_campaign_description',
+			'entry_test_validation_text',
+			'entry_validation_regex_username',
+			'entry_validation_regex_password',
+			'entry_validation_regex_mfa_token',
 			'frame_campaign_expiration',
 			'frame_company_existing',
 			'frame_company_new',
@@ -249,6 +254,17 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		}""", {'name': company_name})
 		return results['db']['company']
 
+	def _do_regex_validation(self, test_text, entry):
+		try:
+			regex = re.compile(entry.get_text())
+		except re.error:
+			entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
+			return
+		result = True
+		if regex.pattern and test_text:
+			result = regex.match(test_text) is not None
+		entry.set_property('secondary-icon-stock', 'gtk-yes' if result else 'gtk-no')
+
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
 		# have to do it this way because the next page will be selected when the apply signal is complete
@@ -359,6 +375,14 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def signal_checkbutton_expire_campaign_toggled(self, _):
 		active = self.gobjects['checkbutton_expire_campaign'].get_property('active')
 		self.gobjects['frame_campaign_expiration'].set_sensitive(active)
+
+	def signal_entry_changed_test_validation_text(self, field):
+		test_text = field.get_text()
+		for field in ('username', 'password', 'mfa_token'):
+			self._do_regex_validation(test_text, self.gobjects['entry_validation_regex_' + field])
+
+	def signal_entry_changed_validation_regex(self, entry):
+		self._do_regex_validation(self.gobjects['entry_test_validation_text'].get_text(), entry)
 
 	def signal_radiobutton_toggled(self, radiobutton):
 		if not radiobutton.get_active():
