@@ -76,6 +76,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'label_confirm_title',
 			'label_intro_body',
 			'label_intro_title',
+			'label_validation_regex_username',
+			'label_validation_regex_password',
+			'label_validation_regex_mfa_token',
 			'radiobutton_company_existing',
 			'radiobutton_company_new',
 			'radiobutton_company_none',
@@ -166,7 +169,12 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			return
 		campaign = self.application.get_graphql_campaign()
 
+		# set entries
 		self.gobjects['entry_campaign_name'].set_text(campaign['name'])
+		self.gobjects['entry_validation_regex_username'].set_text(campaign['credentialRegexUsername'] or '')
+		self.gobjects['entry_validation_regex_password'].set_text(campaign['credentialRegexPassword'] or '')
+		self.gobjects['entry_validation_regex_mfa_token'].set_text(campaign['credentialRegexMfaToken'] or '')
+
 		if campaign['description'] is not None:
 			self.gobjects['entry_campaign_description'].set_text(campaign['description'])
 		if campaign['campaignType'] is not None:
@@ -278,6 +286,22 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			set_current_page('Basic Settings')
 			return True
 
+		properties = {}
+
+		# validate the credential validation regular expressions
+		for field in ('username', 'password', 'mfa_token'):
+			regex = self.gobjects['entry_validation_regex_' + field].get_text()
+			if regex:
+				try:
+					re.compile(regex)
+				except re.error:
+					label = self.gobjects['label_validation_regex_' + field].get_text()
+					gui_utilities.show_dialog_error('Invalid Regex', self.parent, "The '{0}' regular expression is invalid.".format(label))
+					return True
+			else:
+				regex = None  # keep empty strings out of the database
+			properties['credential_regex_' + field] = regex
+
 		# validate the company
 		company_id = None
 		if self.gobjects['radiobutton_company_existing'].get_active():
@@ -305,8 +329,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				gui_utilities.show_dialog_error('Invalid Campaign Expiration', self.parent, 'The expiration date is set in the past.')
 				set_current_page('Expiration')
 				return True
-
-		properties = {}
 
 		# point of no return
 		campaign_description = self.get_entry_value('campaign_description')
