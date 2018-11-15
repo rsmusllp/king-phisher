@@ -380,50 +380,65 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	def rpc_session_id(self):
 		return self.headers.get(server_rpc.RPC_AUTH_HEADER, None)
 
+	def _set_ids(self, *ids, session=None):
+		"""
+		Handle lazy resolution of the ``*_id`` properties necessary to track
+		information.
+		"""
+		if session is None:
+			session = db_manager.Session()
+
+		if not hasattr(self, '_visit_id') and ('visit_id' in ids or 'message_id' in ids or 'campaign_id' in ids):
+			self._visit_id = None
+			kp_cookie_name = self.config.get('server.cookie_name')
+			if kp_cookie_name in self.cookies:
+				value = self.cookies[kp_cookie_name].value
+				if db_manager.get_row_by_id(session, db_models.Visit, value):
+					self._visit_id = value
+
+		if not hasattr(self, '_message_id') and ('message_id' in ids or 'campaign_id' in ids):
+			self._message_id = None
+			msg_id = self.get_query('id')
+			if msg_id == self.config.get('server.secret_id'):
+				self._message_id = msg_id
+			elif msg_id and db_manager.get_row_by_id(session, db_models.Message, msg_id):
+				self._message_id = msg_id
+			elif self._visit_id:
+				visit = db_manager.get_row_by_id(session, db_models.Visit, self._visit_id)
+				self._message_id = visit.message_id
+
+		if not hasattr(self, '_campaign_id') and ('campaign_id' in ids):
+			self._campaign_id = None
+			if self._message_id and self._message_id != self.config.get('server.secret_id'):
+				message = db_manager.get_row_by_id(session, db_models.Message, self._message_id)
+				if message:
+					self._campaign_id = message.campaign_id
+		session.close()
+
 	@property
 	def campaign_id(self):
 		"""
-		The campaign id that is associated with the current request's
-		visitor. This is retrieved by looking up the
-		:py:attr:`~.KingPhisherRequestHandler.message_id` value in the
-		database. If no campaign is associated, this value is None.
+		The campaign id that is associated with the current request's visitor.
+		This is retrieved by looking up the
+		:py:attr:`~.KingPhisherRequestHandler.message_id` value in the database.
+		If no campaign is associated, this value is None.
 		"""
-		if hasattr(self, '_campaign_id'):
-			return self._campaign_id
-		self._campaign_id = None
-		if self.message_id and self.message_id != self.config.get('server.secret_id'):
-			session = db_manager.Session()
-			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
-			if message:
-				self._campaign_id = message.campaign_id
-			session.close()
+		if not hasattr(self, '_campaign_id'):
+			self._set_ids('campaign_id')
 		return self._campaign_id
 
 	@property
 	def message_id(self):
 		"""
-		The message id that is associated with the current request's
-		visitor. This is retrieved by looking at an 'id' parameter in the
-		query and then by checking the
-		:py:attr:`~.KingPhisherRequestHandler.visit_id` value in the
-		database. If no message id is associated, this value is None. The
-		resulting value will be either a confirmed valid value, or the value
-		of the configurations server.secret_id for testing purposes.
+		The message id that is associated with the current request's visitor.
+		This is retrieved by looking at an 'id' parameter in the query and then
+		by checking the :py:attr:`~.KingPhisherRequestHandler.visit_id` value in
+		the database. If no message id is associated, this value is None. The
+		resulting value will be either a confirmed valid value, or the value of
+		the configurations server.secret_id for testing purposes.
 		"""
-		if hasattr(self, '_message_id'):
-			return self._message_id
-		self._message_id = None
-		msg_id = self.get_query('id')
-		if msg_id == self.config.get('server.secret_id'):
-			self._message_id = msg_id
-			return self._message_id
-		session = db_manager.Session()
-		if msg_id and db_manager.get_row_by_id(session, db_models.Message, msg_id):
-			self._message_id = msg_id
-		elif self.visit_id:
-			visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
-			self._message_id = visit.message_id
-		session.close()
+		if not hasattr(self, '_message_id'):
+			self._set_ids('message_id')
 		return self._message_id
 
 	@property
@@ -433,16 +448,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		is retrieved by looking for the King Phisher cookie. If no cookie is
 		set, this value is None.
 		"""
-		if hasattr(self, '_visit_id'):
-			return self._visit_id
-		self._visit_id = None
-		kp_cookie_name = self.config.get('server.cookie_name')
-		if kp_cookie_name in self.cookies:
-			value = self.cookies[kp_cookie_name].value
-			session = db_manager.Session()
-			if db_manager.get_row_by_id(session, db_models.Visit, value):
-				self._visit_id = value
-			session.close()
+		if not hasattr(self, '_visit_id'):
+			self._set_ids('visit_id')
 		return self._visit_id
 
 	@property
@@ -483,7 +490,15 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		signals.send_safe('response-sent', self.logger, self, code=code, message=message)
 
 	def respond_file(self, file_path, attachment=False, query=None):
-		self._respond_file_check_id()
+		self.semaphore_acquire()
+		session = db_manager.Session()
+		try:
+			self._set_ids('campaign_id', 'message_id', 'visit_id', session=session)
+			self._respond_file_check_id(session)
+		finally:
+			session.close()
+			self.semaphore_release()
+
 		file_path = os.path.abspath(file_path)
 		mime_type = self.guess_mime_type(file_path)
 		if attachment or (mime_type != 'text/html' and mime_type != 'text/plain'):
@@ -568,48 +583,36 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		file_obj.close()
 		return
 
-	def _respond_file_check_id(self):
+	def _respond_file_check_id(self, session):
 		if re.match(r'^/\.well-known/acme-challenge/[a-zA-Z0-9\-_]{40,50}$', self.request_path):
 			self.server.logger.info('received request for .well-known/acme-challenge')
 			return
 		if not self.config.get('server.require_id'):
 			return
 
-		self.semaphore_acquire()
 		if self.message_id == self.config.get('server.secret_id'):
-			self.semaphore_release()
 			self.server.logger.debug('request received with the correct secret id')
 			return
 		# a valid campaign_id requires a valid message_id
 		if not self.campaign_id:
-			self.semaphore_release()
 			self.server.logger.warning('denying request due to lack of a valid id')
 			raise errors.KingPhisherAbortRequestError()
 
-		session = db_manager.Session()
 		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
 		query = session.query(db_models.LandingPage)
 		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost)
 		if query.count() == 0:
-			session.close()
-			self.semaphore_release()
 			self.server.logger.warning('denying request with not found due to invalid hostname')
 			raise errors.KingPhisherAbortRequestError()
 		if campaign.has_expired:
-			session.close()
-			self.semaphore_release()
 			self.server.logger.warning('denying request because the campaign has expired')
 			raise errors.KingPhisherAbortRequestError()
 		if campaign.max_credentials is not None and self.visit_id is None:
 			query = session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
 			if query.count() >= campaign.max_credentials:
-				session.close()
-				self.semaphore_release()
 				self.server.logger.warning('denying request because the maximum number of credentials have already been harvested')
 				raise errors.KingPhisherAbortRequestError()
-		session.close()
-		self.semaphore_release()
 		return
 
 	def respond_not_found(self):
