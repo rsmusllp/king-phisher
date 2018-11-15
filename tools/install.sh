@@ -168,7 +168,7 @@ function sync_dependencies {
 		fi
 		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 			if ! apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
-				gir1.2-webkit-3.0 python3-cairo libgeos++-dev libgirepository1.0-dev \
+				python3-cairo libgeos++-dev libgirepository1.0-dev \
 				libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev; then
 					echo "ERROR: Failed to install dependencies with apt-get"
 					exit
@@ -188,10 +188,10 @@ function sync_dependencies {
 				fi
 			fi
 
-			if apt-get install -y gir1.2-webkit2-3.0 &> /dev/null; then
-				echo "INFO: Successfully installed gir1.2-webkit2-3.0 with apt-get"
-			elif apt-get install -y gir1.2-webkit2-4.0 &> /dev/null; then
+			if apt-get install -y gir1.2-webkit2-4.0 &> /dev/null; then
 				echo "INFO: Successfully installed gir1.2-webkit2-4.0 with apt-get"
+			elif apt-get install -y gir1.2-webkit2-3.0 &> /dev/null; then
+				echo "INFO: Successfully installed gir1.2-webkit2-3.0 with apt-get"
 			else
 				echo "ERROR: Failed to install gir1.2-webkit2 3.0 or 4.0 with apt-get"
 			fi
