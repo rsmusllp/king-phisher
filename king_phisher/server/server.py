@@ -98,7 +98,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		self.path = None
 		"""The resource path of the current HTTP request."""
 		self.rpc_session = None
+		self.rpc_session_id = None
 		self.semaphore_acquired = False
+		self._session = None
 		super(KingPhisherRequestHandler, self).__init__(request, client_address, server, **kwargs)
 
 	def on_init(self):
@@ -133,10 +135,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		:param str table: The type of event to use as the sender when it is forwarded.
 		:param int count: The number associated with the event alert.
 		"""
-		session = db_manager.Session()
-		campaign = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
+		campaign = db_manager.get_row_by_id(self._session, db_models.Campaign, campaign_id)
 		_send_safe_campaign_alerts(campaign, 'campaign-alert', table, count=count)
-		session.close()
 		return
 
 	def adjust_path(self):
@@ -171,14 +171,12 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		# finished with it, however if they fail to do so or encounter an error
 		# the semaphore will be released here as a fail safe.
 		self.connection.settimeout(smoke_zephyr.utilities.parse_timespan('20s'))  # set a timeout as a fail safe
-		if self.command == 'RPC':
-			self.semaphore_acquire()
-		else:
-			# delete cached properties so they are handled per request instead of connection.
-			for cache_prop in ('_campaign_id', '_message_id', '_visit_id'):
-				if hasattr(self, cache_prop):
-					delattr(self, cache_prop)
-			self.adjust_path()
+		# delete cached properties so they are handled per request instead of connection.
+		for cache_prop in ('_campaign_id', '_message_id', '_visit_id'):
+			if hasattr(self, cache_prop):
+				delattr(self, cache_prop)
+		self.adjust_path()
+		self._session = db_manager.Session()
 
 		http_method_handler = None
 		try:
@@ -194,15 +192,36 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				self.respond_not_found()
 		finally:
 			if self.semaphore_acquired:
-				if self.command != 'RPC':
-					self.logger.warning('http request failed to cleanly release resources')
+				self.logger.warning('http request failed to cleanly release resources')
 				self.semaphore_release()
+			self._session.close()
+		self.connection.settimeout(None)
+
+	def _do_rpc_method(self, *args, **kwargs):
+		self.connection.settimeout(smoke_zephyr.utilities.parse_timespan('20s'))  # set a timeout as a fail safe
+		self.rpc_session_id = self.headers.get(server_rpc.RPC_AUTH_HEADER, None)
+		self.semaphore_acquire()
+
+		http_method_handler = None
+		try:
+			signals.request_handle.send(self)
+			http_method_handler = getattr(super(KingPhisherRequestHandler, self), 'do_RPC')
+			http_method_handler(*args, **kwargs)
+		except errors.KingPhisherAbortRequestError as error:
+			if http_method_handler is None:
+				self.logger.debug('rpc request aborted by a signal handler')
+			else:
+				self.logger.info('rpc request aborted')
+			if not error.response_sent:
+				self.respond_not_found()
+		finally:
+			self.semaphore_release()
 		self.connection.settimeout(None)
 
 	do_GET = _do_http_method
 	do_HEAD = _do_http_method
 	do_POST = _do_http_method
-	do_RPC = _do_http_method
+	do_RPC = _do_rpc_method
 
 	def do_OPTIONS(self):
 		available_methods = list(x[3:] for x in dir(self) if x.startswith('do_'))
@@ -298,13 +317,12 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		expired_campaign = True
 		visit_count = 0
 		result = None
-		session = db_manager.Session()
 		if self.message_id == self.config.get('server.secret_id'):
 			client_vars['company_name'] = 'Wonderland Inc.'
 			client_vars['company'] = {'name': 'Wonderland Inc.'}
 			result = ('aliddle@wonderland.com', 'Alice', 'Liddle', 0)
 		elif self.message_id:
-			message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
+			message = db_manager.get_row_by_id(self._session, db_models.Message, self.message_id)
 			if message:
 				campaign = message.campaign
 				client_vars['campaign'] = {
@@ -313,9 +331,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 					'created': campaign.created,
 					'expiration': campaign.expiration,
 					'has_expired': campaign.has_expired,
-					'message_count': session.query(db_models.Message).filter_by(campaign_id=campaign.id).count(),
-					'visit_count': session.query(db_models.Visit).filter_by(campaign_id=campaign.id).count(),
-					'credential_count': session.query(db_models.Credential).filter_by(campaign_id=campaign.id).count(),
+					'message_count': self._session.query(db_models.Message).filter_by(campaign_id=campaign.id).count(),
+					'visit_count': self._session.query(db_models.Visit).filter_by(campaign_id=campaign.id).count(),
+					'credential_count': self._session.query(db_models.Credential).filter_by(campaign_id=campaign.id).count(),
 				}
 				if message.campaign.company:
 					client_vars['company_name'] = message.campaign.company.name
@@ -326,12 +344,11 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 						'url_remote_access': campaign.company.url_remote_access
 					}
 				result = (message.target_email, message.first_name, message.last_name, message.trained)
-			query = session.query(db_models.Credential)
+			query = self._session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
 			credential_count = query.count()
 			expired_campaign = message.campaign.has_expired
 		if not result:
-			session.close()
 			return client_vars
 
 		client_vars['email_address'] = result[0]
@@ -341,18 +358,12 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		client_vars['message_id'] = self.message_id
 
 		if self.visit_id:
-			visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
+			visit = db_manager.get_row_by_id(self._session, db_models.Visit, self.visit_id)
 			client_vars['visit_id'] = visit.id
 			visit_count = visit.count
 
-		# increment some counters preemptively
-		# todo: this logic should be updated to check more thoroughly if the count is incremented
-		if not expired_campaign and self.get_query_creds().username is not None:
-			credential_count += 1
 		client_vars['credential_count'] = credential_count
 		client_vars['visit_count'] = visit_count + (0 if expired_campaign else 1)
-
-		session.close()
 		return client_vars
 
 	def check_authorization(self):
@@ -376,45 +387,33 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			return False
 		return True
 
-	@property
-	def rpc_session_id(self):
-		return self.headers.get(server_rpc.RPC_AUTH_HEADER, None)
-
-	def _set_ids(self, session=None):
+	def _set_ids(self):
 		"""
 		Handle lazy resolution of the ``*_id`` properties necessary to track
 		information.
 		"""
-		close_session = False
-		if session is None:
-			session = db_manager.Session()
-			close_session = True
-
 		self._visit_id = None
 		kp_cookie_name = self.config.get('server.cookie_name')
 		if kp_cookie_name in self.cookies:
 			value = self.cookies[kp_cookie_name].value
-			if db_manager.get_row_by_id(session, db_models.Visit, value):
+			if db_manager.get_row_by_id(self._session, db_models.Visit, value):
 				self._visit_id = value
 
 		self._message_id = None
 		msg_id = self.get_query('id')
 		if msg_id == self.config.get('server.secret_id'):
 			self._message_id = msg_id
-		elif msg_id and db_manager.get_row_by_id(session, db_models.Message, msg_id):
+		elif msg_id and db_manager.get_row_by_id(self._session, db_models.Message, msg_id):
 			self._message_id = msg_id
 		elif self._visit_id:
-			visit = db_manager.get_row_by_id(session, db_models.Visit, self._visit_id)
+			visit = db_manager.get_row_by_id(self._session, db_models.Visit, self._visit_id)
 			self._message_id = visit.message_id
 
 		self._campaign_id = None
 		if self._message_id and self._message_id != self.config.get('server.secret_id'):
-			message = db_manager.get_row_by_id(session, db_models.Message, self._message_id)
+			message = db_manager.get_row_by_id(self._session, db_models.Message, self._message_id)
 			if message:
 				self._campaign_id = message.campaign_id
-
-		if close_session:
-			session.close()
 
 	@property
 	def campaign_id(self):
@@ -495,12 +494,10 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 	def respond_file(self, file_path, attachment=False, query=None):
 		self.semaphore_acquire()
-		session = db_manager.Session()
 		try:
-			self._set_ids(session)
-			self._respond_file_check_id(session)
+			self._set_ids()
+			self._respond_file_check_id()
 		finally:
-			session.close()
 			self.semaphore_release()
 
 		file_path = os.path.abspath(file_path)
@@ -520,8 +517,12 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			raise errors.KingPhisherAbortRequestError()
 
 		self.semaphore_acquire()
-		template_data = b''
-		headers = []
+		headers = collections.deque()
+		try:
+			headers.extend(self.handle_page_visit() or [])
+		except Exception as error:
+			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
+
 		template_vars = self.get_template_vars()
 		try:
 			template_module = template.make_module(template_vars)
@@ -534,6 +535,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		require_basic_auth = getattr(template_module, 'require_basic_auth', False)
 		require_basic_auth &= not (query_creds.username and query_creds.password)
 		require_basic_auth &= self.message_id != self.config.get('server.secret_id')
+		template_data = b''
 		if require_basic_auth:
 			mime_type = 'text/html'
 			self.send_response(401)
@@ -545,18 +547,11 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 		if mime_type.startswith('text'):
 			mime_type += '; charset=utf-8'
-		self.send_header('Content-Type', mime_type)
-		self.send_header('Content-Length', len(template_data))
+		headers.extendleft([('Content-Type', mime_type), ('Content-Length', len(template_data))])
 		for header in headers:
 			self.send_header(*header)
 
-		try:
-			self.handle_page_visit()
-		except Exception as error:
-			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
-		finally:
-			self.semaphore_release()
-
+		self.semaphore_release()
 		self.end_headers()
 		self.wfile.write(template_data)
 		return
@@ -567,27 +562,29 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		except IOError:
 			raise errors.KingPhisherAbortRequestError()
 		fs = os.fstat(file_obj.fileno())
-		self.send_response(200)
-		self.send_header('Content-Type', self.guess_mime_type(file_path))
-		self.send_header('Content-Length', fs[6])
+		headers = collections.deque([('Content-Type', self.guess_mime_type(file_path)), ('Content-Length', fs[6])])
+
 		if attachment:
 			file_name = os.path.basename(file_path)
-			self.send_header('Content-Disposition', 'attachment; filename=' + file_name)
-		self.send_header('Last-Modified', self.date_time_string(fs.st_mtime))
+			headers.append(('Content-Disposition', 'attachment; filename=' + file_name))
+		headers.append(('Last-Modified', self.date_time_string(fs.st_mtime)))
 		self.semaphore_acquire()
 		try:
-			self.handle_page_visit()
+			headers.extend(self.handle_page_visit() or [])
 		except Exception as error:
 			self.server.logger.error('handle_page_visit raised error: {0}.{1}'.format(error.__class__.__module__, error.__class__.__name__), exc_info=True)
 		finally:
 			self.semaphore_release()
-		self.end_headers()
 
+		self.send_response(200)
+		for header in headers:
+			self.send_header(*header)
+		self.end_headers()
 		shutil.copyfileobj(file_obj, self.wfile)
 		file_obj.close()
 		return
 
-	def _respond_file_check_id(self, session):
+	def _respond_file_check_id(self):
 		if re.match(r'^/\.well-known/acme-challenge/[a-zA-Z0-9\-_]{40,50}$', self.request_path):
 			self.server.logger.info('received request for .well-known/acme-challenge')
 			return
@@ -602,8 +599,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.server.logger.warning('denying request due to lack of a valid id')
 			raise errors.KingPhisherAbortRequestError()
 
-		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
-		query = session.query(db_models.LandingPage)
+		campaign = db_manager.get_row_by_id(self._session, db_models.Campaign, self.campaign_id)
+		query = self._session.query(db_models.LandingPage)
 		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost)
 		if query.count() == 0:
 			self.server.logger.warning('denying request with not found due to invalid hostname')
@@ -612,7 +609,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.server.logger.warning('denying request because the campaign has expired')
 			raise errors.KingPhisherAbortRequestError()
 		if campaign.max_credentials is not None and self.visit_id is None:
-			query = session.query(db_models.Credential)
+			query = self._session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
 			if query.count() >= campaign.max_credentials:
 				self.server.logger.warning('denying request because the maximum number of credentials have already been harvested')
@@ -662,15 +659,12 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			return
 
 		self.semaphore_acquire()
-		session = db_manager.Session()
-		deployment = db_manager.get_row_by_id(session, db_models.DeaddropDeployment, data.get('deaddrop_id'))
+		deployment = db_manager.get_row_by_id(self._session, db_models.DeaddropDeployment, data.get('deaddrop_id'))
 		if not deployment:
-			session.close()
 			self.semaphore_release()
 			self.logger.error('dead drop request received for an unknown campaign')
 			return
 		if deployment.campaign.has_expired:
-			session.close()
 			self.semaphore_release()
 			self.logger.info('dead drop request received for an expired campaign')
 			return
@@ -678,7 +672,6 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		local_username = data.get('local_username')
 		local_hostname = data.get('local_hostname')
 		if local_username is None or local_hostname is None:
-			session.close()
 			self.semaphore_release()
 			self.logger.error('dead drop request received with missing data')
 			return
@@ -686,7 +679,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if isinstance(local_ip_addresses, (list, tuple)):
 			local_ip_addresses = ' '.join(local_ip_addresses)
 
-		query = session.query(db_models.DeaddropConnection)
+		query = self._session.query(db_models.DeaddropConnection)
 		query = query.filter_by(deployment_id=deployment.id, local_username=local_username, local_hostname=local_hostname)
 		connection = query.first()
 		if connection:
@@ -699,14 +692,13 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			connection.local_username = local_username
 			connection.local_hostname = local_hostname
 			connection.local_ip_addresses = local_ip_addresses
-			session.add(connection)
+			self._session.add(connection)
 			new_connection = True
-		session.commit()
+		self._session.commit()
 
-		query = session.query(db_models.DeaddropConnection)
+		query = self._session.query(db_models.DeaddropConnection)
 		query = query.filter_by(campaign_id=deployment.campaign_id)
 		visit_count = query.count()
-		session.close()
 		self.semaphore_release()
 		if new_connection and visit_count > 0 and ((visit_count in [1, 3, 5]) or ((visit_count % 10) == 0)):
 			self.server.job_manager.job_run(self.issue_alert, (deployment.campaign_id, 'deaddrop_connections', visit_count))
@@ -727,16 +719,14 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if not msg_id:
 			return
 		self.semaphore_acquire()
-		session = db_manager.Session()
-		query = session.query(db_models.Message)
+		query = self._session.query(db_models.Message)
 		query = query.filter_by(id=msg_id, opened=None)
 		message = query.first()
 		if message and not message.campaign.has_expired:
 			message.opened = db_models.current_timestamp()
 			message.opener_ip = self.get_client_ip()
 			message.opener_user_agent = self.headers.get('user-agent', None)
-			session.commit()
-		session.close()
+			self._session.commit()
 		signals.send_safe('email-opened', self.logger, self)
 		self.semaphore_release()
 
@@ -751,12 +741,12 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			javascript += "\nloadScript('{0}');\n\n".format(self.config.get('beef.hook_url'))
 		self.send_response(200)
 		self.send_header('Content-Type', 'text/javascript')
+		self.send_header('Content-Length', len(javascript))
 		self.send_header('Pragma', 'no-cache')
 		self.send_header('Cache-Control', 'no-cache')
 		self.send_header('Expires', '0')
 		self.send_header('Access-Control-Allow-Origin', '*')
 		self.send_header('Access-Control-Allow-Methods', 'POST, GET')
-		self.send_header('Content-Length', len(javascript))
 		self.end_headers()
 		if not isinstance(javascript, bytes):
 			javascript = javascript.encode('utf-8')
@@ -771,22 +761,21 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if not self.campaign_id:
 			return
 		client_ip = self.get_client_ip()
+		headers = []
 
-		session = db_manager.Session()
-		campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
+		campaign = db_manager.get_row_by_id(self._session, db_models.Campaign, self.campaign_id)
 		if campaign.has_expired:
 			self.logger.info("ignoring page visit for expired campaign id: {0} from IP address: {1}".format(self.campaign_id, client_ip))
-			session.close()
 			return
 		self.logger.info("handling a page visit for campaign id: {0} from IP address: {1}".format(self.campaign_id, client_ip))
-		message = db_manager.get_row_by_id(session, db_models.Message, self.message_id)
+		message = db_manager.get_row_by_id(self._session, db_models.Message, self.message_id)
 
 		if message.opened is None and self.config.get('server.set_message_opened_on_visit'):
 			message.opened = db_models.current_timestamp()
 			message.opener_ip = self.get_client_ip()
 			message.opener_user_agent = self.headers.get('user-agent', None)
 
-		query = session.query(db_models.LandingPage)
+		query = self._session.query(db_models.LandingPage)
 		query = query.filter_by(campaign_id=self.campaign_id, hostname=self.vhost, page=self.request_path[1:])
 		landing_page = query.first()
 
@@ -796,11 +785,11 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			visit_id = self.visit_id
 			set_new_visit = False
 			if landing_page:
-				visit = db_manager.get_row_by_id(session, db_models.Visit, self.visit_id)
+				visit = db_manager.get_row_by_id(self._session, db_models.Visit, self.visit_id)
 				if visit.message_id == self.message_id:
 					visit.count += 1
 					visit.last_seen = db_models.current_timestamp()
-					session.commit()
+					self._session.commit()
 				else:
 					set_new_visit = True
 					visit_id = None
@@ -811,32 +800,32 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if landing_page and set_new_visit:
 			kp_cookie_name = self.config.get('server.cookie_name')
 			cookie = "{0}={1}; Path=/; HttpOnly".format(kp_cookie_name, visit_id)
-			self.send_header('Set-Cookie', cookie)
+			headers.append(('Set-Cookie', cookie))
 			visit = db_models.Visit(id=visit_id, campaign_id=self.campaign_id, message_id=self.message_id)
 			visit.ip = client_ip
 			visit.first_landing_page_id = landing_page.id
 			visit.user_agent = self.headers.get('user-agent', '')
-			session.add(visit)
-			session.commit()
+			self._session.add(visit)
+			self._session.commit()
 			self.logger.debug("visit id: {0} created for message id: {1}".format(visit_id, self.message_id))
 			visit_count = len(campaign.visits)
 			if visit_count > 0 and ((visit_count in (1, 10, 25)) or ((visit_count % 50) == 0)):
 				self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'visits', visit_count))
 			signals.send_safe('visit-received', self.logger, self)
 
-		self._handle_page_visit_creds(session, campaign, visit_id)
+		self._handle_page_visit_creds(campaign, visit_id)
 		trained = self.get_query('trained')
 		if isinstance(trained, str) and trained.lower() in ['1', 'true', 'yes']:
 			message.trained = True
-			session.commit()
-		session.close()
+			self._session.commit()
+		return headers
 
-	def _handle_page_visit_creds(self, session, campaign, visit_id):
+	def _handle_page_visit_creds(self, campaign, visit_id):
 		query_creds = self.get_query_creds()
 		if query_creds.username is None:
 			return
 		cred_count = 0
-		query = session.query(db_models.Credential)
+		query = self._session.query(db_models.Credential)
 		query = query.filter_by(message_id=self.message_id, **query_creds._asdict())
 		if query.count() == 0:
 			cred = db_models.Credential(
@@ -867,10 +856,10 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 					break
 			if any_regexes:
 				cred.regex_validated = validated
-			session.add(cred)
-			session.commit()
+			self._session.add(cred)
+			self._session.commit()
 			self.logger.debug("credential id: {0} created for message id: {1}".format(cred.id, cred.message_id))
-			campaign = db_manager.get_row_by_id(session, db_models.Campaign, self.campaign_id)
+			campaign = db_manager.get_row_by_id(self._session, db_models.Campaign, self.campaign_id)
 			cred_count = len(campaign.credentials)
 		if cred_count > 0 and ((cred_count in [1, 5, 10]) or ((cred_count % 25) == 0)):
 			self.server.job_manager.job_run(self.issue_alert, (self.campaign_id, 'credentials', cred_count))
