@@ -34,8 +34,8 @@ import collections
 import contextlib
 import sys
 
-from . import manager
-from . import models
+from . import manager as db_manager
+from . import models as db_models
 from king_phisher import serializers
 
 if sys.version_info[:3] >= (3, 3, 0):
@@ -62,14 +62,14 @@ class KeyValueStorage(_MutableMapping):
 
 	@contextlib.contextmanager
 	def _session(self):
-		session = manager.Session()
+		session = db_manager.Session()
 		try:
 			yield session
 		finally:
 			session.close()
 
 	def _query(self, session):
-		return session.query(models.StorageData).filter_by(namespace=self.namespace)
+		return session.query(db_models.StorageData).filter_by(namespace=self.namespace)
 
 	def __delitem__(self, key):
 		if not isinstance(key, str):
@@ -113,9 +113,9 @@ class KeyValueStorage(_MutableMapping):
 		with self._session() as session:
 			obj = self._query(session).filter_by(key=key).first()
 			if obj is None:
-				obj = models.StorageData(namespace=self.namespace, key=key, value=value)
+				obj = db_models.StorageData(namespace=self.namespace, key=key, value=value)
 			elif obj.value != value:
 				obj.value = value
-				obj.modified = models.current_timestamp()
+				obj.modified = db_models.current_timestamp()
 			session.add(obj)
 			session.commit()

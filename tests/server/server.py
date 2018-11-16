@@ -118,6 +118,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		message_count = self.rpc('db/table/count', 'messages', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(message_count, 1)
 
+	# this is the first step which makes standard HTTP requests to the server
 	def step_3_get_visits(self):
 		# simulate a user visiting the landing page by clicking their link
 		visit_count = self.rpc('db/table/count', 'visits', query_filter={'campaign_id': self.campaign_id})
