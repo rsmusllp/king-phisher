@@ -20,6 +20,7 @@ client.visit_id:          {{ client.visit_id }}
 {% if client.campaign is defined %}
 
 ### Client Session Campaign Variables
+client.campaign.id:                {{ client.campaign.id }}
 client.campaign.name:              {{ client.campaign.name }}
 client.campaign.created:           {{ client.campaign.created }}
 client.campaign.expiration:        {{ client.campaign.expiration }}
@@ -56,6 +57,13 @@ request.parameters:
 request.parameters:     N/A
 {% endif %}
 {% if request.user_agent %}
+
+{% if request.credentials is defined %}
+### Request Credentials Variables
+request.credentials.username:   {{ request.credentials.username }}
+request.credentials.password:   {{ request.credentials.password }}
+request.credentials.mfa_token:  {{ request.credentials.mfa_token }}
+{% endif %}
 
 ### Request User Agent Information
 request.user_agent:     {{ request.user_agent }}
