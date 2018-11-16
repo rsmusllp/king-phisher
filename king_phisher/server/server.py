@@ -380,40 +380,41 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 	def rpc_session_id(self):
 		return self.headers.get(server_rpc.RPC_AUTH_HEADER, None)
 
-	def _set_ids(self, *ids, session=None):
+	def _set_ids(self, session=None):
 		"""
 		Handle lazy resolution of the ``*_id`` properties necessary to track
 		information.
 		"""
+		close_session = False
 		if session is None:
 			session = db_manager.Session()
+			close_session = True
 
-		if not hasattr(self, '_visit_id') and ('visit_id' in ids or 'message_id' in ids or 'campaign_id' in ids):
-			self._visit_id = None
-			kp_cookie_name = self.config.get('server.cookie_name')
-			if kp_cookie_name in self.cookies:
-				value = self.cookies[kp_cookie_name].value
-				if db_manager.get_row_by_id(session, db_models.Visit, value):
-					self._visit_id = value
+		self._visit_id = None
+		kp_cookie_name = self.config.get('server.cookie_name')
+		if kp_cookie_name in self.cookies:
+			value = self.cookies[kp_cookie_name].value
+			if db_manager.get_row_by_id(session, db_models.Visit, value):
+				self._visit_id = value
 
-		if not hasattr(self, '_message_id') and ('message_id' in ids or 'campaign_id' in ids):
-			self._message_id = None
-			msg_id = self.get_query('id')
-			if msg_id == self.config.get('server.secret_id'):
-				self._message_id = msg_id
-			elif msg_id and db_manager.get_row_by_id(session, db_models.Message, msg_id):
-				self._message_id = msg_id
-			elif self._visit_id:
-				visit = db_manager.get_row_by_id(session, db_models.Visit, self._visit_id)
-				self._message_id = visit.message_id
+		self._message_id = None
+		msg_id = self.get_query('id')
+		if msg_id == self.config.get('server.secret_id'):
+			self._message_id = msg_id
+		elif msg_id and db_manager.get_row_by_id(session, db_models.Message, msg_id):
+			self._message_id = msg_id
+		elif self._visit_id:
+			visit = db_manager.get_row_by_id(session, db_models.Visit, self._visit_id)
+			self._message_id = visit.message_id
 
-		if not hasattr(self, '_campaign_id') and ('campaign_id' in ids):
-			self._campaign_id = None
-			if self._message_id and self._message_id != self.config.get('server.secret_id'):
-				message = db_manager.get_row_by_id(session, db_models.Message, self._message_id)
-				if message:
-					self._campaign_id = message.campaign_id
-		session.close()
+		self._campaign_id = None
+		if self._message_id and self._message_id != self.config.get('server.secret_id'):
+			message = db_manager.get_row_by_id(session, db_models.Message, self._message_id)
+			if message:
+				self._campaign_id = message.campaign_id
+
+		if close_session:
+			session.close()
 
 	@property
 	def campaign_id(self):
@@ -424,7 +425,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		If no campaign is associated, this value is None.
 		"""
 		if not hasattr(self, '_campaign_id'):
-			self._set_ids('campaign_id')
+			self.logger.warning('using lazy resolution for the request campaign id')
+			self._set_ids()
 		return self._campaign_id
 
 	@property
@@ -438,7 +440,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		the configurations server.secret_id for testing purposes.
 		"""
 		if not hasattr(self, '_message_id'):
-			self._set_ids('message_id')
+			self.logger.warning('using lazy resolution for the request message id')
+			self._set_ids()
 		return self._message_id
 
 	@property
@@ -449,7 +452,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		set, this value is None.
 		"""
 		if not hasattr(self, '_visit_id'):
-			self._set_ids('visit_id')
+			self.logger.warning('using lazy resolution for the request visit id')
+			self._set_ids()
 		return self._visit_id
 
 	@property
@@ -493,7 +497,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		self.semaphore_acquire()
 		session = db_manager.Session()
 		try:
-			self._set_ids('campaign_id', 'message_id', 'visit_id', session=session)
+			self._set_ids(session)
 			self._respond_file_check_id(session)
 		finally:
 			session.close()
