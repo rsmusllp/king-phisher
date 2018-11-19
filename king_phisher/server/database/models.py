@@ -301,6 +301,10 @@ class BaseRowCls(object):
 		columns = tuple(col.name for col in cls.__table__.columns)
 		return MetaTable(column_names=columns, model=cls, name=cls.__tablename__)
 
+	def to_dict(self):
+		# versionadded:: 1.13.0
+		return collections.OrderedDict((col.name, getattr(self, col.name)) for col in self.__class__.__table__.columns)
+
 Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
 metadata = Base.metadata
 

@@ -51,10 +51,10 @@ from king_phisher import templates
 from king_phisher import utilities
 from king_phisher import xor
 from king_phisher.server import aaa
-from king_phisher.server import pages
 from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
 from king_phisher.server import signals
+from king_phisher.server import template_extras
 from king_phisher.server import web_sockets
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
@@ -281,6 +281,11 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 					username, password = basic_auth
 		return db_validation.CredentialCollection(username, password, mfa_token)
 
+	def _get_db_creds(self, query_creds):
+		query = self._session.query(db_models.Credential)
+		query = query.filter_by(message_id=self.message_id, **query_creds._asdict())
+		return query.first()
+
 	def get_template_vars(self):
 		request_vars = {
 			'command': self.command,
@@ -290,8 +295,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			'user_agent': self.headers.get('user-agent')
 		}
 		creds = self.get_query_creds()
-		if creds.username is not None:
-			request_vars['credentials'] = creds._asdict()
+		creds = None if creds.username is None else self._get_db_creds(creds)
+		if creds is not None:
+			request_vars['credentials'] = creds.to_dict()
 		template_vars = {
 			'client': self.get_template_vars_client(),
 			'request': request_vars,
@@ -327,25 +333,14 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		elif self.message_id:
 			message = db_manager.get_row_by_id(self._session, db_models.Message, self.message_id)
 			if message:
-				campaign = message.campaign
-				client_vars['campaign'] = {
-					'id': str(campaign.id),
-					'name': campaign.name,
-					'created': campaign.created,
-					'expiration': campaign.expiration,
-					'has_expired': campaign.has_expired,
-					'message_count': self._session.query(db_models.Message).filter_by(campaign_id=campaign.id).count(),
-					'visit_count': self._session.query(db_models.Visit).filter_by(campaign_id=campaign.id).count(),
-					'credential_count': self._session.query(db_models.Credential).filter_by(campaign_id=campaign.id).count(),
-				}
+				campaign = message.campaign.to_dict()
+				campaign['message_count'] = self._session.query(db_models.Message).filter_by(campaign_id=message.campaign.id).count()
+				campaign['visit_count'] = self._session.query(db_models.Visit).filter_by(campaign_id=message.campaign.id).count()
+				campaign['credential_count'] = self._session.query(db_models.Credential).filter_by(campaign_id=message.campaign.id).count()
+				client_vars['campaign'] = campaign
 				if message.campaign.company:
 					client_vars['company_name'] = message.campaign.company.name
-					client_vars['company'] = {
-						'name': campaign.company.name,
-						'url_email': campaign.company.url_email,
-						'url_main': campaign.company.url_main,
-						'url_remote_access': campaign.company.url_remote_access
-					}
+					client_vars['company'] = campaign.company.to_dict()
 				result = (message.target_email, message.first_name, message.last_name, message.trained)
 			query = self._session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
@@ -829,9 +824,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		if query_creds.username is None:
 			return
 		cred_count = 0
-		query = self._session.query(db_models.Credential)
-		query = query.filter_by(message_id=self.message_id, **query_creds._asdict())
-		if query.count() == 0:
+		cred = self._get_db_creds(query_creds)
+		if cred is None:
 			cred = db_models.Credential(
 				campaign_id=campaign.id,
 				message_id=self.message_id,
@@ -902,7 +896,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		global_vars = {}
 		if config.has_section('server.page_variables'):
 			global_vars = config.get('server.page_variables')
-		global_vars.update(pages.EXPORTED_FUNCTIONS)
+		global_vars.update(template_extras.functions)
 		self.template_env = templates.TemplateEnvironmentBase(loader=loader, global_vars=global_vars)
 		self.ws_manager = web_sockets.WebSocketsManager(config, self.job_manager)
 

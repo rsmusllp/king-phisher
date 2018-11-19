@@ -30,30 +30,33 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from king_phisher import its
+import html
+
 from king_phisher import utilities
+from king_phisher.server.database import validation as db_validation
 
 import markupsafe
 import smoke_zephyr.utilities
 
-if its.py_v2:
-	import cgi as html
-else:
-	import html
-
-EXPORTED_FUNCTIONS = {}
+functions = {
+	'validate_credential': db_validation.validate_credential,
+	'validate_credential_fields': db_validation.validate_credential_fields,
+}
 """A dictionary of the exported page functions."""
 
 def export_function(function):
 	"""
-	A decorator to "export" a function by placing it in
-	:py:data:`.EXPORTED_FUNCTIONS`.
+	A decorator to "export" a function by placing it in :py:data:`.functions`.
 
 	:param function: The function to export.
 	:type function: function
 	"""
-	EXPORTED_FUNCTIONS[function.__name__] = function
+	functions[function.__name__] = function
 	return function
+
+################################################################################
+# page-generating functions
+################################################################################
 
 @export_function
 def embed_youtube_video(video_id, autoplay=True, enable_js=False, start=0, end=None):

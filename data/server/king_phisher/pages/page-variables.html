@@ -61,14 +61,9 @@
         <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
       </thead>
       <tbody>
-        <tr class="row"><td class="col-md-4">client.campaign.id</td><td class="col-md-8">{{ client.campaign.id }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.campaign.name</td><td class="col-md-8">{{ client.campaign.name }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.campaign.created</td><td class="col-md-8">{{ client.campaign.created }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.campaign.expiration</td><td class="col-md-8">{{ client.campaign.expiration }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.campaign.has_expired</td><td class="col-md-8">{{ client.campaign.has_expired }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.campaign.message_count</td><td class="col-md-8">{{ client.campaign.message_count }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.campaign.visit_count</td><td class="col-md-8">{{ client.campaign.visit_count }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.campaign.credential_count</td><td class="col-md-8">{{ client.campaign.credential_count }}</td></tr>
+        {% for key, value in client.campaign.items() -%}
+        <tr class="row"><td class="col-md-4">client.campaign.{{ key }}</td><td class="col-md-8">{{ value }}</td></tr>
+        {% endfor -%}
       <tbody>
     </table>
     {% endif %}
@@ -80,10 +75,9 @@
         <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
       </thead>
       <tbody>
-        <tr class="row"><td class="col-md-4">client.company.name</td><td class="col-md-8">{{ client.company.name }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.company.url_email</td><td class="col-md-8">{{ client.company.url_email }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.company.url_main</td><td class="col-md-8">{{ client.company.url_main }}</td></tr>
-        <tr class="row"><td class="col-md-4">client.company.url_remote_access</td><td class="col-md-8">{{ client.company.url_remote_access }}</td></tr>
+        {% for key, value in client.company.items() -%}
+        <tr class="row"><td class="col-md-4">client.company.{{ key }}</td><td class="col-md-8">{{ value }}</td></tr>
+        {% endfor -%}
       <tbody>
     </table>
     {% endif %}
@@ -99,9 +93,9 @@
           <td class="col-md-4">request.cookies</td>
           <td class="col-md-8">
             <ul class="list-group">
-            {% for key, value in request.cookies.items() %}
+            {% for key, value in request.cookies.items() -%}
               <li class="list-group-item">{{ key }} = {{ value }}</li>
-            {% endfor %}
+            {% endfor -%}
             </ul>
           </td>
         </tr>
@@ -109,9 +103,9 @@
           <td class="col-md-4">request.parameters</td>
           <td class="col-md-8">
             <ul class="list-group">
-            {% for key, value in request.parameters.items() %}
+            {% for key, value in request.parameters.items() -%}
               <li class="list-group-item">{{ key }} = {{ value }}</li>
-            {% endfor %}
+            {% endfor -%}
             </ul>
           </td>
         </tr>
@@ -125,9 +119,9 @@
         <tr class="row"><th class="col-md-4">Variable</th><th class="col-md-8">Value</th></tr>
       </thead>
       <tbody>
-        <tr class="row"><td class="col-md-4">request.credentials.username</td><td class="col-md-8">{{ request.credentials.username }}</td></tr>
-        <tr class="row"><td class="col-md-4">request.credentials.password</td><td class="col-md-8">{{ request.credentials.password }}</td></tr>
-        <tr class="row"><td class="col-md-4">request.credentials.mfa_token</td><td class="col-md-8">{{ request.credentials.mfa_token }}</td></tr>
+        {% for key, value in request.credentials.items() -%}
+        <tr class="row"><td class="col-md-4">request.credentials.{{ key }}</td><td class="col-md-8">{{ value }}</td></tr>
+        {% endfor -%}
       <tbody>
     </table>
     {% endif %}
