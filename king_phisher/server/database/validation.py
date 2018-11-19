@@ -38,8 +38,21 @@ logger = logging.getLogger('KingPhisher.Server.Database.Validation')
 
 # it is important for all of the field names to also be valid for a database Credential object
 CredentialCollection = collections.namedtuple('CredentialCollection', ('username', 'password', 'mfa_token'))
+"""A collection describing raw credential information."""
 
 def validate_credential(credential, campaign):
+	"""
+	Validate a *credential* object with regards to the configuration provided in
+	*campaign*. This uses :py:func:`~.validate_credential_fields` to validate
+	each field individually and then return either ``None``, ``True`` or
+	``False``. If no validation took place on any field, ``None`` is returned,
+	otherwise if any field was validated then a boolean is returned indicating
+	whether or not all validated (non-``None``) fields passed validation.
+
+	:param credential: The credential object to validate.
+	:param campaign: The campaign with the validation configuration.
+	:return: Either a boolean or ``None`` depending on the results.
+	"""
 	fields = validate_credential_fields(credential, campaign)
 	fields = tuple(getattr(fields, field) for field in CredentialCollection._fields)
 	if all(field is None for field in fields):
@@ -47,6 +60,24 @@ def validate_credential(credential, campaign):
 	return all(field is None or field is True for field in fields)
 
 def validate_credential_fields(credential, campaign):
+	"""
+	Validate a *credential* object with regards to the configuration provided in
+	*campaign*. Each field in the *credential* object is validated and a new
+	:py:class:`~.CredentialCollection` is returned with it's fields set to the
+	results of the validation. A fields validation results are either ``None``,
+	``True`` or ``False``. If no validation took place on the field, either
+	because nothing was configured for it in *campaign*,or the validation
+	information was invalid (a malformed regex for example) the result will be
+	``None``. Otherwise, the result is either ``True`` or ``False`` for the
+	field depending on the validation.
+
+	:param credential: The credential object to validate.
+	:param campaign: The campaign with the validation configuration.
+	:return: A :py:class:`~.CredentialCollection` object with the fields set to the results of their respective validation.
+	:rtype: :py:class:`~.CredentialCollection`
+	"""
+	# note that this uses duck-typing so the *credential* object could be either a db_models.Credential instance or a
+	# db_validation.CredentialCollection instance
 	validated = True
 	results = {}
 	for field in CredentialCollection._fields:

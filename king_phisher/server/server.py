@@ -245,7 +245,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 		:param bool check_query: Whether or not to check the query data in addition to an Authorization header.
 		:return: The submitted credentials.
-		:rtype: :py:class:`~.CredentialCollection`
+		:rtype: :py:class:`~king_phisher.server.database.validation.CredentialCollection`
 		"""
 		username = None
 		password = ''
