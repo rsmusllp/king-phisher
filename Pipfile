@@ -51,6 +51,9 @@ numpy = "==1.14.5"
 pyproj = {git = "https://github.com/jswhit/pyproj.git"}
 
 [dev-packages]
+sphinx = "==1.7.9"
+sphinxcontrib-httpdomain = "==1.5.0"
+sphinx-rtd-theme = "*"
 
 [scripts]
 KingPhisher = "python -m king_phisher.client"
