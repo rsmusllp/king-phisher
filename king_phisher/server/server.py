@@ -58,15 +58,13 @@ from king_phisher.server import signals
 from king_phisher.server import web_sockets
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
+from king_phisher.server.database import validation as db_validation
 
 import advancedhttpserver
 import blinker
 import jinja2
 import smoke_zephyr.job
 import smoke_zephyr.utilities
-
-# it is important for all of the field names to also be valid for a database Credential object
-QueryCredentials = collections.namedtuple('QueryCredentials', ('username', 'password', 'mfa_token'))
 
 def _send_safe_campaign_alerts(campaign, signal_name, sender, **kwargs):
 	alert_subscriptions = tuple(subscription for subscription in campaign.alert_subscriptions if not subscription.has_expired)
@@ -171,6 +169,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		# finished with it, however if they fail to do so or encounter an error
 		# the semaphore will be released here as a fail safe.
 		self.connection.settimeout(smoke_zephyr.utilities.parse_timespan('20s'))  # set a timeout as a fail safe
+		self.rpc_session_id = self.headers.get(server_rpc.RPC_AUTH_HEADER, None)
 		# delete cached properties so they are handled per request instead of connection.
 		for cache_prop in ('_campaign_id', '_message_id', '_visit_id'):
 			if hasattr(self, cache_prop):
@@ -246,7 +245,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 
 		:param bool check_query: Whether or not to check the query data in addition to an Authorization header.
 		:return: The submitted credentials.
-		:rtype: :py:class:`~.QueryCredentials`
+		:rtype: :py:class:`~.CredentialCollection`
 		"""
 		username = None
 		password = ''
@@ -266,7 +265,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 					mfa_token = (self.get_query(pname) or self.get_query(pname.title()) or self.get_query(pname.upper()))
 					if mfa_token:
 						break
-				return QueryCredentials(username, (password or ''), mfa_token)
+				return db_validation.CredentialCollection(username, (password or ''), mfa_token)
 
 		basic_auth = self.headers.get('authorization')
 		if basic_auth:
@@ -275,23 +274,27 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				try:
 					basic_auth = base64.b64decode(basic_auth[1])
 				except TypeError:
-					return QueryCredentials(None, '', None)
+					return db_validation.CredentialCollection(None, '', None)
 				basic_auth = basic_auth.decode('utf-8')
 				basic_auth = basic_auth.split(':', 1)
 				if len(basic_auth) == 2 and len(basic_auth[0]):
 					username, password = basic_auth
-		return QueryCredentials(username, password, mfa_token)
+		return db_validation.CredentialCollection(username, password, mfa_token)
 
 	def get_template_vars(self):
+		request_vars = {
+			'command': self.command,
+			'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
+			'headers': dict(self.headers),
+			'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys()))),
+			'user_agent': self.headers.get('user-agent')
+		}
+		creds = self.get_query_creds()
+		if creds.username is not None:
+			request_vars['credentials'] = creds._asdict()
 		template_vars = {
 			'client': self.get_template_vars_client(),
-			'request': {
-				'command': self.command,
-				'cookies': dict((c[0], c[1].value) for c in self.cookies.items()),
-				'headers': dict(self.headers),
-				'parameters': dict(zip(self.query_data.keys(), map(self.get_query, self.query_data.keys()))),
-				'user_agent': self.headers.get('user-agent')
-			},
+			'request': request_vars,
 			'server': {
 				'hostname': self.vhost,
 				'address': self.connection.getsockname()[0]
@@ -384,6 +387,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			return True
 		self.rpc_session = self.server.session_manager.get(self.rpc_session_id)
 		if not isinstance(self.rpc_session, aaa.AuthenticatedSession):
+			self.logger.warning("request authorization failed (RPC session id is {0})".format('None' if self.rpc_session_id is None else 'invalid'))
 			return False
 		return True
 
@@ -834,28 +838,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				visit_id=visit_id,
 				**query_creds._asdict()
 			)
-			any_regexes = False
-			validated = True
-			for field in ('username', 'password', 'mfa_token'):
-				regex = getattr(campaign, 'credential_regex_' + field, None)
-				if regex is None:
-					continue
-				try:
-					regex = re.compile(regex)
-				except re.error:
-					self.logger.warning("regex compile error while validating credential field: {0}".format(field), exc_info=True)
-					continue
-				any_regexes = True
-				value = getattr(query_creds, field)
-				if value is None:
-					validated = False
-				else:
-					validated = validated and regex.match(value) is not None
-				if not validated:
-					self.logger.debug("credential failed regex validation on field: {0}".format(field))
-					break
-			if any_regexes:
-				cred.regex_validated = validated
+			cred.regex_validated = db_validation.validate_credential(cred, campaign)
 			self._session.add(cred)
 			self._session.commit()
 			self.logger.debug("credential id: {0} created for message id: {1}".format(cred.id, cred.message_id))
