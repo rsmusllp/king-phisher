@@ -764,8 +764,12 @@ def rpc_plugins_list(handler):
 	plugins = {}
 	for _, plugin in plugin_manager:
 		plugins[plugin.name] = {
+			'authors': plugin.authors,
+			'classifiers': plugin.classifiers,
 			'description': plugin.description,
+			'homepage': plugin.homepage,
 			'name': plugin.name,
+			'reference_urls': plugin.reference_urls,
 			'title': plugin.title,
 			'version': plugin.version
 		}

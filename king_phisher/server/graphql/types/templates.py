@@ -129,6 +129,7 @@ class Template(graphene.ObjectType):
 		else:
 			if hostname is not None:
 				logger.debug('ignoring the hostname parameter because vhost_directories is not enabled')
+				hostname = None
 			disk_path = os.path.join(web_root, resource_path)
 		disk_path = os.path.abspath(disk_path)
 		# check for directory traversal
