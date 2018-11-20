@@ -488,7 +488,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	view_columns = (
 		'Email Address',
 		'Submitted',
-		'Validated',
+		'Validation',
 		'Username',
 	) + secret_columns
 	xlsx_worksheet_options = export.XLSXWorksheetOptions(
@@ -504,7 +504,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	def format_node_data(self, node):
 		regex_validated = ''
 		if node['regexValidated'] is not None:
-			regex_validated = 'Yes' if node['regexValidated'] else 'No'
+			regex_validated = 'Pass' if node['regexValidated'] else 'Fail'
 		row = (
 			node['message']['targetEmail'],
 			node['submitted'],
