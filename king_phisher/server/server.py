@@ -584,6 +584,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		return
 
 	def _respond_file_check_id(self):
+		if re.match(r'^[._]metadata\.(json|yaml|yml)$', os.path.basename(self.request_path)):
+			self.server.logger.warning('received request for template metadata file')
+			raise errors.KingPhisherAbortRequestError()
 		if re.match(r'^/\.well-known/acme-challenge/[a-zA-Z0-9\-_]{40,50}$', self.request_path):
 			self.server.logger.info('received request for .well-known/acme-challenge')
 			return
