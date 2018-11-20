@@ -31,12 +31,15 @@
 #
 
 from __future__ import absolute_import
+import logging
 
 import king_phisher.version as version
 import king_phisher.server.graphql.middleware as gql_middleware
 import king_phisher.server.graphql.types as gql_types
 
 import graphene.types.utils
+
+logger = logging.getLogger('KingPhisher.Server.GraphQL.Schema')
 
 # top level query object for the schema
 class Query(graphene.ObjectType):
@@ -47,6 +50,7 @@ class Query(graphene.ObjectType):
 	geoloc = graphene.Field(gql_types.GeoLocation, ip=graphene.String())
 	plugin = graphene.Field(gql_types.Plugin, name=graphene.String())
 	plugins = graphene.relay.ConnectionField(gql_types.PluginConnection)
+	template = graphene.Field(gql_types.Template, hostname=graphene.String(), path=graphene.String())
 	version = graphene.Field(graphene.String)
 	def resolve_db(self, info, **kwargs):
 		return gql_types.Database()
@@ -67,6 +71,9 @@ class Query(graphene.ObjectType):
 	def resolve_plugins(self, info, **kwargs):
 		plugin_manager = info.context.get('plugin_manager', {})
 		return [gql_types.Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
+
+	def resolve_template(self, info, **kwargs):
+		return gql_types.Template.resolve(info, **kwargs)
 
 	def resolve_version(self, info, **kwargs):
 		return version.version

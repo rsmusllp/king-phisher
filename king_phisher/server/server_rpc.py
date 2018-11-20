@@ -790,6 +790,7 @@ def rpc_graphql(handler, session, query, query_vars=None):
 		context_value={
 			'plugin_manager': handler.server.plugin_manager,
 			'rpc_session': handler.rpc_session,
+			'server_config': handler.config,
 			'session': session
 		},
 		variable_values=query_vars
