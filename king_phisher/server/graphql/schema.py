@@ -62,11 +62,7 @@ class Query(graphene.ObjectType):
 		return gql_types.GeoLocation.from_ip_address(ip_address)
 
 	def resolve_plugin(self, info, **kwargs):
-		plugin_manager = info.context.get('plugin_manager', {})
-		for _, plugin in plugin_manager:
-			if plugin.name != kwargs.get('name'):
-				continue
-			return gql_types.Plugin.from_plugin(plugin)
+		return gql_types.Plugin.resolve(info, **kwargs)
 
 	def resolve_plugins(self, info, **kwargs):
 		plugin_manager = info.context.get('plugin_manager', {})

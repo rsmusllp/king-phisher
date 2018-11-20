@@ -123,21 +123,33 @@ class Plugin(graphene.ObjectType):
 	class Meta:
 		interfaces = (RelayNode,)
 	authors = graphene.List(graphene.String)
-	title = graphene.Field(graphene.String)
+	classifiers = graphene.List(graphene.String)
 	description = graphene.Field(graphene.String)
 	homepage = graphene.Field(graphene.String)
 	name = graphene.Field(graphene.String)
+	reference_urls = graphene.List(graphene.String)
+	title = graphene.Field(graphene.String)
 	version = graphene.Field(graphene.String)
 	@classmethod
 	def from_plugin(cls, plugin):
 		return cls(
 			authors=plugin.authors,
+			classifiers=plugin.classifiers,
 			description=plugin.description,
 			homepage=plugin.homepage,
 			name=plugin.name,
+			reference_urls=plugin.reference_urls,
 			title=plugin.title,
 			version=plugin.version
 		)
+
+	@classmethod
+	def resolve(cls, info, **kwargs):
+		plugin_manager = info.context.get('plugin_manager', {})
+		for _, plugin in plugin_manager:
+			if plugin.name != kwargs.get('name'):
+				continue
+			return cls.from_plugin(plugin)
 
 class PluginConnection(graphene.relay.Connection):
 	class Meta:
