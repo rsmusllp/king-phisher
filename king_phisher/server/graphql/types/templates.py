@@ -40,7 +40,9 @@ import os
 from . import misc as gql_misctypes
 from king_phisher import utilities
 
+import graphene.types.resolver
 import graphene.types.utils
+import jsonschema
 import yaml
 
 __all__ = ('Template', 'TemplateMetadata')
@@ -55,31 +57,38 @@ def _load_metadata(path):
 		'.yml': yaml,
 	}
 	for prefix, (suffix, serializer) in itertools.product(prefixes, serializers.items()):
-		metadata = os.path.join(path, prefix + 'metadata' + suffix)
-		if not os.path.isfile(metadata):
+		file_path = os.path.join(path, prefix + 'metadata' + suffix)
+		if not os.path.isfile(file_path):
 			continue
-		if not os.access(metadata, os.R_OK):
+		if not os.access(file_path, os.R_OK):
 			continue
-		with open(metadata, 'r') as file_h:
-			return serializer.load(file_h)
-	logger.info('found no metadata file for path: ' + path)
+		with open(file_path, 'r') as file_h:
+			metadata = serializer.load(file_h)
+			break
+	else:
+		logger.info('found no metadata file for path: ' + path)
+		return
+	# manually set the version to a string so the input format is more forgiving
+	if isinstance(metadata.get('version'), (float, int)):
+		metadata['version'] = str(metadata['version'])
+	try:
+		utilities.validate_json_schema(metadata, 'king-phisher.template.page.metadata')
+	except jsonschema.exceptions.ValidationError:
+		logger.error("template metadata file: {0} failed to pass schema validation".format(file_path), exc_info=True)
+		return None
+	return metadata
 
 class TemplateMetadata(graphene.ObjectType):
+	class Meta:
+		default_resolver = graphene.types.resolver.dict_resolver
 	authors = graphene.List(graphene.String)
+	classifiers = graphene.List(graphene.String)
 	description = graphene.Field(graphene.String)
 	homepage = graphene.Field(graphene.String)
-	#name = graphene.Field(graphene.String)
+	pages = graphene.List(graphene.String)
+	reference_urls = graphene.List(graphene.String)
 	title = graphene.Field(graphene.String)
 	version = graphene.Field(graphene.String)
-	classifiers = graphene.List(graphene.String)
-	reference_urls = graphene.List(graphene.String)
-	@classmethod
-	def from_path(cls, disk_path):
-		metadata = _load_metadata(disk_path)
-		if not metadata:
-			return
-		# todo: need to validate the returned metadata with a json schema
-		return cls(**metadata)
 
 class Template(graphene.ObjectType):
 	class Meta:
@@ -129,4 +138,4 @@ class Template(graphene.ObjectType):
 		return cls.from_path(disk_path, resource_path, hostname=hostname)
 
 	def resolve_metadata(self, info, **kwargs):
-		return TemplateMetadata.from_path(self._disk_path)
+		return _load_metadata(self._disk_path)

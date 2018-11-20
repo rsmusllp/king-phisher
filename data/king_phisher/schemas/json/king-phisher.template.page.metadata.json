@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#", 
+  "definitions": {}, 
+  "id": "king-phisher.template.page.metadata", 
+  "properties": {
+    "authors": {
+      "id": "/properties/authors",
+      "items": {
+        "id": "/properties/authors/items",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "classifiers": {
+      "id": "/properties/classifiers",
+      "items": {
+        "id": "/properties/classifiers/items",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "description": {
+      "id": "/properties/description",
+      "type": "string"
+    },
+    "homepage": {
+      "id": "/properties/homepage",
+      "type": "string"
+    },
+    "pages": {
+      "id": "/properties/pages",
+      "items": {
+        "id": "/properties/pages/items",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "reference_urls": {
+      "id": "/properties/reference_urls",
+      "items": {
+        "id": "/properties/reference_urls/items",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "title": {
+      "id": "/properties/title",
+      "type": "string"
+    },
+    "version": {
+      "id": "/properties/version",
+      "type": "string"
+    }
+  }, 
+  "required": [
+    "authors",
+    "description",
+    "pages",
+    "title",
+    "version"
+  ],
+  "type": "object"
+}
