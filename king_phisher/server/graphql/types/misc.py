@@ -33,6 +33,7 @@
 from __future__ import absolute_import
 
 import datetime
+import functools
 
 import king_phisher.geoip as geoip
 import king_phisher.ipaddress as ipaddress
@@ -41,8 +42,9 @@ import geoip2.errors
 import graphene.relay
 import graphene.types.utils
 import graphql.language.ast
+import graphql_relay.connection.arrayconnection
 
-__all__ = ('GeoLocation', 'Plugin', 'PluginConnection', 'RelayNode')
+__all__ = ('ConnectionField', 'GeoLocation', 'Plugin', 'PluginConnection', 'RelayNode')
 
 # custom enum types
 class FilterOperatorEnum(graphene.Enum):
@@ -66,6 +68,25 @@ class RelayNode(graphene.relay.Node):
 	@classmethod
 	def to_global_id(cls, _, local_id):
 		return local_id
+
+class ConnectionField(graphene.relay.ConnectionField):
+	@classmethod
+	def connection_resolver(cls, resolver, connection, root, info, **kwargs):
+		iterable = resolver(root, info, **kwargs)
+		_len = len(iterable)
+		connection = graphql_relay.connection.arrayconnection.connection_from_list_slice(
+			iterable,
+			kwargs,
+			slice_start=0,
+			list_length=_len,
+			list_slice_length=_len,
+			connection_type=functools.partial(connection, total=_len),
+			pageinfo_type=graphene.relay.connection.PageInfo,
+			edge_type=connection.Edge
+		)
+		connection.iterable = iterable
+		connection.length = _len
+		return connection
 
 # custom scalar types
 class AnyScalar(graphene.types.Scalar):
@@ -160,9 +181,6 @@ class PluginConnection(graphene.relay.Connection):
 	def resolve(cls, info, **kwargs):
 		plugin_manager = info.context.get('plugin_manager', {})
 		return [Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
-
-	def resolve_total(self, info, **kwargs):
-		return len(info.context.get('plugin_manager', {}))
 
 # custom compound input types
 class FilterInput(graphene.InputObjectType):

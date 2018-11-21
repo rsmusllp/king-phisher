@@ -11,3 +11,5 @@ Functions
 ---------
 
 .. autofunction:: get_hostnames
+
+.. autofunction:: get_vhost_directories

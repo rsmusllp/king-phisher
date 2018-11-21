@@ -27,22 +27,27 @@ Schema
 The following table represents the top-level objects available in the GraphQL
 schema and their various sub-object types as applicable.
 
-+-------------+------------+----------------------------------------------------------+
-| Object Name | Sub-Object | Description                                              |
-|             | Type       |                                                          |
-+=============+============+==========================================================+
-| ``db``      | Objects    | Database models. See :ref:`db-table-relationships-label` |
-|             |            | for information on available sub-objects.                |
-+-------------+------------+----------------------------------------------------------+
-| ``geoloc``  | Objects    | Geolocation information.                                 |
-+-------------+------------+----------------------------------------------------------+
-| ``plugin``  | Objects    | Specific information for a loaded plugin.                |
-+-------------+------------+----------------------------------------------------------+
-| ``plugins`` | Connection | Information on all loaded plugins.                       |
-+-------------+------------+----------------------------------------------------------+
-| ``version`` | N/A        | The :py:data:`~king_phisher.version.version` of the King |
-|             |            | Phisher server.                                          |
-+-------------+------------+----------------------------------------------------------+
++---------------+-------------+-------------------------------------------------------------+
+| Object Name   | Object Type | Description                                                 |
++===============+=============+=============================================================+
+| ``db``        | Object      | Database models. See :ref:`db-table-relationships-label`    |
+|               |             | for information on available sub-objects.                   |
++---------------+-------------+-------------------------------------------------------------+
+| ``geoloc``    | Object      | Geolocation information.                                    |
++---------------+-------------+-------------------------------------------------------------+
+| ``hostnames`` | [String]    | The hostnames that are configured for use with this server. |
++---------------+-------------+-------------------------------------------------------------+
+| ``plugin``    | Object      | Specific information for a loaded plugin.                   |
++---------------+-------------+-------------------------------------------------------------+
+| ``plugins``   | Connection  | Information on all loaded plugins.                          |
++---------------+-------------+-------------------------------------------------------------+
+| ``template``  | Object      | Information for an available template.                      |
++---------------+-------------+-------------------------------------------------------------+
+| ``templates`` | Connection  | Information on all available templates.                     |
++---------------+-------------+-------------------------------------------------------------+
+| ``version``   | String      | The :py:data:`~king_phisher.version.version` of the King    |
+|               |             | Phisher server.                                             |
++---------------+-------------+-------------------------------------------------------------+
 
 :Connection:
   A connection sub-object is a special object providing a defined interface used
@@ -50,8 +55,8 @@ schema and their various sub-object types as applicable.
   attribute which is an integer as well as an ``edges`` attribute. See
   `Connection Types`_ for more information.
 
-:Objects:
-  Sub-objects can in turn have their own attributes which can be a combination
+:Object:
+  Objects can in turn have their own attributes which can be a combination
   of additional sub-objects or scalars.
 
 :N/A:

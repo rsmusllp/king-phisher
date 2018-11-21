@@ -51,9 +51,9 @@ class Query(graphene.ObjectType):
 	geoloc = graphene.Field(gql_types.GeoLocation, ip=graphene.String())
 	hostnames = graphene.List(graphene.String)
 	plugin = graphene.Field(gql_types.Plugin, name=graphene.String())
-	plugins = graphene.relay.ConnectionField(gql_types.PluginConnection)
+	plugins = gql_types.ConnectionField(gql_types.PluginConnection)
 	template = graphene.Field(gql_types.Template, hostname=graphene.String(), path=graphene.String())
-	templates = graphene.relay.ConnectionField(gql_types.TemplateConnection, hostname=graphene.String(), max_depth=graphene.Int())
+	templates = gql_types.ConnectionField(gql_types.TemplateConnection, hostname=graphene.String(), max_depth=graphene.Int())
 	version = graphene.Field(graphene.String)
 	def resolve_db(self, info, **kwargs):
 		return gql_types.Database()
