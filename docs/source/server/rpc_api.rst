@@ -169,6 +169,23 @@ GeoIP API
 
    :handler: :py:func:`~king_phisher.server.server_rpc.rpc_geoip_lookup_multi`
 
+.. _rpc-api-hostnames-api-label:
+
+Hostnames API
+-------------
+
+.. rpc:function:: hostnames/add(hostname)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_hostnames_add`
+
+   .. versionadded:: 1.13.0
+
+.. rpc:function:: hostnames/get()
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_hostnames_get`
+
+   .. versionadded:: 1.13.0
+
 .. _rpc-api-table-api-label:
 
 Table API

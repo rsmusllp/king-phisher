@@ -42,6 +42,7 @@ from king_phisher import ipaddress
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
 from king_phisher.server import signals
+from king_phisher.server import web_tools
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 from king_phisher.server.graphql import schema
@@ -698,6 +699,35 @@ def rpc_geoip_lookup_multi(handler, ips, lang=None):
 			result = None
 		results[ip] = result
 	return results
+
+@register_rpc('/hostnames/add', log_call=True)
+def rpc_hostnames_add(handler, hostname):
+	"""
+	Add a hostname to the list of values that are configured for use with this
+	server. At this time, these changes (like other config changes) are not
+	persisted in the server so they will be lost when the server reboots.
+
+	.. versionadded:: 1.13.0
+
+	:param str hostname: The hostname to add.
+	"""
+	hostnames = handler.config.get_if_exists('server.hostnames', [])
+	if hostname not in hostnames:
+		hostnames.append(hostname)
+	handler.config.set('server.hostnames', hostnames)
+	# don't return a value indicating whether it was added or not because it could have been a vhost directory
+
+@register_rpc('/hostnames/get', log_call=True)
+def rpc_hostnames_get(handler):
+	"""
+	Get the hostnames that are configured for use with this server.
+
+	.. versionadded:: 1.13.0
+
+	:return: The configured hostnames.
+	:rtype: list
+	"""
+	return list(web_tools.get_hostnames(handler.config))
 
 @register_rpc('/login', database_access=True)
 def rpc_login(handler, session, username, password, otp=None):

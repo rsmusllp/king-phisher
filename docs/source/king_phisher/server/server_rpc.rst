@@ -69,6 +69,10 @@ Functions
 
 .. autofunction:: rpc_graphql
 
+.. autofunction:: rpc_hostnames_add
+
+.. autofunction:: rpc_hostnames_get
+
 .. autofunction:: rpc_login
 
 .. autofunction:: rpc_logout

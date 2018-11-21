@@ -23,3 +23,4 @@ application.
    server_rpc.rst
    signals.rst
    web_sockets.rst
+   web_tools.rst
