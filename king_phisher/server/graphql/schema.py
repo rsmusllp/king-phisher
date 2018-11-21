@@ -34,6 +34,7 @@ from __future__ import absolute_import
 import logging
 
 import king_phisher.version as version
+import king_phisher.server.web_tools as web_tools
 import king_phisher.server.graphql.middleware as gql_middleware
 import king_phisher.server.graphql.types as gql_types
 
@@ -48,6 +49,7 @@ class Query(graphene.ObjectType):
 	"""
 	db = graphene.Field(gql_types.Database)
 	geoloc = graphene.Field(gql_types.GeoLocation, ip=graphene.String())
+	hostnames = graphene.List(graphene.String)
 	plugin = graphene.Field(gql_types.Plugin, name=graphene.String())
 	plugins = graphene.relay.ConnectionField(gql_types.PluginConnection)
 	template = graphene.Field(gql_types.Template, hostname=graphene.String(), path=graphene.String())
@@ -60,6 +62,13 @@ class Query(graphene.ObjectType):
 		if ip_address is None:
 			return
 		return gql_types.GeoLocation.from_ip_address(ip_address)
+
+	def resolve_hostnames(self, info, **kwargs):
+		server_config = info.context.get('server_config')
+		if server_config is None:
+			logger.warning('can not determine hostnames without the server configuration')
+			return
+		return web_tools.get_hostnames(server_config)
 
 	def resolve_plugin(self, info, **kwargs):
 		return gql_types.Plugin.resolve(info, **kwargs)
