@@ -53,6 +53,7 @@ class Query(graphene.ObjectType):
 	plugin = graphene.Field(gql_types.Plugin, name=graphene.String())
 	plugins = graphene.relay.ConnectionField(gql_types.PluginConnection)
 	template = graphene.Field(gql_types.Template, hostname=graphene.String(), path=graphene.String())
+	templates = graphene.relay.ConnectionField(gql_types.TemplateConnection, hostname=graphene.String(), max_depth=graphene.Int())
 	version = graphene.Field(graphene.String)
 	def resolve_db(self, info, **kwargs):
 		return gql_types.Database()
@@ -74,11 +75,13 @@ class Query(graphene.ObjectType):
 		return gql_types.Plugin.resolve(info, **kwargs)
 
 	def resolve_plugins(self, info, **kwargs):
-		plugin_manager = info.context.get('plugin_manager', {})
-		return [gql_types.Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
+		return gql_types.PluginConnection.resolve(info, **kwargs)
 
 	def resolve_template(self, info, **kwargs):
 		return gql_types.Template.resolve(info, **kwargs)
+
+	def resolve_templates(self, info, **kwargs):
+		return gql_types.TemplateConnection.resolve(info, **kwargs)
 
 	def resolve_version(self, info, **kwargs):
 		return version.version

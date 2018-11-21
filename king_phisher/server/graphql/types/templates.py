@@ -32,6 +32,7 @@
 
 from __future__ import absolute_import
 import datetime
+import functools
 import itertools
 import json
 import logging
@@ -39,17 +40,20 @@ import os
 
 from . import misc as gql_misctypes
 from king_phisher import utilities
+from king_phisher.server import web_tools
 
+import graphene.relay
 import graphene.types.resolver
 import graphene.types.utils
 import jsonschema
+import smoke_zephyr.utilities
 import yaml
 
-__all__ = ('Template', 'TemplateMetadata')
+__all__ = ('Template', 'TemplateConnection', 'TemplateMetadata')
 
 logger = logging.getLogger('KingPhisher.Server.GraphQL.Types.Templates')
 
-def _load_metadata(path):
+def _find_metadata(path):
 	prefixes = ('.', '_')
 	serializers = {
 		'.json': json,
@@ -62,12 +66,16 @@ def _load_metadata(path):
 			continue
 		if not os.access(file_path, os.R_OK):
 			continue
-		with open(file_path, 'r') as file_h:
-			metadata = serializer.load(file_h)
-			break
-	else:
+		return file_path, serializer
+	return None, None
+
+def _load_metadata(path):
+	file_path, serializer = _find_metadata(path)
+	if file_path is None:
 		logger.info('found no metadata file for path: ' + path)
 		return
+	with open(file_path, 'r') as file_h:
+		metadata = serializer.load(file_h)
 	# manually set the version to a string so the input format is more forgiving
 	if isinstance(metadata.get('version'), (float, int)):
 		metadata['version'] = str(metadata['version'])
@@ -77,6 +85,10 @@ def _load_metadata(path):
 		logger.error("template metadata file: {0} failed to pass schema validation".format(file_path), exc_info=True)
 		return None
 	return metadata
+
+def _search_filter(path):
+	file_path, serializer = _find_metadata(path)
+	return file_path is not None
 
 class TemplateMetadata(graphene.ObjectType):
 	class Meta:
@@ -111,16 +123,17 @@ class Template(graphene.ObjectType):
 
 	@classmethod
 	def resolve(cls, info, **kwargs):
-		hostname = kwargs.get('hostname')
-		resource_path = kwargs.get('path')
-		if resource_path is None:
-			return
-		resource_path = resource_path.lstrip('/')
 		server_config = info.context.get('server_config')
 		if server_config is None:
 			logger.warning('can not resolve templates without the server configuration')
 			return
 		web_root = os.path.normpath(server_config.get('server.web_root'))
+		hostname = kwargs.get('hostname')
+
+		resource_path = kwargs.get('path')
+		if resource_path is None:
+			return
+		resource_path = resource_path.lstrip('/')
 		if server_config.get('server.vhost_directories'):
 			if hostname is None:
 				logger.warning('can not resolve templates without a hostname when vhost_directories is enabled')
@@ -140,3 +153,44 @@ class Template(graphene.ObjectType):
 
 	def resolve_metadata(self, info, **kwargs):
 		return _load_metadata(self._disk_path)
+
+class TemplateConnection(graphene.relay.Connection):
+	class Meta:
+		node = Template
+	total = graphene.Int()
+	@classmethod
+	def resolve(cls, info, **kwargs):
+		server_config = info.context.get('server_config')
+		if server_config is None:
+			logger.warning('can not resolve templates without the server configuration')
+			return []
+		web_root = os.path.normpath(server_config.get('server.web_root'))
+		hostname = kwargs.get('hostname')
+
+		if server_config.get('server.vhost_directories'):
+			if hostname is None:
+				directories = ((vhost, os.path.join(web_root, vhost)) for vhost in web_tools.get_vhost_directories(server_config))
+			else:
+				directory = os.path.join(web_root, hostname)
+				if not os.path.isdir(directory):
+					logger.warning("can not resolve templates for hostname: {0} (invalid directory)".format(hostname))
+					return []
+				directories = ((hostname, os.path.join(web_root, hostname)),)
+		else:
+			if hostname is not None:
+				logger.debug('ignoring the hostname parameter because vhost_directories is not enabled')
+			directories = ((None, web_root),)
+
+		iterate_templates = functools.partial(
+			smoke_zephyr.utilities.FileWalker,
+			absolute_path=True,
+			filter_func=_search_filter,
+			follow_links=True,
+			max_depth=kwargs.get('max_depth')
+		)
+		templates = []
+		for hostname, directory in directories:
+			for disk_path in iterate_templates(directory):
+				resource_path = os.path.relpath(disk_path, directory)
+				templates.append(Template.from_path(disk_path, resource_path, hostname=hostname))
+		return templates

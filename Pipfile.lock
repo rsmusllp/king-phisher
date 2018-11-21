@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8261040a7fe743e166eab23c858f20f860fbd58fc5d86f43d1ab9880ad994c20"
+            "sha256": "021f680a517a22f6d7068fa75c9f8732f931e12b3ac96ca3ed56f6d27dc9ba35"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -694,10 +694,10 @@
         },
         "smoke-zephyr": {
             "hashes": [
-                "sha256:c8f17cd57303cb4c62c8ccf596d4dd921b723f63085521ecc127964f6e86762d"
+                "sha256:9e1230c34e7278ec9fa9a57a9042ce42c8321bf5f810b5ddda8011f22e7e42ba"
             ],
             "index": "pypi",
-            "version": "==1.2.0"
+            "version": "==1.4.0"
         },
         "sqlalchemy": {
             "hashes": [

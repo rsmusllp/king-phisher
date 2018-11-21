@@ -38,6 +38,7 @@ import king_phisher.geoip as geoip
 import king_phisher.ipaddress as ipaddress
 
 import geoip2.errors
+import graphene.relay
 import graphene.types.utils
 import graphql.language.ast
 
@@ -155,6 +156,11 @@ class PluginConnection(graphene.relay.Connection):
 	class Meta:
 		node = Plugin
 	total = graphene.Int()
+	@classmethod
+	def resolve(cls, info, **kwargs):
+		plugin_manager = info.context.get('plugin_manager', {})
+		return [Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
+
 	def resolve_total(self, info, **kwargs):
 		return len(info.context.get('plugin_manager', {}))
 

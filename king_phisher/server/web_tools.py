@@ -53,8 +53,25 @@ def get_hostnames(config):
 	:rtype: tuple
 	"""
 	hostnames = config.get_if_exists('server.hostnames', [])
-	if config.get('server.vhost_directories'):
-		web_root = config.get('server.web_root')
-		hostnames.extend([entry for entry in os.listdir(web_root) if os.path.isdir(os.path.join(web_root, entry))])
+	hostnames.extend(get_vhost_directories(config) or ())
 	hostnames = smoke_zephyr.utilities.unique(hostnames)
 	return tuple(sorted(hostnames))
+
+def get_vhost_directories(config):
+	"""
+	List the hostnames that are configured through the Virtual Host directories.
+	If the server option ``vhost_directories`` is disabled, this function
+	returns ``None``.
+
+	.. versionadded:: 1.13.0
+
+	:param config: Configuration to retrieve settings from.
+	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
+	:return: A tuple of the enumerated virtual hostname directories.
+	:rtype: tuple
+	"""
+	if not config.get('server.vhost_directories'):
+		return None
+	web_root = config.get('server.web_root')
+	directories = [entry for entry in os.listdir(web_root) if os.path.isdir(os.path.join(web_root, entry))]
+	return tuple(sorted(directories))
