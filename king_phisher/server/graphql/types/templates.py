@@ -49,7 +49,7 @@ import jsonschema
 import smoke_zephyr.utilities
 import yaml
 
-__all__ = ('Template', 'TemplateConnection', 'TemplateMetadata')
+__all__ = ('SiteTemplate', 'SiteTemplateConnection', 'SiteTemplateMetadata')
 
 logger = logging.getLogger('KingPhisher.Server.GraphQL.Types.Templates')
 
@@ -80,7 +80,7 @@ def _load_metadata(path):
 	if isinstance(metadata.get('version'), (float, int)):
 		metadata['version'] = str(metadata['version'])
 	try:
-		utilities.validate_json_schema(metadata, 'king-phisher.template.page.metadata')
+		utilities.validate_json_schema(metadata, 'king-phisher.template.site.metadata')
 	except jsonschema.exceptions.ValidationError:
 		logger.error("template metadata file: {0} failed to pass schema validation".format(file_path), exc_info=True)
 		return None
@@ -90,7 +90,7 @@ def _search_filter(path):
 	file_path, serializer = _find_metadata(path)
 	return file_path is not None
 
-class TemplateMetadata(graphene.ObjectType):
+class SiteTemplateMetadata(graphene.ObjectType):
 	class Meta:
 		default_resolver = graphene.types.resolver.dict_resolver
 	authors = graphene.List(graphene.String)
@@ -102,16 +102,16 @@ class TemplateMetadata(graphene.ObjectType):
 	title = graphene.Field(graphene.String)
 	version = graphene.Field(graphene.String)
 
-class Template(graphene.ObjectType):
+class SiteTemplate(graphene.ObjectType):
 	class Meta:
 		interfaces = (gql_misctypes.RelayNode,)
 	created = gql_misctypes.DateTimeScalar()
 	hostname = graphene.Field(graphene.String)
 	path = graphene.Field(graphene.String)
-	metadata = graphene.Field(TemplateMetadata)
+	metadata = graphene.Field(SiteTemplateMetadata)
 	def __init__(self, disk_path, *args, **kwargs):
 		self._disk_path = disk_path
-		super(Template, self).__init__(*args, **kwargs)
+		super(SiteTemplate, self).__init__(*args, **kwargs)
 
 	@classmethod
 	def from_path(cls, disk_path, resource_path, **kwargs):
@@ -154,9 +154,9 @@ class Template(graphene.ObjectType):
 	def resolve_metadata(self, info, **kwargs):
 		return _load_metadata(self._disk_path)
 
-class TemplateConnection(graphene.relay.Connection):
+class SiteTemplateConnection(graphene.relay.Connection):
 	class Meta:
-		node = Template
+		node = SiteTemplate
 	total = graphene.Int()
 	@classmethod
 	def resolve(cls, info, **kwargs):
@@ -192,5 +192,5 @@ class TemplateConnection(graphene.relay.Connection):
 		for hostname, directory in directories:
 			for disk_path in iterate_templates(directory):
 				resource_path = os.path.relpath(disk_path, directory)
-				templates.append(Template.from_path(disk_path, resource_path, hostname=hostname))
+				templates.append(SiteTemplate.from_path(disk_path, resource_path, hostname=hostname))
 		return templates

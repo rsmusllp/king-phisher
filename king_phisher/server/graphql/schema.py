@@ -52,8 +52,8 @@ class Query(graphene.ObjectType):
 	hostnames = graphene.List(graphene.String)
 	plugin = graphene.Field(gql_types.Plugin, name=graphene.String())
 	plugins = gql_types.ConnectionField(gql_types.PluginConnection)
-	template = graphene.Field(gql_types.Template, hostname=graphene.String(), path=graphene.String())
-	templates = gql_types.ConnectionField(gql_types.TemplateConnection, hostname=graphene.String(), max_depth=graphene.Int())
+	site_template = graphene.Field(gql_types.SiteTemplate, hostname=graphene.String(), path=graphene.String())
+	site_templates = gql_types.ConnectionField(gql_types.SiteTemplateConnection, hostname=graphene.String(), max_depth=graphene.Int())
 	version = graphene.Field(graphene.String)
 	def resolve_db(self, info, **kwargs):
 		return gql_types.Database()
@@ -77,11 +77,11 @@ class Query(graphene.ObjectType):
 	def resolve_plugins(self, info, **kwargs):
 		return gql_types.PluginConnection.resolve(info, **kwargs)
 
-	def resolve_template(self, info, **kwargs):
-		return gql_types.Template.resolve(info, **kwargs)
+	def resolve_site_template(self, info, **kwargs):
+		return gql_types.SiteTemplate.resolve(info, **kwargs)
 
-	def resolve_templates(self, info, **kwargs):
-		return gql_types.TemplateConnection.resolve(info, **kwargs)
+	def resolve_site_templates(self, info, **kwargs):
+		return gql_types.SiteTemplateConnection.resolve(info, **kwargs)
 
 	def resolve_version(self, info, **kwargs):
 		return version.version

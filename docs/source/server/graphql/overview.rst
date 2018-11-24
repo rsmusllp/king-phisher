@@ -27,27 +27,27 @@ Schema
 The following table represents the top-level objects available in the GraphQL
 schema and their various sub-object types as applicable.
 
-+---------------+-------------+-------------------------------------------------------------+
-| Object Name   | Object Type | Description                                                 |
-+===============+=============+=============================================================+
-| ``db``        | Object      | Database models. See :ref:`db-table-relationships-label`    |
-|               |             | for information on available sub-objects.                   |
-+---------------+-------------+-------------------------------------------------------------+
-| ``geoloc``    | Object      | Geolocation information.                                    |
-+---------------+-------------+-------------------------------------------------------------+
-| ``hostnames`` | [String]    | The hostnames that are configured for use with this server. |
-+---------------+-------------+-------------------------------------------------------------+
-| ``plugin``    | Object      | Specific information for a loaded plugin.                   |
-+---------------+-------------+-------------------------------------------------------------+
-| ``plugins``   | Connection  | Information on all loaded plugins.                          |
-+---------------+-------------+-------------------------------------------------------------+
-| ``template``  | Object      | Information for an available template.                      |
-+---------------+-------------+-------------------------------------------------------------+
-| ``templates`` | Connection  | Information on all available templates.                     |
-+---------------+-------------+-------------------------------------------------------------+
-| ``version``   | String      | The :py:data:`~king_phisher.version.version` of the King    |
-|               |             | Phisher server.                                             |
-+---------------+-------------+-------------------------------------------------------------+
++-------------------+-------------+-------------------------------------------------------------+
+| Object Name       | Object Type | Description                                                 |
++===================+=============+=============================================================+
+| ``db``            | Object      | Database models. See :ref:`db-table-relationships-label`    |
+|                   |             | for information on available sub-objects.                   |
++-------------------+-------------+-------------------------------------------------------------+
+| ``geoloc``        | Object      | Geolocation information.                                    |
++-------------------+-------------+-------------------------------------------------------------+
+| ``hostnames``     | [String]    | The hostnames that are configured for use with this server. |
++-------------------+-------------+-------------------------------------------------------------+
+| ``plugin``        | Object      | Specific information for a loaded plugin.                   |
++-------------------+-------------+-------------------------------------------------------------+
+| ``plugins``       | Connection  | Information on all loaded plugins.                          |
++-------------------+-------------+-------------------------------------------------------------+
+| ``siteTemplate``  | Object      | Information for an available site template.                 |
++-------------------+-------------+-------------------------------------------------------------+
+| ``siteTemplates`` | Connection  | Information on all available site templates.                |
++-------------------+-------------+-------------------------------------------------------------+
+| ``version``       | String      | The :py:data:`~king_phisher.version.version` of the King    |
+|                   |             | Phisher server.                                             |
++-------------------+-------------+-------------------------------------------------------------+
 
 :Connection:
   A connection sub-object is a special object providing a defined interface used
