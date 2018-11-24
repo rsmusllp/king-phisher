@@ -118,8 +118,7 @@ class SiteTemplate(graphene.ObjectType):
 		if not os.path.isdir(disk_path):
 			logger.warning("requested template path: {0} is not a directory".format(disk_path))
 			return None
-		created = utilities.datetime_local_to_utc(datetime.datetime.fromtimestamp(os.path.getctime(disk_path)))
-		return cls(disk_path, created=created, path=resource_path, **kwargs)
+		return cls(disk_path, path=resource_path, **kwargs)
 
 	@classmethod
 	def resolve(cls, info, **kwargs):
@@ -150,6 +149,9 @@ class SiteTemplate(graphene.ObjectType):
 			logger.warning('can not resolve templates when the normalized path is outside of the web root')
 			return
 		return cls.from_path(disk_path, resource_path, hostname=hostname)
+
+	def resolve_created(self, info, **kwargs):
+		return utilities.datetime_local_to_utc(datetime.datetime.fromtimestamp(os.path.getctime(self._disk_path)))
 
 	def resolve_metadata(self, info, **kwargs):
 		return _load_metadata(self._disk_path)
@@ -186,7 +188,8 @@ class SiteTemplateConnection(graphene.relay.Connection):
 			absolute_path=True,
 			filter_func=_search_filter,
 			follow_links=True,
-			max_depth=kwargs.get('max_depth')
+			max_depth=kwargs.get('max_depth'),
+			skip_files=True
 		)
 		templates = []
 		for hostname, directory in directories:
