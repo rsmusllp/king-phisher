@@ -340,7 +340,7 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 				client_vars['campaign'] = campaign
 				if message.campaign.company:
 					client_vars['company_name'] = message.campaign.company.name
-					client_vars['company'] = campaign.company.to_dict()
+					client_vars['company'] = message.campaign.company.to_dict()
 				result = (message.target_email, message.first_name, message.last_name, message.trained)
 			query = self._session.query(db_models.Credential)
 			query = query.filter_by(message_id=self.message_id)
