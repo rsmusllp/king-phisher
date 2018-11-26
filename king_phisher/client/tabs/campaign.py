@@ -45,6 +45,7 @@ from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
 from king_phisher.client.widget import managers
 
+import advancedhttpserver
 from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import Gtk
@@ -597,7 +598,11 @@ class CampaignViewDashboardTab(CampaignViewGenericTab):
 		"""The loading routine to be executed within a thread."""
 		if not 'campaign_id' in self.config:
 			return
-		if not self.application.get_graphql_campaign():
+		try:
+			campaign = self.application.get_graphql_campaign()
+		except (ConnectionError, advancedhttpserver.RPCConnectionError):
+			return
+		if campaign is None:
 			return
 		info_cache = {}
 		for graph in self.graphs:

@@ -153,10 +153,12 @@ class ServerEventSubscriber(_GObject_GObject):
 		# only print exception info when either connected or intending to
 		# reconnect, this effectively suppresses a stack trace caused by
 		# https://github.com/websocket-client/websocket-client/blob/6c3d49c943796fd5d84f5df64806972f565ab10a/websocket/_app.py#L47-L52
-		if self.is_connected or self.reconnect:
+		if isinstance(exception, ConnectionError):
+			self.logger.info("encountered a web socket connection exception (type: {0})".format(exception.__class__.__name__))
+		elif self.is_connected or self.reconnect:
 			self.logger.error('encountered a web socket exception', exc_info=True)
 		else:
-			self.logger.info('encountered a web socket exception while disconnected')
+			self.logger.info("encountered a web socket exception while disconnected (type: {0})".format(exception.__class__.__name__))
 
 	def _on_message(self, message):
 		if isinstance(message, bytes):

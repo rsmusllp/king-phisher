@@ -32,6 +32,7 @@
 
 import collections
 import copy
+import functools
 import http.client
 import logging
 import os
@@ -99,6 +100,12 @@ A named tuple representing the user that is authenticated on the remote server.
 
 	The user's name.
 """
+
+def _rpc_ping(rpc):
+	try:
+		return rpc.ping()
+	except (ConnectionError, advancedhttpserver.RPCConnectionError):
+		return None
 
 class KingPhisherClientApplication(_Gtk_Application):
 	"""
@@ -649,7 +656,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return False, ConnectionErrorReason.ERROR_UNKNOWN
 		self.rpc = rpc
 		self.server_events = event_subscriber
-		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), rpc.ping)
+		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), functools.partial(_rpc_ping, rpc))
 		user = self.rpc.graphql("""\
 		query getUser($name: String!) {
 			db { user(name: $name) { id name } }
