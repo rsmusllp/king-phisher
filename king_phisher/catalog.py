@@ -45,7 +45,7 @@ import requests
 import requests_file
 import smoke_zephyr.utilities
 
-COLLECTION_TYPES = ('plugins/client', 'plugins/server', 'templates/client', 'templates/server')
+COLLECTION_TYPES = ('plugins/client', 'plugins/server', 'templates/message', 'templates/site')
 """
 A tuple of the known collection type identity strings. Collection types are
 logical groupings of published data types. These type identifiers provide some

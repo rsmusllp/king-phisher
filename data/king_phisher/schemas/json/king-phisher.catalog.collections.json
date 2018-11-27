@@ -266,53 +266,53 @@
           },
           "type": "array"
         },
-        "templates/client": {
-          "id": "/properties/collections/properties/templates/client",
+        "templates/message": {
+          "id": "/properties/collections/properties/templates/message",
           "items": {
-            "id": "/properties/collections/properties/templates/client/items",
+            "id": "/properties/collections/properties/templates/message/items",
             "properties": {
               "authors": {
-                "id": "/properties/collections/properties/templates/client/items/properties/authors",
+                "id": "/properties/collections/properties/templates/message/items/properties/authors",
                 "items": {
-                  "id": "/properties/collections/properties/templates/client/items/properties/authors/items",
+                  "id": "/properties/collections/properties/templates/message/items/properties/authors/items",
                   "type": "string"
                 },
                 "minItems": 1,
                 "type": "array"
               },
               "classifiers": {
-                "id": "/properties/collections/properties/templates/client/items/properties/classifiers",
+                "id": "/properties/collections/properties/templates/message/items/properties/classifiers",
                 "items": {
-                  "id": "/properties/collections/properties/templates/client/items/properties/classifiers/items",
+                  "id": "/properties/collections/properties/templates/message/items/properties/classifiers/items",
                   "type": "string"
                 },
                 "minItems": 1,
                 "type": "array"
               },
               "description": {
-                "id": "/properties/collections/properties/templates/client/items/properties/description",
+                "id": "/properties/collections/properties/templates/message/items/properties/description",
                 "type": "string"
               },
               "files": {
-                "id": "/properties/collections/properties/templates/client/items/properties/files",
+                "id": "/properties/collections/properties/templates/message/items/properties/files",
                 "items": {
                   "additionalProperties": false,
-                  "id": "/properties/collections/properties/templates/client/items/properties/files/items",
+                  "id": "/properties/collections/properties/templates/message/items/properties/files/items",
                   "properties": {
                     "path-destination": {
-                      "id": "/properties/collections/properties/templates/client/items/properties/files/items/properties/path-destination",
+                      "id": "/properties/collections/properties/templates/message/items/properties/files/items/properties/path-destination",
                       "type": "string"
                     },
                     "path-source": {
-                      "id": "/properties/collections/properties/templates/client/items/properties/files/items/properties/path-source",
+                      "id": "/properties/collections/properties/templates/message/items/properties/files/items/properties/path-source",
                       "type": "string"
                     },
                     "signature": {
-                      "id": "/properties/collections/properties/templates/client/items/properties/files/items/properties/signature",
+                      "id": "/properties/collections/properties/templates/message/items/properties/files/items/properties/signature",
                       "type": "string"
                     },
                     "signed-by": {
-                      "id": "/properties/collections/properties/templates/client/items/properties/files/items/properties/signed-by",
+                      "id": "/properties/collections/properties/templates/message/items/properties/files/items/properties/signed-by",
                       "type": "string"
                     }
                   },
@@ -326,28 +326,28 @@
                 "type": "array"
               },
               "homepage": {
-                "id": "/properties/collections/properties/templates/client/items/properties/homepage",
+                "id": "/properties/collections/properties/templates/message/items/properties/homepage",
                 "type": "string"
               },
               "name": {
-                "id": "/properties/collections/properties/templates/client/items/properties/name",
+                "id": "/properties/collections/properties/templates/message/items/properties/name",
                 "type": "string"
               },
               "reference_urls": {
-                "id": "/properties/collections/properties/templates/client/items/properties/reference_urls",
+                "id": "/properties/collections/properties/templates/message/items/properties/reference_urls",
                 "items": {
-                  "id": "/properties/collections/properties/templates/client/items/properties/reference_urls/items",
+                  "id": "/properties/collections/properties/templates/message/items/properties/reference_urls/items",
                   "type": "string"
                 },
                 "minItems": 1,
                 "type": "array"
               },
               "title": {
-                "id": "/properties/collections/properties/templates/client/items/properties/title",
+                "id": "/properties/collections/properties/templates/message/items/properties/title",
                 "type": "string"
               },
               "version": {
-                "id": "/properties/collections/properties/templates/client/items/properties/version",
+                "id": "/properties/collections/properties/templates/message/items/properties/version",
                 "type": "string"
               }
             },
@@ -363,53 +363,53 @@
           },
           "type": "array"
         },
-        "templates/server": {
-          "id": "/properties/collections/properties/templates/server",
+        "templates/site": {
+          "id": "/properties/collections/properties/templates/site",
           "items": {
-            "id": "/properties/collections/properties/templates/server/items",
+            "id": "/properties/collections/properties/templates/site/items",
             "properties": {
               "authors": {
-                "id": "/properties/collections/properties/templates/server/items/properties/authors",
+                "id": "/properties/collections/properties/templates/site/items/properties/authors",
                 "items": {
-                  "id": "/properties/collections/properties/templates/server/items/properties/authors/items",
+                  "id": "/properties/collections/properties/templates/site/items/properties/authors/items",
                   "type": "string"
                 },
                 "minItems": 1,
                 "type": "array"
               },
               "classifiers": {
-                "id": "/properties/collections/properties/templates/server/items/properties/classifiers",
+                "id": "/properties/collections/properties/templates/site/items/properties/classifiers",
                 "items": {
-                  "id": "/properties/collections/properties/templates/server/items/properties/classifiers/items",
+                  "id": "/properties/collections/properties/templates/site/items/properties/classifiers/items",
                   "type": "string"
                 },
                 "minItems": 1,
                 "type": "array"
               },
               "description": {
-                "id": "/properties/collections/properties/templates/server/items/properties/description",
+                "id": "/properties/collections/properties/templates/site/items/properties/description",
                 "type": "string"
               },
               "files": {
-                "id": "/properties/collections/properties/templates/server/items/properties/files",
+                "id": "/properties/collections/properties/templates/site/items/properties/files",
                 "items": {
                   "additionalProperties": false,
-                  "id": "/properties/collections/properties/templates/server/items/properties/files/items",
+                  "id": "/properties/collections/properties/templates/site/items/properties/files/items",
                   "properties": {
                     "path-destination": {
-                      "id": "/properties/collections/properties/templates/server/items/properties/files/items/properties/path-destination",
+                      "id": "/properties/collections/properties/templates/site/items/properties/files/items/properties/path-destination",
                       "type": "string"
                     },
                     "path-source": {
-                      "id": "/properties/collections/properties/templates/server/items/properties/files/items/properties/path-source",
+                      "id": "/properties/collections/properties/templates/site/items/properties/files/items/properties/path-source",
                       "type": "string"
                     },
                     "signature": {
-                      "id": "/properties/collections/properties/templates/server/items/properties/files/items/properties/signature",
+                      "id": "/properties/collections/properties/templates/site/items/properties/files/items/properties/signature",
                       "type": "string"
                     },
                     "signed-by": {
-                      "id": "/properties/collections/properties/templates/server/items/properties/files/items/properties/signed-by",
+                      "id": "/properties/collections/properties/templates/site/items/properties/files/items/properties/signed-by",
                       "type": "string"
                     }
                   },
@@ -423,28 +423,28 @@
                 "type": "array"
               },
               "homepage": {
-                "id": "/properties/collections/properties/templates/server/items/properties/homepage",
+                "id": "/properties/collections/properties/templates/site/items/properties/homepage",
                 "type": "string"
               },
               "name": {
-                "id": "/properties/collections/properties/templates/server/items/properties/name",
+                "id": "/properties/collections/properties/templates/site/items/properties/name",
                 "type": "string"
               },
               "reference_urls": {
-                "id": "/properties/collections/properties/templates/server/items/properties/reference_urls",
+                "id": "/properties/collections/properties/templates/site/items/properties/reference_urls",
                 "items": {
-                  "id": "/properties/collections/properties/templates/server/items/properties/reference_urls/items",
+                  "id": "/properties/collections/properties/templates/site/items/properties/reference_urls/items",
                   "type": "string"
                 },
                 "minItems": 1,
                 "type": "array"
               },
               "title": {
-                "id": "/properties/collections/properties/templates/server/items/properties/title",
+                "id": "/properties/collections/properties/templates/site/items/properties/title",
                 "type": "string"
               },
               "version": {
-                "id": "/properties/collections/properties/templates/server/items/properties/version",
+                "id": "/properties/collections/properties/templates/site/items/properties/version",
                 "type": "string"
               }
             },
