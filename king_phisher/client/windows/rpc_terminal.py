@@ -138,6 +138,7 @@ class RPCTerminal(object):
 			'user_data_path': self.application.user_data_path
 		}
 
+		# todo: should forward sys.path as module_path
 		module_path = os.path.dirname(client_rpc.__file__) + ((os.path.sep + '..') * client_rpc.__name__.count('.'))
 		module_path = os.path.normpath(module_path)
 

@@ -212,6 +212,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if use_plugins:
 			self.plugin_manager.load_all()
 
+	@property
+	def user_library_path(self):
+		return self.plugin_manager.library_path
+
 	def _create_actions(self):
 		action = Gio.SimpleAction.new('emit-application-signal', GLib.VariantType.new('s'))
 		action.connect('activate', self.action_emit_application_signal)

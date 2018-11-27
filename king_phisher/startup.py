@@ -193,6 +193,8 @@ def run_process(process_args, cwd=None, encoding='utf-8'):
 	:rtype: :py:class:`~.ProcessResults`
 	"""
 	cwd = cwd or os.getcwd()
+	logger = logging.getLogger('KingPhisher.ExternalProcess')
+	logger.debug('starting external process: ' + ' '.join(process_args))
 	process_handle = subprocess.Popen(process_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
 	process_handle.wait()
 	results = ProcessResults(

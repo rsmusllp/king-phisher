@@ -47,6 +47,7 @@ import threading
 import smoke_zephyr.requirements
 
 from king_phisher import errors
+from king_phisher import its
 from king_phisher import utilities
 from king_phisher import version
 
@@ -78,6 +79,21 @@ def recursive_reload(module):
 	"""
 	_recursive_reload(module, module.__package__, [])
 	return module
+
+def _resolve_lib_path():
+	if its.on_windows:
+		lib_path = os.path.join('%LOCALAPPDATA%', 'king-phisher', 'lib')
+	else:
+		lib_path = os.path.join('$HOME', '.local', 'lib', 'king-phisher')
+	lib_path = os.path.abspath(os.path.expandvars(lib_path))
+	if not os.path.isdir(lib_path):
+		if not os.path.isdir(os.path.dirname(lib_path)):
+			return
+		os.mkdir(lib_path)
+	lib_path = os.path.join(lib_path, "python{}.{}".format(sys.version_info.major, sys.version_info.minor), 'site-packages')
+	if not os.path.isdir(lib_path):
+		os.makedirs(lib_path)
+	return lib_path
 
 class OptionBase(object):
 	"""
@@ -380,10 +396,11 @@ class PluginManagerBase(object):
 	A managing object to control loading and enabling individual plugin objects.
 	"""
 	_plugin_klass = PluginBase
-	def __init__(self, path, args=None):
+	def __init__(self, path, args=None, library_path=None):
 		"""
 		:param tuple path: A tuple of directories from which to load plugins.
 		:param tuple args: Arguments which should be passed to plugins when their class is initialized.
+		:param str library_path: A path to use for plugins library dependencies.
 		"""
 		self._lock = threading.RLock()
 		self.plugin_init_args = (args or ())
@@ -394,6 +411,16 @@ class PluginManagerBase(object):
 		self.enabled_plugins = {}
 		"""A dictionary of the enabled plugins and their respective instances."""
 		self.logger = logging.getLogger('KingPhisher.Plugins.Manager')
+
+		library_path = library_path or _resolve_lib_path()
+		if library_path is None:
+			self.logger.warning('unable to resolve a valid library path for plugin dependencies')
+		else:
+			if library_path not in sys.path:
+				sys.path.append(library_path)
+			library_path = os.path.abspath(library_path)
+			self.logger.debug('plugin dependency path: ' + library_path)
+		self.library_path = library_path
 
 	def __contains__(self, key):
 		return key in self.loaded_plugins
