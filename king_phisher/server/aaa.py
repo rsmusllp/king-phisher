@@ -396,7 +396,7 @@ class ForkedAuthenticator(object):
 
 	def _seq_recv(self):
 		"""
-		Receive a reseponse from the other process and decode it. This also
+		Receive a response from the other process and decode it. This also
 		ensures that 'sequence' member of the response is the expected value.
 		"""
 		timeout = self.response_timeout

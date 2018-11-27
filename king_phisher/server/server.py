@@ -882,7 +882,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 
 		self.throttle_semaphore = threading.BoundedSemaphore()
 		self.session_manager = aaa.AuthenticatedSessionManager(
-			timeout=config.get_if_exists('server.authentication.cache_timeout', '30m')
+			timeout=config.get_if_exists('server.authentication.session_timeout', '30m')
 		)
 		self.forked_authenticator = aaa.ForkedAuthenticator(
 			cache_timeout=config.get_if_exists('server.authentication.cache_timeout', '10m'),
