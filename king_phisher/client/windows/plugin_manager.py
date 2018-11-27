@@ -365,7 +365,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def _plugin_install_tsafe(self, catalog_model, repo_model, model_row, named_row):
 		self.__installing_plugin = named_row.id
-		self.logger.debug("installing plugin '{0}'".format(named_row.title))
+		self.logger.debug("installing plugin '{0}'".format(named_row.id))
 		self._update_status_bar_tsafe("Installing plugin {}...".format(named_row.title))
 		_show_dialog_error_tsafe = functools.partial(gui_utilities.glib_idle_add_once, gui_utilities.show_dialog_error, 'Failed To Install', self.window)
 		try:
@@ -388,7 +388,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		plugin = self._reload_plugin_tsafe(model_row, named_row)
 		packages = smoke_zephyr.requirements.check_requirements(tuple(plugin.req_packages.keys()))
 		if packages:
-			self.logger.debug("installing missing or incompatible packages from PyPi for plugin '{0}'".format(named_row.title))
+			self.logger.debug("installing missing or incompatible packages from PyPi for plugin '{0}'".format(named_row.id))
 			self._update_status_bar_tsafe(
 				"Installing {:,} dependenc{} for plugin {} from PyPi.".format(len(packages), 'y' if len(packages) == 1 else 'ies', named_row.title)
 			)
@@ -407,18 +407,26 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self._set_model_item(model_row.path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
 			if self._selected_model_row.path == model_row.path:
 				self._popup_menu_refresh(model_row)
-		self._update_status_bar("Installing plugin {} completed.".format(named_row.title))
+		self._update_status_bar("Finished installing plugin {}.".format(named_row.title))
 
 	def _plugin_uninstall(self, model_row):
-		plugin_id = _ModelNamedRow(*model_row).id
-		if not self.application.plugin_manager.uninstall(plugin_id):
+		named_row = _ModelNamedRow(*model_row)
+		if not self.application.plugin_manager.uninstall(named_row.id):
 			return False
-		del self.config['plugins.installed'][plugin_id]
+		del self.config['plugins.installed'][named_row.id]
 		if model_row.parent and model_row.parent[_ModelNamedRow._fields.index('id')] == _LOCAL_REPOSITORY_ID:
+			confirm = gui_utilities.show_dialog_yes_no(
+				'Uninstall Plugin?',
+				self.window,
+				'Are you sure you want to uninstall this plugin?'
+			)
+			if not confirm:
+				return
 			del self._model[model_row.path]
 		else:
 			self._set_model_item(model_row.path, 'installed', False)
-		self.logger.info("successfully uninstalled plugin {0}".format(plugin_id))
+		self.logger.info("successfully uninstalled plugin {0}".format(named_row.id))
+		self._update_status_bar("Finished uninstalling plugin {}.".format(named_row.title))
 		return True
 
 	def _popup_menu_refresh(self, model_row):
