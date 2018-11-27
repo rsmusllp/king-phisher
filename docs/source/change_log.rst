@@ -15,6 +15,7 @@ Version 1.13.0
 
 * Added support for logging MFA tokens with credentials
 * Added support for using regular expressions to validate credentials
+* Automatically try to install plugin dependencies with pip from PyPi
 
 Version 1.12.0
 ^^^^^^^^^^^^^^
