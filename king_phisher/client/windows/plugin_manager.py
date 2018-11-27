@@ -40,6 +40,7 @@ import sys
 import traceback
 import xml.sax.saxutils as saxutils
 
+from king_phisher import startup
 from king_phisher import utilities
 from king_phisher.catalog import Catalog
 from king_phisher.client import plugins
@@ -50,6 +51,7 @@ from king_phisher.client.windows import html
 from gi.repository import Gdk
 from gi.repository import Gtk
 import requests.exceptions
+import smoke_zephyr.requirements
 import smoke_zephyr.utilities
 
 __all__ = ('PluginManagerWindow',)
@@ -69,7 +71,6 @@ _ModelNamedRow = collections.namedtuple('RowModel', (
 	'version',
 	'visible_enabled',
 	'visible_installed',
-	'sensitive_installed',
 	'type'
 ))
 class _ModelNode(object):
@@ -77,6 +78,10 @@ class _ModelNode(object):
 	def __init__(self, *args, **kwargs):
 		self.row = _ModelNamedRow(*args, **kwargs)
 		self.children = collections.deque()
+
+def _pip_install(packages):
+	args = [sys.executable, '-m', 'pip', 'install'] + packages
+	return startup.run_process(args)
 
 class PluginDocumentationWindow(html.HTMLWindow):
 	"""
@@ -206,12 +211,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			)
 		)
 		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer_enable, self._toggle_enabled_cell_data_func)
-		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'visible', 6)
 		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'sensitive', 1)
+		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'visible', 6)
 		tvm.column_views['Installed'].set_cell_data_func(toggle_renderer_install, self._toggle_install_cell_data_func)
 		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'visible', 7)
-		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'sensitive', 8)
-		self._model = Gtk.TreeStore(str, bool, bool, str, str, str, bool, bool, bool, str)
+		self._model = Gtk.TreeStore(str, bool, bool, str, str, str, bool, bool, str)
 		self._model.set_sort_column_id(3, Gtk.SortType.ASCENDING)
 		self.gobjects['treeview_plugins'].set_model(self._model)
 
@@ -271,7 +275,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			version=None,
 			visible_enabled=False,
 			visible_installed=False,
-			sensitive_installed=False,
 			type=_ROW_TYPE_CATALOG
 		)
 		for repo in catalog.repositories.values():
@@ -284,7 +287,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				version=None,
 				visible_enabled=False,
 				visible_installed=False,
-				sensitive_installed=False,
 				type=_ROW_TYPE_REPOSITORY
 			)
 			catalog_node.children.append(repo_node)
@@ -309,7 +311,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					version=plugin_info['version'],
 					visible_enabled=True,
 					visible_installed=True,
-					sensitive_installed=self.catalog_plugins.is_compatible(catalog.id, repo.id, plugin_name),
 					type=_ROW_TYPE_PLUGIN
 				))
 		gui_utilities.glib_idle_add_once(self.__store_add_node, catalog_node)
@@ -358,6 +359,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def _plugin_install_tsafe(self, catalog_model, repo_model, model_row, named_row):
 		self.__installing_plugin = named_row.id
+		self.logger.debug("installing plugin '{0}'".format(named_row.title))
 		self._update_status_bar_tsafe("Installing plugin {}...".format(named_row.title))
 		_show_dialog_error_tsafe = functools.partial(gui_utilities.glib_idle_add_once, gui_utilities.show_dialog_error, 'Failed To Install', self.window)
 		try:
@@ -376,8 +378,16 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.__installing_plugin = None
 
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
-		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
-		self._reload_plugin_tsafe(model_row, named_row)
+		self.logger.info("installed plugin '{}' from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
+
+		plugin = self._reload_plugin_tsafe(model_row, named_row)
+		packages = smoke_zephyr.requirements.check_requirements(tuple(plugin.req_packages.keys()))
+		if packages:
+			self.logger.debug("installing missing or incompatible packages from PyPi for plugin '{0}'".format(named_row.title))
+			self._update_status_bar_tsafe("Installing {:,} dependencies for plugin {} from PyPi.".format(len(packages), named_row.title))
+			proc_results = _pip_install(packages)
+			plugin = self._reload_plugin_tsafe(model_row, named_row)
+
 		gui_utilities.glib_idle_add_once(self.__plugin_install_post, catalog_model, repo_model, model_row, named_row)
 
 	def __plugin_install_post(self, catalog_model, repo_model, model_row, named_row):
@@ -406,7 +416,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		sensitive = named_row.type == _ROW_TYPE_PLUGIN and named_row.installed
 		self._info_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
 		self._tv_popup_menu['Show Documentation'].set_property('sensitive', sensitive)
-		sensitive = named_row.type == _ROW_TYPE_PLUGIN and named_row.installed and named_row.sensitive_installed
+		sensitive = named_row.type == _ROW_TYPE_PLUGIN and named_row.installed
 		self._info_popup_menu['Update'].set_property('sensitive', sensitive)
 		self._tv_popup_menu['Update'].set_property('sensitive', sensitive)
 
@@ -458,6 +468,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				pm.enable(named_row.id)
 			self.__load_errors.pop(named_row.id, None)
 		gui_utilities.glib_idle_add_once(self.__reload_plugin_post, model_row, named_row, klass)
+		return klass
 
 	def __reload_plugin_post(self, model_row, named_row, klass=None):
 		if model_row.path is not None:
@@ -772,7 +783,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		pm = self.application.plugin_manager
 		self.__load_errors = {}
 		pm.load_all(on_error=self._on_plugin_load_error_tsafe)
-		node = _ModelNode(_LOCAL_REPOSITORY_ID, None, True, _LOCAL_REPOSITORY_TITLE, None, None, False, False, False, _ROW_TYPE_CATALOG)
+		node = _ModelNode(_LOCAL_REPOSITORY_ID, None, True, _LOCAL_REPOSITORY_TITLE, None, None, False, False, _ROW_TYPE_CATALOG)
 
 		for name, plugin in pm.loaded_plugins.items():
 			if self.config['plugins.installed'].get(name):
@@ -787,7 +798,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				version=plugin.version,
 				visible_enabled=True,
 				visible_installed=True,
-				sensitive_installed=False,
 				type=_ROW_TYPE_PLUGIN
 			))
 		for name in self.__load_errors.keys():
@@ -800,7 +810,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				version='Unknown',
 				visible_enabled=True,
 				visible_installed=True,
-				sensitive_installed=False,
 				type=_ROW_TYPE_PLUGIN
 			))
 		gui_utilities.glib_idle_add_wait(self.__store_add_node, node)
@@ -886,7 +895,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		named_row = None if model_row is None else _ModelNamedRow(*model_row)
 		if named_row is None:
 			return
-		if not (named_row.type == _ROW_TYPE_PLUGIN and named_row.installed and named_row.sensitive_installed):
+		if not (named_row.type == _ROW_TYPE_PLUGIN and named_row.installed):
 			return
 		if not self._plugin_uninstall(model_row):
 			gui_utilities.show_dialog_error('Update Failed', self.window, 'Failed to uninstall the existing plugin data.')
