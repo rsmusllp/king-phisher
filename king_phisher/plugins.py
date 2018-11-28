@@ -399,8 +399,11 @@ class PluginManagerBase(object):
 	def __init__(self, path, args=None, library_path=None):
 		"""
 		:param tuple path: A tuple of directories from which to load plugins.
-		:param tuple args: Arguments which should be passed to plugins when their class is initialized.
+		:param tuple args: Arguments which should be passed to plugins when
+			their class is initialized.
 		:param str library_path: A path to use for plugins library dependencies.
+			This value will be added to :py:attr:`sys.path` if it is not already
+			included.
 		"""
 		self._lock = threading.RLock()
 		self.plugin_init_args = (args or ())
@@ -421,6 +424,19 @@ class PluginManagerBase(object):
 			library_path = os.path.abspath(library_path)
 			self.logger.debug('plugin dependency path: ' + library_path)
 		self.library_path = library_path
+		"""
+		The path to a directory which is included for additional libraries. This
+		path must be writable by the current user.
+
+		The default value is platform and Python-version (where X.Y is the major
+		and minor versions of Python) dependant:
+
+		:Linux:
+			``~/.local/lib/king-phisher/pythonX.Y/site-packages``
+
+		:Windows:
+			``%LOCALAPPDATA%\\king-phisher\\lib\\pythonX.Y\\site-packages``
+		"""
 
 	def __contains__(self, key):
 		return key in self.loaded_plugins

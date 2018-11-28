@@ -79,6 +79,10 @@ server:
     - "X-Frame-Options: DENY"
     - "X-XSS-Protection: 1; mode=block"
 
+  # Hostnames to provide to the client for auto completion
+  #hostnames:
+  #  - king-phisher.com
+
   # Set a file to write the PID to
   pid_file: /var/run/king-phisher.pid
 

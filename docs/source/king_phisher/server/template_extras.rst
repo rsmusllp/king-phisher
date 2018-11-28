@@ -1,7 +1,7 @@
-:mod:`pages`
-============
+:mod:`template_extras`
+======================
 
-.. module:: king_phisher.server.pages
+.. module:: king_phisher.server.template_extras
    :synopsis:
 
 This module provides functionality for Jinja functions used to generate server
@@ -10,7 +10,7 @@ page content.
 Data
 ----
 
-.. autodata:: EXPORTED_FUNCTIONS
+.. autodata:: functions
    :annotation:
 
 Functions

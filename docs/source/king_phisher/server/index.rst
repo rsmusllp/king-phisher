@@ -16,11 +16,11 @@ application.
    aaa.rst
    build.rst
    configuration.rst
-   pages.rst
    plugins.rst
    rest_api.rst
    server.rst
    server_rpc.rst
    signals.rst
+   template_extras.rst
    web_sockets.rst
    web_tools.rst

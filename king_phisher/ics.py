@@ -333,4 +333,10 @@ class Calendar(icalendar.Calendar):
 		self._event.add('attendee', attendee)
 
 	def to_ical(self, encoding='utf-8', **kwargs):
+		"""
+		Convert the calendar object to a string in the iCalendar format.
+
+		:return: The string representation of the data.
+		:rtype: str
+		"""
 		return super(Calendar, self).to_ical(**kwargs).decode('utf-8')

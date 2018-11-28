@@ -148,6 +148,18 @@ class KingPhisherClientApplication(_Gtk_Application):
 		else:
 			self._theme_file = DISABLED
 		self.user_data_path = os.path.join(GLib.get_user_config_dir(), USER_DATA_PATH)
+		"""
+		The path to a directory where user data files can be stored. This path
+		must be writable by the current user.
+
+		The default value is platform dependant:
+
+		:Linux:
+			``~/.config/king-phisher``
+
+		:Windows:
+			``%LOCALAPPDATA%\\king-phisher``
+		"""
 		self.logger = logging.getLogger('KingPhisher.Client.Application')
 		# log version information for debugging purposes
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
