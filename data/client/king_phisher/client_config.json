@@ -49,6 +49,7 @@
   "plugins": {},
   "plugins.enabled": [],
   "plugins.installed": {},
+  "plugins.pip.install_dependencies": true,
   "rpc.serializer": null,
   "server": "localhost:22",
   "server_remote_port": 80,

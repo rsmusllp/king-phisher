@@ -392,17 +392,18 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
 		self.logger.info("installed plugin '{}' from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
 		plugin = self._reload_plugin_tsafe(model_row, named_row)
-		packages = smoke_zephyr.requirements.check_requirements(tuple(plugin.req_packages.keys()))
-		if packages:
-			self.logger.debug("installing missing or incompatible packages from PyPi for plugin '{0}'".format(named_row.id))
-			self._update_status_bar_tsafe(
-				"Installing {:,} dependenc{} for plugin {} from PyPi.".format(len(packages), 'y' if len(packages) == 1 else 'ies', named_row.title)
-			)
-			pip_results = self._pip_install(packages)
-			if pip_results.status:
-				self.logger.warning('pip install failed, exit status: ' + str(pip_results.status))
-			else:
-				plugin = self._reload_plugin_tsafe(model_row, named_row)
+		if self.config['plugins.pip.install_dependencies']:
+			packages = smoke_zephyr.requirements.check_requirements(tuple(plugin.req_packages.keys()))
+			if packages:
+				self.logger.debug("installing missing or incompatible packages from PyPi for plugin '{0}'".format(named_row.id))
+				self._update_status_bar_tsafe(
+					"Installing {:,} dependenc{} for plugin {} from PyPi.".format(len(packages), 'y' if len(packages) == 1 else 'ies', named_row.title)
+				)
+				pip_results = self._pip_install(packages)
+				if pip_results.status:
+					self.logger.warning('pip install failed, exit status: ' + str(pip_results.status))
+				else:
+					plugin = self._reload_plugin_tsafe(model_row, named_row)
 		self.__installing_plugin = None
 		gui_utilities.glib_idle_add_once(self.__plugin_install_post, catalog_model, repo_model, model_row, named_row)
 

@@ -4710,6 +4710,21 @@ Spencer McIntyre</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">3</property>
                         <child>
+                          <object class="GtkCheckButton" id="ConfigurationDialog.checkbutton_pip_install_dependencies">
+                            <property name="label" translatable="yes">Automatically install dependencies from PyPI with pip</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="tooltip_text" translatable="yes">Automatically use pip to install dependencies as necessary for plugins from the Python Package Index (PyPI).</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkLabel" id="label46">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
@@ -4723,7 +4738,7 @@ Spencer McIntyre</property>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">0</property>
+                            <property name="position">1</property>
                           </packing>
                         </child>
                         <child>
