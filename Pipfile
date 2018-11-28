@@ -54,6 +54,7 @@ pyproj = {git = "https://github.com/jswhit/pyproj.git"}
 sphinx = "==1.7.9"
 sphinxcontrib-httpdomain = "==1.5.0"
 sphinx-rtd-theme = "*"
+ipython = "*"
 
 [scripts]
 KingPhisher = "python -m king_phisher.client"
