@@ -86,10 +86,6 @@ def _resolve_lib_path():
 	else:
 		lib_path = os.path.join('$HOME', '.local', 'lib', 'king-phisher')
 	lib_path = os.path.abspath(os.path.expandvars(lib_path))
-	if not os.path.isdir(lib_path):
-		if not os.path.isdir(os.path.dirname(lib_path)):
-			return
-		os.mkdir(lib_path)
 	lib_path = os.path.join(lib_path, "python{}.{}".format(sys.version_info.major, sys.version_info.minor), 'site-packages')
 	if not os.path.isdir(lib_path):
 		os.makedirs(lib_path)
