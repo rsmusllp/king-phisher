@@ -39,6 +39,7 @@ from king_phisher import testing
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 from king_phisher.server.database import storage as db_storage
+from king_phisher.server.database import validation as db_validation
 from king_phisher.utilities import random_string
 
 import sqlalchemy
@@ -206,6 +207,84 @@ class DatabaseTests(DatabaseTestBase):
 		value = random_string(30)
 		db_manager.set_metadata(key, value)
 		self.assertEqual(db_manager.get_metadata(key), value)
+
+	def test_users_dont_default_to_admin(self):
+		user = db_models.User(name='alice')
+		self.assertFalse(user.is_admin)
+
+	def test_models_convert_to_dictionaries(self):
+		model = db_models.User(name='alice')
+		dictionary = model.to_dict()
+		self.assertIsInstance(dictionary, dict)
+		self.assertIn('name', dictionary)
+		self.assertEqual(dictionary['name'], 'alice')
+
+class DatabaseValidateCredentialTests(testing.KingPhisherTestCase):
+	campaign = db_models.Campaign(credential_regex_username=r'a\S+')
+	def test_credential_collection_members(self):
+		for field in db_validation.CredentialCollection._fields:
+			self.assertTrue(hasattr(db_models.Credential, field))
+
+	def test_empty_configuration_returns_none(self):
+		self.assertIsNone(db_validation.validate_credential(
+			db_validation.CredentialCollection(username='alice', password='Wonderland!123', mfa_token='031337'),
+			db_models.Campaign()
+		))
+
+	def test_extra_fields_are_ignored(self):
+		self.assertTrue(db_validation.validate_credential(
+			db_validation.CredentialCollection(username='alice', password='Wonderland!123', mfa_token=None),
+			self.campaign
+		))
+		self.assertTrue(db_validation.validate_credential(
+			db_validation.CredentialCollection(username='alice', password=None, mfa_token='031337'),
+			self.campaign
+		))
+		self.assertTrue(db_validation.validate_credential(
+			db_validation.CredentialCollection(username='alice', password='Wonderland!123', mfa_token='031337'),
+			self.campaign
+		))
+
+	def test_validation_methods(self):
+		cred = db_validation.CredentialCollection(username='alice', password=None, mfa_token=None)
+		self.assertEqual(
+			db_validation.validate_credential_fields(cred, self.campaign),
+			db_validation.CredentialCollection(username=True, password=None, mfa_token=None)
+		)
+		self.assertTrue(db_validation.validate_credential(cred, self.campaign))
+
+		cred = db_validation.CredentialCollection(username='calie', password=None, mfa_token=None)
+		self.assertEqual(
+			db_validation.validate_credential_fields(cred, self.campaign),
+			db_validation.CredentialCollection(username=False, password=None, mfa_token=None)
+		)
+		self.assertFalse(db_validation.validate_credential(cred, self.campaign))
+
+		cred = db_validation.CredentialCollection(username='alice', password=None, mfa_token=None)
+		campaign = db_models.Campaign(credential_regex_username=r'a\S+', credential_regex_password=r'a\S+')
+		self.assertEqual(
+			db_validation.validate_credential_fields(cred, campaign),
+			db_validation.CredentialCollection(username=True, password=False, mfa_token=None)
+		)
+		self.assertFalse(db_validation.validate_credential(cred, campaign))
+
+	def test_empty_fields_fail(self):
+		self.assertEqual(db_validation.validate_credential_fields(
+			db_validation.CredentialCollection(username='', password=None, mfa_token=None),
+			self.campaign
+		), db_validation.CredentialCollection(username=False, password=None, mfa_token=None))
+
+	def test_none_fields_fail(self):
+		self.assertEqual(db_validation.validate_credential_fields(
+			db_validation.CredentialCollection(username=None, password=None, mfa_token=None),
+			self.campaign
+		), db_validation.CredentialCollection(username=False, password=None, mfa_token=None))
+
+	def test_bad_regexs_are_skipped(self):
+		self.assertEqual(db_validation.validate_credential_fields(
+			db_validation.CredentialCollection(username='alice', password=None, mfa_token=None),
+			db_models.Campaign(credential_regex_username=r'\S+[')
+		), db_validation.CredentialCollection(username=None, password=None, mfa_token=None))
 
 if __name__ == '__main__':
 	unittest.main()

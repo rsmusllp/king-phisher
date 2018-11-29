@@ -42,6 +42,7 @@ from .database import DatabaseRPCTests
 from .database import DatabaseSchemaTests
 from .database import DatabaseStorageTests
 from .database import DatabaseTests
+from .database import DatabaseValidateCredentialTests
 from .graphql import ServerGraphQLTests
 from .graphql import ServerGraphQLDatabaseTests
 from .rest_api import ServerRESTAPITests
