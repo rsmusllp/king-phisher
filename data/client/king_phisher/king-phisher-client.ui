@@ -5077,6 +5077,50 @@ Spencer McIntyre</property>
               </object>
             </child>
             <child>
+              <object class="GtkMenuItem" id="RPCTerminalAppWindow.menuitem_view">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">_View</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem" id="RPCTerminalAppWindow.menuitem_view_zoom_in">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Zoom In</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="signal_menuitem_view_zoom_in" swapped="no"/>
+                        <accelerator key="plus" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="RPCTerminalAppWindow.menuitem_view_zoom_reset">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Normal Size</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="signal_menuitem_view_zoom_reset" swapped="no"/>
+                        <accelerator key="0" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="RPCTerminalAppWindow.menuitem_view_zoom_out">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Zoom Out</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="signal_menuitem_view_zoom_out" swapped="no"/>
+                        <accelerator key="minus" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
               <object class="GtkMenuItem" id="RPCTerminalAppWindow.menuitem_help">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>

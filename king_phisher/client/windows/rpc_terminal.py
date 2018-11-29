@@ -56,6 +56,8 @@ else:
 
 __all__ = ('RPCTerminal', 'RPCTerminalAppWindow')
 
+ZOOM_RATE = 0.2
+
 class RPCTerminalAppWindow(gui_utilities.GladeGObject):
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
@@ -76,7 +78,8 @@ class RPCTerminalAppWindow(gui_utilities.GladeGObject):
 		self.gobjects['box_main'].pack_end(self.terminal, True, True, 0)
 		if hasattr(self.terminal.props, 'rewrap_on_resize'):
 			self.terminal.set_property('rewrap-on-resize', True)
-		self.terminal.set_scroll_on_keystroke(True)
+		self.terminal.set_property('scroll-on-keystroke', True)
+		self.terminal.set_property('scrollback-lines', 2048)
 
 	def signal_menuitem_edit_copy(self, menuitem):
 		self.terminal.copy_clipboard()
@@ -93,6 +96,19 @@ class RPCTerminalAppWindow(gui_utilities.GladeGObject):
 
 	def signal_menuitem_help_wiki(self, menuitem):
 		utilities.open_uri('https://github.com/securestate/king-phisher/wiki')
+
+	def signal_menuitem_view_zoom_in(self, menuitem):
+		font_scale = self.terminal.get_property('font-scale')
+		font_scale += font_scale * ZOOM_RATE
+		self.terminal.set_property('font-scale', font_scale)
+
+	def signal_menuitem_view_zoom_out(self, menuitem):
+		font_scale = self.terminal.get_property('font-scale')
+		font_scale = font_scale / (1.0 + ZOOM_RATE)
+		self.terminal.set_property('font-scale', font_scale)
+
+	def signal_menuitem_view_zoom_reset(self, menuitem):
+		self.terminal.set_property('font-scale', 1.0)
 
 	def signal_window_destroy(self, window):
 		if self.child_pid is None:
@@ -135,10 +151,10 @@ class RPCTerminal(object):
 				'uri_base': rpc.uri_base,
 				'headers': rpc.headers
 			},
-			'user_data_path': self.application.user_data_path
+			'user_data_path': self.application.user_data_path,
+			'user_library_path': self.application.user_library_path
 		}
 
-		# todo: should forward sys.path as module_path
 		module_path = os.path.dirname(client_rpc.__file__) + ((os.path.sep + '..') * client_rpc.__name__.count('.'))
 		module_path = os.path.normpath(module_path)
 
@@ -166,6 +182,7 @@ class RPCTerminal(object):
 				find.ENV_VAR + '=' + os.environ[find.ENV_VAR],
 				'DISPLAY=' + os.environ['DISPLAY'],
 				'PATH=' + os.environ['PATH'],
+				'PYTHONDONTWRITEBYTECODE=x',
 				'PYTHONPATH=' + module_path,
 				'TERM=' + os.environ.get('TERM', 'xterm')
 			],
