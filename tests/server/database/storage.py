@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/server/__init__.py
+#  tests/server/database/storage.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,18 +30,33 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
+import datetime
+import unittest
 
-from .aaa import ServerAuthenticatedSessionManagerTests
-from .aaa import ServerAuthenticationTests
-from .aaa import ServerCachedPasswordTests
-from .configuration import ServerConfigurationTests
-from .database import *
-from .graphql import ServerGraphQLTests
-from .graphql import ServerGraphQLDatabaseTests
-from .rest_api import ServerRESTAPITests
-from .server import CampaignWorkflowTests
-from .server import ServerTests
-from .server_rpc import ServerRPCTests
+from king_phisher import testing
+from king_phisher.server.database import storage as db_storage
+
+class DatabaseStorageTests(testing.KingPhisherTestCase):
+	def test_storage_keys_must_be_strings(self):
+		storage = db_storage.KeyValueStorage()
+		with self.assertRaises(TypeError):
+			storage[1] = 'test'
+
+	def test_storage_missing_values_raise_keyerror(self):
+		storage = db_storage.KeyValueStorage()
+		with self.assertRaises(KeyError):
+			storage['missing']
+
+	def test_storage_accepts_native_types(self):
+		storage = db_storage.KeyValueStorage()
+		self.assertNotIsInstance(storage, dict)
+		storage['data'] = {
+			'key1': 1,
+			'key2': 'hello world',
+			'key3': True,
+			'key4': datetime.datetime.utcnow()
+		}
+		self.assertEquals(len(storage), 1)
+
+if __name__ == '__main__':
+	unittest.main()

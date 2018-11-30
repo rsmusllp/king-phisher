@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/server/__init__.py
+#  tests/server/database/__init__.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,18 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
-
-from .aaa import ServerAuthenticatedSessionManagerTests
-from .aaa import ServerAuthenticationTests
-from .aaa import ServerCachedPasswordTests
-from .configuration import ServerConfigurationTests
-from .database import *
-from .graphql import ServerGraphQLTests
-from .graphql import ServerGraphQLDatabaseTests
-from .rest_api import ServerRESTAPITests
-from .server import CampaignWorkflowTests
-from .server import ServerTests
-from .server_rpc import ServerRPCTests
+from .manager import *
+from .models import *
+from .storage import *
+from .validation import *
