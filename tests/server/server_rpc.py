@@ -128,7 +128,7 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.test_rpc_campaign_new()
 		campaign = list(self.rpc.remote_table('campaigns'))[0]
 		campaign = campaign._asdict()
-		self.assertTrue(isinstance(campaign, dict))
+		self.assertIsInstance(campaign, dict)
 		meta_table = self.server.tables_api['campaigns']
 		self.assertEqual(sorted(campaign.keys()), sorted(meta_table.column_names))
 
@@ -165,8 +165,8 @@ class ServerRPCTests(KingPhisherServerTestCase):
 
 	def test_rpc_version(self):
 		response = self.rpc('version')
-		self.assertTrue('version' in response)
-		self.assertTrue('version_info' in response)
+		self.assertIn('version', response)
+		self.assertIn('version_info', response)
 		self.assertEqual(response['version'], version.version)
 		self.assertEqual(response['version_info']['major'], version.version_info.major)
 		self.assertEqual(response['version_info']['minor'], version.version_info.minor)

@@ -38,8 +38,8 @@ from king_phisher.client import graphs
 class ClientGraphsTests(testing.KingPhisherTestCase):
 	def test_graph_classes(self):
 		for graph in graphs.get_graphs():
-			self.assertTrue(isinstance(graph, str))
-			self.assertTrue(issubclass(graphs.get_graph(graph), graphs.CampaignGraph))
+			self.assertIsInstance(graph, str)
+			self.assertIsSubclass(graphs.get_graph(graph), graphs.CampaignGraph)
 
 	def test_graphs_found(self):
 		self.assertGreaterEqual(len(graphs.get_graphs()), 6)

@@ -143,12 +143,27 @@ class KingPhisherTestCase(smoke_zephyr.utilities.TestCase):
 	methods across Python 2.x and Python 3.x.
 	"""
 	def assertIsEmpty(self, obj, msg=None):
+		"""Test that *obj* is empty as determined by :py:func:`len`."""
 		if len(obj):
-			self.fail(msg or 'the object is not empty')
+			self.fail(msg or 'the test object is not empty')
 
 	def assertIsNotEmpty(self, obj, msg=None):
+		"""Test that *obj* is not empty as determined by :py:func:`len`."""
 		if not len(obj):
-			self.fail(msg or 'the object is empty')
+			self.fail(msg or 'the test object is empty')
+
+	def assertIsSubclass(self, obj, cls, msg=None):
+		"""
+		Test that *obj* is a subclass of *cls* (which can be a class or a tuple
+		of classes as supported by :py:func:`issubclass`).
+		"""
+		if not issubclass(obj, cls):
+			self.fail(msg or "the test object is not a subclass of '{}'".format(cls.__name__))
+
+	def assertHasAttribute(self, obj, attribute, msg=None):
+		"""Test that *obj* has the named *attribute*."""
+		if not hasattr(obj, attribute):
+			self.fail(msg or "the test object has no attribute '{}'".format(attribute))
 
 class KingPhisherServerTestCase(KingPhisherTestCase):
 	"""

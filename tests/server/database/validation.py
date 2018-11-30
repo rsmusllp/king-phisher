@@ -40,7 +40,7 @@ class DatabaseValidateCredentialTests(testing.KingPhisherTestCase):
 	campaign = db_models.Campaign(credential_regex_username=r'a\S+')
 	def test_credential_collection_members(self):
 		for field in db_validation.CredentialCollection._fields:
-			self.assertTrue(hasattr(db_models.Credential, field))
+			self.assertHasAttribute(db_models.Credential, field)
 
 	def test_empty_configuration_returns_none(self):
 		self.assertIsNone(db_validation.validate_credential(
