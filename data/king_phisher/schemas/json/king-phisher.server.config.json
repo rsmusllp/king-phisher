@@ -143,6 +143,15 @@
           "minItems": 1,
           "type": "array"
         },
+        "hostnames": {
+          "id": "/properties/server/properties/hostnames",
+          "items": {
+            "id": "/properties/server/properties/hostnames/items",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
         "pid_file": {
           "id": "/properties/server/properties/pid_file",
           "type": "string"

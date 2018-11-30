@@ -38,6 +38,14 @@ from king_phisher import testing
 from king_phisher import utilities
 
 class UtilitiesTests(testing.KingPhisherTestCase):
+	def test_assert_arg_type(self):
+		with self.assertRaisesRegex(TypeError, r'test_assert_arg_type\(\) argument 1 must be str, not int'):
+			utilities.assert_arg_type(0, str)
+		try:
+			utilities.assert_arg_type('', str)
+		except TypeError:
+			self.fail('assert_arg_type raised a TypeError when it should not have')
+
 	def test_configure_stream_logger(self):
 		logger = utilities.configure_stream_logger('KingPhisher', 'INFO')
 		self.assertEqual(logger.level, logging.INFO)
@@ -80,6 +88,11 @@ class UtilitiesTests(testing.KingPhisherTestCase):
 		self.assertIsInstance(mock.foo.bar, utilities.Mock)
 		self.assertEqual(mock.__file__, os.devnull)
 		self.assertEqual(mock.__path__, os.devnull)
+
+	def test_nonempty_string(self):
+		self.assertEqual(utilities.nonempty_string('test'), 'test')
+		self.assertIsNone(utilities.nonempty_string(''))
+		self.assertIsNone(utilities.nonempty_string(None))
 
 	def test_password_is_complex(self):
 		valid_passwords = [

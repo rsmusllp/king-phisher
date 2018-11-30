@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/server/__init__.py
+#  tests/server/template_extras.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,20 +30,21 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
+from king_phisher.testing import KingPhisherServerTestCase
+from king_phisher.server import template_extras
 
-from .aaa import ServerAuthenticatedSessionManagerTests
-from .aaa import ServerAuthenticationTests
-from .aaa import ServerCachedPasswordTests
-from .configuration import ServerConfigurationTests
-from .database import *
-from .graphql import ServerGraphQLTests
-from .graphql import ServerGraphQLDatabaseTests
-from .rest_api import ServerRESTAPITests
-from .server import CampaignWorkflowTests
-from .server import ServerTests
-from .server_rpc import ServerRPCTests
-from .template_extras import TemplateExtraTests
-from .web_tools import ServerWebToolsTests
+class TemplateExtraTests(KingPhisherServerTestCase):
+	def test_tempate_functions_are_callable(self):
+		for name, function in template_extras.functions.items():
+			self.assertIsInstance(name, str)
+			self.assertTrue(callable(function), msg="function '{}' is not callable".format(getattr(function, '__name__', repr(function))))
+
+	def test_template_functions_exporting(self):
+		self.assertIsInstance(template_extras.functions, dict)
+		self.assertNotIn('new_function', template_extras.functions)
+
+		@template_extras.export_function
+		def new_function(foo):
+			return foo
+		self.assertIn('new_function', template_extras.functions)
+		self.assertIs(template_extras.functions['new_function'], new_function)

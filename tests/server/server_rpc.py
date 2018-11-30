@@ -36,7 +36,6 @@ import unittest
 from king_phisher import errors
 from king_phisher import version
 from king_phisher.server import server_rpc
-from king_phisher.server.database import models as db_models
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
 
@@ -116,6 +115,17 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.assertIsNotEmpty(response['errors'])
 		for error in response['errors']:
 			self.assertIsInstance(error, str)
+
+	def test_rpc_hostnames_get(self):
+		hostnames = self.rpc('hostnames/get')
+		self.assertIsInstance(hostnames, list)
+
+	def test_rpc_hostnames_add(self):
+		new_hostname = random_string(16) + '.local'
+		self.rpc('hostnames/add', new_hostname)
+		hostnames = self.rpc('hostnames/get')
+		self.assertIsInstance(hostnames, list)
+		self.assertIn(new_hostname, hostnames)
 
 	def test_rpc_is_unauthorized(self):
 		http_response = self.http_request('/ping', method='RPC')
