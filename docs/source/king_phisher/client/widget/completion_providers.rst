@@ -35,3 +35,8 @@ Classes
    :show-inheritance:
    :members:
    :special-members: __init__
+
+.. autoclass:: JinjaPageCompletionProvider
+   :show-inheritance:
+   :members:
+   :special-members:
