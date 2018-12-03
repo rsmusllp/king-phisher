@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/__init__.py
+#  tests/pipfile.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,32 +30,31 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
-logging.captureWarnings(True)
+import json
+import os
+import unittest
 
-from .client import *
-from .server import *
+from king_phisher import testing
 
-from .color import ColorConversionTests
-from .find import FindTests
-from .find import JSONSchemaDataTests
-from .geoip import GeoIPTests
-from .geoip import GeoIPRPCTests
-from .ics import ICSTests
-from .ipaddress import IPAddressTests
-from .pipfile import PipfileLockTests
-from .plugins import PluginRequirementsTests
-from .security_keys import SecurityKeysTests
-from .security_keys import SigningKeyTests
-from .serializers import ElementTreeTests
-from .serializers import JSONSerializerTests
-from .serializers import MsgPackSerializerTests
-from .sms import SMSTests
-from .spf import SPFTests
-from .templates import TemplatesTests
-from .ua_parser import UserAgentParserTests
-from .utilities import UtilitiesTests
-from .version import VersionTests
-from .xor import XORTests
+class PipfileLockTests(testing.KingPhisherTestCase):
+	pipfile_lock_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Pipfile.lock'))
+	def test_blacklisted_packages_are_not_present(self):
+		with open(self.pipfile_lock_path, 'r') as file_h:
+			pipfile_lock = json.load(file_h)
+		meta = pipfile_lock.get('_meta', {})
+		self.assertEqual(meta.get('pipfile-spec'), 6, msg="incompatible specification version, this test must be reviewed")
+		packages = pipfile_lock.get('default', {})
+		self.assertIsNotEmpty(packages)
+		# a list of packages to blacklist from the default group
+		blacklisted_package_names = (
+			'alabaster',
+			'sphinx',
+			'sphinx-rtd-theme',
+			'sphinxcontrib-websupport'
+		)
+		for package_name in blacklisted_package_names:
+			message = "blacklisted package '{}' found in the Pipfile.lock default group".format(package_name)
+			self.assertNotIn(package_name, packages, msg=message)
+
+if __name__ == '__main__':
+	unittest.main()
