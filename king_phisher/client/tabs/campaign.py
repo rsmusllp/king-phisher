@@ -49,6 +49,7 @@ import advancedhttpserver
 from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import Gtk
+import rule_engine
 from smoke_zephyr.utilities import parse_timespan
 
 UNKNOWN_LOCATION_STRING = 'N/A (Unknown)'
@@ -166,8 +167,10 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
 		treeview = self.gobjects['treeview_campaign']
 		store_columns = [str] * (len(self.view_columns) + 1)
-		store = Gtk.ListStore(*store_columns)
-		treeview.set_model(store)
+		self._tv_model = Gtk.ListStore(*store_columns)
+		self._tv_model_filter = self._tv_model.filter_new()
+		self._tv_model_filter.set_visible_func(self._tv_filter)
+		treeview.set_model(self._tv_model_filter)
 		self.application.connect('server-connected', self.signal_kp_server_connected)
 
 	def signal_kp_server_connected(self, _):
@@ -183,24 +186,23 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		for row in rows:
 			if str(row.campaign_id) != self.config['campaign_id']:
 				continue
-			model = self.gobjects['treeview_campaign'].get_model()
 			for case in utilities.switch(event_type):
 				if case('inserted'):
 					row_data = self.format_node_data(get_node(row.id))
 					row_data = list(map(self.format_cell_data, row_data))
 					row_data.insert(0, str(row.id))
-					gui_utilities.glib_idle_add_wait(model.append, row_data)
-				ti = gui_utilities.gtk_list_store_search(model, str(row.id))
+					gui_utilities.glib_idle_add_wait(self._tv_model.append, row_data)
+				ti = gui_utilities.gtk_list_store_search(self._tv_model, str(row.id))
 				if ti is None:
 					self.logger.warning("received server db event: {0} for non-existent row {1}:{2}".format(event_type, self.table_name, str(row.id)))
 					break
 				if case('deleted'):
-					model.remove(ti)
+					self._tv_model.remove(ti)
 					break
 				if case('updated'):
 					row_data = self.format_node_data(get_node(row.id))
 					for idx, cell_data in enumerate(row_data, 1):
-						model[ti][idx] = self.format_cell_data(cell_data)
+						self._tv_model[ti][idx] = self.format_cell_data(cell_data)
 					break
 
 	def _export_lock(self):
@@ -218,8 +220,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
 			return
-		model = treeview.get_model()
-		row_ids = [model.get_value(ti, 0) for ti in gui_utilities.gtk_treeview_selection_iterate(treeview)]
+		row_ids = [self._tv_model.get_value(ti, 0) for ti in gui_utilities.gtk_treeview_selection_iterate(treeview)]
 		if len(row_ids) == 0:
 			return
 		elif len(row_ids) == 1:
@@ -229,6 +230,9 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
 		self.application.emit(self.table_name[:-1] + '-delete', row_ids)
+
+	def _tv_filter(self, model, tree_iter, _):
+		return True
 
 	def format_node_data(self, node):
 		"""
@@ -284,9 +288,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		with self.loader_thread_lock:
 			self._sync_loader_thread()
 			self.loader_thread_stop.clear()
-			store = self.gobjects['treeview_campaign'].get_model()
-			store.clear()
-			self.loader_thread = utilities.Thread(target=self.loader_thread_routine, args=(store,))
+			self._tv_model.clear()
+			self.loader_thread = utilities.Thread(target=self.loader_thread_routine, args=(self._tv_model,))
 			self.loader_thread.daemon = True
 			self.loader_thread.start()
 		return
@@ -702,6 +705,14 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 
 class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding sent messages."""
+	dependencies = gui_utilities.GladeDependencies(
+		children=(
+			'button_refresh',
+			'entry_filter',
+			'revealer_filter',
+			'treeview_campaign',
+		)
+	)
 	table_name = 'messages'
 	label_text = 'Messages'
 	node_query = """\
@@ -760,6 +771,39 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 		column_widths=(30, 30, 30, 15, 20, 20, 25, 90),
 		title=label_text
 	)
+	def __init__(self, *args, **kwargs):
+		super(CampaignViewMessagesTab, self).__init__(*args, **kwargs)
+		filter_entry = self.gobjects['entry_filter']
+		filter_revealer = self.gobjects['revealer_filter']
+		self._rule = None
+		self._rule_context = rule_engine.Context(
+			type_resolver=rule_engine.type_resolver_from_dict(
+				dict((column.lower().replace(' ', '_'), rule_engine.DataType.STRING) for column in self.view_columns)
+			)
+		)
+
+	def _tv_filter(self, model, tree_iter, _):
+		if self._rule is None:
+			return True
+		model_row = model[tree_iter]
+		row = dict((key.lower().replace(' ', '_'), model_row[idx]) for idx, key in enumerate(self.view_columns, 1))
+		try:
+			return self._rule.matches(row)
+		except rule_engine.EngineError:
+			return True
+
+	def signal_entry_changed_filter(self, entry):
+		text = entry.get_text()
+		self._rule = None
+		if text:
+			try:
+				self._rule = rule_engine.Rule(text, context=self._rule_context)
+			except rule_engine.EngineError:
+				entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
+				return
+		entry.set_property('secondary-icon-stock', None)
+		self._tv_model_filter.refilter()
+
 	def format_node_data(self, node):
 		department = node['companyDepartment']
 		if department:

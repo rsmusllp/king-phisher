@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ac962a5cea6ffb6e2d67b755ee4cdbc1566197d91e229f1b0f15b7f8a149fa41"
+            "sha256": "ec5cb0744d9241aaad92a1a3132643c6b8609cc7f7fd1cd42f5d65d3a7ac4ced"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -486,6 +486,13 @@
             "index": "pypi",
             "version": "==0.5"
         },
+        "ply": {
+            "hashes": [
+                "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3",
+                "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"
+            ],
+            "version": "==3.11"
+        },
         "promise": {
             "hashes": [
                 "sha256:2ebbfc10b7abf6354403ed785fe4f04b9dfd421eb1a474ac8d187022228332af",
@@ -669,6 +676,13 @@
             ],
             "index": "pypi",
             "version": "==1.4.3"
+        },
+        "rule-engine": {
+            "hashes": [
+                "sha256:6c76778ffe18ae68b7b2a0c26bc7e5dd44d7db1d7d2e82ee3169681807e784b6"
+            ],
+            "index": "pypi",
+            "version": "==0.9.0"
         },
         "rx": {
             "hashes": [
