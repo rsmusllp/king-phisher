@@ -40,6 +40,7 @@ import sys
 import tempfile
 import threading
 
+from king_phisher import errors
 from king_phisher import ipaddress
 
 import geoip2.database
@@ -69,7 +70,14 @@ def download_geolite2_city_db(dest):
 
 	:param str dest: The file path to save the database to.
 	"""
-	response = requests.get(DB_DOWNLOAD_URL, stream=True)
+	try:
+		response = requests.get(DB_DOWNLOAD_URL, stream=True)
+	except requests.ConnectionError:
+		logger.error('geoip database download failed (could not connect to the server)')
+		raise errors.KingPhisherResourceError('could not download the geoip database') from None
+	except requests.RequestException:
+		logger.error('geoip database download failed', exc_info=True)
+		raise errors.KingPhisherResourceError('could not download the geoip database') from None
 	tfile = tempfile.mkstemp()
 	os.close(tfile[0])
 	tfile = tfile[1]

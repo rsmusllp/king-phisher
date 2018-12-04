@@ -118,7 +118,8 @@ class KingPhisherPluginError(KingPhisherError):
 class KingPhisherResourceError(KingPhisherError):
 	"""
 	An exception that is raised by King Phisher when there is a problem relating
-	to a resource such as it is missing, locked or otherwise invalid.
+	to a resource such as it is missing, locked, inaccessible or otherwise
+	invalid.
 	"""
 	pass
 

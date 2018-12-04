@@ -214,7 +214,11 @@ def main():
 
 	if arguments.update_geoip_db:
 		color.print_status('downloading a new geoip database')
-		size = geoip.download_geolite2_city_db(config.get('server.geoip.database'))
+		try:
+			size = geoip.download_geolite2_city_db(config.get('server.geoip.database'))
+		except errors.KingPhisherResourceError as error:
+			color.print_error(error.message)
+			return os.EX_UNAVAILABLE
 		color.print_good("download complete, file size: {0}".format(strutils.bytes2human(size)))
 		return os.EX_OK
 
