@@ -154,6 +154,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	"""
 	view_columns = ()
 	"""The dictionary map of column numbers to column names starting at column 1."""
+	view_column_types = ()
 	xlsx_worksheet_options = None
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
@@ -168,19 +169,16 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
 		treeview = self.gobjects['treeview_campaign']
-		store_columns = [str] * (len(self.view_columns) + 1)
-
 		self._rule = None
-		self._rule_context = rule_engine.Context(
-			type_resolver=rule_engine.type_resolver_from_dict(
-				dict((column.lower().replace(' ', '_'), rule_engine.DataType.STRING) for column in self.view_columns)
-			)
-		)
+		self._rule_context = rule_engine.Context(type_resolver=rule_engine.type_resolver_from_dict(
+			# todo: fix this dirty hack when rule_engine.DataType gets a from_type method
+			dict((column.lower().replace(' ', '_'), rule_engine.DataType.from_value(column_type('0'))) for column, column_type in zip(self.view_columns, self.view_column_types))
+		))
 
-		self._tv_model = Gtk.ListStore(*store_columns)
+		self._tv_model = Gtk.ListStore(str, *self.view_column_types)
 		self._tv_model_filter = self._tv_model.filter_new()
 		self._tv_model_filter.set_visible_func(self._tv_filter)
-		treeview.set_model(self._tv_model_filter)
+		treeview.set_model(Gtk.TreeModelSort(model=self._tv_model_filter))
 		self.application.connect('server-connected', self.signal_kp_server_connected)
 
 		filter_revealer = self.gobjects['revealer_filter']
@@ -292,7 +290,6 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		:param cell: The value to format.
 		:param str encoding: The encoding to use to coerce the return value into a unicode string.
 		:return: The formatted cell value.
-		:rtype: str
 		"""
 		if isinstance(cell_data, datetime.datetime):
 			cell_data = utilities.datetime_utc_to_local(cell_data)
@@ -300,11 +297,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 
 		if cell_data is None:
 			cell_data = ''
-		elif isinstance(cell_data, int):
-			cell_data = str(cell_data)
-
 		# ensure that the return value is a unicode string
-		if isinstance(cell_data, bytes):
+		elif isinstance(cell_data, bytes):
 			cell_data = cell_data.decode(encoding)
 		return cell_data
 
@@ -463,6 +457,7 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 		'First Hit',
 		'Last Hit'
 	)
+	view_column_types = (str, int, str, str, str, str, str, str)
 	def format_node_data(self, connection):
 		deaddrop_destination = connection['deaddropDeployment']['destination']
 		if not deaddrop_destination:
@@ -531,6 +526,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		'Validation',
 		'Username',
 	) + secret_columns
+	view_column_types = (str, str, str, str, str, str)
 	xlsx_worksheet_options = export.XLSXWorksheetOptions(
 		column_widths=(20, 30, 25, 30, 30, 30, 20),
 		title=label_text
@@ -709,6 +705,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		'First Visit',
 		'Last Visit'
 	)
+	view_column_types = (str, str, int, str, str, str, str)
 	xlsx_worksheet_options = export.XLSXWorksheetOptions(
 		column_widths=(30, 30, 25, 15, 90, 30, 25, 25),
 		title=label_text
@@ -795,6 +792,7 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 		'Opener IP Address',
 		'Opener User Agent'
 	)
+	view_column_types = (str, str, str, str, str, str, str)
 	xlsx_worksheet_options = export.XLSXWorksheetOptions(
 		column_widths=(30, 30, 30, 15, 20, 20, 25, 90),
 		title=label_text
