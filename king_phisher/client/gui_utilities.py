@@ -589,9 +589,18 @@ class GladeProxyDestination(object):
 	first argument.
 	"""
 	__slots__ = ('widget', 'method', 'args', 'kwargs')
-	def __init__(self, widget, method, args=None, kwargs=None):
-		utilities.assert_arg_type(widget, str, 1)
-		utilities.assert_arg_type(method, str, 2)
+	def __init__(self, method, widget=None, args=None, kwargs=None):
+		"""
+		:param str method: The method of the container *widget* to use to add
+			the proxied widget.
+		:param str widget: The widget name to add the proxied widget to. If this
+			value is ``None``, the proxied widget is added to the top level
+			widget.
+		:param tuple args: Position arguments to provide when calling *method*.
+		:param dict kwargs: Key word arguments to provide when calling *method*.
+		"""
+		utilities.assert_arg_type(method, str, 1)
+		utilities.assert_arg_type(widget, (type(None), str), 2)
 		self.widget = widget
 		"""The name of the parent widget for this proxied child."""
 		self.method = method
@@ -702,7 +711,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 			if isinstance(child, GladeProxy):
 				self._load_child_dependencies(child)
 				child = child.destination.widget
-
+				if child is None:
+					continue
 			gobject = self.gtk_builder_get(child, parent_name=dependencies.name)
 			# the following five lines ensure that the types match up, this is to enforce clean development
 			gtype = child.split('_', 1)[0]
@@ -710,6 +720,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 				raise TypeError("gobject {0} could not be found in the glade file".format(child))
 			elif gobject.__class__.__name__.lower() != gtype:
 				raise TypeError("gobject {0} is of type {1} expected {2}".format(child, gobject.__class__.__name__, gtype))
+			elif child in self.gobjects:
+				raise ValueError("key: {0!r} is already in self.gobjects".format(child))
 			self.gobjects[child] = gobject
 
 	def _load_child_proxies(self):
@@ -717,7 +729,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 			if not isinstance(child, GladeProxy):
 				continue
 			dest = child.destination
-			method = getattr(self.gobjects[dest.widget], dest.method)
+			widget = self.gtk_builder.get_object(self.dependencies.name) if dest.widget is None else self.gobjects[dest.widget]
+			method = getattr(widget, dest.method)
 			if method is None:
 				raise ValueError("gobject {0} does not have method {1}".format(dest.widget, dest.method))
 			src_widget = self.gtk_builder.get_object(child.name)

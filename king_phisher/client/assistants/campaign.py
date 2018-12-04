@@ -52,8 +52,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		children=(
 			resources.CompanyEditorGrid(
 				gui_utilities.GladeProxyDestination(
-					widget='alignment_company',
-					method='add'
+					'add',
+					widget='alignment_company'
 				)
 			),
 			'calendar_campaign_expiration',
