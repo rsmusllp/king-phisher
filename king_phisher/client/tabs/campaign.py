@@ -134,6 +134,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
 			'button_refresh',
+			'entry_filter',
+			'revealer_filter',
 			'treeview_campaign'
 		)
 	)
@@ -167,11 +169,38 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
 		treeview = self.gobjects['treeview_campaign']
 		store_columns = [str] * (len(self.view_columns) + 1)
+
+		self._rule = None
+		self._rule_context = rule_engine.Context(
+			type_resolver=rule_engine.type_resolver_from_dict(
+				dict((column.lower().replace(' ', '_'), rule_engine.DataType.STRING) for column in self.view_columns)
+			)
+		)
+
 		self._tv_model = Gtk.ListStore(*store_columns)
 		self._tv_model_filter = self._tv_model.filter_new()
 		self._tv_model_filter.set_visible_func(self._tv_filter)
 		treeview.set_model(self._tv_model_filter)
 		self.application.connect('server-connected', self.signal_kp_server_connected)
+
+		filter_revealer = self.gobjects['revealer_filter']
+		menu_item = Gtk.CheckMenuItem.new_with_label('Show Filter')
+		menu_item.set_active(filter_revealer.get_reveal_child())
+		menu_item.connect('activate', lambda widget: filter_revealer.set_reveal_child(widget.get_active()))
+		menu_item.show()
+		self.popup_menu.append(menu_item)
+
+	def signal_entry_changed_filter(self, entry):
+		text = entry.get_text()
+		self._rule = None
+		if text:
+			try:
+				self._rule = rule_engine.Rule(text, context=self._rule_context)
+			except rule_engine.EngineError:
+				entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
+				return
+		entry.set_property('secondary-icon-stock', None)
+		self._tv_model_filter.refilter()
 
 	def signal_kp_server_connected(self, _):
 		event_id = 'db-' + self.table_name.replace('_', '-')
@@ -232,7 +261,14 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.application.emit(self.table_name[:-1] + '-delete', row_ids)
 
 	def _tv_filter(self, model, tree_iter, _):
-		return True
+		if self._rule is None:
+			return True
+		model_row = model[tree_iter]
+		row = dict((key.lower().replace(' ', '_'), model_row[idx]) for idx, key in enumerate(self.view_columns, 1))
+		try:
+			return self._rule.matches(row)
+		except rule_engine.EngineError:
+			return True
 
 	def format_node_data(self, node):
 		"""
@@ -705,14 +741,6 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 
 class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding sent messages."""
-	dependencies = gui_utilities.GladeDependencies(
-		children=(
-			'button_refresh',
-			'entry_filter',
-			'revealer_filter',
-			'treeview_campaign',
-		)
-	)
 	table_name = 'messages'
 	label_text = 'Messages'
 	node_query = """\
@@ -771,39 +799,6 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 		column_widths=(30, 30, 30, 15, 20, 20, 25, 90),
 		title=label_text
 	)
-	def __init__(self, *args, **kwargs):
-		super(CampaignViewMessagesTab, self).__init__(*args, **kwargs)
-		filter_entry = self.gobjects['entry_filter']
-		filter_revealer = self.gobjects['revealer_filter']
-		self._rule = None
-		self._rule_context = rule_engine.Context(
-			type_resolver=rule_engine.type_resolver_from_dict(
-				dict((column.lower().replace(' ', '_'), rule_engine.DataType.STRING) for column in self.view_columns)
-			)
-		)
-
-	def _tv_filter(self, model, tree_iter, _):
-		if self._rule is None:
-			return True
-		model_row = model[tree_iter]
-		row = dict((key.lower().replace(' ', '_'), model_row[idx]) for idx, key in enumerate(self.view_columns, 1))
-		try:
-			return self._rule.matches(row)
-		except rule_engine.EngineError:
-			return True
-
-	def signal_entry_changed_filter(self, entry):
-		text = entry.get_text()
-		self._rule = None
-		if text:
-			try:
-				self._rule = rule_engine.Rule(text, context=self._rule_context)
-			except rule_engine.EngineError:
-				entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
-				return
-		entry.set_property('secondary-icon-stock', None)
-		self._tv_model_filter.refilter()
-
 	def format_node_data(self, node):
 		department = node['companyDepartment']
 		if department:

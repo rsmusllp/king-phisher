@@ -247,6 +247,7 @@ class TreeViewManager(object):
 		if selection_mode is None:
 			selection_mode = Gtk.SelectionMode.SINGLE
 		treeview.get_selection().set_mode(selection_mode)
+		self._menu_items = {}
 
 	def _call_cb_delete(self):
 		if not self.cb_delete:
@@ -271,12 +272,14 @@ class TreeViewManager(object):
 		menu_item = Gtk.MenuItem.new_with_label('Copy')
 		menu_item.set_submenu(popup_copy_submenu)
 		popup_menu.append(menu_item)
+		self._menu_items['Copy'] = menu_item
 		if self.cb_delete:
 			menu_item = Gtk.SeparatorMenuItem()
 			popup_menu.append(menu_item)
 			menu_item = Gtk.MenuItem.new_with_label('Delete')
 			menu_item.connect('activate', self.signal_activate_popup_menu_delete)
 			popup_menu.append(menu_item)
+			self._menu_items['Delete'] = menu_item
 		popup_menu.show_all()
 		if handle_button_press:
 			self.treeview.connect('button-press-event', self.signal_button_pressed, popup_menu)
@@ -350,8 +353,9 @@ class TreeViewManager(object):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY):
 			return
 		selection = treeview.get_selection()
-		if not selection.count_selected_rows():
-			return
+		sensitive = bool(selection.count_selected_rows())
+		for menu_item in self._menu_items.values():
+			menu_item.set_sensitive(sensitive)
 		popup_menu.popup(None, None, functools.partial(gui_utilities.gtk_menu_position, event), None, event.button, event.time)
 		return True
 

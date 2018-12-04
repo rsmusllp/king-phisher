@@ -9,6 +9,7 @@
   "filter.campaign.expired": false,
   "filter.campaign.other_users": false,
   "filter.campaign.user": true,
+  "gui.show_deaddrop": false,
   "mailer.attachment_file": "",
   "mailer.attachment_file.post_processing": null,
   "mailer.calendar_invite_all_day": false,
