@@ -140,6 +140,10 @@ def pipenv_entry(parser, entry_point):
 
 	os.environ['PIPENV_VENV_IN_PROJECT'] = os.environ.get('PIPENV_VENV_IN_PROJECT', 'True')
 	os.environ['PIPENV_PIPFILE'] = os.environ.get('PIPENV_PIPFILE', os.path.join(target_directory, 'Pipfile'))
+	python_path = os.environ.get('PYTHONPATH')
+	python_path = [] if python_path is None else python_path.split(os.pathsep)
+	python_path.append(target_directory)
+	os.environ['PYTHONPATH'] = os.pathsep.join(python_path)
 
 	logger.info('checking for the pipenv environment')
 	if which('pipenv') is None:
