@@ -31,6 +31,7 @@
 #
 
 import collections
+import logging
 import string
 
 from king_phisher import color
@@ -141,6 +142,7 @@ class GraphBase(object):
 		"""
 		:param tuple size_request: The size to set for the canvas.
 		"""
+		self.logger = logging.getLogger('KingPhisher.Client.Graph.' + self.__class__.__name__[13:])
 		self.application = application
 		self.style_context = style_context
 		self.config = application.config
@@ -186,6 +188,9 @@ class GraphBase(object):
 			ax.spines[pos].set_color(spine_color)
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
+		if matplotlib.__version__ == '3.0.2':
+			self.logger.warning('skipping legend patch with matplotlib v3.0.2 for compatibility')
+			return
 		if self._legend is not None:
 			self._legend.remove()
 			self._legend = None
@@ -913,12 +918,12 @@ class CampaignGraphPasswordComplexityPie(CampaignPieGraph):
 					break
 		return met >= 3
 
-class CampaignCompGraph(GraphBase):
+class CampaignGraphComparison(GraphBase):
 	"""Display selected campaigns data by order of campaign start date."""
 	graph_title = 'Campaign Comparison Graph'
 	name_human = 'Graph'
 	def __init__(self, *args, **kwargs):
-		super(CampaignCompGraph, self).__init__(*args, **kwargs)
+		super(CampaignGraphComparison, self).__init__(*args, **kwargs)
 		ax = self.axes[0]
 		self.axes.append(ax.twinx())
 		ax2 = self.axes[1]
@@ -947,8 +952,8 @@ class CampaignCompGraph(GraphBase):
 			top=False,
 			bottom=False
 		)
-		ax.set_axis_bgcolor(color_line_bg)
-		ax2.set_axis_bgcolor(color_line_bg)
+		ax.set_facecolor(color_line_bg)
+		ax2.set_facecolor(color_line_bg)
 		title = pyplot.title('Campaign Comparison', color=color_fg, size=self.markersize_scale * 1.75, loc='left')
 		title.set_position([0.075, 1.05])
 		ax.set_ylabel('Percent Visits/Credentials', color=color_fg, size=self.markersize_scale * 1.5)
@@ -1037,6 +1042,9 @@ class CampaignCompGraph(GraphBase):
 		return results['db']['campaign']['name']
 
 	def add_legend_patch(self, legend_rows, fontsize=None):
+		if matplotlib.__version__ == '3.0.2':
+			self.logger.warning('skipping legend patch with matplotlib v3.0.2 for compatibility')
+			return
 		if self._legend is not None:
 			self._legend.remove()
 			self._legend = None

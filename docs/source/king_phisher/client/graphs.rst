@@ -90,7 +90,7 @@ Classes
    :special-members: __init__
    :undoc-members:
 
-.. autoclass:: CampaignCompGraph
+.. autoclass:: CampaignGraphComparison
    :show-inheritance:
    :members:
    :special-members: __init__
