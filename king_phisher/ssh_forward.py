@@ -173,7 +173,7 @@ class SSHTCPForwarder(threading.Thread):
 
 	def __resolve_private_key(self, private_key, agent_keys):
 		private_key = private_key.strip()
-		pkey_type = private_key.split(':')[0].lower()
+		pkey_type = private_key.split(':', 1)[0].lower()
 		if pkey_type in ('file', 'key'):
 			if pkey_type == 'file':
 				file_path = os.path.expandvars(private_key[5:])
@@ -206,6 +206,8 @@ class SSHTCPForwarder(threading.Thread):
 			finally:
 				file_h.close()
 			return private_key
+		# if the key has whitespace, discard anything after the first occurrence
+		private_key = private_key.split(' ', 1)[0]
 
 		# if it's not one of the above, treat it like it's a fingerprint
 		if pkey_type == 'sha256':
