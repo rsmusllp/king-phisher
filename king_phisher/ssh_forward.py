@@ -213,16 +213,21 @@ class SSHTCPForwarder(threading.Thread):
 		if pkey_type == 'sha256':
 			# OpenSSH 6.8 started to use sha256 & base64 for keys
 			algorithm = pkey_type
-			private_key = private_key[7:]
-			private_key = binascii.a2b_base64(private_key + '=')
+			private_key = private_key[7:] + '='
+			decode = binascii.a2b_base64
 		else:
 			algorithm = 'md5'
 			private_key = private_key.replace(':', '')
-			private_key = binascii.a2b_hex(private_key)
+			decode = binascii.a2b_hex
+		try:
+			private_key = decode(private_key)
+		except binascii.Error as error:
+			self.logger.warning("the user specified ssh key could not be decoded (type: {0}, error: {1!r})".format(pkey_type, error))
+			raise KingPhisherSSHKeyError('The preferred SSH key could not be decoded.')
 		private_key = tuple(key for key in agent_keys if hashlib.new(algorithm, key.blob).digest() == private_key)
 		if not private_key:
 			self.logger.warning('the user specified ssh key could not be loaded from the ssh agent')
-			raise KingPhisherSSHKeyError('The SSH key could not be loaded from the SSH agent.')
+			raise KingPhisherSSHKeyError('The preferred SSH key could not be loaded from the SSH agent.')
 		return private_key[0]
 
 	def __try_connect(self, *args, **kwargs):
