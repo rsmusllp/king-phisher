@@ -220,7 +220,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 
 	def signal_checkbutton_toggled(self, _):
 		self._tv_model_filter.refilter()
-		self.gobjects['label_campaign_info'].set_text("Showing {0} of {1:,} Campaign{2}".format(
+		self.gobjects['label_campaign_info'].set_text("Showing {0:,} of {1:,} Campaign{2}".format(
 			len(self._tv_model_filter),
 			len(self._tv_model),
 			('' if len(self._tv_model) == 1 else 's')

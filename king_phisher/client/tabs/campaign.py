@@ -135,6 +135,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		children=(
 			'button_refresh',
 			'entry_filter',
+			'label_filter_summary',
 			'revealer_filter',
 			'treeview_campaign'
 		)
@@ -171,8 +172,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		treeview = self.gobjects['treeview_campaign']
 		self._rule = None
 		self._rule_context = rule_engine.Context(type_resolver=rule_engine.type_resolver_from_dict(
-			# todo: fix this dirty hack when rule_engine.DataType gets a from_type method
-			dict((column.lower().replace(' ', '_'), rule_engine.DataType.from_value(column_type('0'))) for column, column_type in zip(self.view_columns, self.view_column_types))
+			dict((column.lower().replace(' ', '_'), rule_engine.DataType.from_type(column_type)) for column, column_type in zip(self.view_columns, self.view_column_types))
 		))
 
 		self._tv_model = Gtk.ListStore(str, *self.view_column_types)
@@ -184,13 +184,14 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		filter_revealer = self.gobjects['revealer_filter']
 		menu_item = Gtk.CheckMenuItem.new_with_label('Show Filter')
 		menu_item.set_active(filter_revealer.get_reveal_child())
-		menu_item.connect('activate', lambda widget: filter_revealer.set_reveal_child(widget.get_active()))
+		menu_item.connect('toggled', self.signal_toggled_show_filter)
 		menu_item.show()
 		self.popup_menu.append(menu_item)
 
 	def signal_entry_changed_filter(self, entry):
 		text = entry.get_text()
 		self._rule = None
+		label = self.gobjects['label_filter_summary']
 		if text:
 			try:
 				self._rule = rule_engine.Rule(text, context=self._rule_context)
@@ -199,6 +200,20 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 				return
 		entry.set_property('secondary-icon-stock', None)
 		self._tv_model_filter.refilter()
+		visible_records = len(self._tv_model_filter)
+		all_records = len(self._tv_model)
+		label.set_text("Showing {:,} of {:,} {} ({:.1f}%)".format(
+			visible_records,
+			all_records,
+			self.label_text.lower(),
+			((visible_records / all_records) if all_records > 0 else 1.0) * 100
+		))
+
+	def signal_toggled_show_filter(self, widget):
+		active = widget.get_active()
+		self.gobjects['revealer_filter'].set_reveal_child(active)
+		if active:
+			self.gobjects['entry_filter'].grab_focus()
 
 	def signal_kp_server_connected(self, _):
 		event_id = 'db-' + self.table_name.replace('_', '-')
@@ -398,7 +413,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""
 	table_name = 'deaddrop_connections'
-	label_text = 'Deaddrop'
+	label_text = 'Deaddrop Connections'
 	node_query = """\
 	query getDeaddropConnection($id: String!) {
 		db {
