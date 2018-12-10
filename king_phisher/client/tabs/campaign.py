@@ -375,9 +375,9 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.last_load_time = time.time()
 
 	def signal_button_clicked_export(self, button):
-		self.export_table_to_csv()
+		self.export_table_to_csv(filtered=True)
 
-	def export_table_to_csv(self):
+	def export_table_to_csv(self, filtered=False):
 		"""Export the data represented by the view to a CSV file."""
 		if not self._export_lock():
 			return
@@ -389,7 +389,10 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			self.loader_thread_lock.release()
 			return
 		destination_file = response['target_path']
-		store = self.gobjects['treeview_campaign'].get_model()
+		if filtered:
+			store = self._tv_model_filter
+		else:
+			store = self._tv_model
 		columns = dict(enumerate(('UID',) + self.view_columns))
 		export.liststore_to_csv(store, destination_file, columns)
 		self.loader_thread_lock.release()
@@ -405,7 +408,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""
 		if not self._export_lock():
 			return
-		store = self.gobjects['treeview_campaign'].get_model()
+		store = self._tv_model
 		columns = dict(enumerate(('UID',) + self.view_columns))
 		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_options=self.xlsx_worksheet_options)
 		self.loader_thread_lock.release()
