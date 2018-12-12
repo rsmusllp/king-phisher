@@ -11,6 +11,9 @@ Classes
 .. autoclass:: CellRendererBytes
    :show-inheritance:
 
+.. autoclass:: CellRendererInteger
+   :show-inheritance:
+
 .. autoclass:: FileChooserDialog
    :show-inheritance:
    :members:

@@ -74,6 +74,15 @@ class CellRendererBytes(_Gtk_CellRendererText):
 			self.set_property('text', boltons.strutils.bytes2human(int(original), 1))
 		Gtk.CellRendererText.do_render(self, *args, **kwargs)
 
+class CellRendererInteger(_Gtk_CellRendererText):
+	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values with comma separators."""
+	def do_render(self, *args, **kwargs):
+		original = self.get_property('text')
+		is_digit = original[1:].isdigit() if original[0] == '-' else original.isdigit()
+		if is_digit:
+			self.set_property('text', "{:,}".format(int(original)))
+		Gtk.CellRendererText.do_render(self, *args, **kwargs)
+
 class FileChooserDialog(_Gtk_FileChooserDialog):
 	"""Display a file chooser dialog with additional convenience methods."""
 	def __init__(self, title, parent, **kwargs):

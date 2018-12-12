@@ -37,6 +37,7 @@ from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
 from king_phisher.client.assistants import CampaignAssistant
 from king_phisher.client import gui_utilities
+from king_phisher.client.widget import extras
 from king_phisher.client.widget import managers
 
 from gi.repository import Gdk
@@ -70,22 +71,24 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
 		self.treeview_manager = managers.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
-		self.treeview_manager.set_column_titles(('Campaign Name', 'Company', 'Type', 'Messages', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
+		self.treeview_manager.set_column_titles(
+			('Campaign Name', 'Company', 'Type', 'Messages', 'Created By', 'Creation Date', 'Expiration'),
+			column_offset=1,
+			renderers=(Gtk.CellRendererText(), Gtk.CellRendererText(), Gtk.CellRendererText(), extras.CellRendererInteger(), Gtk.CellRendererText(), Gtk.CellRendererText(), Gtk.CellRendererText())
+		)
 		self.treeview_manager.set_column_color(background=8, foreground=9)
 		treeview.set_tooltip_column(10)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		self._creation_assistant = None
 
-		self._tv_model = Gtk.ListStore(str, str, str, str, str, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
+		self._tv_model = Gtk.ListStore(str, str, str, str, int, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
 		# default sort is descending by campaign creation date
 		self._tv_model.set_sort_column_id(6, Gtk.SortType.DESCENDING)
 
 		# create and set the filter for expired campaigns
 		self._tv_model_filter = self._tv_model.filter_new()
 		self._tv_model_filter.set_visible_func(self._filter_campaigns)
-		tv_model = Gtk.TreeModelSort(model=self._tv_model_filter)
-		tv_model.set_sort_func(4, gui_utilities.gtk_treesortable_sort_func_numeric, 4)
-		treeview.set_model(tv_model)
+		treeview.set_model(Gtk.TreeModelSort(model=self._tv_model_filter))
 
 		# setup menus for filtering campaigns and load campaigns
 		self.get_popup_filter_menu()
@@ -185,7 +188,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 				campaign['name'],
 				(campaign['company']['name'] if campaign['company'] is not None else None),
 				(campaign['campaignType']['name'] if campaign['campaignType'] is not None else None),
-				"{0:,}".format(campaign['messages']['total']),
+				campaign['messages']['total'],
 				campaign['user']['name'],
 				created_ts,
 				expiration_ts,
