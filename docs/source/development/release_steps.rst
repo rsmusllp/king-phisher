@@ -31,6 +31,7 @@ Release Steps
 Post Release Steps
 ------------------
 
+#. Open new issue 
 #. Increment the version number on the dev branch and re-set the version label
 #. Update the Python packages list in Pipfile
 
