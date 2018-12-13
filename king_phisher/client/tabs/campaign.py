@@ -54,6 +54,29 @@ from smoke_zephyr.utilities import parse_timespan
 
 UNKNOWN_LOCATION_STRING = 'N/A (Unknown)'
 
+class _ColumnDefinitionBase(object):
+	__slots__ = ('title', 'width')
+	cell_renderer = g_type = python_type = None
+	def __init__(self, title, width):
+		self.title = title
+		self.width = width
+
+	@property
+	def name(self):
+		return self.title.lower().replace(' ', '_')
+
+class _ColumnDefinitionInteger(_ColumnDefinitionBase):
+	cell_renderer = extras.CellRendererInteger()
+	g_type = python_type = int
+	def __init__(self, title, width=15):
+		super(_ColumnDefinitionInteger, self).__init__(title, width)
+
+class _ColumnDefinitionString(_ColumnDefinitionBase):
+	cell_renderer = Gtk.CellRendererText()
+	g_type = python_type = str
+	def __init__(self, title, width=30):
+		super(_ColumnDefinitionString, self).__init__(title, width)
+
 class CampaignViewGenericTab(gui_utilities.GladeGObject):
 	"""
 	This object is meant to be subclassed by all of the tabs which load and
@@ -125,11 +148,10 @@ class CampaignViewGenericTab(gui_utilities.GladeGObject):
 
 class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	"""
-	This object is meant to be subclassed by tabs which will display
-	campaign information of different types from specific database
-	tables. The data in this object is refreshed when multiple events
-	occur and it uses an internal timer to represent the last time the
-	data was refreshed.
+	This object is meant to be subclassed by tabs which will display campaign
+	information of different types from specific database tables. The data in
+	this object is refreshed when multiple events occur and it uses an internal
+	timer to represent the last time the data was refreshed.
 	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
@@ -142,20 +164,18 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	)
 	node_query = None
 	"""
-	The GraphQL query used to load a particular node from the remote table.
-	This query is provided with a single parameter of the node's id.
+	The GraphQL query used to load a particular node from the remote table. This
+	query is provided with a single parameter of the node's id.
 	"""
 	table_name = ''
 	"""The database table represented by this tab."""
 	table_query = None
 	"""
 	The GraphQL query used to load the desired information from the remote
-	table. This query is provided with the following three parameters:
-	campaign, count and cursor.
+	table. This query is provided with the following three parameters: campaign,
+	count and cursor.
 	"""
 	view_columns = ()
-	"""The dictionary map of column numbers to column names starting at column 1."""
-	view_column_types = ()
 	xlsx_worksheet_options = None
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
@@ -166,16 +186,21 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			cb_delete=self._prompt_to_delete_row,
 			cb_refresh=self.load_campaign_information
 		)
-		self.treeview_manager.set_column_titles(self.view_columns, column_offset=1)
+		self.treeview_manager.set_column_titles(
+			self.view_column_titles,
+			column_offset=1,
+			renderers=tuple(column.cell_renderer for column in self.view_columns)
+		)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
 		treeview = self.gobjects['treeview_campaign']
 		self._rule = None
 		self._rule_context = rule_engine.Context(type_resolver=rule_engine.type_resolver_from_dict(
-			dict((column.lower().replace(' ', '_'), rule_engine.DataType.from_type(column_type)) for column, column_type in zip(self.view_columns, self.view_column_types))
+			dict((column.name, rule_engine.DataType.from_type(column.python_type)) for column in self.view_columns)
 		))
 
-		self._tv_model = Gtk.ListStore(str, *self.view_column_types)
+		view_column_types = tuple(column.g_type for column in self.view_columns)
+		self._tv_model = Gtk.ListStore(str, *view_column_types)
 		self._tv_model_filter = self._tv_model.filter_new()
 		self._tv_model_filter.set_visible_func(self._tv_filter)
 		treeview.set_model(Gtk.TreeModelSort(model=self._tv_model_filter))
@@ -277,7 +302,9 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if self._rule is None:
 			return True
 		model_row = model[tree_iter]
-		row = dict((key.lower().replace(' ', '_'), model_row[idx]) for idx, key in enumerate(self.view_columns, 1))
+		row = {}
+		for idx, column in enumerate(self.view_columns, 1):
+			row[column.name] = model_row[idx]
 		try:
 			return self._rule.matches(row)
 		except rule_engine.EngineError:
@@ -393,7 +420,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			store = self._tv_model_filter
 		else:
 			store = self._tv_model
-		columns = dict(enumerate(('UID',) + self.view_columns))
+		columns = dict(enumerate(('UID',) + self.view_column_titles))
 		export.liststore_to_csv(store, destination_file, columns)
 		self.loader_thread_lock.release()
 
@@ -409,9 +436,17 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not self._export_lock():
 			return
 		store = self._tv_model
-		columns = dict(enumerate(('UID',) + self.view_columns))
+		columns = dict(enumerate(('UID',) + self.view_column_titles))
+		xlsx_worksheet_options = export.XLSXWorksheetOptions(
+			column_widths=(20,) + tuple(column.width for column in self.view_columns),
+			title=self.label_text
+		)
 		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_options=self.xlsx_worksheet_options)
 		self.loader_thread_lock.release()
+
+	@property
+	def view_column_titles(self):
+		return tuple(column.title for column in self.view_columns)
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""
@@ -466,16 +501,15 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	}
 	"""
 	view_columns = (
-		'Destination',
-		'Visit Count',
-		'IP Address',
-		'Username',
-		'Hostname',
-		'Local IP Addresses',
-		'First Hit',
-		'Last Hit'
+		_ColumnDefinitionString('Destination'),
+		_ColumnDefinitionInteger('Visit Count'),
+		_ColumnDefinitionString('IP Address', 25),
+		_ColumnDefinitionString('Username'),
+		_ColumnDefinitionString('Hostname'),
+		_ColumnDefinitionString('Local IP Addresses'),
+		_ColumnDefinitionString('First Hit', 25),
+		_ColumnDefinitionString('Last Hit', 25),
 	)
-	view_column_types = (str, int, str, str, str, str, str, str)
 	def format_node_data(self, connection):
 		deaddrop_destination = connection['deaddropDeployment']['destination']
 		if not deaddrop_destination:
@@ -539,21 +573,18 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	"""
 	secret_columns = ('Password', 'MFA Token')
 	view_columns = (
-		'Email Address',
-		'Submitted',
-		'Validation',
-		'Username',
-	) + secret_columns
-	view_column_types = (str, str, str, str, str, str)
-	xlsx_worksheet_options = export.XLSXWorksheetOptions(
-		column_widths=(20, 30, 25, 30, 30, 30, 20),
-		title=label_text
+		_ColumnDefinitionString('Email Address'),
+		_ColumnDefinitionString('Submitted', 25),
+		_ColumnDefinitionString('Validation', 20),
+		_ColumnDefinitionString('Username'),
+		_ColumnDefinitionString('Password'),
+		_ColumnDefinitionString('MFA Token', 20),
 	)
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
 		for column_name in self.secret_columns:
-			treeview.get_column(self.view_columns.index(column_name)).set_property('visible', False)
+			treeview.get_column(self.view_column_titles.index(column_name)).set_property('visible', False)
 
 	def format_node_data(self, node):
 		regex_validated = ''
@@ -573,7 +604,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		treeview = self.gobjects['treeview_campaign']
 		visible = button.get_property('active')
 		for column_name in self.secret_columns:
-			treeview.get_column(self.view_columns.index(column_name)).set_property('visible', visible)
+			treeview.get_column(self.view_column_titles.index(column_name)).set_property('visible', visible)
 
 class CampaignViewDashboardTab(CampaignViewGenericTab):
 	"""Display campaign information on a graphical dash board."""
@@ -715,18 +746,13 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	}
 	"""
 	view_columns = (
-		'Email Address',
-		'IP Address',
-		'Visit Count',
-		'Visitor User Agent',
-		'Visitor Location',
-		'First Visit',
-		'Last Visit'
-	)
-	view_column_types = (str, str, int, str, str, str, str)
-	xlsx_worksheet_options = export.XLSXWorksheetOptions(
-		column_widths=(30, 30, 25, 15, 90, 30, 25, 25),
-		title=label_text
+		_ColumnDefinitionString('Email Address'),
+		_ColumnDefinitionString('IP Address', width=25),
+		_ColumnDefinitionInteger('Visit Count'),
+		_ColumnDefinitionString('Visitor User Agent', width=90),
+		_ColumnDefinitionString('Visitor Location'),
+		_ColumnDefinitionString('First Visit', width=25),
+		_ColumnDefinitionString('Last Visit', width=25),
 	)
 	def format_node_data(self, node):
 		geo_location = UNKNOWN_LOCATION_STRING
@@ -802,18 +828,13 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	}
 	"""
 	view_columns = (
-		'Email Address',
-		'Sent',
-		'Trained',
-		'Department',
-		'Opened',
-		'Opener IP Address',
-		'Opener User Agent'
-	)
-	view_column_types = (str, str, str, str, str, str, str)
-	xlsx_worksheet_options = export.XLSXWorksheetOptions(
-		column_widths=(30, 30, 30, 15, 20, 20, 25, 90),
-		title=label_text
+		_ColumnDefinitionString('Email Address'),
+		_ColumnDefinitionString('Sent', width=25),
+		_ColumnDefinitionString('Trained', width=15),
+		_ColumnDefinitionString('Department'),
+		_ColumnDefinitionString('Opened', width=25),
+		_ColumnDefinitionString('Opener IP Address', width=25),
+		_ColumnDefinitionString('Opener User Agent', width=90)
 	)
 	def format_node_data(self, node):
 		department = node['companyDepartment']
