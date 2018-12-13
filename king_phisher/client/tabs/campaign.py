@@ -56,7 +56,7 @@ UNKNOWN_LOCATION_STRING = 'N/A (Unknown)'
 
 class _ColumnDefinitionBase(object):
 	__slots__ = ('title', 'width')
-	cell_renderer = g_type = python_type = None
+	cell_renderer = g_type = python_type = sort_function = None
 	def __init__(self, title, width):
 		self.title = title
 		self.width = width
@@ -64,6 +64,14 @@ class _ColumnDefinitionBase(object):
 	@property
 	def name(self):
 		return self.title.lower().replace(' ', '_')
+
+class _ColumnDefinitionDatetime(_ColumnDefinitionBase):
+	cell_renderer = extras.CellRendererDatetime()
+	g_type = object
+	python_type = datetime.datetime
+	sort_function = staticmethod(gui_utilities.gtk_treesortable_sort_func)
+	def __init__(self, title, width=25):
+		super(_ColumnDefinitionDatetime, self).__init__(title, width)
 
 class _ColumnDefinitionInteger(_ColumnDefinitionBase):
 	cell_renderer = extras.CellRendererInteger()
@@ -203,7 +211,11 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self._tv_model = Gtk.ListStore(str, *view_column_types)
 		self._tv_model_filter = self._tv_model.filter_new()
 		self._tv_model_filter.set_visible_func(self._tv_filter)
-		treeview.set_model(Gtk.TreeModelSort(model=self._tv_model_filter))
+		tree_model_sort = Gtk.TreeModelSort(model=self._tv_model_filter)
+		for idx, column in enumerate(self.view_columns, 1):
+			if column.sort_function is not None:
+				tree_model_sort.set_sort_func(idx, column.sort_function, idx)
+		treeview.set_model(tree_model_sort)
 		self.application.connect('server-connected', self.signal_kp_server_connected)
 
 		filter_revealer = self.gobjects['revealer_filter']
@@ -256,7 +268,6 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			for case in utilities.switch(event_type):
 				if case('inserted'):
 					row_data = self.format_node_data(get_node(row.id))
-					row_data = list(map(self.format_cell_data, row_data))
 					row_data.insert(0, str(row.id))
 					gui_utilities.glib_idle_add_wait(self._tv_model.append, row_data)
 				ti = gui_utilities.gtk_list_store_search(self._tv_model, str(row.id))
@@ -269,7 +280,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 				if case('updated'):
 					row_data = self.format_node_data(get_node(row.id))
 					for idx, cell_data in enumerate(row_data, 1):
-						self._tv_model[ti][idx] = self.format_cell_data(cell_data)
+						self._tv_model[ti][idx] = cell_data
 					break
 
 	def _export_lock(self):
@@ -323,27 +334,6 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""
 		raise NotImplementedError()
 
-	def format_cell_data(self, cell_data, encoding='utf-8'):
-		"""
-		This method provides formatting to the individual cell values returned
-		from the :py:meth:`.format_row_data` function. Values are converted into
-		a format suitable for reading.
-
-		:param cell: The value to format.
-		:param str encoding: The encoding to use to coerce the return value into a unicode string.
-		:return: The formatted cell value.
-		"""
-		if isinstance(cell_data, datetime.datetime):
-			cell_data = utilities.datetime_utc_to_local(cell_data)
-			return utilities.format_datetime(cell_data, encoding=encoding)
-
-		if cell_data is None:
-			cell_data = ''
-		# ensure that the return value is a unicode string
-		elif isinstance(cell_data, bytes):
-			cell_data = cell_data.decode(encoding)
-		return cell_data
-
 	def load_campaign_information(self, force=True):
 		"""
 		Load the necessary campaign information from the remote server.
@@ -391,8 +381,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 				break
 			for edge in results['db']['campaign'][self.table_name]['edges']:
 				node = edge['node']
-				row_data = self.format_node_data(node)
-				row_data = list(map(self.format_cell_data, row_data))
+				row_data = list(self.format_node_data(node))
 				row_data.insert(0, str(node['id']))
 				gui_utilities.glib_idle_add_wait(store.append, row_data)
 			page_info = results['db']['campaign'][self.table_name]['pageInfo']
@@ -441,7 +430,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			column_widths=(20,) + tuple(column.width for column in self.view_columns),
 			title=self.label_text
 		)
-		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_options=self.xlsx_worksheet_options)
+		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_options=xlsx_worksheet_options)
 		self.loader_thread_lock.release()
 
 	@property
@@ -503,12 +492,12 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	view_columns = (
 		_ColumnDefinitionString('Destination'),
 		_ColumnDefinitionInteger('Visit Count'),
-		_ColumnDefinitionString('IP Address', 25),
+		_ColumnDefinitionString('IP Address', width=25),
 		_ColumnDefinitionString('Username'),
 		_ColumnDefinitionString('Hostname'),
 		_ColumnDefinitionString('Local IP Addresses'),
-		_ColumnDefinitionString('First Hit', 25),
-		_ColumnDefinitionString('Last Hit', 25),
+		_ColumnDefinitionDatetime('First Hit'),
+		_ColumnDefinitionDatetime('Last Hit'),
 	)
 	def format_node_data(self, connection):
 		deaddrop_destination = connection['deaddropDeployment']['destination']
@@ -574,11 +563,11 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	secret_columns = ('Password', 'MFA Token')
 	view_columns = (
 		_ColumnDefinitionString('Email Address'),
-		_ColumnDefinitionString('Submitted', 25),
-		_ColumnDefinitionString('Validation', 20),
+		_ColumnDefinitionDatetime('Submitted'),
+		_ColumnDefinitionString('Validation', width=20),
 		_ColumnDefinitionString('Username'),
 		_ColumnDefinitionString('Password'),
-		_ColumnDefinitionString('MFA Token', 20),
+		_ColumnDefinitionString('MFA Token', width=20),
 	)
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
@@ -751,8 +740,8 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		_ColumnDefinitionInteger('Visit Count'),
 		_ColumnDefinitionString('Visitor User Agent', width=90),
 		_ColumnDefinitionString('Visitor Location'),
-		_ColumnDefinitionString('First Visit', width=25),
-		_ColumnDefinitionString('Last Visit', width=25),
+		_ColumnDefinitionDatetime('First Visit'),
+		_ColumnDefinitionDatetime('Last Visit'),
 	)
 	def format_node_data(self, node):
 		geo_location = UNKNOWN_LOCATION_STRING
@@ -829,10 +818,10 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	"""
 	view_columns = (
 		_ColumnDefinitionString('Email Address'),
-		_ColumnDefinitionString('Sent', width=25),
+		_ColumnDefinitionDatetime('Sent'),
 		_ColumnDefinitionString('Trained', width=15),
 		_ColumnDefinitionString('Department'),
-		_ColumnDefinitionString('Opened', width=25),
+		_ColumnDefinitionDatetime('Opened'),
 		_ColumnDefinitionString('Opener IP Address', width=25),
 		_ColumnDefinitionString('Opener User Agent', width=90)
 	)
