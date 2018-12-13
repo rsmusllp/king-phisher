@@ -75,8 +75,22 @@ parameters, the object and the value and the get function will just be
 provided the object.
 """
 
-# official python3 work-around per https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
-_cmp = lambda i1, i2: (i1 > i2) - (i1 < i2)
+# modified from the official python3 work-around per
+# https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
+def _cmp(item1, item2):
+	"""
+	Compare two arbitrary Python objects. The object types should either be the
+	same or one or both may be ``None``.
+
+	:rtype: int
+	:return: ``-1`` if *item1* is less than *item2*, ``0`` if they are equal or
+		``1`` if *item1* is greater than *item2*.
+	"""
+	if item1 is None:
+		return 0 if item2 is None else -1
+	if item2 is None:
+		return 1
+	return (item1 > item2) - (item1 < item2)
 
 def which_glade():
 	"""

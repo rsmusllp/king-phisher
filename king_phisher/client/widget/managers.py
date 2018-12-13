@@ -338,15 +338,13 @@ class TreeViewManager(object):
 			column_titles = (column_titles,)
 		for column_title in column_titles:
 			column = self.column_views[column_title]
-			cell = column.get_cells()[0]
-			props = {'text': self.column_titles[column_title]}
+			renderer = column.get_cells()[0]
 			if background is not None:
-				props['background-rgba'] = background
-				props['background-set'] = True
+				column.add_attribute(renderer, 'background-rgba', background)
+				column.add_attribute(renderer, 'background-set', True)
 			if foreground is not None:
-				props['foreground-rgba'] = foreground
-				props['foreground-set'] = True
-			column.set_attributes(cell, **props)
+				column.add_attribute(renderer, 'foreground-rgba', foreground)
+				column.add_attribute(renderer, 'foreground-set', True)
 
 	def signal_button_pressed(self, treeview, event, popup_menu):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY):
