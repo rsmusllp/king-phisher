@@ -66,6 +66,9 @@ else:
 	_Gtk_Frame = Gtk.Frame
 	_WebKitX_WebView = WebKitX.WebView
 
+################################################################################
+# Cell renderers
+################################################################################
 class CellRendererPythonText(_Gtk_CellRendererText):
 	python_value = GObject.Property(type=object, flags=GObject.ParamFlags.READWRITE)
 	__gtype_name__ = 'CellRendererPythonText'
@@ -100,6 +103,43 @@ class CellRendererInteger(CellRendererPythonText):
 		if isinstance(value, int):
 			return "{:,}".format(value)
 
+################################################################################
+# Column definitions
+################################################################################
+class ColumnDefinitionBase(object):
+	__slots__ = ('title', 'width')
+	cell_renderer = g_type = python_type = sort_function = None
+	def __init__(self, title, width):
+		self.title = title
+		self.width = width
+
+	@property
+	def name(self):
+		return self.title.lower().replace(' ', '_')
+
+class ColumnDefinitionDatetime(ColumnDefinitionBase):
+	cell_renderer = CellRendererDatetime()
+	g_type = object
+	python_type = datetime.datetime
+	sort_function = staticmethod(gui_utilities.gtk_treesortable_sort_func)
+	def __init__(self, title, width=25):
+		super(ColumnDefinitionDatetime, self).__init__(title, width)
+
+class ColumnDefinitionInteger(ColumnDefinitionBase):
+	cell_renderer = CellRendererInteger()
+	g_type = python_type = int
+	def __init__(self, title, width=15):
+		super(ColumnDefinitionInteger, self).__init__(title, width)
+
+class ColumnDefinitionString(ColumnDefinitionBase):
+	cell_renderer = Gtk.CellRendererText()
+	g_type = python_type = str
+	def __init__(self, title, width=30):
+		super(ColumnDefinitionString, self).__init__(title, width)
+
+################################################################################
+# Miscellaneous
+################################################################################
 class FileChooserDialog(_Gtk_FileChooserDialog):
 	"""Display a file chooser dialog with additional convenience methods."""
 	def __init__(self, title, parent, **kwargs):

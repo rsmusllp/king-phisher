@@ -54,37 +54,6 @@ from smoke_zephyr.utilities import parse_timespan
 
 UNKNOWN_LOCATION_STRING = 'N/A (Unknown)'
 
-class _ColumnDefinitionBase(object):
-	__slots__ = ('title', 'width')
-	cell_renderer = g_type = python_type = sort_function = None
-	def __init__(self, title, width):
-		self.title = title
-		self.width = width
-
-	@property
-	def name(self):
-		return self.title.lower().replace(' ', '_')
-
-class _ColumnDefinitionDatetime(_ColumnDefinitionBase):
-	cell_renderer = extras.CellRendererDatetime()
-	g_type = object
-	python_type = datetime.datetime
-	sort_function = staticmethod(gui_utilities.gtk_treesortable_sort_func)
-	def __init__(self, title, width=25):
-		super(_ColumnDefinitionDatetime, self).__init__(title, width)
-
-class _ColumnDefinitionInteger(_ColumnDefinitionBase):
-	cell_renderer = extras.CellRendererInteger()
-	g_type = python_type = int
-	def __init__(self, title, width=15):
-		super(_ColumnDefinitionInteger, self).__init__(title, width)
-
-class _ColumnDefinitionString(_ColumnDefinitionBase):
-	cell_renderer = Gtk.CellRendererText()
-	g_type = python_type = str
-	def __init__(self, title, width=30):
-		super(_ColumnDefinitionString, self).__init__(title, width)
-
 class CampaignViewGenericTab(gui_utilities.GladeGObject):
 	"""
 	This object is meant to be subclassed by all of the tabs which load and
@@ -490,14 +459,14 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	}
 	"""
 	view_columns = (
-		_ColumnDefinitionString('Destination'),
-		_ColumnDefinitionInteger('Visit Count'),
-		_ColumnDefinitionString('IP Address', width=25),
-		_ColumnDefinitionString('Username'),
-		_ColumnDefinitionString('Hostname'),
-		_ColumnDefinitionString('Local IP Addresses'),
-		_ColumnDefinitionDatetime('First Hit'),
-		_ColumnDefinitionDatetime('Last Hit'),
+		extras.ColumnDefinitionString('Destination'),
+		extras.ColumnDefinitionInteger('Visit Count'),
+		extras.ColumnDefinitionString('IP Address', width=25),
+		extras.ColumnDefinitionString('Username'),
+		extras.ColumnDefinitionString('Hostname'),
+		extras.ColumnDefinitionString('Local IP Addresses'),
+		extras.ColumnDefinitionDatetime('First Hit'),
+		extras.ColumnDefinitionDatetime('Last Hit'),
 	)
 	def format_node_data(self, connection):
 		deaddrop_destination = connection['deaddropDeployment']['destination']
@@ -562,12 +531,12 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	"""
 	secret_columns = ('Password', 'MFA Token')
 	view_columns = (
-		_ColumnDefinitionString('Email Address'),
-		_ColumnDefinitionDatetime('Submitted'),
-		_ColumnDefinitionString('Validation', width=20),
-		_ColumnDefinitionString('Username'),
-		_ColumnDefinitionString('Password'),
-		_ColumnDefinitionString('MFA Token', width=20),
+		extras.ColumnDefinitionString('Email Address'),
+		extras.ColumnDefinitionDatetime('Submitted'),
+		extras.ColumnDefinitionString('Validation', width=20),
+		extras.ColumnDefinitionString('Username'),
+		extras.ColumnDefinitionString('Password'),
+		extras.ColumnDefinitionString('MFA Token', width=20),
 	)
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
@@ -735,13 +704,13 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	}
 	"""
 	view_columns = (
-		_ColumnDefinitionString('Email Address'),
-		_ColumnDefinitionString('IP Address', width=25),
-		_ColumnDefinitionInteger('Visit Count'),
-		_ColumnDefinitionString('Visitor User Agent', width=90),
-		_ColumnDefinitionString('Visitor Location'),
-		_ColumnDefinitionDatetime('First Visit'),
-		_ColumnDefinitionDatetime('Last Visit'),
+		extras.ColumnDefinitionString('Email Address'),
+		extras.ColumnDefinitionString('IP Address', width=25),
+		extras.ColumnDefinitionInteger('Visit Count'),
+		extras.ColumnDefinitionString('Visitor User Agent', width=90),
+		extras.ColumnDefinitionString('Visitor Location'),
+		extras.ColumnDefinitionDatetime('First Visit'),
+		extras.ColumnDefinitionDatetime('Last Visit'),
 	)
 	def format_node_data(self, node):
 		geo_location = UNKNOWN_LOCATION_STRING
@@ -817,13 +786,13 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	}
 	"""
 	view_columns = (
-		_ColumnDefinitionString('Email Address'),
-		_ColumnDefinitionDatetime('Sent'),
-		_ColumnDefinitionString('Trained', width=15),
-		_ColumnDefinitionString('Department'),
-		_ColumnDefinitionDatetime('Opened'),
-		_ColumnDefinitionString('Opener IP Address', width=25),
-		_ColumnDefinitionString('Opener User Agent', width=90)
+		extras.ColumnDefinitionString('Email Address'),
+		extras.ColumnDefinitionDatetime('Sent'),
+		extras.ColumnDefinitionString('Trained', width=15),
+		extras.ColumnDefinitionString('Department'),
+		extras.ColumnDefinitionDatetime('Opened'),
+		extras.ColumnDefinitionString('Opener IP Address', width=25),
+		extras.ColumnDefinitionString('Opener User Agent', width=90)
 	)
 	def format_node_data(self, node):
 		department = node['companyDepartment']

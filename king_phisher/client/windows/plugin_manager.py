@@ -62,7 +62,7 @@ _ROW_TYPE_CATALOG = 'catalog'
 _LOCAL_REPOSITORY_ID = 'local'
 _LOCAL_REPOSITORY_TITLE = '[Locally Installed]'
 
-_ModelNamedRow = collections.namedtuple('RowModel', (
+_ModelNamedRow = collections.namedtuple('ModelNamedRow', (
 	'id',
 	'installed',
 	'enabled',
