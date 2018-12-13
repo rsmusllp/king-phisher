@@ -31,10 +31,10 @@
 #
 
 import codecs
+import datetime
 import logging
 import os
 
-from king_phisher import find
 from king_phisher import its
 from king_phisher import templates
 from king_phisher import utilities
@@ -66,22 +66,39 @@ else:
 	_Gtk_Frame = Gtk.Frame
 	_WebKitX_WebView = WebKitX.WebView
 
-class CellRendererBytes(_Gtk_CellRendererText):
-	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
+class CellRendererPythonText(_Gtk_CellRendererText):
+	python_value = GObject.Property(type=object, flags=GObject.ParamFlags.READWRITE)
+	__gtype_name__ = 'CellRendererPythonText'
+	def __init__(self, *args, **kwargs):
+		Gtk.CellRendererText.__init__(self, *args, **kwargs)
+
 	def do_render(self, *args, **kwargs):
-		original = self.get_property('text')
-		if original.isdigit():
-			self.set_property('text', boltons.strutils.bytes2human(int(original), 1))
+		value = self.render_python_value(self.get_property('python-value'))
+		value = '' if value is None else str(value)
+		self.set_property('text', value)
 		Gtk.CellRendererText.do_render(self, *args, **kwargs)
 
-class CellRendererInteger(_Gtk_CellRendererText):
+class CellRendererBytes(CellRendererPythonText):
+	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
+	python_value = GObject.Property(type=int, flags=GObject.ParamFlags.READWRITE)
+	@staticmethod
+	def render_python_value(value):
+		if isinstance(value, int):
+			return boltons.strutils.bytes2human(value, 1)
+
+class CellRendererDatetime(CellRendererPythonText):
+	format = GObject.Property(type=str, flags=GObject.ParamFlags.READWRITE, default=utilities.TIMESTAMP_FORMAT)
+	def render_python_value(self, value):
+		if isinstance(value, datetime.datetime):
+			return value.strftime(self.props.format)
+
+class CellRendererInteger(CellRendererPythonText):
 	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values with comma separators."""
-	def do_render(self, *args, **kwargs):
-		original = self.get_property('text')
-		is_digit = original[1:].isdigit() if original[0] == '-' else original.isdigit()
-		if is_digit:
-			self.set_property('text', "{:,}".format(int(original)))
-		Gtk.CellRendererText.do_render(self, *args, **kwargs)
+	python_value = GObject.Property(type=int, flags=GObject.ParamFlags.READWRITE)
+	@staticmethod
+	def render_python_value(value):
+		if isinstance(value, int):
+			return "{:,}".format(value)
 
 class FileChooserDialog(_Gtk_FileChooserDialog):
 	"""Display a file chooser dialog with additional convenience methods."""

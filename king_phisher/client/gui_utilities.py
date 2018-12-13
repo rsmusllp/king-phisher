@@ -359,6 +359,12 @@ def gtk_sync():
 	while Gtk.events_pending():
 		Gtk.main_iteration()
 
+def gtk_treesortable_sort_func(model, iter1, iter2, column_id):
+	column_id = column_id or 0
+	item1 = model.get_value(iter1, column_id)
+	item2 = model.get_value(iter2, column_id)
+	return _cmp(item1, item2)
+
 def gtk_treesortable_sort_func_numeric(model, iter1, iter2, column_id):
 	"""
 	Sort the model by comparing text numeric values with place holders such as
@@ -462,6 +468,8 @@ def gtk_treeview_set_column_titles(treeview, column_titles, column_offset=0, ren
 		renderer = renderers[column_id - column_offset] if renderers else Gtk.CellRendererText()
 		if isinstance(renderer, Gtk.CellRendererToggle):
 			column = Gtk.TreeViewColumn(column_title, renderer, active=column_id)
+		elif hasattr(renderer.props, 'python_value'):
+			column = Gtk.TreeViewColumn(column_title, renderer, python_value=column_id)
 		else:
 			column = Gtk.TreeViewColumn(column_title, renderer, text=column_id)
 		column.set_property('reorderable', True)
