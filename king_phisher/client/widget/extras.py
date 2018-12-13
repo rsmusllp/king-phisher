@@ -70,6 +70,10 @@ else:
 # Cell renderers
 ################################################################################
 class CellRendererPythonText(_Gtk_CellRendererText):
+	"""
+	A base :py:class:`Gtk.CellRendererText` class to facilitate rendering native
+	Python values into strings of various formats.
+	"""
 	python_value = GObject.Property(type=object, flags=GObject.ParamFlags.READWRITE)
 	__gtype_name__ = 'CellRendererPythonText'
 	def __init__(self, *args, **kwargs):
@@ -81,8 +85,23 @@ class CellRendererPythonText(_Gtk_CellRendererText):
 		self.set_property('text', value)
 		Gtk.CellRendererText.do_render(self, *args, **kwargs)
 
+	def render_python_value(self, value):
+		"""
+		The method to render *value* into a string to be displayed within the
+		cell.
+
+		:param value: The Python value to render.
+		:rtype: str
+		:return: Either the value rendered as a string or ``None``. Returning
+			``None`` will cause the cell to be displayed as empty.
+		"""
+		raise NotImplementedError()
+
 class CellRendererBytes(CellRendererPythonText):
-	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
+	"""
+	A custom :py:class:`.CellRendererPythonText` to render numeric values
+	representing bytes.
+	"""
 	python_value = GObject.Property(type=int, flags=GObject.ParamFlags.READWRITE)
 	@staticmethod
 	def render_python_value(value):
@@ -90,13 +109,20 @@ class CellRendererBytes(CellRendererPythonText):
 			return boltons.strutils.bytes2human(value, 1)
 
 class CellRendererDatetime(CellRendererPythonText):
+	"""
+	A custom :py:class:`.CellRendererPythonText` to render numeric values
+	representing bytes.
+	"""
 	format = GObject.Property(type=str, flags=GObject.ParamFlags.READWRITE, default=utilities.TIMESTAMP_FORMAT)
 	def render_python_value(self, value):
 		if isinstance(value, datetime.datetime):
 			return value.strftime(self.props.format)
 
 class CellRendererInteger(CellRendererPythonText):
-	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values with comma separators."""
+	"""
+	A custom :py:class:`.CellRendererPythonText` to render numeric values with
+	comma separators.
+	"""
 	python_value = GObject.Property(type=int, flags=GObject.ParamFlags.READWRITE)
 	@staticmethod
 	def render_python_value(value):
@@ -107,14 +133,39 @@ class CellRendererInteger(CellRendererPythonText):
 # Column definitions
 ################################################################################
 class ColumnDefinitionBase(object):
+	"""
+	A base class for defining attributes of columns to be displayed within
+	:py:class:`~Gtk.TreeView` instances.
+	"""
 	__slots__ = ('title', 'width')
-	cell_renderer = g_type = python_type = sort_function = None
+	cell_renderer = None
+	"""The :py:class:`~Gtk.CellRenderer` to use for renderering the content."""
+	g_type = None
+	"""The type to specify in the context of GObjects."""
+	python_type = None
+	"""The type to specify in the context of native Python code."""
+	sort_function = None
+	"""
+	An optional custom sort function to use for comparing values. This is
+	necessary when :py:attr:`.g_type` is not something that can be automatically
+	sorted. If specified, this function will be passed to
+	:py:meth:`Gtk.TreeSortable.set_sort_func`.
+	"""
 	def __init__(self, title, width):
 		self.title = title
+		"""
+		The title of the column to be displayed within the
+		:py:class:`~Gtk.TreeView` instance.
+		"""
 		self.width = width
+		"""An integer specifying the width of the column."""
 
 	@property
 	def name(self):
+		"""
+		The title converted to lowercase and with spaces replaced with
+		underscores.
+		"""
 		return self.title.lower().replace(' ', '_')
 
 class ColumnDefinitionBytes(ColumnDefinitionBase):
