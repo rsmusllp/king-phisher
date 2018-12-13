@@ -117,6 +117,12 @@ class ColumnDefinitionBase(object):
 	def name(self):
 		return self.title.lower().replace(' ', '_')
 
+class ColumnDefinitionBytes(ColumnDefinitionBase):
+	cell_renderer = CellRendererBytes()
+	g_type = python_type = int
+	def __init__(self, title, width=25):
+		super(ColumnDefinitionBytes, self).__init__(title, width)
+
 class ColumnDefinitionDatetime(ColumnDefinitionBase):
 	cell_renderer = CellRendererDatetime()
 	g_type = object
