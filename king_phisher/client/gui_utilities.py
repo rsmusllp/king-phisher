@@ -472,7 +472,9 @@ def gtk_treeview_set_column_titles(treeview, column_titles, column_offset=0, ren
 			column = Gtk.TreeViewColumn(column_title, renderer, python_value=column_id)
 		else:
 			column = Gtk.TreeViewColumn(column_title, renderer, text=column_id)
+		column.set_property('min-width', 25)
 		column.set_property('reorderable', True)
+		column.set_property('resizable', True)
 		column.set_sort_column_id(column_id)
 		treeview.append_column(column)
 		columns[column_id] = column

@@ -168,6 +168,9 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			column_offset=1,
 			renderers=tuple(column.cell_renderer for column in self.view_columns)
 		)
+		for column in self.view_columns:
+			if isinstance(column, extras.ColumnDefinitionDatetime):
+				self.treeview_manager.column_views[column.title].set_fixed_width(150)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
 		treeview = self.gobjects['treeview_campaign']
