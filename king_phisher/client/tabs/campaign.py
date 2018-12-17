@@ -166,7 +166,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.treeview_manager.set_column_titles(
 			self.view_column_titles,
 			column_offset=1,
-			renderers=tuple(column.cell_renderer for column in self.view_columns)
+			renderers=tuple(column.cell_renderer() for column in self.view_columns)
 		)
 		for column in self.view_columns:
 			if isinstance(column, extras.ColumnDefinitionDatetime):

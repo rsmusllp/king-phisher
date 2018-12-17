@@ -80,7 +80,7 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 		self.treeview_manager = managers.TreeViewManager(treeview)
 		self.treeview_manager.set_column_titles(
 			tuple(column.title for column in self.view_columns),
-			renderers=tuple(column.cell_renderer for column in self.view_columns)
+			renderers=tuple(column.cell_renderer() for column in self.view_columns)
 		)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 

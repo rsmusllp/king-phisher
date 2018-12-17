@@ -98,7 +98,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.treeview_manager.set_column_titles(
 			tuple(column.title for column in self.view_columns),
 			column_offset=4,
-			renderers=tuple(column.cell_renderer for column in self.view_columns)
+			renderers=tuple(column.cell_renderer() for column in self.view_columns)
 		)
 		treeview.set_tooltip_column(1)
 		self.treeview_manager.set_column_color(background=2, foreground=3)

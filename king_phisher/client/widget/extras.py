@@ -169,13 +169,13 @@ class ColumnDefinitionBase(object):
 		return self.title.lower().replace(' ', '_')
 
 class ColumnDefinitionBytes(ColumnDefinitionBase):
-	cell_renderer = CellRendererBytes()
+	cell_renderer = CellRendererBytes
 	g_type = python_type = int
 	def __init__(self, title, width=25):
 		super(ColumnDefinitionBytes, self).__init__(title, width)
 
 class ColumnDefinitionDatetime(ColumnDefinitionBase):
-	cell_renderer = CellRendererDatetime()
+	cell_renderer = CellRendererDatetime
 	g_type = object
 	python_type = datetime.datetime
 	sort_function = staticmethod(gui_utilities.gtk_treesortable_sort_func)
@@ -183,13 +183,13 @@ class ColumnDefinitionDatetime(ColumnDefinitionBase):
 		super(ColumnDefinitionDatetime, self).__init__(title, width)
 
 class ColumnDefinitionInteger(ColumnDefinitionBase):
-	cell_renderer = CellRendererInteger()
+	cell_renderer = CellRendererInteger
 	g_type = python_type = int
 	def __init__(self, title, width=15):
 		super(ColumnDefinitionInteger, self).__init__(title, width)
 
 class ColumnDefinitionString(ColumnDefinitionBase):
-	cell_renderer = Gtk.CellRendererText()
+	cell_renderer = Gtk.CellRendererText
 	g_type = python_type = str
 	def __init__(self, title, width=30):
 		super(ColumnDefinitionString, self).__init__(title, width)
