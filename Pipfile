@@ -49,6 +49,7 @@ XlsxWriter = "==0.9.6"
 numpy = "==1.14.5"
 "basemap" = {file = "https://github.com/matplotlib/basemap/archive/v1.2.0rel.tar.gz"}
 pyproj = {git = "https://github.com/jswhit/pyproj.git"}
+rule-engine = "~=1.0"
 
 [dev-packages]
 sphinx = "==1.7.9"

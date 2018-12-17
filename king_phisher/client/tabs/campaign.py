@@ -49,6 +49,7 @@ import advancedhttpserver
 from gi.repository import GdkPixbuf
 from gi.repository import GLib
 from gi.repository import Gtk
+import rule_engine
 from smoke_zephyr.utilities import parse_timespan
 
 UNKNOWN_LOCATION_STRING = 'N/A (Unknown)'
@@ -124,33 +125,34 @@ class CampaignViewGenericTab(gui_utilities.GladeGObject):
 
 class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	"""
-	This object is meant to be subclassed by tabs which will display
-	campaign information of different types from specific database
-	tables. The data in this object is refreshed when multiple events
-	occur and it uses an internal timer to represent the last time the
-	data was refreshed.
+	This object is meant to be subclassed by tabs which will display campaign
+	information of different types from specific database tables. The data in
+	this object is refreshed when multiple events occur and it uses an internal
+	timer to represent the last time the data was refreshed.
 	"""
 	dependencies = gui_utilities.GladeDependencies(
 		children=(
 			'button_refresh',
+			'entry_filter',
+			'label_filter_summary',
+			'revealer_filter',
 			'treeview_campaign'
 		)
 	)
 	node_query = None
 	"""
-	The GraphQL query used to load a particular node from the remote table.
-	This query is provided with a single parameter of the node's id.
+	The GraphQL query used to load a particular node from the remote table. This
+	query is provided with a single parameter of the node's id.
 	"""
 	table_name = ''
 	"""The database table represented by this tab."""
 	table_query = None
 	"""
 	The GraphQL query used to load the desired information from the remote
-	table. This query is provided with the following three parameters:
-	campaign, count and cursor.
+	table. This query is provided with the following three parameters: campaign,
+	count and cursor.
 	"""
 	view_columns = ()
-	"""The dictionary map of column numbers to column names starting at column 1."""
 	xlsx_worksheet_options = None
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewGenericTableTab, self).__init__(*args, **kwargs)
@@ -161,14 +163,66 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			cb_delete=self._prompt_to_delete_row,
 			cb_refresh=self.load_campaign_information
 		)
-		self.treeview_manager.set_column_titles(self.view_columns, column_offset=1)
+		self.treeview_manager.set_column_titles(
+			self.view_column_titles,
+			column_offset=1,
+			renderers=tuple(column.cell_renderer for column in self.view_columns)
+		)
+		for column in self.view_columns:
+			if isinstance(column, extras.ColumnDefinitionDatetime):
+				self.treeview_manager.column_views[column.title].set_fixed_width(150)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		"""The :py:class:`Gtk.Menu` object which is displayed when right-clicking in the view area."""
 		treeview = self.gobjects['treeview_campaign']
-		store_columns = [str] * (len(self.view_columns) + 1)
-		store = Gtk.ListStore(*store_columns)
-		treeview.set_model(store)
+		self._rule = None
+		self._rule_context = rule_engine.Context(type_resolver=rule_engine.type_resolver_from_dict(
+			dict((column.name, rule_engine.DataType.from_type(column.python_type)) for column in self.view_columns)
+		))
+
+		view_column_types = tuple(column.g_type for column in self.view_columns)
+		self._tv_model = Gtk.ListStore(str, *view_column_types)
+		self._tv_model_filter = self._tv_model.filter_new()
+		self._tv_model_filter.set_visible_func(self._tv_filter)
+		tree_model_sort = Gtk.TreeModelSort(model=self._tv_model_filter)
+		for idx, column in enumerate(self.view_columns, 1):
+			if column.sort_function is not None:
+				tree_model_sort.set_sort_func(idx, column.sort_function, idx)
+		treeview.set_model(tree_model_sort)
 		self.application.connect('server-connected', self.signal_kp_server_connected)
+
+		filter_revealer = self.gobjects['revealer_filter']
+		menu_item = Gtk.CheckMenuItem.new_with_label('Show Filter')
+		menu_item.set_active(filter_revealer.get_reveal_child())
+		menu_item.connect('toggled', self.signal_toggled_show_filter)
+		menu_item.show()
+		self.popup_menu.append(menu_item)
+
+	def signal_entry_changed_filter(self, entry):
+		text = entry.get_text()
+		self._rule = None
+		label = self.gobjects['label_filter_summary']
+		if text:
+			try:
+				self._rule = rule_engine.Rule(text, context=self._rule_context)
+			except rule_engine.EngineError:
+				entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
+				return
+		entry.set_property('secondary-icon-stock', None)
+		self._tv_model_filter.refilter()
+		visible_records = len(self._tv_model_filter)
+		all_records = len(self._tv_model)
+		label.set_text("Showing {:,} of {:,} {} ({:.1f}%)".format(
+			visible_records,
+			all_records,
+			self.label_text.lower(),
+			((visible_records / all_records) if all_records > 0 else 1.0) * 100
+		))
+
+	def signal_toggled_show_filter(self, widget):
+		active = widget.get_active()
+		self.gobjects['revealer_filter'].set_reveal_child(active)
+		if active:
+			self.gobjects['entry_filter'].grab_focus()
 
 	def signal_kp_server_connected(self, _):
 		event_id = 'db-' + self.table_name.replace('_', '-')
@@ -183,24 +237,22 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		for row in rows:
 			if str(row.campaign_id) != self.config['campaign_id']:
 				continue
-			model = self.gobjects['treeview_campaign'].get_model()
 			for case in utilities.switch(event_type):
 				if case('inserted'):
 					row_data = self.format_node_data(get_node(row.id))
-					row_data = list(map(self.format_cell_data, row_data))
 					row_data.insert(0, str(row.id))
-					gui_utilities.glib_idle_add_wait(model.append, row_data)
-				ti = gui_utilities.gtk_list_store_search(model, str(row.id))
+					gui_utilities.glib_idle_add_wait(self._tv_model.append, row_data)
+				ti = gui_utilities.gtk_list_store_search(self._tv_model, str(row.id))
 				if ti is None:
 					self.logger.warning("received server db event: {0} for non-existent row {1}:{2}".format(event_type, self.table_name, str(row.id)))
 					break
 				if case('deleted'):
-					model.remove(ti)
+					self._tv_model.remove(ti)
 					break
 				if case('updated'):
 					row_data = self.format_node_data(get_node(row.id))
 					for idx, cell_data in enumerate(row_data, 1):
-						model[ti][idx] = self.format_cell_data(cell_data)
+						self._tv_model[ti][idx] = cell_data
 					break
 
 	def _export_lock(self):
@@ -218,8 +270,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
 			return
-		model = treeview.get_model()
-		row_ids = [model.get_value(ti, 0) for ti in gui_utilities.gtk_treeview_selection_iterate(treeview)]
+		row_ids = [self._tv_model.get_value(ti, 0) for ti in gui_utilities.gtk_treeview_selection_iterate(treeview)]
 		if len(row_ids) == 0:
 			return
 		elif len(row_ids) == 1:
@@ -229,6 +280,18 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
 		self.application.emit(self.table_name[:-1] + '-delete', row_ids)
+
+	def _tv_filter(self, model, tree_iter, _):
+		if self._rule is None:
+			return True
+		model_row = model[tree_iter]
+		row = {}
+		for idx, column in enumerate(self.view_columns, 1):
+			row[column.name] = model_row[idx]
+		try:
+			return self._rule.matches(row)
+		except rule_engine.EngineError:
+			return True
 
 	def format_node_data(self, node):
 		"""
@@ -242,31 +305,6 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		:rtype: list
 		"""
 		raise NotImplementedError()
-
-	def format_cell_data(self, cell_data, encoding='utf-8'):
-		"""
-		This method provides formatting to the individual cell values returned
-		from the :py:meth:`.format_row_data` function. Values are converted into
-		a format suitable for reading.
-
-		:param cell: The value to format.
-		:param str encoding: The encoding to use to coerce the return value into a unicode string.
-		:return: The formatted cell value.
-		:rtype: str
-		"""
-		if isinstance(cell_data, datetime.datetime):
-			cell_data = utilities.datetime_utc_to_local(cell_data)
-			return utilities.format_datetime(cell_data, encoding=encoding)
-
-		if cell_data is None:
-			cell_data = ''
-		elif isinstance(cell_data, int):
-			cell_data = str(cell_data)
-
-		# ensure that the return value is a unicode string
-		if isinstance(cell_data, bytes):
-			cell_data = cell_data.decode(encoding)
-		return cell_data
 
 	def load_campaign_information(self, force=True):
 		"""
@@ -284,9 +322,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		with self.loader_thread_lock:
 			self._sync_loader_thread()
 			self.loader_thread_stop.clear()
-			store = self.gobjects['treeview_campaign'].get_model()
-			store.clear()
-			self.loader_thread = utilities.Thread(target=self.loader_thread_routine, args=(store,))
+			self._tv_model.clear()
+			self.loader_thread = utilities.Thread(target=self.loader_thread_routine, args=(self._tv_model,))
 			self.loader_thread.daemon = True
 			self.loader_thread.start()
 		return
@@ -316,8 +353,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 				break
 			for edge in results['db']['campaign'][self.table_name]['edges']:
 				node = edge['node']
-				row_data = self.format_node_data(node)
-				row_data = list(map(self.format_cell_data, row_data))
+				row_data = list(self.format_node_data(node))
 				row_data.insert(0, str(node['id']))
 				gui_utilities.glib_idle_add_wait(store.append, row_data)
 			page_info = results['db']['campaign'][self.table_name]['pageInfo']
@@ -327,9 +363,9 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		self.last_load_time = time.time()
 
 	def signal_button_clicked_export(self, button):
-		self.export_table_to_csv()
+		self.export_table_to_csv(filtered=True)
 
-	def export_table_to_csv(self):
+	def export_table_to_csv(self, filtered=False):
 		"""Export the data represented by the view to a CSV file."""
 		if not self._export_lock():
 			return
@@ -341,8 +377,11 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			self.loader_thread_lock.release()
 			return
 		destination_file = response['target_path']
-		store = self.gobjects['treeview_campaign'].get_model()
-		columns = dict(enumerate(('UID',) + self.view_columns))
+		if filtered:
+			store = self._tv_model_filter
+		else:
+			store = self._tv_model
+		columns = dict(enumerate(('UID',) + self.view_column_titles))
 		export.liststore_to_csv(store, destination_file, columns)
 		self.loader_thread_lock.release()
 
@@ -357,15 +396,23 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		"""
 		if not self._export_lock():
 			return
-		store = self.gobjects['treeview_campaign'].get_model()
-		columns = dict(enumerate(('UID',) + self.view_columns))
-		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_options=self.xlsx_worksheet_options)
+		store = self._tv_model
+		columns = dict(enumerate(('UID',) + self.view_column_titles))
+		xlsx_worksheet_options = export.XLSXWorksheetOptions(
+			column_widths=(20,) + tuple(column.width for column in self.view_columns),
+			title=self.label_text
+		)
+		export.liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_options=xlsx_worksheet_options)
 		self.loader_thread_lock.release()
+
+	@property
+	def view_column_titles(self):
+		return tuple(column.title for column in self.view_columns)
 
 class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	"""Display campaign information regarding dead drop connections."""
 	table_name = 'deaddrop_connections'
-	label_text = 'Deaddrop'
+	label_text = 'Deaddrop Connections'
 	node_query = """\
 	query getDeaddropConnection($id: String!) {
 		db {
@@ -415,14 +462,14 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 	}
 	"""
 	view_columns = (
-		'Destination',
-		'Visit Count',
-		'IP Address',
-		'Username',
-		'Hostname',
-		'Local IP Addresses',
-		'First Hit',
-		'Last Hit'
+		extras.ColumnDefinitionString('Destination'),
+		extras.ColumnDefinitionInteger('Visit Count'),
+		extras.ColumnDefinitionString('IP Address', width=25),
+		extras.ColumnDefinitionString('Username'),
+		extras.ColumnDefinitionString('Hostname'),
+		extras.ColumnDefinitionString('Local IP Addresses'),
+		extras.ColumnDefinitionDatetime('First Hit'),
+		extras.ColumnDefinitionDatetime('Last Hit'),
 	)
 	def format_node_data(self, connection):
 		deaddrop_destination = connection['deaddropDeployment']['destination']
@@ -487,20 +534,18 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 	"""
 	secret_columns = ('Password', 'MFA Token')
 	view_columns = (
-		'Email Address',
-		'Submitted',
-		'Validation',
-		'Username',
-	) + secret_columns
-	xlsx_worksheet_options = export.XLSXWorksheetOptions(
-		column_widths=(20, 30, 25, 30, 30, 30, 20),
-		title=label_text
+		extras.ColumnDefinitionString('Email Address'),
+		extras.ColumnDefinitionDatetime('Submitted'),
+		extras.ColumnDefinitionString('Validation', width=20),
+		extras.ColumnDefinitionString('Username'),
+		extras.ColumnDefinitionString('Password'),
+		extras.ColumnDefinitionString('MFA Token', width=20),
 	)
 	def __init__(self, *args, **kwargs):
 		super(CampaignViewCredentialsTab, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaign']
 		for column_name in self.secret_columns:
-			treeview.get_column(self.view_columns.index(column_name)).set_property('visible', False)
+			treeview.get_column(self.view_column_titles.index(column_name)).set_property('visible', False)
 
 	def format_node_data(self, node):
 		regex_validated = ''
@@ -520,7 +565,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 		treeview = self.gobjects['treeview_campaign']
 		visible = button.get_property('active')
 		for column_name in self.secret_columns:
-			treeview.get_column(self.view_columns.index(column_name)).set_property('visible', visible)
+			treeview.get_column(self.view_column_titles.index(column_name)).set_property('visible', visible)
 
 class CampaignViewDashboardTab(CampaignViewGenericTab):
 	"""Display campaign information on a graphical dash board."""
@@ -662,17 +707,13 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	}
 	"""
 	view_columns = (
-		'Email Address',
-		'IP Address',
-		'Visit Count',
-		'Visitor User Agent',
-		'Visitor Location',
-		'First Visit',
-		'Last Visit'
-	)
-	xlsx_worksheet_options = export.XLSXWorksheetOptions(
-		column_widths=(30, 30, 25, 15, 90, 30, 25, 25),
-		title=label_text
+		extras.ColumnDefinitionString('Email Address'),
+		extras.ColumnDefinitionString('IP Address', width=25),
+		extras.ColumnDefinitionInteger('Visit Count'),
+		extras.ColumnDefinitionString('Visitor User Agent', width=90),
+		extras.ColumnDefinitionString('Visitor Location'),
+		extras.ColumnDefinitionDatetime('First Visit'),
+		extras.ColumnDefinitionDatetime('Last Visit'),
 	)
 	def format_node_data(self, node):
 		geo_location = UNKNOWN_LOCATION_STRING
@@ -748,17 +789,13 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 	}
 	"""
 	view_columns = (
-		'Email Address',
-		'Sent',
-		'Trained',
-		'Department',
-		'Opened',
-		'Opener IP Address',
-		'Opener User Agent'
-	)
-	xlsx_worksheet_options = export.XLSXWorksheetOptions(
-		column_widths=(30, 30, 30, 15, 20, 20, 25, 90),
-		title=label_text
+		extras.ColumnDefinitionString('Email Address'),
+		extras.ColumnDefinitionDatetime('Sent'),
+		extras.ColumnDefinitionString('Trained', width=15),
+		extras.ColumnDefinitionString('Department'),
+		extras.ColumnDefinitionDatetime('Opened'),
+		extras.ColumnDefinitionString('Opener IP Address', width=25),
+		extras.ColumnDefinitionString('Opener User Agent', width=90)
 	)
 	def format_node_data(self, node):
 		department = node['companyDepartment']

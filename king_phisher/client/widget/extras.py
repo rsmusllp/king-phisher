@@ -31,10 +31,10 @@
 #
 
 import codecs
+import datetime
 import logging
 import os
 
-from king_phisher import find
 from king_phisher import its
 from king_phisher import templates
 from king_phisher import utilities
@@ -66,14 +66,137 @@ else:
 	_Gtk_Frame = Gtk.Frame
 	_WebKitX_WebView = WebKitX.WebView
 
-class CellRendererBytes(_Gtk_CellRendererText):
-	"""A custom :py:class:`Gtk.CellRendererText` to render numeric values representing bytes."""
+################################################################################
+# Cell renderers
+################################################################################
+class CellRendererPythonText(_Gtk_CellRendererText):
+	"""
+	A base :py:class:`Gtk.CellRendererText` class to facilitate rendering native
+	Python values into strings of various formats.
+	"""
+	python_value = GObject.Property(type=object, flags=GObject.ParamFlags.READWRITE)
+	__gtype_name__ = 'CellRendererPythonText'
+	def __init__(self, *args, **kwargs):
+		Gtk.CellRendererText.__init__(self, *args, **kwargs)
+
 	def do_render(self, *args, **kwargs):
-		original = self.get_property('text')
-		if original.isdigit():
-			self.set_property('text', boltons.strutils.bytes2human(int(original), 1))
+		value = self.render_python_value(self.get_property('python-value'))
+		value = '' if value is None else str(value)
+		self.set_property('text', value)
 		Gtk.CellRendererText.do_render(self, *args, **kwargs)
 
+	def render_python_value(self, value):
+		"""
+		The method to render *value* into a string to be displayed within the
+		cell.
+
+		:param value: The Python value to render.
+		:rtype: str
+		:return: Either the value rendered as a string or ``None``. Returning
+			``None`` will cause the cell to be displayed as empty.
+		"""
+		raise NotImplementedError()
+
+class CellRendererBytes(CellRendererPythonText):
+	"""
+	A custom :py:class:`.CellRendererPythonText` to render numeric values
+	representing bytes.
+	"""
+	python_value = GObject.Property(type=int, flags=GObject.ParamFlags.READWRITE)
+	@staticmethod
+	def render_python_value(value):
+		if isinstance(value, int):
+			return boltons.strutils.bytes2human(value, 1)
+
+class CellRendererDatetime(CellRendererPythonText):
+	"""
+	A custom :py:class:`.CellRendererPythonText` to render numeric values
+	representing bytes.
+	"""
+	format = GObject.Property(type=str, flags=GObject.ParamFlags.READWRITE, default=utilities.TIMESTAMP_FORMAT)
+	def render_python_value(self, value):
+		if isinstance(value, datetime.datetime):
+			return value.strftime(self.props.format)
+
+class CellRendererInteger(CellRendererPythonText):
+	"""
+	A custom :py:class:`.CellRendererPythonText` to render numeric values with
+	comma separators.
+	"""
+	python_value = GObject.Property(type=int, flags=GObject.ParamFlags.READWRITE)
+	@staticmethod
+	def render_python_value(value):
+		if isinstance(value, int):
+			return "{:,}".format(value)
+
+################################################################################
+# Column definitions
+################################################################################
+class ColumnDefinitionBase(object):
+	"""
+	A base class for defining attributes of columns to be displayed within
+	:py:class:`~Gtk.TreeView` instances.
+	"""
+	__slots__ = ('title', 'width')
+	cell_renderer = None
+	"""The :py:class:`~Gtk.CellRenderer` to use for renderering the content."""
+	g_type = None
+	"""The type to specify in the context of GObjects."""
+	python_type = None
+	"""The type to specify in the context of native Python code."""
+	sort_function = None
+	"""
+	An optional custom sort function to use for comparing values. This is
+	necessary when :py:attr:`.g_type` is not something that can be automatically
+	sorted. If specified, this function will be passed to
+	:py:meth:`Gtk.TreeSortable.set_sort_func`.
+	"""
+	def __init__(self, title, width):
+		self.title = title
+		"""
+		The title of the column to be displayed within the
+		:py:class:`~Gtk.TreeView` instance.
+		"""
+		self.width = width
+		"""An integer specifying the width of the column."""
+
+	@property
+	def name(self):
+		"""
+		The title converted to lowercase and with spaces replaced with
+		underscores.
+		"""
+		return self.title.lower().replace(' ', '_')
+
+class ColumnDefinitionBytes(ColumnDefinitionBase):
+	cell_renderer = CellRendererBytes()
+	g_type = python_type = int
+	def __init__(self, title, width=25):
+		super(ColumnDefinitionBytes, self).__init__(title, width)
+
+class ColumnDefinitionDatetime(ColumnDefinitionBase):
+	cell_renderer = CellRendererDatetime()
+	g_type = object
+	python_type = datetime.datetime
+	sort_function = staticmethod(gui_utilities.gtk_treesortable_sort_func)
+	def __init__(self, title, width=25):
+		super(ColumnDefinitionDatetime, self).__init__(title, width)
+
+class ColumnDefinitionInteger(ColumnDefinitionBase):
+	cell_renderer = CellRendererInteger()
+	g_type = python_type = int
+	def __init__(self, title, width=15):
+		super(ColumnDefinitionInteger, self).__init__(title, width)
+
+class ColumnDefinitionString(ColumnDefinitionBase):
+	cell_renderer = Gtk.CellRendererText()
+	g_type = python_type = str
+	def __init__(self, title, width=30):
+		super(ColumnDefinitionString, self).__init__(title, width)
+
+################################################################################
+# Miscellaneous
+################################################################################
 class FileChooserDialog(_Gtk_FileChooserDialog):
 	"""Display a file chooser dialog with additional convenience methods."""
 	def __init__(self, title, parent, **kwargs):

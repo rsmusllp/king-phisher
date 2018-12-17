@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import datetime
 
 from king_phisher import its
@@ -37,6 +38,7 @@ from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
 from king_phisher.client.assistants import CampaignAssistant
 from king_phisher.client import gui_utilities
+from king_phisher.client.widget import extras
 from king_phisher.client.widget import managers
 
 from gi.repository import Gdk
@@ -48,6 +50,20 @@ else:
 	import html
 
 __all__ = ('CampaignSelectionDialog',)
+
+_ModelNamedRow = collections.namedtuple('ModelNamedRow', (
+	'id',
+	'description',
+	'bg_color',
+	'fg_color',
+	'name',
+	'company',
+	'type',
+	'messages',
+	'user',
+	'created',
+	'expiration',
+))
 
 class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	"""
@@ -65,27 +81,43 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		),
 		top_level=('StockAddImage',)
 	)
+	view_columns = (
+		extras.ColumnDefinitionString('Campaign Name'),
+		extras.ColumnDefinitionString('Company'),
+		extras.ColumnDefinitionString('Type'),
+		extras.ColumnDefinitionInteger('Messages'),
+		extras.ColumnDefinitionString('Created By'),
+		extras.ColumnDefinitionDatetime('Creation Date'),
+		extras.ColumnDefinitionDatetime('Expiration')
+	)
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
 		super(CampaignSelectionDialog, self).__init__(*args, **kwargs)
 		treeview = self.gobjects['treeview_campaigns']
 		self.treeview_manager = managers.TreeViewManager(treeview, cb_delete=self._prompt_to_delete_row, cb_refresh=self.load_campaigns)
-		self.treeview_manager.set_column_titles(('Campaign Name', 'Company', 'Type', 'Messages', 'Created By', 'Creation Date', 'Expiration'), column_offset=1)
-		self.treeview_manager.set_column_color(background=8, foreground=9)
-		treeview.set_tooltip_column(10)
+		self.treeview_manager.set_column_titles(
+			tuple(column.title for column in self.view_columns),
+			column_offset=4,
+			renderers=tuple(column.cell_renderer for column in self.view_columns)
+		)
+		treeview.set_tooltip_column(1)
+		self.treeview_manager.set_column_color(background=2, foreground=3)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 		self._creation_assistant = None
 
-		self._tv_model = Gtk.ListStore(str, str, str, str, str, str, str, str, Gdk.RGBA, Gdk.RGBA, str)
-		# default sort is descending by campaign creation date
-		self._tv_model.set_sort_column_id(6, Gtk.SortType.DESCENDING)
+		view_column_types = tuple(column.g_type for column in self.view_columns)
+		self._tv_model = Gtk.ListStore(str, str, Gdk.RGBA, Gdk.RGBA, *view_column_types)
 
 		# create and set the filter for expired campaigns
 		self._tv_model_filter = self._tv_model.filter_new()
 		self._tv_model_filter.set_visible_func(self._filter_campaigns)
-		tv_model = Gtk.TreeModelSort(model=self._tv_model_filter)
-		tv_model.set_sort_func(4, gui_utilities.gtk_treesortable_sort_func_numeric, 4)
-		treeview.set_model(tv_model)
+		tree_model_sort = Gtk.TreeModelSort(model=self._tv_model_filter)
+		for idx, column in enumerate(self.view_columns, 4):
+			if column.sort_function is not None:
+				tree_model_sort.set_sort_func(idx, column.sort_function, idx)
+		# default sort is descending by campaign creation date
+		tree_model_sort.set_sort_column_id(9, Gtk.SortType.DESCENDING)
+		treeview.set_model(tree_model_sort)
 
 		# setup menus for filtering campaigns and load campaigns
 		self.get_popup_filter_menu()
@@ -119,18 +151,17 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.config['filter.campaign.other_users'] = self.filter_menu_items['other_campaigns'].get_active()
 
 	def _filter_campaigns(self, model, tree_iter, _):
-		expiration_ts = model[tree_iter][7]
-		campaign_owner = model[tree_iter][5]
+		named_row = _ModelNamedRow(*model[tree_iter])
 		username = self.config['server_username']
 		if not self.filter_menu_items['your_campaigns'].get_active():
-			if username == campaign_owner:
+			if username == named_row.user:
 				return False
 		if not self.filter_menu_items['other_campaigns'].get_active():
-			if username != campaign_owner:
+			if username != named_row.user:
 				return False
-		if expiration_ts is None:
+		if named_row.expiration is None:
 			return True
-		if utilities.parse_datetime(expiration_ts) < datetime.datetime.now():
+		if named_row.expiration < datetime.datetime.now():
 			if not self.filter_menu_items['expired_campaigns'].get_active():
 				return False
 		return True
@@ -172,26 +203,23 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		for campaign in campaigns['db']['campaigns']['edges']:
 			campaign = campaign['node']
 			created_ts = utilities.datetime_utc_to_local(campaign['created'])
-			created_ts = utilities.format_datetime(created_ts)
 			expiration_ts = campaign['expiration']
 			is_expired = False
 			if expiration_ts is not None:
 				expiration_ts = utilities.datetime_utc_to_local(expiration_ts)
-				if expiration_ts < now:
-					is_expired = True
-				expiration_ts = utilities.format_datetime(expiration_ts)
-			store.append((
-				str(campaign['id']),
-				campaign['name'],
-				(campaign['company']['name'] if campaign['company'] is not None else None),
-				(campaign['campaignType']['name'] if campaign['campaignType'] is not None else None),
-				"{0:,}".format(campaign['messages']['total']),
-				campaign['user']['name'],
-				created_ts,
-				expiration_ts,
-				(hlbg_color if is_expired else bg_color),
-				(hlfg_color if is_expired else fg_color),
-				(html.escape(campaign['description'], quote=True) if campaign['description'] else None)
+				is_expired = expiration_ts < now
+			store.append(_ModelNamedRow(
+				id=str(campaign['id']),
+				description=(html.escape(campaign['description'], quote=True) if campaign['description'] else None),
+				bg_color=(hlbg_color if is_expired else bg_color),
+				fg_color=(hlfg_color if is_expired else fg_color),
+				name=campaign['name'],
+				company=(campaign['company']['name'] if campaign['company'] is not None else None),
+				type=(campaign['campaignType']['name'] if campaign['campaignType'] is not None else None),
+				messages=campaign['messages']['total'],
+				user=campaign['user']['name'],
+				created=created_ts,
+				expiration=expiration_ts,
 			))
 		self.gobjects['label_campaign_info'].set_text("Showing {0} of {1:,} Campaign{2}".format(
 			len(self._tv_model_filter),
@@ -220,7 +248,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 
 	def signal_checkbutton_toggled(self, _):
 		self._tv_model_filter.refilter()
-		self.gobjects['label_campaign_info'].set_text("Showing {0} of {1:,} Campaign{2}".format(
+		self.gobjects['label_campaign_info'].set_text("Showing {0:,} of {1:,} Campaign{2}".format(
 			len(self._tv_model_filter),
 			len(self._tv_model),
 			('' if len(self._tv_model) == 1 else 's')
@@ -253,11 +281,11 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			gui_utilities.show_dialog_error('No Campaign Selected', self.dialog, 'Either select a campaign or create a new one.')
 			response = self.dialog.run()
 		if response == Gtk.ResponseType.APPLY:
-			new_campaign_id = model.get_value(tree_iter, 0)
-			self.config['campaign_id'] = new_campaign_id
+			named_row = _ModelNamedRow(*model[tree_iter])
+			self.config['campaign_id'] = named_row.id
 			campaign_name = model.get_value(tree_iter, 1)
-			self.config['campaign_name'] = campaign_name
-			if not (new_campaign_id == old_campaign_id and campaign_name == old_campaign_name):
-				self.application.emit('campaign-set', old_campaign_id, new_campaign_id)
+			self.config['campaign_name'] = named_row.name
+			if not (named_row.id == old_campaign_id and campaign_name == old_campaign_name):
+				self.application.emit('campaign-set', old_campaign_id, named_row.id)
 		self.dialog.destroy()
 		return response

@@ -680,9 +680,9 @@ Spencer McIntyre</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="top_padding">5</property>
-                <property name="bottom_padding">5</property>
+                <property name="bottom_padding">3</property>
                 <property name="left_padding">12</property>
-                <property name="right_padding">5</property>
+                <property name="right_padding">3</property>
                 <child>
                   <object class="GtkBox" id="box18">
                     <property name="visible">True</property>
@@ -751,9 +751,9 @@ Spencer McIntyre</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="top_padding">5</property>
-                <property name="bottom_padding">5</property>
+                <property name="bottom_padding">3</property>
                 <property name="left_padding">12</property>
-                <property name="right_padding">5</property>
+                <property name="right_padding">3</property>
                 <child>
                   <placeholder/>
                 </child>
@@ -848,9 +848,9 @@ Spencer McIntyre</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="top_padding">5</property>
-                <property name="bottom_padding">5</property>
-                <property name="left_padding">10</property>
-                <property name="right_padding">5</property>
+                <property name="bottom_padding">3</property>
+                <property name="left_padding">12</property>
+                <property name="right_padding">3</property>
                 <child>
                   <object class="GtkBox" id="box13">
                     <property name="visible">True</property>
@@ -1341,6 +1341,82 @@ Spencer McIntyre</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
     <child>
+      <object class="GtkRevealer" id="CampaignViewCredentialsTab.revealer_filter">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="transition_duration">500</property>
+        <child>
+          <object class="GtkFrame" id="CampaignViewCredentialsTab.frame_filter">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">3</property>
+            <property name="margin_right">3</property>
+            <property name="margin_top">1</property>
+            <property name="margin_bottom">3</property>
+            <property name="label_xalign">0</property>
+            <child>
+              <object class="GtkAlignment">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="bottom_padding">3</property>
+                <property name="left_padding">12</property>
+                <property name="right_padding">3</property>
+                <child>
+                  <object class="GtkBox" id="CampaignViewCredentialsTab.box_filter">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkEntry" id="CampaignViewCredentialsTab.entry_filter">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="margin_top">1</property>
+                        <property name="margin_bottom">1</property>
+                        <property name="hexpand">True</property>
+                        <property name="primary_icon_stock">gtk-execute</property>
+                        <signal name="changed" handler="signal_entry_changed_filter" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="CampaignViewCredentialsTab.label_filter_summary">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="hexpand">True</property>
+                        <property name="selectable">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">View Filter</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
       <object class="GtkScrolledWindow" id="CampaignViewCredentialsTab.scrolledwindow1">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
@@ -1357,7 +1433,7 @@ Spencer McIntyre</property>
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="position">0</property>
+        <property name="position">1</property>
       </packing>
     </child>
     <child>
@@ -1401,7 +1477,7 @@ Spencer McIntyre</property>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">2</property>
       </packing>
     </child>
   </object>
@@ -1558,6 +1634,82 @@ Spencer McIntyre</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
     <child>
+      <object class="GtkRevealer" id="CampaignViewDeaddropTab.revealer_filter">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="transition_duration">500</property>
+        <child>
+          <object class="GtkFrame" id="CampaignViewDeaddropTab.frame_filter">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">3</property>
+            <property name="margin_right">3</property>
+            <property name="margin_top">1</property>
+            <property name="margin_bottom">3</property>
+            <property name="label_xalign">0</property>
+            <child>
+              <object class="GtkAlignment">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="bottom_padding">3</property>
+                <property name="left_padding">12</property>
+                <property name="right_padding">3</property>
+                <child>
+                  <object class="GtkBox" id="CampaignViewDeaddropTab.box_filter">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkEntry" id="CampaignViewDeaddropTab.entry_filter">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="margin_top">1</property>
+                        <property name="margin_bottom">1</property>
+                        <property name="hexpand">True</property>
+                        <property name="primary_icon_stock">gtk-execute</property>
+                        <signal name="changed" handler="signal_entry_changed_filter" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="CampaignViewDeaddropTab.label_filter_summary">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="hexpand">True</property>
+                        <property name="selectable">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">View Filter</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
       <object class="GtkScrolledWindow" id="CampaignViewDeaddropTab.scrolledwindow2">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
@@ -1574,7 +1726,7 @@ Spencer McIntyre</property>
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="position">0</property>
+        <property name="position">1</property>
       </packing>
     </child>
     <child>
@@ -1617,7 +1769,7 @@ Spencer McIntyre</property>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">2</property>
       </packing>
     </child>
   </object>
@@ -1627,6 +1779,82 @@ Spencer McIntyre</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkRevealer" id="CampaignViewMessagesTab.revealer_filter">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="transition_duration">500</property>
+        <child>
+          <object class="GtkFrame" id="CampaignViewMessagesTab.frame_filter">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">3</property>
+            <property name="margin_right">3</property>
+            <property name="margin_top">1</property>
+            <property name="margin_bottom">3</property>
+            <property name="label_xalign">0</property>
+            <child>
+              <object class="GtkAlignment">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="bottom_padding">3</property>
+                <property name="left_padding">12</property>
+                <property name="right_padding">3</property>
+                <child>
+                  <object class="GtkBox" id="CampaignViewMessagesTab.box_filter">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkEntry" id="CampaignViewMessagesTab.entry_filter">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="margin_top">1</property>
+                        <property name="margin_bottom">1</property>
+                        <property name="hexpand">True</property>
+                        <property name="primary_icon_stock">gtk-execute</property>
+                        <signal name="changed" handler="signal_entry_changed_filter" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="CampaignViewMessagesTab.label_filter_summary">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="hexpand">True</property>
+                        <property name="selectable">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">View Filter</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
     <child>
       <object class="GtkScrolledWindow" id="CampaignViewMessagesTab.scrolledwindow3">
         <property name="visible">True</property>
@@ -1644,7 +1872,7 @@ Spencer McIntyre</property>
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="position">0</property>
+        <property name="position">1</property>
       </packing>
     </child>
     <child>
@@ -1687,7 +1915,7 @@ Spencer McIntyre</property>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">2</property>
       </packing>
     </child>
   </object>
@@ -1697,6 +1925,82 @@ Spencer McIntyre</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkRevealer" id="CampaignViewVisitsTab.revealer_filter">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="transition_duration">500</property>
+        <child>
+          <object class="GtkFrame" id="CampaignViewVisitsTab.frame_filter">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">3</property>
+            <property name="margin_right">3</property>
+            <property name="margin_top">1</property>
+            <property name="margin_bottom">3</property>
+            <property name="label_xalign">0</property>
+            <child>
+              <object class="GtkAlignment">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="bottom_padding">3</property>
+                <property name="left_padding">12</property>
+                <property name="right_padding">3</property>
+                <child>
+                  <object class="GtkBox" id="CampaignViewVisitsTab.box_filter">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkEntry" id="CampaignViewVisitsTab.entry_filter">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="margin_top">1</property>
+                        <property name="margin_bottom">1</property>
+                        <property name="hexpand">True</property>
+                        <property name="primary_icon_stock">gtk-execute</property>
+                        <signal name="changed" handler="signal_entry_changed_filter" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="CampaignViewVisitsTab.label_filter_summary">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="hexpand">True</property>
+                        <property name="selectable">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">View Filter</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
     <child>
       <object class="GtkScrolledWindow" id="CampaignViewVisitsTab.scrolledwindow4">
         <property name="visible">True</property>
@@ -1914,9 +2218,9 @@ Spencer McIntyre</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="top_padding">5</property>
-                    <property name="bottom_padding">5</property>
+                    <property name="bottom_padding">3</property>
                     <property name="left_padding">12</property>
-                    <property name="right_padding">5</property>
+                    <property name="right_padding">3</property>
                     <child>
                       <object class="GtkBox" id="box31">
                         <property name="visible">True</property>
@@ -4200,7 +4504,7 @@ Spencer McIntyre</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="top_padding">5</property>
-                                <property name="left_padding">5</property>
+                                <property name="left_padding">12</property>
                                 <child>
                                   <object class="GtkGrid" id="grid4">
                                     <property name="visible">True</property>
@@ -4209,7 +4513,7 @@ Spencer McIntyre</property>
                                     <property name="row_homogeneous">True</property>
                                     <child>
                                       <object class="GtkLabel" id="label7">
-                                        <property name="width_request">170</property>
+                                        <property name="width_request">163</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
                                         <property name="label" translatable="yes">SSH Server</property>
@@ -4221,7 +4525,7 @@ Spencer McIntyre</property>
                                     </child>
                                     <child>
                                       <object class="GtkLabel" id="label14">
-                                        <property name="width_request">170</property>
+                                        <property name="width_request">163</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
                                         <property name="label" translatable="yes">SSH Username</property>
@@ -5866,6 +6170,7 @@ host key will store it for identification verification of future connections.</p
                   <object class="GtkAlignment" id="alignment5">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="top_padding">5</property>
                     <property name="bottom_padding">3</property>
                     <property name="left_padding">12</property>
                     <property name="right_padding">3</property>
@@ -6052,6 +6357,7 @@ your communications. Please contact the system administrator.</property>
                   <object class="GtkAlignment" id="alignment7">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="top_padding">5</property>
                     <property name="bottom_padding">3</property>
                     <property name="left_padding">12</property>
                     <property name="right_padding">3</property>
@@ -7573,7 +7879,9 @@ your communications. Please contact the system administrator.</property>
                   <object class="GtkAlignment">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="bottom_padding">3</property>
                     <property name="left_padding">12</property>
+                    <property name="right_padding">3</property>
                     <child>
                       <object class="GtkBox" id="MailSenderConfigurationTab.box_message_uid_charset">
                         <property name="visible">True</property>

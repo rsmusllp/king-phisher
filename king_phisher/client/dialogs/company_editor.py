@@ -46,8 +46,8 @@ class CompanyEditorDialog(gui_utilities.GladeGObject):
 		children=(
 			resources.CompanyEditorGrid(
 				gui_utilities.GladeProxyDestination(
+					'pack_start',
 					widget='box_company',
-					method='pack_start',
 					kwargs=dict(expand=True, fill=True, padding=0)
 				)
 			),
