@@ -35,6 +35,7 @@ import collections
 import copy
 import csv
 import datetime
+import itertools
 import logging
 import os
 import re
@@ -427,7 +428,13 @@ def liststore_export(store, columns, cb_write, cb_write_args, row_offset=0, writ
 	store_iter = store.get_iter_first()
 	rows_written = 0
 	while store_iter:
-		cb_write(rows_written + 1 + row_offset, (store.get_value(store_iter, c) for c in store_columns), *cb_write_args)
+		row = collections.deque()
+		for column in store_columns:
+			value = store.get_value(store_iter, column)
+			if isinstance(value, datetime.datetime):
+				value = utilities.format_datetime(value)
+			row.append(value)
+		cb_write(rows_written + 1 + row_offset, row, *cb_write_args)
 		rows_written += 1
 		store_iter = store.iter_next(store_iter)
 	return rows_written
