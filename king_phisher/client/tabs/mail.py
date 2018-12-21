@@ -36,6 +36,7 @@ import hashlib
 import os
 import re
 import sys
+import time
 import urllib
 
 from king_phisher import its
@@ -62,6 +63,7 @@ from gi.repository import Pango
 import jinja2
 import requests
 from smoke_zephyr.utilities import escape_single_quote
+from smoke_zephyr.utilities import parse_timespan
 
 if sys.version_info[0] < 3:
 	import urlparse
@@ -855,6 +857,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.application.connect('campaign-changed', self.signal_kpc_campaign_changed)
 		self.application.connect('campaign-set', self.signal_kpc_campaign_set)
 		self.application.connect('exit', self.signal_kpc_exit)
+		self.application.connect('server-connected', self._url_completion_load)
 
 		self.message_type = managers.RadioButtonGroupManager(self, 'message_type')
 		self.message_type.set_active(self.config['mailer.message_type'])
@@ -865,6 +868,121 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.message_uid_charset = managers.ToggleButtonGroupManager(self, 'checkbutton', 'message_uid_charset')
 		self.message_uid_charset.set_active(self.config['mailer.message_uid.charset'])
 		self._update_target_count()
+
+		self.url_completion = Gtk.EntryCompletion()
+		self.url_list_store = Gtk.ListStore(str)
+		self.url_completion.set_model(self.url_list_store)
+		self.url_completion.set_text_column(0)
+		self.url_completion.set_match_func(self._url_custom_match_function)
+		self.gobjects['entry_webserver_url'].set_completion(self.url_completion)
+		self.gobjects['entry_webserver_url'].connect('key-press-event', self._webserver_url_key_press_event)
+		self.refresh_frequency = parse_timespan(str(self.config.get('gui.refresh_frequency', '5m')))
+		self.url_completion_last_load_time = None
+		self.url_thread = None
+
+	@property
+	def _url_thread_is_ready(self):
+		return self.url_thread is None or not self.url_thread.is_alive()
+
+	def _url_custom_match_function(self, gtk_completion, key, tree_iter):
+		model = gtk_completion.get_model()
+		raw_iter_url = model[tree_iter][0]
+
+		if raw_iter_url.startswith(key):
+			return True
+		if not key.startswith('http'):
+			key = 'http://' + key
+
+		try:
+			key_parse = urllib.parse.urlparse(key)
+			parse_iter_url = urllib.parse.urlparse(raw_iter_url)
+		except ValueError:
+			self.logger.warning('value error when parsing uris for url entry completion')
+			return False
+
+		iter_hostname = parse_iter_url.netloc.partition(':')[0]
+		if key_parse.netloc:
+			if not iter_hostname.startswith(key_parse.netloc.split(':')[0]):
+				return False
+			if not parse_iter_url.path.startswith(key_parse.path):
+				return False
+
+		return True
+
+	def _url_completion_load(self, _):
+		self.config['server_config']['server.ssl'] = False
+		self.config['server_config']['server.addresses'] = self.application.rpc('config/get', 'server.addresses')
+		self.config['server_config']['server.vhost_directories'] = self.application.rpc('config/get', 'server.vhost_directories')
+		for address in self.config['server_config']['server.addresses']:
+			if address['ssl']:
+				self.config['server_config']['server.ssl'] = True
+		if not self._url_thread_is_ready:
+			return
+		self.url_thread = utilities.Thread(self._set_entry_completion_list_tsafe)
+		self.url_thread.start()
+
+	def _webserver_url_key_press_event(self, widget, event):
+		if event.type != Gdk.EventType.KEY_PRESS:
+			return
+		if not self._url_thread_is_ready:
+			return
+
+		keyval = event.get_keyval()[1]
+		if keyval == Gdk.KEY_F5:
+			self.url_thread = utilities.Thread(self._set_entry_completion_list_tsafe)
+			self.url_thread.start()
+		if (time.time() - self.url_completion_last_load_time) < self.refresh_frequency:
+			return
+		self.url_thread = utilities.Thread(self._set_entry_completion_list_tsafe)
+		self.url_thread.start()
+
+	def _get_url_templates(self):
+		return self.application.rpc.graphql("""\
+		{ 
+			siteTemplates 
+				{
+					edges 
+						{ 
+							node 
+								{ 
+									created 
+									hostname 
+									path 
+									metadata
+										{
+											authors
+											classifiers 
+											description 
+											pages
+										}
+								}
+						}
+				}
+		}""")
+
+	def _set_entry_completion_list_tsafe(self):
+		gui_utilities.glib_idle_add_once(self.url_list_store.clear)
+		url_information = self._get_url_templates()
+		if not url_information:
+			return
+		for edge in url_information['siteTemplates']['edges']:
+			for page in edge['node']['metadata']['pages']:
+				for url in self._build_urls(edge['node']['hostname'], page, edge['node']['path']):
+					gui_utilities.glib_idle_add_once(self.url_list_store.append, [url])
+		self.logger.debug('updated webserver url autocomplete liststore')
+		self.url_completion_last_load_time = time.time()
+
+	def _build_urls(self, hostname, page, path):
+		urls = []
+		if self.config['server_config']['server.vhost_directories']:
+			urls.append(urllib.parse.urljoin('http://' + hostname, page))
+		else:
+			urls.append(urllib.parse.urljoin('http://' + hostname, path, page))
+		if self.config['server_config']['server.ssl'] and self.config['server_config']['server.vhost_directories']:
+			urls.append(urllib.parse.urljoin('https://' + hostname, page))
+		elif self.config['server_config']['server.ssl'] and not self.config['server_config']['server.vhost_directories']:
+			urls.append(urllib.parse.urljoin('https://' + hostname, path, page))
+		return urls
 
 	def _campaign_load(self, campaign_id):
 		campaign = self.application.get_graphql_campaign(campaign_id=campaign_id)
