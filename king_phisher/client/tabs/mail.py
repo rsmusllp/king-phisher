@@ -967,21 +967,31 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			return
 		for edge in url_information['siteTemplates']['edges']:
 			for page in edge['node']['metadata']['pages']:
-				for url in self._build_urls(edge['node']['hostname'], page, edge['node']['path']):
+				urls = self._build_urls(edge['node']['hostname'], page, edge['node']['path'])
+				if not urls:
+					continue
+				for url in urls:
 					gui_utilities.glib_idle_add_once(self.url_list_store.append, [url])
 		self.logger.debug('updated webserver url autocomplete liststore')
 		self.url_completion_last_load_time = time.time()
 
 	def _build_urls(self, hostname, page, path):
 		urls = []
-		if self.config['server_config']['server.vhost_directories']:
-			urls.append(urllib.parse.urljoin('http://' + hostname, page))
+		if not hostname:
+			for address in self.config['server_config']['server.addresses']:
+				if address['host'] != '0.0.0.0':
+					hostname = address['host']
+		if not hostname:
+			return
+
+		if path != '.':
+			landing_page = path + page
 		else:
-			urls.append(urllib.parse.urljoin('http://' + hostname, path, page))
-		if self.config['server_config']['server.ssl'] and self.config['server_config']['server.vhost_directories']:
-			urls.append(urllib.parse.urljoin('https://' + hostname, page))
-		elif self.config['server_config']['server.ssl'] and not self.config['server_config']['server.vhost_directories']:
-			urls.append(urllib.parse.urljoin('https://' + hostname, path, page))
+			landing_page = page
+
+		urls.append(urllib.parse.urljoin('http://' + hostname, landing_page))
+		if self.config['server_config']['server.ssl']:
+			urls.append(urllib.parse.urljoin('https://' + hostname, landing_page))
 		return urls
 
 	def _campaign_load(self, campaign_id):
