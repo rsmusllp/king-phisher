@@ -33,6 +33,7 @@
 import codecs
 import datetime
 import hashlib
+import ipaddress
 import os
 import re
 import sys
@@ -884,6 +885,13 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 	def _url_thread_is_ready(self):
 		return self.url_thread is None or not self.url_thread.is_alive()
 
+	@property
+	def _server_uses_ssl(self):
+		for address in self.config['server_config']['server.addresses']:
+			if address['ssl']:
+				return True
+		return False
+
 	def _url_custom_match_function(self, gtk_completion, key, tree_iter):
 		model = gtk_completion.get_model()
 		raw_iter_url = model[tree_iter][0]
@@ -910,12 +918,6 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		return True
 
 	def _url_completion_load(self, _):
-		self.config['server_config']['server.ssl'] = False
-		self.config['server_config']['server.addresses'] = self.application.rpc('config/get', 'server.addresses')
-		self.config['server_config']['server.vhost_directories'] = self.application.rpc('config/get', 'server.vhost_directories')
-		for address in self.config['server_config']['server.addresses']:
-			if address['ssl']:
-				self.config['server_config']['server.ssl'] = True
 		if not self._url_thread_is_ready:
 			return
 		self.url_thread = utilities.Thread(self._set_entry_completion_list_tsafe)
@@ -936,33 +938,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		self.url_thread = utilities.Thread(self._set_entry_completion_list_tsafe)
 		self.url_thread.start()
 
-	def _get_url_templates(self):
-		return self.application.rpc.graphql("""\
-		{ 
-			siteTemplates 
-				{
-					edges 
-						{ 
-							node 
-								{ 
-									created 
-									hostname 
-									path 
-									metadata
-										{
-											authors
-											classifiers 
-											description 
-											pages
-										}
-								}
-						}
-				}
-		}""")
-
 	def _set_entry_completion_list_tsafe(self):
 		gui_utilities.glib_idle_add_once(self.url_list_store.clear)
-		url_information = self._get_url_templates()
+		url_information = self.application.rpc.graphql_find_file('get_site_templates.graphql')
 		if not url_information:
 			return
 		for edge in url_information['siteTemplates']['edges']:
@@ -970,16 +948,15 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 				urls = self._build_urls(edge['node']['hostname'], page, edge['node']['path'])
 				if not urls:
 					continue
-				for url in urls:
-					gui_utilities.glib_idle_add_once(self.url_list_store.append, [url])
-		self.logger.debug('updated webserver url autocomplete liststore')
+				gui_utilities.glib_idle_add_store_extend(self.url_list_store, urls)
+		self.logger.debug('successfully updated webserver url autocomplete liststore')
 		self.url_completion_last_load_time = time.time()
 
 	def _build_urls(self, hostname, page, path):
 		urls = []
 		if not hostname:
 			for address in self.config['server_config']['server.addresses']:
-				if address['host'] != '0.0.0.0':
+				if address['host'] != '0.0.0.0' and address['host'] != '::' and not ipaddress.ip_address(address['host'].is_link_local):
 					hostname = address['host']
 		if not hostname:
 			return
@@ -989,9 +966,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		else:
 			landing_page = page
 
-		urls.append(urllib.parse.urljoin('http://' + hostname, landing_page))
-		if self.config['server_config']['server.ssl']:
-			urls.append(urllib.parse.urljoin('https://' + hostname, landing_page))
+		urls.append([urllib.parse.urljoin('http://' + hostname, landing_page)])
+		if self._server_uses_ssl:
+			urls.append([urllib.parse.urljoin('https://' + hostname, landing_page)])
 		return urls
 
 	def _campaign_load(self, campaign_id):

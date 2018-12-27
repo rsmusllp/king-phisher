@@ -552,7 +552,17 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def load_server_config(self):
 		"""Load the necessary values from the server's configuration."""
-		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image', 'server.web_root'])
+		self.config['server_config'] = self.rpc(
+			'config/get',
+			[
+				'server.require_id',
+				'server.secret_id',
+				'server.tracking_image',
+				'server.web_root',
+				'server.addresses',
+				'server.vhost_directories'
+			]
+		)
 		return
 
 	def load_style_css(self, css_file):
