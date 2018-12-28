@@ -102,6 +102,29 @@ def which_glade():
 	"""
 	return find.data_file(os.environ.get('KING_PHISHER_GLADE_FILE', 'king-phisher-client.ui'))
 
+def _store_extend(store, things, clear=False):
+	if clear:
+		store.clear()
+	for thing in things:
+		store.append(thing)
+
+def glib_idle_add_store_extend(store, things, clear=False, wait=False):
+	"""
+	Extend a GTK store object (either :py:class:`Gtk.ListStore` or :py:class:`Gtk.TreeStore`)
+	object using :py:func:`GLib.idle_add`.
+	This function is suitable for use in non-main GUI threads for synchronizing data.
+
+	:param store: The GTK storage object to add *things* to.
+	:type store: :py:class:`Gtk.ListStore`, :py:class:`Gtk.TreeStore`
+	:param tuple things: The array of things to add to *store*.
+	:param bool clear: Whether or not to clear the storage object before adding *things* to it.
+	:param bool wait: Whether or not to wait for the operation to complete before returning.
+	:return: Regardless of the *wait* parameter, ``None`` is returned.
+	:rtype: None
+	"""
+	idle_add = glib_idle_add_wait if wait else glib_idle_add_once
+	idle_add(_store_extend, store, things, clear)
+
 def glib_idle_add_once(function, *args, **kwargs):
 	"""
 	Execute *function* in the main GTK loop using :py:func:`GLib.idle_add`
