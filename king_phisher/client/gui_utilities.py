@@ -114,13 +114,13 @@ def glib_idle_add_store_extend(store, things, clear=False, wait=False):
 	object using :py:func:`GLib.idle_add`.
 	This function is suitable for use in non-main GUI threads for synchronizing data.
 
-	note** regardless of *wait*, None is returned
-
 	:param store: The GTK storage object to add *things* to.
 	:type store: :py:class:`Gtk.ListStore`, :py:class:`Gtk.TreeStore`
 	:param tuple things: The array of things to add to *store*.
 	:param bool clear: Whether or not to clear the storage object before adding *things* to it.
 	:param bool wait: Whether or not to wait for the operation to complete before returning.
+	:return: Regardless of the *wait* parameter, ``None`` is returned.
+	:rtype: None
 	"""
 	idle_add = glib_idle_add_wait if wait else glib_idle_add_once
 	idle_add(_store_extend, store, things, clear)
