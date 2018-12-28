@@ -887,10 +887,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	@property
 	def _server_uses_ssl(self):
-		for address in self.config['server_config']['server.addresses']:
-			if address['ssl']:
-				return True
-		return False
+		return any(address['ssl'] for address in self.config['server_config']['server.addresses'])
 
 	def _url_custom_match_function(self, gtk_completion, key, tree_iter):
 		model = gtk_completion.get_model()
@@ -945,9 +942,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			return
 		for edge in url_information['siteTemplates']['edges']:
 			for page in edge['node']['metadata']['pages']:
-				urls = self._build_urls(edge['node']['hostname'], page, edge['node']['path'])
-				if not urls:
-					continue
+				urls = self._build_urls(edge['node']['hostname'], page, edge['node']['path']) or []
 				gui_utilities.glib_idle_add_store_extend(self.url_list_store, urls)
 		self.logger.debug('successfully updated webserver url autocomplete liststore')
 		self.url_completion_last_load_time = time.time()
@@ -956,7 +951,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		urls = []
 		if not hostname:
 			for address in self.config['server_config']['server.addresses']:
-				if address['host'] != '0.0.0.0' and address['host'] != '::' and not ipaddress.ip_address(address['host'].is_link_local):
+				ip = ipaddress.ip_address(address['host'])
+				if not ip.is_unspecified and (ip.is_global or ip.is_private):
 					hostname = address['host']
 		if not hostname:
 			return

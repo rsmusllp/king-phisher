@@ -20,6 +20,8 @@ Functions
 
 .. autofunction:: glib_idle_add_wait
 
+.. autofunction:: glib_idle_add_store_extend
+
 .. autofunction:: gobject_get_value
 
 .. autofunction:: gobject_set_value

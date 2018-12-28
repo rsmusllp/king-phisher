@@ -1,5 +1,5 @@
 # retrieve information of all site templates
-query getsiteTemplates {
+query getSiteTemplates {
   siteTemplates {
     edges {
       node {
