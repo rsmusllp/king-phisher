@@ -69,6 +69,12 @@ class CompanyEditorDialog(gui_utilities.GladeGObject):
 		self.gobjects['entry_company_url_email'].connect('changed', self.signal_editable_changed)
 		self.gobjects['entry_company_url_remote_access'].connect('changed', self.signal_editable_changed)
 
+		campaign = self.application.rpc.graphql_find_file('get_campaign.graphql', id=self.config['campaign_id'])['db']['campaign']
+		if campaign['company'] is not None:
+			combobox = self.gobjects['combobox_company_existing']
+			combobox.set_active_iter(gui_utilities.gtk_list_store_search(combobox.get_model(), str(campaign['company']['id'])))
+			self._get_company_info(campaign['company']['id'])
+
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
 		renderer = resources.renderer_text_desc
@@ -101,7 +107,7 @@ class CompanyEditorDialog(gui_utilities.GladeGObject):
 			combobox.set_active_iter(None)
 			combobox.get_child().set_text('')
 		else:
-			combobox.set_active_iter(gui_utilities.gtk_list_store_search(combobox.get_model(), company['industryId']))
+			combobox.set_active_iter(gui_utilities.gtk_list_store_search(combobox.get_model(), str(company['industryId'])))
 		self.gobjects['entry_company_name'].set_text(company['name'])
 		self.gobjects['entry_company_description'].set_text(company['description'] or '')
 		self.gobjects['entry_company_url_main'].set_text(company['urlMain'] or '')
