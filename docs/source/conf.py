@@ -119,7 +119,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'King Phisher'
-copyright = '2013-2018, SecureState LLC'
+copyright = '2013-2019, SecureState LLC'
 
 # The short X.Y version.
 version = king_phisher.version.version.split('-')[0]

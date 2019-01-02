@@ -260,9 +260,9 @@ def gtk_calendar_get_pydate(gtk_calendar):
 	"""
 	if not isinstance(gtk_calendar, Gtk.Calendar):
 		raise ValueError('calendar must be a Gtk.Calendar instance')
-	year, month, day = calendar_day = gtk_calendar.get_date()
+	year, month, day = gtk_calendar.get_date()
 	month += 1  # account for Gtk.Calendar starting at 0
-	_, last_day_of_month = calendar.monthrange(2018, month)
+	_, last_day_of_month = calendar.monthrange(year, month)
 	day = max(1, min(day, last_day_of_month))
 	return datetime.date(year, month, day)
 
