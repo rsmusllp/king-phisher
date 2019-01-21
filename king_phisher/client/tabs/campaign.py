@@ -239,8 +239,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 				continue
 			for case in utilities.switch(event_type):
 				if case('inserted'):
-					row_data = self.format_node_data(get_node(row.id))
-					row_data.insert(0, str(row.id))
+					row_data = (str(row.id),) + tuple(self.format_node_data(get_node(row.id)))
 					gui_utilities.glib_idle_add_wait(self._tv_model.append, row_data)
 				ti = gui_utilities.gtk_list_store_search(self._tv_model, str(row.id))
 				if ti is None:
@@ -353,8 +352,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 				break
 			for edge in results['db']['campaign'][self.table_name]['edges']:
 				node = edge['node']
-				row_data = list(self.format_node_data(node))
-				row_data.insert(0, str(node['id']))
+				row_data = (str(node['id']),) + tuple(self.format_node_data(node))
 				gui_utilities.glib_idle_add_wait(store.append, row_data)
 			page_info = results['db']['campaign'][self.table_name]['pageInfo']
 		if self.is_destroyed.is_set():
