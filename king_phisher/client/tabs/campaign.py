@@ -269,7 +269,8 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		if isinstance(self.loader_thread, threading.Thread) and self.loader_thread.is_alive():
 			gui_utilities.show_dialog_warning('Can Not Delete Rows While Loading', self.parent)
 			return
-		row_ids = [self._tv_model.get_value(ti, 0) for ti in gui_utilities.gtk_treeview_selection_iterate(treeview)]
+		model = treeview.get_model()
+		row_ids = [model.get_value(ti, 0) for ti in gui_utilities.gtk_treeview_selection_iterate(treeview)]
 		if len(row_ids) == 0:
 			return
 		elif len(row_ids) == 1:
