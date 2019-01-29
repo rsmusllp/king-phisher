@@ -159,31 +159,31 @@ function sync_dependencies {
 		 [ "$LINUX_VERSION" == "Ubuntu"  ]; then
 		apt-get install -y libfreetype6-dev python3-dev pkg-config
 		if ! python3 -m pip --version; then
-			if apt-get install python3-pip; then
+			if apt-get install -y python3-pip; then
 				echo "INFO: Installed python3-pip via apt-get"
 			else
 				curl https://bootstrap.pypa.io/get-pip.py | python3
 				echo "INFO: Installed pip via get-pip.py"
 			fi
 		fi
-		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-			if ! apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
-				python3-cairo libgeos++-dev libgirepository1.0-dev \
-				libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev; then
-					echo "ERROR: Failed to install dependencies with apt-get"
-					exit
-			fi
 
+		if ! apt-get install -y gir1.2-gtk-3.0 gir1.2-gtksource-3.0 \
+			python3-cairo libgeos++-dev libgirepository1.0-dev \
+			libgtk-3-dev libpq-dev python3-gi python3-gi-cairo libpq-dev; then
+				echo "ERROR: Failed to install dependencies with apt-get"
+				exit
+		fi
+		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 			if [ "$LINUX_VERSION" == "Ubuntu" ]; then
 				apt-get install -y adwaita-icon-theme-full
 			fi
 
 			if apt-cache search gir1.2-vte-2.91 &> /dev/null; then
-				if ! apt-get -y install gir1.2-vte-2.91; then
+				if ! apt-get install -y gir1.2-vte-2.91; then
 					echo "ERROR: Failed to install gir1.2-vte-2.91"
 				fi
 			else
-				if ! apt-get -y install gir1.2-vte-2.90; then
+				if ! apt-get install -y gir1.2-vte-2.90; then
 					echo "ERROR: Failed to install gir1.2-vte-2.90"
 				fi
 			fi
