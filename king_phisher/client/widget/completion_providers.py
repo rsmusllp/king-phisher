@@ -30,9 +30,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import ipaddress
 import logging
 import os
 import re
+import urllib
 
 from king_phisher import find
 from king_phisher import its

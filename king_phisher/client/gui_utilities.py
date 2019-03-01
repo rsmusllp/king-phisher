@@ -39,6 +39,7 @@ import logging
 import os
 import socket
 import threading
+import xml.sax.saxutils as saxutils
 
 from king_phisher import find
 from king_phisher import utilities
@@ -512,6 +513,35 @@ def gtk_widget_destroy_children(widget):
 	"""
 	for child in widget.get_children():
 		child.destroy()
+
+def set_listbox_classifiers(label, listbox, classifiers):
+	"""
+	Formats and adds classifiers to a listbox.
+	If no classifiers, it hides the label and listbox.
+
+	:param label: Gtk Label associated with the listbox
+	:type label: :py:class:`Gtk.label`
+	:param listbox: Gtk Listbox to put the classifiers in.
+	:type listbox: :py:class:`Gtk.listbox`
+	:param list classifiers: List of classifiers to add to the Gtk Listbox
+	"""
+	gtk_widget_destroy_children(listbox)
+
+	if not classifiers:
+		label.set_property('visible', False)
+		listbox.set_property('visible', False)
+		return
+
+	label.set_property('visible', True)
+	listbox.set_property('visible', True)
+	for classifier in classifiers:
+		label = Gtk.Label()
+		label.set_markup("<span font=\"smaller\"><tt>{0}</tt></span>".format(saxutils.escape(classifier)))
+		label.set_property('halign', Gtk.Align.START)
+		label.set_property('use-markup', True)
+		label.set_property('valign', Gtk.Align.START)
+		label.set_property('visible', True)
+		listbox.add(label)
 
 def show_dialog(message_type, message, parent, secondary_text=None, message_buttons=Gtk.ButtonsType.OK, use_markup=False, secondary_use_markup=False):
 	"""

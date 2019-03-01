@@ -975,6 +975,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		else:
 			self.config['mailer.company_name'] = campaign['company']['name']
 		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
+		self.gobjects['entry_webserver_url'].set_text(self.config['mailer.webserver_url'] or '')
 
 	def _update_target_count(self):
 		if not hasattr(self, 'target_type'):
@@ -1243,6 +1244,7 @@ class MailSenderTab(_GObject_GObject):
 		context_id = self.status_bar.get_context_id('campaign name')
 		self.status_bar.pop(context_id)
 		self.status_bar.push(context_id, self.config['campaign_name'])
+		#self.go
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		previous_page = notebook.get_nth_page(self.last_page_id)
