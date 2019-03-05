@@ -136,7 +136,7 @@ def pipenv_entry(parser, entry_point):
 	logger.addHandler(console_log_handler)
 
 	target_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-	logger.debug("target diretory: {}".format(target_directory))
+	logger.debug("target directory: {}".format(target_directory))
 
 	os.environ['PIPENV_VENV_IN_PROJECT'] = os.environ.get('PIPENV_VENV_IN_PROJECT', 'True')
 	os.environ['PIPENV_PIPFILE'] = os.environ.get('PIPENV_PIPFILE', os.path.join(target_directory, 'Pipfile'))
@@ -239,8 +239,9 @@ def argp_add_default_args(parser, default_root=''):
 	:param str default_root: The default root logger to specify.
 	"""
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'), help='set the logging level')
-	parser.add_argument('--logger', default=default_root, help='specify the root logger')
+	log_group = parser.add_argument_group('logging options')
+	log_group.add_argument('-L', '--log', dest='loglvl', choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'), help='set the logging level')
+	log_group.add_argument('--logger', default=default_root, help='specify the root logger')
 	gc_group = parser.add_argument_group('garbage collector options')
 	gc_group.add_argument('--gc-debug-leak', action='store_const', const=gc.DEBUG_LEAK, default=0, help='set the DEBUG_LEAK flag')
 	gc_group.add_argument('--gc-debug-stats', action='store_const', const=gc.DEBUG_STATS, default=0, help='set the DEBUG_STATS flag')

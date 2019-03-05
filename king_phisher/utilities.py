@@ -177,7 +177,7 @@ def argp_add_args(parser, default_root=''):
 	:type parser: :py:class:`argparse.ArgumentParser`
 	:param str default_root: The default root logger to specify.
 	"""
-	startup.argp_add_default_args(parser, default_root='')
+	startup.argp_add_default_args(parser, default_root=default_root)
 
 	@functools.wraps(parser.parse_args)
 	def parse_args_hook(*args, **kwargs):
