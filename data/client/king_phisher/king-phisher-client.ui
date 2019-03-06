@@ -1281,6 +1281,8 @@ Spencer McIntyre</property>
                             <property name="tooltip_text" translatable="yes">Destination folder for KPM contents.</property>
                             <property name="hexpand">True</property>
                             <property name="editable">False</property>
+                            <property name="primary_icon_stock">gtk-directory</property>
+                            <signal name="backspace" handler="signal_kpm_dest_folder" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -1308,8 +1310,10 @@ Spencer McIntyre</property>
                             <property name="hexpand">True</property>
                             <property name="editable">False</property>
                             <property name="invisible_char">●</property>
+                            <property name="primary_icon_stock">gtk-file</property>
                             <property name="primary_icon_activatable">False</property>
                             <property name="secondary_icon_activatable">False</property>
+                            <signal name="backspace" handler="signal_kpm_file_clear" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -1335,7 +1339,7 @@ Spencer McIntyre</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <signal name="clicked" handler="signal_kpm_dest_folder" swapped="no"/>
+                            <signal name="clicked" handler="signal_kpm_dest_folder_clicked" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>

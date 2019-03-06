@@ -66,35 +66,17 @@ _KpmImport = collections.namedtuple('KpmImport', (
 class KpmImport(object):
 
 	def __init__(self):
-		self._target_file = None
-		self._dest_folder = None
+		self.target_file = None
+		self.dest_folder = None
 
 	def __bool__(self):
-		if not self._dest_folder or self._target_file:
+		if not self.dest_folder or not self.target_file:
 			return False
-		if not os.path.isfile(self._target_file):
+		if not os.path.isfile(self.target_file):
 			return False
-		if not os.path.isdir(self._dest_folder):
+		if not os.path.isdir(self.dest_folder):
 			return False
 		return True
-
-	@property
-	def target_file(self):
-		return self._target_file
-
-	@target_file.setter
-	def target_file(self, target_file):
-		if os.path.isfile(target_file):
-			self._target_file = target_file
-
-	@property
-	def dest_folder(self):
-		return self._dest_folder
-
-	@dest_folder.setter
-	def dest_folder(self, dest_folder):
-		if os.path.isdir(dest_folder):
-			self._dest_folder = dest_folder
 
 class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
@@ -261,8 +243,12 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			return False
 		self._import_kpm.target_file = response['target_path']
 		self.gobjects['entry_kpm_file'].set_text(self._import_kpm.target_file)
+		if not self._import_kpm.dest_folder:
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), False)
+		else:
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), True)
 
-	def signal_kpm_dest_folder(self, _):
+	def signal_kpm_dest_folder_clicked(self, _):
 		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
 		response = dialog.run_quick_select_directory()
 		dialog.destroy()
@@ -270,24 +256,26 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			return False
 		self._import_kpm.dest_folder = response['target_path']
 		self.gobjects['entry_kpm_dest_folder'].set_text(self._import_kpm.dest_folder)
+		if not self._import_kpm.target_file:
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), False)
+		else:
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), True)
 
-	def signal_kpm_import_clicked(self, _):
-		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
-		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
-		dialog.quick_add_filter('All Files', '*')
-		response = dialog.run_quick_open()
-		dialog.destroy()
-		if not response:
-			return False
-		kpm_target_file = response['target_path']
+	def signal_kpm_file_clear(self, _):
+		self.gobjects['entry_kpm_file'].set_text('')
+		self._import_kpm.target_file = None
+		if not self._import_kpm.dest_folder:
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), True)
+		else:
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), False)
 
-		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
-		response = dialog.run_quick_select_directory()
-		dialog.destroy()
-		if not response:
-			self._import_kpm = None
-			return False
-		self._import_kpm = _KpmImport(file_path=kpm_target_file, dir_path=response['target_path'])
+	def signal_kpm_dest_folder(self, _):
+		self.gobjects['entry_kpm_dest_folder'].set_text('')
+		self._import_kpm.dest_folder = None
+		if not self._import_kpm.target_file:
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), True)
+		else:
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), False)
 
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
