@@ -1,4 +1,4 @@
-# retrieve information of all site templates
+# retrieve information for site templates by hostname
 query getSiteTemplates($hostname: String!) {
   siteTemplates(hostname: $hostname) {
     edges {

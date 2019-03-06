@@ -33,6 +33,7 @@
 import collections
 import datetime
 import ipaddress
+import os
 import re
 import urllib
 
@@ -50,12 +51,50 @@ __all__ = ('CampaignAssistant',)
 _ModelNamedRow = collections.namedtuple('ModelNamedRow', (
 	'hostname',
 	'page',
-	'classifiers',
 	'url',
+	'classifiers',
 	'authors',
 	'description',
 	'created'
 ))
+
+_KpmImport = collections.namedtuple('KpmImport', (
+	'file_path',
+	'dir_path',
+))
+
+class KpmImport(object):
+
+	def __init__(self):
+		self._target_file = None
+		self._dest_folder = None
+
+	def __bool__(self):
+		if not self._dest_folder or self._target_file:
+			return False
+		if not os.path.isfile(self._target_file):
+			return False
+		if not os.path.isdir(self._dest_folder):
+			return False
+		return True
+
+	@property
+	def target_file(self):
+		return self._target_file
+
+	@target_file.setter
+	def target_file(self, target_file):
+		if os.path.isfile(target_file):
+			self._target_file = target_file
+
+	@property
+	def dest_folder(self):
+		return self._dest_folder
+
+	@dest_folder.setter
+	def dest_folder(self, dest_folder):
+		if os.path.isdir(dest_folder):
+			self._dest_folder = dest_folder
 
 class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
@@ -71,7 +110,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 					widget='alignment_company'
 				)
 			),
-			'button_import_kpm',
+			'button_select_kpm_dest_folder',
+			'button_select_kpm_file',
 			'calendar_campaign_expiration',
 			'checkbutton_alert_subscribe',
 			'checkbutton_expire_campaign',
@@ -81,6 +121,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'entry_campaign_name',
 			'entry_campaign_description',
 			'entry_domain_filter',
+			'entry_kpm_dest_folder',
+			'entry_kpm_file',
 			'entry_test_validation_text',
 			'entry_validation_regex_username',
 			'entry_validation_regex_password',
@@ -154,6 +196,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['label_intro_title'].set_text('New Campaign')
 
 		self._url_selected = None
+		self._url_classifiers = {}
 		self._url_thread = None
 
 		self.domain_completion = Gtk.EntryCompletion()
@@ -162,12 +205,11 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self.domain_completion.set_text_column(0)
 		self.gobjects['entry_domain_filter'].set_completion(self.domain_completion)
 
-		self.kpm_target_file = None
-		self.kpm_dest_dir = None
+		self._import_kpm = KpmImport()
 
 		tvm = managers.TreeViewManager(self.gobjects['treeview_url_selector'])
 		tvm.set_column_titles(
-			['Domain', 'Landng Page', 'Tags', 'URL'],
+			['Domain', 'Landing Page', 'URL', 'Classifiers'],
 			renderers=[
 				Gtk.CellRendererText(),
 				Gtk.CellRendererText(),
@@ -209,8 +251,25 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def _server_uses_ssl(self):
 		return any(address['ssl'] for address in self.config['server_config']['server.addresses'])
 
-	def signal_expander_activate(self, expander):
-		return
+	def signal_kpm_select_clicked(self, _):
+		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
+		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
+		dialog.quick_add_filter('All Files', '*')
+		response = dialog.run_quick_open()
+		dialog.destroy()
+		if not response:
+			return False
+		self._import_kpm.target_file = response['target_path']
+		self.gobjects['entry_kpm_file'].set_text(self._import_kpm.target_file)
+
+	def signal_kpm_dest_folder(self, _):
+		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
+		response = dialog.run_quick_select_directory()
+		dialog.destroy()
+		if not response:
+			return False
+		self._import_kpm.dest_folder = response['target_path']
+		self.gobjects['entry_kpm_dest_folder'].set_text(self._import_kpm.dest_folder)
 
 	def signal_kpm_import_clicked(self, _):
 		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
@@ -220,15 +279,15 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		dialog.destroy()
 		if not response:
 			return False
-		self.kpm_target_file = response['target_path']
+		kpm_target_file = response['target_path']
 
 		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
 		response = dialog.run_quick_select_directory()
 		dialog.destroy()
 		if not response:
-			self.kpm_target_file = None
+			self._import_kpm = None
 			return False
-		self.kpm_dest_dir = response['target_path']
+		self._import_kpm = _KpmImport(file_path=kpm_target_file, dir_path=response['target_path'])
 
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
@@ -256,17 +315,19 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			return
 
 		domains = []
+		self._url_classifiers = {}
 		for edge in url_information['siteTemplates']['edges']:
 			for page in edge['node']['metadata']['pages']:
 				if hostname:
 					if not edge['node']['hostname'].startswith(hostname):
 						continue
 				domains.append(edge['node']['hostname'])
+				self._url_classifiers[edge['node']['hostname']] = edge['node']['metadata']['classifiers']
 				row = _ModelNamedRow(
 					hostname=edge['node']['hostname'],
 					page=page,
-					classifiers='\n'.join(edge['node']['metadata']['classifiers']),
 					url=self._build_url(edge['node']['hostname'], page),
+					classifiers='\n'.join(edge['node']['metadata']['classifiers']),
 					authors=', '.join(edge['node']['metadata']['authors']),
 					description=edge['node']['metadata']['description'].strip('\n'),
 					created=utilities.format_datetime(utilities.datetime_utc_to_local(edge['node']['created']))
@@ -289,11 +350,12 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		return urllib.parse.urljoin('http://' + hostname, page)
 
 	def signal_url_entry_change(self, gtk_entry):
-		self.logger.debug('filtering url selection on {}'.format(gtk_entry.get_text()))
+		gtk_entry_text = gtk_entry.get_text()
+		self.logger.debug('filtering url selection on {}'.format(gtk_entry_text))
 		if not self._url_information['created'] or datetime.datetime.utcnow() - self._url_information['created'] > datetime.timedelta(minutes=5):
-			self._load_url_treeview_tsafe(hostname=gtk_entry.get_text(), refresh=True)
+			self._load_url_treeview_tsafe(hostname=gtk_entry_text, refresh=True)
 		else:
-			self._load_url_treeview_tsafe(hostname=gtk_entry.get_text(), refresh=False)
+			self._load_url_treeview_tsafe(hostname=gtk_entry_text, refresh=False)
 
 	def _set_defaults(self):
 		"""
@@ -413,7 +475,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		gui_utilities.set_listbox_classifiers(
 			self.gobjects['label_classifiers'],
 			self.gobjects['listbox_domain_info_classifiers'],
-			named_row.classifiers.split('\n') or []
+			self._url_classifiers[named_row.hostname] or []
 		)
 		self.gobjects['label_info_description'].set_text(named_row.description or '')
 		self._url_selected = named_row.url or ''
@@ -495,6 +557,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		else:
 			try:
 				cid = self.application.rpc('campaign/new', campaign_name, description=campaign_description)
+				properties['name'] = campaign_name
 			except advancedhttpserver.RPCError as error:
 				if not error.is_remote_exception:
 					raise error
@@ -525,8 +588,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self.config['campaign_id'] = cid
 		self.config['campaign_name'] = properties['name']
 
-		if self.kpm_target_file and self.kpm_dest_dir:
-			if not self.application.main_tabs['mailer'].emit('message-data-import', self.kpm_target_file, self.kpm_dest_dir):
+		if self._import_kpm:
+			if not self.application.main_tabs['mailer'].emit('message-data-import', self._import_kpm.target_file, self._import_kpm.dest_folder):
 				gui_utilities.show_dialog_info('Failure', self.parent, 'Failed to imported the message configuration.')
 			else:
 				gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message configuration.')

@@ -936,6 +936,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	def _set_entry_completion_list_tsafe(self):
 		gui_utilities.glib_idle_add_once(self._url_list_store.clear)
+		if not self.application.rpc:
+			return
 		url_information = self.application.rpc.graphql_find_file('get_site_templates.graphql')
 		if not url_information:
 			return
@@ -1244,7 +1246,6 @@ class MailSenderTab(_GObject_GObject):
 		context_id = self.status_bar.get_context_id('campaign name')
 		self.status_bar.pop(context_id)
 		self.status_bar.push(context_id, self.config['campaign_name'])
-		#self.go
 
 	def signal_notebook_switch_page(self, notebook, current_page, index):
 		previous_page = notebook.get_nth_page(self.last_page_id)

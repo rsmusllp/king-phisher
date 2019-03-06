@@ -1,4 +1,4 @@
-# retrieve information of all site templates
+# retrieve information for all site templates
 query getSiteTemplates {
   siteTemplates {
     edges {

@@ -1203,13 +1203,181 @@ Spencer McIntyre</property>
         </child>
       </object>
       <packing>
-        <property name="title" translatable="yes">Advertised URLS</property>
+        <property name="title" translatable="yes">Target URL</property>
         <property name="complete">True</property>
         <property name="has_padding">False</property>
       </packing>
     </child>
     <child>
       <object class="GtkBox" id="CampaignAssistant.page7">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="margin_top">5</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">10</property>
+        <child>
+          <object class="GtkLabel" id="CampaignAssistant.label_kpm_top_level">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="halign">center</property>
+            <property name="label" translatable="yes">KPM Import</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+              <attribute name="scale" value="1.5"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="grid8">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">3</property>
+            <property name="margin_right">3</property>
+            <property name="row_spacing">3</property>
+            <property name="column_spacing">10</property>
+            <property name="row_homogeneous">True</property>
+            <child>
+              <object class="GtkFrame" id="CampaignAssistant.frame_kpm_import">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label_xalign">0</property>
+                <property name="shadow_type">none</property>
+                <child>
+                  <object class="GtkAlignment">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="top_padding">5</property>
+                    <property name="bottom_padding">5</property>
+                    <property name="left_padding">12</property>
+                    <property name="right_padding">5</property>
+                    <child>
+                      <object class="GtkGrid" id="CampaignAssistant.grid_credential_validation_regexs1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="row_spacing">3</property>
+                        <property name="column_spacing">3</property>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_kpm_file">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="label" translatable="yes">Message Configuration File</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">0</property>
+                            <property name="width">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="CampaignAssistant.entry_kpm_dest_folder">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">Destination folder for KPM contents.</property>
+                            <property name="hexpand">True</property>
+                            <property name="editable">False</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_kpm_dest_folder">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="label" translatable="yes">Destination Folder</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">2</property>
+                            <property name="width">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="CampaignAssistant.entry_kpm_file">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">File path to KPM file</property>
+                            <property name="hexpand">True</property>
+                            <property name="editable">False</property>
+                            <property name="invisible_char">●</property>
+                            <property name="primary_icon_activatable">False</property>
+                            <property name="secondary_icon_activatable">False</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="CampaignAssistant.button_select_kpm_file">
+                            <property name="label" translatable="yes">Select</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <signal name="clicked" handler="signal_kpm_select_clicked" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="CampaignAssistant.button_select_kpm_dest_folder">
+                            <property name="label" translatable="yes">Select</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <signal name="clicked" handler="signal_kpm_dest_folder" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">3</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">KPM settings</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="title" translatable="yes">Import KPM</property>
+        <property name="complete">True</property>
+        <property name="has_padding">False</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkBox" id="CampaignAssistant.page8">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="margin_left">5</property>
@@ -1280,39 +1448,10 @@ Spencer McIntyre</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkLabel" id="CampaignAssistant.label_import_kpm">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="margin_left">3</property>
-                <property name="margin_right">3</property>
-                <property name="margin_top">3</property>
-                <property name="margin_bottom">3</property>
-                <property name="label" translatable="yes">Import Message Configuration settings:</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
+              <placeholder/>
             </child>
             <child>
-              <object class="GtkButton" id="CampaignAssistant.button_import_kpm">
-                <property name="label" translatable="yes">Import</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">Import message configuration settings to quickly configure phishing setting for the campaign.</property>
-                <property name="margin_left">3</property>
-                <property name="margin_right">3</property>
-                <property name="margin_top">3</property>
-                <property name="margin_bottom">3</property>
-                <signal name="clicked" handler="signal_kpm_import_clicked" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
+              <placeholder/>
             </child>
           </object>
           <packing>
@@ -1328,9 +1467,6 @@ Spencer McIntyre</property>
         <property name="complete">True</property>
         <property name="has_padding">False</property>
       </packing>
-    </child>
-    <child>
-      <placeholder/>
     </child>
     <child>
       <placeholder/>

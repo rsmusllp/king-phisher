@@ -58,6 +58,8 @@ Functions
 
 .. autofunction:: gtk_widget_destroy_children
 
+.. autofunction:: set_listbox_classifiers
+
 .. autofunction:: show_dialog
 
 .. autofunction:: show_dialog_exc_socket_error
