@@ -58,18 +58,13 @@ _ModelNamedRow = collections.namedtuple('ModelNamedRow', (
 	'created'
 ))
 
-_KpmImport = collections.namedtuple('KpmImport', (
-	'file_path',
-	'dir_path',
-))
-
 class KpmImport(object):
 
 	def __init__(self):
 		self.target_file = None
 		self.dest_folder = None
 
-	def __bool__(self):
+	def check(self):
 		if not self.dest_folder or not self.target_file:
 			return False
 		if not os.path.isfile(self.target_file):
@@ -233,6 +228,12 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def _server_uses_ssl(self):
 		return any(address['ssl'] for address in self.config['server_config']['server.addresses'])
 
+	def set_kpm_assistant_complete(self):
+		if not self._import_kpm.check():
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), False)
+		else:
+			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), True)
+
 	def signal_kpm_select_clicked(self, _):
 		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
 		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
@@ -243,10 +244,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			return False
 		self._import_kpm.target_file = response['target_path']
 		self.gobjects['entry_kpm_file'].set_text(self._import_kpm.target_file)
-		if not self._import_kpm.dest_folder:
-			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), False)
-		else:
-			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), True)
+		self.set_kpm_assistant_complete()
 
 	def signal_kpm_dest_folder_clicked(self, _):
 		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
@@ -256,26 +254,17 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			return False
 		self._import_kpm.dest_folder = response['target_path']
 		self.gobjects['entry_kpm_dest_folder'].set_text(self._import_kpm.dest_folder)
-		if not self._import_kpm.target_file:
-			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), False)
-		else:
-			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), True)
+		self.set_kpm_assistant_complete()
 
 	def signal_kpm_file_clear(self, _):
 		self.gobjects['entry_kpm_file'].set_text('')
 		self._import_kpm.target_file = None
-		if not self._import_kpm.dest_folder:
-			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), True)
-		else:
-			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), False)
+		self.set_kpm_assistant_complete()
 
 	def signal_kpm_dest_folder(self, _):
 		self.gobjects['entry_kpm_dest_folder'].set_text('')
 		self._import_kpm.dest_folder = None
-		if not self._import_kpm.target_file:
-			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), True)
-		else:
-			self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), False)
+		self.set_kpm_assistant_complete()
 
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
@@ -339,7 +328,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 	def signal_url_entry_change(self, gtk_entry):
 		gtk_entry_text = gtk_entry.get_text()
-		self.logger.debug('filtering url selection on {}'.format(gtk_entry_text))
 		if not self._url_information['created'] or datetime.datetime.utcnow() - self._url_information['created'] > datetime.timedelta(minutes=5):
 			self._load_url_treeview_tsafe(hostname=gtk_entry_text, refresh=True)
 		else:
@@ -576,7 +564,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self.config['campaign_id'] = cid
 		self.config['campaign_name'] = properties['name']
 
-		if self._import_kpm:
+		if self._import_kpm.check():
 			if not self.application.main_tabs['mailer'].emit('message-data-import', self._import_kpm.target_file, self._import_kpm.dest_folder):
 				gui_utilities.show_dialog_info('Failure', self.parent, 'Failed to imported the message configuration.')
 			else:
