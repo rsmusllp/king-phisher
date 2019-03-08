@@ -134,7 +134,8 @@ function sync_dependencies {
 		fi
 		yum install -y epel-release
 		yum install -y freetype-devel gcc gcc-c++ libpng-devel make \
-			openssl-devel postgresql-devel
+			openssl-devel postgresql-devel geos geos-devel cairo cairo-devel\
+			gobject-introspection-devel cairo-gobject cairo-gobject-devel
 		if [ "$KING_PHISHER_USE_POSTGRESQL" == "yes" ]; then
 			yum install -y postgresql-server
 			# manually init the database
@@ -142,10 +143,10 @@ function sync_dependencies {
 		fi
 	elif [ "$LINUX_VERSION" == "Fedora" ]; then
 		dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
-			libpng-devel postgresql-devel python3-devel python3-pip \
-			libffi-devel openssl-devel
+			libpng-devel postgresql-devel python3-devel python3-pip cairo-devel\
+			libffi-devel openssl-devel geos geos-devel cairo-gobject cairo-gobject-devel
 		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
-			dnf install -y geos geos-devel gtksourceview3 gobject-introspection-devel
+			dnf install -y gtksourceview3
 			# vte3 is not available in Fedora 29, try to install it in case it's an older version.
 			dnf install -y vte3
 		fi
