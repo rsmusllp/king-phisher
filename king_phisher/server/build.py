@@ -36,6 +36,7 @@ import socket
 
 from king_phisher import errors
 from king_phisher.server import signals
+from king_phisher.server.database import storage as db_storage
 from king_phisher.server.server import KingPhisherRequestHandler, KingPhisherServer
 
 logger = logging.getLogger('KingPhisher.Server.build')
@@ -99,6 +100,17 @@ def get_ssl_hostnames(config):
 		ssl_hostnames.append((hostname, ssl_certfile, ssl_keyfile))
 	return ssl_hostnames
 
+def _server_add_sni(server, hostname, ssl_certfile, ssl_keyfile):
+	if not os.path.isfile(ssl_certfile):
+		logger.warning("skipping ssl configuration for hostname: {} (missing certificate file: {})".format(hostname, ssl_certfile))
+		return False
+	if not os.path.isfile(ssl_keyfile):
+		logger.warning("skipping ssl configuration for hostname: {} (missing key file: {})".format(hostname, ssl_keyfile))
+		return False
+	logger.info("setting configuration for ssl hostname: {0} with certificate file: {1}".format(hostname, ssl_certfile))
+	server.add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+	return True
+
 def server_from_config(config, handler_klass=None, plugin_manager=None):
 	"""
 	Build a server from a provided configuration instance. If *handler_klass* is
@@ -153,9 +165,14 @@ def server_from_config(config, handler_klass=None, plugin_manager=None):
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
 		logger.info("setting the server version to the custom header: '{0}'".format(config.get('server.server_header')))
+
 	for hostname, ssl_certfile, ssl_keyfile in ssl_hostnames:
-		logger.info("setting configuration for ssl hostname: {0} with cert: {1}".format(hostname, ssl_certfile))
-		server.add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+		_server_add_sni(server, hostname, ssl_certfile, ssl_keyfile)
+	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
+	for hostname, sni_config in kv_store.items():
+		if not sni_config['enabled']:
+			continue
+		_server_add_sni(server, hostname, ssl_certfile, ssl_keyfile)
 
 	signals.server_initialized.send(server)
 	return server

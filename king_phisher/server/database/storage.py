@@ -30,20 +30,14 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
+import collections.abc
 import contextlib
-import sys
 
 from . import manager as db_manager
 from . import models as db_models
 from king_phisher import serializers
 
-if sys.version_info[:3] >= (3, 3, 0):
-	_MutableMapping = collections.abc.MutableMapping
-else:
-	_MutableMapping = collections.MutableMapping
-
-class KeyValueStorage(_MutableMapping):
+class KeyValueStorage(collections.abc.MutableMapping):
 	"""
 	This class provides key-value storage of arbitrary data in the database.
 	The :py:mod:`.serializers` module is used for converting data into a format
