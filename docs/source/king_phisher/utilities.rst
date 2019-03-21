@@ -40,8 +40,6 @@ Functions
 
 .. autofunction:: random_string_lower_numeric
 
-.. autofunction:: start_process
-
 .. autofunction:: switch
 
 .. autofunction:: validate_json_schema

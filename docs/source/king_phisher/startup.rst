@@ -25,6 +25,8 @@ Functions
 
 .. autofunction:: run_process
 
+.. autofunction:: start_process
+
 .. autofunction:: which
 
 Classes

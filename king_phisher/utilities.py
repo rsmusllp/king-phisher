@@ -438,30 +438,6 @@ def random_string_lower_numeric(size):
 	"""
 	return ''.join(random.choice(string.ascii_lowercase + string.digits) for x in range(size))
 
-def start_process(proc_args, wait=True):
-	"""
-	Start an external process.
-
-	:param proc_args: The arguments of the process to start.
-	:type proc_args: list, str
-	:param bool wait: Wait for the process to exit before returning.
-	"""
-	if isinstance(proc_args, str):
-		proc_args = shlex.split(proc_args)
-	close_fds = True
-	startupinfo = None
-	preexec_fn = None if wait else getattr(os, 'setsid', None)
-	if sys.platform.startswith('win'):
-		close_fds = False
-		startupinfo = subprocess.STARTUPINFO()
-		startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-		startupinfo.wShowWindow = subprocess.SW_HIDE
-
-	proc_h = subprocess.Popen(proc_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=preexec_fn, close_fds=close_fds, startupinfo=startupinfo)
-	if not wait:
-		return proc_h
-	return proc_h.wait() == 0
-
 def switch(value, comp=operator.eq, swapped=False):
 	"""
 	A pure Python implementation of a switch case statement. *comp* will be used
