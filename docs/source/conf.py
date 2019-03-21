@@ -323,17 +323,19 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-# mock specific external packages
-MOCK_MODULES = [
-	'gi',
-	'gi.repository',
-	'matplotlib',
-	'matplotlib.backends',
-	'matplotlib.backends.backend_gtk3',
-	'matplotlib.backends.backend_gtk3agg',
-	'matplotlib.figure'
-]
-sys.modules.update((mod_name, king_phisher.utilities.Mock()) for mod_name in MOCK_MODULES)
+if king_phisher.its.on_rtd:
+	its.mocked = True
+	# mock specific external packages
+	MOCK_MODULES = [
+		'gi',
+		'gi.repository',
+		'matplotlib',
+		'matplotlib.backends',
+		'matplotlib.backends.backend_gtk3',
+		'matplotlib.backends.backend_gtk3agg',
+		'matplotlib.figure'
+	]
+	sys.modules.update((mod_name, king_phisher.utilities.Mock()) for mod_name in MOCK_MODULES)
 
 class PatchedDocsCache(object):
 	def __init__(self, *args, **kwargs):
