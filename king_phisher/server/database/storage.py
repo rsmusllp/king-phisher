@@ -43,7 +43,7 @@ class KeyValueStorage(collections.abc.MutableMapping):
 	The :py:mod:`.serializers` module is used for converting data into a format
 	suitable for storing in the database. This object, once initialized,
 	provides an interface just like a standard dictionary object. An optional
-	namespace can be specified as a unique identifier, allowing different
+	namespace should be specified as a unique identifier, allowing different
 	sources to store data using the same keys. All keys must be strings but
 	data can be anything that is serializable.
 	"""

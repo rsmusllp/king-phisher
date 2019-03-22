@@ -1,3 +1,5 @@
+.. py:currentmodule:: king_phisher.server.database
+
 Database
 ========
 
@@ -18,12 +20,12 @@ Schema Versioning
 -----------------
 
 The King Phisher database uses an internal version number defined as
-:py:data:`~king_phisher.server.database.models.SCHEMA_VERSION` which is used by
-the initialization code to determine whether or not the stored database schema
-(the one existing in the database) matches the running schema (the one defined
-in the source code). When the schemas are not the same, the database is
-considered to be incompatible. The King Phisher server process will then
-automatically attempt to upgrade the stored database schema.
+:py:data:`~models.SCHEMA_VERSION` which is used by the initialization code to
+determine whether or not the stored database schema (the one existing in the
+database) matches the running schema (the one defined in the source code). When
+the schemas are not the same, the database is considered to be incompatible. The
+King Phisher server process will then automatically attempt to upgrade the
+stored database schema.
 
 If the stored database schema is newer than the running schema, the King Phisher
 process can not downgrade it. This would happen for example if a developer were
@@ -31,7 +33,7 @@ to use version control to revert the project code to an older version. In this
 case the older version would have no knowledge of the newer schema and would
 therefor be unable to "downgrade" it to a compatible version. In this case the
 developer must use the included database schema migration utilities to update
-the stored database schema to a compatible version before switchign to the older
+the stored database schema to a compatible version before switching to the older
 project revision.
 
 Alembic
@@ -76,8 +78,37 @@ a new Alembic migration file, it's important to set the King Phisher schema
 version as well which must be explicitly done by the developer. The King Phisher
 stored database schema version exists in the ``storage_data`` in the
 ``metadata`` namespace with the key ``schema_version``. See
-:py:func:`~king_phisher.server.database.manager.set_metadata` for a convenient
-way to set this value. The Alembic revision identifier is stored as a single
-record in the ``alembic_version`` table under the ``version_num`` column.
+:py:func:`~manager.set_metadata` for a convenient way to set this value. The
+Alembic revision identifier is stored as a single record in the
+``alembic_version`` table under the ``version_num`` column.
+
+Key-Value Storage
+-----------------
+
+The database provides serialized key-value storage to allow semi-arbitrary
+objects to be stored in the database. This is more convenient than dealing with
+and managing individual files for the following reasons:
+
+ * Server-written data is kept together in a single location (the database)
+ * The developers do not need to worry about file formats and permissions
+
+The primary interface into this storage is provided by the :py:mod:`.storage`
+module, specifically the :py:class:`~storage.KeyValueStorage` class. Each
+instance should specify the *namespace* parameter to uniquely identify it's
+usage.
+
+Key-Value Namespaces
+~~~~~~~~~~~~~~~~~~~~
+
+The following namespaces are currently in use by the key-value storage system.
+
+ * ``metadata`` -- Storage of metadata values related to the server instance.
+
+ * ``plugins.$name`` -- Storage of server plugin specific data. See
+   :py:attr:`king_phisher.server.plugins.ServerPlugin.storage`. ``$name`` is the
+   name of the plugin using the storage.
+
+ * ``server.ssl.sni.hostnames`` -- Storage of SSL-SNI certificate configurations
+   for specific hostnames. Used to permit SNI configuration changes at run time.
 
 .. _Alembic: http://alembic.zzzcomputing.com/en/latest/
