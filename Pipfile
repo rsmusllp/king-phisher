@@ -38,7 +38,7 @@ smoke-zephyr = "==1.4.0"
 termcolor = "==1.1.0"
 tzlocal = "==1.5.1"
 websocket-client = "==0.49.0"
-AdvancedHTTPServer = "==2.2.0"
+AdvancedHTTPServer = "~=2.2.0"
 email_validator = "==1.0.3"
 "Jinja2" = "==2.10"
 Markdown = "==2.6.11"
@@ -47,9 +47,9 @@ PyYAML = "==5.1"
 SQLAlchemy = "==1.2.6"
 XlsxWriter = "==0.9.6"
 numpy = "==1.14.5"
-"basemap" = {file = "https://github.com/matplotlib/basemap/archive/v1.2.0rel.tar.gz"}
-pyproj = {git = "https://github.com/jswhit/pyproj.git"}
+basemap = {file = "https://github.com/matplotlib/basemap/archive/v1.2.0rel.tar.gz"}
 rule-engine = "~=1.1.0"
+pyproj = "==1.9.6"
 
 [dev-packages]
 sphinx = "==1.7.9"

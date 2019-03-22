@@ -34,17 +34,22 @@ import collections
 import datetime
 import functools
 import logging
+import os
+import re
 import threading
 
 from king_phisher import errors
 from king_phisher import geoip
 from king_phisher import ipaddress
+from king_phisher import startup
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
+from king_phisher.server import letsencrypt
 from king_phisher.server import signals
 from king_phisher.server import web_tools
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
+from king_phisher.server.database import storage as db_storage
 from king_phisher.server.graphql import schema
 
 import advancedhttpserver
@@ -198,6 +203,94 @@ def rpc_config_set(handler, options):
 			raise errors.KingPhisherPermissionError('permission denied to write config option: ' + option_name)
 		handler.config.set(option_name, option_value)
 	return
+
+@register_rpc('/config/ssl/hostnames/load', log_call=True)
+def rpc_config_ssl_hostnames_load(handler, hostname):
+	"""
+
+	.. versionadded: 1.14.0
+
+	:param str hostname: The hostname to configure SSL for.
+	:return: ``True`` if the hostname was either added or was already configured.
+	:rtype: bool
+	"""
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not add an SNI hostname when SNI is not available')
+		return False
+	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
+	if not data_path:
+		rpc_logger.warning('can not add an SNI hostname when SNI is not configured')
+		return False
+
+	for sni_cert in handler.server.sni_certs:
+		if sni_cert.hostname == hostname:
+			rpc_logger.warning('ignoring directive to add an SNI hostname that already exists')
+			return True
+	cert_path, key_path = letsencrypt.get_files(data_path, hostname)
+	if not (cert_path and key_path):
+		rpc_logger.warning('can not add an SNI hostname without the necessary files')
+		return False
+	handler.add_sni_cert(hostname, cert_path, key_path)
+	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
+	kv_store[sni_cert.hostname] = {
+		'certfile': cert_path,
+		'keyfile': key_path,
+		'enabled': True
+	}
+	return True
+
+@register_rpc('/config/ssl/hostnames/get', log_call=True)
+def rpc_config_ssl_hostnames_get(handler):
+	"""
+	Get the hostnames that are configured for SSL use with this server.
+
+	.. versionadded: 1.14.0
+
+	:return: A dictoinary of the hostnames that are available and enabled for SSL use through SNI.
+	:rtype: dict
+	"""
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not available')
+		return
+	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
+	if not data_path:
+		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not configured')
+		return
+
+	available = []
+	hostname_dir = os.path.join(data_path, 'etc', 'live')
+	if not os.path.isdir(hostname_dir):
+		rpc_logger.warning('can not enumerate SNI hostnames when the directories do not exist')
+		return
+	for hostname in os.listdir(os.path.join(data_path, 'etc', 'live')):
+		if all(letsencrypt.get_files(data_path, hostname)):
+			available.append(hostname)
+	return {'available': available, 'enabled': [cert.hostname for cert in handler.server.sni_certs]}
+
+@register_rpc('/config/ssl/hostnames/unload', log_call=True)
+def rpc_config_ssl_hostnames_unload(handler, hostname):
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not remove an SNI hostname when SNI is not available')
+		return False
+	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
+	if not data_path:
+		rpc_logger.warning('can not remove an SNI hostname when SNI is not configured')
+		return False
+
+	for sni_cert in handler.server.sni_certs:
+		if sni_cert.hostname == hostname:
+			break
+	else:
+		rpc_logger.warning('can not remove an SNI hostname that does not exist')
+		return False
+	handler.remove_sni_cert(sni_cert.hostname)
+	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
+	kv_store[sni_cert.hostname] = {
+		'certfile': sni_cert.certfile,
+		'keyfile': sni_cert.keyfile,
+		'enabled': False
+	}
+	return True
 
 @register_rpc('/campaign/new', database_access=True, log_call=True)
 def rpc_campaign_new(handler, session, name, description=None):
@@ -841,3 +934,98 @@ def rpc_graphql(handler, session, query, query_vars=None):
 			else:
 				errors.append(repr(error))
 	return {'data': result.data, 'errors': errors}
+
+@register_rpc('/letsencrypt/certbot-version', database_access=False, log_call=True)
+def rpc_letsencrypt_certbot_version(handler):
+	"""
+	Get the version of certbot.
+
+	..versionadded: 1.14.0
+	"""
+	bin_path = startup.which('certbot')
+	if not bin_path:
+		return None
+	results = startup.run_process((bin_path, '--version'))
+	return results.stdout.split('\n', 1)[0].split(' ')[2]
+
+@register_rpc('/letsencrypt/issue', log_call=True)
+def rpc_letsencrypt_issue(handler, hostname, load=True):
+	"""
+	Issue a certificate with Let's Encrypt. This operation can fail for a wide
+	variety of reasons, check the ``message`` key of the returned dictionary for
+	a string description of what occurred.
+
+	.. versionadded: 1.14.0
+
+	:param str hostname: The hostname of the certificate to issue.
+	:param bool load: Whether or not to load the certificate once it has been issued.
+	:return: A dictionary containing the results of the operation.
+	:rtype: dict
+	"""
+	config = handler.config
+	result = {'success': False}
+
+	letsencrypt_config = config.get_if_exists('server.letsencrypt', {})
+	# step 1: ensure that a letsencrypt configuration is available
+	data_path = letsencrypt_config.get('data_path')
+	if not data_path:
+		result['message'] = 'Let\'s Encrypt is not configured for use.'
+		return result
+	if not os.path.isdir(data_path):
+		rpc_logger.info('creating the letsencrypt data directory')
+		os.mkdir(data_path)
+
+	# step 2: ensure that SSL is enabled already
+	if not any(address.get('ssl', False) for address in config.get('server.addresses')):
+		result['message'] = 'Can not issue certificates when SSL is not in use.'
+		return result
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		result['message'] = 'Can not issue certificates when SNI is not available.'
+		return result
+
+	# step 3: ensure that the certbot utility is available
+	bin_path = letsencrypt_config.get('certbot_path') or startup.which('certbot')
+	if not bin_path:
+		result['message'] = 'Can not issue certificates without the certbot utility.'
+		return result
+
+	# step 4: ensure the hostname looks legit (TM)
+	if re.match(r'^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+$', hostname, flags=re.IGNORECASE) is None:
+		result['message'] = 'Can not issue certificates for invalid hostnames.'
+		return result
+
+	# step 5: determine the web_root path for this hostname and create it if necessary
+	web_root = config.get('server.web_root')
+	if config.get('server.vhost_directories'):
+		web_root = os.path.join(web_root, hostname)
+		if not os.path.isdir(web_root):
+			rpc_logger.info('vhost directory does not exist for hostname: ' + hostname)
+			os.mkdir(web_root)
+
+	# step 6: issue the certificate with certbot, this starts the subprocess and may take a few seconds
+	status = letsencrypt.certbot_issue(web_root, hostname, bin_path=bin_path, unified_directory=data_path)
+	if status != os.EX_OK:
+		result['message'] = 'Failed to issue the certificate.'
+		return result
+
+	# step 7: ensure the necessary files were created
+	cert_path = os.path.join(data_path, 'etc', 'live', hostname, 'fullchain.pem')
+	key_path = os.path.join(data_path, 'etc', 'live', hostname, 'privkey.pem')
+	if not os.path.isfile(cert_path) and os.path.isfile(key_path):
+		result['message'] = 'The certificate files were not generated'
+		return result
+
+	# step 8: store the data in the database so it can be loaded next time the server starts
+	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
+	kv_store[hostname] = {
+		'certfile': cert_path,
+		'keyfile': key_path,
+		'enabled': load
+	}
+
+	if load:
+		handler.add_sni_cert(hostname, ssl_certfile=cert_path, ssl_keyfile=key_path)
+
+	result['success'] = True
+	result['message'] = 'The operation completed successfully'
+	return result

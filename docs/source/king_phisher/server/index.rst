@@ -16,6 +16,7 @@ application.
    aaa.rst
    build.rst
    configuration.rst
+   letsencrypt.rst
    plugins.rst
    rest_api.rst
    server.rst

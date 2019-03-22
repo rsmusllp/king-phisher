@@ -43,6 +43,12 @@ Functions
 
 .. autofunction:: rpc_config_set
 
+.. autofunction:: rpc_config_ssl_hostnames_get
+
+.. autofunction:: rpc_config_ssl_hostnames_load
+
+.. autofunction:: rpc_config_ssl_hostnames_unload
+
 .. autofunction:: rpc_events_is_subscribed
 
 .. autofunction:: rpc_events_subscribe
@@ -72,6 +78,10 @@ Functions
 .. autofunction:: rpc_hostnames_add
 
 .. autofunction:: rpc_hostnames_get
+
+.. autofunction:: rpc_letsencrypt_issue
+
+.. autofunction:: rpc_letsencrypt_certbot_version
 
 .. autofunction:: rpc_login
 

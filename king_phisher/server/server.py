@@ -908,16 +908,17 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 
 		for http_server in self.sub_servers:
 			http_server.config = config
-			http_server.plugin_manager = plugin_manager
-			http_server.throttle_semaphore = self.throttle_semaphore
-			http_server.session_manager = self.session_manager
 			http_server.forked_authenticator = self.forked_authenticator
-			http_server.job_manager = self.job_manager
-			http_server.template_env = self.template_env
-			http_server.kp_shutdown = self.shutdown
-			http_server.ws_manager = self.ws_manager
 			http_server.headers = self.headers
+			http_server.job_manager = self.job_manager
+			http_server.kp_shutdown = self.shutdown
+			http_server.plugin_manager = plugin_manager
+			http_server.session_manager = self.session_manager
+			http_server.sni_certs = self.sni_certs
 			http_server.tables_api = self.tables_api
+			http_server.template_env = self.template_env
+			http_server.throttle_semaphore = self.throttle_semaphore
+			http_server.ws_manager = self.ws_manager
 
 		if not config.has_option('server.secret_id'):
 			config.set('server.secret_id', rest_api.generate_token())
