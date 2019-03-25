@@ -222,7 +222,7 @@ def rpc_config_ssl_hostnames_load(handler, hostname):
 		rpc_logger.warning('can not add an SNI hostname when SNI is not configured')
 		return False
 
-	for sni_cert in handler.server.sni_certs:
+	for sni_cert in handler.server.get_sni_certs():
 		if sni_cert.hostname == hostname:
 			rpc_logger.warning('ignoring directive to add an SNI hostname that already exists')
 			return True
@@ -265,7 +265,7 @@ def rpc_config_ssl_hostnames_get(handler):
 	for hostname in os.listdir(os.path.join(data_path, 'etc', 'live')):
 		if all(letsencrypt.get_files(data_path, hostname)):
 			available.append(hostname)
-	return {'available': available, 'enabled': [cert.hostname for cert in handler.server.sni_certs]}
+	return {'available': available, 'enabled': [cert.hostname for cert in handler.server.get_sni_certs()]}
 
 @register_rpc('/config/ssl/hostnames/unload', log_call=True)
 def rpc_config_ssl_hostnames_unload(handler, hostname):
@@ -277,7 +277,7 @@ def rpc_config_ssl_hostnames_unload(handler, hostname):
 		rpc_logger.warning('can not remove an SNI hostname when SNI is not configured')
 		return False
 
-	for sni_cert in handler.server.sni_certs:
+	for sni_cert in handler.server.get_sni_certs():
 		if sni_cert.hostname == hostname:
 			break
 	else:
@@ -938,15 +938,23 @@ def rpc_graphql(handler, session, query, query_vars=None):
 @register_rpc('/letsencrypt/certbot-version', database_access=False, log_call=True)
 def rpc_letsencrypt_certbot_version(handler):
 	"""
-	Get the version of certbot.
+	Find the certbot binary and retrieve it's version information. If the
+	certbot binary could not be found, ``None`` is returned.
 
 	..versionadded: 1.14.0
+
+	:return: The version of certbot.
+	:rtype: str
 	"""
-	bin_path = startup.which('certbot')
+	letsencrypt_config = handler.config.get_if_exists('server.letsencrypt', {})
+	bin_path = letsencrypt_config.get('certbot_path') or startup.which('certbot')
 	if not bin_path:
 		return None
 	results = startup.run_process((bin_path, '--version'))
-	return results.stdout.split('\n', 1)[0].split(' ')[2]
+	match = re.match(r'^certbot (?P<version>\d+\.\d+\.\d+)$', results.stdout)
+	if match is None:
+		return None
+	return match.group('version')
 
 @register_rpc('/letsencrypt/issue', log_call=True)
 def rpc_letsencrypt_issue(handler, hostname, load=True):
@@ -1024,7 +1032,7 @@ def rpc_letsencrypt_issue(handler, hostname, load=True):
 	}
 
 	if load:
-		handler.add_sni_cert(hostname, ssl_certfile=cert_path, ssl_keyfile=key_path)
+		handler.server.add_sni_cert(hostname, ssl_certfile=cert_path, ssl_keyfile=key_path)
 
 	result['success'] = True
 	result['message'] = 'The operation completed successfully'

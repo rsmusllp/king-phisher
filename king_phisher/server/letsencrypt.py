@@ -32,6 +32,7 @@
 
 import logging
 import os
+import re
 
 from king_phisher import startup
 
@@ -88,13 +89,28 @@ def get_files(unified_directory, hostname):
 	:rtype: tuple
 	"""
 	unified_directory = os.path.abspath(unified_directory)
-	unified_directory = os.path.join(unified_directory, 'etc', 'live')
-	if not os.path.isdir(unified_directory):
+	directory = os.path.join(unified_directory, 'etc', 'live')
+	if not os.path.isdir(directory):
 		return None, None
-	cert_path = os.path.join(unified_directory, hostname, 'fullchain.pem')
+	if os.path.isdir(os.path.join(directory, hostname)):
+		directory = os.path.join(directory, hostname)
+	else:
+		# certbot will append digits to the end of a directory to avoid naming conflicts, so find the highest index
+		index_str = None
+		for subdirectory in os.listdir(directory):
+			match = re.match('^' + re.escape(hostname) + '-(?P<index>\d+)$', subdirectory)
+			if match is None:
+				continue
+			if index_str is None or int(match.group('index')) > int(index_str):
+				index_str = match.group('index')
+		if index_str is None:
+			return None, None
+		directory = os.path.join(directory, hostname + '-' + index_str)
+
+	cert_path = os.path.join(directory, 'fullchain.pem')
 	if not (os.path.isfile(cert_path) and os.access(cert_path, os.R_OK)):
 		cert_path = None
-	key_path = os.path.join(unified_directory, hostname, 'privkey.pem')
+	key_path = os.path.join(directory, 'privkey.pem')
 	if not (os.path.isfile(key_path) and os.access(key_path, os.R_OK)):
 		key_path = None
 	return cert_path, key_path

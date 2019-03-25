@@ -907,14 +907,15 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self._init_tables_api()
 
 		for http_server in self.sub_servers:
+			http_server.add_sni_cert = self.add_sni_cert
 			http_server.config = config
 			http_server.forked_authenticator = self.forked_authenticator
+			http_server.get_sni_certs = lambda: self.sni_certs
 			http_server.headers = self.headers
 			http_server.job_manager = self.job_manager
 			http_server.kp_shutdown = self.shutdown
 			http_server.plugin_manager = plugin_manager
 			http_server.session_manager = self.session_manager
-			http_server.sni_certs = self.sni_certs
 			http_server.tables_api = self.tables_api
 			http_server.template_env = self.template_env
 			http_server.throttle_semaphore = self.throttle_semaphore
