@@ -40,6 +40,8 @@ from king_phisher.server import server_rpc
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
 
+import advancedhttpserver
+
 _certbot_bin_path = startup.which('certbot')
 
 class ServerRPCTests(KingPhisherServerTestCase):
@@ -135,10 +137,16 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.assertHTTPStatus(http_response, 401)
 
 	@unittest.skipUnless(_certbot_bin_path, 'due to certbot being unavailable')
-	def test_rpc_letsencrypt_certbot_version(self):
-		version = self.rpc('letsencrypt/certbot-version')
+	def test_rpc_ssl_letsencrypt_certbot_version(self):
+		version = self.rpc('ssl/letsencrypt/certbot-version')
 		self.assertIsNotNone(version, 'the certbot version was not retrieved')
 		self.assertRegexpMatches(version, r'(\d.)*\d', 'the certbot version is invalid')
+
+	def test_rpc_ssl_status(self):
+		result = self.rpc('ssl/status')
+		self.assertIn('enabled', result)
+		self.assertIn('has-sni', result)
+		self.assertEqual(result['has-sni'], advancedhttpserver.g_ssl_has_server_sni)
 
 	def test_rpc_ping(self):
 		self.assertTrue(self.rpc('ping'))

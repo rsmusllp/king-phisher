@@ -204,94 +204,6 @@ def rpc_config_set(handler, options):
 		handler.config.set(option_name, option_value)
 	return
 
-@register_rpc('/config/ssl/hostnames/load', log_call=True)
-def rpc_config_ssl_hostnames_load(handler, hostname):
-	"""
-
-	.. versionadded: 1.14.0
-
-	:param str hostname: The hostname to configure SSL for.
-	:return: ``True`` if the hostname was either added or was already configured.
-	:rtype: bool
-	"""
-	if not advancedhttpserver.g_ssl_has_server_sni:
-		rpc_logger.warning('can not add an SNI hostname when SNI is not available')
-		return False
-	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
-	if not data_path:
-		rpc_logger.warning('can not add an SNI hostname when SNI is not configured')
-		return False
-
-	for sni_cert in handler.server.get_sni_certs():
-		if sni_cert.hostname == hostname:
-			rpc_logger.warning('ignoring directive to add an SNI hostname that already exists')
-			return True
-	cert_path, key_path = letsencrypt.get_files(data_path, hostname)
-	if not (cert_path and key_path):
-		rpc_logger.warning('can not add an SNI hostname without the necessary files')
-		return False
-	handler.add_sni_cert(hostname, cert_path, key_path)
-	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
-	kv_store[sni_cert.hostname] = {
-		'certfile': cert_path,
-		'keyfile': key_path,
-		'enabled': True
-	}
-	return True
-
-@register_rpc('/config/ssl/hostnames/get', log_call=True)
-def rpc_config_ssl_hostnames_get(handler):
-	"""
-	Get the hostnames that are configured for SSL use with this server.
-
-	.. versionadded: 1.14.0
-
-	:return: A dictionary of the hostnames that are available and enabled for SSL use through SNI.
-	:rtype: dict
-	"""
-	if not advancedhttpserver.g_ssl_has_server_sni:
-		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not available')
-		return
-	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
-	if not data_path:
-		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not configured')
-		return
-
-	hostnames = {}
-	enabled = [cert.hostname for cert in handler.server.get_sni_certs()]
-	hostname_dir = os.path.join(data_path, 'etc', 'live')
-	if not os.path.isdir(hostname_dir):
-		rpc_logger.warning('can not enumerate SNI hostnames when the directories do not exist')
-		return
-	for hostname in letsencrypt.get_hostnames(data_path):
-		hostnames[hostname] = {'enabled': hostname in enabled}
-	return hostnames
-
-@register_rpc('/config/ssl/hostnames/unload', log_call=True)
-def rpc_config_ssl_hostnames_unload(handler, hostname):
-	if not advancedhttpserver.g_ssl_has_server_sni:
-		rpc_logger.warning('can not remove an SNI hostname when SNI is not available')
-		return False
-	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
-	if not data_path:
-		rpc_logger.warning('can not remove an SNI hostname when SNI is not configured')
-		return False
-
-	for sni_cert in handler.server.get_sni_certs():
-		if sni_cert.hostname == hostname:
-			break
-	else:
-		rpc_logger.warning('can not remove an SNI hostname that does not exist')
-		return False
-	handler.remove_sni_cert(sni_cert.hostname)
-	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
-	kv_store[sni_cert.hostname] = {
-		'certfile': sni_cert.certfile,
-		'keyfile': sni_cert.keyfile,
-		'enabled': False
-	}
-	return True
-
 @register_rpc('/campaign/new', database_access=True, log_call=True)
 def rpc_campaign_new(handler, session, name, description=None):
 	"""
@@ -814,7 +726,9 @@ def rpc_hostnames_add(handler, hostname):
 @register_rpc('/hostnames/get', log_call=True)
 def rpc_hostnames_get(handler):
 	"""
-	Get the hostnames that are configured for use with this server.
+	Get the hostnames that are configured for use with this server. This is not
+	related to the ``ssl/hostnames`` RPC methods which deal with hostnames as
+	they relate to SSL for the purposes of certificate usage.
 
 	.. versionadded:: 1.13.0
 
@@ -935,8 +849,96 @@ def rpc_graphql(handler, session, query, query_vars=None):
 				errors.append(repr(error))
 	return {'data': result.data, 'errors': errors}
 
-@register_rpc('/letsencrypt/certbot-version', database_access=False, log_call=True)
-def rpc_letsencrypt_certbot_version(handler):
+@register_rpc('/ssl/hostnames/load', log_call=True)
+def rpc_ssl_hostnames_load(handler, hostname):
+	"""
+
+	.. versionadded: 1.14.0
+
+	:param str hostname: The hostname to configure SSL for.
+	:return: ``True`` if the hostname was either added or was already configured.
+	:rtype: bool
+	"""
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not add an SNI hostname when SNI is not available')
+		return False
+	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
+	if not data_path:
+		rpc_logger.warning('can not add an SNI hostname when SNI is not configured')
+		return False
+
+	for sni_cert in handler.server.get_sni_certs():
+		if sni_cert.hostname == hostname:
+			rpc_logger.warning('ignoring directive to add an SNI hostname that already exists')
+			return True
+	cert_path, key_path = letsencrypt.get_files(data_path, hostname)
+	if not (cert_path and key_path):
+		rpc_logger.warning('can not add an SNI hostname without the necessary files')
+		return False
+	handler.server.add_sni_cert(hostname, cert_path, key_path)
+	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
+	kv_store[sni_cert.hostname] = {
+		'certfile': cert_path,
+		'keyfile': key_path,
+		'enabled': True
+	}
+	return True
+
+@register_rpc('/ssl/hostnames/get', log_call=True)
+def rpc_ssl_hostnames_get(handler):
+	"""
+	Get the hostnames that are configured for SSL use with this server.
+
+	.. versionadded: 1.14.0
+
+	:return: A dictionary of the hostnames that are available and enabled for SSL use through SNI.
+	:rtype: dict
+	"""
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not available')
+		return
+	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
+	if not data_path:
+		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not configured')
+		return
+
+	hostnames = {}
+	enabled = [cert.hostname for cert in handler.server.get_sni_certs()]
+	hostname_dir = os.path.join(data_path, 'etc', 'live')
+	if not os.path.isdir(hostname_dir):
+		rpc_logger.warning('can not enumerate SNI hostnames when the directories do not exist')
+		return
+	for hostname in letsencrypt.get_hostnames(data_path):
+		hostnames[hostname] = {'enabled': hostname in enabled}
+	return hostnames
+
+@register_rpc('/ssl/hostnames/unload', log_call=True)
+def rpc_ssl_hostnames_unload(handler, hostname):
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not remove an SNI hostname when SNI is not available')
+		return False
+	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
+	if not data_path:
+		rpc_logger.warning('can not remove an SNI hostname when SNI is not configured')
+		return False
+
+	for sni_cert in handler.server.get_sni_certs():
+		if sni_cert.hostname == hostname:
+			break
+	else:
+		rpc_logger.warning('can not remove an SNI hostname that does not exist')
+		return False
+	handler.remove_sni_cert(sni_cert.hostname)
+	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
+	kv_store[sni_cert.hostname] = {
+		'certfile': sni_cert.certfile,
+		'keyfile': sni_cert.keyfile,
+		'enabled': False
+	}
+	return True
+
+@register_rpc('/ssl/letsencrypt/certbot-version', database_access=False, log_call=True)
+def rpc_ssl_letsencrypt_certbot_version(handler):
 	"""
 	Find the certbot binary and retrieve it's version information. If the
 	certbot binary could not be found, ``None`` is returned.
@@ -956,8 +958,8 @@ def rpc_letsencrypt_certbot_version(handler):
 		return None
 	return match.group('version')
 
-@register_rpc('/letsencrypt/issue', log_call=True)
-def rpc_letsencrypt_issue(handler, hostname, load=True):
+@register_rpc('/ssl/letsencrypt/issue', log_call=True)
+def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
 	"""
 	Issue a certificate with Let's Encrypt. This operation can fail for a wide
 	variety of reasons, check the ``message`` key of the returned dictionary for
@@ -1039,3 +1041,21 @@ def rpc_letsencrypt_issue(handler, hostname, load=True):
 	result['success'] = True
 	result['message'] = 'The operation completed successfully.'
 	return result
+
+@register_rpc('/ssl/status', log_call=True)
+def rpc_ssl_status(handler):
+	"""
+	Get information regarding the status of SSL on the server. This method
+	returns a dictionary with keys describing whether or not SSL is enabled on
+	one or more interfaces, and whether or not the server possess the SNI
+	support. For details regarding which addresses are using SSL, see the
+	:py:func:`~rpc_config_get` method.
+
+	:param handler:
+	:return:
+	"""
+	status = {
+		'enabled': any(address.get('ssl', False) for address in handler.config.get('server.addresses')),
+		'has-sni': advancedhttpserver.g_ssl_has_server_sni
+	}
+	return status
