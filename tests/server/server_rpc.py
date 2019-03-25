@@ -34,10 +34,13 @@ import types
 import unittest
 
 from king_phisher import errors
+from king_phisher import startup
 from king_phisher import version
 from king_phisher.server import server_rpc
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
+
+_certbot_bin_path = startup.which('certbot')
 
 class ServerRPCTests(KingPhisherServerTestCase):
 	def test_rpc_config_get(self):
@@ -130,6 +133,12 @@ class ServerRPCTests(KingPhisherServerTestCase):
 	def test_rpc_is_unauthorized(self):
 		http_response = self.http_request('/ping', method='RPC')
 		self.assertHTTPStatus(http_response, 401)
+
+	@unittest.skipUnless(_certbot_bin_path, 'due to certbot being unavailable')
+	def test_rpc_letsencrypt_certbot_version(self):
+		version = self.rpc('letsencrypt/certbot-version')
+		self.assertIsNotNone(version, 'the certbot version was not retrieved')
+		self.assertRegexpMatches(version, r'(\d.)*\d', 'the certbot version is invalid')
 
 	def test_rpc_ping(self):
 		self.assertTrue(self.rpc('ping'))
