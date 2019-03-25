@@ -19,3 +19,5 @@ Functions
 .. autofunction:: certbot_issue
 
 .. autofunction:: get_files
+
+.. autofunction:: get_hostnames

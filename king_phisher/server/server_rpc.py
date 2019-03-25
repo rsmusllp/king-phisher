@@ -246,7 +246,7 @@ def rpc_config_ssl_hostnames_get(handler):
 
 	.. versionadded: 1.14.0
 
-	:return: A dictoinary of the hostnames that are available and enabled for SSL use through SNI.
+	:return: A dictionary of the hostnames that are available and enabled for SSL use through SNI.
 	:rtype: dict
 	"""
 	if not advancedhttpserver.g_ssl_has_server_sni:
@@ -257,15 +257,15 @@ def rpc_config_ssl_hostnames_get(handler):
 		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not configured')
 		return
 
-	available = []
+	hostnames = {}
+	enabled = [cert.hostname for cert in handler.server.get_sni_certs()]
 	hostname_dir = os.path.join(data_path, 'etc', 'live')
 	if not os.path.isdir(hostname_dir):
 		rpc_logger.warning('can not enumerate SNI hostnames when the directories do not exist')
 		return
-	for hostname in os.listdir(os.path.join(data_path, 'etc', 'live')):
-		if all(letsencrypt.get_files(data_path, hostname)):
-			available.append(hostname)
-	return {'available': available, 'enabled': [cert.hostname for cert in handler.server.get_sni_certs()]}
+	for hostname in letsencrypt.get_hostnames(data_path):
+		hostnames[hostname] = {'enabled': hostname in enabled}
+	return hostnames
 
 @register_rpc('/config/ssl/hostnames/unload', log_call=True)
 def rpc_config_ssl_hostnames_unload(handler, hostname):
@@ -997,9 +997,12 @@ def rpc_letsencrypt_issue(handler, hostname, load=True):
 		result['message'] = 'Can not issue certificates without the certbot utility.'
 		return result
 
-	# step 4: ensure the hostname looks legit (TM)
+	# step 4: ensure the hostname looks legit (TM) and hasn't already been issued
 	if re.match(r'^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+$', hostname, flags=re.IGNORECASE) is None:
 		result['message'] = 'Can not issue certificates for invalid hostnames.'
+		return result
+	if all(letsencrypt.get_files(data_path, hostname)):
+		result['message'] = 'The specified hostname already has the necessary files.'
 		return result
 
 	# step 5: determine the web_root path for this hostname and create it if necessary
@@ -1020,7 +1023,7 @@ def rpc_letsencrypt_issue(handler, hostname, load=True):
 	cert_path = os.path.join(data_path, 'etc', 'live', hostname, 'fullchain.pem')
 	key_path = os.path.join(data_path, 'etc', 'live', hostname, 'privkey.pem')
 	if not os.path.isfile(cert_path) and os.path.isfile(key_path):
-		result['message'] = 'The certificate files were not generated'
+		result['message'] = 'The certificate files were not generated.'
 		return result
 
 	# step 8: store the data in the database so it can be loaded next time the server starts
@@ -1030,10 +1033,9 @@ def rpc_letsencrypt_issue(handler, hostname, load=True):
 		'keyfile': key_path,
 		'enabled': load
 	}
-
 	if load:
 		handler.server.add_sni_cert(hostname, ssl_certfile=cert_path, ssl_keyfile=key_path)
 
 	result['success'] = True
-	result['message'] = 'The operation completed successfully'
+	result['message'] = 'The operation completed successfully.'
 	return result

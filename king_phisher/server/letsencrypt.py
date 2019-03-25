@@ -41,6 +41,8 @@ logger = logging.getLogger('KingPhisher.LetsEncrypt')
 LETS_ENCRYPT_DEFAULT_DATA_PATH = '/etc/letsencrypt'
 """The default path at which Let's Encrypt data is stored."""
 
+_HOSTNAME_DIRECTORY_REGEX = re.compile(r'^(?P<hostname>[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.[a-z]+)(-(?P<index>\d+))?$', re.IGNORECASE)
+
 def _run_certbot(args, bin_path=None):
 	bin_path = bin_path or startup.which('certbot')
 	if bin_path is None:
@@ -98,8 +100,8 @@ def get_files(unified_directory, hostname):
 		# certbot will append digits to the end of a directory to avoid naming conflicts, so find the highest index
 		index_str = None
 		for subdirectory in os.listdir(directory):
-			match = re.match('^' + re.escape(hostname) + '-(?P<index>\d+)$', subdirectory)
-			if match is None:
+			match = _HOSTNAME_DIRECTORY_REGEX.match(subdirectory)
+			if match is None or match.group('hostname') != hostname or not match.group('index'):
 				continue
 			if index_str is None or int(match.group('index')) > int(index_str):
 				index_str = match.group('index')
@@ -114,3 +116,28 @@ def get_files(unified_directory, hostname):
 	if not (os.path.isfile(key_path) and os.access(key_path, os.R_OK)):
 		key_path = None
 	return cert_path, key_path
+
+def get_hostnames(unified_directory):
+	"""
+	Return a list of hostnames for which the necessary files are available for
+	*unified_directory*.
+
+	:param str unified_directory: The path to the unified directory as used by the :py:func:`.certbot_issue`.
+	:return: The hostnames that are available.
+	:rtype: list
+	"""
+	directory = os.path.join(unified_directory, 'etc', 'live')
+	if not os.path.isdir(directory):
+		return None
+	hostnames = []
+	for subdirectory in os.listdir(directory):
+		match = _HOSTNAME_DIRECTORY_REGEX.match(subdirectory)
+		if match is None:
+			continue
+		hostname = match.group('hostname')
+		if hostname in hostnames:
+			continue
+		if not all(get_files(unified_directory, match.group('hostname'))):
+			continue
+		hostnames.append(hostname)
+	return sorted(hostnames)
