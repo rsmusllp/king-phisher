@@ -1282,7 +1282,7 @@ Spencer McIntyre</property>
                             <property name="hexpand">True</property>
                             <property name="editable">False</property>
                             <property name="primary_icon_stock">gtk-directory</property>
-                            <signal name="backspace" handler="signal_kpm_dest_folder" swapped="no"/>
+                            <signal name="backspace" handler="signal_kpm_entry_clear" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -1313,7 +1313,7 @@ Spencer McIntyre</property>
                             <property name="primary_icon_stock">gtk-file</property>
                             <property name="primary_icon_activatable">False</property>
                             <property name="secondary_icon_activatable">False</property>
-                            <signal name="backspace" handler="signal_kpm_file_clear" swapped="no"/>
+                            <signal name="backspace" handler="signal_kpm_entry_clear" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -1362,9 +1362,6 @@ Spencer McIntyre</property>
                 <property name="left_attach">0</property>
                 <property name="top_attach">0</property>
               </packing>
-            </child>
-            <child>
-              <placeholder/>
             </child>
           </object>
           <packing>
