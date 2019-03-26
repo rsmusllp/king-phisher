@@ -167,14 +167,14 @@ def server_from_config(config, handler_klass=None, plugin_manager=None):
 		logger.info("setting the server version to the custom header: '{0}'".format(config.get('server.server_header')))
 
 	for hostname, ssl_certfile, ssl_keyfile in ssl_hostnames:
-		sni_config = letsencrypt.sni_hostnames.get(hostname)
+		sni_config = letsencrypt.get_sni_hostname_config(hostname, config)
 		if sni_config is None:
-			letsencrypt.sni_hostnames[hostname] = {'certfile': ssl_certfile, 'keyfile': ssl_keyfile, 'enabled': True}
+			letsencrypt.set_sni_hostname(hostname, ssl_certfile, ssl_keyfile, enabled=True)
 
-	for hostname, sni_config in letsencrypt.sni_hostnames.items():
-		if not sni_config['enabled']:
+	for hostname, sni_config in letsencrypt.get_sni_hostnames(config).items():
+		if not sni_config.enabled:
 			continue
-		_server_add_sni(server, hostname, sni_config['certfile'], sni_config['keyfile'])
+		_server_add_sni(server, hostname, sni_config.certfile, sni_config.keyfile)
 
 	signals.server_initialized.send(server)
 	return server

@@ -18,6 +18,11 @@ Functions
 
 .. autofunction:: certbot_issue
 
-.. autofunction:: get_files
+.. autofunction:: get_sni_hostname_config
 
 .. autofunction:: get_sni_hostnames
+
+Classes
+-------
+
+.. autoclass:: SNIHostnameConfiguration

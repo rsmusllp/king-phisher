@@ -861,21 +861,16 @@ def rpc_ssl_hostnames_load(handler, hostname):
 	if not advancedhttpserver.g_ssl_has_server_sni:
 		rpc_logger.warning('can not add an SNI hostname when SNI is not available')
 		return False
-	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
-	if not data_path:
-		rpc_logger.warning('can not add an SNI hostname when SNI is not configured')
-		return False
 
 	for sni_cert in handler.server.get_sni_certs():
 		if sni_cert.hostname == hostname:
 			rpc_logger.warning('ignoring directive to add an SNI hostname that already exists')
 			return True
-	cert_path, key_path = letsencrypt.get_files(data_path, hostname)
-	if not (cert_path and key_path):
+	sni_config = letsencrypt.get_sni_hostname_config(hostname, handler.config)
+	if not sni_config:
 		rpc_logger.warning('can not add an SNI hostname without the necessary files')
 		return False
-	handler.server.add_sni_cert(hostname, cert_path, key_path)
-	letsencrypt.sni_hostnames[sni_cert.hostname] = {'certfile': cert_path, 'keyfile': key_path, 'enabled': True}
+	handler.server.add_sni_cert(hostname, sni_config.certfile, sni_config.keyfile)
 	return True
 
 @register_rpc('/ssl/hostnames/get', log_call=True)
@@ -891,19 +886,9 @@ def rpc_ssl_hostnames_get(handler):
 	if not advancedhttpserver.g_ssl_has_server_sni:
 		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not available')
 		return
-	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
-	if not data_path:
-		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not configured')
-		return
-
 	hostnames = {}
-	enabled = [cert.hostname for cert in handler.server.get_sni_certs()]
-	hostname_dir = os.path.join(data_path, 'etc', 'live')
-	if not os.path.isdir(hostname_dir):
-		rpc_logger.warning('can not enumerate SNI hostnames when the directories do not exist')
-		return
-	for hostname in letsencrypt.get_sni_hostnames(data_path):
-		hostnames[hostname] = {'enabled': hostname in enabled}
+	for hostname, sni_config in letsencrypt.get_sni_hostnames(handler.config).items():
+		hostnames[hostname] = {'enabled': sni_config.enabled}
 	return hostnames
 
 @register_rpc('/ssl/hostnames/unload', log_call=True)
@@ -922,12 +907,7 @@ def rpc_ssl_hostnames_unload(handler, hostname):
 	else:
 		rpc_logger.warning('can not remove an SNI hostname that does not exist')
 		return False
-	handler.remove_sni_cert(sni_cert.hostname)
-	letsencrypt.sni_hostnames[sni_cert.hostname] = {
-		'certfile': sni_cert.certfile,
-		'keyfile': sni_cert.keyfile,
-		'enabled': False
-	}
+	handler.server.remove_sni_cert(sni_cert.hostname)
 	return True
 
 @register_rpc('/ssl/letsencrypt/certbot-version', database_access=False, log_call=True)
@@ -996,7 +976,7 @@ def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
 	if re.match(r'^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+$', hostname, flags=re.IGNORECASE) is None:
 		result['message'] = 'Can not issue certificates for invalid hostnames.'
 		return result
-	if all(letsencrypt.get_files(data_path, hostname)):
+	if letsencrypt.get_sni_hostname_config(hostname, config):
 		result['message'] = 'The specified hostname already has the necessary files.'
 		return result
 
@@ -1024,7 +1004,7 @@ def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
 	# step 8: store the data in the database so it can be loaded next time the server starts
 	if load:
 		handler.server.add_sni_cert(hostname, ssl_certfile=cert_path, ssl_keyfile=key_path)
-	letsencrypt.sni_hostnames[hostname] = {'certfile': cert_path, 'keyfile': key_path, 'enabled': load}
+	letsencrypt.set_sni_hostname(hostname, cert_path, key_path, enabled=load)
 
 	result['success'] = True
 	result['message'] = 'The operation completed successfully.'

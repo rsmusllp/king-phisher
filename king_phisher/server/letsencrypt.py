@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import logging
 import os
 import re
@@ -44,7 +45,25 @@ LETS_ENCRYPT_DEFAULT_DATA_PATH = '/etc/letsencrypt'
 
 _HOSTNAME_DIRECTORY_REGEX = re.compile(r'^(?P<hostname>[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)*\.[a-z]+)(-(?P<index>\d+))?$', re.IGNORECASE)
 
-sni_hostnames = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
+_sni_hostnames = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames', order_by='key')
+
+SNIHostnameConfiguration = collections.namedtuple('SNIHostnameConfiguration', ('certfile', 'keyfile', 'enabled'))
+"""
+The information for a certificate used by the server's SSL Server Name Indicator
+(SNI) extension.
+
+.. py:attribute:: certfile
+
+	The path to the SSL certificate file on disk to use for the hostname.
+
+.. py:attribute:: keyfile
+
+	The path to the SSL key file on disk to use for the hostname.
+
+.. py:attribute:: enabled
+
+	Whether or not this configuration is set to be loaded by the server.
+"""
 
 def _check_files(*file_paths):
 	return all(os.path.isfile(file_path) and os.access(file_path, os.R_OK) for file_path in file_paths)
@@ -80,6 +99,22 @@ def _run_certbot(args, bin_path=None):
 	args = (bin_path,) + tuple(args)
 	return startup.run_process(args)
 
+def _sync_hostnames(unified_directory):
+	directory = os.path.join(unified_directory, 'etc', 'live')
+	if not os.path.isdir(directory):
+		return
+	for subdirectory in os.listdir(directory):
+		match = _HOSTNAME_DIRECTORY_REGEX.match(subdirectory)
+		if match is None:
+			continue
+		hostname = match.group('hostname')
+		if hostname in _sni_hostnames:
+			continue
+		certfile, keyfile = _get_files(directory, match.group('hostname'))
+		if not (certfile and keyfile):
+			continue
+		set_sni_hostname(hostname, certfile, keyfile)
+
 def certbot_issue(webroot, hostname, bin_path=None, unified_directory=None):
 	"""
 	Issue a certificate using Let's Encrypt's ``certbot`` utility. This function
@@ -108,54 +143,60 @@ def certbot_issue(webroot, hostname, bin_path=None, unified_directory=None):
 	proc = _run_certbot(args, bin_path=bin_path)
 	return proc.status
 
-def get_files(unified_directory, hostname):
+def get_sni_hostname_config(hostname, config=None):
 	"""
-	Given the *unified_directory*, find and return the certificate and key files
-	for the specified *hostname*. The paths to the files will be returned if
-	exist, are files and are readable. If either path fails to meet these
-	conditions, ``None`` will be returned in it's place.
+	Search for and return the SNI configuration for the specified *hostname*.
+	This method will first check to see if the entry exists in the database
+	before searching the Let's Encrypt data directory (if ``data_path`` is
+	present in the server configuration). If no configuration data is found, or
+	the data file paths appear invalid, ``None`` is returned.
 
-	:param str unified_directory: The path to the unified directory as used by the :py:func:`.certbot_issue`.
-	:param str hostname: The hostname to retrieve files for.
-	:return: A tuple containing the certfile and keyfile.
-	:rtype: tuple
+	:param str hostname: The hostname to retrieve the configuration for.
+	:param config: Configuration to retrieve settings from.
+	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
+	:return: The SNI configuration for the hostname if it was found.
+	:rtype: :py:class:`.SNIHostnameConfiguration`
 	"""
-	unified_directory = os.path.abspath(unified_directory)
-	directory = os.path.join(unified_directory, 'etc', 'live')
-	if not os.path.isdir(directory):
-		return None, None
-	sni_config = sni_hostnames.get(hostname)
-	if sni_config and _check_files(sni_config['certfile'], sni_config['keyfile']):
-		return sni_config['certfile'], sni_config['keyfile']
-	return _get_files(directory, hostname)
+	unified_directory = config.get_if_exists('server.letsencrypt.data_path') if config else None
+	if unified_directory:
+		_sync_hostnames(unified_directory)
 
-def get_sni_hostnames(unified_directory):
-	"""
-	Return a list of hostnames for which the necessary files are available for.
-	This function first checks the the files configured in the database, then
-	enumerates the *unified_directory* to add additional entries.
-
-	:param str unified_directory: The path to the unified directory as used by the :py:func:`.certbot_issue`.
-	:return: The hostnames that are available.
-	:rtype: list
-	"""
-	directory = os.path.join(unified_directory, 'etc', 'live')
-	if not os.path.isdir(directory):
+	sni_config = _sni_hostnames.get(hostname)
+	if not sni_config:
 		return None
-	hostnames = []
-	for hostname, sni_config in sni_hostnames.items():
+	if not _check_files(sni_config['certfile'], sni_config['keyfile']):
+		return None
+	return SNIHostnameConfiguration(**sni_config)
+
+def get_sni_hostnames(config=None):
+	"""
+	Retrieve all the hostnames for which a valid SNI configuration can be
+	retrieved. These are the hostnames for which SNI can be enabled.
+
+	:param config: Configuration to retrieve settings from.
+	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
+	:return: A dictionary, keyed by hostnames with values of :py:class:`.SNIHostnameConfiguration` instances.
+	:rtype: dict
+	"""
+	unified_directory = config.get_if_exists('server.letsencrypt.data_path') if config else None
+	if unified_directory:
+		_sync_hostnames(unified_directory)
+	hostnames = collections.OrderedDict()
+	for hostname, sni_config in _sni_hostnames.items():
 		if not _check_files(sni_config['certfile'], sni_config['keyfile']):
 			continue
-		hostnames.append(hostname)
+		hostnames[hostname] = SNIHostnameConfiguration(**sni_config)
+	return hostnames
 
-	for subdirectory in os.listdir(directory):
-		match = _HOSTNAME_DIRECTORY_REGEX.match(subdirectory)
-		if match is None:
-			continue
-		hostname = match.group('hostname')
-		if hostname in hostnames:
-			continue
-		if not all(get_files(directory, match.group('hostname'))):
-			continue
-		hostnames.append(hostname)
-	return sorted(hostnames)
+def set_sni_hostname(hostname, certfile, keyfile, enabled=False):
+	"""
+	Set the SNI configuration for the specified *hostname*. This information can
+	then later be retrieved with either :py:func:`get_sni_hostname_config` or
+	:py:func:`get_sni_hostnames`.
+
+	:param str hostname: The hostname associated with the configuration data.
+	:param str certfile: The path to the certificate file on disk.
+	:param str keyfile: The path to the key file on disk.
+	:param bool enabled: Whether or not this SNI configuration is loaded in the server.
+	"""
+	_sni_hostnames[hostname] = {'certfile': os.path.abspath(certfile), 'keyfile': os.path.abspath(keyfile), 'enabled': enabled}

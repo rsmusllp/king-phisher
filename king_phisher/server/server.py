@@ -51,6 +51,7 @@ from king_phisher import templates
 from king_phisher import utilities
 from king_phisher import xor
 from king_phisher.server import aaa
+from king_phisher.server import letsencrypt
 from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
 from king_phisher.server import signals
@@ -915,6 +916,7 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			http_server.job_manager = self.job_manager
 			http_server.kp_shutdown = self.shutdown
 			http_server.plugin_manager = plugin_manager
+			http_server.remove_sni_cert = self.remove_sni_cert
 			http_server.session_manager = self.session_manager
 			http_server.tables_api = self.tables_api
 			http_server.template_env = self.template_env
@@ -996,3 +998,18 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			self.logger.debug('stopped the forked authenticator process')
 			self.__geoip_db.close()
 			self.__is_shutdown.set()
+
+	def add_sni_cert(self, hostname, ssl_certfile=None, ssl_keyfile=None, ssl_version=None):
+		result = super(KingPhisherServer, self).add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile, ssl_version=ssl_version)
+		letsencrypt.set_sni_hostname(hostname, ssl_certfile, ssl_keyfile, enabled=True)
+		return result
+
+	def remove_sni_cert(self, hostname):
+		for sni_cert in self.sni_certs:
+			if sni_cert.hostname == hostname:
+				break
+		else:
+			raise ValueError('the specified hostname does not have an sni certificate configuration')
+		result = super(KingPhisherServer, self).remove_sni_cert(hostname)
+		letsencrypt.set_sni_hostname(hostname, sni_cert.certfile, sni_cert.keyfile, enabled=False)
+		return result
