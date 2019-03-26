@@ -77,6 +77,13 @@ database_tables = db_models.database_tables
 graphql_schema = schema.Schema()
 rpc_logger = logging.getLogger('KingPhisher.Server.RPC')
 
+def _ssl_is_enabled(handler):
+	"""
+	Returns whether or not SSL is enabled for any of the addresses that the
+	server is bound with.
+	"""
+	return any(address.get('ssl', False) for address in handler.config.get('server.addresses'))
+
 def register_rpc(path, database_access=False, log_call=False):
 	"""
 	Register an RPC function with the HTTP request handler. This allows the
@@ -848,75 +855,13 @@ def rpc_graphql(handler, session, query, query_vars=None):
 				errors.append(repr(error))
 	return {'data': result.data, 'errors': errors}
 
-@register_rpc('/ssl/hostnames/load', log_call=True)
-def rpc_ssl_hostnames_load(handler, hostname):
-	"""
-
-	.. versionadded: 1.14.0
-
-	:param str hostname: The hostname to configure SSL for.
-	:return: ``True`` if the hostname was either added or was already configured.
-	:rtype: bool
-	"""
-	if not advancedhttpserver.g_ssl_has_server_sni:
-		rpc_logger.warning('can not add an SNI hostname when SNI is not available')
-		return False
-
-	for sni_cert in handler.server.get_sni_certs():
-		if sni_cert.hostname == hostname:
-			rpc_logger.warning('ignoring directive to add an SNI hostname that already exists')
-			return True
-	sni_config = letsencrypt.get_sni_hostname_config(hostname, handler.config)
-	if not sni_config:
-		rpc_logger.warning('can not add an SNI hostname without the necessary files')
-		return False
-	handler.server.add_sni_cert(hostname, sni_config.certfile, sni_config.keyfile)
-	return True
-
-@register_rpc('/ssl/hostnames/get', log_call=True)
-def rpc_ssl_hostnames_get(handler):
-	"""
-	Get the hostnames that are configured for SSL use with this server.
-
-	.. versionadded: 1.14.0
-
-	:return: A dictionary of the hostnames that are available and enabled for SSL use through SNI.
-	:rtype: dict
-	"""
-	if not advancedhttpserver.g_ssl_has_server_sni:
-		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not available')
-		return
-	hostnames = {}
-	for hostname, sni_config in letsencrypt.get_sni_hostnames(handler.config).items():
-		hostnames[hostname] = {'enabled': sni_config.enabled}
-	return hostnames
-
-@register_rpc('/ssl/hostnames/unload', log_call=True)
-def rpc_ssl_hostnames_unload(handler, hostname):
-	if not advancedhttpserver.g_ssl_has_server_sni:
-		rpc_logger.warning('can not remove an SNI hostname when SNI is not available')
-		return False
-	data_path = handler.config.get_if_exists('server.letsencrypt.data_path')
-	if not data_path:
-		rpc_logger.warning('can not remove an SNI hostname when SNI is not configured')
-		return False
-
-	for sni_cert in handler.server.get_sni_certs():
-		if sni_cert.hostname == hostname:
-			break
-	else:
-		rpc_logger.warning('can not remove an SNI hostname that does not exist')
-		return False
-	handler.server.remove_sni_cert(sni_cert.hostname)
-	return True
-
-@register_rpc('/ssl/letsencrypt/certbot-version', database_access=False, log_call=True)
+@register_rpc('/ssl/letsencrypt/certbot_version', database_access=False, log_call=True)
 def rpc_ssl_letsencrypt_certbot_version(handler):
 	"""
 	Find the certbot binary and retrieve it's version information. If the
 	certbot binary could not be found, ``None`` is returned.
 
-	..versionadded: 1.14.0
+	.. versionadded:: 1.14.0
 
 	:return: The version of certbot.
 	:rtype: str
@@ -936,9 +881,11 @@ def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
 	"""
 	Issue a certificate with Let's Encrypt. This operation can fail for a wide
 	variety of reasons, check the ``message`` key of the returned dictionary for
-	a string description of what occurred.
+	a string description of what occurred. Successful operation requires that
+	the certbot utility be installed, and the server's Let's Encrypt data path
+	is configured.
 
-	.. versionadded: 1.14.0
+	.. versionadded:: 1.14.0
 
 	:param str hostname: The hostname of the certificate to issue.
 	:param bool load: Whether or not to load the certificate once it has been issued.
@@ -959,7 +906,7 @@ def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
 		os.mkdir(data_path)
 
 	# step 2: ensure that SSL is enabled already
-	if not any(address.get('ssl', False) for address in config.get('server.addresses')):
+	if not _ssl_is_enabled(handler):
 		result['message'] = 'Can not issue certificates when SSL is not in use.'
 		return result
 	if not advancedhttpserver.g_ssl_has_server_sni:
@@ -1010,6 +957,82 @@ def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
 	result['message'] = 'The operation completed successfully.'
 	return result
 
+@register_rpc('/ssl/sni_hostnames/get', log_call=True)
+def rpc_ssl_sni_hostnames_get(handler):
+	"""
+	Get the hostnames that have available Server Name Indicator (SNI)
+	configurations for use with SSL.
+
+	.. versionadded:: 1.14.0
+
+	:return: A dictionary keyed by hostnames with values of dictionaries containing additional metadata.
+	:rtype: dict
+	"""
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not available')
+		return
+	hostnames = {}
+	for hostname, sni_config in letsencrypt.get_sni_hostnames(handler.config).items():
+		hostnames[hostname] = {'enabled': sni_config.enabled}
+	return hostnames
+
+@register_rpc('/ssl/sni_hostnames/load', log_call=True)
+def rpc_ssl_sni_hostnames_load(handler, hostname):
+	"""
+	Load the SNI configuration for the specified *hostname*, effectively
+	enabling it. If SSL is not enabled, SNI is not available, the necessary data
+	files are not available or the SNI configuration was already loaded, this
+	function returns ``False``.
+
+	.. versionadded:: 1.14.0
+
+	:param str hostname: The hostname to configure SSL for.
+	:return: Returns ``True`` only if the SNI configuration for *hostname* was loaded.
+	:rtype: bool
+	"""
+	if not _ssl_is_enabled(handler):
+		rpc_logger.warning('can not add an SNI hostname when SSL is not in use')
+		return False
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not add an SNI hostname when SNI is not available')
+		return False
+
+	for sni_cert in handler.server.get_sni_certs():
+		if sni_cert.hostname == hostname:
+			rpc_logger.warning('ignoring directive to add an SNI hostname that already exists')
+			return False
+	sni_config = letsencrypt.get_sni_hostname_config(hostname, handler.config)
+	if not sni_config:
+		rpc_logger.warning('can not add an SNI hostname without the necessary files')
+		return False
+	handler.server.add_sni_cert(hostname, sni_config.certfile, sni_config.keyfile)
+	return True
+
+@register_rpc('/ssl/sni_hostnames/unload', log_call=True)
+def rpc_ssl_sni_hostnames_unload(handler, hostname):
+	"""
+	Unload the SNI configuration for the specified *hostname*, effectively
+	disabling it. If SNI is not available, or the specified configuration was
+	not already loaded, this function returns ``False``.
+
+	.. versionadded:: 1.14.0
+
+	:param str hostname: The hostname to configure SSL for.
+	:return: Returns ``True`` only if the SNI configuration for *hostname* was unloaded.
+	:rtype: bool
+	"""
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not remove an SNI hostname when SNI is not available')
+		return False
+	for sni_cert in handler.server.get_sni_certs():
+		if sni_cert.hostname == hostname:
+			break
+	else:
+		rpc_logger.warning('can not remove an SNI hostname that does not exist')
+		return False
+	handler.server.remove_sni_cert(sni_cert.hostname)
+	return True
+
 @register_rpc('/ssl/status', log_call=True)
 def rpc_ssl_status(handler):
 	"""
@@ -1019,11 +1042,13 @@ def rpc_ssl_status(handler):
 	support. For details regarding which addresses are using SSL, see the
 	:py:func:`~rpc_config_get` method.
 
-	:param handler:
-	:return:
+	.. versionadded:: 1.14.0
+
+	:return: A dictionary with SSL status information.
+	:rtype: dict
 	"""
 	status = {
-		'enabled': any(address.get('ssl', False) for address in handler.config.get('server.addresses')),
+		'enabled': _ssl_is_enabled(handler),
 		'has-sni': advancedhttpserver.g_ssl_has_server_sni
 	}
 	return status

@@ -83,15 +83,15 @@ Functions
 
 .. autofunction:: rpc_shutdown
 
-.. autofunction:: rpc_ssl_hostnames_get
-
-.. autofunction:: rpc_ssl_hostnames_load
-
-.. autofunction:: rpc_ssl_hostnames_unload
-
 .. autofunction:: rpc_ssl_letsencrypt_issue
 
 .. autofunction:: rpc_ssl_letsencrypt_certbot_version
+
+.. autofunction:: rpc_ssl_sni_hostnames_get
+
+.. autofunction:: rpc_ssl_sni_hostnames_load
+
+.. autofunction:: rpc_ssl_sni_hostnames_unload
 
 .. autofunction:: rpc_ssl_status
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/server/__init__.py
+#  tests/server/letsencrypt.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,21 +30,41 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
-logging.getLogger('').setLevel(logging.CRITICAL)
+import os
+import tempfile
 
-from .aaa import ServerAuthenticatedSessionManagerTests
-from .aaa import ServerAuthenticationTests
-from .aaa import ServerCachedPasswordTests
-from .configuration import ServerConfigurationTests
-from .database import *
-from .graphql import ServerGraphQLTests
-from .graphql import ServerGraphQLDatabaseTests
-from .letsencrypt import ServerSNIHostnameTests
-from .rest_api import ServerRESTAPITests
-from .server import CampaignWorkflowTests
-from .server import ServerTests
-from .server_rpc import ServerRPCTests
-from .template_extras import TemplateExtraTests
-from .web_tools import ServerWebToolsTests
+from king_phisher import find
+from king_phisher.testing import KingPhisherTestCase
+from king_phisher.server import letsencrypt
+from king_phisher.server import configuration
+from king_phisher.utilities import random_string
+
+class ServerSNIHostnameTests(KingPhisherTestCase):
+	def setUp(self):
+		self.config = configuration.Configuration.from_file(find.data_file('server_config.yml'))
+		self.tmp_directory = tempfile.mkdtemp()
+
+	def test_get_sni_hostnames(self):
+		sni_hostnames = letsencrypt.get_sni_hostnames()
+		self.assertIsInstance(sni_hostnames, dict)
+
+	def test_get_sni_hostname_config(self):
+		hostname = random_string(16)
+		sni_config = letsencrypt.get_sni_hostname_config(hostname)
+		self.assertIsNone(sni_config)
+
+		certfile = os.path.join(self.tmp_directory, hostname + '.pem')
+		keyfile = os.path.join(self.tmp_directory, hostname + '-key.pem')
+		letsencrypt.set_sni_hostname(hostname, certfile, keyfile, enabled=False)
+		sni_config = letsencrypt.get_sni_hostname_config(hostname)
+		self.assertIsNone(sni_config)
+
+		open(certfile, 'wb')
+		open(keyfile, 'wb')
+		sni_config = letsencrypt.get_sni_hostname_config(hostname)
+		os.remove(certfile)
+		os.remove(keyfile)
+		self.assertIsInstance(sni_config, letsencrypt.SNIHostnameConfiguration)
+		self.assertFalse(sni_config.enabled)
+		self.assertEqual(sni_config.certfile, certfile)
+		self.assertEqual(sni_config.keyfile, keyfile)
