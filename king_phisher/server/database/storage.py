@@ -48,11 +48,29 @@ class KeyValueStorage(collections.abc.MutableMapping):
 	data can be anything that is serializable.
 	"""
 	serializer = serializers.MsgPack
-	def __init__(self, namespace=None):
+	def __init__(self, namespace=None, order_by='created'):
 		"""
+		.. versionchanged:: 1.14.0
+			Added the *order_by* parameter.
+
 		:param str namespace: The unique identifier of this namespace.
+		:param str order_by: The attribute to order stored items by. This must be one of "created", "id", "key", or "modified".
 		"""
 		self.namespace = namespace
+		self.order_by = order_by
+
+	@property
+	def order_by(self):
+		return self.__order_by
+
+	@order_by.setter
+	def order_by(self, value):
+		if not isinstance(value, str):
+			raise TypeError('order_by must be a string')
+		value = value.lower()
+		if value not in ('created', 'id', 'key', 'modified'):
+			raise ValueError('order_by must be one of: \'created\', \'id\', \'key\' or \'modified\'')
+		self.__order_by = value
 
 	@contextlib.contextmanager
 	def _session(self):
@@ -63,7 +81,7 @@ class KeyValueStorage(collections.abc.MutableMapping):
 			session.close()
 
 	def _query(self, session):
-		return session.query(db_models.StorageData).filter_by(namespace=self.namespace)
+		return session.query(db_models.StorageData).filter_by(namespace=self.namespace).order_by(getattr(db_models.StorageData, self.order_by))
 
 	def __delitem__(self, key):
 		if not isinstance(key, str):
