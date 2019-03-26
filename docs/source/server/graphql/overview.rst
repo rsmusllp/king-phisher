@@ -45,6 +45,8 @@ schema and their various sub-object types as applicable.
 +-------------------+-------------+-------------------------------------------------------------+
 | ``siteTemplates`` | Connection  | Information on all available site templates.                |
 +-------------------+-------------+-------------------------------------------------------------+
+| ``ssl``           | Object      | Information regarding the SSL configuration and status.     |
++-------------------+-------------+-------------------------------------------------------------+
 | ``version``       | String      | The :py:data:`~king_phisher.version.version` of the King    |
 |                   |             | Phisher server.                                             |
 +-------------------+-------------+-------------------------------------------------------------+
@@ -58,9 +60,6 @@ schema and their various sub-object types as applicable.
 :Object:
   Objects can in turn have their own attributes which can be a combination
   of additional sub-objects or scalars.
-
-:N/A:
-  Objects with no sub-type return a scalar type such as a string or an integer.
 
 Additional Database Model Attributes
 ------------------------------------
