@@ -49,7 +49,6 @@ from king_phisher.server import signals
 from king_phisher.server import web_tools
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
-from king_phisher.server.database import storage as db_storage
 from king_phisher.server.graphql import schema
 
 import advancedhttpserver
@@ -876,12 +875,7 @@ def rpc_ssl_hostnames_load(handler, hostname):
 		rpc_logger.warning('can not add an SNI hostname without the necessary files')
 		return False
 	handler.server.add_sni_cert(hostname, cert_path, key_path)
-	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
-	kv_store[sni_cert.hostname] = {
-		'certfile': cert_path,
-		'keyfile': key_path,
-		'enabled': True
-	}
+	letsencrypt.sni_hostnames[sni_cert.hostname] = {'certfile': cert_path, 'keyfile': key_path, 'enabled': True}
 	return True
 
 @register_rpc('/ssl/hostnames/get', log_call=True)
@@ -908,7 +902,7 @@ def rpc_ssl_hostnames_get(handler):
 	if not os.path.isdir(hostname_dir):
 		rpc_logger.warning('can not enumerate SNI hostnames when the directories do not exist')
 		return
-	for hostname in letsencrypt.get_hostnames(data_path):
+	for hostname in letsencrypt.get_sni_hostnames(data_path):
 		hostnames[hostname] = {'enabled': hostname in enabled}
 	return hostnames
 
@@ -929,8 +923,7 @@ def rpc_ssl_hostnames_unload(handler, hostname):
 		rpc_logger.warning('can not remove an SNI hostname that does not exist')
 		return False
 	handler.remove_sni_cert(sni_cert.hostname)
-	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
-	kv_store[sni_cert.hostname] = {
+	letsencrypt.sni_hostnames[sni_cert.hostname] = {
 		'certfile': sni_cert.certfile,
 		'keyfile': sni_cert.keyfile,
 		'enabled': False
@@ -1029,14 +1022,9 @@ def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
 		return result
 
 	# step 8: store the data in the database so it can be loaded next time the server starts
-	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
-	kv_store[hostname] = {
-		'certfile': cert_path,
-		'keyfile': key_path,
-		'enabled': load
-	}
 	if load:
 		handler.server.add_sni_cert(hostname, ssl_certfile=cert_path, ssl_keyfile=key_path)
+	letsencrypt.sni_hostnames[hostname] = {'certfile': cert_path, 'keyfile': key_path, 'enabled': load}
 
 	result['success'] = True
 	result['message'] = 'The operation completed successfully.'

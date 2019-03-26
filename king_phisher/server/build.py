@@ -35,8 +35,8 @@ import os
 import socket
 
 from king_phisher import errors
+from king_phisher.server import letsencrypt
 from king_phisher.server import signals
-from king_phisher.server.database import storage as db_storage
 from king_phisher.server.server import KingPhisherRequestHandler, KingPhisherServer
 
 logger = logging.getLogger('KingPhisher.Server.build')
@@ -167,12 +167,14 @@ def server_from_config(config, handler_klass=None, plugin_manager=None):
 		logger.info("setting the server version to the custom header: '{0}'".format(config.get('server.server_header')))
 
 	for hostname, ssl_certfile, ssl_keyfile in ssl_hostnames:
-		_server_add_sni(server, hostname, ssl_certfile, ssl_keyfile)
-	kv_store = db_storage.KeyValueStorage(namespace='server.ssl.sni.hostnames')
-	for hostname, sni_config in kv_store.items():
+		sni_config = letsencrypt.sni_hostnames.get(hostname)
+		if sni_config is None:
+			letsencrypt.sni_hostnames[hostname] = {'certfile': ssl_certfile, 'keyfile': ssl_keyfile, 'enabled': True}
+
+	for hostname, sni_config in letsencrypt.sni_hostnames.items():
 		if not sni_config['enabled']:
 			continue
-		_server_add_sni(server, hostname, ssl_certfile, ssl_keyfile)
+		_server_add_sni(server, hostname, sni_config['certfile'], sni_config['keyfile'])
 
 	signals.server_initialized.send(server)
 	return server

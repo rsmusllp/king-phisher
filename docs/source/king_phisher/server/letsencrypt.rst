@@ -20,4 +20,4 @@ Functions
 
 .. autofunction:: get_files
 
-.. autofunction:: get_hostnames
+.. autofunction:: get_sni_hostnames
