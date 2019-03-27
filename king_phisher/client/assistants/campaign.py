@@ -176,8 +176,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			renderers=[
 				Gtk.CellRendererText(),
 				Gtk.CellRendererText(),
-				Gtk.CellRendererText(),
-				Gtk.CellRendererText(),
+				Gtk.CellRendererText()
 			]
 		)
 		self._url_model = Gtk.ListStore(str, str, str, object, object, str, str)
@@ -295,7 +294,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		domains = [[domain] for domain in set(domains)]
 		gui_utilities.glib_idle_add_store_extend(self._hostname_list_store, domains, clear=True)
 
-	def _build_url(self, hostname, page, prefix):
+	def _build_url(self, hostname, page, scheme):
 		if not hostname:
 			for address in self.config['server_config']['server.addresses']:
 				ip = ipaddress.ip_address(address['host'])
@@ -304,7 +303,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 					break
 			else:
 				hostname = 'localhost'
-		return urllib.parse.urljoin(prefix + '://' + hostname, page)
+		return urllib.parse.urljoin(scheme + '://' + hostname, page)
 
 	def signal_url_entry_change(self, gtk_entry):
 		gtk_entry_text = gtk_entry.get_text()

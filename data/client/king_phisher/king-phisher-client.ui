@@ -987,10 +987,9 @@ Spencer McIntyre</property>
               <object class="GtkEntry" id="CampaignAssistant.entry_hostname_filter">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">Domain to filter url list by</property>
+                <property name="tooltip_text" translatable="yes">Hostname to filter URLs by.</property>
                 <property name="hexpand">True</property>
-                <property name="primary_icon_tooltip_text" translatable="yes">Domain to filter by</property>
-                <property name="placeholder_text" translatable="yes">foo.bar</property>
+                <property name="placeholder_text" translatable="yes">king-phisher.lan</property>
                 <signal name="changed" handler="signal_url_entry_change" swapped="no"/>
               </object>
               <packing>

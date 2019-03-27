@@ -169,7 +169,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	def _highlight_campaign(self, campaign_name):
 		treeview = self.gobjects['treeview_campaigns']
 		model = treeview.get_model()
-		model_iter = gui_utilities.gtk_list_store_search(model, campaign_name, column=1)
+		model_iter = gui_utilities.gtk_list_store_search(model, campaign_name, column=_ModelNamedRow._fields.index('name'))
 		if model_iter:
 			treeview.set_cursor(model.get_path(model_iter), None, False)
 			return True
@@ -234,6 +234,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			return
 		self.load_campaigns()
 		self._highlight_campaign(campaign_name)
+		self.dialog.response(Gtk.ResponseType.APPLY)
 
 	def signal_button_clicked(self, button):
 		if self._creation_assistant is not None:
@@ -271,7 +272,6 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.dialog.show_all()
 		response = self.dialog.run()
 		old_campaign_id = self.config.get('campaign_id')
-		old_campaign_name = self.config.get('campaign_name')
 		while response != Gtk.ResponseType.CANCEL:
 			treeview = self.gobjects['treeview_campaigns']
 			selection = treeview.get_selection()
@@ -282,10 +282,9 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			response = self.dialog.run()
 		if response == Gtk.ResponseType.APPLY:
 			named_row = _ModelNamedRow(*model[tree_iter])
-			self.config['campaign_id'] = named_row.id
-			campaign_name = model.get_value(tree_iter, 1)
-			self.config['campaign_name'] = named_row.name
-			if not (named_row.id == old_campaign_id and campaign_name == old_campaign_name):
+			if named_row.id != str(old_campaign_id):
+				self.config['campaign_id'] = named_row.id
+				self.config['campaign_name'] = named_row.name
 				self.application.emit('campaign-set', old_campaign_id, named_row.id)
 		self.dialog.destroy()
 		return response
