@@ -942,16 +942,16 @@ def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
 		return result
 
 	# step 7: ensure the necessary files were created
-	cert_path = os.path.join(data_path, 'etc', 'live', hostname, 'fullchain.pem')
-	key_path = os.path.join(data_path, 'etc', 'live', hostname, 'privkey.pem')
-	if not os.path.isfile(cert_path) and os.path.isfile(key_path):
+	sni_config = letsencrypt.get_sni_hostname_config(hostname, config)
+	if sni_config is None:
 		result['message'] = 'The certificate files were not generated.'
 		return result
 
 	# step 8: store the data in the database so it can be loaded next time the server starts
 	if load:
-		handler.server.add_sni_cert(hostname, ssl_certfile=cert_path, ssl_keyfile=key_path)
-	letsencrypt.set_sni_hostname(hostname, cert_path, key_path, enabled=load)
+		handler.server.add_sni_cert(hostname, ssl_certfile=sni_config.certfile, ssl_keyfile=sni_config.keyfile)
+	else:
+		letsencrypt.set_sni_hostname(hostname, sni_config.certfile, sni_config.certfile, enabled=False)
 
 	result['success'] = True
 	result['message'] = 'The operation completed successfully.'

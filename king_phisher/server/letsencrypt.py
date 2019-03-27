@@ -168,13 +168,16 @@ def get_sni_hostname_config(hostname, config=None):
 		return None
 	return SNIHostnameConfiguration(**sni_config)
 
-def get_sni_hostnames(config=None):
+def get_sni_hostnames(config=None, check_files=True):
 	"""
 	Retrieve all the hostnames for which a valid SNI configuration can be
-	retrieved. These are the hostnames for which SNI can be enabled.
+	retrieved. These are the hostnames for which SNI can be enabled. If
+	*check_files* is enabled, the data files will be checked to ensure that they
+	exist and are readable, else the configuration will be omitted.
 
 	:param config: Configuration to retrieve settings from.
 	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
+	:param bool check_files: Whether or not to check the referenced data files.
 	:return: A dictionary, keyed by hostnames with values of :py:class:`.SNIHostnameConfiguration` instances.
 	:rtype: dict
 	"""
@@ -183,7 +186,7 @@ def get_sni_hostnames(config=None):
 		_sync_hostnames(unified_directory)
 	hostnames = collections.OrderedDict()
 	for hostname, sni_config in _sni_hostnames.items():
-		if not _check_files(sni_config['certfile'], sni_config['keyfile']):
+		if check_files and not _check_files(sni_config['certfile'], sni_config['keyfile']):
 			continue
 		hostnames[hostname] = SNIHostnameConfiguration(**sni_config)
 	return hostnames

@@ -1000,7 +1000,11 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			self.__is_shutdown.set()
 
 	def add_sni_cert(self, hostname, ssl_certfile=None, ssl_keyfile=None, ssl_version=None):
-		result = super(KingPhisherServer, self).add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile, ssl_version=ssl_version)
+		try:
+			result = super(KingPhisherServer, self).add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile, ssl_version=ssl_version)
+		except Exception as error:
+			letsencrypt.set_sni_hostname(hostname, ssl_certfile, ssl_keyfile, enabled=False)
+			raise error
 		letsencrypt.set_sni_hostname(hostname, ssl_certfile, ssl_keyfile, enabled=True)
 		return result
 

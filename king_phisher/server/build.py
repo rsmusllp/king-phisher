@@ -100,15 +100,21 @@ def get_ssl_hostnames(config):
 		ssl_hostnames.append((hostname, ssl_certfile, ssl_keyfile))
 	return ssl_hostnames
 
-def _server_add_sni(server, hostname, ssl_certfile, ssl_keyfile):
-	if not os.path.isfile(ssl_certfile):
-		logger.warning("skipping ssl configuration for hostname: {} (missing certificate file: {})".format(hostname, ssl_certfile))
+def _server_add_sni_cert(server, hostname, sni_config):
+	if not os.path.isfile(sni_config.certfile):
+		logger.warning("skipping ssl configuration for hostname: {} (missing certificate file: {})".format(hostname, sni_config.certfile))
 		return False
-	if not os.path.isfile(ssl_keyfile):
-		logger.warning("skipping ssl configuration for hostname: {} (missing key file: {})".format(hostname, ssl_keyfile))
+	if not os.access(sni_config.certfile, os.R_OK):
+		logger.warning("skipping ssl configuration for hostname: {} (unreadable certificate file: {})".format(hostname, sni_config.certfile))
 		return False
-	logger.info("setting configuration for ssl hostname: {0} with certificate file: {1}".format(hostname, ssl_certfile))
-	server.add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+	if not os.path.isfile(sni_config.keyfile):
+		logger.warning("skipping ssl configuration for hostname: {} (missing key file: {})".format(hostname, sni_config.keyfile))
+		return False
+	if not os.access(sni_config.keyfile, os.R_OK):
+		logger.warning("skipping ssl configuration for hostname: {} (unreadable key file: {})".format(hostname, sni_config.keyfile))
+		return False
+	logger.info("setting configuration for ssl hostname: {0} with certificate file: {1}".format(hostname, sni_config.certfile))
+	server.add_sni_cert(hostname, ssl_certfile=sni_config.certfile, ssl_keyfile=sni_config.keyfile)
 	return True
 
 def server_from_config(config, handler_klass=None, plugin_manager=None):
@@ -171,10 +177,11 @@ def server_from_config(config, handler_klass=None, plugin_manager=None):
 		if sni_config is None:
 			letsencrypt.set_sni_hostname(hostname, ssl_certfile, ssl_keyfile, enabled=True)
 
-	for hostname, sni_config in letsencrypt.get_sni_hostnames(config).items():
+	for hostname, sni_config in letsencrypt.get_sni_hostnames(config, check_files=False).items():
 		if not sni_config.enabled:
 			continue
-		_server_add_sni(server, hostname, sni_config.certfile, sni_config.keyfile)
+		if not _server_add_sni_cert(server, hostname, sni_config):
+			letsencrypt.set_sni_hostname(hostname, sni_config.certfile, sni_config.keyfile, enabled=False)
 
 	signals.server_initialized.send(server)
 	return server

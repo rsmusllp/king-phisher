@@ -49,7 +49,7 @@ class SNIHostname(graphene.ObjectType):
 	@classmethod
 	def resolve(cls, info, **kwargs):
 		hostname = kwargs.pop('hostname')
-		sni_config = letsencrypt.get_sni_hostname(hostname)
+		sni_config = letsencrypt.get_sni_hostname_config(hostname)
 		if sni_config is None:
 			return None
 		return cls(enabled=sni_config.enabled, hostname=hostname)
