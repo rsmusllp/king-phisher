@@ -111,9 +111,9 @@ def _store_extend(store, things, clear=False):
 
 def glib_idle_add_store_extend(store, things, clear=False, wait=False):
 	"""
-	Extend a GTK store object (either :py:class:`Gtk.ListStore` or :py:class:`Gtk.TreeStore`)
-	object using :py:func:`GLib.idle_add`.
-	This function is suitable for use in non-main GUI threads for synchronizing data.
+	Extend a GTK store object (either :py:class:`Gtk.ListStore` or
+	:py:class:`Gtk.TreeStore`) object using :py:func:`GLib.idle_add`. This
+	function is suitable for use in non-main GUI threads for synchronizing data.
 
 	:param store: The GTK storage object to add *things* to.
 	:type store: :py:class:`Gtk.ListStore`, :py:class:`Gtk.TreeStore`
@@ -123,6 +123,8 @@ def glib_idle_add_store_extend(store, things, clear=False, wait=False):
 	:return: Regardless of the *wait* parameter, ``None`` is returned.
 	:rtype: None
 	"""
+	if not isinstance(store, Gtk.ListStore):
+		raise TypeError('store must be a Gtk.ListStore instance')
 	idle_add = glib_idle_add_wait if wait else glib_idle_add_once
 	idle_add(_store_extend, store, things, clear)
 
@@ -301,6 +303,28 @@ def gtk_list_store_search(list_store, value, column=0):
 		if row[column] == value:
 			return row.iter
 	return None
+
+def gtk_listbox_populate_labels(listbox, label_strings):
+	"""
+	Formats and adds labels to a listbox. Each label is styled as a separate
+	entry.
+
+	.. versionadded:: 1.13.0
+
+	:param listbox: Gtk Listbox to put the labels in.
+	:type listbox: :py:class:`Gtk.listbox`
+	:param list label_strings: List of strings to add to the Gtk Listbox as labels.
+	"""
+	gtk_widget_destroy_children(listbox)
+	listbox.set_property('visible', True)
+	for label_text in label_strings:
+		label = Gtk.Label()
+		label.set_markup("<span font=\"smaller\"><tt>{0}</tt></span>".format(saxutils.escape(label_text)))
+		label.set_property('halign', Gtk.Align.START)
+		label.set_property('use-markup', True)
+		label.set_property('valign', Gtk.Align.START)
+		label.set_property('visible', True)
+		listbox.add(label)
 
 def gtk_menu_get_item_by_label(menu, label):
 	"""
@@ -513,35 +537,6 @@ def gtk_widget_destroy_children(widget):
 	"""
 	for child in widget.get_children():
 		child.destroy()
-
-def set_listbox_classifiers(label, listbox, classifiers):
-	"""
-	Formats and adds classifiers to a listbox.
-	If no classifiers, it hides the label and listbox.
-
-	:param label: Gtk Label associated with the listbox
-	:type label: :py:class:`Gtk.label`
-	:param listbox: Gtk Listbox to put the classifiers in.
-	:type listbox: :py:class:`Gtk.listbox`
-	:param list classifiers: List of classifiers to add to the Gtk Listbox
-	"""
-	gtk_widget_destroy_children(listbox)
-
-	if not classifiers:
-		label.set_property('visible', False)
-		listbox.set_property('visible', False)
-		return
-
-	label.set_property('visible', True)
-	listbox.set_property('visible', True)
-	for classifier in classifiers:
-		label = Gtk.Label()
-		label.set_markup("<span font=\"smaller\"><tt>{0}</tt></span>".format(saxutils.escape(classifier)))
-		label.set_property('halign', Gtk.Align.START)
-		label.set_property('use-markup', True)
-		label.set_property('valign', Gtk.Align.START)
-		label.set_property('visible', True)
-		listbox.add(label)
 
 def show_dialog(message_type, message, parent, secondary_text=None, message_buttons=Gtk.ButtonsType.OK, use_markup=False, secondary_use_markup=False):
 	"""

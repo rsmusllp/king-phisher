@@ -58,10 +58,10 @@ _ModelNamedRow = collections.namedtuple('ModelNamedRow', (
 	'created'
 ))
 
-_ModelKpmImport = collections.namedtuple('ModelKpmImport', (
+_KPMPaths = collections.namedtuple('KPMPaths', (
 	'kpm_file',
 	'destination_folder',
-	'check'
+	'is_valid'
 ))
 
 class CampaignAssistant(gui_utilities.GladeGObject):
@@ -88,7 +88,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'combobox_company_existing',
 			'entry_campaign_name',
 			'entry_campaign_description',
-			'entry_domain_filter',
+			'entry_hostname_filter',
 			'entry_kpm_dest_folder',
 			'entry_kpm_file',
 			'entry_test_validation_text',
@@ -113,12 +113,12 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'treeview_url_selector',
 			'treeselection_url_selector',
 			'expander_url_information',
-			'label_classifiers',
-			'label_info_authors',
-			'label_info_created',
-			'label_info_description',
-			'label_info_url',
-			'listbox_domain_info_classifiers',
+			'label_url_info_for_classifiers',
+			'label_url_info_authors',
+			'label_url_info_created',
+			'label_url_info_description',
+			'label_url_info_url',
+			'listbox_url_info_classifiers',
 		),
 		top_level=(
 			'ClockHourAdjustment',
@@ -163,18 +163,16 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['label_intro_body'].set_text('This assistant will walk you through creating and configuring a new King Phisher campaign.')
 			self.gobjects['label_intro_title'].set_text('New Campaign')
 
-		self._url_classifiers = {}
 		self._url_thread = None
-
 		domain_completion = Gtk.EntryCompletion()
-		self._domain_list_store = Gtk.ListStore(str)
-		domain_completion.set_model(self._domain_list_store)
+		self._hostname_list_store = Gtk.ListStore(str)
+		domain_completion.set_model(self._hostname_list_store)
 		domain_completion.set_text_column(0)
-		self.gobjects['entry_domain_filter'].set_completion(domain_completion)
+		self.gobjects['entry_hostname_filter'].set_completion(domain_completion)
 
 		tvm = managers.TreeViewManager(self.gobjects['treeview_url_selector'])
 		tvm.set_column_titles(
-			['Domain', 'Landing Page', 'URL', 'Classifiers'],
+			['Hostname', 'Landing Page', 'URL'],
 			renderers=[
 				Gtk.CellRendererText(),
 				Gtk.CellRendererText(),
@@ -182,7 +180,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				Gtk.CellRendererText(),
 			]
 		)
-		self._url_model = Gtk.TreeStore(str, str, str, str, str, str, str)
+		self._url_model = Gtk.ListStore(str, str, str, object, object, str, str)
 		self._url_model.set_sort_column_id(0, Gtk.SortType.ASCENDING)
 		self.gobjects['treeview_url_selector'].set_model(self._url_model)
 		self._url_information = {
@@ -208,6 +206,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def is_new_campaign(self):
 		return self.campaign_id is None
 
+	def _update_completion_status(self):
+		self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), self._get_kpm_path().is_valid)
+
 	@property
 	def _url_thread_is_ready(self):
 		return self._url_thread is None or not self._url_thread.is_alive()
@@ -215,9 +216,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	@property
 	def _server_uses_ssl(self):
 		return any(address['ssl'] for address in self.config['server_config']['server.addresses'])
-
-	def set_kpm_assistant_complete(self):
-		self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), self._kpm_pathing().check)
 
 	def signal_kpm_select_clicked(self, _):
 		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
@@ -228,7 +226,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if not response:
 			return False
 		self.gobjects['entry_kpm_file'].set_text(response['target_path'])
-		self.set_kpm_assistant_complete()
+		self._update_completion_status()
 
 	def signal_kpm_dest_folder_clicked(self, _):
 		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
@@ -237,22 +235,11 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if not response:
 			return False
 		self.gobjects['entry_kpm_dest_folder'].set_text(response['target_path'])
-		self.set_kpm_assistant_complete()
+		self._update_completion_status()
 
 	def signal_kpm_entry_clear(self, entry_widget):
 		entry_widget.set_text('')
-		self.set_kpm_assistant_complete()
-
-	def _kpm_pathing(self):
-		kpm_file_path = self.gobjects['entry_kpm_file'].get_text()
-		dest_folder_path = self.gobjects['entry_kpm_dest_folder'].get_text()
-		if not dest_folder_path or not kpm_file_path:
-			return _ModelKpmImport(None, None, False)
-		if not os.path.isfile(kpm_file_path):
-			return _ModelKpmImport(None, None, False)
-		if not os.path.isdir(dest_folder_path):
-			return _ModelKpmImport(None, None, False)
-		return _ModelKpmImport(kpm_file_path, dest_folder_path, True)
+		self._update_completion_status()
 
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
@@ -270,49 +257,43 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if refresh or not self._url_information['created']:
 			self._url_information['data'] = self.application.rpc.graphql_find_file('get_site_templates.graphql')
 			self._url_information['created'] = datetime.datetime.utcnow()
-		gui_utilities.glib_idle_add_once(self.gobjects['treeselection_url_selector'].unselect_all)
-		gui_utilities.glib_idle_add_once(self._url_model.clear)
-		gui_utilities.glib_idle_add_once(self._domain_list_store.clear)
-
 		url_information = self._url_information['data']
 		if not url_information:
 			return
 
+		rows = []
 		domains = []
-		self._url_classifiers = {}
 		for edge in url_information['siteTemplates']['edges']:
 			for page in edge['node']['metadata']['pages']:
-				if hostname:
-					if not edge['node']['hostname'].startswith(hostname):
-						continue
+				if hostname and edge['node']['hostname'] and not edge['node']['hostname'].startswith(hostname):
+					continue
 				domains.append(edge['node']['hostname'])
-				self._url_classifiers[(edge['node']['hostname'], page)] = edge['node']['metadata']['classifiers']
-				row = _ModelNamedRow(
+				rows.append(_ModelNamedRow(
 					hostname=edge['node']['hostname'],
 					page=page,
 					url=self._build_url(edge['node']['hostname'], page, 'http'),
-					classifiers='\n'.join(edge['node']['metadata']['classifiers']),
-					authors=', '.join(edge['node']['metadata']['authors']),
+					classifiers=edge['node']['metadata']['classifiers'],
+					authors=edge['node']['metadata']['authors'],
 					description=edge['node']['metadata']['description'].strip('\n'),
 					created=utilities.format_datetime(utilities.datetime_utc_to_local(edge['node']['created']))
-				)
-				gui_utilities.glib_idle_add_once(self._url_model.append, None, list(row))
+				))
 
 				if self._server_uses_ssl:
-					row = _ModelNamedRow(
+					rows.append(_ModelNamedRow(
 						hostname=edge['node']['hostname'],
 						page=page,
 						url=self._build_url(edge['node']['hostname'], page, 'https'),
-						classifiers='\n'.join(edge['node']['metadata']['classifiers']),
-						authors=', '.join(edge['node']['metadata']['authors']),
+						classifiers=edge['node']['metadata']['classifiers'],
+						authors=edge['node']['metadata']['authors'],
 						description=edge['node']['metadata']['description'].strip('\n'),
 						created=utilities.format_datetime(utilities.datetime_utc_to_local(edge['node']['created']))
-					)
-					gui_utilities.glib_idle_add_once(self._url_model.append, None, list(row))
+					))
 
+		gui_utilities.glib_idle_add_once(self.gobjects['treeselection_url_selector'].unselect_all)
+		gui_utilities.glib_idle_add_store_extend(self._url_model, rows, clear=True)
 		# make domain list unique in case multiple pages are advertised for the domains
 		domains = [[domain] for domain in set(domains)]
-		gui_utilities.glib_idle_add_store_extend(self._domain_list_store, domains)
+		gui_utilities.glib_idle_add_store_extend(self._hostname_list_store, domains, clear=True)
 
 	def _build_url(self, hostname, page, prefix):
 		if not hostname:
@@ -323,7 +304,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 					break
 			else:
 				hostname = 'localhost'
-
 		return urllib.parse.urljoin(prefix + '://' + hostname, page)
 
 	def signal_url_entry_change(self, gtk_entry):
@@ -439,21 +419,36 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		}""", {'name': company_name})
 		return results['db']['company']
 
+	def _get_kpm_path(self):
+		file_path = self.gobjects['entry_kpm_file'].get_text()
+		dir_path = self.gobjects['entry_kpm_dest_folder'].get_text()
+		if not dir_path and not file_path:
+			return _KPMPaths(None, None, True)
+		if not (file_path and os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
+			return _KPMPaths(None, None, False)
+		if not (dir_path and os.path.isdir(dir_path) and os.access(dir_path, os.R_OK | os.W_OK)):
+			return _KPMPaths(None, None, False)
+		return _KPMPaths(file_path, dir_path, True)
+
 	def signal_url_treeview_row_activated(self, treeview, path, column):
 		model_row = self._url_model[path]
 		self._set_info_url_details(model_row)
 
 	def _set_info_url_details(self, model_row):
 		named_row = _ModelNamedRow(*model_row)
-		self.gobjects['label_info_url'].set_text(named_row.url or '')
-		self.gobjects['label_info_authors'].set_text(named_row.authors or '')
-		self.gobjects['label_info_created'].set_text(named_row.created or '')
-		gui_utilities.set_listbox_classifiers(
-			self.gobjects['label_classifiers'],
-			self.gobjects['listbox_domain_info_classifiers'],
-			self._url_classifiers[(named_row.hostname, named_row.page)] or []
-		)
-		self.gobjects['label_info_description'].set_text(named_row.description or '')
+		self.gobjects['label_url_info_url'].set_text(named_row.url or '')
+		self.gobjects['label_url_info_authors'].set_text('\n'.join(named_row.authors))
+		self.gobjects['label_url_info_created'].set_text(named_row.created or '')
+		self.gobjects['label_url_info_description'].set_text(named_row.description or '')
+
+		if named_row.classifiers:
+			self.gobjects['label_url_info_for_classifiers'].set_property('visible', True)
+			gui_utilities.gtk_listbox_populate_labels(
+				self.gobjects['listbox_url_info_classifiers'],
+				named_row.classifiers
+			)
+		else:
+			self.gobjects['label_url_info_for_classifiers'].set_property('visible', False)
 
 	def _do_regex_validation(self, test_text, entry):
 		try:
@@ -480,7 +475,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			return True
 
 		properties = {}
-
 		# validate the credential validation regular expressions
 		for field in ('username', 'password', 'mfa_token'):
 			regex = self.gobjects['entry_validation_regex_' + field].get_text()
@@ -563,12 +557,12 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self.config['campaign_id'] = cid
 		self.config['campaign_name'] = properties['name']
 
-		_kpm_pathing = self._kpm_pathing()
-		if _kpm_pathing.check:
+		_kpm_pathing = self._get_kpm_path()
+		if all(_kpm_pathing):
 			if not self.application.main_tabs['mailer'].emit('message-data-import', _kpm_pathing.kpm_file, _kpm_pathing.destination_folder):
-				gui_utilities.show_dialog_info('Failure', self.parent, 'Failed to imported message configuration.')
+				gui_utilities.show_dialog_info('Failure', self.parent, 'Failed to import the message configuration.')
 			else:
-				gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported message configuration.')
+				gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message configuration.')
 
 		url_model, url_iter = self.gobjects['treeselection_url_selector'].get_selected()
 		if url_iter:
@@ -579,7 +573,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.config['mailer.webserver_url'] = selected_row.url
 
 		self.application.emit('campaign-set', old_cid, cid)
-
 		self._close_ready = True
 		return
 

@@ -619,11 +619,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.gobjects['label_plugin_info_description'].set_text(plugin['description'])
 		self._set_info_plugin_homepage_url(plugin['homepage'])
 		self._set_info_plugin_reference_urls(plugin.get('reference_urls', []))
-		gui_utilities.set_listbox_classifiers(
-			self.gobjects['label_plugin_info_for_classifiers'],
-			self.gobjects['listbox_plugin_info_classifiers'],
-			plugin.get('classifiers', [])
-		)
+		classifiers = plugin.get('classifiers', [])
+		if classifiers:
+			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', True)
+			gui_utilities.gtk_listbox_populate_labels(
+				self.gobjects['listbox_plugin_info_classifiers'],
+				classifiers
+			)
+		else:
+			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', False)
 
 	def _set_info_plugin_error(self, model_instance):
 		id_ = _ModelNamedRow(*model_instance).id
