@@ -402,8 +402,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				pip_results = self._pip_install(packages)
 				if pip_results is None:
 					self.logger.warning('pip install failed')
+					_show_dialog_error_tsafe(
+						"Failed to run pip to install package(s) for plugin {}.".format(named_row.id)
+					)
 				elif pip_results.status:
 					self.logger.warning('pip install failed, exit status: ' + str(pip_results.status))
+					_show_dialog_error_tsafe(
+						"Failed to install pip package(s) for plugin {}.".format(named_row.id)
+					)
 				else:
 					plugin = self._reload_plugin_tsafe(model_row, named_row)
 		self.__installing_plugin = None
