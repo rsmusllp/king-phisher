@@ -619,26 +619,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.gobjects['label_plugin_info_description'].set_text(plugin['description'])
 		self._set_info_plugin_homepage_url(plugin['homepage'])
 		self._set_info_plugin_reference_urls(plugin.get('reference_urls', []))
-		self._set_info_plugin_classifiers(plugin.get('classifiers', []))
-
-	def _set_info_plugin_classifiers(self, classifiers):
-		label = self.gobjects['label_plugin_info_for_classifiers']
-		listbox = self.gobjects['listbox_plugin_info_classifiers']
-		gui_utilities.gtk_widget_destroy_children(listbox)
-		if not classifiers:
-			label.set_property('visible', False)
-			listbox.set_property('visible', False)
-			return
-		label.set_property('visible', True)
-		listbox.set_property('visible', True)
-		for classifier in classifiers:
-			label = Gtk.Label()
-			label.set_markup("<span font=\"smaller\"><tt>{0}</tt></span>".format(saxutils.escape(classifier)))
-			label.set_property('halign', Gtk.Align.START)
-			label.set_property('use-markup', True)
-			label.set_property('valign', Gtk.Align.START)
-			label.set_property('visible', True)
-			listbox.add(label)
+		classifiers = plugin.get('classifiers', [])
+		if classifiers:
+			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', True)
+			gui_utilities.gtk_listbox_populate_labels(
+				self.gobjects['listbox_plugin_info_classifiers'],
+				classifiers
+			)
+		else:
+			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', False)
 
 	def _set_info_plugin_error(self, model_instance):
 		id_ = _ModelNamedRow(*model_instance).id

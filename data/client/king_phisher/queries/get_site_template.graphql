@@ -1,6 +1,6 @@
-# retrieve information for all site templates
-query getSiteTemplates {
-  siteTemplates {
+# retrieve information for site templates by hostname
+query getSiteTemplates($hostname: String!) {
+  siteTemplates(hostname: $hostname) {
     edges {
       node {
         created

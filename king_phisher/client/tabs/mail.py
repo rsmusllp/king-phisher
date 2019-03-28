@@ -936,6 +936,8 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 
 	def _set_entry_completion_list_tsafe(self):
 		gui_utilities.glib_idle_add_once(self._url_list_store.clear)
+		if not self.application.rpc:
+			return
 		url_information = self.application.rpc.graphql_find_file('get_site_templates.graphql')
 		if not url_information:
 			return
@@ -975,6 +977,7 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 		else:
 			self.config['mailer.company_name'] = campaign['company']['name']
 		self.gobjects['entry_company_name'].set_text(self.config['mailer.company_name'] or '')
+		self.gobjects['entry_webserver_url'].set_text(self.config['mailer.webserver_url'] or '')
 
 	def _update_target_count(self):
 		if not hasattr(self, 'target_type'):

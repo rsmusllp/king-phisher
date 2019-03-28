@@ -36,6 +36,8 @@ Functions
 
 .. autofunction:: gtk_list_store_search
 
+.. autofunction:: gtk_listbox_populate_labels
+
 .. autofunction:: gtk_menu_get_item_by_label
 
 .. autofunction:: gtk_menu_insert_by_path
