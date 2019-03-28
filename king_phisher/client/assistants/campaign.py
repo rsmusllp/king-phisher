@@ -86,15 +86,16 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'checkbutton_reject_after_credentials',
 			'combobox_campaign_type',
 			'combobox_company_existing',
-			'entry_campaign_name',
 			'entry_campaign_description',
+			'entry_campaign_name',
 			'entry_hostname_filter',
 			'entry_kpm_dest_folder',
 			'entry_kpm_file',
 			'entry_test_validation_text',
-			'entry_validation_regex_username',
-			'entry_validation_regex_password',
 			'entry_validation_regex_mfa_token',
+			'entry_validation_regex_password',
+			'entry_validation_regex_username',
+			'expander_url_info',
 			'frame_campaign_expiration',
 			'frame_company_existing',
 			'frame_company_new',
@@ -103,22 +104,22 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'label_confirm_title',
 			'label_intro_body',
 			'label_intro_title',
-			'label_validation_regex_username',
-			'label_validation_regex_password',
+			'label_url_info_authors',
+			'label_url_info_created',
+			'label_url_info_description',
+			'label_url_info_for_classifiers',
+			'label_url_info_url',
 			'label_validation_regex_mfa_token',
+			'label_validation_regex_password',
+			'label_validation_regex_username',
+			'listbox_url_info_classifiers',
+			'paned_url_info',
 			'radiobutton_company_existing',
 			'radiobutton_company_new',
 			'radiobutton_company_none',
 			'togglebutton_expiration_time',
-			'treeview_url_selector',
 			'treeselection_url_selector',
-			'expander_url_information',
-			'label_url_info_for_classifiers',
-			'label_url_info_authors',
-			'label_url_info_created',
-			'label_url_info_description',
-			'label_url_info_url',
-			'listbox_url_info_classifiers',
+			'treeview_url_selector',
 		),
 		top_level=(
 			'ClockHourAdjustment',
@@ -187,6 +188,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'data': None
 		}
 		self._load_url_treeview_tsafe(refresh=True)
+		paned = self.gobjects['paned_url_info']
+		self._paned_offset = paned.get_allocation().height - paned.get_position()
 
 	@property
 	def campaign_name(self):
@@ -429,10 +432,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			return _KPMPaths(None, None, False)
 		return _KPMPaths(file_path, dir_path, True)
 
-	def signal_url_treeview_row_activated(self, treeview, path, column):
-		model_row = self._url_model[path]
-		self._set_info_url_details(model_row)
-
 	def _set_info_url_details(self, model_row):
 		named_row = _ModelNamedRow(*model_row)
 		self.gobjects['label_url_info_url'].set_text(named_row.url or '')
@@ -614,6 +613,14 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def signal_entry_changed_validation_regex(self, entry):
 		self._do_regex_validation(self.gobjects['entry_test_validation_text'].get_text(), entry)
 
+	def signal_expander_activate(self, expander):
+		paned = self.gobjects['paned_url_info']
+		if expander.get_property('expanded'):  # collapsing
+			paned.set_position(paned.get_allocation().height + self._paned_offset)
+
+	def signal_paned_button_press_event(self, paned, event):
+		return not self.gobjects['expander_url_info'].get_property('expanded')
+
 	def signal_radiobutton_toggled(self, radiobutton):
 		if not radiobutton.get_active():
 			return
@@ -626,6 +633,10 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		elif radiobutton == self.gobjects['radiobutton_company_none']:
 			self.gobjects['frame_company_existing'].set_sensitive(False)
 			self.gobjects['frame_company_new'].set_sensitive(False)
+
+	def signal_treeview_row_activated(self, treeview, path, column):
+		model_row = self._url_model[path]
+		self._set_info_url_details(model_row)
 
 	def interact(self):
 		self.assistant.show_all()
