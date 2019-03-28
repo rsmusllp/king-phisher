@@ -88,6 +88,8 @@ server:
   #  # Directory to store Let's Encrypt data to, must be writeable by the King
   #  # Phisher server process
   #  data_path: /var/king-phisher/letsencrypt
+  #  # Recursively change the owner of the data path when setuid is enabled
+  #  chown_data_path: true
 
   # Hostnames to provide to the client for auto completion
   #hostnames:

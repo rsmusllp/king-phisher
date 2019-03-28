@@ -98,8 +98,13 @@ def build_and_run(arguments, config, plugin_manager, log_file=None):
 			logger.critical('an invalid username was specified as \'server.setuid_username\'')
 			king_phisher_server.shutdown()
 			return os.EX_NOUSER
+
 		if log_file is not None:
-			os.chown(log_file, user_info.pw_uid, user_info.pw_gid)
+			utilities.fs_chown(log_file, user=user_info.pw_uid, group=user_info.pw_gid, recursive=False)
+		data_path = config.get_if_exists('server.letsencrypt.data_path')
+		if data_path and config.get_if_exists('server.letsencrypt.chown_data_path', True):
+			utilities.fs_chown(data_path, user=user_info.pw_uid, group=user_info.pw_gid, recursive=True)
+
 		os.setgroups([])
 		os.setresgid(user_info.pw_gid, user_info.pw_gid, user_info.pw_gid)
 		os.setresuid(user_info.pw_uid, user_info.pw_uid, user_info.pw_uid)
