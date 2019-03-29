@@ -61,6 +61,7 @@ schema and their various sub-object types as applicable.
   Objects can in turn have their own attributes which can be a combination
   of additional sub-objects or scalars.
 
+
 Additional Database Model Attributes
 ------------------------------------
 
@@ -134,6 +135,14 @@ utility. This console provides a ``graphql_query`` function which takes a query
 string parameter and optional query variables. This can be used for easily
 testing queries. It should be noted however that using this utility directly on
 the server does not restrict access to data as the RPC interface does.
+
+The client's RPC terminal (only available on Linux due to the dependency on VTE)
+can also be used to easily execute raw GraphQL queries. The RPC method can be
+called directly, or when IPython is available, either the ``%graphql`` or
+``%graphql_file`` commands can be used. The former of which takes a GraphQL
+query as an argument, while the second takes the path to a file on disk to
+execute. Both of these are useful for debugging and inspecting GraphQL queries
+and their resulting data structures.
 
 .. _Connection Types: https://facebook.github.io/relay/graphql/connections.htm#sec-Connection-Types
 .. _GraphQL: http://graphql.org/

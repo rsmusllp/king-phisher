@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/rpc_docs.py
+#  king_phisher/sphinxext/graphql.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -39,11 +39,11 @@ from king_phisher.third_party.domaintools import custom_domain
 
 http_sig_param_re = re.compile(r'\((?:(?P<type>[^:)]+):)?(?P<name>[\w_]+)\)', re.VERBOSE)
 
-class DescRPCArgument(nodes.Part, nodes.Inline, nodes.TextElement):
-	"""Node for an argument wrapper"""
+class DescGraphQLField(nodes.Part, nodes.Inline, nodes.TextElement):
+	"""Node for an field wrapper"""
 
-class DescRPCArgumentList(nodes.Part, nodes.Inline, nodes.TextElement):
-	"""Node for a general parameter list."""
+class DescGraphQLFieldList(nodes.Part, nodes.Inline, nodes.TextElement):
+	"""Node for a general field list."""
 	child_text_separator = ' '
 
 def argument_visit(self, node):
@@ -52,61 +52,28 @@ def argument_visit(self, node):
 def argument_depart(self, node):
 	pass
 
-def html_argument_visit(self, node):
+def html_field_visit(self, node):
 	self.body.append('<span class="arg">')
 
-def html_argument_depart(self, node):
+def html_field_depart(self, node):
 	self.body.append('</span>')
 
-def argumentlist_visit(self, node):
+def fieldlist_visit(self, node):
 	self.visit_desc_parameterlist(node)
 
-def argumentlist_depart(self, node):
+def fieldlist_depart(self, node):
 	self.depart_desc_parameterlist(node)
 
-def html_argumentlist_visit(self, node):
+def html_fieldlist_visit(self, node):
 	self.visit_desc_parameterlist(node)
 	if len(node.children) > 3:
 		self.body.append('<span class="long-argument-list">')
 	else:
 		self.body.append('<span class="argument-list">')
 
-def html_argumentlist_depart(self, node):
+def html_fieldlist_depart(self, node):
 	self.body.append('</span>')
 	self.depart_desc_parameterlist(node)
-
-def parse_macro_arguments(signode, args):
-	plist = DescRPCArgumentList()
-	args = args.split(',')
-	for pos, arg in enumerate(args):
-		arg = arg.strip()
-		if pos < len(args) - 1:
-			arg += ','
-		x = DescRPCArgument()
-		x += addnodes.desc_parameter(arg, arg)
-		plist += x
-	signode += plist
-
-def parse_macro_uri_path(signode, uri_path):
-	offset = 0
-	path = None
-	for match in http_sig_param_re.finditer(uri_path):
-		path = uri_path[offset:match.start()]
-		signode += addnodes.desc_name(path, path)
-		params = addnodes.desc_parameterlist()
-		typ = match.group('type')
-		if typ:
-			typ += ': '
-			params += addnodes.desc_annotation(typ, typ)
-		name = match.group('name')
-		params += addnodes.desc_parameter(name, name)
-		signode += params
-		offset = match.end()
-	if offset < len(uri_path):
-		path = uri_path[offset:len(uri_path)]
-		signode += addnodes.desc_name(path, path)
-	if path is None:
-		raise RuntimeError('no matches for sig')
 
 def parse_macro(env, sig, signode):
 	m = re.match(r'([a-zA-Z0-9_/\(\):]+)\(([a-zA-Z0-9,\'"_= ]*)\)', sig)
@@ -114,52 +81,36 @@ def parse_macro(env, sig, signode):
 		signode += addnodes.desc_name(sig, sig)
 		return sig
 	uri_path, args = m.groups()
-	parse_macro_uri_path(signode, uri_path)
-	parse_macro_arguments(signode, args)
 	return uri_path
 
 def setup(app):
 	app.add_node(
-		node=DescRPCArgumentList,
-		html=(html_argumentlist_visit, html_argumentlist_depart),
-		latex=(argumentlist_visit, argumentlist_depart)
+		node=DescGraphQLFieldList,
+		html=(html_fieldlist_visit, html_fieldlist_depart),
+		latex=(fieldlist_visit, fieldlist_depart)
 	)
 	app.add_node(
-		node=DescRPCArgument,
-		html=(html_argument_visit, html_argument_depart),
+		node=DescGraphQLField,
+		html=(html_field_visit, html_field_depart),
 		latex=(argument_visit, argument_depart)
 	)
 	app.add_domain(custom_domain(
-		'RPCDomain',
-		name='rpc',
-		label='RPC',
+		'GraphQLDomain',
+		name='gql',
+		label='GraphQL',
 		elements=dict(
-			function=dict(
-				objname='RPC Function',
+			object=dict(
+				objname='GraphQL Object',
 				indextemplate=None,
 				parse=parse_macro,
-				role='func',
+				role='obj',
 				fields=(
-					docfields.Field(
-						'handler',
-						label="Handler",
-						names=('handler',),
-						has_arg=False
-					),
 					docfields.TypedField(
-						'parameter',
-						label='Parameters',
-						names=('param', 'parameter', 'arg', 'argument'),
-						typerolename='obj',
-						typenames=('paramtype', 'type')
+						'field',
+						label='Fields',
+						names=('field',),
+						typenames=('fieldtype', 'type')
 					),
-					docfields.TypedField(
-						'uriparameter',
-						label='URI Parameters',
-						names=('uparam', 'uri_param', 'uri_parameter'),
-						typerolename='obj',
-						typenames=('uriparamtype',)
-					)
 				)
 			)
 		)

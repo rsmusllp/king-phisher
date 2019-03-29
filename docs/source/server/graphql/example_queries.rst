@@ -5,7 +5,7 @@ The following query is an example of retrieving the first 3 users from the
 users table. The query includes the necessary information to perform subsequent
 queries to iterate over all entries.
 
-.. 'none' has to be used because at this type pygments does not support graphql
+.. 'none' has to be used because pygments does not support graphql at this time
 
 .. code-block:: none
 
@@ -154,6 +154,64 @@ data. See :ref:`graphql-db-connection-args-label` for more details.
                   messages(filter: {field: "opened", operator: NE}) {
                      total
                   }
+               }
+            }
+         }
+      }
+   }
+
+Miscellaneous Queries
+---------------------
+
+The following queries are for referencing the various APIs.
+
+Site Templates
+^^^^^^^^^^^^^^
+
+.. code-block:: none
+
+   # get the available site templates
+   query getSiteTemplates {
+      siteTemplates {
+         total
+         edges {
+            node {
+               # the top-level node contains information unique to this instance
+               # such as the hostname its configured for and the path where it
+               # is installed
+               created
+               hostname
+               path
+               # the metdata includes information regarding the template itself
+               # such as who created it and what pages are intended to be used
+               # as landing pages
+               metadata {
+                  authors
+                  classifiers
+                  description
+                  pages
+               }
+            }
+         }
+      }
+   }
+
+SSL SNI Hostnames
+^^^^^^^^^^^^^^^^^
+
+.. code-block:: none
+
+   # get the available SSL SNI Hostnames
+   query getSslSniHostnames {
+      ssl {
+         sniHostnames {
+            total
+            edges {
+               node {
+                   # the node contains entries defining the hostname and whether
+                   # or not the certificate is loaded and enabled on the server
+                   enabled
+                   hostname
                }
             }
          }
