@@ -65,7 +65,7 @@ class SNIHostnameConnection(graphene.relay.Connection):
 			sni_hostnames.append(SNIHostname(hostname=hostname, enabled=sni_config.enabled))
 		return sni_hostnames
 
-class Status(graphene.ObjectType):
+class SSLStatus(graphene.ObjectType):
 	enabled = graphene.Field(graphene.Boolean)
 	has_sni = graphene.Field(graphene.Boolean)
 	@classmethod
@@ -80,7 +80,7 @@ class Status(graphene.ObjectType):
 class SSL(graphene.ObjectType):
 	sni_hostname = graphene.Field(SNIHostname, hostname=graphene.String())
 	sni_hostnames = gql_misctypes.ConnectionField(SNIHostnameConnection)
-	status = graphene.Field(Status)
+	status = graphene.Field(SSLStatus)
 	def resolve_sni_hostname(self, info, **kwargs):
 		return SNIHostname.resolve(info, **kwargs)
 
@@ -88,7 +88,7 @@ class SSL(graphene.ObjectType):
 		return SNIHostnameConnection.resolve(info, **kwargs)
 
 	def resolve_status(self, info, **kwargs):
-		return Status.resolve(info, **kwargs)
+		return SSLStatus.resolve(info, **kwargs)
 
 	@classmethod
 	def resolve(cls, info, **kwargs):
