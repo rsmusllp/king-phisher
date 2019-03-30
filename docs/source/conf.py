@@ -324,7 +324,7 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 if king_phisher.its.on_rtd:
-	its.mocked = True
+	king_phisher.its.mocked = True
 	# mock specific external packages
 	MOCK_MODULES = [
 		'gi',
