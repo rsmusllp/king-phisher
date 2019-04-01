@@ -32,86 +32,119 @@
 
 import re
 
-from docutils import nodes
+from . import _exttools
+
 from sphinx import addnodes
+from sphinx.directives import ObjectDescription
+from sphinx.domains import ObjType
+from sphinx.roles import XRefRole
 from sphinx.util import docfields
-from king_phisher.third_party.domaintools import custom_domain
+from sphinx.util import ws_re
 
-http_sig_param_re = re.compile(r'\((?:(?P<type>[^:)]+):)?(?P<name>[\w_]+)\)', re.VERBOSE)
+class DescGraphQLFieldArgument(_exttools.ArgumentBase):
+	"""Node for an argument wrapper"""
 
-class DescGraphQLField(nodes.Part, nodes.Inline, nodes.TextElement):
-	"""Node for an field wrapper"""
+class DescGraphQLFieldArgumentList(_exttools.ArgumentListBase):
+	"""Node for a general argument list."""
 
-class DescGraphQLFieldList(nodes.Part, nodes.Inline, nodes.TextElement):
-	"""Node for a general field list."""
-	child_text_separator = ' '
+class GraphQLObject(ObjectDescription):
+	def before_content(self):
+		if self.names:
+			self.env.ref_context['gql:object'] = self.names[-1]
 
-def argument_visit(self, node):
-	pass
+	def after_content(self):
+		self.env.ref_context.pop('gql:object')
 
-def argument_depart(self, node):
-	pass
+	def add_target_and_index(self, name, sig, signode):
+		targetname = 'gql:%s-%s' % (self.objtype, name)
+		signode['ids'].append(targetname)
+		self.state.document.note_explicit_target(signode)
+		self.env.domaindata[self.domain]['objects'][self.objtype, name] = self.env.docname, targetname
+		self.indexnode['entries'].append(('single', name + ' (GraphQL object)', targetname, '', None))
 
-def html_field_visit(self, node):
-	self.body.append('<span class="arg">')
-
-def html_field_depart(self, node):
-	self.body.append('</span>')
-
-def fieldlist_visit(self, node):
-	self.visit_desc_parameterlist(node)
-
-def fieldlist_depart(self, node):
-	self.depart_desc_parameterlist(node)
-
-def html_fieldlist_visit(self, node):
-	self.visit_desc_parameterlist(node)
-	if len(node.children) > 3:
-		self.body.append('<span class="long-argument-list">')
-	else:
-		self.body.append('<span class="argument-list">')
-
-def html_fieldlist_depart(self, node):
-	self.body.append('</span>')
-	self.depart_desc_parameterlist(node)
-
-def parse_macro(env, sig, signode):
-	m = re.match(r'([a-zA-Z0-9_/\(\):]+)\(([a-zA-Z0-9,\'"_= ]*)\)', sig)
-	if not m:
+	def handle_signature(self, sig, signode):
+		signode.clear()
 		signode += addnodes.desc_name(sig, sig)
-		return sig
-	uri_path, args = m.groups()
-	return uri_path
+		return ws_re.sub('', sig)
+
+class GraphQLField(ObjectDescription):
+	doc_field_types = [
+		docfields.Field(
+			'type',
+			has_arg=False,
+			label='Data Type',
+			names=('type',),
+		),
+		docfields.TypedField(
+			'parameter',
+			label='Parameters',
+			names=('param', 'parameter'),
+			typenames=('paramtype', 'type'),
+			typerolename='class',
+			can_collapse=True,
+		)
+	]
+	def add_target_and_index(self, name, sig, signode):
+		targetname = 'gql:%s-%s' % (self.objtype, name)
+		signode['ids'].append(targetname)
+		self.state.document.note_explicit_target(signode)
+		self.env.domaindata[self.domain]['objects'][self.objtype, name] = self.env.docname, targetname
+
+	def handle_signature(self, sig, signode):
+		match = re.match(r'(?P<name>[a-zA-Z0-9]+)(?P<arguments>\(([^\)]*)\))?', sig)
+		field_name = match.group('name')
+		full_name = self.env.ref_context['gql:object'] + '.' + field_name
+		signode += addnodes.desc_name(field_name, field_name)
+		arguments = match.group('arguments')
+		if arguments:
+			plist = DescGraphQLFieldArgumentList()
+			arguments = arguments.split(',')
+			for pos, arg in enumerate(arguments):
+				arg = arg.strip()
+				if pos < len(arguments) - 1:
+					arg += ','
+				x = DescGraphQLFieldArgument()
+				x += addnodes.desc_parameter(arg, arg)
+				plist += x
+			signode += plist
+		return full_name
+
+class GraphQLXRefRole(XRefRole):
+	def process_link(self, env, refnode, has_explicit_title, title, target):
+		refnode['gql:object'] = env.ref_context.get('gql:object')
+		if not has_explicit_title:
+			title = title.lstrip('.')    # only has a meaning for the target
+			target = target.lstrip('~')  # only has a meaning for the title
+			# if the first character is a tilde, don't display the module/class
+			# parts of the contents
+			if title[0:1] == '~':
+				title = title[1:]
+				dot = title.rfind('.')
+				if dot != -1:
+					title = title[dot + 1:]
+		# if the first character is a dot, search more specific namespaces first
+		# else search builtins first
+		if target[0:1] == '.':
+			target = target[1:]
+			refnode['refspecific'] = True
+		return title, target
+
+class GraphQLDomain(_exttools.DomainBase):
+	name = 'gql'
+	label = 'GraphQL'
+	directives = {
+		'field': GraphQLField,
+		'object': GraphQLObject,
+	}
+	object_types = {
+		'field': ObjType('GraphQL Field', 'fld'),
+		'object': ObjType('GraphQL Object', 'obj'),
+	}
+	roles = {
+		'fld': GraphQLXRefRole(),
+		'obj': GraphQLXRefRole(),
+	}
 
 def setup(app):
-	app.add_node(
-		node=DescGraphQLFieldList,
-		html=(html_fieldlist_visit, html_fieldlist_depart),
-		latex=(fieldlist_visit, fieldlist_depart)
-	)
-	app.add_node(
-		node=DescGraphQLField,
-		html=(html_field_visit, html_field_depart),
-		latex=(argument_visit, argument_depart)
-	)
-	app.add_domain(custom_domain(
-		'GraphQLDomain',
-		name='gql',
-		label='GraphQL',
-		elements=dict(
-			object=dict(
-				objname='GraphQL Object',
-				indextemplate=None,
-				parse=parse_macro,
-				role='obj',
-				fields=(
-					docfields.TypedField(
-						'field',
-						label='Fields',
-						names=('field',),
-						typenames=('fieldtype', 'type')
-					),
-				)
-			)
-		)
-	))
+	_exttools.add_app_node_arguments(app, DescGraphQLFieldArgument, DescGraphQLFieldArgumentList)
+	app.add_domain(GraphQLDomain)

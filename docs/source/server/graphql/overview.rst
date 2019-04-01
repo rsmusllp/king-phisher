@@ -98,7 +98,7 @@ argument is an object containing one or more of the following key words.
 | field :sup:`1` | String             | N/A      | The name of a database field to filter by.     |
 +----------------+--------------------+----------+------------------------------------------------+
 | operator       | FilterOperatorEnum | ``EQ``   | The operator to use with value, one of ``EQ``, |
-|                |                    |          | ``GE``, ``GT``, ``LE``, ``LT``, ``NE``.        |
+|                |                    |          | ``GE``, ``GT``, ``LE``, ``LT``, or ``NE``.     |
 +----------------+--------------------+----------+------------------------------------------------+
 | value          | AnyScalar          | ``Null`` | The value of the field to use with the         |
 |                |                    | :sup:`2` | specified comparison operator.                 |
@@ -121,8 +121,8 @@ one or more fields.
 +===========+===================+==========+==================================================+
 | field*    | String            | N/A      | The name of a database field to sort by.         |
 +-----------+-------------------+----------+--------------------------------------------------+
-| direction | SortDirectionEnum | ``AESC`` | The direction in which to sort the data, one of  |
-|           |                   |          | ``AESC``, ``DESC``.                              |
+| direction | SortDirectionEnum | ``AESC`` | The direction in which to sort the data, either  |
+|           |                   |          | ``AESC`` or ``DESC``.                            |
 +-----------+-------------------+----------+--------------------------------------------------+
 
 \* This keyword must be specified.

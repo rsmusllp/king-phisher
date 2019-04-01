@@ -32,128 +32,59 @@
 
 import re
 
-from docutils import nodes
+from . import _exttools
+
 from sphinx import addnodes
-from sphinx.util import docfields
-from king_phisher.third_party.domaintools import custom_domain
+from sphinx.directives import ObjectDescription
+from sphinx.domains import ObjType
+from sphinx.roles import XRefRole
 
-http_sig_param_re = re.compile(r'\((?:(?P<type>[^:)]+):)?(?P<name>[\w_]+)\)', re.VERBOSE)
-
-class DescRPCArgument(nodes.Part, nodes.Inline, nodes.TextElement):
+class DescRPCArgument(_exttools.ArgumentBase):
 	"""Node for an argument wrapper"""
 
-class DescRPCArgumentList(nodes.Part, nodes.Inline, nodes.TextElement):
+class DescRPCArgumentList(_exttools.ArgumentListBase):
 	"""Node for a general parameter list."""
-	child_text_separator = ' '
 
-def argument_visit(self, node):
-	pass
+class RPCFunction(ObjectDescription):
+	def add_target_and_index(self, name, sig, signode):
+		targetname = 'rpc:%s-%s' % (self.objtype, name)
+		signode['ids'].append(targetname)
+		self.state.document.note_explicit_target(signode)
+		self.env.domaindata[self.domain]['objects'][self.objtype, name] = self.env.docname, targetname
+		self.indexnode['entries'].append(('single', name + ' (RPC function)', targetname, '', None))
 
-def argument_depart(self, node):
-	pass
+	def handle_signature(self, sig, signode):
+		m = re.match(r'([a-zA-Z0-9_/\(\):]+)\(([a-zA-Z0-9,\'"_= ]*)\)', sig)
+		if not m:
+			signode += addnodes.desc_name(sig, sig)
+			return sig
+		uri_path, args = m.groups()
+		signode += addnodes.desc_name(uri_path, uri_path)
+		plist = DescRPCArgumentList()
+		args = args.split(',')
+		for pos, arg in enumerate(args):
+			arg = arg.strip()
+			if pos < len(args) - 1:
+				arg += ','
+			x = DescRPCArgument()
+			x += addnodes.desc_parameter(arg, arg)
+			plist += x
+		signode += plist
+		return uri_path
 
-def html_argument_visit(self, node):
-	self.body.append('<span class="arg">')
-
-def html_argument_depart(self, node):
-	self.body.append('</span>')
-
-def argumentlist_visit(self, node):
-	self.visit_desc_parameterlist(node)
-
-def argumentlist_depart(self, node):
-	self.depart_desc_parameterlist(node)
-
-def html_argumentlist_visit(self, node):
-	self.visit_desc_parameterlist(node)
-	if len(node.children) > 3:
-		self.body.append('<span class="long-argument-list">')
-	else:
-		self.body.append('<span class="argument-list">')
-
-def html_argumentlist_depart(self, node):
-	self.body.append('</span>')
-	self.depart_desc_parameterlist(node)
-
-def parse_macro_arguments(signode, args):
-	plist = DescRPCArgumentList()
-	args = args.split(',')
-	for pos, arg in enumerate(args):
-		arg = arg.strip()
-		if pos < len(args) - 1:
-			arg += ','
-		x = DescRPCArgument()
-		x += addnodes.desc_parameter(arg, arg)
-		plist += x
-	signode += plist
-
-def parse_macro_uri_path(signode, uri_path):
-	offset = 0
-	path = None
-	for match in http_sig_param_re.finditer(uri_path):
-		path = uri_path[offset:match.start()]
-		signode += addnodes.desc_name(path, path)
-		params = addnodes.desc_parameterlist()
-		typ = match.group('type')
-		if typ:
-			typ += ': '
-			params += addnodes.desc_annotation(typ, typ)
-		name = match.group('name')
-		params += addnodes.desc_parameter(name, name)
-		signode += params
-		offset = match.end()
-	if offset < len(uri_path):
-		path = uri_path[offset:len(uri_path)]
-		signode += addnodes.desc_name(path, path)
-	if path is None:
-		raise RuntimeError('no matches for sig')
-
-def parse_macro(env, sig, signode):
-	m = re.match(r'([a-zA-Z0-9_/\(\):]+)\(([a-zA-Z0-9,\'"_= ]*)\)', sig)
-	if not m:
-		signode += addnodes.desc_name(sig, sig)
-		return sig
-	uri_path, args = m.groups()
-	parse_macro_uri_path(signode, uri_path)
-	parse_macro_arguments(signode, args)
-	return uri_path
+class RPCDomain(_exttools.DomainBase):
+	name = 'rpc'
+	label = 'RPC'
+	directives = {
+		'function': RPCFunction,
+	}
+	object_types = {
+		'function': ObjType('RPC Function', 'func'),
+	}
+	roles = {
+		'func': XRefRole(),
+	}
 
 def setup(app):
-	app.add_node(
-		node=DescRPCArgumentList,
-		html=(html_argumentlist_visit, html_argumentlist_depart),
-		latex=(argumentlist_visit, argumentlist_depart)
-	)
-	app.add_node(
-		node=DescRPCArgument,
-		html=(html_argument_visit, html_argument_depart),
-		latex=(argument_visit, argument_depart)
-	)
-	app.add_domain(custom_domain(
-		'RPCDomain',
-		name='rpc',
-		label='RPC',
-		elements=dict(
-			function=dict(
-				objname='RPC Function',
-				indextemplate=None,
-				parse=parse_macro,
-				role='func',
-				fields=(
-					docfields.Field(
-						'handler',
-						label="Handler",
-						names=('handler',),
-						has_arg=False
-					),
-					docfields.TypedField(
-						'parameter',
-						label='Parameters',
-						names=('param', 'parameter', 'arg', 'argument'),
-						typerolename='obj',
-						typenames=('paramtype', 'type')
-					)
-				)
-			)
-		)
-	))
+	_exttools.add_app_node_arguments(app, DescRPCArgument, DescRPCArgumentList)
+	app.add_domain(RPCDomain)
