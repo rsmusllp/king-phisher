@@ -266,29 +266,32 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		rows = []
 		domains = []
 		for edge in url_information['siteTemplates']['edges']:
-			for page in edge['node']['metadata']['pages']:
-				if hostname and edge['node']['hostname'] and not edge['node']['hostname'].startswith(hostname):
+			template = edge['node']
+			for page in template['metadata']['pages']:
+				if hostname and template['hostname'] and not template['hostname'].startswith(hostname):
 					continue
-				domains.append(edge['node']['hostname'])
+				page = page.strip('/')
+				resource = '/' + '/'.join((template.get('path', '').strip('/'), page)).lstrip('/')
+				domains.append(template['hostname'])
 				rows.append(_ModelNamedRow(
-					hostname=edge['node']['hostname'],
+					hostname=template['hostname'],
 					page=page,
-					url=self._build_url(edge['node']['hostname'], page, 'http'),
-					classifiers=edge['node']['metadata']['classifiers'],
-					authors=edge['node']['metadata']['authors'],
-					description=edge['node']['metadata']['description'].strip('\n'),
-					created=utilities.format_datetime(utilities.datetime_utc_to_local(edge['node']['created']))
+					url=self._build_url(template['hostname'], resource, 'http'),
+					classifiers=template['metadata']['classifiers'],
+					authors=template['metadata']['authors'],
+					description=template['metadata']['description'].strip('\n'),
+					created=utilities.format_datetime(utilities.datetime_utc_to_local(template['created']))
 				))
 
 				if self._server_uses_ssl:
 					rows.append(_ModelNamedRow(
-						hostname=edge['node']['hostname'],
+						hostname=template['hostname'],
 						page=page,
-						url=self._build_url(edge['node']['hostname'], page, 'https'),
-						classifiers=edge['node']['metadata']['classifiers'],
-						authors=edge['node']['metadata']['authors'],
-						description=edge['node']['metadata']['description'].strip('\n'),
-						created=utilities.format_datetime(utilities.datetime_utc_to_local(edge['node']['created']))
+						url=self._build_url(template['hostname'], resource, 'https'),
+						classifiers=template['metadata']['classifiers'],
+						authors=template['metadata']['authors'],
+						description=template['metadata']['description'].strip('\n'),
+						created=utilities.format_datetime(utilities.datetime_utc_to_local(template['created']))
 					))
 
 		gui_utilities.glib_idle_add_once(self.gobjects['treeselection_url_selector'].unselect_all)
