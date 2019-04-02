@@ -91,9 +91,12 @@ class GraphQLField(ObjectDescription):
 		self.env.domaindata[self.domain]['objects'][self.objtype, name] = self.env.docname, targetname
 
 	def handle_signature(self, sig, signode):
-		match = re.match(r'(?P<name>[a-zA-Z0-9]+)(?P<arguments>\(([^\)]*)\))?', sig)
+		match = re.match(r'(?P<name>[a-zA-Z0-9]+)(\((?P<arguments>[a-z_0-9]+(, +[a-z_0-9]+)*)\))?', sig)
 		field_name = match.group('name')
-		full_name = self.env.ref_context['gql:object'] + '.' + field_name
+		if 'gql:object' in self.env.ref_context:
+			full_name = self.env.ref_context['gql:object'] + '.' + field_name
+		else:
+			full_name = field_name
 		signode += addnodes.desc_name(field_name, field_name)
 		arguments = match.group('arguments')
 		if arguments:

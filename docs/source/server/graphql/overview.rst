@@ -25,31 +25,32 @@ Schema
 ------
 
 The following table represents the top-level objects available in the GraphQL
-schema and their various sub-object types as applicable.
+schema and their various sub-object types as applicable. For more information,
+see the :ref:`graphql-schema-label` documentation.
 
-+-------------------+-------------------------+-------------------------------------------------------------+
-| Object Name       | Object Type             | Description                                                 |
-+===================+=========================+=============================================================+
-| ``db``            | Object                  | Database models. See :ref:`db-table-relationships-label`    |
-|                   |                         | for information on available sub-objects.                   |
-+-------------------+-------------------------+-------------------------------------------------------------+
-| ``geoloc``        | :gql:obj:`GeoLocation`  | Geolocation information.                                    |
-+-------------------+-------------------------+-------------------------------------------------------------+
-| ``hostnames``     | [String]                | The hostnames that are configured for use with this server. |
-+-------------------+-------------------------+-------------------------------------------------------------+
-| ``plugin``        | :gql:obj:`Plugin`       | Specific information for a loaded plugin.                   |
-+-------------------+-------------------------+-------------------------------------------------------------+
-| ``plugins``       | Connection              | Information on all loaded plugins.                          |
-+-------------------+-------------------------+-------------------------------------------------------------+
-| ``siteTemplate``  | :gql:obj:`SiteTemplate` | Information for an available site template.                 |
-+-------------------+-------------------------+-------------------------------------------------------------+
-| ``siteTemplates`` | Connection              | Information on all available site templates.                |
-+-------------------+-------------------------+-------------------------------------------------------------+
-| ``ssl``           | :gql:obj:`SSL`          | Information regarding the SSL configuration and status.     |
-+-------------------+-------------------------+-------------------------------------------------------------+
-| ``version``       | String                  | The :py:data:`~king_phisher.version.version` of the King    |
-|                   |                         | Phisher server.                                             |
-+-------------------+-------------------------+-------------------------------------------------------------+
++--------------------------+-------------------------+-------------------------------------------------------------+
+| Object Name              | Object Type             | Description                                                 |
++==========================+=========================+=============================================================+
+| ``db``                   | Object                  | Database models. See :ref:`db-table-relationships-label`    |
+|                          |                         | for information on available sub-objects.                   |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`geoloc`        | :gql:obj:`GeoLocation`  | Geolocation information.                                    |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`hostnames`     | [String]                | The hostnames that are configured for use with this server. |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`plugin`        | :gql:obj:`Plugin`       | Specific information for a loaded plugin.                   |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`plugins`       | Connection              | Information on all loaded plugins.                          |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`siteTemplate`  | :gql:obj:`SiteTemplate` | Information for an available site template.                 |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`siteTemplates` | Connection              | Information on all available site templates.                |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`ssl`           | :gql:obj:`SSL`          | Information regarding the SSL configuration and status.     |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`version`       | String                  | The :py:data:`~king_phisher.version.version` of the King    |
+|                          |                         | Phisher server.                                             |
++--------------------------+-------------------------+-------------------------------------------------------------+
 
 :Connection:
   A connection sub-object is a special object providing a defined interface used

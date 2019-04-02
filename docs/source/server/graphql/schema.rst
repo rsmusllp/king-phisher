@@ -1,5 +1,74 @@
+.. _graphql-schema-label:
+
 Schema
 ======
+
+Top-Level Fields
+----------------
+
+These are the top-level fields that are accessible from within the default
+query.
+
+.. gql:field:: geoloc(ip)
+
+   :param String! geoloc: The IP address to lookup the Geo Location for.
+   :type: :gql:obj:`GeoLocation`
+
+   Lookup the :gql:obj:`GeoLocation` for a specific IP address.
+
+.. gql:field:: hostnames
+
+   :type: [String]
+
+   A list of strings, one for each hostname that is configured for use on the
+   server.
+
+.. gql:field:: plugin(name)
+
+   :param String! name: The name of the plugin to retrieve the information for.
+   :type: :gql:obj:`Plugin`
+
+   Lookup a specific :gql:obj:`Plugin` by name.
+
+.. gql:field:: plugins
+
+   :type: Connection
+
+   A connection for enumerating available server plugins.
+
+.. gql:field:: siteTemplate(hostname, path)
+
+   :param String hostname: The hostname associated with the template. If the
+      VHOSTs setting is enabled on the server, this option is required.
+   :param String! path: The path of the template to retrieve information for.
+   :type: :gql:obj:`SiteTemplate`
+
+   Lookup a specific :gql:obj:`SiteTemplate` by path and hostname combination.
+
+.. gql:field:: siteTemplates(hostname, max_depth)
+
+   :param String hostname: An optional hostname to use for filtering returned
+      site templates.
+   :param Int max_depth: An optional maximum depth to search for site templates
+      within the web root.
+   :type: Connection
+
+   A connection for enumerating available site templates.
+
+.. gql:field:: ssl
+
+   :type: :gql:obj:`SSL`
+
+   Lookup the server's :gql:obj:`SSL` information.
+
+.. gql:field:: version
+
+   :type: String
+
+   The :py:data:`~king_phisher.version.version` of the King Phisher server.
+
+Objects
+-------
 
 .. gql:object:: GeoLocation
 
@@ -194,9 +263,10 @@ Schema
 
    .. gql:field:: sniHostname(hostname: String!)
 
-      :param String! hostname: The hostname to retrieve the SNI configuration
+      :param hostname: The hostname to retrieve the SNI configuration
          for.
-      :type: :gql:obj:`SNIHostname`
+      :type hostname: String!
+      :type: :gql:obj:`SniHostname`
 
       A field for looking up the SNI configuration for a specific hostname.
 
@@ -212,12 +282,12 @@ Schema
 
       An object describing the status of the server's SSL configuration.
 
-.. gql:object:: SNIHostname
+.. gql:object:: SniHostname
 
    An object describing the configuration of SSL's Server Name Indicator (SNI)
    extension for a specific hostname. If this object exists, the necessary data
    files are available however they may or may not be loaded as indicated by the
-   :gql:fld:`~SNIHostname.enabled` field.
+   :gql:fld:`~SniHostname.enabled` field.
 
    .. gql:field:: enabled
 
