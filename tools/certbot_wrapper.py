@@ -88,10 +88,6 @@ def main():
 	server_config = configuration.ex_load_config(arguments.server_config).get('server')
 	web_root = server_config['web_root']
 
-	if os.getuid():
-		color.print_error('this tool must be run as root')
-		return os.EX_NOPERM
-
 	certbot_bin = arguments.certbot_bin or smoke_zephyr.utilities.which('certbot')
 	if certbot_bin is None:
 		color.print_error('could not identify the path to the certbot binary, make sure that it is')
