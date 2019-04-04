@@ -95,7 +95,8 @@ def register_rpc(path, database_access=False, log_call=False):
 				if kwargs:
 					for key, value in sorted(kwargs.items()):
 						args_repr += ", {0}={1!r}".format(key, value)
-				msg = "calling RPC method {0}({1})".format(function.__name__, args_repr)
+				user_id = getattr(handler_instance.rpc_session, 'user', 'N/A')
+				msg = "user id: {0} calling RPC method {1}({2})".format(user_id, function.__name__, args_repr)
 				rpc_logger.debug(msg)
 			signals.send_safe('rpc-method-call', rpc_logger, path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs)
 			if database_access:
@@ -768,7 +769,7 @@ def rpc_login(handler, session, username, password, otp=None):
 	session.add(user)
 	session.commit()
 	session_id = handler.server.session_manager.put(user)
-	logger.info("successful login request from {0} for user {1}".format(handler.client_address[0], username))
+	logger.info("successful login request from {0} for user {1} (id: {2})".format(handler.client_address[0], username, user.id))
 	signals.send_safe('rpc-user-logged-in', logger, handler, session=session_id, name=username)
 	return True, ConnectionErrorReason.SUCCESS, session_id
 
@@ -779,7 +780,7 @@ def rpc_logout(handler):
 		rpc_session.event_socket.close()
 	handler.server.session_manager.remove(handler.rpc_session_id)
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
-	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], rpc_session.user))
+	logger.info("successful logout request from {0} for user id: {1}".format(handler.client_address[0], rpc_session.user))
 	signals.send_safe('rpc-user-logged-out', logger, handler, session=handler.rpc_session_id, name=rpc_session.user)
 
 @register_rpc('/plugins/list', log_call=True)
