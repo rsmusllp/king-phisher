@@ -59,6 +59,9 @@ _geoip_db = None
 _geoip_db_lock = threading.Lock()
 logger = logging.getLogger('KingPhisher.GeoIP')
 
+Coordinates = collections.namedtuple('Coordinates', ('latitude', 'longitude'))
+"""A named tuple for representing GPS coordinates."""
+
 def _normalize_encoding(word):
 	if sys.version_info[0] == 2 and isinstance(word, unicode):
 		word = word.encode('ascii', 'ignore')
@@ -145,14 +148,11 @@ def lookup(ip, lang='en'):
 	result = {}
 	result['city'] = city.city.names.get(lang)
 	result['continent'] = city.continent.names.get(lang)
-	result['coordinates'] = (city.location.latitude, city.location.longitude)
+	result['coordinates'] = Coordinates(latitude=city.location.latitude, longitude=city.location.longitude)
 	result['country'] = city.country.names.get(lang)
 	result['postal_code'] = city.postal.code
 	result['time_zone'] = city.location.time_zone
 	return result
-
-Coordinates = collections.namedtuple('Coordinates', ('latitude', 'longitude'))
-"""A named tuple for representing GPS coordinates."""
 
 class GeoLocation(object):
 	"""

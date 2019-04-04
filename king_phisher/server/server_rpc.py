@@ -162,7 +162,7 @@ def rpc_version(handler):
 	}
 	return vinfo
 
-@register_rpc('/config/get')
+@register_rpc('/config/get', log_call=True)
 def rpc_config_get(handler, option_name):
 	"""
 	Retrieve a value from the server's configuration.
@@ -467,7 +467,7 @@ def rpc_database_delete_rows_by_id(handler, session, table_name, row_ids):
 	session.commit()
 	return deleted_rows
 
-@register_rpc('/db/table/get', database_access=True)
+@register_rpc('/db/table/get', database_access=True, log_call=True)
 def rpc_database_get_row_by_id(handler, session, table_name, row_id):
 	"""
 	Retrieve a row from a given table with the specified value in the
