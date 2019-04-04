@@ -44,6 +44,7 @@ import collections
 import gc
 import logging
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -136,7 +137,7 @@ def pipenv_entry(parser, entry_point):
 	logger.addHandler(console_log_handler)
 
 	target_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-	logger.debug("target diretory: {}".format(target_directory))
+	logger.debug("target directory: {}".format(target_directory))
 
 	os.environ['PIPENV_VENV_IN_PROJECT'] = os.environ.get('PIPENV_VENV_IN_PROJECT', 'True')
 	os.environ['PIPENV_PIPFILE'] = os.environ.get('PIPENV_PIPFILE', os.path.join(target_directory, 'Pipfile'))
@@ -186,20 +187,19 @@ def pipenv_entry(parser, entry_point):
 
 def run_process(process_args, cwd=None, encoding='utf-8'):
 	"""
-	Start a process, wait for it to complete and return a
-	:py:class:`~.ProcessResults` object.
+	Run a subprocess, wait for it to complete and return a
+	:py:class:`~.ProcessResults` object. This function differs from
+	:py:func:`.start_process` in the type it returns and the fact that it always
+	waits for the subprocess to finish before returning.
 
-	:param process_args: The arguments for the processes including the binary.
+	:param tuple process_args: The arguments for the processes including the binary.
 	:param cwd: An optional current working directory to use for the process.
 	:param str encoding: The encoding to use for strings.
 	:return: The results of the process including the status code and any text
 		printed to stdout or stderr.
 	:rtype: :py:class:`~.ProcessResults`
 	"""
-	cwd = cwd or os.getcwd()
-	logger = logging.getLogger('KingPhisher.ExternalProcess')
-	logger.debug('starting external process: ' + ' '.join(process_args))
-	process_handle = subprocess.Popen(process_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+	process_handle = start_process(process_args, wait=False, cwd=cwd)
 	process_handle.wait()
 	results = ProcessResults(
 		process_handle.stdout.read().decode(encoding),
@@ -207,6 +207,47 @@ def run_process(process_args, cwd=None, encoding='utf-8'):
 		process_handle.returncode
 	)
 	return results
+
+def start_process(process_args, wait=True, cwd=None):
+	"""
+	Start a subprocess and optionally wait for it to finish. If not **wait**, a
+	handle to the subprocess is returned instead of ``True`` when it exits
+	successfully. This function differs from :py:func:`.run_process` in that it
+	optionally waits for the subprocess to finish, and can return a handle to
+	it.
+
+	:param tuple process_args: The arguments for the processes including the binary.
+	:param bool wait: Whether or not to wait for the subprocess to finish before returning.
+	:param str cwd: The optional current working directory.
+	:return: If **wait** is set to True, then a boolean indication success is returned, else a handle to the subprocess is returened.
+	"""
+	cwd = cwd or os.getcwd()
+	if isinstance(process_args, str):
+		process_args = shlex.split(process_args)
+	close_fds = True
+	startupinfo = None
+	preexec_fn = None if wait else getattr(os, 'setsid', None)
+	if sys.platform.startswith('win'):
+		close_fds = False
+		startupinfo = subprocess.STARTUPINFO()
+		startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+		startupinfo.wShowWindow = subprocess.SW_HIDE
+
+	logger = logging.getLogger('KingPhisher.ExternalProcess')
+	logger.debug('starting external process: ' + ' '.join(process_args))
+	proc_h = subprocess.Popen(
+		process_args,
+		stdin=subprocess.PIPE,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE,
+		preexec_fn=preexec_fn,
+		close_fds=close_fds,
+		cwd=cwd,
+		startupinfo=startupinfo
+	)
+	if not wait:
+		return proc_h
+	return proc_h.wait() == 0
 
 def which(program):
 	"""
@@ -239,8 +280,9 @@ def argp_add_default_args(parser, default_root=''):
 	:param str default_root: The default root logger to specify.
 	"""
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'), help='set the logging level')
-	parser.add_argument('--logger', default=default_root, help='specify the root logger')
+	log_group = parser.add_argument_group('logging options')
+	log_group.add_argument('-L', '--log', dest='loglvl', choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'), help='set the logging level')
+	log_group.add_argument('--logger', default=default_root, help='specify the root logger')
 	gc_group = parser.add_argument_group('garbage collector options')
 	gc_group.add_argument('--gc-debug-leak', action='store_const', const=gc.DEBUG_LEAK, default=0, help='set the DEBUG_LEAK flag')
 	gc_group.add_argument('--gc-debug-stats', action='store_const', const=gc.DEBUG_STATS, default=0, help='set the DEBUG_STATS flag')

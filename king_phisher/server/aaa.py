@@ -156,7 +156,12 @@ class AuthenticatedSessionManager(object):
 			self._sessions[stored_session.id] = auth_session
 		session.query(db_models.AuthenticatedSession).delete()
 		session.commit()
-		self.logger.info("restored {0:,} valid sessions and skipped {1:,} expired sessions from the database".format(len(self._sessions), expired))
+		self.logger.info("restored {0:,} valid session{1} and skipped {2:,} expired session{3} from the database".format(
+			len(self._sessions),
+			('' if len(self._sessions) == 1 else 's'),
+			expired,
+			('' if expired == 1 else 's')
+		))
 
 	def __len__(self):
 		return len(self._sessions)

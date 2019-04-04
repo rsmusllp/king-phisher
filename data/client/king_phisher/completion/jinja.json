@@ -14,6 +14,7 @@
         },
         "client": {
           "company_name": null,
+          "department": null,
           "email_address": null,
           "first_name": null,
           "last_name": null,

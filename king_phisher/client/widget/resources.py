@@ -68,4 +68,7 @@ class CompanyEditorGrid(gui_utilities.GladeProxy):
 		'entry_company_url_email',
 		'entry_company_url_remote_access'
 	)
-	"""The children widgets that can be used to edit the fields of the comapny."""
+	"""The children widgets that can be used to edit the fields of the company."""
+
+class ManagedTreeView(gui_utilities.GladeProxy):
+	pass

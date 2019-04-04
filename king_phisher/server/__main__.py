@@ -31,6 +31,7 @@
 #  pylint: disable=too-many-locals
 
 import argparse
+import functools
 import logging
 import os
 import pwd
@@ -53,6 +54,12 @@ from king_phisher.server import plugins
 from boltons import strutils
 
 logger = logging.getLogger('KingPhisher.Server.CLI')
+
+def sig_handler(server, name, number, frame):
+	signal.signal(signal.SIGINT, signal.SIG_IGN)
+	signal.signal(signal.SIGTERM, signal.SIG_IGN)
+	logger.info("received signal {0}, shutting down the server".format(name))
+	threading.Thread(target=server.shutdown).start()
 
 def build_and_run(arguments, config, plugin_manager, log_file=None):
 	# fork into the background
@@ -109,8 +116,11 @@ def build_and_run(arguments, config, plugin_manager, log_file=None):
 			logger.critical('sqlite requires write permissions to the folder containing the database')
 			king_phisher_server.shutdown()
 			return os.EX_NOPERM
-	sighup_handler = lambda: threading.Thread(target=king_phisher_server.shutdown).start()
-	signal.signal(signal.SIGHUP, lambda signum, frame: sighup_handler())
+
+	signal.signal(signal.SIGHUP, functools.partial(sig_handler, king_phisher_server, 'SIGHUP'))
+	signal.signal(signal.SIGINT, functools.partial(sig_handler, king_phisher_server, 'SIGINT'))
+	signal.signal(signal.SIGTERM, functools.partial(sig_handler, king_phisher_server, 'SIGTERM'))
+
 	try:
 		king_phisher_server.serve_forever(fork=False)
 	except KeyboardInterrupt:
