@@ -16,7 +16,11 @@ Version 1.13.0
 * Added support for logging MFA tokens with credentials
 * Added support for using regular expressions to validate credentials
 * Automatically try to install plugin dependencies with pip from PyPi
-* Added advanced filtering support to the Campaign tabs
+* Added advanced, rule-based filtering support to the Campaign tabs
+* Added site template metadata
+
+   * Site templates can now include a metadata file for describing their content
+   * The Campaign Assistant will help select a target URL based on available templates
 
 Version 1.12.0
 ^^^^^^^^^^^^^^
