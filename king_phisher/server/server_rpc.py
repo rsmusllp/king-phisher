@@ -84,6 +84,16 @@ def _ssl_is_enabled(handler):
 	"""
 	return any(address.get('ssl', False) for address in handler.config.get('server.addresses'))
 
+class _lend_semaphore(object):
+	def __init__(self, handler):
+		self.handler = handler
+
+	def __enter__(self):
+		self.handler.semaphore_release()
+
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		self.handler.semaphore_acquire()
+
 def register_rpc(path, database_access=False, log_call=False):
 	"""
 	Register an RPC function with the HTTP request handler. This allows the
@@ -936,7 +946,8 @@ def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
 			os.mkdir(web_root)
 
 	# step 6: issue the certificate with certbot, this starts the subprocess and may take a few seconds
-	status = letsencrypt.certbot_issue(web_root, hostname, bin_path=bin_path, unified_directory=data_path)
+	with _lend_semaphore(handler):
+		status = letsencrypt.certbot_issue(web_root, hostname, bin_path=bin_path, unified_directory=data_path)
 	if status != os.EX_OK:
 		result['message'] = 'Failed to issue the certificate.'
 		return result
