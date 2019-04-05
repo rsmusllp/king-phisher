@@ -85,6 +85,10 @@ def main():
 	parser.epilog = PARSER_EPILOG
 	arguments = parser.parse_args()
 
+	if not os.path.isfile(arguments.server_config) and os.access(arguments.server_config, os.R_OK):
+		color.print_error('can not read the server configuration file')
+		return os.EX_NOINPUT
+
 	server_config = configuration.ex_load_config(arguments.server_config).get('server')
 	web_root = server_config['web_root']
 

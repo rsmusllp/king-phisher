@@ -16,6 +16,8 @@ Version 1.14.0
 Version 1.13.0
 ^^^^^^^^^^^^^^
 
+Released :release:`1.13.0` on April 4th, 2019
+
 * Added support for logging MFA tokens with credentials
 * Added support for using regular expressions to validate credentials
 * Automatically try to install plugin dependencies with pip from PyPi
