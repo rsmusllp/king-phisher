@@ -171,10 +171,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	)
 	top_gobject = 'window'
 
-	# todo: this _tsafe note should be clarified in the documentation
-	# methods defined within this class that are suffixed with _tsafe are safe
-	# to be called from a non-GUI thread and by extension only call fellow
-	# _tsafe methods
 	def __init__(self, *args, **kwargs):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
@@ -338,7 +334,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		named_row = _ModelNamedRow(*model_row)
 		self.application.plugin_manager.disable(named_row.id)
 		self.config['plugins.enabled'].remove(named_row.id)
-		model_row[_ModelNamedRow._fields.index('enabled')] = False
+		self._set_model_item(model_row.path, enabled=False, sensitive_installed=True)
 
 	def _plugin_enable(self, model_row):
 		named_row = _ModelNamedRow(*model_row)
@@ -348,7 +344,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		if not pm.enable(named_row.id):
 			return
-		self._set_model_item(model_row.path, 'enabled', True)
+		self._set_model_item(model_row.path, enabled=True, sensitive_installed=False)
 		self.config['plugins.enabled'].append(named_row.id)
 
 	def _plugin_install(self, model_row):
@@ -393,7 +389,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.logger.info("installed plugin '{}' from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
 		plugin = self._reload_plugin_tsafe(model_row, named_row)
 		if self.config['plugins.pip.install_dependencies']:
-			packages = smoke_zephyr.requirements.check_requirements(tuple(plugin.req_packages.keys()))
+			try:
+				packages = smoke_zephyr.requirements.check_requirements(tuple(plugin.req_packages.keys()))
+			except ValueError:
+				self.logger.warning("requirements check failed for plugin '{}', can not automatically install requirements".format(named_row.id))
+				packages = None
 			if packages:
 				self.logger.debug("installing missing or incompatible packages from PyPi for plugin '{0}'".format(named_row.id))
 				self._update_status_bar_tsafe(
@@ -418,8 +418,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def __plugin_install_post(self, catalog_model, repo_model, model_row, named_row):
 		# handles GUI related updates after data has been fetched from the internet
 		if model_row.path is not None:
-			self._set_model_item(model_row.path, 'installed', True)
-			self._set_model_item(model_row.path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
+			version = self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version']
+			self._set_model_item(model_row.path, installed=True, version=version)
 			if self._selected_model_row.path == model_row.path:
 				self._popup_menu_refresh(model_row)
 		self._update_status_bar("Finished installing plugin {}.".format(named_row.title))
@@ -432,7 +432,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if model_row.parent and model_row.parent[_ModelNamedRow._fields.index('id')] == _LOCAL_REPOSITORY_ID:
 			del self._model[model_row.path]
 		else:
-			self._set_model_item(model_row.path, 'installed', False)
+			self._set_model_item(model_row.path, installed=False)
 		self.logger.info("successfully uninstalled plugin {0}".format(named_row.id))
 		self._update_status_bar("Finished uninstalling plugin {}.".format(named_row.title))
 		return True
@@ -501,11 +501,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if named_row.id == self._selected_named_row.id:
 				self._set_info(model_row)
 			if klass is None:
-				self._set_model_item(model_row.path, 'title', "{0} (Reload Failed)".format(named_row.id))
+				self._set_model_item(model_row.path, title="{0} (Reload Failed)".format(named_row.id))
 			else:
-				self._set_model_item(model_row.path, 'title', klass.title)
-				self._set_model_item(model_row.path, 'compatibility', 'Yes' if klass.is_compatible else 'No')
-				self._set_model_item(model_row.path, 'version', klass.version)
+				self._set_model_item(
+					model_row.path,
+					title=klass.title,
+					compatibility='Yes' if klass.is_compatible else 'No',
+					version=klass.version
+				)
 		self._update_status_bar('Reloading plugin... completed.')
 
 	def _remove_matching_plugin(self, named_row, plugin_src):
@@ -545,8 +548,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		model_row = self._selected_model_row
 		return _ModelNamedRow(*model_row) if model_row else None
 
-	def _set_model_item(self, model_path, item, item_value):
-		self._model[model_path][_ModelNamedRow._fields.index(item)] = item_value
+	def _set_model_item(self, model_path, **kwargs):
+		model_row = self._model[model_path]
+		for key, value in kwargs.items():
+			model_row[_ModelNamedRow._fields.index(key)] = value
 
 	def _set_info(self, model_instance):
 		named_model = _ModelNamedRow(*model_instance)
@@ -950,11 +955,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		model_row = self._model[path]
 		named_row = _ModelNamedRow(*model_row)
 		if named_row.type == _ROW_TYPE_PLUGIN and named_row.installed:
+			if named_row.enabled:
+				self._plugin_disable(model_row)
 			self._plugin_uninstall(model_row)
 		else:
 			self._plugin_install(model_row)
-		if named_row.enabled:
-			self._plugin_enable(model_row)
 
 	def signal_treeview_row_activated(self, treeview, path, column):
 		model_row = self._model[path]
