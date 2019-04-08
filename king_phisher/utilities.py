@@ -331,7 +331,7 @@ def open_uri(uri):
 	else:
 		raise RuntimeError('could not find suitable application to open uri')
 	proc_args.append(uri)
-	return start_process(proc_args)
+	return startup.start_process(proc_args)
 
 def parse_datetime(ts):
 	"""
