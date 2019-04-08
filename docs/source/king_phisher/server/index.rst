@@ -18,6 +18,7 @@ application.
    configuration.rst
    letsencrypt.rst
    plugins.rst
+   pylibc.rst
    rest_api.rst
    server.rst
    server_rpc.rst

@@ -34,6 +34,8 @@ import collections
 import ctypes
 import ctypes.util
 
+from king_phisher import constants
+
 _c_gid_t = ctypes.c_int
 _c_uid_t = ctypes.c_int
 
@@ -117,18 +119,43 @@ _libc_getpwnam.argtypes = [ctypes.c_char_p]
 _libc_getpwnam.restype = ctypes.POINTER(_PASSWD)
 
 def getgrnam(name, encoding='utf-8'):
+	"""
+	Get the structure containing the fields from the specified entry in the
+	group database. See
+	`getgrnam(3) <http://man7.org/linux/man-pages/man3/getgrnam.3.html>`_ for
+	more information.
+
+	:param str name: The group name to look up.
+	:param str encoding: The encoding to use for strings.
+	:return: The entry from the group database or ``None`` if it was not found.
+	:rtype: tuple
+	"""
 	name = _cbytes(name, encoding=encoding)
 	c_pgroup = _libc_getgrnam(name)
 	if not c_pgroup:
 		return None
 	return c_pgroup.contents.to_tuple()
 
-def getgrouplist(user, group=None, encoding='utf-8'):
+def getgrouplist(user, group=constants.AUTOMATIC, encoding='utf-8'):
+	"""
+	Get the groups that the specified user belongs to. If *group* is not
+	specified, it will be looked up from the password record for *user*. See
+	`getgrouplist(3) <http://man7.org/linux/man-pages/man3/getgrouplist.3.html>`_
+	for more information.
+
+	:param str user: The user name to look up.
+	:param int group: An optional group to add to the returned groups.
+	:param str encoding: The encoding to use for strings.
+	:return: The group IDs that *user* belongs to.
+	:rtype: tuple
+	"""
 	user = _cbytes(user, encoding=encoding)
-	ngroups = 10
+	ngroups = 20
 	ngrouplist = ctypes.c_int(ngroups)
-	if group is None:
+	if group is constants.AUTOMATIC:
 		group = getpwnam(user).pw_gid
+	elif not isinstance(group, int):
+		raise TypeError('group must be AUTOMATIC or an integer')
 
 	grouplist = (ctypes.c_uint * ngroups)()
 	ct = _libc_getgrouplist(user, group, ctypes.cast(ctypes.byref(grouplist), ctypes.POINTER(ctypes.c_uint)), ctypes.byref(ngrouplist))
@@ -138,6 +165,17 @@ def getgrouplist(user, group=None, encoding='utf-8'):
 	return tuple(grouplist[:ct])
 
 def getpwnam(name, encoding='utf-8'):
+	"""
+	Get the structure containing the fields from the specified entry in the
+	passwrd database. See
+	`getpwnam(3) <http://man7.org/linux/man-pages/man3/getpwnam.3.html>`_ for
+	more information.
+
+	:param str name: The user name to look up.
+	:param str encoding: The encoding to use for strings.
+	:return: The entry from the user database or ``None`` if it was not found.
+	:rtype: tuple
+	"""
 	name = _cbytes(name, encoding=encoding)
 	c_ppasswd = _libc_getpwnam(name)
 	if not c_ppasswd:

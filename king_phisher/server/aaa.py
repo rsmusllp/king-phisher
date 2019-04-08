@@ -71,19 +71,6 @@ def alarm_set(seconds):
 	yield
 	signal.alarm(0)
 
-@smoke_zephyr.utilities.Cache('3h')
-def get_groups_for_user(username):
-	"""
-	Get the groups that a user is a member of.
-
-	:param str username: The user to lookup group membership for.
-	:rtype: set
-	:return: The names of the groups that the user is a member of.
-	"""
-	groups = set(g.gr_name for g in grp.getgrall() if username in g.gr_mem)
-	groups.add(grp.getgrgid(pwd.getpwnam(username).pw_gid).gr_name)
-	return groups
-
 class AuthenticatedSession(object):
 	"""A container to store information associated with an authenticated session."""
 	__slots__ = ('_event_socket', 'created', 'last_seen', 'user', 'user_is_admin')
