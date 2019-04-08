@@ -34,7 +34,6 @@ import argparse
 import functools
 import logging
 import os
-import pwd
 import signal
 import sys
 import threading
@@ -50,6 +49,7 @@ from king_phisher import version
 from king_phisher.server import build
 from king_phisher.server import configuration
 from king_phisher.server import plugins
+from king_phisher.server import pylibc
 
 from boltons import strutils
 
@@ -93,22 +93,22 @@ def build_and_run(arguments, config, plugin_manager, log_file=None):
 	if config.has_option('server.setuid_username'):
 		setuid_username = config.get('server.setuid_username')
 		try:
-			user_info = pwd.getpwnam(setuid_username)
+			passwd = pylibc.getpwnam(setuid_username)
 		except KeyError:
 			logger.critical('an invalid username was specified as \'server.setuid_username\'')
 			king_phisher_server.shutdown()
 			return os.EX_NOUSER
 
 		if log_file is not None:
-			utilities.fs_chown(log_file, user=user_info.pw_uid, group=user_info.pw_gid, recursive=False)
+			utilities.fs_chown(log_file, user=passwd.pw_uid, group=passwd.pw_gid, recursive=False)
 		data_path = config.get_if_exists('server.letsencrypt.data_path')
 		if data_path and config.get_if_exists('server.letsencrypt.chown_data_path', True):
-			utilities.fs_chown(data_path, user=user_info.pw_uid, group=user_info.pw_gid, recursive=True)
+			utilities.fs_chown(data_path, user=passwd.pw_uid, group=passwd.pw_gid, recursive=True)
 
-		os.setgroups([])
-		os.setresgid(user_info.pw_gid, user_info.pw_gid, user_info.pw_gid)
-		os.setresuid(user_info.pw_uid, user_info.pw_uid, user_info.pw_uid)
-		logger.info("dropped privileges to the {0} account".format(setuid_username))
+		os.setgroups(pylibc.getgrouplist(setuid_username))
+		os.setresgid(passwd.pw_gid, passwd.pw_gid, passwd.pw_gid)
+		os.setresuid(passwd.pw_uid, passwd.pw_uid, passwd.pw_uid)
+		logger.info("dropped privileges to the {} account (uid: {}, gid: {})".format(setuid_username, passwd.pw_uid, passwd.pw_gid))
 	else:
 		logger.warning('running with root privileges is dangerous, drop them by configuring \'server.setuid_username\'')
 	os.umask(0o077)
