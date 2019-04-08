@@ -50,6 +50,7 @@ from king_phisher import ipaddress
 from king_phisher import its
 from king_phisher import serializers
 from king_phisher import ssh_forward
+from king_phisher import startup
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import assistants
@@ -791,7 +792,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self.get_active_window(), "Invalid token '{0}' in the SFTP command.".format(error.args[0]))
 			return False
 		self.logger.debug("starting sftp client command: {0}".format(command))
-		utilities.start_process(command, wait=False)
+		startup.start_process(command, wait=False)
 		return
 
 	def stop_remote_service(self):
