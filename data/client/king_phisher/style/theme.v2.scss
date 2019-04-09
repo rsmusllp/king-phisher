@@ -428,6 +428,9 @@ treeview.view {
     background-color: $theme_color_tv_hobg;
     color: $theme_color_tv_hofg;
   }
+  entry {
+    min-height: 0px;
+  }
   header {
     button {
       border: 1px solid;
