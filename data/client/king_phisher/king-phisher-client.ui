@@ -263,6 +263,7 @@ Spencer McIntyre</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
                 <property name="placeholder_text" translatable="yes">campaign name (REQUIRED)</property>
+                <signal name="changed" handler="signal_entry_changed_campaign_name" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -2905,18 +2906,6 @@ Spencer McIntyre</property>
       </packing>
     </child>
     <child>
-      <object class="GtkEntry" id="CompanyEditorGrid.entry_company_url_email">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="tooltip_text" translatable="yes">The URL the company uses for web mail access.</property>
-        <property name="placeholder_text" translatable="yes">http://king-phisher.com/ (OPTIONAL)</property>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">5</property>
-      </packing>
-    </child>
-    <child>
       <object class="GtkEntry" id="CompanyEditorGrid.entry_company_url_remote_access">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
@@ -2926,6 +2915,18 @@ Spencer McIntyre</property>
       <packing>
         <property name="left_attach">1</property>
         <property name="top_attach">6</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkEntry" id="CompanyEditorGrid.entry_company_url_email">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="tooltip_text" translatable="yes">The URL the company uses for web mail access.</property>
+        <property name="placeholder_text" translatable="yes">http://king-phisher.com/ (OPTIONAL)</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">5</property>
       </packing>
     </child>
   </object>

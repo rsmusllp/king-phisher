@@ -144,6 +144,11 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			if page_title:
 				self._page_titles[page_title] = page_n
 
+		campaign_edges = self.application.rpc.graphql("""\
+		{ db { campaigns { edges { node { id name } } } } }
+		""")['db']['campaigns']['edges']
+		self._campaign_names = dict((edge['node']['name'], edge['node']['id']) for edge in campaign_edges)
+
 		self._expiration_time = managers.TimeSelectorButtonManager(self.application, self.gobjects['togglebutton_expiration_time'])
 		self._set_comboboxes()
 		self._set_defaults()
@@ -327,7 +332,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		default_day = datetime.datetime.today() + datetime.timedelta(days=31)
 		gui_utilities.gtk_calendar_set_pydate(calendar, default_day)
 
-		if self.campaign_id is None:
+		if self.is_new_campaign:
 			return
 		campaign = self.application.get_graphql_campaign()
 
@@ -375,6 +380,13 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if model_iter is None:
 			return self.application.rpc('db/table/insert', db_table, 'name', campaign_type)
 		return model.get_value(model_iter, 0)
+
+	def _get_campaign_by_name(self, name):
+		campaign = self.application.rpc.graphql("""\
+			query getCampaignByName($name: String!)
+			{ db { campaign(name: $name) { id } } }
+		""", query_vars={'name': name})['db']['campaign']
+		return campaign
 
 	def _get_company_existing_id(self):
 		combobox_company = self.gobjects['combobox_company_existing']
@@ -471,7 +483,12 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		campaign_name = self.gobjects['entry_campaign_name'].get_text()
 		campaign_name = campaign_name.strip()
 		if not campaign_name:
-			gui_utilities.show_dialog_error('Invalid Campaign Name', self.parent, 'A unique and valid campaign name must be specified.')
+			gui_utilities.show_dialog_error('Invalid Campaign Name', self.parent, 'A valid campaign name must be specified.')
+			set_current_page('Basic Settings')
+			return True
+		campaign = self._get_campaign_by_name(campaign_name)
+		if campaign and campaign['id'] != self.campaign_id:
+			gui_utilities.show_dialog_error('Invalid Campaign Name', self.parent, 'A unique campaign name must be specified.')
 			set_current_page('Basic Settings')
 			return True
 
@@ -607,6 +624,22 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def signal_checkbutton_expire_campaign_toggled(self, _):
 		active = self.gobjects['checkbutton_expire_campaign'].get_property('active')
 		self.gobjects['frame_campaign_expiration'].set_sensitive(active)
+
+	def signal_entry_changed_campaign_name(self, entry):
+		campaign_name = entry.get_text().strip()
+		if not campaign_name:
+			entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
+		if self.is_new_campaign:
+			if self._campaign_names.get(campaign_name) is not None:
+				entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
+			else:
+				entry.set_property('secondary-icon-stock', None)
+		elif self.is_editing_campaign:
+			other_cid = self._campaign_names.get(campaign_name)
+			if other_cid is not None and other_cid != self.campaign_id:
+				entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
+			else:
+				entry.set_property('secondary-icon-stock', None)
 
 	def signal_entry_changed_test_validation_text(self, field):
 		test_text = field.get_text()
