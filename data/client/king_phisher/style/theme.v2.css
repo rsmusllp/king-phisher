@@ -536,6 +536,15 @@ treeview.view:selected {
 treeview.view entry {
   min-height: 0px;
 }
+treeview.view.progressbar {
+  border-radius: 3px;
+  background-image: linear-gradient(to bottom, #5d84a8, #496a89);
+  border: 0px solid;
+}
+treeview.view.progressbar:focus, treeview.view.progressbar:hover {
+  border-color: #ffffff;
+  border: 1px solid;
+}
 treeview.view header button {
   border: 1px solid;
   border-color: shade(#00203a, 1.2);

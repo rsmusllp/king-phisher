@@ -431,6 +431,16 @@ treeview.view {
   entry {
     min-height: 0px;
   }
+  &.progressbar {
+    border-radius: 3px;
+    background-image: linear-gradient(to bottom, $theme_color_1, darken($theme_color_1, 10%));
+    border: 0px solid;
+    &:focus, &:hover {
+      border-color: #ffffff;
+      border: 1px solid;
+    }
+  }
+
   header {
     button {
       border: 1px solid;
