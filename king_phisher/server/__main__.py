@@ -199,7 +199,7 @@ def _ex_config_logging(arguments, config, console_handler):
 	return file_path
 
 def main():
-	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
+	parser = argparse.ArgumentParser(prog='KingPhisherServer', description='King Phisher Server', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
 	startup.argp_add_server(parser)
 	arguments = parser.parse_args()
