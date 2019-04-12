@@ -206,19 +206,26 @@ def main():
 
 	# basic runtime checks
 	if sys.version_info < (3, 4):
-		color.print_error('the Python version is too old (minimum required is 3.4)')
+		color.print_error('the python version is too old (minimum required is 3.4)')
 		return 0
 
 	console_log_handler = utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 	del parser
 
-	if os.getuid():
-		color.print_error('the server must be started as root, configure the')
-		color.print_error('\'server.setuid_username\' option in the config file to drop privileges')
-		return os.EX_NOPERM
-
 	# configure environment variables and load the config
 	find.init_data_path('server')
+	if not os.path.exists(arguments.config_file):
+		color.print_error('invalid configuration file')
+		color.print_error('the specified path does not exist')
+		return os.EX_NOINPUT
+	if not os.path.isfile(arguments.config_file):
+		color.print_error('invalid configuration file')
+		color.print_error('the specified path is not a file')
+		return os.EX_NOINPUT
+	if not os.access(arguments.config_file, os.R_OK):
+		color.print_error('invalid configuration file')
+		color.print_error('the specified path can not be read')
+		return os.EX_NOPERM
 	config = configuration.ex_load_config(arguments.config_file)
 	if arguments.verify_config:
 		color.print_good('configuration verification passed')
@@ -226,6 +233,11 @@ def main():
 		return os.EX_OK
 	if config.has_option('server.data_path'):
 		find.data_path_append(config.get('server.data_path'))
+
+	if os.getuid():
+		color.print_error('the server must be started as root, configure the')
+		color.print_error('\'server.setuid_username\' option in the config file to drop privileges')
+		return os.EX_NOPERM
 
 	if arguments.update_geoip_db:
 		color.print_status('downloading a new geoip database')
