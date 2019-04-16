@@ -101,7 +101,8 @@
         },
         "server": {
           "address": null,
-          "hostname": null
+          "hostname": null,
+          "port": null
         },
         "validate_credential(": null,
         "validate_credential_fields(": null

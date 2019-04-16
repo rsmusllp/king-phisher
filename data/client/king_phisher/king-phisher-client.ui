@@ -49,7 +49,7 @@ Spencer McIntyre
     <property name="title" translatable="yes">About</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">King Phisher</property>
-    <property name="copyright" translatable="yes">Copyright (c) 2013-2017, SecureState LLC</property>
+    <property name="copyright" translatable="yes">Copyright (c) 2013-2019, SecureState LLC</property>
     <property name="comments" translatable="yes">Phishing Campaign Toolkit</property>
     <property name="website">https://github.com/securestate/king-phisher</property>
     <property name="website_label" translatable="yes">GitHub Home Page</property>

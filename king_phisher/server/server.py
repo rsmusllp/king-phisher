@@ -304,7 +304,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			'request': request_vars,
 			'server': {
 				'hostname': self.vhost,
-				'address': self.connection.getsockname()[0]
+				'address': self.connection.getsockname()[0],
+				'port': self.connection.getsockname()[1]
 			}
 		}
 		template_vars.update(self.server.template_env.standard_variables)
