@@ -525,6 +525,8 @@ def validate_json_schema(data, schema_file_id):
 	"""
 	schema_file_name = schema_file_id + '.json'
 	file_path = find.data_file(os.path.join('schemas', 'json', schema_file_name))
+	if file_path is None:
+		raise FileNotFoundError('the json schema file was not found')
 	with open(file_path, 'r') as file_h:
 		schema = json.load(file_h)
 	jsonschema.validate(data, schema)

@@ -42,7 +42,6 @@ from . import misc as gql_misctypes
 from king_phisher import utilities
 from king_phisher.server import web_tools
 
-import graphene.relay
 import graphene.types.resolver
 import graphene.types.utils
 import jsonschema
@@ -53,12 +52,14 @@ __all__ = ('SiteTemplate', 'SiteTemplateConnection', 'SiteTemplateMetadata')
 
 logger = logging.getLogger('KingPhisher.Server.GraphQL.Types.Templates')
 
+_yaml_loader = functools.partial(yaml.load, Loader=yaml.SafeLoader)
+
 def _find_metadata(path):
 	prefixes = ('.', '_')
 	serializers = {
-		'.json': json,
-		'.yaml': yaml,
-		'.yml': yaml,
+		'.json': json.load,
+		'.yaml': _yaml_loader,
+		'.yml': _yaml_loader,
 	}
 	for prefix, (suffix, serializer) in itertools.product(prefixes, serializers.items()):
 		file_path = os.path.join(path, prefix + 'metadata' + suffix)
@@ -70,12 +71,12 @@ def _find_metadata(path):
 	return None, None
 
 def _load_metadata(path):
-	file_path, serializer = _find_metadata(path)
+	file_path, loader = _find_metadata(path)
 	if file_path is None:
 		logger.info('found no metadata file for path: ' + path)
 		return
 	with open(file_path, 'r') as file_h:
-		metadata = serializer.load(file_h)
+		metadata = loader(file_h)
 	# manually set the version to a string so the input format is more forgiving
 	if isinstance(metadata.get('version'), (float, int)):
 		metadata['version'] = str(metadata['version'])
@@ -87,7 +88,7 @@ def _load_metadata(path):
 	return metadata
 
 def _search_filter(path):
-	file_path, serializer = _find_metadata(path)
+	file_path, _ = _find_metadata(path)
 	return file_path is not None
 
 class SiteTemplateMetadata(graphene.ObjectType):
