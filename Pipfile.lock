@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "92c229af39b50aab56803c1e44557926113fabf13e6e9195aaf04a57141ef640"
+            "sha256": "4b2bbeede0c5fd118ca40cb574d6ae55a125aabe35e723692289a38e48ac103f"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -246,11 +246,11 @@
         },
         "graphene-sqlalchemy": {
             "hashes": [
-                "sha256:5bfc93986c5e6001861e8cdfe33eeb5094ca1f30efde6822387e13070ec3ab82",
-                "sha256:8260a128f360eda5437147a3cb72809e267fa8e2464f9996ff95ddc47239dcec"
+                "sha256:e643f4f3c5f1a136f4a26c8e9d7a0f6dfe930bbae4fb4f6cb526df3b03cd749e",
+                "sha256:f492a0b4b490ffb32636b85b4d926d1d074393d2d737ba518aa62eac3c9aa672"
             ],
             "index": "pypi",
-            "version": "==2.1.0"
+            "version": "==2.1.1"
         },
         "graphql-core": {
             "hashes": [
@@ -732,10 +732,10 @@
         },
         "urllib3": {
             "hashes": [
-                "sha256:61bf29cada3fc2fbefad4fdf059ea4bd1b4a86d2b6d15e1c7c0b582b9752fe39",
-                "sha256:de9529817c93f27c8ccbfead6985011db27bd0ddfcdb2d86f3f663385c6a9c22"
+                "sha256:4c291ca23bbb55c76518905869ef34bdd5f0e46af7afe6861e8375643ffee1a0",
+                "sha256:9a247273df709c4fedb38c711e44292304f73f39ab01beda9f6b9fc375669ac3"
             ],
-            "version": "==1.24.1"
+            "version": "==1.24.2"
         },
         "websocket-client": {
             "hashes": [
@@ -1098,10 +1098,10 @@
         },
         "urllib3": {
             "hashes": [
-                "sha256:61bf29cada3fc2fbefad4fdf059ea4bd1b4a86d2b6d15e1c7c0b582b9752fe39",
-                "sha256:de9529817c93f27c8ccbfead6985011db27bd0ddfcdb2d86f3f663385c6a9c22"
+                "sha256:4c291ca23bbb55c76518905869ef34bdd5f0e46af7afe6861e8375643ffee1a0",
+                "sha256:9a247273df709c4fedb38c711e44292304f73f39ab01beda9f6b9fc375669ac3"
             ],
-            "version": "==1.24.1"
+            "version": "==1.24.2"
         },
         "wcwidth": {
             "hashes": [
