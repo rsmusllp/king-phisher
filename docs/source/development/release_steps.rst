@@ -17,9 +17,8 @@ Release Steps
 -------------
 
 #. Create a final signed commit on the dev branch and push it to GitHub
-#. Merge dev into master and push master and push the changes
+#. Merge dev into master and push master to GitHub
 #. Create and push a signed tag of the release commit
-#. Merge dev into master for the plugins repository and push the changes
 #. Create a new release on GitHub
 
    #. Upload the final Windows build
@@ -31,9 +30,10 @@ Release Steps
 Post Release Steps
 ------------------
 
-#. Open new issue 
-#. Increment the version number on the dev branch and re-set the version label
+#. Open a new issue with the Kali bug tracker notifying them of the release
+#. Increment the version number on the dev branch and reset the version label
 #. Update the Python packages list in Pipfile
 
    #. List the outdated packages with: ``pipenv update --outdated``
    #. Update each one with: ``pipenv install PACKAGE==VERSION``
+   #. Manually synchronize ``docs/requirements.txt``
