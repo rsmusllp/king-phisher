@@ -29,10 +29,22 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+################################################################################
+#
+# CLEAN ROOM MODULE
+#
+# This module is classified as a "Clean Room" module and is subject to
+# restrictions on what it may import.
+#
+# See: https://king-phisher.readthedocs.io/en/latest/development/modules.html#clean-room-modules
+#
+################################################################################
+
 import collections
 import gc
 import logging
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -82,9 +94,10 @@ def _run_pipenv(args, cwd=None):
 
 def pipenv_entry(parser, entry_point):
 	"""
-	Run through startup logic for a Pipenv script. This sets up a basic stream
-	logging configuration, establishes the Pipenv environment and finally calls
-	the actual entry point using :py:func:`os.execve`.
+	Run through startup logic for a Pipenv script (see Pipenv: `Custom Script
+	Shortcuts`_ for more information). This sets up a basic stream logging
+	configuration, establishes the Pipenv environment and finally calls the
+	actual entry point using :py:func:`os.execve`.
 
 	.. note::
 		Due to the use of :py:func:`os.execve`, this function does not return.
@@ -96,6 +109,8 @@ def pipenv_entry(parser, entry_point):
 	:param parser: The argument parser to use. Arguments are added to it and
 		extracted before passing the remainder to the entry point.
 	:param str entry_point: The name of the entry point using Pipenv.
+
+	.. _Custom Script Shortcuts: https://pipenv.readthedocs.io/en/latest/advanced/#custom-script-shortcuts
 	"""
 	if its.on_windows:
 		# this is because of the os.exec call and os.EX_* status codes
@@ -122,25 +137,22 @@ def pipenv_entry(parser, entry_point):
 	logger.addHandler(console_log_handler)
 
 	target_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-	logger.debug("target diretory: {}".format(target_directory))
+	logger.debug("target directory: {}".format(target_directory))
 
 	os.environ['PIPENV_VENV_IN_PROJECT'] = os.environ.get('PIPENV_VENV_IN_PROJECT', 'True')
 	os.environ['PIPENV_PIPFILE'] = os.environ.get('PIPENV_PIPFILE', os.path.join(target_directory, 'Pipfile'))
+	python_path = os.environ.get('PYTHONPATH')
+	python_path = [] if python_path is None else python_path.split(os.pathsep)
+	python_path.append(target_directory)
+	os.environ['PYTHONPATH'] = os.pathsep.join(python_path)
 
 	logger.info('checking for the pipenv environment')
 	if which('pipenv') is None:
-		logger.info('installing pipenv from PyPi using pip')
-		results = run_process([sys.executable, '-m', 'pip', 'install', 'pipenv'], cwd=target_directory)
-		if results.status:
-			sys.stderr.write('the following issue occurred during installation of pipenv:\n')
-			sys.stderr.write(results.stdout)
-			return results.status
+		logger.exception('pipenv not found, run tools/install.sh --update')
+		return os.EX_UNAVAILABLE
 
 	pipenv_path = which('pipenv')
 	logger.debug("pipenv path: {0!r}".format(pipenv_path))
-	if not pipenv_path:
-		logger.exception('failed to find pipenv')
-		return os.EX_UNAVAILABLE
 
 	if arguments.pipenv_install or not os.path.isdir(os.path.join(target_directory, '.venv')):
 		if arguments.pipenv_install:
@@ -175,18 +187,19 @@ def pipenv_entry(parser, entry_point):
 
 def run_process(process_args, cwd=None, encoding='utf-8'):
 	"""
-	Start a process, wait for it to complete and return a
-	:py:class:`~.ProcessResults` object.
+	Run a subprocess, wait for it to complete and return a
+	:py:class:`~.ProcessResults` object. This function differs from
+	:py:func:`.start_process` in the type it returns and the fact that it always
+	waits for the subprocess to finish before returning.
 
-	:param process_args: The arguments for the processes including the binary.
+	:param tuple process_args: The arguments for the processes including the binary.
 	:param cwd: An optional current working directory to use for the process.
 	:param str encoding: The encoding to use for strings.
 	:return: The results of the process including the status code and any text
 		printed to stdout or stderr.
 	:rtype: :py:class:`~.ProcessResults`
 	"""
-	cwd = cwd or os.getcwd()
-	process_handle = subprocess.Popen(process_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+	process_handle = start_process(process_args, wait=False, cwd=cwd)
 	process_handle.wait()
 	results = ProcessResults(
 		process_handle.stdout.read().decode(encoding),
@@ -194,6 +207,47 @@ def run_process(process_args, cwd=None, encoding='utf-8'):
 		process_handle.returncode
 	)
 	return results
+
+def start_process(process_args, wait=True, cwd=None):
+	"""
+	Start a subprocess and optionally wait for it to finish. If not **wait**, a
+	handle to the subprocess is returned instead of ``True`` when it exits
+	successfully. This function differs from :py:func:`.run_process` in that it
+	optionally waits for the subprocess to finish, and can return a handle to
+	it.
+
+	:param tuple process_args: The arguments for the processes including the binary.
+	:param bool wait: Whether or not to wait for the subprocess to finish before returning.
+	:param str cwd: The optional current working directory.
+	:return: If **wait** is set to True, then a boolean indication success is returned, else a handle to the subprocess is returened.
+	"""
+	cwd = cwd or os.getcwd()
+	if isinstance(process_args, str):
+		process_args = shlex.split(process_args)
+	close_fds = True
+	startupinfo = None
+	preexec_fn = None if wait else getattr(os, 'setsid', None)
+	if sys.platform.startswith('win'):
+		close_fds = False
+		startupinfo = subprocess.STARTUPINFO()
+		startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+		startupinfo.wShowWindow = subprocess.SW_HIDE
+
+	logger = logging.getLogger('KingPhisher.ExternalProcess')
+	logger.debug('starting external process: ' + ' '.join(process_args))
+	proc_h = subprocess.Popen(
+		process_args,
+		stdin=subprocess.PIPE,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE,
+		preexec_fn=preexec_fn,
+		close_fds=close_fds,
+		cwd=cwd,
+		startupinfo=startupinfo
+	)
+	if not wait:
+		return proc_h
+	return proc_h.wait() == 0
 
 def which(program):
 	"""
@@ -226,8 +280,11 @@ def argp_add_default_args(parser, default_root=''):
 	:param str default_root: The default root logger to specify.
 	"""
 	parser.add_argument('-v', '--version', action='version', version=parser.prog + ' Version: ' + version.version)
-	parser.add_argument('-L', '--log', dest='loglvl', choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'), help='set the logging level')
-	parser.add_argument('--logger', default=default_root, help='specify the root logger')
+
+	log_group = parser.add_argument_group('logging options')
+	log_group.add_argument('-L', '--log', dest='loglvl', type=str.upper, choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL'), help='set the logging level')
+	log_group.add_argument('--logger', default=default_root, help='specify the root logger')
+
 	gc_group = parser.add_argument_group('garbage collector options')
 	gc_group.add_argument('--gc-debug-leak', action='store_const', const=gc.DEBUG_LEAK, default=0, help='set the DEBUG_LEAK flag')
 	gc_group.add_argument('--gc-debug-stats', action='store_const', const=gc.DEBUG_STATS, default=0, help='set the DEBUG_STATS flag')

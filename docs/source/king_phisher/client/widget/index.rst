@@ -1,6 +1,8 @@
 :mod:`widget`
 =============
 
+.. module:: king_phisher.client.widget
+
 .. toctree::
    :maxdepth: 2
    :titlesonly:

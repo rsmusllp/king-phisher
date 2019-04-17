@@ -45,6 +45,7 @@ from .geoip import GeoIPTests
 from .geoip import GeoIPRPCTests
 from .ics import ICSTests
 from .ipaddress import IPAddressTests
+from .pipfile import PipfileLockTests
 from .plugins import PluginRequirementsTests
 from .security_keys import SecurityKeysTests
 from .security_keys import SigningKeyTests

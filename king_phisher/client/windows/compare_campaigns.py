@@ -33,7 +33,7 @@
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import managers
-from king_phisher.client.graphs import CampaignCompGraph
+from king_phisher.client.graphs import CampaignGraphComparison
 
 from gi.repository import Gtk
 
@@ -56,7 +56,7 @@ class CampaignCompWindow(gui_utilities.GladeGObject):
 	top_gobject = 'window'
 	def __init__(self, *args, **kwargs):
 		super(CampaignCompWindow, self).__init__(*args, **kwargs)
-		self.comp_graph = CampaignCompGraph(self.application, style_context=self.application.style_context)
+		self.comp_graph = CampaignGraphComparison(self.application, style_context=self.application.style_context)
 		self.gobjects['scrolledwindow_compare'].add(self.comp_graph.canvas)
 		self.gobjects['box_compare'].pack_end(self.comp_graph.navigation_toolbar, False, False, 0)
 		self.comp_graph.navigation_toolbar.hide()

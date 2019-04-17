@@ -4,10 +4,15 @@ query getCampaign($id: String!) {
     campaign(id: $id) {
       id
       created
+      name
       description
       expiration
       maxCredentials
-      name
+
+      credentialRegexUsername
+      credentialRegexPassword
+      credentialRegexMfaToken
+
       campaignType {
         id
         name

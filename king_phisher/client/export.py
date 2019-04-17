@@ -35,6 +35,7 @@ import collections
 import copy
 import csv
 import datetime
+import itertools
 import logging
 import os
 import re
@@ -47,7 +48,6 @@ from king_phisher import errors
 from king_phisher import ipaddress
 from king_phisher import serializers
 from king_phisher import utilities
-from king_phisher.client import gui_utilities
 
 from boltons import iterutils
 import dateutil.tz
@@ -155,184 +155,44 @@ def campaign_to_xml(rpc, campaign_id, xml_file, encoding='utf-8'):
 
 	campaign = ET.SubElement(root, 'campaign')
 	logger.info('gathering campaign information for export')
+	page_size = 1000
 	try:
-		campaign_info = _get_graphql_campaignexport(rpc, campaign_id)
+		campaign_info = rpc.graphql_find_file('get_campaign_export.graphql', id=campaign_id, page=page_size)['db']['campaign']
 	except errors.KingPhisherGraphQLQueryError as error:
 		logger.error('graphql error: ' + error.message)
 		raise
-	gui_utilities.gtk_sync()
 	for key, value in campaign_info.items():
 		if key in ('landingPages', 'messages', 'visits', 'credentials', 'deaddropDeployments', 'deaddropConnections'):
 			continue
 		if isinstance(value, datetime.datetime):
 			value = value.replace(tzinfo=tzutc)
 		serializers.to_elementtree_subelement(campaign, key, value)
-		gui_utilities.gtk_sync()
 
-	# Tables with a campaign_id field
-	table_names = ['landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections']
-	cursor = None
-	last_cursor = None
 	table_elements = {}
 	while True:
-		gui_utilities.gtk_sync()
-		if not cursor and last_cursor:
-			break
-		if cursor:
-			last_cursor = cursor
-			campaign_info = _get_graphql_campaignexport(rpc, campaign_id, cursor)
-			cursor = None
-			gui_utilities.gtk_sync()
-		for table_name in table_names:
-			gui_utilities.gtk_sync()
-			if campaign_info[parse_case_snake_to_camel(table_name, upper_first=False)]['pageInfo']['hasNextPage']:
-				cursor = campaign_info[parse_case_snake_to_camel(table_name, upper_first=False)]['pageInfo']['endCursor']
-			table = campaign_info[parse_case_snake_to_camel(table_name, upper_first=False)]['edges']
+		cursor = None  # set later if any table hasNextPage
+		for table_name in ('landing_pages', 'messages', 'visits', 'credentials', 'deaddrop_deployments', 'deaddrop_connections'):
+			gql_table_name = parse_case_snake_to_camel(table_name, upper_first=False)
+			if campaign_info[gql_table_name]['pageInfo']['hasNextPage']:
+				cursor = campaign_info[gql_table_name]['pageInfo']['endCursor']
+			table = campaign_info[gql_table_name]['edges']
 			if table_name not in table_elements:
 				table_elements[table_name] = ET.SubElement(campaign, table_name)
 			for node in table:
-				gui_utilities.gtk_sync()
-				row = node['node']
 				table_row_element = ET.SubElement(table_elements[table_name], table_name[:-1])
-				for key, value in row.items():
-					gui_utilities.gtk_sync()
+				for key, value in node['node'].items():
 					if isinstance(value, datetime.datetime):
 						value = value.replace(tzinfo=tzutc)
 					serializers.to_elementtree_subelement(table_row_element, key, value)
+		if cursor is None:
+			break
+		campaign_info = rpc.graphql_find_file('get_campaign_export.graphql', id=campaign_id, cursor=cursor, page=page_size)['db']['campaign']
 	logger.info('completed processing campaign information for export')
 
 	document = minidom.parseString(ET.tostring(root))
 	with open(xml_file, 'wb') as file_h:
 		file_h.write(document.toprettyxml(indent='  ', encoding=encoding))
 	logger.info('campaign export complete')
-
-def _get_graphql_campaignexport(rpc, campaign_id, cursor=None, page=1000):
-	options = {'campaign': campaign_id, 'cursor': cursor, 'page': page}
-	results = rpc.graphql("""\
-	query getCampaignExport($campaign: String!, $cursor: String, $page: Int) {
-		db {
-			campaign(id: $campaign) {
-				id
-				name
-				description
-				userId
-				created
-				maxCredentials
-				expiration
-				campaignTypeId
-				companyId
-				landingPages(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							campaignId
-							hostname
-							page
-						}
-					}
-					pageInfo {
-						hasNextPage
-						endCursor
-					}
-				}
-				messages(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							campaignId
-							targetEmail
-							firstName
-							lastName
-							opened
-							openerIp
-							openerUserAgent
-							sent
-							trained
-							companyDepartmentId
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-				visits(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							messageId
-							campaignId
-							count
-							ip
-							firstSeen
-							lastSeen
-							userAgent
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-				credentials(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							visitId
-							messageId
-							campaignId
-							username
-							password
-							submitted
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-				deaddropDeployments(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							campaignId
-							destination
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-				deaddropConnections(first: $page, after: $cursor) {
-					edges {
-						node {
-							id
-							deploymentId
-							campaignId
-							count
-							ip
-							localUsername
-							localHostname
-							localIpAddresses
-							firstSeen
-							lastSeen
-						}
-					}
-					pageInfo {
-						hasNextPage
-						startCursor
-						endCursor
-					}
-				}
-			}
-		}
-	}""", options)
-	return results['db']['campaign']
 
 def campaign_credentials_to_msf_txt(rpc, campaign_id, target_file):
 	"""
@@ -568,7 +428,13 @@ def liststore_export(store, columns, cb_write, cb_write_args, row_offset=0, writ
 	store_iter = store.get_iter_first()
 	rows_written = 0
 	while store_iter:
-		cb_write(rows_written + 1 + row_offset, (store.get_value(store_iter, c) for c in store_columns), *cb_write_args)
+		row = collections.deque()
+		for column in store_columns:
+			value = store.get_value(store_iter, column)
+			if isinstance(value, datetime.datetime):
+				value = utilities.format_datetime(value)
+			row.append(value)
+		cb_write(rows_written + 1 + row_offset, row, *cb_write_args)
 		rows_written += 1
 		store_iter = store.iter_next(store_iter)
 	return rows_written

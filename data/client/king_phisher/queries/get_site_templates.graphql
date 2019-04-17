@@ -1,0 +1,18 @@
+# retrieve information for all site templates
+query getSiteTemplates {
+  siteTemplates {
+    edges {
+      node {
+        created
+        hostname
+        path
+        metadata {
+          authors
+          classifiers
+          description
+          pages
+        }
+      }
+    }
+  }
+}

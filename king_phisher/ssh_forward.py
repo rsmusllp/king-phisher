@@ -173,7 +173,7 @@ class SSHTCPForwarder(threading.Thread):
 
 	def __resolve_private_key(self, private_key, agent_keys):
 		private_key = private_key.strip()
-		pkey_type = private_key.split(':')[0].lower()
+		pkey_type = private_key.split(':', 1)[0].lower()
 		if pkey_type in ('file', 'key'):
 			if pkey_type == 'file':
 				file_path = os.path.expandvars(private_key[5:])
@@ -206,21 +206,28 @@ class SSHTCPForwarder(threading.Thread):
 			finally:
 				file_h.close()
 			return private_key
+		# if the key has whitespace, discard anything after the first occurrence
+		private_key = private_key.split(' ', 1)[0]
 
 		# if it's not one of the above, treat it like it's a fingerprint
 		if pkey_type == 'sha256':
 			# OpenSSH 6.8 started to use sha256 & base64 for keys
 			algorithm = pkey_type
-			private_key = private_key[7:]
-			private_key = binascii.a2b_base64(private_key + '=')
+			private_key = private_key[7:] + '='
+			decode = binascii.a2b_base64
 		else:
 			algorithm = 'md5'
 			private_key = private_key.replace(':', '')
-			private_key = binascii.a2b_hex(private_key)
+			decode = binascii.a2b_hex
+		try:
+			private_key = decode(private_key)
+		except binascii.Error as error:
+			self.logger.warning("the user specified ssh key could not be decoded (type: {0}, error: {1!r})".format(pkey_type, error))
+			raise KingPhisherSSHKeyError('The preferred SSH key could not be decoded.')
 		private_key = tuple(key for key in agent_keys if hashlib.new(algorithm, key.blob).digest() == private_key)
 		if not private_key:
 			self.logger.warning('the user specified ssh key could not be loaded from the ssh agent')
-			raise KingPhisherSSHKeyError('The SSH key could not be loaded from the SSH agent.')
+			raise KingPhisherSSHKeyError('The preferred SSH key could not be loaded from the SSH agent.')
 		return private_key[0]
 
 	def __try_connect(self, *args, **kwargs):

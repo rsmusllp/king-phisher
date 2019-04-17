@@ -38,12 +38,13 @@ from .aaa import ServerAuthenticatedSessionManagerTests
 from .aaa import ServerAuthenticationTests
 from .aaa import ServerCachedPasswordTests
 from .configuration import ServerConfigurationTests
-from .database import DatabaseRPCTests
-from .database import DatabaseSchemaTests
-from .database import DatabaseStorageTests
-from .database import DatabaseTests
+from .database import *
 from .graphql import ServerGraphQLTests
+from .graphql import ServerGraphQLDatabaseTests
+from .letsencrypt import ServerSNIHostnameTests
 from .rest_api import ServerRESTAPITests
 from .server import CampaignWorkflowTests
 from .server import ServerTests
 from .server_rpc import ServerRPCTests
+from .template_extras import TemplateExtraTests
+from .web_tools import ServerWebToolsTests

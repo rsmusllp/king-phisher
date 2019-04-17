@@ -40,6 +40,7 @@ import sys
 import traceback
 import xml.sax.saxutils as saxutils
 
+from king_phisher import startup
 from king_phisher import utilities
 from king_phisher.catalog import Catalog
 from king_phisher.client import plugins
@@ -50,6 +51,7 @@ from king_phisher.client.windows import html
 from gi.repository import Gdk
 from gi.repository import Gtk
 import requests.exceptions
+import smoke_zephyr.requirements
 import smoke_zephyr.utilities
 
 __all__ = ('PluginManagerWindow',)
@@ -60,7 +62,7 @@ _ROW_TYPE_CATALOG = 'catalog'
 _LOCAL_REPOSITORY_ID = 'local'
 _LOCAL_REPOSITORY_TITLE = '[Locally Installed]'
 
-_ModelNamedRow = collections.namedtuple('RowModel', (
+_ModelNamedRow = collections.namedtuple('ModelNamedRow', (
 	'id',
 	'installed',
 	'enabled',
@@ -72,6 +74,7 @@ _ModelNamedRow = collections.namedtuple('RowModel', (
 	'sensitive_installed',
 	'type'
 ))
+
 class _ModelNode(object):
 	__slots__ = ('children', 'row')
 	def __init__(self, *args, **kwargs):
@@ -168,9 +171,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	)
 	top_gobject = 'window'
 
-	# methods defined within this class that are suffixed with _tsafe are safe
-	# to be called from a non-GUI thread and by extension only call fellow
-	# _tsafe methods
 	def __init__(self, *args, **kwargs):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
@@ -206,8 +206,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			)
 		)
 		tvm.column_views['Enabled'].set_cell_data_func(toggle_renderer_enable, self._toggle_enabled_cell_data_func)
-		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'visible', 6)
 		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'sensitive', 1)
+		tvm.column_views['Enabled'].add_attribute(toggle_renderer_enable, 'visible', 6)
 		tvm.column_views['Installed'].set_cell_data_func(toggle_renderer_install, self._toggle_install_cell_data_func)
 		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'visible', 7)
 		tvm.column_views['Installed'].add_attribute(toggle_renderer_install, 'sensitive', 8)
@@ -309,7 +309,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					version=plugin_info['version'],
 					visible_enabled=True,
 					visible_installed=True,
-					sensitive_installed=self.catalog_plugins.is_compatible(catalog.id, repo.id, plugin_name),
+					sensitive_installed=True,
 					type=_ROW_TYPE_PLUGIN
 				))
 		gui_utilities.glib_idle_add_once(self.__store_add_node, catalog_node)
@@ -321,11 +321,20 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		# WARNING: this may not be called from the GUI thread
 		self.__load_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
 
+	def _pip_install(self, packages):
+		options = ['--no-color']
+		if self.application.user_library_path is None:
+			self.logger.warning('can not install packages with out a defined library path')
+			return
+		options.extend(['--target', self.application.user_library_path])
+		args = [sys.executable, '-m', 'pip', 'install'] + options + packages
+		return startup.run_process(args)
+
 	def _plugin_disable(self, model_row):
 		named_row = _ModelNamedRow(*model_row)
 		self.application.plugin_manager.disable(named_row.id)
 		self.config['plugins.enabled'].remove(named_row.id)
-		model_row[_ModelNamedRow._fields.index('enabled')] = False
+		self._set_model_item(model_row.path, enabled=False, sensitive_installed=True)
 
 	def _plugin_enable(self, model_row):
 		named_row = _ModelNamedRow(*model_row)
@@ -335,7 +344,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		if not pm.enable(named_row.id):
 			return
-		self._set_model_item(model_row.path, 'enabled', True)
+		self._set_model_item(model_row.path, enabled=True, sensitive_installed=False)
 		self.config['plugins.enabled'].append(named_row.id)
 
 	def _plugin_install(self, model_row):
@@ -349,7 +358,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			plugin_src = self.config['plugins.installed'].get(named_row.id)
 			if plugin_src != {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}:
 				window_question = 'A plugin with this name is already installed from another\nrepository. Do you want to replace it with this one?'
-				if not gui_utilities.show_dialog_yes_no('Plugin installed from another source', self.window, window_question):
+				if not gui_utilities.show_dialog_yes_no('Plugin Already Installed', self.window, window_question):
 					return
 				if not self._remove_matching_plugin(named_row, plugin_src):
 					self.logger.warning("failed to uninstall plugin {0}".format(named_row.id))
@@ -358,6 +367,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 
 	def _plugin_install_tsafe(self, catalog_model, repo_model, model_row, named_row):
 		self.__installing_plugin = named_row.id
+		self.logger.debug("installing plugin '{0}'".format(named_row.id))
 		self._update_status_bar_tsafe("Installing plugin {}...".format(named_row.title))
 		_show_dialog_error_tsafe = functools.partial(gui_utilities.glib_idle_add_once, gui_utilities.show_dialog_error, 'Failed To Install', self.window)
 		try:
@@ -366,39 +376,65 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.logger.warning("failed to download plugin {}".format(named_row.id))
 			_show_dialog_error_tsafe("Failed to download {} plugin, check your internet connection.".format(named_row.id))
 			self._update_status_bar_tsafe("Installing plugin {} failed.".format(named_row.title))
+			self.__installing_plugin = None
 			return
 		except Exception:
 			self.logger.warning("failed to install plugin {}".format(named_row.id), exc_info=True)
 			_show_dialog_error_tsafe("Failed to install {} plugin.".format(named_row.id))
 			self._update_status_bar_tsafe("Installing plugin {} failed.".format(named_row.title))
-			return
-		finally:
 			self.__installing_plugin = None
+			return
 
 		self.config['plugins.installed'][named_row.id] = {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}
-		self.logger.info("installed plugin {} from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
-		self._reload_plugin_tsafe(model_row, named_row)
+		self.logger.info("installed plugin '{}' from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
+		plugin = self._reload_plugin_tsafe(model_row, named_row)
+		if self.config['plugins.pip.install_dependencies']:
+			try:
+				packages = smoke_zephyr.requirements.check_requirements(tuple(plugin.req_packages.keys()))
+			except ValueError:
+				self.logger.warning("requirements check failed for plugin '{}', can not automatically install requirements".format(named_row.id))
+				packages = None
+			if packages:
+				self.logger.debug("installing missing or incompatible packages from PyPi for plugin '{0}'".format(named_row.id))
+				self._update_status_bar_tsafe(
+					"Installing {:,} dependenc{} for plugin {} from PyPi.".format(len(packages), 'y' if len(packages) == 1 else 'ies', named_row.title)
+				)
+				pip_results = self._pip_install(packages)
+				if pip_results is None:
+					self.logger.warning('pip install failed')
+					_show_dialog_error_tsafe(
+						"Failed to run pip to install package(s) for plugin {}.".format(named_row.id)
+					)
+				elif pip_results.status:
+					self.logger.warning('pip install failed, exit status: ' + str(pip_results.status))
+					_show_dialog_error_tsafe(
+						"Failed to install pip package(s) for plugin {}.".format(named_row.id)
+					)
+				else:
+					plugin = self._reload_plugin_tsafe(model_row, named_row)
+		self.__installing_plugin = None
 		gui_utilities.glib_idle_add_once(self.__plugin_install_post, catalog_model, repo_model, model_row, named_row)
 
 	def __plugin_install_post(self, catalog_model, repo_model, model_row, named_row):
 		# handles GUI related updates after data has been fetched from the internet
 		if model_row.path is not None:
-			self._set_model_item(model_row.path, 'installed', True)
-			self._set_model_item(model_row.path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
+			version = self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version']
+			self._set_model_item(model_row.path, installed=True, version=version)
 			if self._selected_model_row.path == model_row.path:
 				self._popup_menu_refresh(model_row)
-		self._update_status_bar("Installing plugin {} completed.".format(named_row.title))
+		self._update_status_bar("Finished installing plugin {}.".format(named_row.title))
 
 	def _plugin_uninstall(self, model_row):
-		plugin_id = _ModelNamedRow(*model_row).id
-		if not self.application.plugin_manager.uninstall(plugin_id):
+		named_row = _ModelNamedRow(*model_row)
+		if not self.application.plugin_manager.uninstall(named_row.id):
 			return False
-		del self.config['plugins.installed'][plugin_id]
+		del self.config['plugins.installed'][named_row.id]
 		if model_row.parent and model_row.parent[_ModelNamedRow._fields.index('id')] == _LOCAL_REPOSITORY_ID:
 			del self._model[model_row.path]
 		else:
-			self._set_model_item(model_row.path, 'installed', False)
-		self.logger.info("successfully uninstalled plugin {0}".format(plugin_id))
+			self._set_model_item(model_row.path, installed=False)
+		self.logger.info("successfully uninstalled plugin {0}".format(named_row.id))
+		self._update_status_bar("Finished uninstalling plugin {}.".format(named_row.title))
 		return True
 
 	def _popup_menu_refresh(self, model_row):
@@ -458,17 +494,21 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				pm.enable(named_row.id)
 			self.__load_errors.pop(named_row.id, None)
 		gui_utilities.glib_idle_add_once(self.__reload_plugin_post, model_row, named_row, klass)
+		return klass
 
 	def __reload_plugin_post(self, model_row, named_row, klass=None):
 		if model_row.path is not None:
 			if named_row.id == self._selected_named_row.id:
 				self._set_info(model_row)
 			if klass is None:
-				self._set_model_item(model_row.path, 'title', "{0} (Reload Failed)".format(named_row.id))
+				self._set_model_item(model_row.path, title="{0} (Reload Failed)".format(named_row.id))
 			else:
-				self._set_model_item(model_row.path, 'title', klass.title)
-				self._set_model_item(model_row.path, 'compatibility', 'Yes' if klass.is_compatible else 'No')
-				self._set_model_item(model_row.path, 'version', klass.version)
+				self._set_model_item(
+					model_row.path,
+					title=klass.title,
+					compatibility='Yes' if klass.is_compatible else 'No',
+					version=klass.version
+				)
 		self._update_status_bar('Reloading plugin... completed.')
 
 	def _remove_matching_plugin(self, named_row, plugin_src):
@@ -508,8 +548,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		model_row = self._selected_model_row
 		return _ModelNamedRow(*model_row) if model_row else None
 
-	def _set_model_item(self, model_path, item, item_value):
-		self._model[model_path][_ModelNamedRow._fields.index(item)] = item_value
+	def _set_model_item(self, model_path, **kwargs):
+		model_row = self._model[model_path]
+		for key, value in kwargs.items():
+			model_row[_ModelNamedRow._fields.index(key)] = value
 
 	def _set_info(self, model_instance):
 		named_model = _ModelNamedRow(*model_instance)
@@ -588,26 +630,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.gobjects['label_plugin_info_description'].set_text(plugin['description'])
 		self._set_info_plugin_homepage_url(plugin['homepage'])
 		self._set_info_plugin_reference_urls(plugin.get('reference_urls', []))
-		self._set_info_plugin_classifiers(plugin.get('classifiers', []))
-
-	def _set_info_plugin_classifiers(self, classifiers):
-		label = self.gobjects['label_plugin_info_for_classifiers']
-		listbox = self.gobjects['listbox_plugin_info_classifiers']
-		gui_utilities.gtk_widget_destroy_children(listbox)
-		if not classifiers:
-			label.set_property('visible', False)
-			listbox.set_property('visible', False)
-			return
-		label.set_property('visible', True)
-		listbox.set_property('visible', True)
-		for classifier in classifiers:
-			label = Gtk.Label()
-			label.set_markup("<span font=\"smaller\"><tt>{0}</tt></span>".format(saxutils.escape(classifier)))
-			label.set_property('halign', Gtk.Align.START)
-			label.set_property('use-markup', True)
-			label.set_property('valign', Gtk.Align.START)
-			label.set_property('visible', True)
-			listbox.add(label)
+		classifiers = plugin.get('classifiers', [])
+		if classifiers:
+			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', True)
+			gui_utilities.gtk_listbox_populate_labels(
+				self.gobjects['listbox_plugin_info_classifiers'],
+				classifiers
+			)
+		else:
+			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', False)
 
 	def _set_info_plugin_error(self, model_instance):
 		id_ = _ModelNamedRow(*model_instance).id
@@ -772,7 +803,18 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		pm = self.application.plugin_manager
 		self.__load_errors = {}
 		pm.load_all(on_error=self._on_plugin_load_error_tsafe)
-		node = _ModelNode(_LOCAL_REPOSITORY_ID, None, True, _LOCAL_REPOSITORY_TITLE, None, None, False, False, False, _ROW_TYPE_CATALOG)
+		node = _ModelNode(
+			id=_LOCAL_REPOSITORY_ID,
+			installed=None,
+			enabled=True,
+			title=_LOCAL_REPOSITORY_TITLE,
+			compatibility=None,
+			version=None,
+			visible_enabled=False,
+			visible_installed=False,
+			sensitive_installed=False,
+			type=_ROW_TYPE_CATALOG
+		)
 
 		for name, plugin in pm.loaded_plugins.items():
 			if self.config['plugins.installed'].get(name):
@@ -913,11 +955,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		model_row = self._model[path]
 		named_row = _ModelNamedRow(*model_row)
 		if named_row.type == _ROW_TYPE_PLUGIN and named_row.installed:
+			if named_row.enabled:
+				self._plugin_disable(model_row)
 			self._plugin_uninstall(model_row)
 		else:
 			self._plugin_install(model_row)
-		if named_row.enabled:
-			self._plugin_enable(model_row)
 
 	def signal_treeview_row_activated(self, treeview, path, column):
 		model_row = self._model[path]

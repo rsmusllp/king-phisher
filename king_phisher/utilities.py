@@ -35,16 +35,16 @@ import collections
 import datetime
 import functools
 import gc
+import grp
 import inspect
 import json
 import logging
 import operator
 import os
+import pwd
 import random
 import re
-import shlex
 import string
-import subprocess
 import sys
 import threading
 
@@ -134,7 +134,7 @@ class Mock(object):
 	"""
 	__all__ = []
 	def __init__(self, *args, **kwargs):
-		its.mocked = True
+		pass
 
 	def __add__(self, other):
 		return other
@@ -177,7 +177,7 @@ def argp_add_args(parser, default_root=''):
 	:type parser: :py:class:`argparse.ArgumentParser`
 	:param str default_root: The default root logger to specify.
 	"""
-	startup.argp_add_default_args(parser, default_root='')
+	startup.argp_add_default_args(parser, default_root=default_root)
 
 	@functools.wraps(parser.parse_args)
 	def parse_args_hook(*args, **kwargs):
@@ -294,6 +294,52 @@ def format_datetime(dt, encoding='utf-8'):
 		formatted = formatted.decode(encoding)
 	return formatted
 
+def fs_chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
+	"""
+	This is a high-level wrapper around :py:func:`os.chown` to provide
+	additional functionality. ``None`` can be specified as the *user* or *group*
+	to leave the value unchanged. At least one of either *user* or *group* must
+	be specified.
+
+	.. versionadded:: 1.14.0
+
+	:param str path: The path to change the owner information for.
+	:param user: The new owner to set for the path.
+	:type user: int, str, ``None``
+	:param group: The new group to set for the path. If set to
+		:py:class:`~king_phisher.constants.AUTOMATIC`, the group that *user*
+		belongs too will be used.
+	:type group: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
+	:param bool recursive: Whether or not to recurse into directories.
+	"""
+	if (user is constants.AUTOMATIC or user is None) and (group is constants.AUTOMATIC or group is None):
+		raise ValueError('either user or group must be specified')
+	if isinstance(user, str):
+		struct_passwd = pwd.getpwnam(user)
+		user = struct_passwd.pw_uid
+		if group is constants.AUTOMATIC:
+			group = struct_passwd.pw_gid
+	elif user is None:
+		user = -1
+	elif not isinstance(user, int) and user >= 0:
+		raise ValueError('owner must be a (zero inclusive) natural number or a user name')
+	elif group is constants.AUTOMATIC:
+		struct_passwd = pwd.getpwuid(user)
+		group = struct_passwd.pw_gid
+	if isinstance(group, str):
+		struct_group = grp.getgrnam(group)
+		group = struct_group.gr_gid
+	elif group is None:
+		group = -1
+	elif not isinstance(group, int) and group >= 0:
+		raise ValueError('group must be a (zero inclusive) natural number or a group name')
+	if recursive:
+		iterator = smoke_zephyr.utilities.FileWalker(path)
+	else:
+		iterator = (path,)
+	for path in iterator:
+		os.chown(path, user, group)
+
 def is_valid_email_address(email_address):
 	"""
 	Check that the string specified appears to be a valid email address.
@@ -331,7 +377,7 @@ def open_uri(uri):
 	else:
 		raise RuntimeError('could not find suitable application to open uri')
 	proc_args.append(uri)
-	return start_process(proc_args)
+	return startup.start_process(proc_args)
 
 def parse_datetime(ts):
 	"""
@@ -438,30 +484,6 @@ def random_string_lower_numeric(size):
 	"""
 	return ''.join(random.choice(string.ascii_lowercase + string.digits) for x in range(size))
 
-def start_process(proc_args, wait=True):
-	"""
-	Start an external process.
-
-	:param proc_args: The arguments of the process to start.
-	:type proc_args: list, str
-	:param bool wait: Wait for the process to exit before returning.
-	"""
-	if isinstance(proc_args, str):
-		proc_args = shlex.split(proc_args)
-	close_fds = True
-	startupinfo = None
-	preexec_fn = None if wait else getattr(os, 'setsid', None)
-	if sys.platform.startswith('win'):
-		close_fds = False
-		startupinfo = subprocess.STARTUPINFO()
-		startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-		startupinfo.wShowWindow = subprocess.SW_HIDE
-
-	proc_h = subprocess.Popen(proc_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=preexec_fn, close_fds=close_fds, startupinfo=startupinfo)
-	if not wait:
-		return proc_h
-	return proc_h.wait() == 0
-
 def switch(value, comp=operator.eq, swapped=False):
 	"""
 	A pure Python implementation of a switch case statement. *comp* will be used
@@ -503,6 +525,8 @@ def validate_json_schema(data, schema_file_id):
 	"""
 	schema_file_name = schema_file_id + '.json'
 	file_path = find.data_file(os.path.join('schemas', 'json', schema_file_name))
+	if file_path is None:
+		raise FileNotFoundError('the json schema file was not found')
 	with open(file_path, 'r') as file_h:
 		schema = json.load(file_h)
 	jsonschema.validate(data, schema)

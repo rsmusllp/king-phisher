@@ -482,6 +482,7 @@ def vte_child_routine(config):
 	for name, value in headers.items():
 		rpc.headers[str(name)] = str(value)
 	user_data_path = config['user_data_path']
+	sys.path.append(config['user_library_path'])
 
 	print("Python {0} on {1}".format(sys.version, sys.platform))  # pylint: disable=superfluous-parens
 	print("Campaign Name: '{0}' ID: {1}".format(config['campaign_name'], config['campaign_id']))  # pylint: disable=superfluous-parens

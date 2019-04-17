@@ -143,6 +143,36 @@
           "minItems": 1,
           "type": "array"
         },
+        "hostnames": {
+          "id": "/properties/server/properties/hostnames",
+          "items": {
+            "id": "/properties/server/properties/hostnames/items",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "letsencrypt": {
+          "id": "/properties/server/properties/letsencrypt",
+          "properties": {
+            "certbot_path": {
+              "id": "/properties/server/properties/letsencrypt/properties/certbot_path",
+              "type": "string"
+            },
+            "chown_data_path": {
+              "id": "/properties/server/properties/letsencrypt/properties/data_path",
+              "type": "boolean"
+            },
+            "data_path": {
+              "id": "/properties/server/properties/letsencrypt/properties/data_path",
+              "type": "string"
+            }
+          },
+          "required": [
+            "data_path"
+          ],
+          "type": "object"
+        },
         "pid_file": {
           "id": "/properties/server/properties/pid_file",
           "type": "string"

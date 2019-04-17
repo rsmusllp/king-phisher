@@ -43,11 +43,11 @@ class ClientDialogTests(testing.KingPhisherTestCase):
 		for dialog_name in dialog_names:
 			dialog_obj = getattr(dialogs, dialog_name)
 			msg = "{0} is not a subclass of GladeGObject".format(dialog_name)
-			self.assertTrue(issubclass(dialog_obj, gui_utilities.GladeGObject), msg=msg)
+			self.assertIsSubclass(dialog_obj, gui_utilities.GladeGObject, msg=msg)
 			msg = "{0}.top_gobject is not 'dialog'".format(dialog_name)
 			self.assertEqual(getattr(dialog_obj, 'top_gobject', None), 'dialog', msg=msg)
 			msg = "{0} has no 'interact' method".format(dialog_name)
-			self.assertTrue(hasattr(dialog_obj, 'interact'), msg=msg)
+			self.assertHasAttribute(dialog_obj, 'interact', msg=msg)
 
 if __name__ == '__main__':
 	unittest.main()

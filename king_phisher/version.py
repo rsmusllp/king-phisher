@@ -30,9 +30,22 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+################################################################################
+#
+# CLEAN ROOM MODULE
+#
+# This module is classified as a "Clean Room" module and is subject to
+# restrictions on what it may import.
+#
+# See: https://king-phisher.readthedocs.io/en/latest/development/modules.html#clean-room-modules
+#
+################################################################################
+
 import collections
 import os
 import subprocess
+
+from king_phisher import its
 
 def get_revision(encoding='utf-8'):
 	"""
@@ -49,7 +62,7 @@ def get_revision(encoding='utf-8'):
 			('git', 'rev-parse', 'HEAD'),
 			stdout=subprocess.PIPE,
 			stderr=subprocess.PIPE,
-			close_fds=True,
+			close_fds=False if its.on_windows else True,
 			cwd=os.path.dirname(os.path.abspath(__file__))
 		)
 	except OSError:
@@ -63,10 +76,10 @@ def get_revision(encoding='utf-8'):
 revision = get_revision()
 """The git revision identifying the latest commit if available."""
 
-version_info = collections.namedtuple('version_info', ('major', 'minor', 'micro'))(1, 12, 0)
+version_info = collections.namedtuple('version_info', ('major', 'minor', 'micro'))(1, 14, 0)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
 
-version_label = 'beta2'
+version_label = 'beta'
 """A version label such as alpha or beta."""
 
 version = "{0}.{1}.{2}".format(version_info.major, version_info.minor, version_info.micro)
@@ -87,7 +100,7 @@ if version_label:
 if revision:
 	version += " (rev: {0})".format(revision[:12])
 
-rpc_api_version = collections.namedtuple('rpc_api_version', ('major', 'minor'))(6, 1)
+rpc_api_version = collections.namedtuple('rpc_api_version', ('major', 'minor'))(6, 4)
 """
 A tuple representing the local version of the RPC API for use with compatibility
 checks. The major version is incremented when backwards incompatible changes are

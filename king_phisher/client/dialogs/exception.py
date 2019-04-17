@@ -95,6 +95,8 @@ def format_exception_details(exc_type, exc_value, exc_traceback, error_uid=None)
 		raise TypeError('error_uid must be an instance of either str, uuid.UUID or None')
 	pversion = 'UNKNOWN'
 	if its.on_linux:
+		# todo: platform.linux_distribution will be removed in Python 3.8, see:
+		# https://docs.python.org/3/library/platform.html#platform.linux_distribution
 		pversion = 'Linux: ' + ' '.join(platform.linux_distribution())
 	elif its.on_windows:
 		pversion = 'Windows: ' + ' '.join(platform.win32_ver())
@@ -103,7 +105,7 @@ def format_exception_details(exc_type, exc_value, exc_traceback, error_uid=None)
 		else:
 			pversion += ' (Frozen=False)'
 	exc_name = format_exception_name(exc_type)
-	rpc_error_details = 'N/A (Not a remote RPC error)'
+	rpc_error_details = 'N/A (Not an RPC error)'
 	if isinstance(exc_value, advancedhttpserver.RPCError) and exc_value.is_remote_exception:
 		rpc_error_details = "Name: {0}".format(exc_value.remote_exception['name'])
 		if exc_value.remote_exception.get('message'):

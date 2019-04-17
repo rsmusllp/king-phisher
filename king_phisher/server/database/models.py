@@ -47,11 +47,11 @@ import sqlalchemy.sql.expression
 
 DATABASE_TABLE_REGEX = '[a-z_]+'
 """A regular expression which will match all valid database table names."""
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 """The schema version of the database, used for compatibility checks."""
 
 MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name'))
-"""Table metadata.
+"""Metadata describing a table and its various attributes.
 
 .. py:attribute:: column_names
 
@@ -127,6 +127,14 @@ class BaseRowCls(object):
 	The base class from which other database table objects inherit from.
 	Provides a standard ``__repr__`` method and default permission checks which
 	are to be overridden as desired by subclasses.
+
+	.. warning::
+		Subclasses should not directly override the ``session_has_*_access``
+		methods. These contain wrapping logic to do things like checking if the
+		session is an administrator, etc. Instead subclasses looking to control
+		access should override the individual private variants
+		``_session_has_*_access``. Each of these use the same call signature as
+		their public counterparts.
 	"""
 	__repr_attributes__ = ()
 	"""Attributes which should be included in the __repr__ method."""
@@ -153,13 +161,22 @@ class BaseRowCls(object):
 		"""
 		Check that the authenticated session has the permissions specified in
 		*access*. The permissions in *access* are abbreviated with the first
-		letter of create, read, update, and delete.
+		letter of create, read, update, and delete. For example, to check for
+		read and update permissions, *access* would be ``'ru'``.
+
+		.. note::
+			This will always return ``True`` for sessions which are for
+			administrative users. To maintain this logic, this method **should
+			not** be overridden in subclasses. Instead override the specific
+			``_session_has_*_access`` methods as necessary.
 
 		:param str access: The desired permissions.
 		:param session: The authenticated session to check access for.
 		:return: Whether the session has the desired permissions.
 		:rtype: bool
 		"""
+		if session.user_is_admin:
+			return True
 		cls = self.__class__
 		if cls.is_private:
 			return False
@@ -179,22 +196,98 @@ class BaseRowCls(object):
 
 	@classmethod
 	def session_has_create_access(cls, session, instance=None):
-		return not cls.is_private
+		"""
+		Check that the authenticated *session* has access to create the
+		specified model *instance*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
+		if session.user_is_admin:
+			return True
+		return cls._session_has_create_access(session, instance=instance)
 
 	@classmethod
 	def session_has_delete_access(cls, session, instance=None):
-		return not cls.is_private
+		"""
+		Check that the authenticated *session* has access to delete the
+		specified model *instance*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
+		if session.user_is_admin:
+			return True
+		return cls._session_has_delete_access(session, instance=instance)
 
 	@classmethod
 	def session_has_read_access(cls, session, instance=None):
-		return not cls.is_private
+		"""
+		Check that the authenticated *session* has access to read the
+		specified model *instance*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
+		if session.user_is_admin:
+			return True
+		return cls._session_has_read_access(session, instance=instance)
 
 	@classmethod
 	def session_has_read_prop_access(cls, session, prop, instance=None):
-		return cls.session_has_read_access(session, instance=instance)
+		"""
+		Check that the authenticated *session* has access to read the property
+		of the specified model *instance*. This allows models to only explicitly
+		control which of their attributes can be read by a particular *session*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
+		if session.user_is_admin:
+			return True
+		return cls._session_has_read_prop_access(session, prop, instance=instance)
 
 	@classmethod
 	def session_has_update_access(cls, session, instance=None):
+		"""
+		Check that the authenticated *session* has access to update the
+		specified model *instance*.
+
+		:param session: The authenticated session to check access for.
+		:param instance: The optional model instance to inspect.
+		:return: Whether the session has the desired permissions.
+		:rtype: bool
+		"""
+		if session.user_is_admin:
+			return True
+		return cls._session_has_update_access(session, instance=instance)
+
+	@classmethod
+	def _session_has_create_access(cls, session, instance=None):
+		return not cls.is_private
+
+	@classmethod
+	def _session_has_delete_access(cls, session, instance=None):
+		return not cls.is_private
+
+	@classmethod
+	def _session_has_read_access(cls, session, instance=None):
+		return not cls.is_private
+
+	@classmethod
+	def _session_has_read_prop_access(cls, session, prop, instance=None):
+		return cls._session_has_read_access(session, instance=instance)
+
+	@classmethod
+	def _session_has_update_access(cls, session, instance=None):
 		return not cls.is_private
 
 	@classmethod
@@ -207,6 +300,10 @@ class BaseRowCls(object):
 		"""
 		columns = tuple(col.name for col in cls.__table__.columns)
 		return MetaTable(column_names=columns, model=cls, name=cls.__tablename__)
+
+	def to_dict(self):
+		# versionadded:: 1.13.0
+		return collections.OrderedDict((col.name, getattr(self, col.name)) for col in self.__class__.__table__.columns)
 
 Base = sqlalchemy.ext.declarative.declarative_base(cls=BaseRowCls)
 metadata = Base.metadata
@@ -237,19 +334,19 @@ class AlertSubscription(ExpireMixIn, Base):
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 
 	@classmethod
-	def session_has_create_access(cls, session, instance=None):
+	def _session_has_create_access(cls, session, instance=None):
 		return instance and session.user == instance.user_id
 
 	@classmethod
-	def session_has_delete_access(cls, session, instance=None):
+	def _session_has_delete_access(cls, session, instance=None):
 		return instance and session.user == instance.user_id
 
 	@classmethod
-	def session_has_read_access(cls, session, instance=None):
+	def _session_has_read_access(cls, session, instance=None):
 		return instance and session.user == instance.user_id
 
 	@classmethod
-	def session_has_update_access(cls, session, instance=None):
+	def _session_has_update_access(cls, session, instance=None):
 		return instance and session.user == instance.user_id
 
 @register_table
@@ -274,6 +371,9 @@ class Campaign(ExpireMixIn, Base):
 	max_credentials = sqlalchemy.Column(sqlalchemy.Integer)
 	campaign_type_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaign_types.id'))
 	company_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('companies.id'))
+	credential_regex_username = sqlalchemy.Column(sqlalchemy.String)
+	credential_regex_password = sqlalchemy.Column(sqlalchemy.String)
+	credential_regex_mfa_token = sqlalchemy.Column(sqlalchemy.String)
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='campaign', cascade='all, delete-orphan')
 	credentials = sqlalchemy.orm.relationship('Credential', backref='campaign', cascade='all, delete-orphan')
@@ -319,7 +419,9 @@ class Credential(Base):
 	campaign_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('campaigns.id'), nullable=False)
 	username = sqlalchemy.Column(sqlalchemy.String)
 	password = sqlalchemy.Column(sqlalchemy.String)
+	mfa_token = sqlalchemy.Column(sqlalchemy.String)
 	submitted = sqlalchemy.Column(sqlalchemy.DateTime, default=current_timestamp)
+	regex_validated = sqlalchemy.Column(sqlalchemy.Boolean)
 
 @register_table
 class DeaddropDeployment(Base):
@@ -409,30 +511,37 @@ class User(ExpireMixIn, Base):
 	email_address = sqlalchemy.Column(sqlalchemy.String)
 	otp_secret = sqlalchemy.Column(sqlalchemy.String(16))
 	last_login = sqlalchemy.Column(sqlalchemy.DateTime)
+	access_level = sqlalchemy.Column(sqlalchemy.Integer, default=1000, nullable=False)
 	# relationships
 	alert_subscriptions = sqlalchemy.orm.relationship('AlertSubscription', backref='user', cascade='all, delete-orphan')
+	authenticated_sessions = sqlalchemy.orm.relationship('AuthenticatedSession', backref='user', cascade='all, delete-orphan')
 	campaigns = sqlalchemy.orm.relationship('Campaign', backref='user', cascade='all, delete-orphan')
 
+	@property
+	def is_admin(self):
+		"""True when the user is an administrative user as determined by checking the :py:attr:`.User.access_level` is ``0``."""
+		return self.access_level == 0
+
 	@classmethod
-	def session_has_create_access(cls, session, instance=None):
+	def _session_has_create_access(cls, session, instance=None):
 		return False
 
 	@classmethod
-	def session_has_delete_access(cls, session, instance=None):
+	def _session_has_delete_access(cls, session, instance=None):
 		return False
 
 	@classmethod
-	def session_has_read_access(cls, session, instance=None):
+	def _session_has_read_access(cls, session, instance=None):
 		return instance and session.user == instance.id
 
 	@classmethod
-	def session_has_read_prop_access(cls, session, prop, instance=None):
+	def _session_has_read_prop_access(cls, session, prop, instance=None):
 		if prop in ('id', 'campaigns', 'name'):  # everyone can read the id
 			return True
 		return cls.session_has_read_access(session, instance=instance)
 
 	@classmethod
-	def session_has_update_access(cls, session, instance=None):
+	def _session_has_update_access(cls, session, instance=None):
 		return instance and session.user == instance.id
 
 @register_table

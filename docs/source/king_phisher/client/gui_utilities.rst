@@ -20,6 +20,8 @@ Functions
 
 .. autofunction:: glib_idle_add_wait
 
+.. autofunction:: glib_idle_add_store_extend
+
 .. autofunction:: gobject_get_value
 
 .. autofunction:: gobject_set_value
@@ -33,6 +35,8 @@ Functions
 .. autofunction:: gtk_calendar_set_pydate
 
 .. autofunction:: gtk_list_store_search
+
+.. autofunction:: gtk_listbox_populate_labels
 
 .. autofunction:: gtk_menu_get_item_by_label
 

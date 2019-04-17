@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
 import json
 import unittest
 
@@ -41,6 +42,15 @@ class ClientApplicationTests(testing.KingPhisherTestCase):
 	def test_client_main_window_initialize(self):
 		find.data_path_append('data/client')
 		application.KingPhisherClientApplication()
+
+	def test_user_paths(self):
+		app = application.KingPhisherClientApplication()
+		for user_path in (app.user_data_path, app.user_library_path):
+			self.assertIsNotNone(user_path)
+			self.assertIsNotEmpty(user_path)
+			self.assertTrue(os.path.isdir(user_path))
+			self.assertTrue(os.access(user_path, os.R_OK | os.W_OK))
+			self.assertEqual(user_path, os.path.abspath(user_path))
 
 	def test_client_template_config(self):
 		find.data_path_append('data/client')

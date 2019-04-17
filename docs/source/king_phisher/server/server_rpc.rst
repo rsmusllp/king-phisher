@@ -69,6 +69,10 @@ Functions
 
 .. autofunction:: rpc_graphql
 
+.. autofunction:: rpc_hostnames_add
+
+.. autofunction:: rpc_hostnames_get
+
 .. autofunction:: rpc_login
 
 .. autofunction:: rpc_logout
@@ -78,5 +82,17 @@ Functions
 .. autofunction:: rpc_plugins_list
 
 .. autofunction:: rpc_shutdown
+
+.. autofunction:: rpc_ssl_letsencrypt_issue
+
+.. autofunction:: rpc_ssl_letsencrypt_certbot_version
+
+.. autofunction:: rpc_ssl_sni_hostnames_get
+
+.. autofunction:: rpc_ssl_sni_hostnames_load
+
+.. autofunction:: rpc_ssl_sni_hostnames_unload
+
+.. autofunction:: rpc_ssl_status
 
 .. autofunction:: rpc_version

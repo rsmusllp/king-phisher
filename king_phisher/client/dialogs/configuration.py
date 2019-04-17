@@ -157,6 +157,8 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		# connect to the signal here so the settings can be loaded with modifications
 		self.gobjects['switch_smtp_ssh_enable'].connect('notify::active', self.signal_switch_smtp_ssh)
 		self._plugin_option_widgets = collections.defaultdict(dict)
+		checkbutton = self.gtk_builder_get('checkbutton_pip_install_dependencies')
+		checkbutton.set_active(self.config['plugins.pip.install_dependencies'])
 
 	def signal_switch_smtp_ssh(self, switch, _):
 		active = switch.get_property('active')
@@ -279,6 +281,8 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			plugin_config = self.config['plugins'][name]  # use or instead of get incase the value is actually None
 			for option_name, option_widget in option_widgets.items():
 				plugin_config[option_name] = option_widget.option.get_widget_value(option_widget.widget)
+		checkbutton = self.gtk_builder_get('checkbutton_pip_install_dependencies')
+		self.config['plugins.pip.install_dependencies'] = checkbutton.get_active()
 
 	def save_alert_settings(self):
 		email_address = gui_utilities.gobject_get_value(self.gobjects['entry_email_address'])

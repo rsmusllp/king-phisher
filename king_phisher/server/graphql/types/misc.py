@@ -33,15 +33,18 @@
 from __future__ import absolute_import
 
 import datetime
+import functools
 
 import king_phisher.geoip as geoip
 import king_phisher.ipaddress as ipaddress
 
 import geoip2.errors
+import graphene.relay
 import graphene.types.utils
 import graphql.language.ast
+import graphql_relay.connection.arrayconnection
 
-__all__ = ('GeoLocation', 'Plugin', 'PluginConnection', 'RelayNode')
+__all__ = ('ConnectionField', 'GeoLocation', 'Plugin', 'PluginConnection', 'RelayNode')
 
 # custom enum types
 class FilterOperatorEnum(graphene.Enum):
@@ -65,6 +68,25 @@ class RelayNode(graphene.relay.Node):
 	@classmethod
 	def to_global_id(cls, _, local_id):
 		return local_id
+
+class ConnectionField(graphene.relay.ConnectionField):
+	@classmethod
+	def connection_resolver(cls, resolver, connection, root, info, **kwargs):
+		iterable = resolver(root, info, **kwargs)
+		_len = len(iterable)
+		connection = graphql_relay.connection.arrayconnection.connection_from_list_slice(
+			iterable,
+			kwargs,
+			slice_start=0,
+			list_length=_len,
+			list_slice_length=_len,
+			connection_type=functools.partial(connection, total=_len),
+			pageinfo_type=graphene.relay.connection.PageInfo,
+			edge_type=connection.Edge
+		)
+		connection.iterable = iterable
+		connection.length = _len
+		return connection
 
 # custom scalar types
 class AnyScalar(graphene.types.Scalar):
@@ -123,28 +145,42 @@ class Plugin(graphene.ObjectType):
 	class Meta:
 		interfaces = (RelayNode,)
 	authors = graphene.List(graphene.String)
-	title = graphene.Field(graphene.String)
+	classifiers = graphene.List(graphene.String)
 	description = graphene.Field(graphene.String)
 	homepage = graphene.Field(graphene.String)
 	name = graphene.Field(graphene.String)
+	reference_urls = graphene.List(graphene.String)
+	title = graphene.Field(graphene.String)
 	version = graphene.Field(graphene.String)
 	@classmethod
 	def from_plugin(cls, plugin):
 		return cls(
 			authors=plugin.authors,
+			classifiers=plugin.classifiers,
 			description=plugin.description,
 			homepage=plugin.homepage,
 			name=plugin.name,
+			reference_urls=plugin.reference_urls,
 			title=plugin.title,
 			version=plugin.version
 		)
+
+	@classmethod
+	def resolve(cls, info, **kwargs):
+		plugin_manager = info.context.get('plugin_manager', {})
+		for _, plugin in plugin_manager:
+			if plugin.name != kwargs.get('name'):
+				continue
+			return cls.from_plugin(plugin)
 
 class PluginConnection(graphene.relay.Connection):
 	class Meta:
 		node = Plugin
 	total = graphene.Int()
-	def resolve_total(self, info, **kwargs):
-		return len(info.context.get('plugin_manager', {}))
+	@classmethod
+	def resolve(cls, info, **kwargs):
+		plugin_manager = info.context.get('plugin_manager', {})
+		return [Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
 
 # custom compound input types
 class FilterInput(graphene.InputObjectType):

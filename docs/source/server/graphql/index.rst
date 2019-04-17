@@ -6,4 +6,5 @@ GraphQL
    :titlesonly:
 
    overview.rst
+   schema.rst
    example_queries.rst

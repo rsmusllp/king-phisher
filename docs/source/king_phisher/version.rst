@@ -8,6 +8,10 @@ This module collects all import version information for the application. This
 is the authoritative source for the applications version information and should
 be used anywhere the version is required.
 
+.. note::
+   This is a :ref:`"Clean Room" module <clean-room-modules>` and is suitable for
+   use during initialization.
+
 Data
 ----
 

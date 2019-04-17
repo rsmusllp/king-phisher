@@ -33,7 +33,6 @@
 import collections
 import datetime
 import os
-import sys
 import tempfile
 import weakref
 
@@ -47,11 +46,6 @@ from king_phisher.serializers import JSON
 
 from gi.repository import Gtk
 import jinja2.exceptions
-
-if sys.version_info[:3] >= (3, 3, 0):
-	_MutableMapping = collections.abc.MutableMapping
-else:
-	_MutableMapping = collections.MutableMapping
 
 def _split_menu_path(menu_path):
 	menu_path = [path_item.strip() for path_item in menu_path.split('>')]

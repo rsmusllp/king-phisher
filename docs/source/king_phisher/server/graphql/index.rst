@@ -1,6 +1,8 @@
 :mod:`graphql`
 ==============
 
+.. module:: king_phisher.server.graphql
+
 This package provides the `GraphQL <http://graphql.org/>`_ interface for
 querying information from the King Phisher server. This allows flexibility in
 how the client would like for the returned data to be formatted. This interface

@@ -82,7 +82,7 @@ class ServerTests(KingPhisherServerTestCase):
 		javascript = str(javascript.decode('utf-8'))
 		load_script = 'function loadScript(url, callback) {'
 		error_message = "Javascript did not defined the loadScript function"
-		self.assertTrue(load_script in javascript, msg=error_message)
+		self.assertIn(load_script, javascript, msg=error_message)
 
 		beef_hook_url = "http://{0}:3000/hook.js".format(random_string(30))
 		self.config.set('beef.hook_url', beef_hook_url)
@@ -92,7 +92,7 @@ class ServerTests(KingPhisherServerTestCase):
 		javascript = str(javascript.decode('utf-8'))
 		load_script = "loadScript('{0}');".format(beef_hook_url)
 		error_message = "Javascript did not load the beef hook from the config"
-		self.assertTrue(load_script in javascript, msg=error_message)
+		self.assertIn(load_script, javascript, msg=error_message)
 
 	def test_static_resource_tracking_image(self):
 		http_response = self.http_request(self.config.get('server.tracking_image'), include_id=False)
@@ -118,6 +118,7 @@ class CampaignWorkflowTests(KingPhisherServerTestCase):
 		message_count = self.rpc('db/table/count', 'messages', query_filter={'campaign_id': self.campaign_id})
 		self.assertEqual(message_count, 1)
 
+	# this is the first step which makes standard HTTP requests to the server
 	def step_3_get_visits(self):
 		# simulate a user visiting the landing page by clicking their link
 		visit_count = self.rpc('db/table/count', 'visits', query_filter={'campaign_id': self.campaign_id})

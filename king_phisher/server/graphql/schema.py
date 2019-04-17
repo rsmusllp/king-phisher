@@ -31,12 +31,16 @@
 #
 
 from __future__ import absolute_import
+import logging
 
 import king_phisher.version as version
+import king_phisher.server.web_tools as web_tools
 import king_phisher.server.graphql.middleware as gql_middleware
 import king_phisher.server.graphql.types as gql_types
 
 import graphene.types.utils
+
+logger = logging.getLogger('KingPhisher.Server.GraphQL.Schema')
 
 # top level query object for the schema
 class Query(graphene.ObjectType):
@@ -45,8 +49,12 @@ class Query(graphene.ObjectType):
 	"""
 	db = graphene.Field(gql_types.Database)
 	geoloc = graphene.Field(gql_types.GeoLocation, ip=graphene.String())
+	hostnames = graphene.List(graphene.String)
 	plugin = graphene.Field(gql_types.Plugin, name=graphene.String())
-	plugins = graphene.relay.ConnectionField(gql_types.PluginConnection)
+	plugins = gql_types.ConnectionField(gql_types.PluginConnection)
+	site_template = graphene.Field(gql_types.SiteTemplate, hostname=graphene.String(), path=graphene.String())
+	site_templates = gql_types.ConnectionField(gql_types.SiteTemplateConnection, hostname=graphene.String(), max_depth=graphene.Int())
+	ssl = graphene.Field(gql_types.SSL)
 	version = graphene.Field(graphene.String)
 	def resolve_db(self, info, **kwargs):
 		return gql_types.Database()
@@ -57,16 +65,27 @@ class Query(graphene.ObjectType):
 			return
 		return gql_types.GeoLocation.from_ip_address(ip_address)
 
+	def resolve_hostnames(self, info, **kwargs):
+		server_config = info.context.get('server_config')
+		if server_config is None:
+			logger.warning('can not determine hostnames without the server configuration')
+			return
+		return web_tools.get_hostnames(server_config)
+
 	def resolve_plugin(self, info, **kwargs):
-		plugin_manager = info.context.get('plugin_manager', {})
-		for _, plugin in plugin_manager:
-			if plugin.name != kwargs.get('name'):
-				continue
-			return gql_types.Plugin.from_plugin(plugin)
+		return gql_types.Plugin.resolve(info, **kwargs)
 
 	def resolve_plugins(self, info, **kwargs):
-		plugin_manager = info.context.get('plugin_manager', {})
-		return [gql_types.Plugin.from_plugin(plugin) for _, plugin in sorted(plugin_manager, key=lambda i: i[0])]
+		return gql_types.PluginConnection.resolve(info, **kwargs)
+
+	def resolve_site_template(self, info, **kwargs):
+		return gql_types.SiteTemplate.resolve(info, **kwargs)
+
+	def resolve_site_templates(self, info, **kwargs):
+		return gql_types.SiteTemplateConnection.resolve(info, **kwargs)
+
+	def resolve_ssl(self, info, **kwargs):
+		return gql_types.SSL.resolve(info, **kwargs)
 
 	def resolve_version(self, info, **kwargs):
 		return version.version

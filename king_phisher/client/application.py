@@ -32,6 +32,7 @@
 
 import collections
 import copy
+import functools
 import http.client
 import logging
 import os
@@ -49,6 +50,7 @@ from king_phisher import ipaddress
 from king_phisher import its
 from king_phisher import serializers
 from king_phisher import ssh_forward
+from king_phisher import startup
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.client import assistants
@@ -100,6 +102,12 @@ A named tuple representing the user that is authenticated on the remote server.
 	The user's name.
 """
 
+def _rpc_ping(rpc):
+	try:
+		return rpc.ping()
+	except (ConnectionError, advancedhttpserver.RPCConnectionError):
+		return None
+
 class KingPhisherClientApplication(_Gtk_Application):
 	"""
 	This is the top level King Phisher client object. It contains the
@@ -133,13 +141,26 @@ class KingPhisherClientApplication(_Gtk_Application):
 	def __init__(self, config_file=None, use_plugins=True, use_style=True):
 		super(KingPhisherClientApplication, self).__init__()
 		if use_style:
-			if Gtk.check_version(3, 18, 0):
+			# 3.20+ use theme.v2.css
+			if Gtk.check_version(3, 20, 0) or its.on_windows:
 				self._theme_file = 'theme.v1.css'
 			else:
 				self._theme_file = 'theme.v2.css'
 		else:
 			self._theme_file = DISABLED
 		self.user_data_path = os.path.join(GLib.get_user_config_dir(), USER_DATA_PATH)
+		"""
+		The path to a directory where user data files can be stored. This path
+		must be writable by the current user.
+
+		The default value is platform dependant:
+
+		:Linux:
+			``~/.config/king-phisher``
+
+		:Windows:
+			``%LOCALAPPDATA%\\king-phisher``
+		"""
 		self.logger = logging.getLogger('KingPhisher.Client.Application')
 		# log version information for debugging purposes
 		self.logger.debug("gi.repository GLib version: {0}".format('.'.join(map(str, GLib.glib_version))))
@@ -203,6 +224,10 @@ class KingPhisherClientApplication(_Gtk_Application):
 		"""The :py:class:`~king_phisher.client.plugins.ClientPluginManager` instance to manage the installed client plugins."""
 		if use_plugins:
 			self.plugin_manager.load_all()
+
+	@property
+	def user_library_path(self):
+		return self.plugin_manager.library_path
 
 	def _create_actions(self):
 		action = Gio.SimpleAction.new('emit-application-signal', GLib.VariantType.new('s'))
@@ -528,7 +553,17 @@ class KingPhisherClientApplication(_Gtk_Application):
 
 	def load_server_config(self):
 		"""Load the necessary values from the server's configuration."""
-		self.config['server_config'] = self.rpc('config/get', ['server.require_id', 'server.secret_id', 'server.tracking_image', 'server.web_root'])
+		self.config['server_config'] = self.rpc(
+			'config/get',
+			[
+				'server.require_id',
+				'server.secret_id',
+				'server.tracking_image',
+				'server.web_root',
+				'server.addresses',
+				'server.vhost_directories'
+			]
+		)
 		return
 
 	def load_style_css(self, css_file):
@@ -648,7 +683,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			return False, ConnectionErrorReason.ERROR_UNKNOWN
 		self.rpc = rpc
 		self.server_events = event_subscriber
-		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), rpc.ping)
+		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), functools.partial(_rpc_ping, rpc))
 		user = self.rpc.graphql("""\
 		query getUser($name: String!) {
 			db { user(name: $name) { id name } }
@@ -757,7 +792,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			gui_utilities.show_dialog_error('Invalid SFTP Configuration', self.get_active_window(), "Invalid token '{0}' in the SFTP command.".format(error.args[0]))
 			return False
 		self.logger.debug("starting sftp client command: {0}".format(command))
-		utilities.start_process(command, wait=False)
+		startup.start_process(command, wait=False)
 		return
 
 	def stop_remote_service(self):

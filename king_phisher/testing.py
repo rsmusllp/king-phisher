@@ -37,6 +37,7 @@ import threading
 import time
 import urllib
 
+from king_phisher import constants
 from king_phisher import find
 from king_phisher.client import client_rpc
 from king_phisher.server import build
@@ -44,6 +45,8 @@ from king_phisher.server import configuration
 from king_phisher.server import plugins
 from king_phisher.server import rest_api
 from king_phisher.server import server
+from king_phisher.server.database import manager as db_manager
+from king_phisher.server.database import models as db_models
 
 import advancedhttpserver
 import smoke_zephyr.utilities
@@ -122,7 +125,16 @@ class KingPhisherRequestHandlerTest(server.KingPhisherRequestHandler):
 		self.rpc_handler_map['^/login$'] = self.rpc_test_login
 
 	def rpc_test_login(self, username, password, otp=None):
-		return True, 'success', self.server.session_manager.put(username)
+		session = db_manager.Session()
+		user = session.query(db_models.User).filter_by(name=username).first()
+		if not user:
+			user = db_models.User(name=username)
+		user.last_login = db_models.current_timestamp()
+		session.add(user)
+		session.commit()
+		session_id = self.server.session_manager.put(user)
+		session.close()
+		return True, constants.ConnectionErrorReason.SUCCESS, session_id
 
 class KingPhisherTestCase(smoke_zephyr.utilities.TestCase):
 	"""
@@ -131,12 +143,27 @@ class KingPhisherTestCase(smoke_zephyr.utilities.TestCase):
 	methods across Python 2.x and Python 3.x.
 	"""
 	def assertIsEmpty(self, obj, msg=None):
+		"""Test that *obj* is empty as determined by :py:func:`len`."""
 		if len(obj):
-			self.fail(msg or 'the object is not empty')
+			self.fail(msg or 'the test object is not empty')
 
 	def assertIsNotEmpty(self, obj, msg=None):
+		"""Test that *obj* is not empty as determined by :py:func:`len`."""
 		if not len(obj):
-			self.fail(msg or 'the object is empty')
+			self.fail(msg or 'the test object is empty')
+
+	def assertIsSubclass(self, obj, cls, msg=None):
+		"""
+		Test that *obj* is a subclass of *cls* (which can be a class or a tuple
+		of classes as supported by :py:func:`issubclass`).
+		"""
+		if not issubclass(obj, cls):
+			self.fail(msg or "the test object is not a subclass of '{}'".format(cls.__name__))
+
+	def assertHasAttribute(self, obj, attribute, msg=None):
+		"""Test that *obj* has the named *attribute*."""
+		if not hasattr(obj, attribute):
+			self.fail(msg or "the test object has no attribute '{}'".format(attribute))
 
 class KingPhisherServerTestCase(KingPhisherTestCase):
 	"""

@@ -39,6 +39,7 @@ import logging
 import os
 import socket
 import threading
+import xml.sax.saxutils as saxutils
 
 from king_phisher import find
 from king_phisher import utilities
@@ -75,8 +76,22 @@ parameters, the object and the value and the get function will just be
 provided the object.
 """
 
-# official python3 work-around per https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
-_cmp = lambda i1, i2: (i1 > i2) - (i1 < i2)
+# modified from the official python3 work-around per
+# https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
+def _cmp(item1, item2):
+	"""
+	Compare two arbitrary Python objects. The object types should either be the
+	same or one or both may be ``None``.
+
+	:rtype: int
+	:return: ``-1`` if *item1* is less than *item2*, ``0`` if they are equal or
+		``1`` if *item1* is greater than *item2*.
+	"""
+	if item1 is None:
+		return 0 if item2 is None else -1
+	if item2 is None:
+		return 1
+	return (item1 > item2) - (item1 < item2)
 
 def which_glade():
 	"""
@@ -87,6 +102,31 @@ def which_glade():
 	:rtype: str
 	"""
 	return find.data_file(os.environ.get('KING_PHISHER_GLADE_FILE', 'king-phisher-client.ui'))
+
+def _store_extend(store, things, clear=False):
+	if clear:
+		store.clear()
+	for thing in things:
+		store.append(thing)
+
+def glib_idle_add_store_extend(store, things, clear=False, wait=False):
+	"""
+	Extend a GTK store object (either :py:class:`Gtk.ListStore` or
+	:py:class:`Gtk.TreeStore`) object using :py:func:`GLib.idle_add`. This
+	function is suitable for use in non-main GUI threads for synchronizing data.
+
+	:param store: The GTK storage object to add *things* to.
+	:type store: :py:class:`Gtk.ListStore`, :py:class:`Gtk.TreeStore`
+	:param tuple things: The array of things to add to *store*.
+	:param bool clear: Whether or not to clear the storage object before adding *things* to it.
+	:param bool wait: Whether or not to wait for the operation to complete before returning.
+	:return: Regardless of the *wait* parameter, ``None`` is returned.
+	:rtype: None
+	"""
+	if not isinstance(store, Gtk.ListStore):
+		raise TypeError('store must be a Gtk.ListStore instance')
+	idle_add = glib_idle_add_wait if wait else glib_idle_add_once
+	idle_add(_store_extend, store, things, clear)
 
 def glib_idle_add_once(function, *args, **kwargs):
 	"""
@@ -223,9 +263,9 @@ def gtk_calendar_get_pydate(gtk_calendar):
 	"""
 	if not isinstance(gtk_calendar, Gtk.Calendar):
 		raise ValueError('calendar must be a Gtk.Calendar instance')
-	year, month, day = calendar_day = gtk_calendar.get_date()
+	year, month, day = gtk_calendar.get_date()
 	month += 1  # account for Gtk.Calendar starting at 0
-	_, last_day_of_month = calendar.monthrange(2018, month)
+	_, last_day_of_month = calendar.monthrange(year, month)
 	day = max(1, min(day, last_day_of_month))
 	return datetime.date(year, month, day)
 
@@ -263,6 +303,28 @@ def gtk_list_store_search(list_store, value, column=0):
 		if row[column] == value:
 			return row.iter
 	return None
+
+def gtk_listbox_populate_labels(listbox, label_strings):
+	"""
+	Formats and adds labels to a listbox. Each label is styled as a separate
+	entry.
+
+	.. versionadded:: 1.13.0
+
+	:param listbox: Gtk Listbox to put the labels in.
+	:type listbox: :py:class:`Gtk.listbox`
+	:param list label_strings: List of strings to add to the Gtk Listbox as labels.
+	"""
+	gtk_widget_destroy_children(listbox)
+	listbox.set_property('visible', True)
+	for label_text in label_strings:
+		label = Gtk.Label()
+		label.set_markup("<span font=\"smaller\"><tt>{0}</tt></span>".format(saxutils.escape(label_text)))
+		label.set_property('halign', Gtk.Align.START)
+		label.set_property('use-markup', True)
+		label.set_property('valign', Gtk.Align.START)
+		label.set_property('visible', True)
+		listbox.add(label)
 
 def gtk_menu_get_item_by_label(menu, label):
 	"""
@@ -344,6 +406,12 @@ def gtk_sync():
 	"""Wait while all pending GTK events are processed."""
 	while Gtk.events_pending():
 		Gtk.main_iteration()
+
+def gtk_treesortable_sort_func(model, iter1, iter2, column_id):
+	column_id = column_id or 0
+	item1 = model.get_value(iter1, column_id)
+	item2 = model.get_value(iter2, column_id)
+	return _cmp(item1, item2)
 
 def gtk_treesortable_sort_func_numeric(model, iter1, iter2, column_id):
 	"""
@@ -448,9 +516,13 @@ def gtk_treeview_set_column_titles(treeview, column_titles, column_offset=0, ren
 		renderer = renderers[column_id - column_offset] if renderers else Gtk.CellRendererText()
 		if isinstance(renderer, Gtk.CellRendererToggle):
 			column = Gtk.TreeViewColumn(column_title, renderer, active=column_id)
+		elif hasattr(renderer.props, 'python_value'):
+			column = Gtk.TreeViewColumn(column_title, renderer, python_value=column_id)
 		else:
 			column = Gtk.TreeViewColumn(column_title, renderer, text=column_id)
+		column.set_property('min-width', 25)
 		column.set_property('reorderable', True)
+		column.set_property('resizable', True)
 		column.set_sort_column_id(column_id)
 		treeview.append_column(column)
 		columns[column_id] = column
@@ -575,9 +647,18 @@ class GladeProxyDestination(object):
 	first argument.
 	"""
 	__slots__ = ('widget', 'method', 'args', 'kwargs')
-	def __init__(self, widget, method, args=None, kwargs=None):
-		utilities.assert_arg_type(widget, str, 1)
-		utilities.assert_arg_type(method, str, 2)
+	def __init__(self, method, widget=None, args=None, kwargs=None):
+		"""
+		:param str method: The method of the container *widget* to use to add
+			the proxied widget.
+		:param str widget: The widget name to add the proxied widget to. If this
+			value is ``None``, the proxied widget is added to the top level
+			widget.
+		:param tuple args: Position arguments to provide when calling *method*.
+		:param dict kwargs: Key word arguments to provide when calling *method*.
+		"""
+		utilities.assert_arg_type(method, str, 1)
+		utilities.assert_arg_type(widget, (type(None), str), 2)
 		self.widget = widget
 		"""The name of the parent widget for this proxied child."""
 		self.method = method
@@ -688,7 +769,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 			if isinstance(child, GladeProxy):
 				self._load_child_dependencies(child)
 				child = child.destination.widget
-
+				if child is None:
+					continue
 			gobject = self.gtk_builder_get(child, parent_name=dependencies.name)
 			# the following five lines ensure that the types match up, this is to enforce clean development
 			gtype = child.split('_', 1)[0]
@@ -696,6 +778,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 				raise TypeError("gobject {0} could not be found in the glade file".format(child))
 			elif gobject.__class__.__name__.lower() != gtype:
 				raise TypeError("gobject {0} is of type {1} expected {2}".format(child, gobject.__class__.__name__, gtype))
+			elif child in self.gobjects:
+				raise ValueError("key: {0!r} is already in self.gobjects".format(child))
 			self.gobjects[child] = gobject
 
 	def _load_child_proxies(self):
@@ -703,7 +787,8 @@ class GladeGObject(GladeGObjectMeta('_GladeGObject', (object,), {})):
 			if not isinstance(child, GladeProxy):
 				continue
 			dest = child.destination
-			method = getattr(self.gobjects[dest.widget], dest.method)
+			widget = self.gtk_builder.get_object(self.dependencies.name) if dest.widget is None else self.gobjects[dest.widget]
+			method = getattr(widget, dest.method)
 			if method is None:
 				raise ValueError("gobject {0} does not have method {1}".format(dest.widget, dest.method))
 			src_widget = self.gtk_builder.get_object(child.name)

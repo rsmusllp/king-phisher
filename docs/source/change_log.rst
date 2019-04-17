@@ -8,10 +8,29 @@ team for note worthy changes.
 Version 1.x.x
 -------------
 
-Version 1.12.0
+Version 1.14.0
 ^^^^^^^^^^^^^^
 
 *In Progress*
+
+Version 1.13.0
+^^^^^^^^^^^^^^
+
+Released :release:`1.13.0` on April 4th, 2019
+
+* Added support for logging MFA tokens with credentials
+* Added support for using regular expressions to validate credentials
+* Automatically try to install plugin dependencies with pip from PyPi
+* Added advanced, rule-based filtering support to the Campaign tabs
+* Added site template metadata
+
+   * Site templates can now include a metadata file for describing their content
+   * The Campaign Assistant will help select a target URL based on available templates
+
+Version 1.12.0
+^^^^^^^^^^^^^^
+
+Released :release:`1.12.0` on November 7th, 2018
 
 * Added support for users to set their email address for campaign alerts via email
 * Added additional plugin metadata fields for reference URLs and category classifiers

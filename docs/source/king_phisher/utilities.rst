@@ -22,6 +22,8 @@ Functions
 
 .. autofunction:: format_datetime
 
+.. autofunction:: fs_chown
+
 .. autofunction:: is_valid_email_address
 
 .. autofunction:: make_message_uid
@@ -39,8 +41,6 @@ Functions
 .. autofunction:: random_string
 
 .. autofunction:: random_string_lower_numeric
-
-.. autofunction:: start_process
 
 .. autofunction:: switch
 

@@ -80,7 +80,7 @@ class ClientMailerTests(testing.KingPhisherTestCase):
 
 	def test_client_template_environment_mode_analyze(self):
 		tenv = MessageTemplateEnvironment()
-		self.assertTrue(hasattr(tenv, 'attachment_images'))
+		self.assertHasAttribute(tenv, 'attachment_images')
 		self.assertIsInstance(tenv.attachment_images, dict)
 		self.assertEqual(len(tenv.attachment_images), 0)
 
@@ -95,7 +95,7 @@ class ClientMailerTests(testing.KingPhisherTestCase):
 	def test_client_template_environment_mode_preview(self):
 		tenv = MessageTemplateEnvironment()
 		tenv.set_mode(MessageTemplateEnvironment.MODE_PREVIEW)
-		self.assertTrue('inline_image' in tenv.globals)
+		self.assertIn('inline_image', tenv.globals)
 		inline_image = tenv.globals['inline_image']
 		img_tag_result = inline_image(testing.TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)
 		img_tag_test = "<img src=\"file://{0}\">".format(testing.TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)
@@ -105,7 +105,7 @@ class ClientMailerTests(testing.KingPhisherTestCase):
 	def test_client_template_environment_mode_send(self):
 		tenv = MessageTemplateEnvironment()
 		tenv.set_mode(MessageTemplateEnvironment.MODE_SEND)
-		self.assertTrue('inline_image' in tenv.globals)
+		self.assertIn('inline_image', tenv.globals)
 		inline_image = tenv.globals['inline_image']
 		img_tag_result = inline_image(testing.TEST_MESSAGE_TEMPLATE_INLINE_IMAGE)
 		img_tag_test = r'<img src="cid:'

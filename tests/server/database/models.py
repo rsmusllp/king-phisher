@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  tests/server/database.py
+#  tests/server/database/models.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -30,31 +30,20 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import datetime
 import os
 import unittest
 
 from king_phisher import find
 from king_phisher import testing
-from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
-from king_phisher.server.database import storage as db_storage
-from king_phisher.utilities import random_string
 
 import sqlalchemy
 
 get_tables_with_column_id = db_models.get_tables_with_column_id
 
-class DatabaseTestBase(testing.KingPhisherTestCase):
-	def _init_db(self):
-		try:
-			db_manager.init_database('sqlite://')
-		except Exception as error:
-			self.fail("failed to initialize the database (error: {0})".format(error.__class__.__name__))
-
-class DatabaseRPCTests(testing.KingPhisherServerTestCase):
+class DatabaseModelRPCTests(testing.KingPhisherServerTestCase):
 	def assertRPCPermissionDenied(self, db_method, *args, **kwargs):
-		super(DatabaseRPCTests, self).assertRPCPermissionDenied('db/table/' + db_method, *args, **kwargs)
+		super(DatabaseModelRPCTests, self).assertRPCPermissionDenied('db/table/' + db_method, *args, **kwargs)
 
 	def test_storage_data_is_private(self):
 		# ensure that meta_data is kept private and that private tables can't be accessed via rpc
@@ -64,7 +53,7 @@ class DatabaseRPCTests(testing.KingPhisherServerTestCase):
 		self.assertRPCPermissionDenied('set', 'storage_data', 1, ('namespace',), ('test',))
 		self.assertRPCPermissionDenied('delete', 'storage_data', 1)
 
-class DatabaseSchemaTests(testing.KingPhisherTestCase):
+class DatabaseModelSchemaTests(testing.KingPhisherTestCase):
 	def test_get_tables_id(self):
 		tables = set([
 			'alert_subscriptions',
@@ -143,69 +132,9 @@ class DatabaseSchemaTests(testing.KingPhisherTestCase):
 				continue
 			self.assertRegex(schema_file, r'[a-f0-9]{10,16}_schema_v\d+\.py', schema_file)
 
-class DatabaseStorageTests(DatabaseTestBase):
-	def test_storage_keys_must_be_strings(self):
-		storage = db_storage.KeyValueStorage()
-		with self.assertRaises(TypeError):
-			storage[1] = 'test'
-
-	def test_storage_missing_values_raise_keyerror(self):
-		storage = db_storage.KeyValueStorage()
-		with self.assertRaises(KeyError):
-			storage['missing']
-
-	def test_storage_accepts_native_types(self):
-		storage = db_storage.KeyValueStorage()
-		self.assertNotIsInstance(storage, dict)
-		storage['data'] = {
-			'key1': 1,
-			'key2': 'hello world',
-			'key3': True,
-			'key4': datetime.datetime.utcnow()
-		}
-		self.assertEquals(len(storage), 1)
-
-class DatabaseTests(DatabaseTestBase):
-	def test_create_database(self):
-		self._init_db()
-
-	def test_get_meta_data(self):
-		self._init_db()
-		database_driver = db_manager.get_metadata('database_driver')
-		self.assertEqual(database_driver, 'sqlite')
-
-		schema_version = db_manager.get_metadata('schema_version')
-		self.assertEqual(schema_version, db_models.SCHEMA_VERSION)
-
-	def test_get_row_by_id(self):
-		self._init_db()
-		session = db_manager.Session()
+	def test_users_dont_default_to_admin(self):
 		user = db_models.User(name='alice')
-		session.add(user)
-		campaign_name = random_string(10)
-		campaign = db_models.Campaign(name=campaign_name, user=user)
-		session.add(campaign)
-		session.commit()
-		self.assertIsNotNone(campaign.id)
-		campaign_id = campaign.id
-		del campaign
-
-		row = db_manager.get_row_by_id(session, db_models.Campaign, campaign_id)
-		self.assertEqual(row.id, campaign_id)
-		self.assertEqual(row.name, campaign_name)
-
-	def test_set_meta_data(self):
-		self._init_db()
-		# set a new value
-		key = random_string(10)
-		value = random_string(20)
-		db_manager.set_metadata(key, value)
-		self.assertEqual(db_manager.get_metadata(key), value)
-
-		# update an existing value
-		value = random_string(30)
-		db_manager.set_metadata(key, value)
-		self.assertEqual(db_manager.get_metadata(key), value)
+		self.assertFalse(user.is_admin)
 
 if __name__ == '__main__':
 	unittest.main()

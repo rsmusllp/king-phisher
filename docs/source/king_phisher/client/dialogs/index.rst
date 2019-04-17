@@ -1,6 +1,8 @@
 :mod:`dialogs`
 ==============
 
+.. module:: king_phisher.client.dialogs
+
 .. toctree::
    :maxdepth: 2
    :titlesonly:

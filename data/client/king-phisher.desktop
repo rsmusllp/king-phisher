@@ -2,6 +2,7 @@
 Name=King Phisher
 GenericName=King Phisher
 Exec=/usr/bin/python3 /opt/king-phisher/KingPhisher
+Path=/opt/king-phisher
 Terminal=false
 Type=Application
 Categories=Network;Security;

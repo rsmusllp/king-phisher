@@ -46,8 +46,8 @@ class TemplatesTests(testing.KingPhisherTestCase):
 		test_string = '<html>{{ ' + test_key + ' }}</html>'
 		template = env.from_string(test_string)
 		result = template.render()
-		self.assertTrue(test_value in result)
-		self.assertFalse(test_key in result)
+		self.assertIn(test_value, result)
+		self.assertNotIn(test_key, result)
 
 	def test_strings_are_not_escaped(self):
 		env = TemplateEnvironmentBase()
@@ -55,7 +55,7 @@ class TemplatesTests(testing.KingPhisherTestCase):
 		link = '<a href="http://king-phisher.com/">Click Me</a>'
 		template = env.from_string(test_string)
 		result = template.render(link=link)
-		self.assertTrue(link in result)
+		self.assertIn(link, result)
 
 	def test_decoding_filters(self):
 		env = TemplateEnvironmentBase()

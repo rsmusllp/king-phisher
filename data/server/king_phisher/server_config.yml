@@ -31,21 +31,22 @@ server:
     - host: 0.0.0.0
       port: 80
       ssl: false
-    # bind to port 443 on all IPv4 interfaces with SSL (https)
+    # Bind to port 443 on all IPv4 interfaces with SSL (https)
     #- host: 0.0.0.0
     #  port: 443
     #  ssl: true
 
   # Server RPC authentication related settings
   #authentication:
-    # How long to cache authentication information in the server process
-    #cache_timeout: 10m
-    # Require authenticating users to be a member of the specified group
-    #group: king-phisher
-    # The service to use for PAM authentication
-    #pam_service: sshd
-    # How long an authenticated RPC session should be valid for after no requests have been received.
-    #session_timeout: 30m
+  #  # How long to cache authentication information in the server process
+  #  cache_timeout: 10m
+  #  # Require authenticating users to be a member of the specified group
+  #  group: king-phisher
+  #  # The service to use for PAM authentication
+  #  pam_service: sshd
+  #  # How long an authenticated RPC session should be valid for after no
+  #  # requests have been received
+  #  session_timeout: 30m
 
   # A header to retrieve the client's IP from, useful when a proxy is in place
   #client_ip_header: X-Real-IP
@@ -78,6 +79,21 @@ server:
     - "X-Content-Type-Options: nosniff"
     - "X-Frame-Options: DENY"
     - "X-XSS-Protection: 1; mode=block"
+
+  # Let's Encrypt integration settings, requires that certbot is installed
+  #letsencrypt:
+  #  # Optionally specify the path to the certbot binary, otherwise search
+  #  # $PATH for it
+  #  certbot_path: /usr/local/bin/certbot
+  #  # Directory to store Let's Encrypt data to, must be writeable by the King
+  #  # Phisher server process
+  #  data_path: /var/king-phisher/letsencrypt
+  #  # Recursively change the owner of the data path when setuid is enabled
+  #  chown_data_path: true
+
+  # Hostnames to provide to the client for auto completion
+  #hostnames:
+  #  - king-phisher.com
 
   # Set a file to write the PID to
   pid_file: /var/run/king-phisher.pid

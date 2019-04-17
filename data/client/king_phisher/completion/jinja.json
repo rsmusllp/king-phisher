@@ -14,6 +14,7 @@
         },
         "client": {
           "company_name": null,
+          "department": null,
           "email_address": null,
           "first_name": null,
           "last_name": null,
@@ -56,9 +57,13 @@
           "campaign": {
             "created": null,
             "credential_count": null,
+            "credential_regex_mfa_token": null,
+            "credential_regex_password": null,
+            "credential_regex_username": null,
             "expiration": null,
             "has_expired": null,
             "id": null,
+            "max_credentials": null,
             "message_count": null,
             "name": null,
             "visit_count": null
@@ -82,15 +87,25 @@
         "make_csrf_page(": null,
         "make redirect_page(": null,
         "request": {
+          "credentials": {
+            "mfa_token": null,
+            "password": null,
+            "regex_validated": null,
+            "username": null
+          },
           "command": null,
           "cookies": null,
+          "headers": null,
           "parameters": null,
           "user_agent": null
         },
         "server": {
           "address": null,
-          "hostname": null
-        }
+          "hostname": null,
+          "port": null
+        },
+        "validate_credential(": null,
+        "validate_credential_fields(": null
       }
     }
   },
@@ -178,6 +193,7 @@
     ],
     "tokens": {
       "dict(": null,
+      "fetch(": null,
       "libsum": null,
       "parse_user_agent(": null,
       "random_integer(": null,

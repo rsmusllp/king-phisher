@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import os
 
 from king_phisher.client import gui_utilities
@@ -40,6 +41,12 @@ from king_phisher.client.widget import managers
 from gi.repository import Gtk
 
 __all__ = ('ClonePageDialog',)
+
+_ModelNamedRow = collections.namedtuple('ModelNamedRow', (
+	'path',
+	'mime_type',
+	'size'
+))
 
 class ClonePageDialog(gui_utilities.GladeGObject):
 	"""
@@ -59,14 +66,22 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 			'StockStopImage'
 		)
 	)
+	view_columns = (
+		extras.ColumnDefinitionString('Resource Path'),
+		extras.ColumnDefinitionString('MIME Type'),
+		extras.ColumnDefinitionBytes('Size'),
+	)
 	top_gobject = 'dialog'
 	def __init__(self, *args, **kwargs):
 		super(ClonePageDialog, self).__init__(*args, **kwargs)
-		self.resources = Gtk.ListStore(str, str, int)
+		self.resources = Gtk.ListStore(*tuple(column.g_type for column in self.view_columns))
 		treeview = self.gobjects['treeview_resources']
 		treeview.set_model(self.resources)
 		self.treeview_manager = managers.TreeViewManager(treeview)
-		self.treeview_manager.set_column_titles(('Resource Path', 'MIME Type', 'Size'), renderers=(Gtk.CellRendererText(), Gtk.CellRendererText(), extras.CellRendererBytes()))
+		self.treeview_manager.set_column_titles(
+			tuple(column.title for column in self.view_columns),
+			renderers=tuple(column.cell_renderer() for column in self.view_columns)
+		)
 		self.popup_menu = self.treeview_manager.get_popup_menu()
 
 		self.button_cancel = self.gobjects['button_cancel']
@@ -121,7 +136,11 @@ class ClonePageDialog(gui_utilities.GladeGObject):
 			for resource in cloner.cloned_resources.values():
 				if gui_utilities.gtk_list_store_search(self.resources, resource.resource, column=0):
 					continue
-				self.resources.append([resource.resource, resource.mime_type or 'N/A', resource.size])
+				self.resources.append(_ModelNamedRow(
+					path=resource.resource,
+					mime_type=resource.mime_type or 'N/A',
+					size=resource.size
+				))
 			self.set_status('Done')
 			gui_utilities.gtk_sync()
 		if len(self.resources) and gui_utilities.show_dialog_yes_no('Transfer Cloned Pages', self.dialog, 'Would you like to start the SFTP client\nto upload the cloned pages?'):

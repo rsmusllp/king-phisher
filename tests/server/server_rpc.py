@@ -34,11 +34,15 @@ import types
 import unittest
 
 from king_phisher import errors
+from king_phisher import startup
 from king_phisher import version
 from king_phisher.server import server_rpc
-from king_phisher.server.database import models as db_models
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
+
+import advancedhttpserver
+
+_certbot_bin_path = startup.which('certbot')
 
 class ServerRPCTests(KingPhisherServerTestCase):
 	def test_rpc_config_get(self):
@@ -117,9 +121,45 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		for error in response['errors']:
 			self.assertIsInstance(error, str)
 
+	def test_rpc_hostnames_get(self):
+		hostnames = self.rpc('hostnames/get')
+		self.assertIsInstance(hostnames, list)
+
+	def test_rpc_hostnames_add(self):
+		new_hostname = random_string(16) + '.local'
+		self.rpc('hostnames/add', new_hostname)
+		hostnames = self.rpc('hostnames/get')
+		self.assertIsInstance(hostnames, list)
+		self.assertIn(new_hostname, hostnames)
+
 	def test_rpc_is_unauthorized(self):
 		http_response = self.http_request('/ping', method='RPC')
 		self.assertHTTPStatus(http_response, 401)
+
+	@unittest.skipUnless(_certbot_bin_path, 'due to certbot being unavailable')
+	def test_rpc_ssl_letsencrypt_certbot_version(self):
+		version = self.rpc('ssl/letsencrypt/certbot_version')
+		self.assertIsNotNone(version, 'the certbot version was not retrieved')
+		self.assertRegexpMatches(version, r'(\d.)*\d', 'the certbot version is invalid')
+
+	def test_rpc_ssl_sni_hostnames_get(self):
+		sni_hostnames = self.rpc('ssl/sni_hostnames/get')
+		self.assertIsInstance(sni_hostnames, dict)
+
+	def test_rpc_ssl_sni_hostnames_load(self):
+		fake_hostname = random_string(16)
+		self.assertFalse(self.rpc('ssl/sni_hostnames/load', fake_hostname))
+
+	def test_rpc_ssl_sni_hostnames_unload(self):
+		fake_hostname = random_string(16)
+		self.assertFalse(self.rpc('ssl/sni_hostnames/unload', fake_hostname))
+
+	def test_rpc_ssl_status(self):
+		ssl_status = self.rpc('ssl/status')
+		self.assertIsInstance(ssl_status, dict)
+		self.assertIn('enabled', ssl_status)
+		self.assertIn('has-sni', ssl_status)
+		self.assertEqual(ssl_status['has-sni'], advancedhttpserver.g_ssl_has_server_sni)
 
 	def test_rpc_ping(self):
 		self.assertTrue(self.rpc('ping'))
@@ -128,8 +168,9 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		self.test_rpc_campaign_new()
 		campaign = list(self.rpc.remote_table('campaigns'))[0]
 		campaign = campaign._asdict()
-		self.assertTrue(isinstance(campaign, dict))
-		self.assertEqual(sorted(campaign.keys()), sorted(db_models.database_tables['campaigns'].column_names))
+		self.assertIsInstance(campaign, dict)
+		meta_table = self.server.tables_api['campaigns']
+		self.assertEqual(sorted(campaign.keys()), sorted(meta_table.column_names))
 
 	def test_rpc_shutdown(self):
 		self.assertIsNone(self.rpc('shutdown'))
@@ -147,8 +188,9 @@ class ServerRPCTests(KingPhisherServerTestCase):
 		campaign = self.rpc('db/table/view', 'campaigns')
 		self.assertTrue(bool(campaign))
 		self.assertEqual(len(campaign['rows']), 1)
-		self.assertEqual(len(campaign['rows'][0]), len(db_models.database_tables['campaigns'].column_names))
-		self.assertEqual(sorted(campaign['columns']), sorted(db_models.database_tables['campaigns'].column_names))
+		meta_table = self.server.tables_api['campaigns']
+		self.assertEqual(len(campaign['rows'][0]), len(meta_table.column_names))
+		self.assertEqual(sorted(campaign['columns']), sorted(meta_table.column_names))
 
 	def test_rpc_set_value(self):
 		campaign_name = random_string(10)
@@ -163,8 +205,8 @@ class ServerRPCTests(KingPhisherServerTestCase):
 
 	def test_rpc_version(self):
 		response = self.rpc('version')
-		self.assertTrue('version' in response)
-		self.assertTrue('version_info' in response)
+		self.assertIn('version', response)
+		self.assertIn('version_info', response)
 		self.assertEqual(response['version'], version.version)
 		self.assertEqual(response['version_info']['major'], version.version_info.major)
 		self.assertEqual(response['version_info']['minor'], version.version_info.minor)

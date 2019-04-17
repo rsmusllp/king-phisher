@@ -43,6 +43,7 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import king_phisher.color as color
 import king_phisher.serializers as serializers
 import king_phisher.utilities as utilities
+import king_phisher.server.letsencrypt as letsencrypt
 import king_phisher.server.configuration as configuration
 
 import advancedhttpserver
@@ -84,12 +85,12 @@ def main():
 	parser.epilog = PARSER_EPILOG
 	arguments = parser.parse_args()
 
+	if not os.path.isfile(arguments.server_config) and os.access(arguments.server_config, os.R_OK):
+		color.print_error('can not read the server configuration file')
+		return os.EX_NOINPUT
+
 	server_config = configuration.ex_load_config(arguments.server_config).get('server')
 	web_root = server_config['web_root']
-
-	if os.getuid():
-		color.print_error('this tool must be run as root')
-		return os.EX_NOPERM
 
 	certbot_bin = arguments.certbot_bin or smoke_zephyr.utilities.which('certbot')
 	if certbot_bin is None:
@@ -138,11 +139,8 @@ def main():
 			os.mkdir(directory, mode=0o775)
 			logger.info('created directory for host at: ' + directory)
 
-		certbot_args = (certbot_bin, 'certonly', '--webroot', '-w', directory, '-d', hostname)
-		logger.info('running certbot command: ' + ' '.join(certbot_args))
-		proc_h = subprocess.Popen(certbot_args, shell=False)
-		status = proc_h.wait()
-		if status != os.EX_OK:
+		status = letsencrypt.certbot_issue(directory, hostname, bin_path=certbot_bin)
+		if status:
 			color.print_error('certbot exited with exit status: ' + str(status))
 			break
 		color.print_good('certbot exited with a successful status code')

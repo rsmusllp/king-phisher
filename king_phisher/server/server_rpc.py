@@ -34,19 +34,25 @@ import collections
 import datetime
 import functools
 import logging
+import os
+import re
 import threading
 
 from king_phisher import errors
 from king_phisher import geoip
 from king_phisher import ipaddress
+from king_phisher import startup
 from king_phisher import version
 from king_phisher.constants import ConnectionErrorReason
+from king_phisher.server import letsencrypt
 from king_phisher.server import signals
+from king_phisher.server import web_tools
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 from king_phisher.server.graphql import schema
 
 import advancedhttpserver
+import boltons.typeutils
 import pyotp
 
 CONFIG_READABLE = (
@@ -72,6 +78,37 @@ database_tables = db_models.database_tables
 graphql_schema = schema.Schema()
 rpc_logger = logging.getLogger('KingPhisher.Server.RPC')
 
+_REDACTED = boltons.typeutils.make_sentinel('REDACTED', 'REDACTED')
+"""Used with :py:func:`_log_rpc_call` as a place holder for sensitive arguments such as database row values."""
+
+class _lend_semaphore(object):
+	def __init__(self, handler):
+		self.handler = handler
+
+	def __enter__(self):
+		self.handler.semaphore_release()
+
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		self.handler.semaphore_acquire()
+
+def _log_rpc_call(handler_instance, function_name, *args, **kwargs):
+	if not rpc_logger.isEnabledFor(logging.DEBUG):
+		return
+	args_repr = ', '.join(map(repr, args))
+	if kwargs:
+		for key, value in sorted(kwargs.items()):
+			args_repr += ", {0}={1!r}".format(key, value)
+	user_id = getattr(handler_instance.rpc_session, 'user', 'N/A')
+	msg = "user id: {0} calling RPC method {1}({2})".format(user_id, function_name, args_repr)
+	rpc_logger.debug(msg)
+
+def _ssl_is_enabled(handler):
+	"""
+	Returns whether or not SSL is enabled for any of the addresses that the
+	server is bound with.
+	"""
+	return any(address.get('ssl', False) for address in handler.config.get('server.addresses'))
+
 def register_rpc(path, database_access=False, log_call=False):
 	"""
 	Register an RPC function with the HTTP request handler. This allows the
@@ -89,13 +126,8 @@ def register_rpc(path, database_access=False, log_call=False):
 	def decorator(function):
 		@functools.wraps(function)
 		def wrapper(handler_instance, *args, **kwargs):
-			if log_call and rpc_logger.isEnabledFor(logging.DEBUG):
-				args_repr = ', '.join(map(repr, args))
-				if kwargs:
-					for key, value in sorted(kwargs.items()):
-						args_repr += ", {0}={1!r}".format(key, value)
-				msg = "calling RPC method {0}({1})".format(function.__name__, args_repr)
-				rpc_logger.debug(msg)
+			if log_call:
+				_log_rpc_call(handler_instance, function.__name__, *args, **kwargs)
 			signals.send_safe('rpc-method-call', rpc_logger, path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs)
 			if database_access:
 				session = db_manager.Session()
@@ -160,7 +192,7 @@ def rpc_version(handler):
 	}
 	return vinfo
 
-@register_rpc('/config/get')
+@register_rpc('/config/get', log_call=True)
 def rpc_config_get(handler, option_name):
 	"""
 	Retrieve a value from the server's configuration.
@@ -191,10 +223,12 @@ def rpc_config_set(handler, options):
 
 	:param dict options: A dictionary of option names and values
 	"""
-	for option_name, option_value in options.items():
-		if not option_name in CONFIG_WRITEABLE:
-			raise errors.KingPhisherPermissionError('permission denied to write config option: ' + option_name)
-		handler.config.set(option_name, option_value)
+	if rpc_logger.isEnabledFor(logging.DEBUG):
+		_log_rpc_call(handler, 'rpc_config_set', dict((key, _REDACTED) for key in options.keys()))
+	for key, value in options.items():
+		if key not in CONFIG_WRITEABLE:
+			raise errors.KingPhisherPermissionError('permission denied to write config option: ' + key)
+		handler.config.set(key, value)
 	return
 
 @register_rpc('/campaign/new', database_access=True, log_call=True)
@@ -394,7 +428,7 @@ def rpc_database_view_rows(handler, session, table_name, page=0, query_filter=No
 	:return: A dictionary with columns and rows keys.
 	:rtype: dict
 	"""
-	metatable = database_tables.get(table_name)
+	metatable = handler.server.tables_api.get(table_name)
 	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	query_filter = query_filter or {}
@@ -465,7 +499,7 @@ def rpc_database_delete_rows_by_id(handler, session, table_name, row_ids):
 	session.commit()
 	return deleted_rows
 
-@register_rpc('/db/table/get', database_access=True)
+@register_rpc('/db/table/get', database_access=True, log_call=True)
 def rpc_database_get_row_by_id(handler, session, table_name, row_id):
 	"""
 	Retrieve a row from a given table with the specified value in the
@@ -476,7 +510,7 @@ def rpc_database_get_row_by_id(handler, session, table_name, row_id):
 	:return: The specified row data.
 	:rtype: dict
 	"""
-	metatable = database_tables.get(table_name)
+	metatable = handler.server.tables_api.get(table_name)
 	if not metatable:
 		raise errors.KingPhisherAPIError("failed to get table object for: {0}".format(table_name))
 	row = db_manager.get_row_by_id(session, metatable.model, row_id)
@@ -497,6 +531,7 @@ def rpc_database_insert_row(handler, session, table_name, keys, values):
 	:param list values: The values to be inserted in the row.
 	:return: The id of the new row that has been added.
 	"""
+	_log_rpc_call(handler, 'rpc_database_insert_row', table_name, keys, _REDACTED)
 	if not isinstance(keys, (list, tuple)):
 		keys = (keys,)
 	if not isinstance(values, (list, tuple)):
@@ -532,6 +567,7 @@ def rpc_database_insert_row_multi(handler, session, table_name, keys, rows, deco
 	:return: List of ids of the newly inserted rows.
 	:rtype: list
 	"""
+	_log_rpc_call(handler, 'rpc_database_insert_row_multi', table_name, keys, _REDACTED, deconflict_ids=deconflict_ids)
 	inserted_rows = collections.deque()
 	if not isinstance(keys, list):
 		keys = list(keys)
@@ -571,6 +607,7 @@ def rpc_database_set_row_value(handler, session, table_name, row_id, keys, value
 	:param tuple keys: The column names of *values*.
 	:param tuple values: The values to be updated in the row.
 	"""
+	_log_rpc_call(handler, 'rpc_database_rpc_row_value', table_name, row_id, keys, _REDACTED)
 	if not isinstance(keys, (list, tuple)):
 		keys = (keys,)
 	if not isinstance(values, (list, tuple)):
@@ -699,6 +736,37 @@ def rpc_geoip_lookup_multi(handler, ips, lang=None):
 		results[ip] = result
 	return results
 
+@register_rpc('/hostnames/add', log_call=True)
+def rpc_hostnames_add(handler, hostname):
+	"""
+	Add a hostname to the list of values that are configured for use with this
+	server. At this time, these changes (like other config changes) are not
+	persisted in the server so they will be lost when the server reboots.
+
+	.. versionadded:: 1.13.0
+
+	:param str hostname: The hostname to add.
+	"""
+	hostnames = handler.config.get_if_exists('server.hostnames', [])
+	if hostname not in hostnames:
+		hostnames.append(hostname)
+	handler.config.set('server.hostnames', hostnames)
+	# don't return a value indicating whether it was added or not because it could have been a vhost directory
+
+@register_rpc('/hostnames/get', log_call=True)
+def rpc_hostnames_get(handler):
+	"""
+	Get the hostnames that are configured for use with this server. This is not
+	related to the ``ssl/hostnames`` RPC methods which deal with hostnames as
+	they relate to SSL for the purposes of certificate usage.
+
+	.. versionadded:: 1.13.0
+
+	:return: The configured hostnames.
+	:rtype: list
+	"""
+	return list(web_tools.get_hostnames(handler.config))
+
 @register_rpc('/login', database_access=True)
 def rpc_login(handler, session, username, password, otp=None):
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
@@ -737,8 +805,8 @@ def rpc_login(handler, session, username, password, otp=None):
 	user.last_login = db_models.current_timestamp()
 	session.add(user)
 	session.commit()
-	session_id = handler.server.session_manager.put(user.id)
-	logger.info("successful login request from {0} for user {1}".format(handler.client_address[0], username))
+	session_id = handler.server.session_manager.put(user)
+	logger.info("successful login request from {0} for user {1} (id: {2})".format(handler.client_address[0], username, user.id))
 	signals.send_safe('rpc-user-logged-in', logger, handler, session=session_id, name=username)
 	return True, ConnectionErrorReason.SUCCESS, session_id
 
@@ -749,7 +817,7 @@ def rpc_logout(handler):
 		rpc_session.event_socket.close()
 	handler.server.session_manager.remove(handler.rpc_session_id)
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
-	logger.info("successful logout request from {0} for user {1}".format(handler.client_address[0], rpc_session.user))
+	logger.info("successful logout request from {0} for user id: {1}".format(handler.client_address[0], rpc_session.user))
 	signals.send_safe('rpc-user-logged-out', logger, handler, session=handler.rpc_session_id, name=rpc_session.user)
 
 @register_rpc('/plugins/list', log_call=True)
@@ -764,8 +832,12 @@ def rpc_plugins_list(handler):
 	plugins = {}
 	for _, plugin in plugin_manager:
 		plugins[plugin.name] = {
+			'authors': plugin.authors,
+			'classifiers': plugin.classifiers,
 			'description': plugin.description,
+			'homepage': plugin.homepage,
 			'name': plugin.name,
+			'reference_urls': plugin.reference_urls,
 			'title': plugin.title,
 			'version': plugin.version
 		}
@@ -790,6 +862,7 @@ def rpc_graphql(handler, session, query, query_vars=None):
 		context_value={
 			'plugin_manager': handler.server.plugin_manager,
 			'rpc_session': handler.rpc_session,
+			'server_config': handler.config,
 			'session': session
 		},
 		variable_values=query_vars
@@ -805,3 +878,202 @@ def rpc_graphql(handler, session, query, query_vars=None):
 			else:
 				errors.append(repr(error))
 	return {'data': result.data, 'errors': errors}
+
+@register_rpc('/ssl/letsencrypt/certbot_version', database_access=False, log_call=True)
+def rpc_ssl_letsencrypt_certbot_version(handler):
+	"""
+	Find the certbot binary and retrieve it's version information. If the
+	certbot binary could not be found, ``None`` is returned.
+
+	.. versionadded:: 1.14.0
+
+	:return: The version of certbot.
+	:rtype: str
+	"""
+	letsencrypt_config = handler.config.get_if_exists('server.letsencrypt', {})
+	bin_path = letsencrypt_config.get('certbot_path') or startup.which('certbot')
+	if not bin_path:
+		return None
+	results = startup.run_process((bin_path, '--version'))
+	match = re.match(r'^certbot (?P<version>\d+\.\d+\.\d+)$', results.stdout)
+	if match is None:
+		return None
+	return match.group('version')
+
+@register_rpc('/ssl/letsencrypt/issue', log_call=True)
+def rpc_ssl_letsencrypt_issue(handler, hostname, load=True):
+	"""
+	Issue a certificate with Let's Encrypt. This operation can fail for a wide
+	variety of reasons, check the ``message`` key of the returned dictionary for
+	a string description of what occurred. Successful operation requires that
+	the certbot utility be installed, and the server's Let's Encrypt data path
+	is configured.
+
+	.. versionadded:: 1.14.0
+
+	:param str hostname: The hostname of the certificate to issue.
+	:param bool load: Whether or not to load the certificate once it has been issued.
+	:return: A dictionary containing the results of the operation.
+	:rtype: dict
+	"""
+	config = handler.config
+	result = {'success': False}
+
+	letsencrypt_config = config.get_if_exists('server.letsencrypt', {})
+	# step 1: ensure that a letsencrypt configuration is available
+	data_path = letsencrypt_config.get('data_path')
+	if not data_path:
+		result['message'] = 'Let\'s Encrypt is not configured for use.'
+		return result
+	if not os.path.isdir(data_path):
+		rpc_logger.info('creating the letsencrypt data directory')
+		os.mkdir(data_path)
+
+	# step 2: ensure that SSL is enabled already
+	if not _ssl_is_enabled(handler):
+		result['message'] = 'Can not issue certificates when SSL is not in use.'
+		return result
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		result['message'] = 'Can not issue certificates when SNI is not available.'
+		return result
+
+	# step 3: ensure that the certbot utility is available
+	bin_path = letsencrypt_config.get('certbot_path') or startup.which('certbot')
+	if not bin_path:
+		result['message'] = 'Can not issue certificates without the certbot utility.'
+		return result
+
+	# step 4: ensure the hostname looks legit (TM) and hasn't already been issued
+	if re.match(r'^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+$', hostname, flags=re.IGNORECASE) is None:
+		result['message'] = 'Can not issue certificates for invalid hostnames.'
+		return result
+	if letsencrypt.get_sni_hostname_config(hostname, config):
+		result['message'] = 'The specified hostname already has the necessary files.'
+		return result
+
+	# step 5: determine the web_root path for this hostname and create it if necessary
+	web_root = config.get('server.web_root')
+	if config.get('server.vhost_directories'):
+		web_root = os.path.join(web_root, hostname)
+		if not os.path.isdir(web_root):
+			rpc_logger.info('vhost directory does not exist for hostname: ' + hostname)
+			os.mkdir(web_root)
+
+	# step 6: issue the certificate with certbot, this starts the subprocess and may take a few seconds
+	with _lend_semaphore(handler):
+		status = letsencrypt.certbot_issue(web_root, hostname, bin_path=bin_path, unified_directory=data_path)
+	if status != os.EX_OK:
+		result['message'] = 'Failed to issue the certificate.'
+		return result
+
+	# step 7: ensure the necessary files were created
+	sni_config = letsencrypt.get_sni_hostname_config(hostname, config)
+	if sni_config is None:
+		result['message'] = 'The certificate files were not generated.'
+		return result
+
+	# step 8: store the data in the database so it can be loaded next time the server starts
+	if load:
+		handler.server.add_sni_cert(hostname, ssl_certfile=sni_config.certfile, ssl_keyfile=sni_config.keyfile)
+	else:
+		letsencrypt.set_sni_hostname(hostname, sni_config.certfile, sni_config.certfile, enabled=False)
+
+	result['success'] = True
+	result['message'] = 'The operation completed successfully.'
+	return result
+
+@register_rpc('/ssl/sni_hostnames/get', log_call=True)
+def rpc_ssl_sni_hostnames_get(handler):
+	"""
+	Get the hostnames that have available Server Name Indicator (SNI)
+	configurations for use with SSL.
+
+	.. versionadded:: 1.14.0
+
+	:return: A dictionary keyed by hostnames with values of dictionaries containing additional metadata.
+	:rtype: dict
+	"""
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not enumerate SNI hostnames when SNI is not available')
+		return
+	hostnames = {}
+	for hostname, sni_config in letsencrypt.get_sni_hostnames(handler.config).items():
+		hostnames[hostname] = {'enabled': sni_config.enabled}
+	return hostnames
+
+@register_rpc('/ssl/sni_hostnames/load', log_call=True)
+def rpc_ssl_sni_hostnames_load(handler, hostname):
+	"""
+	Load the SNI configuration for the specified *hostname*, effectively
+	enabling it. If SSL is not enabled, SNI is not available, the necessary data
+	files are not available or the SNI configuration was already loaded, this
+	function returns ``False``.
+
+	.. versionadded:: 1.14.0
+
+	:param str hostname: The hostname to configure SSL for.
+	:return: Returns ``True`` only if the SNI configuration for *hostname* was loaded.
+	:rtype: bool
+	"""
+	if not _ssl_is_enabled(handler):
+		rpc_logger.warning('can not add an SNI hostname when SSL is not in use')
+		return False
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not add an SNI hostname when SNI is not available')
+		return False
+
+	for sni_cert in handler.server.get_sni_certs():
+		if sni_cert.hostname == hostname:
+			rpc_logger.warning('ignoring directive to add an SNI hostname that already exists')
+			return False
+	sni_config = letsencrypt.get_sni_hostname_config(hostname, handler.config)
+	if not sni_config:
+		rpc_logger.warning('can not add an SNI hostname without the necessary files')
+		return False
+	handler.server.add_sni_cert(hostname, sni_config.certfile, sni_config.keyfile)
+	return True
+
+@register_rpc('/ssl/sni_hostnames/unload', log_call=True)
+def rpc_ssl_sni_hostnames_unload(handler, hostname):
+	"""
+	Unload the SNI configuration for the specified *hostname*, effectively
+	disabling it. If SNI is not available, or the specified configuration was
+	not already loaded, this function returns ``False``.
+
+	.. versionadded:: 1.14.0
+
+	:param str hostname: The hostname to configure SSL for.
+	:return: Returns ``True`` only if the SNI configuration for *hostname* was unloaded.
+	:rtype: bool
+	"""
+	if not advancedhttpserver.g_ssl_has_server_sni:
+		rpc_logger.warning('can not remove an SNI hostname when SNI is not available')
+		return False
+	for sni_cert in handler.server.get_sni_certs():
+		if sni_cert.hostname == hostname:
+			break
+	else:
+		rpc_logger.warning('can not remove an SNI hostname that does not exist')
+		return False
+	handler.server.remove_sni_cert(sni_cert.hostname)
+	return True
+
+@register_rpc('/ssl/status', log_call=True)
+def rpc_ssl_status(handler):
+	"""
+	Get information regarding the status of SSL on the server. This method
+	returns a dictionary with keys describing whether or not SSL is enabled on
+	one or more interfaces, and whether or not the server possess the SNI
+	support. For details regarding which addresses are using SSL, see the
+	:py:func:`~rpc_config_get` method.
+
+	.. versionadded:: 1.14.0
+
+	:return: A dictionary with SSL status information.
+	:rtype: dict
+	"""
+	status = {
+		'enabled': _ssl_is_enabled(handler),
+		'has-sni': advancedhttpserver.g_ssl_has_server_sni
+	}
+	return status

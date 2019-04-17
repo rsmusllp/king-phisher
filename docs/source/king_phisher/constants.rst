@@ -12,7 +12,20 @@ Data
 
 .. autodata:: DEFAULT_LOG_LEVEL
 
+Sentinel Values
+^^^^^^^^^^^^^^^
+
+Sentinel values are used as place holders where ``None`` may be valid and have a
+different meaning.
+
+.. autodata:: AUTOMATIC
+
+   A sentinel value to indicate that a feature or value is determined
+   automatically.
+
 .. autodata:: DISABLED
+
+   A sentinel value to indicate that a feature or value is disabled.
 
 Classes
 -------

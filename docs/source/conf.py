@@ -42,13 +42,14 @@ import sphinx.domains.python
 import sphinx.util.docfields
 
 # -- General configuration ------------------------------------------------
-needs_sphinx = '1.6'
+needs_sphinx = '1.7'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-	'king_phisher.rpc_docs',
+	'king_phisher.sphinxext.graphql',
+	'king_phisher.sphinxext.rpc',
 	'sphinx.ext.autodoc',
 	'sphinx.ext.coverage',
 	'sphinx.ext.extlinks',
@@ -119,7 +120,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'King Phisher'
-copyright = '2013-2018, SecureState LLC'
+copyright = '2013-2019, SecureState LLC'
 
 # The short X.Y version.
 version = king_phisher.version.version.split('-')[0]
@@ -323,17 +324,19 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-# mock specific external packages
-MOCK_MODULES = [
-	'gi',
-	'gi.repository',
-	'matplotlib',
-	'matplotlib.backends',
-	'matplotlib.backends.backend_gtk3',
-	'matplotlib.backends.backend_gtk3agg',
-	'matplotlib.figure'
-]
-sys.modules.update((mod_name, king_phisher.utilities.Mock()) for mod_name in MOCK_MODULES)
+if king_phisher.its.on_rtd:
+	king_phisher.its.mocked = True
+	# mock specific external packages
+	MOCK_MODULES = [
+		'gi',
+		'gi.repository',
+		'matplotlib',
+		'matplotlib.backends',
+		'matplotlib.backends.backend_gtk3',
+		'matplotlib.backends.backend_gtk3agg',
+		'matplotlib.figure'
+	]
+	sys.modules.update((mod_name, king_phisher.utilities.Mock()) for mod_name in MOCK_MODULES)
 
 class PatchedDocsCache(object):
 	def __init__(self, *args, **kwargs):

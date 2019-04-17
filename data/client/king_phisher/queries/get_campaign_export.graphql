@@ -1,0 +1,131 @@
+# get all of the data to export a campaign
+query getCampaignExport($id: String!, $cursor: String, $page: Int) {
+  db {
+    campaign(id: $id) {
+      id
+      name
+      description
+      userId
+      created
+      maxCredentials
+      expiration
+      campaignTypeId
+      companyId
+
+      credentialRegexUsername
+      credentialRegexPassword
+      credentialRegexMfaToken
+
+      landingPages(first: $page, after: $cursor) {
+        edges {
+          node {
+            id
+            campaignId
+            hostname
+            page
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+      messages(first: $page, after: $cursor) {
+        edges {
+          node {
+            id
+            campaignId
+            targetEmail
+            firstName
+            lastName
+            opened
+            openerIp
+            openerUserAgent
+            sent
+            trained
+            companyDepartmentId
+          }
+        }
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
+      }
+      visits(first: $page, after: $cursor) {
+        edges {
+          node {
+            id
+            messageId
+            campaignId
+            count
+            ip
+            firstSeen
+            lastSeen
+            userAgent
+          }
+        }
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
+      }
+      credentials(first: $page, after: $cursor) {
+        edges {
+          node {
+            id
+            visitId
+            messageId
+            campaignId
+            username
+            password
+            submitted
+            mfaToken
+            regexValidated
+          }
+        }
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
+      }
+      deaddropDeployments(first: $page, after: $cursor) {
+        edges {
+          node {
+            id
+            campaignId
+            destination
+          }
+        }
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
+      }
+      deaddropConnections(first: $page, after: $cursor) {
+        edges {
+          node {
+            id
+            deploymentId
+            campaignId
+            count
+            ip
+            localUsername
+            localHostname
+            localIpAddresses
+            firstSeen
+            lastSeen
+          }
+        }
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
+      }
+    }
+  }
+}

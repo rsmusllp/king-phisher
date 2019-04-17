@@ -40,6 +40,7 @@ import sys
 import tempfile
 import threading
 
+from king_phisher import errors
 from king_phisher import ipaddress
 
 import geoip2.database
@@ -58,6 +59,9 @@ _geoip_db = None
 _geoip_db_lock = threading.Lock()
 logger = logging.getLogger('KingPhisher.GeoIP')
 
+Coordinates = collections.namedtuple('Coordinates', ('latitude', 'longitude'))
+"""A named tuple for representing GPS coordinates."""
+
 def _normalize_encoding(word):
 	if sys.version_info[0] == 2 and isinstance(word, unicode):
 		word = word.encode('ascii', 'ignore')
@@ -69,7 +73,14 @@ def download_geolite2_city_db(dest):
 
 	:param str dest: The file path to save the database to.
 	"""
-	response = requests.get(DB_DOWNLOAD_URL, stream=True)
+	try:
+		response = requests.get(DB_DOWNLOAD_URL, stream=True)
+	except requests.ConnectionError:
+		logger.error('geoip database download failed (could not connect to the server)')
+		raise errors.KingPhisherResourceError('could not download the geoip database') from None
+	except requests.RequestException:
+		logger.error('geoip database download failed', exc_info=True)
+		raise errors.KingPhisherResourceError('could not download the geoip database') from None
 	tfile = tempfile.mkstemp()
 	os.close(tfile[0])
 	tfile = tfile[1]
@@ -137,14 +148,11 @@ def lookup(ip, lang='en'):
 	result = {}
 	result['city'] = city.city.names.get(lang)
 	result['continent'] = city.continent.names.get(lang)
-	result['coordinates'] = (city.location.latitude, city.location.longitude)
+	result['coordinates'] = Coordinates(latitude=city.location.latitude, longitude=city.location.longitude)
 	result['country'] = city.country.names.get(lang)
 	result['postal_code'] = city.postal.code
 	result['time_zone'] = city.location.time_zone
 	return result
-
-Coordinates = collections.namedtuple('Coordinates', ('latitude', 'longitude'))
-"""A named tuple for representing GPS coordinates."""
 
 class GeoLocation(object):
 	"""

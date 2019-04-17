@@ -101,7 +101,14 @@ def main():
 
 	engine = manager.init_database(database_connection_url)
 	session = manager.Session()
-	rpc_session = aaa.AuthenticatedSession(user=getpass.getuser())
+
+	username = getpass.getuser()
+	user = session.query(models.User).filter_by(name=username).first()
+	if user is None:
+		print("[-] no user {0} found in the database".format(username))
+		return
+	rpc_session = aaa.AuthenticatedSession(user=user)
+
 	console = code.InteractiveConsole(dict(
 		engine=engine,
 		graphql_query=graphql_query,

@@ -42,7 +42,7 @@ class ClientRPCRemoteRowTests(testing.KingPhisherTestCase):
 		public_tables = tuple(metatable.model for metatable in models.database_tables.values() if not metatable.model.is_private)
 		self.assertEqual(len(client_rpc.database_table_objects), len(public_tables))
 		for remote_row in client_rpc.database_table_objects.values():
-			self.assertTrue(issubclass(remote_row, client_rpc.RemoteRow))
+			self.assertIsSubclass(remote_row, client_rpc.RemoteRow)
 
 	def test_table_row_classes_are_named(self):
 		for table_name, remote_row in client_rpc.database_table_objects.items():

@@ -237,6 +237,7 @@ def render_message_template(template, config, target=None, analyze=False):
 		first_name=target.first_name,
 		last_name=target.last_name,
 		email_address=target.email_address,
+		department=target.department,
 		company_name=config.get('mailer.company_name'),
 		message_id=target.uid
 	)
