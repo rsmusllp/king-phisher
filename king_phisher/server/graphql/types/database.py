@@ -33,6 +33,7 @@
 from __future__ import absolute_import
 
 import functools
+import logging
 import operator
 
 from . import misc as gql_misctypes
@@ -51,6 +52,8 @@ import sqlalchemy.orm.query
 
 __all__ = ('Database',)
 
+logger = logging.getLogger('KingPhisher.Server.GraphQL.Types.Database')
+
 def sa_get_relationship(session, model, name):
 	"""
 	Resolve the relationship on a SQLAlchemy model to either an object (in the
@@ -64,7 +67,7 @@ def sa_get_relationship(session, model, name):
 	"""
 	mapper = sqlalchemy.inspect(model.__class__)
 	relationship = mapper.relationships[name]
-	foreign_model = db_models.database_tables[relationship.table.name].model
+	foreign_model = db_models.database_tables[relationship.target.name].model
 	query = session.query(foreign_model)
 	if relationship.uselist:
 		column_name = relationship.primaryjoin.right.name
@@ -91,7 +94,19 @@ def sa_object_resolver(attname, default_value, model, info, **kwargs):
 		return sa_get_relationship(info.context['session'], model, attname)
 	return getattr(model, attname, default_value)
 
-sa_object_meta = functools.partial(dict, default_resolver=sa_object_resolver, interfaces=(gql_misctypes.RelayNode,))
+# GraphQL unfortunately makes it difficult to debug errors in certain locations of the code base, this can make
+# debugging issues very difficult so this wrapper adds exception logging before reraising any errors
+def _exception_logger(function):
+	@functools.wraps(function)
+	def wrapper(*args, **kwargs):
+		try:
+			return function(*args, **kwargs)
+		except Exception as error:
+			logger.error("{} encountered an unhandled exception".format(function.__name__), exc_info=True)
+			raise error
+	return wrapper
+
+sa_object_meta = functools.partial(dict, default_resolver=_exception_logger(sa_object_resolver), interfaces=(gql_misctypes.RelayNode,))
 
 # custom sqlalchemy related objects
 class SQLAlchemyConnectionField(graphene_sqlalchemy.SQLAlchemyConnectionField):
