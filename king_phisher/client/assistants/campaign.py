@@ -554,7 +554,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 		self.application.emit('campaign-changed', cid)
 
-		old_cid = self.config['campaign_id']
+		old_cid = self.config.get('campaign_id')
 		self.config['campaign_id'] = cid
 		self.config['campaign_name'] = properties['name']
 
