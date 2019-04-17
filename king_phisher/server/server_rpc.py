@@ -52,6 +52,7 @@ from king_phisher.server.database import models as db_models
 from king_phisher.server.graphql import schema
 
 import advancedhttpserver
+import boltons.typeutils
 import pyotp
 
 CONFIG_READABLE = (
@@ -77,12 +78,8 @@ database_tables = db_models.database_tables
 graphql_schema = schema.Schema()
 rpc_logger = logging.getLogger('KingPhisher.Server.RPC')
 
-def _ssl_is_enabled(handler):
-	"""
-	Returns whether or not SSL is enabled for any of the addresses that the
-	server is bound with.
-	"""
-	return any(address.get('ssl', False) for address in handler.config.get('server.addresses'))
+_REDACTED = boltons.typeutils.make_sentinel('REDACTED', 'REDACTED')
+"""Used with :py:func:`_log_rpc_call` as a place holder for sensitive arguments such as database row values."""
 
 class _lend_semaphore(object):
 	def __init__(self, handler):
@@ -93,6 +90,24 @@ class _lend_semaphore(object):
 
 	def __exit__(self, exc_type, exc_val, exc_tb):
 		self.handler.semaphore_acquire()
+
+def _log_rpc_call(handler_instance, function_name, *args, **kwargs):
+	if not rpc_logger.isEnabledFor(logging.DEBUG):
+		return
+	args_repr = ', '.join(map(repr, args))
+	if kwargs:
+		for key, value in sorted(kwargs.items()):
+			args_repr += ", {0}={1!r}".format(key, value)
+	user_id = getattr(handler_instance.rpc_session, 'user', 'N/A')
+	msg = "user id: {0} calling RPC method {1}({2})".format(user_id, function_name, args_repr)
+	rpc_logger.debug(msg)
+
+def _ssl_is_enabled(handler):
+	"""
+	Returns whether or not SSL is enabled for any of the addresses that the
+	server is bound with.
+	"""
+	return any(address.get('ssl', False) for address in handler.config.get('server.addresses'))
 
 def register_rpc(path, database_access=False, log_call=False):
 	"""
@@ -111,14 +126,8 @@ def register_rpc(path, database_access=False, log_call=False):
 	def decorator(function):
 		@functools.wraps(function)
 		def wrapper(handler_instance, *args, **kwargs):
-			if log_call and rpc_logger.isEnabledFor(logging.DEBUG):
-				args_repr = ', '.join(map(repr, args))
-				if kwargs:
-					for key, value in sorted(kwargs.items()):
-						args_repr += ", {0}={1!r}".format(key, value)
-				user_id = getattr(handler_instance.rpc_session, 'user', 'N/A')
-				msg = "user id: {0} calling RPC method {1}({2})".format(user_id, function.__name__, args_repr)
-				rpc_logger.debug(msg)
+			if log_call:
+				_log_rpc_call(handler_instance, function.__name__, *args, **kwargs)
 			signals.send_safe('rpc-method-call', rpc_logger, path[1:-1], request_handler=handler_instance, args=args, kwargs=kwargs)
 			if database_access:
 				session = db_manager.Session()
@@ -214,10 +223,12 @@ def rpc_config_set(handler, options):
 
 	:param dict options: A dictionary of option names and values
 	"""
-	for option_name, option_value in options.items():
-		if not option_name in CONFIG_WRITEABLE:
-			raise errors.KingPhisherPermissionError('permission denied to write config option: ' + option_name)
-		handler.config.set(option_name, option_value)
+	if rpc_logger.isEnabledFor(logging.DEBUG):
+		_log_rpc_call(handler, 'rpc_config_set', dict((key, _REDACTED) for key in options.keys()))
+	for key, value in options.items():
+		if key not in CONFIG_WRITEABLE:
+			raise errors.KingPhisherPermissionError('permission denied to write config option: ' + key)
+		handler.config.set(key, value)
 	return
 
 @register_rpc('/campaign/new', database_access=True, log_call=True)
@@ -520,6 +531,7 @@ def rpc_database_insert_row(handler, session, table_name, keys, values):
 	:param list values: The values to be inserted in the row.
 	:return: The id of the new row that has been added.
 	"""
+	_log_rpc_call(handler, 'rpc_database_insert_row', table_name, keys, _REDACTED)
 	if not isinstance(keys, (list, tuple)):
 		keys = (keys,)
 	if not isinstance(values, (list, tuple)):
@@ -555,6 +567,7 @@ def rpc_database_insert_row_multi(handler, session, table_name, keys, rows, deco
 	:return: List of ids of the newly inserted rows.
 	:rtype: list
 	"""
+	_log_rpc_call(handler, 'rpc_database_insert_row_multi', table_name, keys, _REDACTED, deconflict_ids=deconflict_ids)
 	inserted_rows = collections.deque()
 	if not isinstance(keys, list):
 		keys = list(keys)
@@ -594,6 +607,7 @@ def rpc_database_set_row_value(handler, session, table_name, row_id, keys, value
 	:param tuple keys: The column names of *values*.
 	:param tuple values: The values to be updated in the row.
 	"""
+	_log_rpc_call(handler, 'rpc_database_rpc_row_value', table_name, row_id, keys, _REDACTED)
 	if not isinstance(keys, (list, tuple)):
 		keys = (keys,)
 	if not isinstance(values, (list, tuple)):
