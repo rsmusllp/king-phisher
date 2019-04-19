@@ -62,6 +62,7 @@ extensions = [
 tab_width = 4
 
 extlinks = {
+	'issue':   ("https://github.com/{0}/issues/%s".format(GITHUB_REPO), '#'),
 	'release': ("https://github.com/{0}/releases/tag/v%s".format(GITHUB_REPO), 'v'),
 	'wiki':    ("https://github.com/{0}/wiki/%s".format(GITHUB_REPO), ''),
 }

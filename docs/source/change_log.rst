@@ -13,6 +13,15 @@ Version 1.14.0
 
 *In Progress*
 
+Version 1.13.1
+^^^^^^^^^^^^^^
+
+Released :release:`1.13.1` on April 19th, 2019
+
+* Fixed broken references to :py:func:`~king_phisher.startup.start_process`
+* Fixed a :py:exc:`KeyError` when creating a campaign for the first time (see: :issue:`365`)
+* Updated SQLAlchemy and Jinja2 libraries for security patches
+
 Version 1.13.0
 ^^^^^^^^^^^^^^
 
