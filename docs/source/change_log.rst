@@ -8,8 +8,19 @@ team for note worthy changes.
 Version 1.x.x
 -------------
 
+Version 1.13.1
+^^^^^^^^^^^^^^
+
+Released :release:`1.13.1` on April 19th, 2019
+
+* Fixed broken references to :py:func:`~king_phisher.startup.start_process`
+* Fixed a :py:exc:`KeyError` when creating a campaign for the first time (see: :issue:`365`)
+* Updated SQLAlchemy and Jinja2 libraries for security patches
+
 Version 1.13.0
 ^^^^^^^^^^^^^^
+
+Released :release:`1.13.0` on April 4th, 2019
 
 * Added support for logging MFA tokens with credentials
 * Added support for using regular expressions to validate credentials
