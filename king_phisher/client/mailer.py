@@ -488,7 +488,9 @@ class MailSenderThread(threading.Thread):
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			return ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED
 		except paramiko.SSHException as error:
-			self.logger.warning("failed with ssh exception '{0}'".format(error.message))
+			self.logger.warning("failed with: {0!r}".format(error))
+		except socket.timeout:
+			self.logger.warning('the connection to the ssh server timed out')
 		except Exception:
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
 		else:
