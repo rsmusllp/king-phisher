@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import logging
 import os
 
 from king_phisher import errors
@@ -40,6 +41,8 @@ from king_phisher.server import signals
 from king_phisher.server.database import storage
 
 import advancedhttpserver
+
+logger = logging.getLogger('KingPhisher.Server.Plugins')
 
 class ServerPlugin(plugins.PluginBase):
 	"""
@@ -167,6 +170,7 @@ class ServerPluginManager(plugins.PluginManagerBase):
 			raise errors.KingPhisherInputValidationError('configuration setting server.plugin_directories must be a list')
 		for directory in extra_dirs:
 			if not os.path.isdir(directory):
+				logger.warning("the specified plugin directory does not exist: {!r}".format(directory))
 				continue
 			path.append(directory)
 		return path
