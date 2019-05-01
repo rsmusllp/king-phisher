@@ -282,7 +282,7 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			response = self.dialog.run()
 		if response == Gtk.ResponseType.APPLY:
 			named_row = _ModelNamedRow(*model[tree_iter])
-			if old_campaign_id is not None and named_row.id != str(old_campaign_id):
+			if old_campaign_id is None or (old_campaign_id is not None and named_row.id != str(old_campaign_id)):
 				self.config['campaign_id'] = named_row.id
 				self.config['campaign_name'] = named_row.name
 				self.application.emit('campaign-set', old_campaign_id, named_row.id)
