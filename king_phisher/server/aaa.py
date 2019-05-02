@@ -73,7 +73,7 @@ def alarm_set(seconds):
 
 class AuthenticatedSession(object):
 	"""A container to store information associated with an authenticated session."""
-	__slots__ = ('_event_socket', 'created', 'last_seen', 'user', 'user_is_admin')
+	__slots__ = ('_event_socket', 'created', 'last_seen', 'user', 'user_access_level', 'user_is_admin')
 	# also used in tools/database_console for mocking a live session
 	def __init__(self, user):
 		"""
@@ -81,6 +81,7 @@ class AuthenticatedSession(object):
 		:type user: :py:class:`~king_phisher.server.database.models.User`
 		"""
 		self.user = user.id
+		self.user_access_level = user.access_level
 		self.user_is_admin = user.is_admin
 		self.created = db_models.current_timestamp()
 		self.last_seen = self.created
