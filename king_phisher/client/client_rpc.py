@@ -35,6 +35,7 @@ import collections
 import functools
 import logging
 import os
+import queue
 import ssl
 import sys
 
@@ -43,6 +44,7 @@ from king_phisher import find
 from king_phisher import geoip
 from king_phisher import serializers
 from king_phisher import utilities
+from king_phisher.client import gui_utilities
 
 import advancedhttpserver
 import boltons.typeutils
@@ -55,6 +57,10 @@ _tag_tables = ('campaign_types', 'campaigns', 'companies', 'company_departments'
 database_table_objects = utilities.FreezableDict()
 UNRESOLVED = boltons.typeutils.make_sentinel('UNRESOLVED', var_name='UNRESOLVED')
 """A sentinel value used for values in rows to indicate that the data has not been loaded from the server."""
+
+_WorkItem = collections.namedtuple('_WorkItem',
+	('callback_on_success', 'callback_on_error', 'callback_when_idle', 'callback_args', 'callback_kwargs', 'method', 'args', 'kwargs')
+)
 
 class RemoteRowMeta(type):
 	def __new__(mcs, name, bases, dct):
@@ -172,6 +178,20 @@ class Visit(RemoteRow):
 
 database_table_objects.freeze()
 
+def _graphql_file(file_or_path):
+	if isinstance(file_or_path, str):
+		with open(file_or_path, 'r') as file_h:
+			query = file_h.read()
+	else:
+		query = file_or_path.read()
+	return query
+
+def _graphql_find_file(query_file):
+	path = find.data_file(os.path.join('queries', query_file))
+	if path is None:
+		raise errors.KingPhisherResourceError('could not find GraphQL query file: ' + query_file)
+	return _graphql_file(path)
+
 class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 	"""
 	The main RPC object for communicating with the King Phisher Server
@@ -181,9 +201,71 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		self.logger = logging.getLogger('KingPhisher.Client.RPC')
 		super(KingPhisherRPCClient, self).__init__(*args, **kwargs)
 		self.set_serializer('binary/message-pack')
+		self._async_queue = queue.Queue()
+		self._async_thread = utilities.Thread(target=self._async_thread_routine, name='RPCAsyncWorker')
+		self._async_thread.start()
 
 	def __repr__(self):
 		return "<{0} '{1}@{2}:{3}{4}'>".format(self.__class__.__name__, self.username, self.host, self.port, self.uri_base)
+
+	def _async_thread_routine(self):
+		logger = logging.getLogger('KingPhisher.Client.RPC.Async')
+		while True:
+			work_item = self._async_queue.get()
+			if work_item is None:
+				break
+
+			args = work_item.args or ()
+			kwargs = work_item.kwargs or {}
+			callback_args = work_item.callback_args or ()
+			callback_kwargs = work_item.callback_kwargs or {}
+			try:
+				results = work_item.method(*args, **kwargs)
+			except Exception as error:
+				logger.error("async rpc method: {} encountered an error".format(work_item.method.__name__), exc_info=True)
+				callback = work_item.callback_on_error
+				callback_args = callback_args + (error,)
+			else:
+				callback = work_item.callback_on_success
+				callback_args = callback_args + (results,)
+
+			if callback is None:
+				continue
+			if work_item.callback_when_idle:
+				gui_utilities.glib_idle_add_once(callback, *callback_args, **callback_kwargs)
+			else:
+				try:
+					callback(*callback_args, **callback_kwargs)
+				except Exception:
+					logger.error("async rpc callback: {} encountered an error".format(callback.__name__), exc_info=True)
+
+	def async_call(self, method, args=None, kwargs=None, on_success=None, on_error=None, when_idle=False, cb_args=None, cb_kwargs=None):
+		self._async_queue.put(_WorkItem(
+			callback_on_success=on_success,
+			callback_on_error=on_error,
+			callback_when_idle=when_idle,
+			callback_args=cb_args,
+			callback_kwargs=cb_kwargs,
+			method=self.call,
+			args=(method,) + (args or ()),
+			kwargs=kwargs
+		))
+
+	def async_graphql(self, query, query_vars=None, on_success=None, on_error=None, when_idle=False, cb_args=None, cb_kwargs=None):
+		self._async_queue.put(_WorkItem(
+			callback_on_success=on_success,
+			callback_on_error=on_error,
+			callback_when_idle=when_idle,
+			callback_args=cb_args,
+			callback_kwargs=cb_kwargs,
+			method=self.graphql,
+			args=(query,),
+			kwargs={'query_vars': query_vars}
+		))
+
+	def async_graphql_file(self, file_or_path, *args, **kwargs):
+		query = _graphql_file(file_or_path)
+		return self.async_graphql(query, *args, **kwargs)
 
 	def graphql(self, query, query_vars=None):
 		"""
@@ -216,11 +298,7 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		:return: The query results.
 		:rtype: dict
 		"""
-		if isinstance(file_or_path, str):
-			with open(file_or_path, 'r') as file_h:
-				query = file_h.read()
-		else:
-			query = file_or_path.read()
+		query = _graphql_file(file_or_path)
 		return self.graphql(query, query_vars=query_vars)
 
 	def graphql_find_file(self, query_file, **query_vars):
@@ -235,10 +313,8 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		:return: The query results.
 		:rtype: dict
 		"""
-		path = find.data_file(os.path.join('queries', query_file))
-		if path is None:
-			raise errors.KingPhisherResourceError('could not find GraphQL query file: ' + query_file)
-		return self.graphql_file(path, query_vars=query_vars)
+		query = _graphql_find_file(query_file)
+		return self.graphql(query, query_vars=query_vars)
 
 	def reconnect(self):
 		"""Reconnect to the remote server."""
@@ -419,6 +495,10 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		:rtype: bool
 		"""
 		return self.call('ping')
+
+	def shutdown(self):
+		self._async_queue.put(None)
+		self._async_thread.join()
 
 def _magic_graphql(rpc, mode, line):
 	if mode == 'file':

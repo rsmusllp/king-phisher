@@ -496,6 +496,31 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.emit('campaign-set', None, self.config['campaign_id'])
 		return
 
+	def do_server_disconnected(self):
+		"""
+		Clean up the connections to the server and disconnect. This logs out of
+		the RPC, closes the server event socket, and stops the SSH forwarder.
+		"""
+		if self.rpc is not None:
+			if self.server_events is not None:
+				self.server_events.reconnect = False
+			GLib.source_remove(self._rpc_ping_event)
+			try:
+				self.rpc('logout')
+			except advancedhttpserver.RPCError as error:
+				self.logger.warning('failed to logout, rpc error: ' + error.message)
+			else:
+				if self.server_events is not None:
+					self.server_events.shutdown()
+					self.server_events = None
+			self.rpc.shutdown()
+			self.rpc = None
+
+		if self._ssh_forwarder:
+			self._ssh_forwarder.stop()
+			self._ssh_forwarder = None
+		return
+
 	def do_shutdown(self):
 		Gtk.Application.do_shutdown(self)
 		sys.excepthook = sys.__excepthook__
@@ -691,31 +716,6 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.server_user = ServerUser(id=user['id'], name=user['name'])
 		self.emit('server-connected')
 		return True, ConnectionErrorReason.SUCCESS
-
-	def do_server_disconnected(self):
-		"""
-		Clean up the connections to the server and disconnect. This logs out
-		of the RPC, closes the server event socket, and stops the SSH
-		forwarder.
-		"""
-		if self.rpc is not None:
-			if self.server_events is not None:
-				self.server_events.reconnect = False
-			GLib.source_remove(self._rpc_ping_event)
-			try:
-				self.rpc('logout')
-			except advancedhttpserver.RPCError as error:
-				self.logger.warning('failed to logout, rpc error: ' + error.message)
-			else:
-				if self.server_events is not None:
-					self.server_events.shutdown()
-					self.server_events = None
-			self.rpc = None
-
-		if self._ssh_forwarder:
-			self._ssh_forwarder.stop()
-			self._ssh_forwarder = None
-		return
 
 	def show_campaign_graph(self, graph_name):
 		"""
