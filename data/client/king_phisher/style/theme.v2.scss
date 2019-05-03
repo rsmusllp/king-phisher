@@ -207,6 +207,15 @@ grid {
   background: none;
 }
 
+infobar {
+  background: none;
+  > revealer {
+    > box {
+      background: $theme_color_1;
+    }
+  }
+}
+
 label {
   background: none;
   color: white;

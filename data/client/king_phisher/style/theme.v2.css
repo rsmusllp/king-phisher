@@ -266,6 +266,13 @@ grid {
   background: none;
 }
 
+infobar {
+  background: none;
+}
+infobar > revealer > box {
+  background: #5d84a8;
+}
+
 label {
   background: none;
   color: white;
