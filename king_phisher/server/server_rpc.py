@@ -810,15 +810,16 @@ def rpc_login(handler, session, username, password, otp=None):
 	signals.send_safe('rpc-user-logged-in', logger, handler, session=session_id, name=username)
 	return True, ConnectionErrorReason.SUCCESS, session_id
 
-@register_rpc('/logout', log_call=True)
-def rpc_logout(handler):
+@register_rpc('/logout', database_access=True, log_call=True)
+def rpc_logout(handler, session):
 	rpc_session = handler.rpc_session
 	if rpc_session.event_socket is not None:
 		rpc_session.event_socket.close()
 	handler.server.session_manager.remove(handler.rpc_session_id)
 	logger = logging.getLogger('KingPhisher.Server.Authentication')
 	logger.info("successful logout request from {0} for user id: {1}".format(handler.client_address[0], rpc_session.user))
-	signals.send_safe('rpc-user-logged-out', logger, handler, session=handler.rpc_session_id, name=rpc_session.user)
+	user = session.query(db_models.User).filter_by(id=rpc_session.user).first()
+	signals.send_safe('rpc-user-logged-out', logger, handler, session=handler.rpc_session_id, name=user.name)
 
 @register_rpc('/plugins/list', log_call=True)
 def rpc_plugins_list(handler):
