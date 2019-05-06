@@ -176,7 +176,7 @@ class ServerPluginManager(plugins.PluginManagerBase):
 		return path
 
 	def _sig_db_initialized(self, _):
-		for _, plugin in self:
+		for plugin in self.enabled_plugins.values():
 			plugin.storage = storage.KeyValueStorage('plugins.' + plugin.name)
 
 	@property
