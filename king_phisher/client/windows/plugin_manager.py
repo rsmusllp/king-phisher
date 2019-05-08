@@ -106,6 +106,7 @@ class PluginDocumentationWindow(html.HTMLWindow):
 			raise FileNotFoundError(errno.ENOENT, "could not find the data path for plugin '{0}'".format(plugin_id))
 		md_file = os.path.join(plugin_path, 'README.md')
 		if md_file is None or not os.path.isfile(md_file):
+			self.window.destroy()
 			raise FileNotFoundError(errno.ENOENT, "plugin '{0}' has no documentation".format(plugin_id), md_file)
 		self._md_file = md_file
 		self._plugin = self.application.plugin_manager[plugin_id]
