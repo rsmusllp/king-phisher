@@ -210,9 +210,11 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 
 	def _async_thread_routine(self):
 		logger = logging.getLogger('KingPhisher.Client.RPC.Async')
+		logger.debug('the async RPC worker has started')
 		while True:
 			work_item = self._async_queue.get()
 			if work_item is None:
+				self._async_queue.task_done()
 				break
 
 			args = work_item.args or ()
@@ -229,15 +231,16 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 				callback = work_item.callback_on_success
 				callback_args = callback_args + (results,)
 
-			if callback is None:
-				continue
-			if work_item.callback_when_idle:
-				gui_utilities.glib_idle_add_once(callback, *callback_args, **callback_kwargs)
-			else:
-				try:
-					callback(*callback_args, **callback_kwargs)
-				except Exception:
-					logger.error("async rpc callback: {} encountered an error".format(callback.__name__), exc_info=True)
+			if callback is not None:
+				if work_item.callback_when_idle:
+					gui_utilities.glib_idle_add_once(callback, *callback_args, **callback_kwargs)
+				else:
+					try:
+						callback(*callback_args, **callback_kwargs)
+					except Exception:
+						logger.error("async rpc callback: {} encountered an error".format(callback.__name__), exc_info=True)
+			self._async_queue.task_done()
+		logger.debug('the async RPC worker is exiting')
 
 	def async_call(self, method, args=None, kwargs=None, on_success=None, on_error=None, when_idle=False, cb_args=None, cb_kwargs=None):
 		self._async_queue.put(_WorkItem(
