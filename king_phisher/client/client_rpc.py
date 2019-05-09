@@ -501,6 +501,7 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 
 	def shutdown(self):
 		self._async_queue.put(None)
+		self._async_queue.join()
 		self._async_thread.join()
 
 def _magic_graphql(rpc, mode, line):
