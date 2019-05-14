@@ -506,7 +506,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 				self.server_events.reconnect = False
 			GLib.source_remove(self._rpc_ping_event)
 			try:
-				self.rpc('logout')
+				self.rpc.async_call('logout')
 			except advancedhttpserver.RPCError as error:
 				self.logger.warning('failed to logout, rpc error: ' + error.message)
 			else:
@@ -646,6 +646,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		try:
 			server_version_info = rpc('version')
 			if server_version_info is None:
+				rpc.shutdown()
 				raise RuntimeError('no version information was retrieved from the server')
 		except advancedhttpserver.RPCError as error:
 			self.logger.warning('failed to connect to the remote rpc service due to http status: ' + str(error.status))
@@ -666,6 +667,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			connection_failed = False
 
 		if connection_failed:
+			rpc.shutdown()
 			self.emit('server-disconnected')
 			return False, ConnectionErrorReason.ERROR_CONNECTION
 
@@ -690,12 +692,14 @@ class KingPhisherClientApplication(_Gtk_Application):
 			error_text += '\nPlease update the local client installation.'
 		if error_text:
 			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', window, error_text)
+			rpc.shutdown()
 			self.emit('server-disconnected')
 			return False, ConnectionErrorReason.ERROR_INCOMPATIBLE_VERSIONS
 
 		login_result, login_reason = rpc.login(username, password, otp)
 		if not login_result:
 			self.logger.warning('failed to authenticate to the remote king phisher service, reason: ' + login_reason)
+			rpc.shutdown()
 			self.emit('server-disconnected')
 			return False, login_reason
 		rpc.username = username
@@ -705,6 +709,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		if not event_subscriber.is_connected:
 			event_subscriber.reconnect = False
 			event_subscriber.shutdown()
+			rpc.shutdown()
+			self.emit('server-disconnected')
 			return False, ConnectionErrorReason.ERROR_UNKNOWN
 		self.rpc = rpc
 		self.server_events = event_subscriber
