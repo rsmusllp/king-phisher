@@ -217,6 +217,9 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		"""
 		utilities.assert_arg_type(application, Gtk.Application, arg_pos=2)
 		super(MainAppWindow, self).__init__(application=application)
+		self.set_property('hexpand', False)
+		self.set_property('vexpand', False)
+		self.set_property('window-position', Gtk.WindowPosition.NONE)
 		self.application = application
 		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')
 		self.config = config
@@ -258,7 +261,6 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		self.tabs['campaign'] = campaign_tab
 		self.notebook.insert_page(campaign_tab.box, campaign_tab.label, current_page + 2)
 
-		self.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
 		self.set_size_request(800, 600)
 		self.connect('delete-event', self.signal_delete_event)
 		self.notebook.show()
