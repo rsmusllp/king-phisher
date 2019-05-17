@@ -420,7 +420,10 @@ class SenderPolicyFramework(object):
 		elif mechanism == 'mx':
 			answers, additional = self._dns_query(rvalue, 'MX')
 			for mx_record in answers:
-				mx_record = str(mx_record.exchange).rstrip('.')
+				if hasattr(mx_record, 'exchange'):
+					mx_record = str(mx_record.exchange).rstrip('.')
+				else:
+					continue
 				found, matches = self._hostname_matches_additional(ip, mx_record, additional)
 				if matches:
 					return True
