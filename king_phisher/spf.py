@@ -266,7 +266,7 @@ class SenderPolicyFramework(object):
 		self.logger = logging.getLogger('KingPhisher.SPF.SenderPolicyFramework')
 
 	def __repr__(self):
-		return "<{0} ip={1} domain={2} sender={3} >".format(self.__class__.__name__, self.ip_address, self.domain, self.sender)
+		return "<{0} ip='{1}' domain='{2}' sender='{3}' >".format(self.__class__.__name__, self.ip_address, self.domain, self.sender)
 
 	def __str__(self):
 		return self.check_host() or ''
@@ -349,7 +349,7 @@ class SenderPolicyFramework(object):
 
 	def _dns_query(self, qname, qtype):
 		# querys all system dns servers
-		# returns answers, additional
+		# returns (answers, additional)
 		self.query_limit -= 1
 		if self.query_limit < 0:
 			raise SPFPermError('DNS query limit reached')
@@ -419,15 +419,19 @@ class SenderPolicyFramework(object):
 				return True
 		elif mechanism == 'mx':
 			answers, additional = self._dns_query(rvalue, 'MX')
-			for mx_record in answers:
-				if hasattr(mx_record, 'exchange'):
-					mx_record = str(mx_record.exchange).rstrip('.')
+			for answer in answers:
+				hostname = None
+				if answer.rdtype == dns.rdatatype.MX:
+					hostname = answer.exchange
+				elif answer.rdtype == dns.rdatatype.CNAME:
+					hostname = answer.target
 				else:
-					continue
-				found, matches = self._hostname_matches_additional(ip, mx_record, additional)
+					raise ValueError('answer is not an MX or CNAME record')
+				hostname = str(hostname).rstrip('.')
+				found, matches = self._hostname_matches_additional(ip, hostname, additional)
 				if matches:
 					return True
-				if not found and self._hostname_matches_ip(ip, mx_record):
+				if not found and self._hostname_matches_ip(ip, hostname):
 					return True
 		elif mechanism == 'ptr':
 			if isinstance(ip, ipaddress.IPv4Address):
