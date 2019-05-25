@@ -21,7 +21,7 @@ Client Responsibilities
 -----------------------
 
 - **Creating Campaigns** -- The client facilitates creating new campaigns
-  through it's user interface. Once the campaign user is done adjusting the
+  through its user interface. Once the campaign user is done adjusting the
   settings for the new campaign, the client uses RPC to transfer the information
   to the King Phisher server.
 
@@ -72,7 +72,7 @@ a connection to, and authenticate with the server for communication.
    tunnel, this time to the :rpc:func:`login` endpoint to authenticate and
    create a new session.
 
-4. The client opens a websocket connection through the RPC tunnel to subscribe
+4. The client opens a websocket connection through the SSH tunnel to subscribe
    to and receive events published by the server in real time.
 
 At this point the client is fully connected to the server.
