@@ -22,8 +22,6 @@ Functions
 
 .. autofunction:: format_datetime
 
-.. autofunction:: fs_chown
-
 .. autofunction:: is_valid_email_address
 
 .. autofunction:: make_message_uid

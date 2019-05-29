@@ -35,13 +35,11 @@ import collections
 import datetime
 import functools
 import gc
-import grp
 import inspect
 import json
 import logging
 import operator
 import os
-import pwd
 import random
 import re
 import string
@@ -293,52 +291,6 @@ def format_datetime(dt, encoding='utf-8'):
 	if isinstance(formatted, bytes):
 		formatted = formatted.decode(encoding)
 	return formatted
-
-def fs_chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
-	"""
-	This is a high-level wrapper around :py:func:`os.chown` to provide
-	additional functionality. ``None`` can be specified as the *user* or *group*
-	to leave the value unchanged. At least one of either *user* or *group* must
-	be specified.
-
-	.. versionadded:: 1.14.0
-
-	:param str path: The path to change the owner information for.
-	:param user: The new owner to set for the path.
-	:type user: int, str, ``None``
-	:param group: The new group to set for the path. If set to
-		:py:class:`~king_phisher.constants.AUTOMATIC`, the group that *user*
-		belongs too will be used.
-	:type group: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
-	:param bool recursive: Whether or not to recurse into directories.
-	"""
-	if (user is constants.AUTOMATIC or user is None) and (group is constants.AUTOMATIC or group is None):
-		raise ValueError('either user or group must be specified')
-	if isinstance(user, str):
-		struct_passwd = pwd.getpwnam(user)
-		user = struct_passwd.pw_uid
-		if group is constants.AUTOMATIC:
-			group = struct_passwd.pw_gid
-	elif user is None:
-		user = -1
-	elif not isinstance(user, int) and user >= 0:
-		raise ValueError('owner must be a (zero inclusive) natural number or a user name')
-	elif group is constants.AUTOMATIC:
-		struct_passwd = pwd.getpwuid(user)
-		group = struct_passwd.pw_gid
-	if isinstance(group, str):
-		struct_group = grp.getgrnam(group)
-		group = struct_group.gr_gid
-	elif group is None:
-		group = -1
-	elif not isinstance(group, int) and group >= 0:
-		raise ValueError('group must be a (zero inclusive) natural number or a group name')
-	if recursive:
-		iterator = smoke_zephyr.utilities.FileWalker(path)
-	else:
-		iterator = (path,)
-	for path in iterator:
-		os.chown(path, user, group)
 
 def is_valid_email_address(email_address):
 	"""
