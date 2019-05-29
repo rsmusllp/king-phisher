@@ -307,6 +307,7 @@ def message_data_from_kpm(target_file, dest_dir, encoding='utf-8'):
 	message_config = kpm.get_data('message_config.json')
 	message_config = message_config.decode(encoding)
 	message_config = serializers.JSON.loads(message_config)
+	message_config.pop('company_name', None)
 
 	if attachment_member_names:
 		attachment_dir = os.path.join(dest_dir, 'attachments')
