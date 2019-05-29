@@ -1367,8 +1367,8 @@ class MailSenderTab(_GObject_GObject):
 			gui_utilities.show_dialog_error('Import Error', self.parent, error.message.capitalize() + '.')
 			return False
 
-		message_config.pop('company_name', None)
 		config_keys = set(key for key in self.config.keys() if key.startswith(config_prefix))
+		config_keys.remove('mailer.company_name')
 		config_types = dict(zip(config_keys, [type(self.config[key]) for key in config_keys]))
 		for key, value in message_config.items():
 			key = config_prefix + key
