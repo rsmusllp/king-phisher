@@ -38,7 +38,6 @@ import signal
 import sys
 import threading
 
-import king_phisher.fs_utilities
 from king_phisher import startup
 from king_phisher import color
 from king_phisher import constants
@@ -49,6 +48,7 @@ from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import build
 from king_phisher.server import configuration
+from king_phisher.server import fs_utilities
 from king_phisher.server import plugins
 from king_phisher.server import pylibc
 
@@ -101,10 +101,10 @@ def build_and_run(arguments, config, plugin_manager, log_file=None):
 			return os.EX_NOUSER
 
 		if log_file is not None:
-			king_phisher.fs_utilities.chown(log_file, user=passwd.pw_uid, group=passwd.pw_gid, recursive=False)
+			fs_utilities.chown(log_file, user=passwd.pw_uid, group=passwd.pw_gid, recursive=False)
 		data_path = config.get_if_exists('server.letsencrypt.data_path')
 		if data_path and config.get_if_exists('server.letsencrypt.chown_data_path', True):
-			king_phisher.fs_utilities.chown(data_path, user=passwd.pw_uid, group=passwd.pw_gid, recursive=True)
+			fs_utilities.chown(data_path, user=passwd.pw_uid, group=passwd.pw_gid, recursive=True)
 
 		os.setgroups(pylibc.getgrouplist(setuid_username))
 		os.setresgid(passwd.pw_gid, passwd.pw_gid, passwd.pw_gid)

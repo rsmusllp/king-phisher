@@ -16,6 +16,7 @@ application.
    aaa.rst
    build.rst
    configuration.rst
+   fs_utilities.rst
    letsencrypt.rst
    plugins.rst
    pylibc.rst
