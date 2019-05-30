@@ -13,6 +13,8 @@ Version 1.14.0
 
 *In Progress*
 
+* Added the ``Message-ID`` MIME header to outgoing messages
+
 Version 1.13.1
 ^^^^^^^^^^^^^^
 
