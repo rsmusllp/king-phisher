@@ -36,9 +36,9 @@ import hashlib
 import ipaddress
 import os
 import re
-import sys
 import time
 import urllib
+import urllib.parse
 
 from king_phisher import its
 from king_phisher import spf
@@ -65,13 +65,6 @@ import jinja2
 import requests
 from smoke_zephyr.utilities import escape_single_quote
 from smoke_zephyr.utilities import parse_timespan
-
-if sys.version_info[0] < 3:
-	import urlparse
-	urllib.parse = urlparse
-	urllib.parse.urlencode = urllib.urlencode
-else:
-	import urllib.parse  # pylint: disable=ungrouped-imports
 
 if its.mocked:
 	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})

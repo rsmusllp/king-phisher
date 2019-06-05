@@ -756,6 +756,8 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 				opened
 				openerIp
 				openerUserAgent
+				deliveryStatus
+				deliveryDetails
 			}
 		}
 	}
@@ -776,6 +778,8 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 							opened
 							openerIp
 							openerUserAgent
+							deliveryStatus
+							deliveryDetails
 						}
 					}
 					pageInfo {
@@ -794,7 +798,9 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 		extras.ColumnDefinitionString('Department'),
 		extras.ColumnDefinitionDatetime('Opened'),
 		extras.ColumnDefinitionString('Opener IP Address', width=25),
-		extras.ColumnDefinitionString('Opener User Agent', width=90)
+		extras.ColumnDefinitionString('Opener User Agent', width=90),
+		extras.ColumnDefinitionString('Delivery Status'),
+		extras.ColumnDefinitionString('Delivery Details')
 	)
 	def format_node_data(self, node):
 		department = node['companyDepartment']
@@ -807,7 +813,9 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 			department,
 			node['opened'],
 			node['openerIp'],
-			node['openerUserAgent']
+			node['openerUserAgent'],
+			node['deliveryStatus'],
+			node['deliveryDetails']
 		)
 		return row
 
