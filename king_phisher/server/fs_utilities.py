@@ -85,4 +85,8 @@ def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 		os.chown(path, user, group)
 
 def access():
+	"""
+	
+	:return:
+	"""
 	pass
