@@ -11,3 +11,5 @@ Functions
 ---------
 
 .. autofunction:: chown
+
+.. autofunction:: access

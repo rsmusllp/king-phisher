@@ -83,3 +83,6 @@ def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 		iterator = (path,)
 	for path in iterator:
 		os.chown(path, user, group)
+
+def access():
+	pass
