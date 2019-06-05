@@ -1,0 +1,32 @@
+// diagram overview of a signal emission example
+digraph {
+    graph [pad="0.5", nodesep="1", ranksep="1"];
+    label="King Phisher Signal Emission Diagram";
+    labelloc="t";
+    rankdir=LR;
+
+    SQLAlchemy
+    ServerCore
+    WebSocketServer
+    WebSocketClient
+    ClientCore
+
+    subgraph cluster_Client {
+        color = lightgray;
+        label = "Client";
+        style = filled;
+        WebSocketClient ClientCore;
+    }
+
+    subgraph cluster_Server {
+        color = lightgray;
+        label = "Server";
+        style = filled;
+        SQLAlchemy ServerCore WebSocketServer
+    }
+
+    SQLAlchemy       -> ServerCore
+    ServerCore       -> WebSocketServer
+    WebSocketServer  -> WebSocketClient [constraint=false; label="Transmission over the network"]
+    WebSocketClient  -> ClientCore
+}

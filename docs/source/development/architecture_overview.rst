@@ -76,3 +76,55 @@ a connection to, and authenticate with the server for communication.
    to and receive events published by the server in real time.
 
 At this point the client is fully connected to the server.
+
+Signal Architecture
+-------------------
+
+Both the client and server utilize and provide functionality for signal-driven
+callbacks. The two use different backends, but in both cases, there is a core
+interface through which King Phisher signals are published to registered
+callback functions as events. The signal subsystem is particularly useful for
+plugins to modify system behavior.
+
+Client Signals
+^^^^^^^^^^^^^^
+
+Due to the nature of the client application using GTK, the GObject Signal
+functionality is used to provide the core of client events. These events are
+defined in the :ref:`gobject-signals-label` documentation. These signals are
+published by particular object instances, with the most notable being the
+:py:class:`~king_phisher.client.application.KingPhisherClientApplication`.
+
+Server Signals
+^^^^^^^^^^^^^^
+
+The server utilizes the :py:mod:`blinker` module to support application events.
+This interface is defined and documented in :ref:`_server-signals-label`
+documentation. Server signals are centrally located within the
+:py:mod:`~king_phisher.server.signals` module from which that can be both
+connected to and emitted.
+
+Signal Forwarders
+^^^^^^^^^^^^^^^^^
+
+Due to the both the client and server having a centralized signal mechanism,
+there are notable components which both forward signals to and from other
+components to make the interface consistent.
+
++------------------+-----------------------------+---------------------------------------------------------------------+
+| Name             | Direction                   | Description                                                         |
++==================+=============================+=====================================================================+
+| SQLAlchemy       | **From:** SQLAlchemy        | Forwards events from SQLAlchemy into the server's core signal       |
+|                  +-----------------------------+ dispatcher. This allows server components to connect to SQLAlchemy  |
+|                  | **To:** Server Core         | signals for database events through the central interface.          |
++------------------+-----------------------------+---------------------------------------------------------------------+
+| WebSocket Server | **From:** Server Core       | Forwards events from the server's core signal dispatcher to         |
+|                  +-----------------------------+ connected and subscribed client web sockets. This effectively       |
+|                  | **To:** WebSocket Clients   | enables subscribers to receive a subset of server signals.          |
++------------------+-----------------------------+---------------------------------------------------------------------+
+| WebSocket Client | **From:** WebSocket Client  | Forwards events received from the web sockets to the client's core  |
+|                  +-----------------------------+ signal dispatcher. This effectively enables client components to    |
+|                  | **To:** Client Core         | receive a subset of server signals.                                 |
++------------------+-----------------------------+---------------------------------------------------------------------+
+
+.. graphviz:: signals.dot
