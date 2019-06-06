@@ -10,6 +10,8 @@ the application.
 Functions
 ---------
 
+.. autofunction:: access
+
 .. autofunction:: chown
 
-.. autofunction:: access
+
