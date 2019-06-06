@@ -30,7 +30,6 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import datetime
 import logging
 import threading
 import time
@@ -53,6 +52,9 @@ import rule_engine
 from smoke_zephyr.utilities import parse_timespan
 
 UNKNOWN_LOCATION_STRING = 'N/A (Unknown)'
+
+def _dt_field(value):
+	return value if value is None else utilities.datetime_utc_to_local(value)
 
 class CampaignViewGenericTab(gui_utilities.GladeGObject):
 	"""
@@ -481,8 +483,8 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			connection['localUsername'],
 			connection['localHostname'],
 			connection['localIpAddresses'],
-			connection['firstSeen'],
-			connection['lastSeen']
+			_dt_field(connection['firstSeen']),
+			_dt_field(connection['lastSeen'])
 		)
 		return row
 
@@ -552,7 +554,7 @@ class CampaignViewCredentialsTab(CampaignViewGenericTableTab):
 			regex_validated = 'Pass' if node['regexValidated'] else 'Fail'
 		row = (
 			node['message']['targetEmail'],
-			node['submitted'],
+			_dt_field(node['submitted']),
 			regex_validated,
 			node['username'],
 			node['password'],
@@ -735,8 +737,8 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 			node['count'],
 			node['userAgent'],
 			geo_location,
-			node['firstSeen'],
-			node['lastSeen']
+			_dt_field(node['firstSeen']),
+			_dt_field(node['lastSeen'])
 		)
 		return row
 
@@ -808,10 +810,10 @@ class CampaignViewMessagesTab(CampaignViewGenericTableTab):
 			department = department['name']
 		row = (
 			node['targetEmail'],
-			node['sent'],
+			_dt_field(node['sent']),
 			('Yes' if node['trained'] else ''),
 			department,
-			node['opened'],
+			_dt_field(node['opened']),
 			node['openerIp'],
 			node['openerUserAgent'],
 			node['deliveryStatus'],
