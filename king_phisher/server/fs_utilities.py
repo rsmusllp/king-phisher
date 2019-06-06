@@ -34,9 +34,12 @@ import grp
 import os
 import pwd
 
+import collections
+import king_phisher.server.pylibc as pylibc
 import smoke_zephyr.utilities
 
 from king_phisher import constants
+from os import stat
 
 def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	"""
@@ -84,9 +87,76 @@ def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	for path in iterator:
 		os.chown(path, user, group)
 
-def access():
+def access(path, mode, user=None, group=constants.AUTOMATIC):
 	"""
-	
-	:return:
+	This is a high-level wrapper around :py:func:`os.access` to provide
+	additional functionality. Similar to `os.access` this high-level wrapper
+	will test the given path for a variety of access modes. Additionally however,
+	*user* or *group* can be specified to test against a specific of user or group.
+
+	.. versionadded:: 1.14.0
+
+	:param str path: The path to test access for.
+	:param str mode: The mode to test access for. Set to
+		`R_OK` to test for readability, `W_OK` for writability and
+		`X_OK` to determine if path can be executed.
+	:param user: The user to test permissions for.
+	:type user: int, str, ``None``
+	:param group: The group to test permissions for. If set to
+		:py:class:`~king_phisher.constants.AUTOMATIC`, the group that *user*
+		belongs too will be used.
+	:type group: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
+	:return: Returns ``True`` only if the user or group has the mode of permission specified else returns ``False``.
+	:rtype: bool
 	"""
-	pass
+	if (user is constants.AUTOMATIC or user is None) and (group is constants.AUTOMATIC or group is None):
+		raise ValueError('either user or group must be specified')
+
+	if isinstance(user, str):
+		user_info = pylibc.getpwnam(user)
+		file_info = os.stat(path)
+		raise ValueError('hi :)')
+		if mode == 'R_OK':
+			user_permissions = stat.S_IRUSR
+			group_permissions = stat.S_IRGRP
+			other_permissions = stat.S_IROTH
+		elif mode == 'W_OK':
+			user_permissions = stat.S_IWUSR
+			group_permissions = stat.S_IWGRP
+			other_permissions = stat.S_IWOTH
+		elif mode == 'X_OK':
+			user_permissions = stat.S_IXUSR
+			group_permissions = stat.S_IXGRP
+			other_permissions = stat.S_IXOTH
+
+		if file_info.st_uid == user_info.pw_uid and file_info.st_mode & user_permissions:
+			return True
+
+		if file_info.st_gid == user_info.pw_gid and file_info.st_mode & group_permissions:
+			return True
+
+		user_group_info = pylibc.getgrouplist(user)
+		for group_id in user_group_info:
+			if group_id == file_info.st_gid and file_info.st_mode & group_permissions:
+				return True
+
+		if file_info.st_mode & other_permissions:
+			return True
+
+		return False
+
+	if isinstance(group, str):
+		group_info = pylibc.getgrnam(group)
+		file_info = os.stat(path)
+
+		if mode == 'R_OK':
+			group_permissions = stat.S_IRGRP
+		elif mode == 'W_OK':
+			group_permissions = stat.S_IWGRP
+		elif mode == 'X_OK':
+			group_permissions = stat.S_IXGRP
+
+		if group_info.gr_gid == file_info.st_gid and file_info.st_mode & group_permissions:
+			return True
+
+		return False
