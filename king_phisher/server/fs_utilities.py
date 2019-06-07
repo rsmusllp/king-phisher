@@ -33,13 +33,12 @@
 import grp
 import os
 import pwd
+import stat
 
-import collections
-import king_phisher.server.pylibc as pylibc
 import smoke_zephyr.utilities
 
 from king_phisher import constants
-from os import stat
+import king_phisher.server.pylibc as pylibc
 
 def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	"""
@@ -115,7 +114,6 @@ def access(path, mode, user=None, group=constants.AUTOMATIC):
 	if isinstance(user, str):
 		user_info = pylibc.getpwnam(user)
 		file_info = os.stat(path)
-		raise ValueError('hi :)')
 		if mode == 'R_OK':
 			user_permissions = stat.S_IRUSR
 			group_permissions = stat.S_IRGRP
