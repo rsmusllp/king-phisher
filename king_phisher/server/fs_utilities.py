@@ -38,7 +38,7 @@ import stat
 import smoke_zephyr.utilities
 
 from king_phisher import constants
-import king_phisher.server.pylibc as pylibc
+from king_phisher.server import pylibc
 
 def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	"""
