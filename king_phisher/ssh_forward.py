@@ -158,6 +158,9 @@ class SSHTCPForwarder(threading.Thread):
 				if self.__try_connect(look_for_keys=False, pkey=key):
 					break
 
+		if not self.__connected and len(agent_keys) == 1:
+			self.__try_connect(look_for_keys=False, pkey=agent_keys[0])
+
 		if not self.__connected:
 			self.__try_connect(password=password, look_for_keys=True, raise_error=True)
 
