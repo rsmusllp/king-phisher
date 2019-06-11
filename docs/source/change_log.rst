@@ -14,6 +14,7 @@ Version 1.14.0
 *In Progress*
 
 * Added the ``Message-ID`` MIME header to outgoing messages
+* Attempt SSH authentication with all agent-provided SSH keys
 
 Version 1.13.1
 ^^^^^^^^^^^^^^

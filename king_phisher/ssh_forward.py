@@ -154,11 +154,13 @@ class SSHTCPForwarder(threading.Thread):
 				self.logger.warning('failed to identify the user specified key for ssh authentication')
 
 		if not self.__connected and agent_keys:
+			self.logger.debug("attempting ssh authentication with {:,} agent provided key{}".format(len(agent_keys), '' if len(agent_keys) == 1 else 's'))
 			for key in agent_keys:
 				if self.__try_connect(look_for_keys=False, pkey=key):
 					break
 
 		if not self.__connected:
+			self.logger.debug('attempting ssh authentication with user specified credentials')
 			self.__try_connect(password=password, look_for_keys=True, raise_error=True)
 
 		transport = self.client.get_transport()
