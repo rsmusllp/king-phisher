@@ -38,6 +38,45 @@ import smoke_zephyr.utilities
 
 from king_phisher import constants
 
+def _resolve_target_ids(user, group):
+	if user is None and (group is constants.AUTOMATIC or group is None):
+		raise ValueError('either user or group must be specified')
+
+	uid = None
+	gid = None
+	if isinstance(user, str):
+		struct_passwd = pwd.getpwnam(user)
+		uid = struct_passwd.pw_uid
+		if group is constants.AUTOMATIC:
+			gid = struct_passwd.pw_gid
+	elif user is constants.AUTOMATIC:
+		uid = os.getuid()
+	elif user is None:
+		uid = None
+	elif isinstance(user, int):
+		if user < 0:
+			raise ValueError('owner must be a (zero inclusive) natural number or a user name')
+		uid = user
+	else:
+		raise TypeError('the user argument type is unsupported')
+
+	if isinstance(group, str):
+		struct_group = grp.getgrnam(group)
+		gid = struct_group.gr_gid
+	elif group is constants.AUTOMATIC:
+		if uid is None:
+			raise ValueError('can not resolve a group without a uid')
+		if gid is None:  # check if this was resolved already before calling into libc
+			struct_passwd = pwd.getpwuid(uid)
+			gid = struct_passwd.pw_gid
+	elif group is None:
+		gid = None
+	elif isinstance(group, int):
+		if group < 0:
+			raise ValueError('group must be a (zero inclusive) natural number or a group name')
+		gid = group
+	return uid, gid
+
 def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	"""
 	This is a high-level wrapper around :py:func:`os.chown` to provide
@@ -48,38 +87,24 @@ def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	.. versionadded:: 1.14.0
 
 	:param str path: The path to change the owner information for.
-	:param user: The new owner to set for the path.
-	:type user: int, str, ``None``
+	:param user: The new owner to set for the path. If set to
+		:py:class:`~king_phisher.constants.AUTOMATIC`, the processes current uid
+		will be used.
+	:type user: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
 	:param group: The new group to set for the path. If set to
 		:py:class:`~king_phisher.constants.AUTOMATIC`, the group that *user*
 		belongs too will be used.
 	:type group: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
 	:param bool recursive: Whether or not to recurse into directories.
 	"""
-	if (user is constants.AUTOMATIC or user is None) and (group is constants.AUTOMATIC or group is None):
-		raise ValueError('either user or group must be specified')
-	if isinstance(user, str):
-		struct_passwd = pwd.getpwnam(user)
-		user = struct_passwd.pw_uid
-		if group is constants.AUTOMATIC:
-			group = struct_passwd.pw_gid
-	elif user is None:
-		user = -1
-	elif not isinstance(user, int) and user >= 0:
-		raise ValueError('owner must be a (zero inclusive) natural number or a user name')
-	elif group is constants.AUTOMATIC:
-		struct_passwd = pwd.getpwuid(user)
-		group = struct_passwd.pw_gid
-	if isinstance(group, str):
-		struct_group = grp.getgrnam(group)
-		group = struct_group.gr_gid
-	elif group is None:
-		group = -1
-	elif not isinstance(group, int) and group >= 0:
-		raise ValueError('group must be a (zero inclusive) natural number or a group name')
+	uid, gid = _resolve_target_ids(user, group)
+	if uid is None:
+		uid = -1
+	if gid is None:
+		gid = -1
 	if recursive:
 		iterator = smoke_zephyr.utilities.FileWalker(path)
 	else:
 		iterator = (path,)
 	for path in iterator:
-		os.chown(path, user, group)
+		os.chown(path, uid, gid)
