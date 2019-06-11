@@ -30,15 +30,50 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import grp
 import os
-import pwd
-import stat
-
 import smoke_zephyr.utilities
 
 from king_phisher import constants
 from king_phisher.server import pylibc
+
+def _resolve_target_ids(user, group):
+	if user is None and (group is constants.AUTOMATIC or group is None):
+		raise ValueError('either user or group must be specified')
+
+	uid = None
+	gid = None
+	if isinstance(user, str):
+		struct_passwd = pylibc.getpwnam(user)
+		uid = struct_passwd.pw_uid
+		if group is constants.AUTOMATIC:
+			gid = struct_passwd.pw_gid
+	elif user is constants.AUTOMATIC:
+		uid = os.getuid()
+	elif user is None:
+		uid = None
+	elif isinstance(user, int):
+		if user < 0:
+			raise ValueError('owner must be a (zero inclusive) natural number or a user name')
+		uid = user
+	else:
+		raise TypeError('the user argument type is unsupported')
+
+	if isinstance(group, str):
+		struct_group = pylibc.getgrnam(group)
+		gid = struct_group.gr_gid
+	elif group is constants.AUTOMATIC:
+		if uid is None:
+			raise ValueError('can not resolve a group without a uid')
+		if gid is None:  # check if this was resolved already before calling into libc
+			struct_passwd = pylibc.getpwuid(uid)
+			gid = struct_passwd.pw_gid
+	elif group is None:
+		gid = None
+	elif isinstance(group, int):
+		if group < 0:
+			raise ValueError('group must be a (zero inclusive) natural number or a group name')
+		gid = group
+	return uid, gid
 
 def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	"""
@@ -46,104 +81,27 @@ def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	additional functionality. ``None`` can be specified as the *user* or *group*
 	to leave the value unchanged. At least one of either *user* or *group* must
 	be specified.
-
 	.. versionadded:: 1.14.0
-
 	:param str path: The path to change the owner information for.
-	:param user: The new owner to set for the path.
-	:type user: int, str, ``None``
+	:param user: The new owner to set for the path. If set to
+		:py:class:`~king_phisher.constants.AUTOMATIC`, the processes current uid
+		will be used.
+	:type user: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
 	:param group: The new group to set for the path. If set to
 		:py:class:`~king_phisher.constants.AUTOMATIC`, the group that *user*
 		belongs too will be used.
 	:type group: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
 	:param bool recursive: Whether or not to recurse into directories.
 	"""
-
-	user, group = _resolve_information(user, group)
-
+	uid, gid = _resolve_target_ids(user, group)
+	if uid is None:
+		uid = -1
+	if gid is None:
+		gid = -1
 	if recursive:
 		iterator = smoke_zephyr.utilities.FileWalker(path)
 	else:
 		iterator = (path,)
 	for path in iterator:
-		os.chown(path, user, group)
+		os.chown(path, uid, gid)
 
-
-def access(path, mode, user=None, group=constants.AUTOMATIC):
-	"""
-	This is a high-level wrapper around :py:func:`os.access` to provide
-	additional functionality. Similar to `os.access` this high-level wrapper
-	will test the given path for a variety of access modes. Additionally however,
-	*user* or *group* can be specified to test against a specific of user or group.
-
-	.. versionadded:: 1.14.0
-
-	:param str path: The path to test access for.
-	:param str mode: The mode to test access for. Set to `R_OK` to test for readability,
-		`W_OK` for writability and
-		`X_OK` to determine if path can be executed.
-	:param user: The user to test permissions for.
-	:type user: int, str, ``None``
-	:param group: The group to test permissions for. If set to
-		:py:class:`~king_phisher.constants.AUTOMATIC`, the group that *user*
-		belongs too will be used.
-	:type group: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
-	:return: Returns ``True`` only if the user or group has the mode of permission specified else returns ``False``.
-	:rtype: bool
-	"""
-
-	user_id, group = _resolve_information(user, group)
-	file_info = os.stat(path)
-
-	if mode == 'R_OK':
-		user_permissions = stat.S_IRUSR
-		group_permissions = stat.S_IRGRP
-		other_permissions = stat.S_IROTH
-	elif mode == 'W_OK':
-		user_permissions = stat.S_IWUSR
-		group_permissions = stat.S_IWGRP
-		other_permissions = stat.S_IWOTH
-	elif mode == 'X_OK':
-		user_permissions = stat.S_IXUSR
-		group_permissions = stat.S_IXGRP
-		other_permissions = stat.S_IXOTH
-
-	if file_info.st_uid == user_id and file_info.st_mode & user_permissions:
-		return True
-
-	if file_info.st_gid == group and file_info.st_mode & group_permissions:
-		return True
-
-	for group_id in pylibc.getgrouplist(user):
-		if group_id == file_info.st_gid and file_info.st_mode & group_permissions:
-			return True
-
-	if file_info.st_mode & other_permissions:
-		return True
-
-	return False
-
-def _resolve_information(user, group):
-	if (user is constants.AUTOMATIC or user is None) and (group is constants.AUTOMATIC or group is None):
-		raise ValueError('either user or group must be specified')
-	if isinstance(user, str):
-		struct_passwd = pwd.getpwnam(user)
-		user = struct_passwd.pw_uid
-		if group is constants.AUTOMATIC:
-			group = struct_passwd.pw_gid
-	elif user is None:
-		user = -1
-	elif not isinstance(user, int) and user >= 0:
-		raise ValueError('owner must be a (zero inclusive) natural number or a user name')
-	elif group is constants.AUTOMATIC:
-		struct_passwd = pwd.getpwuid(user)
-		group = struct_passwd.pw_gid
-	if isinstance(group, str):
-		struct_group = grp.getgrnam(group)
-		group = struct_group.gr_gid
-	elif group is None:
-		group = -1
-	elif not isinstance(group, int) and group >= 0:
-		raise ValueError('group must be a (zero inclusive) natural number or a group name')
-
-	return user, group
