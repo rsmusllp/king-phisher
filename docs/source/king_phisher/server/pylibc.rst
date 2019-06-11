@@ -18,3 +18,5 @@ Functions
 .. autofunction:: getgrouplist
 
 .. autofunction:: getpwnam
+
+.. autofunction:: getpwuid

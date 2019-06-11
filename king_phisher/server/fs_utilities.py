@@ -30,13 +30,12 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import grp
 import os
-import pwd
 
 import smoke_zephyr.utilities
 
 from king_phisher import constants
+from king_phisher.server import pylibc
 
 def _resolve_target_ids(user, group):
 	if user is None and (group is constants.AUTOMATIC or group is None):
@@ -45,7 +44,7 @@ def _resolve_target_ids(user, group):
 	uid = None
 	gid = None
 	if isinstance(user, str):
-		struct_passwd = pwd.getpwnam(user)
+		struct_passwd = pylibc.getpwnam(user)
 		uid = struct_passwd.pw_uid
 		if group is constants.AUTOMATIC:
 			gid = struct_passwd.pw_gid
@@ -61,13 +60,13 @@ def _resolve_target_ids(user, group):
 		raise TypeError('the user argument type is unsupported')
 
 	if isinstance(group, str):
-		struct_group = grp.getgrnam(group)
+		struct_group = pylibc.getgrnam(group)
 		gid = struct_group.gr_gid
 	elif group is constants.AUTOMATIC:
 		if uid is None:
 			raise ValueError('can not resolve a group without a uid')
 		if gid is None:  # check if this was resolved already before calling into libc
-			struct_passwd = pwd.getpwuid(uid)
+			struct_passwd = pylibc.getpwuid(uid)
 			gid = struct_passwd.pw_gid
 	elif group is None:
 		gid = None

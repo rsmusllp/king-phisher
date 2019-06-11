@@ -36,8 +36,8 @@ import ctypes.util
 
 from king_phisher import constants
 
-_c_gid_t = ctypes.c_int
-_c_uid_t = ctypes.c_int
+_c_gid_t = ctypes.c_uint32
+_c_uid_t = ctypes.c_uint32
 
 def _cstr(c_string, encoding='utf-8'):
 	if c_string is None:
@@ -118,6 +118,10 @@ _libc_getpwnam = _libc.getpwnam
 _libc_getpwnam.argtypes = [ctypes.c_char_p]
 _libc_getpwnam.restype = ctypes.POINTER(_PASSWD)
 
+_libc_getpwuid = _libc.getpwuid
+_libc_getpwuid.argtypes = [_c_uid_t]
+_libc_getpwuid.restype = ctypes.POINTER(_PASSWD)
+
 def getgrnam(name, encoding='utf-8'):
 	"""
 	Get the structure containing the fields from the specified entry in the
@@ -178,6 +182,22 @@ def getpwnam(name, encoding='utf-8'):
 	"""
 	name = _cbytes(name, encoding=encoding)
 	c_ppasswd = _libc_getpwnam(name)
+	if not c_ppasswd:
+		return None
+	return c_ppasswd.contents.to_tuple()
+
+def getpwuid(uid):
+	"""
+	Get the structure containing the fields from the specified entry in the
+	passwrd database. See
+	`getpwuid(3) <http://man7.org/linux/man-pages/man3/getpwuid.3.html>`_ for
+	more information.
+
+	:param int uid: The user id to look up.
+	:return: The entry from the user database or ``None`` if it was not found.
+	:rtype: tuple
+	"""
+	c_ppasswd = _libc_getpwuid(uid)
 	if not c_ppasswd:
 		return None
 	return c_ppasswd.contents.to_tuple()
