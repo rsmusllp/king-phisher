@@ -31,6 +31,8 @@
 #
 
 import os
+import stat
+
 import smoke_zephyr.utilities
 
 from king_phisher import constants
@@ -105,3 +107,58 @@ def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	for path in iterator:
 		os.chown(path, uid, gid)
 
+
+def access(path, mode, user=constants.AUTOMATIC, group=constants.AUTOMATIC):
+	"""
+	This is a high-level wrapper around :py:func:`os.access` to provide
+	additional functionality. Similar to `os.access` this high-level wrapper
+	will test the given path for a variety of access modes. Additionally however,
+	*user* or *group* can be specified to test against a specific of user or group.
+	.. versionadded:: 1.14.0
+	:param str path: The path to test access for.
+	:param mode: The mode to test access for. Set to `os.W_OK` to test for readability,
+		`os.W_OK` for writability and
+		`os.W_OK` to determine if path can be executed.
+	:type mode: :py:class`os.*_OK`
+	:param user: The user to test permissions for. If set to
+		:py:class:`~king_phisher.constants.AUTOMATIC`, the processes current uid
+		will be used.
+	:type user: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
+	:param group: The group to test permissions for. If set to
+		:py:class:`~king_phisher.constants.AUTOMATIC`, the group that *user*
+		belongs too will be used.
+	:type group: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
+	:return: Returns ``True`` only if the user or group has the mode of permission specified else returns ``False``.
+	:rtype: bool
+	"""
+	uid, gid = _resolve_target_ids(user, group)
+	file_info = os.stat(path)
+
+	if file_info.st_uid == uid:
+		# start with no test flags
+		test_mode = 0
+		# then check if R_OK is to be checked for
+		if mode & os.R_OK:
+			# and if so, add the proper flag to be tested
+			test_mode |= stat.S_IRUSR
+		if mode & os.W_OK:
+			test_mode |= stat.S_IWUSR
+		if mode & os.X_OK:
+			test_mode |= stat.S_IXUSR
+		if file_info.st_mode & test_mode:
+			return True
+
+	if isinstance(user, str) and group == constants.AUTOMATIC:
+		# check all the groups
+		if any(file_info.st_gid == gid for gid in pylibc.getgrouplist(user)):
+			test_mode = 0
+			if mode & os.R_OK:
+				test_mode |= stat.S_IRGRP
+			if mode & os.W_OK:
+				test_mode |= stat.S_IWGRP
+			if mode & os.X_OK:
+				test_mode |= stat.S_IXGRP
+			if file_info.st_mode & test_mode:
+				return True
+
+	return False
