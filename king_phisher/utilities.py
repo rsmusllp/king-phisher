@@ -511,7 +511,7 @@ class Thread(threading.Thread):
 		"""
 		Check to see if the flag is set to stop the thread.
 		"""
-		return self.stop_flag.is_set()
+		return not self.is_alive()
 
 class Event(getattr(threading, ('_Event' if hasattr(threading, '_Event') else 'Event'))):
 	__slots__ = ('__event',)

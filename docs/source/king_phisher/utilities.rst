@@ -47,6 +47,10 @@ Functions
 Classes
 -------
 
+.. autoclass:: Event
+   :show-inheritance:
+   :members:
+
 .. autoclass:: FreezableDict
    :show-inheritance:
    :members:
@@ -58,3 +62,5 @@ Classes
 
 .. autoclass:: Mock
    :show-inheritance:
+
+.. autoclass:: Thread
