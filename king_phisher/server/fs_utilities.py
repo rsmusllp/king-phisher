@@ -30,7 +30,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import functools
 import os
+import stat
 
 import smoke_zephyr.utilities
 
@@ -76,6 +78,16 @@ def _resolve_target_ids(user, group):
 		gid = group
 	return uid, gid
 
+def _test_mode(st_mode, mode, ir_flag, iw_flag, ix_flag):
+	test_flags = 0
+	if mode & os.R_OK:
+		test_flags |= ir_flag
+	if mode & os.W_OK:
+		test_flags |= iw_flag
+	if mode & os.X_OK:
+		test_flags |= ix_flag
+	return (st_mode & test_flags) == test_flags
+
 def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	"""
 	This is a high-level wrapper around :py:func:`os.chown` to provide
@@ -87,7 +99,7 @@ def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 
 	:param str path: The path to change the owner information for.
 	:param user: The new owner to set for the path. If set to
-		:py:class:`~king_phisher.constants.AUTOMATIC`, the processes current uid
+		:py:class:`~king_phisher.constants.AUTOMATIC`, the process's current uid
 		will be used.
 	:type user: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
 	:param group: The new group to set for the path. If set to
@@ -107,3 +119,58 @@ def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 		iterator = (path,)
 	for path in iterator:
 		os.chown(path, uid, gid)
+
+def access(path, mode, user=constants.AUTOMATIC, group=constants.AUTOMATIC):
+	"""
+	This is a high-level wrapper around :py:func:`os.access` to provide
+	additional functionality. Similar to `os.access` this high-level wrapper
+	will test the given path for a variety of access modes. Additionally *user*
+	or *group* can be specified to test access for a specific user or group.
+
+	.. versionadded:: 1.14.0
+
+	:param str path: The path to test access for.
+	:param int mode: The mode to test access for. Set to `os.R_OK` to test for
+		readability, `os.W_OK` for writability and `os.X_OK` to determine if
+		path can be executed.
+	:param user: The user to test permissions for. If set to
+		:py:class:`~king_phisher.constants.AUTOMATIC`, the process's current uid
+		will be used.
+	:type user: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
+	:param group: The group to test permissions for. If set to
+		:py:class:`~king_phisher.constants.AUTOMATIC`, the group that *user*
+		belongs too will be used.
+	:type group: int, str, ``None``, :py:class:`~king_phisher.constants.AUTOMATIC`
+	:return: Returns ``True`` only if the user or group has the mode of
+		permission specified else returns ``False``.
+	:rtype: bool
+	"""
+	uid, gid = _resolve_target_ids(user, group)
+	file_info = os.stat(path)
+
+	# If there are no permissions to check for then yes the user has no more than no permissions.
+	if not mode:
+		return True
+
+	__test_mode = functools.partial(_test_mode, file_info.st_mode, mode)
+
+	# Other checks
+	if __test_mode(stat.S_IROTH, stat.S_IWOTH, stat.S_IXOTH):
+		return True
+
+	# User Checks
+	if file_info.st_uid == uid and __test_mode(stat.S_IRUSR, stat.S_IWUSR, stat.S_IXUSR):
+		return True
+
+	# Group checks
+	if file_info.st_gid == gid and __test_mode(stat.S_IRGRP, stat.S_IWGRP, stat.S_IXGRP):
+		return True
+
+	# If there were no groups specified then enumerate all of the users gids and test them all.
+	if group == constants.AUTOMATIC:
+		if not isinstance(user, str):
+			user = pylibc.getpwuid(uid).pw_name
+		# Check all the groups
+		if file_info.st_gid in pylibc.getgrouplist(user) and __test_mode(stat.S_IRGRP, stat.S_IWGRP, stat.S_IXGRP):
+			return True
+	return False
