@@ -134,6 +134,25 @@ def access(path, mode, user=constants.AUTOMATIC, group=constants.AUTOMATIC):
 	uid, gid = _resolve_target_ids(user, group)
 	file_info = os.stat(path)
 
+	# If there are no permissions to check for then yes the user has no more than no permissions.
+	if not mode:
+		return True
+
+	# Other checks
+	# start with no test flags
+	test_mode = 0
+	# then check if R_OK is to be checked for
+	if mode & os.R_OK:
+		# and if so, add the proper flag to be tested
+		test_mode |= stat.S_IROTH
+	if mode & os.W_OK:
+		test_mode |= stat.S_IWOTH
+	if mode & os.X_OK:
+		test_mode |= stat.S_IXOTH
+	if file_info.st_mode & test_mode:
+		return True
+
+	# User Checks
 	if file_info.st_uid == uid:
 		# start with no test flags
 		test_mode = 0
@@ -148,7 +167,24 @@ def access(path, mode, user=constants.AUTOMATIC, group=constants.AUTOMATIC):
 		if file_info.st_mode & test_mode:
 			return True
 
-	if isinstance(user, str) and group == constants.AUTOMATIC:
+	# Group checks
+	if file_info.st_gid == gid:
+		test_mode = 0
+		# then check if R_OK is to be checked for
+		if mode & os.R_OK:
+			# and if so, add the proper flag to be tested
+			test_mode |= stat.S_IRUSR
+		if mode & os.W_OK:
+			test_mode |= stat.S_IWUSR
+		if mode & os.X_OK:
+			test_mode |= stat.S_IXUSR
+		if file_info.st_mode & test_mode:
+			return True
+
+	# If there were no groups specified then enumerate all of the users gids and test them all.
+	if group == constants.AUTOMATIC:
+		if not isinstance(user, str):
+			user = pylibc.getpwuid(user).pw_name
 		# check all the groups
 		if any(file_info.st_gid == gid for gid in pylibc.getgrouplist(user)):
 			test_mode = 0
