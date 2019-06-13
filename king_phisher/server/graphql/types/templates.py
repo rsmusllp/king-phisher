@@ -168,6 +168,12 @@ class SiteTemplateConnection(graphene.relay.Connection):
 			logger.warning('can not resolve templates without the server configuration')
 			return []
 		web_root = os.path.normpath(server_config.get('server.web_root'))
+		if not os.path.isdir(web_root):
+			logger.warning('can not resolve templates from the web root (invalid directory)')
+			return []
+		if not os.access(web_root, os.R_OK | os.X_OK):
+			logger.warning('can not resolve templates from the web root (invalid permissions)')
+			return []
 		hostname = kwargs.get('hostname')
 
 		if server_config.get('server.vhost_directories'):
