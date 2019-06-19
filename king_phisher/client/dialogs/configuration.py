@@ -35,6 +35,8 @@ import logging
 import os
 import string
 import re
+import urllib.parse
+
 
 from king_phisher import its
 from king_phisher import utilities
@@ -278,15 +280,24 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		return response
 
 	def save_proxy_settings(self):
-		proxy_url = re.match(r'(?P<protocol>[a-zA-Z]+)://(?P<host>.+):(?P<port>[0-9]{1,65535})/', self.gtk_builder_get('entry_proxy_url').get_text())
+		proxy_url = urllib.parse.urlparse(self.gtk_builder_get('entry_proxy_username').get_text())
 		proxy_username = self.gtk_builder_get('entry_proxy_username').get_text()
 		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text()
-		if not proxy_url:
+		if not proxy_url.hostname and not proxy_url.scheme:
 			gui_utilities.show_dialog_warning('Invalid Proxy Values', self.parent,
 												'The proxy settings you have entered are not valid.')
 			return
-		formatted_proxy_url = utilities.nonempty_string('{0}//{1}:{2}@{3}:{4}/'.format(proxy_url.group('protocol'), proxy_username, proxy_password,
-																							proxy_url.group('host'), proxy_url.group('port')))
+		if proxy_username and proxy_password and proxy_url.port:
+			formatted_proxy_url = utilities.nonempty_string('{0}//{1}:{2}@{3}:{4}/'.format(proxy_url.scheme, proxy_username,
+																																									proxy_password, proxy_url.hostname, proxy_url.port))
+		elif proxy_url.port:
+			formatted_proxy_url = utilities.nonempty_string('{0}//{1}:{2}/'.format(proxy_url.scheme, proxy_url.hostname, proxy_url.port))
+		elif proxy_username and proxy_password:
+			formatted_proxy_url = utilities.nonempty_string('{0}//{3}/'.format(proxy_url.scheme, proxy_username,
+																							proxy_password, proxy_url.hostname, proxy_url.port))
+		else:
+			formatted_proxy_url = utilities.nonempty_string('{0}//{1}/'.format(proxy_url.scheme, proxy_url.hostname))
+
 		self.config['proxy.url'] = formatted_proxy_url
 		if proxy_url.group('protocol').lower() == 'http':
 			os.environ["HTTP_PROXY"] = formatted_proxy_url
