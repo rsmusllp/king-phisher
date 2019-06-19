@@ -281,7 +281,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		proxy_url = re.match(r'(?P<protocol>[a-zA-Z]+)://(?P<host>.+):(?P<port>[0-9]{1,65535})/', self.gtk_builder_get('entry_proxy_url').get_text())
 		proxy_username = self.gtk_builder_get('entry_proxy_username').get_text()
 		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text()
-		if not (proxy_username and proxy_password and proxy_url):
+		if not proxy_url:
 			gui_utilities.show_dialog_warning('Invalid Proxy Values', self.parent,
 												'The proxy settings you have entered are not valid.')
 			return
