@@ -32,7 +32,9 @@
 
 import collections
 import logging
+import os
 import string
+import re
 
 from king_phisher import its
 from king_phisher import utilities
@@ -265,6 +267,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		response = self.dialog.run()
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
+			self.save_proxy_settings()
 			self.save_plugin_options()
 			self.save_alert_settings()
 			entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
@@ -273,6 +276,22 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 				self._finialize_settings_dashboard()
 		self.dialog.destroy()
 		return response
+
+	def save_proxy_settings(self):
+		proxy_url = re.match(r'(?P<protocol>[a-zA-Z]+)://(?P<host>.+):(?P<port>[0-9]{1,65535})/', self.gtk_builder_get('entry_proxy_url').get_text())
+		proxy_username = self.gtk_builder_get('entry_proxy_username').get_text()
+		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text()
+		if not (proxy_username and proxy_password and proxy_url):
+			gui_utilities.show_dialog_warning('Invalid Proxy Values', self.parent,
+												'The proxy settings you have entered are not valid.')
+			return
+		formatted_proxy_url = utilities.nonempty_string('{0}//{1}:{2}@{3}:{4}/'.format(proxy_url.group('protocol'), proxy_username, proxy_password,
+																							proxy_url.group('host'), proxy_url.group('port')))
+		self.config['proxy.url'] = formatted_proxy_url
+		if proxy_url.group('protocol').lower() == 'http':
+			os.environ["HTTP_PROXY"] = formatted_proxy_url
+		elif proxy_url.group('protocol').lower() == 'https':
+			os.environ["HTTPS_PROXY"] = formatted_proxy_url
 
 	def save_plugin_options(self):
 		for name, option_widgets in self._plugin_option_widgets.items():
