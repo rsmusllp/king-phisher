@@ -51,7 +51,7 @@
   "plugins.enabled": [],
   "plugins.installed": {},
   "plugins.pip.install_dependencies": true,
-  "proxy.url": null,
+  "proxy.url": "",
   "rpc.serializer": null,
   "server": "localhost:22",
   "server_remote_port": 80,
@@ -69,5 +69,5 @@
   "ssh_server": "localhost:22",
   "ssh_username": "",
   "text_font": "monospace 11",
-  "text_source.theme": "cobalt",
+  "text_source.theme": "cobalt"
 }
