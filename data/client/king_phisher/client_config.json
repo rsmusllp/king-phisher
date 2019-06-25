@@ -51,7 +51,7 @@
   "plugins.enabled": [],
   "plugins.installed": {},
   "plugins.pip.install_dependencies": true,
-  "proxy.url": "",
+  "proxy.url": null,
   "rpc.serializer": null,
   "server": "localhost:22",
   "server_remote_port": 80,
