@@ -186,6 +186,36 @@ Hostnames API
 
    .. versionadded:: 1.13.0
 
+.. _rpc-api-ssl-api-label:
+
+SSL API
+-------
+
+.. rpc:function:: /ssl/letsencrypt/certbot_version()
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_ssl_letsencrypt_certbot_version`
+
+.. rpc:function:: /ssl/letsencrypt/issue(hostname, load=True)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_ssl_letsencrypt_issue`
+
+.. rpc:function:: /ssl/sni_hostnames/get()
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_ssl_sni_hostnames_get`
+
+.. rpc:function:: /ssl/sni_hostnames/load(hostname)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_ssl_sni_hostnames_load`
+
+.. rpc:function:: /ssl/sni_hostnames/unload(hostname)
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_ssl_sni_hostnames_unload`
+
+.. rpc:function:: /ssl/status()
+
+   :handler: :py:func:`~king_phisher.server.server_rpc.rpc_ssl_status`
+
+
 .. _rpc-api-table-api-label:
 
 Table API
