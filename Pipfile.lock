@@ -403,7 +403,7 @@
                 "sha256:f4c12a01eb2dc16693887a874ba948b18c92f425c4d329639ece6d3bb8e631bb"
             ],
             "index": "pypi",
-            "version": "==3.0.2"
+            "version": "==2.2.4"
         },
         "maxminddb": {
             "hashes": [
