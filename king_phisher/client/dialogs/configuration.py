@@ -229,12 +229,12 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		if formatted_proxy_url.username and formatted_proxy_url.password:
 			if formatted_proxy_url.port:
 				netloc = '{}:{}'.format(formatted_proxy_url.hostname, formatted_proxy_url.port)
-			netloc = formatted_proxy_url.hostname
+			else:
+				netloc = formatted_proxy_url.hostname
 			self.gtk_builder_get('entry_proxy_username').set_text(formatted_proxy_url.username)
 			self.gtk_builder_get('entry_proxy_password').set_text(formatted_proxy_url.password)
 		proxy_url = urllib.parse.urlunparse((formatted_proxy_url.scheme, netloc, formatted_proxy_url.path, '', '', ''))
 		self.gtk_builder_get('entry_proxy_url').set_text(proxy_url)
-
 
 	def _configure_settings_server(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
@@ -300,11 +300,11 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			return
 		try:
 			proxy_url.port
-		except:
-			gui_utilities.show_dialog_warning('Invalid Port', self.parent, 'The port must be an integer.')
+		except ValueError:
+			gui_utilities.show_dialog_warning('Invalid Proxy Settings', self.parent, 'The port must be an integer between 1-65535 inclusive.')
 			return
 		netloc = proxy_url.netloc
-		if proxy_username and proxy_password:
+		if proxy_username:
 			netloc = '{}:{}@{}'.format(proxy_username, proxy_password, proxy_url.netloc)
 		formatted_proxy_url = urllib.parse.urlunparse((proxy_url.scheme, netloc, proxy_url.path, '', '', ''))
 		self.config['proxy.url'] = formatted_proxy_url
