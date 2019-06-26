@@ -36,7 +36,6 @@ import os
 import string
 import urllib.parse
 
-
 from king_phisher import its
 from king_phisher import utilities
 from king_phisher.client import graphs
@@ -291,10 +290,10 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		return response
 
 	def save_proxy_settings(self):
-		proxy_url = urllib.parse.urlparse(self.gtk_builder_get('entry_proxy_url').get_text())
-		proxy_username = self.gtk_builder_get('entry_proxy_username').get_text()
-		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text()
-		if proxy_url.hostname and not proxy_url.scheme or proxy_url.scheme and not proxy_url.hostname:
+		proxy_url = urllib.parse.urlparse(self.gtk_builder_get('entry_proxy_url').get_text().strip())
+		proxy_username = self.gtk_builder_get('entry_proxy_username').get_text().strip()
+		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text().strip()
+		if proxy_url and not (proxy_url.hostname and proxy_url.scheme):
 			gui_utilities.show_dialog_warning('The proxy settings you have submitted are not valid.')
 			return
 		netloc = proxy_url.netloc

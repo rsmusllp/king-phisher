@@ -555,17 +555,19 @@ class KingPhisherClientApplication(_Gtk_Application):
 			for key, value in client_template.items():
 				if not key in self.config:
 					self.config[key] = value
-			env_proxy = os.environ.get('HTTPS_PROXY')
-			if env_proxy is not None:
-				proxy_url = urllib.parse.urlparse(env_proxy)
-				if proxy_url.hostname and not proxy_url.scheme or proxy_url.scheme and not proxy_url.hostname:
-					self.logger.error('invalid proxy url scheme or hostname')
-					return
-				if env_proxy != self.config['proxy.url']:
-					self.logger.warning('proxy environment variable does not match the user configuration')
-					self.config['proxy.url'] = env_proxy
-			os.environ['HTTPS_PROXY'] = self.config['proxy.url']
-			os.environ['HTTP_PROXY'] = self.config['proxy.url']
+		env_proxy = os.environ.get('HTTPS_PROXY')
+		if env_proxy is not None:
+			proxy_url = urllib.parse.urlparse(env_proxy)
+			if not (proxy_url.hostname and proxy_url.scheme):
+				self.logger.error('invalid proxy url (missing scheme or hostname)')
+				return
+			if env_proxy != self.config['proxy.url']:
+				self.logger.warning('proxy environment variable does not match the user configuration')
+			else:
+				self.logger.info('proxy environment variable is the same as the user configuration')
+			self.config['proxy.url'] = env_proxy
+		os.environ['HTTPS_PROXY'] = self.config['proxy.url']
+		os.environ['HTTP_PROXY'] = self.config['proxy.url']
 
 	def merge_config(self, config_file, strict=True):
 		"""
