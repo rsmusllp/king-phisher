@@ -294,7 +294,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		proxy_username = self.gtk_builder_get('entry_proxy_username').get_text().strip()
 		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text().strip()
 		if proxy_url and not (proxy_url.hostname and proxy_url.scheme):
-			gui_utilities.show_dialog_warning('The proxy settings you have submitted are not valid.')
+			gui_utilities.show_dialog_warning('Invalid Proxy Settings', self.parent, 'The proxy url you have submitted is not valid.')
 			return
 		netloc = proxy_url.netloc
 		if proxy_username and proxy_password:
