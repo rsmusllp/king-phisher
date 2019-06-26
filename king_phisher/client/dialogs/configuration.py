@@ -227,7 +227,9 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		formatted_proxy_url = urllib.parse.urlparse(self.config['proxy.url'])
 		netloc = formatted_proxy_url.netloc
 		if formatted_proxy_url.username and formatted_proxy_url.password:
-			netloc = '{}:{}'.format(formatted_proxy_url.hostname, formatted_proxy_url.port)
+			if formatted_proxy_url.port:
+				netloc = '{}:{}'.format(formatted_proxy_url.hostname, formatted_proxy_url.port)
+			netloc = formatted_proxy_url.hostname
 			self.gtk_builder_get('entry_proxy_username').set_text(formatted_proxy_url.username)
 			self.gtk_builder_get('entry_proxy_password').set_text(formatted_proxy_url.password)
 		proxy_url = urllib.parse.urlunparse((formatted_proxy_url.scheme, netloc, formatted_proxy_url.path, '', '', ''))
@@ -295,6 +297,11 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text().strip()
 		if proxy_url and not (proxy_url.hostname and proxy_url.scheme):
 			gui_utilities.show_dialog_warning('Invalid Proxy Settings', self.parent, 'The proxy url you have submitted is not valid.')
+			return
+		try:
+			proxy_url.port
+		except:
+			gui_utilities.show_dialog_warning('Invalid Port', self.parent, 'The port must be an integer.')
 			return
 		netloc = proxy_url.netloc
 		if proxy_username and proxy_password:
