@@ -566,8 +566,11 @@ class KingPhisherClientApplication(_Gtk_Application):
 			else:
 				self.logger.info('proxy environment variable is the same as the user configuration')
 			self.config['proxy.url'] = env_proxy
-		os.environ['HTTPS_PROXY'] = self.config['proxy.url']
-		os.environ['HTTP_PROXY'] = self.config['proxy.url']
+		elif self.config['proxy.url']:
+			os.environ['HTTPS_PROXY'] = self.config['proxy.url']
+			os.environ['HTTP_PROXY'] = self.config['proxy.url']
+		else:
+			os.environ.pop('HTTP_PROXY', NONE)
 
 	def merge_config(self, config_file, strict=True):
 		"""
