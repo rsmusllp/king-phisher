@@ -13,6 +13,7 @@
 .python-version
 .venv
 .venv/*
+Pipfile.lock
 build/*
 configs/*
 dist/*
