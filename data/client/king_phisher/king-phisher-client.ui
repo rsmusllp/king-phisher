@@ -2814,6 +2814,7 @@ Spencer McIntyre</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="tooltip_text" translatable="yes">The name of the company.</property>
+        <property name="margin_top">103</property>
         <property name="hexpand">True</property>
         <property name="placeholder_text" translatable="yes">company name (REQUIRED)</property>
       </object>
@@ -5311,10 +5312,10 @@ Spencer McIntyre</property>
                             <property name="margin_right">3</property>
                             <property name="margin_bottom">3</property>
                             <property name="row_spacing">3</property>
-                            <property name="column_spacing">25</property>
                             <property name="row_homogeneous">True</property>
                             <child>
                               <object class="GtkLabel" id="label15">
+                                <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">10</property>
@@ -5327,6 +5328,7 @@ Spencer McIntyre</property>
                             </child>
                             <child>
                               <object class="GtkLabel" id="label16">
+                                <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">10</property>
@@ -5339,9 +5341,9 @@ Spencer McIntyre</property>
                             </child>
                             <child>
                               <object class="GtkLabel" id="label17">
+                                <property name="width_request">120</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="margin_left">10</property>
                                 <property name="label" translatable="yes">Bottom</property>
                               </object>
                               <packing>
@@ -5407,6 +5409,7 @@ Spencer McIntyre</property>
                     <property name="can_focus">False</property>
                     <child>
                       <object class="GtkLabel" id="label37">
+                        <property name="width_request">132</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_left">5</property>
@@ -5437,6 +5440,111 @@ Spencer McIntyre</property>
                     <property name="fill">True</property>
                     <property name="padding">3</property>
                     <property name="position">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkFrame">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label_xalign">0</property>
+                    <property name="shadow_type">none</property>
+                    <child>
+                      <object class="GtkAlignment">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="left_padding">12</property>
+                        <child>
+                          <object class="GtkGrid">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="row_spacing">3</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="width_request">120</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Proxy URL</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Username</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Password</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="ConfigurationDialog.entry_proxy_username">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Username for the proxy server.</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="ConfigurationDialog.entry_proxy_url">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">An optional URL for the proxy to use.</property>
+                                <property name="hexpand">True</property>
+                                <property name="placeholder_text" translatable="yes">http://proxy.lan:8080/</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="ConfigurationDialog.entry_proxy_password">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Password for the proxy server.</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">2</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child type="label">
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Proxy Settings</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">4</property>
                   </packing>
                 </child>
               </object>

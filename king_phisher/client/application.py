@@ -42,6 +42,7 @@ import ssl
 import socket
 import sys
 import uuid
+import urllib.parse
 
 from king_phisher import constants
 from king_phisher import errors
@@ -540,6 +541,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Load the client configuration from disk and set the
 		:py:attr:`~.KingPhisherClientApplication.config` attribute.
 
+		Check the proxy environment variable and set them appropriately.
+
 		:param bool load_defaults: Load missing options from the template configuration file.
 		"""
 		client_template = find.data_file('client_config.json')
@@ -552,6 +555,24 @@ class KingPhisherClientApplication(_Gtk_Application):
 			for key, value in client_template.items():
 				if not key in self.config:
 					self.config[key] = value
+		env_proxy = os.environ.get('HTTPS_PROXY')
+		if env_proxy is not None:
+			env_proxy = env_proxy.strip()
+			proxy_url = urllib.parse.urlparse(env_proxy)
+			if not (proxy_url.hostname and proxy_url.scheme):
+				self.logger.error('invalid proxy url (missing scheme or hostname)')
+				return
+			if env_proxy != self.config['proxy.url']:
+				self.logger.warning('setting proxy configuration via the environment, overriding the configuration')
+			else:
+				self.logger.info('setting proxy configuration via the environment')
+			self.config['proxy.url'] = env_proxy
+		elif self.config['proxy.url']:
+			self.logger.info('setting proxy configuration via the configuration')
+			os.environ['HTTPS_PROXY'] = self.config['proxy.url']
+			os.environ['HTTP_PROXY'] = self.config['proxy.url']
+		else:
+			os.environ.pop('HTTP_PROXY', None)
 
 	def merge_config(self, config_file, strict=True):
 		"""
