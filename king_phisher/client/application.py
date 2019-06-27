@@ -557,16 +557,18 @@ class KingPhisherClientApplication(_Gtk_Application):
 					self.config[key] = value
 		env_proxy = os.environ.get('HTTPS_PROXY')
 		if env_proxy is not None:
+			env_proxy = env_proxy.strip()
 			proxy_url = urllib.parse.urlparse(env_proxy)
 			if not (proxy_url.hostname and proxy_url.scheme):
 				self.logger.error('invalid proxy url (missing scheme or hostname)')
 				return
 			if env_proxy != self.config['proxy.url']:
-				self.logger.warning('proxy environment variable does not match the user configuration')
+				self.logger.warning('setting proxy configuration via the environment, overriding the configuration')
 			else:
-				self.logger.info('proxy environment variable is the same as the user configuration')
+				self.logger.info('setting proxy configuration via the environment')
 			self.config['proxy.url'] = env_proxy
 		elif self.config['proxy.url']:
+			self.logger.info('setting proxy configuration via the configuration')
 			os.environ['HTTPS_PROXY'] = self.config['proxy.url']
 			os.environ['HTTP_PROXY'] = self.config['proxy.url']
 		else:

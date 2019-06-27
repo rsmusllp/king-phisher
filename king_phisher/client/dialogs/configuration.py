@@ -313,7 +313,6 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		os.environ['HTTP_PROXY'] = formatted_proxy_url
 		os.environ['HTTPS_PROXY'] = formatted_proxy_url
 
-
 	def save_plugin_options(self):
 		for name, option_widgets in self._plugin_option_widgets.items():
 			if name not in self.config['plugins']:
