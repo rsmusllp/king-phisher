@@ -104,7 +104,10 @@ def build_and_run(arguments, config, plugin_manager, log_file=None):
 			fs_utilities.chown(log_file, user=passwd.pw_uid, group=passwd.pw_gid, recursive=False)
 		data_path = config.get_if_exists('server.letsencrypt.data_path')
 		if data_path and config.get_if_exists('server.letsencrypt.chown_data_path', True):
-			fs_utilities.chown(data_path, user=passwd.pw_uid, group=passwd.pw_gid, recursive=True)
+			if os.path.isdir(data_path):
+				fs_utilities.chown(data_path, user=passwd.pw_uid, group=passwd.pw_gid, recursive=True)
+			else:
+				logger.warning('can not chown the letsencrypt data directory (directory not found)')
 
 		os.setgroups(pylibc.getgrouplist(setuid_username))
 		os.setresgid(passwd.pw_gid, passwd.pw_gid, passwd.pw_gid)

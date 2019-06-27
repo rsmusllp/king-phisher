@@ -101,8 +101,11 @@ def _run_certbot(args, bin_path=None):
 
 def _sync_hostnames(unified_directory):
 	directory = os.path.join(unified_directory, 'etc', 'live')
-	if not (os.path.isdir(directory) and os.access(directory, os.R_OK | os.X_OK)):
-		logger.warning('the letsencrypt data directory is configured but inaccessible, can not enumerate available data')
+	if not os.path.isdir(directory):
+		logger.warning('can not enumerate available letsencrypt data (directory not found)')
+		return
+	if not os.access(directory, os.R_OK | os.X_OK):
+		logger.warning('can not enumerate available letsencrypt data (invalid permissions)')
 		return
 	for subdirectory in os.listdir(directory):
 		match = _HOSTNAME_DIRECTORY_REGEX.match(subdirectory)
