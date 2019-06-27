@@ -114,7 +114,8 @@ def chown(path, user=None, group=constants.AUTOMATIC, recursive=True):
 	if gid is None:
 		gid = -1
 	if recursive:
-		iterator = smoke_zephyr.utilities.FileWalker(path)
+		# set *filter_func* to skip paths that may have come from broken links
+		iterator = smoke_zephyr.utilities.FileWalker(path, filter_func=os.path.exists)
 	else:
 		iterator = (path,)
 	for path in iterator:
