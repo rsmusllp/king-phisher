@@ -224,18 +224,19 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			self._configure_settings_plugin_options(plugin_klass)
 
 	def _configure_settings_proxy(self):
-		if self.config['proxy.url']:
-			formatted_proxy_url = urllib.parse.urlparse(self.config['proxy.url'])
-			netloc = formatted_proxy_url.netloc
-			if formatted_proxy_url.username or formatted_proxy_url.password:
-				if formatted_proxy_url.port:
-					netloc = '{}:{}'.format(formatted_proxy_url.hostname, formatted_proxy_url.port)
-				else:
-					netloc = formatted_proxy_url.hostname
-				self.gtk_builder_get('entry_proxy_username').set_text(formatted_proxy_url.username)
-				self.gtk_builder_get('entry_proxy_password').set_text(formatted_proxy_url.password)
-			proxy_url = urllib.parse.urlunparse((formatted_proxy_url.scheme, netloc, formatted_proxy_url.path, '', '', ''))
-			self.gtk_builder_get('entry_proxy_url').set_text(proxy_url)
+		if not self.config['proxy.url']:
+			return
+		formatted_proxy_url = urllib.parse.urlparse(self.config['proxy.url'])
+		netloc = formatted_proxy_url.netloc
+		if formatted_proxy_url.username or formatted_proxy_url.password:
+			if formatted_proxy_url.port:
+				netloc = '{}:{}'.format(formatted_proxy_url.hostname, formatted_proxy_url.port)
+			else:
+				netloc = formatted_proxy_url.hostname
+			self.gtk_builder_get('entry_proxy_username').set_text(formatted_proxy_url.username)
+			self.gtk_builder_get('entry_proxy_password').set_text(formatted_proxy_url.password)
+		proxy_url = urllib.parse.urlunparse((formatted_proxy_url.scheme, netloc, formatted_proxy_url.path, '', '', ''))
+		self.gtk_builder_get('entry_proxy_url').set_text(proxy_url)
 
 	def _configure_settings_server(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
