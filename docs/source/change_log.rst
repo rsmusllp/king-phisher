@@ -17,7 +17,7 @@ Version 1.14.0
 * Attempt SSH authentication with all agent-provided SSH keys
 * Deleted ``Pipefile.lock`` from repository to prevent hash issues between python interpreter versions
 * Add ``--three`` to ``pipenv install`` and ``pipenv --update`` startup procedures to force use of ``Python3``
-* Server will now attempt to install missing plugin python packages during initialization.
+* Server will now attempt to install missing plugin requirements during initialization
 
 Version 1.13.1
 ^^^^^^^^^^^^^^

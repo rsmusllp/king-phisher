@@ -47,6 +47,7 @@ import threading
 
 import smoke_zephyr.requirements
 
+from king_phisher import constants
 from king_phisher import errors
 from king_phisher import its
 from king_phisher import startup
@@ -395,7 +396,7 @@ class PluginManagerBase(object):
 	A managing object to control loading and enabling individual plugin objects.
 	"""
 	_plugin_klass = PluginBase
-	def __init__(self, path, args=None, library_path=None):
+	def __init__(self, path, args=None, library_path=constants.AUTOMATIC):
 		"""
 		:param tuple path: A tuple of directories from which to load plugins.
 		:param tuple args: Arguments which should be passed to plugins when
@@ -414,14 +415,15 @@ class PluginManagerBase(object):
 		"""A dictionary of the enabled plugins and their respective instances."""
 		self.logger = logging.getLogger('KingPhisher.Plugins.Manager')
 
-		library_path = _resolve_lib_path(library_path)
-		if library_path is None:
-			self.logger.warning('unable to resolve a valid library path for plugin dependencies')
-		else:
+		if library_path is not None:
+			library_path = _resolve_lib_path(library_path)
+		if library_path:
 			if library_path not in sys.path:
 				sys.path.append(library_path)
 			library_path = os.path.abspath(library_path)
-			self.logger.debug('plugin dependency path: ' + library_path)
+			self.logger.debug('using plugin-specific library path: ' + library_path)
+		else:
+			self.logger.debug('no plugin-specific library path has been specified')
 		self.library_path = library_path
 		"""
 		The path to a directory which is included for additional libraries. This
@@ -612,24 +614,24 @@ class PluginManagerBase(object):
 
 	def install_packages(self, packages):
 		"""
-		This function will take a list of python packages and attempt to install
-		them through pip to target path.
+		This function will take a list of Python packages and attempt to install
+		them through pip to the :py:attr:`.library_path`.
 
 		.. versionadded:: 1.14.0
 
 		:param list packages: list of python packages to install using pip.
 		:return: The process results from the command execution.
-		:type: :py:class:`~.ProcessResults`
+		:rtype: :py:class:`~.ProcessResults`
 		"""
 		options = []
 		if self.library_path is None:
-			raise errors.KingPhisherResourceError("missing library path")
+			raise errors.KingPhisherResourceError('missing plugin-specific library path')
 		options.extend(['--target', self.library_path])
 		args = [sys.executable, '-m', 'pip', 'install'] + options + packages
 		if len(packages) > 1:
-			info_string = "installing packages {}"
+			info_string = "installing packages: {}"
 		else:
-			info_string = "installing package {}"
+			info_string = "installing package: {}"
 		self.logger.info(info_string.format(', '.join(packages)))
 		return startup.run_process(args)
 
