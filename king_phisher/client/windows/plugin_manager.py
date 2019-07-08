@@ -322,15 +322,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		# WARNING: this may not be called from the GUI thread
 		self.__load_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
 
-	def _pip_install(self, packages):
-		options = ['--no-color']
-		if self.application.user_library_path is None:
-			self.logger.warning('can not install packages with out a defined library path')
-			return
-		options.extend(['--target', self.application.user_library_path])
-		args = [sys.executable, '-m', 'pip', 'install'] + options + packages
-		return startup.run_process(args)
-
 	def _plugin_disable(self, model_row):
 		named_row = _ModelNamedRow(*model_row)
 		self.application.plugin_manager.disable(named_row.id)
@@ -400,7 +391,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				self._update_status_bar_tsafe(
 					"Installing {:,} dependenc{} for plugin {} from PyPi.".format(len(packages), 'y' if len(packages) == 1 else 'ies', named_row.title)
 				)
-				pip_results = self._pip_install(packages)
+				pip_results = self.application.plugin_manager.install_packages(packages)
 				if pip_results is None:
 					self.logger.warning('pip install failed')
 					_show_dialog_error_tsafe(

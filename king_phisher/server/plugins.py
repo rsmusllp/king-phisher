@@ -134,14 +134,10 @@ class ServerPluginManager(plugins.PluginManagerBase):
 		self.config = config
 		path = self._get_path()
 		self._server = None
-		super(ServerPluginManager, self).__init__(path, (config,))
+		super(ServerPluginManager, self).__init__(path, (config,), config.get_if_exists('server.plugin_library_path'))
 		for plugin in config.get_if_exists('server.plugins', {}).keys():
 			# load the plugin
-			try:
-				self.load(plugin)
-			except Exception:
-				self.logger.critical('failed to load plugin: ' + plugin, exc_info=True)
-				raise errors.KingPhisherPluginError(plugin, 'failed to load')
+			self._load_plugin(plugin)
 			# check compatibility
 			klass = self[plugin]
 			for req_type, req_value, req_met in klass.compatibility:
@@ -149,9 +145,14 @@ class ServerPluginManager(plugins.PluginManagerBase):
 				if req_met:
 					self.logger.debug("plugin '{0}' requirement {1} ({2}) met".format(plugin, req_type, req_value))
 					continue
-				self.logger.warning("plugin '{0}' unmet requirement {1} ({2})".format(plugin, req_type, req_value))
-				raise errors.KingPhisherPluginError(plugin, 'failed to meet requirement: ' + req_type)
-			# enable the plugin
+				if req_type == 'Required Package' or not req_met:
+					self.logger.warning("plugin '{0}' unmet requirement {1} ({2})".format(plugin, req_type, req_value))
+					if config.get_if_exists('server.plugin_library_path') and config.get_if_exists('server.plugin_install_requirements'):
+						self.install_packages([req_value])
+						self._load_plugin(plugin, reload_module=True)
+					else:
+						raise errors.KingPhisherPluginError(plugin, 'failed to meet requirement: ' + req_type)
+
 			try:
 				self.enable(plugin)
 			except errors.KingPhisherPluginError as error:
@@ -160,6 +161,13 @@ class ServerPluginManager(plugins.PluginManagerBase):
 				self.logger.critical('failed to enable plugin: ' + plugin)
 				raise errors.KingPhisherPluginError(plugin, 'failed to enable')
 		signals.db_initialized.connect(self._sig_db_initialized)
+
+	def _load_plugin(self, plugin, reload_module=False):
+		try:
+			logger.debug("loading plugin: {}".format(plugin))
+			self.load(plugin, reload_module=reload_module)
+		except Exception:
+			logger.critical('failed to load plugin: ' + plugin, exc_info=True)
 
 	def _get_path(self):
 		path = [find.data_directory('plugins')]

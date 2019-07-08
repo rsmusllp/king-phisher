@@ -107,6 +107,10 @@ server:
   #  some_plugin:
   #    # An option specific to this particular plugin
   #    value_for_some_plugin: true
+  # Plugin Library depenacy path
+  plugin_library_path: /var/king-phisher/libs/plugin_site_packages
+  # Auto install server plugin requirements
+  plugin_install_requirements: True
 
   # Require an ID associated with a campaign to load pages
   require_id: true
