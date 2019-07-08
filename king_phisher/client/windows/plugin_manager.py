@@ -391,7 +391,15 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				self._update_status_bar_tsafe(
 					"Installing {:,} dependenc{} for plugin {} from PyPi.".format(len(packages), 'y' if len(packages) == 1 else 'ies', named_row.title)
 				)
-				pip_results = self.application.plugin_manager.install_packages(packages)
+				if self.application.plugin_manager.library_path:
+					pip_results = self.application.plugin_manager.install_packages(packages)
+				else:
+					self.logger.warning('no library path to install plugin dependencies')
+					_show_dialog_error_tsafe(
+						"Failed to run pip to install package(s) for plugin {}.".format(named_row.id)
+					)
+					# set pip results to none to safely complete and cleanly release installing lock.
+					pip_results = None
 				if pip_results is None:
 					self.logger.warning('pip install failed')
 					_show_dialog_error_tsafe(

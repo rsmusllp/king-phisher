@@ -611,6 +611,16 @@ class PluginManagerBase(object):
 		return module
 
 	def install_packages(self, packages):
+		"""
+		This function will take a list of python packages and attempt to install
+		them through pip to target path.
+
+		.. versionadded:: 1.14.0
+
+		:param list packages: list of python packages to install using pip.
+		:return: The process results from the command execution.
+		:type: :py:class:`~.ProcessResults`
+		"""
 		options = []
 		if self.library_path is None:
 			raise errors.KingPhisherResourceError("missing library path")

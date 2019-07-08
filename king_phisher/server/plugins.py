@@ -145,13 +145,22 @@ class ServerPluginManager(plugins.PluginManagerBase):
 				if req_met:
 					self.logger.debug("plugin '{0}' requirement {1} ({2}) met".format(plugin, req_type, req_value))
 					continue
-				if req_type == 'Required Package' or not req_met:
+				if req_type == 'required package' and not req_met:
 					self.logger.warning("plugin '{0}' unmet requirement {1} ({2})".format(plugin, req_type, req_value))
 					if config.get_if_exists('server.plugin_library_path') and config.get_if_exists('server.plugin_install_requirements'):
-						self.install_packages([req_value])
-						self._load_plugin(plugin, reload_module=True)
+						pip_results = self.install_packages([req_value])
+						if pip_results is None:
+							self.logger.warning('pip install failed')
+						elif pip_results.status:
+							self.logger.warning('pip install failed, exit status: ' + str(pip_results.status))
+							self.logger.debug('pip error: {}'.format(pip_results.stderr))
+						else:
+							self._load_plugin(plugin, reload_module=True)
 					else:
 						raise errors.KingPhisherPluginError(plugin, 'failed to meet requirement: ' + req_type)
+				else:
+					self.logger.warning("plugin '{0}' unmet requirement {1} ({2})".format(plugin, req_type, req_value))
+					raise errors.KingPhisherPluginError(plugin, 'failed to meet requirement: ' + req_type)
 
 			try:
 				self.enable(plugin)
