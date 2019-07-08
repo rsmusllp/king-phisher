@@ -101,6 +101,10 @@ server:
   # Add additional search paths for plugin directories
   #plugin_directories:
   #  - /some/plugin/path
+  # Auto install server plugin Python requirements
+  plugin_install_requirements: true
+  # Library path for plugin dependencies
+  plugin_library_path: /var/king-phisher/lib
   # List the plugins that need to be enabled
   #plugins:
   #  # The plugin to enable's name
