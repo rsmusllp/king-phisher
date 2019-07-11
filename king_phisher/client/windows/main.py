@@ -316,7 +316,12 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		if reason == ConnectionErrorReason.ERROR_INVALID_OTP:
 			revealer = self.login_dialog.gobjects['revealer_server_one_time_password']
 			if revealer.get_child_revealed():
-				gui_utilities.show_dialog_error('Login Failed', dialog, 'A valid one time password (OTP) token is required.')
+				gui_utilities.show_dialog_warning(
+					'Login failed',
+					dialog,
+					'The specified TOTP code is invalid. Make sure your time\n'\
+					+ 'is correct.'
+				)
 			else:
 				revealer.set_reveal_child(True)
 			entry = self.login_dialog.gobjects['entry_server_one_time_password']
