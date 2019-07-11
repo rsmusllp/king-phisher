@@ -297,7 +297,12 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		proxy_url = urllib.parse.urlparse(self.gtk_builder_get('entry_proxy_url').get_text().strip())
 		proxy_username = self.gtk_builder_get('entry_proxy_username').get_text().strip()
 		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text().strip()
-		if proxy_url and not (proxy_url.hostname and proxy_url.scheme):
+		if not proxy_url.geturl():
+			self.config['proxy.url'] = ''
+			os.environ.pop('HTTP_PROXY', None)
+			os.environ.pop('HTTPS_PROXY', None)
+			return
+		if not (proxy_url.hostname and proxy_url.scheme):
 			gui_utilities.show_dialog_warning('Invalid Proxy Settings', self.parent, 'The proxy url you have submitted is not valid.')
 			return
 		try:
