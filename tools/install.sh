@@ -144,7 +144,8 @@ function sync_dependencies {
 	elif [ "$LINUX_VERSION" == "Fedora" ]; then
 		dnf install -y freetype-devel gcc gcc-c++ gtk3-devel \
 			libpng-devel postgresql-devel python3-devel python3-pip cairo-devel\
-			libffi-devel openssl-devel geos geos-devel cairo-gobject cairo-gobject-devel
+			libffi-devel openssl-devel geos geos-devel \
+			cairo-gobject cairo-gobject-devel gobject-introspection-devel
 		if [ -z "$KING_PHISHER_SKIP_CLIENT" ]; then
 			dnf install -y gtksourceview3
 			# vte3 is not available in Fedora 29, try to install it in case it's an older version.
@@ -318,7 +319,7 @@ if [[ ! $LINUX_VERSION ]] && grep -E "Red Hat Enterprise Linux Server release 7(
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[4-9]" /etc/redhat-release &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[4-9]|3[0]" /etc/redhat-release &> /dev/null; then
 	LINUX_VERSION="Fedora"
 fi
 
