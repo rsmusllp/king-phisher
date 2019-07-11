@@ -562,7 +562,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			if not (proxy_url.hostname and proxy_url.scheme):
 				self.logger.error('invalid proxy url (missing scheme or hostname)')
 				return
-			if env_proxy != self.config['proxy.url']:
+			if self.config['proxy.url'] and env_proxy != self.config['proxy.url']:
 				self.logger.warning('setting proxy configuration via the environment, overriding the configuration')
 			else:
 				self.logger.info('setting proxy configuration via the environment')

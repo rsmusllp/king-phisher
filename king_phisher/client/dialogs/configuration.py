@@ -298,7 +298,7 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		proxy_username = self.gtk_builder_get('entry_proxy_username').get_text().strip()
 		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text().strip()
 		if not proxy_url.geturl():
-			self.config['proxy.url'] = ''
+			self.config['proxy.url'] = None
 			os.environ.pop('HTTP_PROXY', None)
 			os.environ.pop('HTTPS_PROXY', None)
 			return
