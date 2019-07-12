@@ -58,6 +58,8 @@ sphinx-rtd-theme = "==0.4.2"
 ipython = "==7.1.1"
 pyopenssl = "==18.0.0"
 ipdb = "*"
+jupyter = "*"
+ipykernel = "*"
 
 [scripts]
 KingPhisher = "python -m king_phisher.client"

@@ -28,6 +28,7 @@ DODO
 todo.txt
 notes.txt
 
+data/.ipynb_checkpoints/*
 data/client/king_phisher/#king-phisher-client.ui#
 data/client/king_phisher/king-phisher-client.ui~
 data/server/king_phisher/plugins/*
