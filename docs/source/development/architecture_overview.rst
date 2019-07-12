@@ -99,7 +99,7 @@ Server Signals
 ^^^^^^^^^^^^^^
 
 The server utilizes the :py:mod:`blinker` module to support application events.
-This interface is defined and documented in :ref:`_server-signals-label`
+This interface is defined and documented in :ref:`server-signals-label`
 documentation. Server signals are centrally located within the
 :py:mod:`~king_phisher.server.signals` module from which that can be both
 connected to and emitted.

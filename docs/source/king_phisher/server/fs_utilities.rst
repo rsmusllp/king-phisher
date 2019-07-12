@@ -1,5 +1,5 @@
 :mod:`fs_utilities`
-================
+===================
 
 .. module:: king_phisher.server.fs_utilities
    :synopsis:

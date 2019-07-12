@@ -1,4 +1,4 @@
-.. _gobject-signals-label
+.. _gobject-signals-label:
 
 GObject Signals
 ===============
