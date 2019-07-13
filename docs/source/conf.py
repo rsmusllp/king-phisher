@@ -48,6 +48,7 @@ needs_sphinx = '1.7'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+	'king_phisher.sphinxext.database',
 	'king_phisher.sphinxext.graphql',
 	'king_phisher.sphinxext.rpc',
 	'sphinx.ext.autodoc',

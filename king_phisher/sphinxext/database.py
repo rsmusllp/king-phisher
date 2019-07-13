@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  king_phisher/sphinxext/graphql.py
+#  king_phisher/sphinxext/database.py
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -37,24 +37,35 @@ from . import _exttools
 from sphinx import addnodes
 from sphinx.directives import ObjectDescription
 from sphinx.domains import ObjType
-from sphinx.roles import XRefRole
 from sphinx.util import docfields
 
-NAMESPACE = 'gql'
+NAMESPACE = 'db'
 
-class DescGraphQLFieldArgument(_exttools.ArgumentBase):
+class DescDatabaseFieldArgument(_exttools.ArgumentBase):
 	"""Node for an argument wrapper"""
 
-class DescGraphQLFieldArgumentList(_exttools.ArgumentListBase):
+class DescDatabaseFieldArgumentList(_exttools.ArgumentListBase):
 	"""Node for a general argument list."""
 
-class GraphQLObject(_exttools.GenericObjectBase):
-	label = 'GraphQL object'
-	attribute = 'object'
+class DatabaseTable(_exttools.GenericObjectBase):
+	label = 'Database table'
+	attribute = 'table'
 	xref_prefix = NAMESPACE
 
-class GraphQLField(ObjectDescription):
+class DatabaseField(ObjectDescription):
 	doc_field_types = [
+		docfields.TypedField(
+			'foreignkey',
+			label='Foreign Key',
+			names=('fkey', 'foreignkey'),
+			can_collapse=True
+		),
+		docfields.Field(
+			'nullable',
+			has_arg=False,
+			label='Nullable',
+			names=('nullable',),
+		),
 		docfields.Field(
 			'type',
 			has_arg=False,
@@ -68,56 +79,62 @@ class GraphQLField(ObjectDescription):
 			typenames=('paramtype', 'type'),
 			typerolename='class',
 			can_collapse=True,
+		),
+		docfields.Field(
+			'primarykey',
+			has_arg=False,
+			label='Primary Key',
+			names=('pkey', 'primarykey'),
 		)
 	]
 	def add_target_and_index(self, name, sig, signode):
-		targetname = 'gql:%s-%s' % (self.objtype, name)
+		targetname = 'db:%s-%s' % (self.objtype, name)
 		signode['ids'].append(targetname)
 		self.state.document.note_explicit_target(signode)
 		self.env.domaindata[self.domain]['objects'][self.objtype, name] = self.env.docname, targetname
 
 	def handle_signature(self, sig, signode):
-		match = re.match(r'(?P<name>[a-zA-Z0-9]+)(\((?P<arguments>[a-z_0-9]+(, +[a-z_0-9]+)*)\))?', sig)
+		match = re.match(r'(?P<name>[a-z0-9_]+)(\((?P<arguments>[a-z_0-9]+(, +[a-z_0-9]+)*)\))?', sig)
 		field_name = match.group('name')
-		if 'gql:object' in self.env.ref_context:
-			full_name = self.env.ref_context['gql:object'] + '.' + field_name
+		if 'db:table' in self.env.ref_context:
+			full_name = self.env.ref_context['db:table'] + '.' + field_name
 		else:
 			full_name = field_name
 		signode += addnodes.desc_name(field_name, field_name)
 		arguments = match.group('arguments')
 		if arguments:
-			plist = DescGraphQLFieldArgumentList()
+			plist = DescDatabaseFieldArgumentList()
 			arguments = arguments.split(',')
 			for pos, arg in enumerate(arguments):
 				arg = arg.strip()
 				if pos < len(arguments) - 1:
 					arg += ','
-				x = DescGraphQLFieldArgument()
+				x = DescDatabaseFieldArgument()
 				x += addnodes.desc_parameter(arg, arg)
 				plist += x
 			signode += plist
 		return full_name
 
-class GraphQLXRefRole(_exttools.XRefRoleBase):
-	attribute = 'object'
+class DatabaseXRefRole(_exttools.XRefRoleBase):
+	attribute = 'table'
 	xref_prefix = NAMESPACE
 
-class GraphQLDomain(_exttools.DomainBase):
+class DatabaseDomain(_exttools.DomainBase):
 	name = NAMESPACE
-	label = 'GraphQL'
+	label = 'Database'
 	directives = {
-		'field': GraphQLField,
-		'object': GraphQLObject,
+		'field': DatabaseField,
+		'table': DatabaseTable,
 	}
 	object_types = {
-		'field': ObjType('GraphQL Field', 'fld'),
-		'object': ObjType('GraphQL Object', 'obj'),
+		'field': ObjType('Database Field', 'fld'),
+		'table': ObjType('Database Object', 'tbl'),
 	}
 	roles = {
-		'fld': GraphQLXRefRole(),
-		'obj': GraphQLXRefRole(),
+		'fld': DatabaseXRefRole(),
+		'tbl': DatabaseXRefRole(),
 	}
 
 def setup(app):
-	_exttools.add_app_node_arguments(app, DescGraphQLFieldArgument, DescGraphQLFieldArgumentList)
-	app.add_domain(GraphQLDomain)
+	_exttools.add_app_node_arguments(app, DescDatabaseFieldArgument, DescDatabaseFieldArgumentList)
+	app.add_domain(DatabaseDomain)
