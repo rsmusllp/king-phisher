@@ -8,7 +8,13 @@ Tables
 
 .. db:table:: alert_subscriptions
 
+   Subscriptions to alerts for campaigns that users are interested in receiving
+   notifications for.
+
    .. db:field:: expiration
+
+      An optional expiration for which the user can set to no longer receive
+      notifications.
 
       :nullable: True
       :type: DateTime
@@ -20,15 +26,23 @@ Tables
       
    .. db:field:: user_id
 
+      The identifier of the user which created the alert subscription.
+
       :nullable: False
       :foreignkey: :db:fld:`users.id`
             
    .. db:field:: campaign_id
 
+      The identifier of the campaign the user is interested in receiving
+      notifications for.
+
       :nullable: False
       :foreignkey: :db:fld:`campaigns.id`
             
 .. db:table:: authenticated_sessions
+
+   An authenticated session associated with a user that has logged into the
+   server over RPC.
 
    .. db:field:: id
 
@@ -37,20 +51,34 @@ Tables
       
    .. db:field:: created
 
+      The time at which the session was created.
+
       :nullable: False
       :type: DateTime
       
    .. db:field:: last_seen
+
+      The time at which the last authenticated request associated with this
+      session was seen. Used to support session timeouts.
 
       :nullable: False
       :type: DateTime
       
    .. db:field:: user_id
 
+      The identifier of the authenticated user who established this session.
+
       :nullable: False
       :foreignkey: :db:fld:`users.id`
             
 .. db:table:: campaign_types
+
+   The type information for a particular campaign. This information is useful
+   for determining the success metrics. For example, a campaign type can be set
+   as "Credentials" for a campaign intending to collect credentials from users
+   while a campaign which does not can have the type set to "Visits". This will
+   ensure that the campaign of type "Visits" is not considered to be less
+   successful due to it having not collected any credentials.
 
    .. db:field:: id
 
@@ -59,10 +87,15 @@ Tables
       
    .. db:field:: name
 
+      A short name for the campaign type, e.g. "Credentials".
+
       :nullable: False
       :type: String
       
    .. db:field:: description
+
+      A description of the campaign type, e.g. "Campaigns that intend to collect
+      credentials from target users".
 
       :nullable: True
       :type: String
