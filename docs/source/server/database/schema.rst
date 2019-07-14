@@ -13,7 +13,7 @@ Tables
 
    .. db:field:: expiration
 
-      An optional expiration for which the user can set to no longer receive
+      The expiration for which the user can set to no longer receive
       notifications.
 
       :nullable: True
@@ -102,7 +102,12 @@ Tables
       
 .. db:table:: campaigns
 
+   A logical testing unit representing a single campaign.
+
    .. db:field:: expiration
+
+      The time at which the server should cease collection of testings
+      information.
 
       :nullable: True
       :type: DateTime
@@ -114,55 +119,83 @@ Tables
       
    .. db:field:: name
 
+      A short, human-readable name for the campaign.
+
       :nullable: False
       :type: String
       
    .. db:field:: description
+
+      A field to store any descriptive information regarding the campaign such
+      as why or how it was conducted.
 
       :nullable: True
       :type: String
       
    .. db:field:: user_id
 
+      The identifier of the user who originally created the campaign.
+
       :nullable: False
       :foreignkey: :db:fld:`users.id`
             
    .. db:field:: created
+
+      The time at which the campaign was created.
 
       :nullable: True
       :type: DateTime
       
    .. db:field:: max_credentials
 
+      The maximum number of credentials to collect *per user*. This setting can
+      be used to alter how the server behaves when a target submits multiple
+      credentials during the course of a campaign.
+
       :nullable: True
       :type: Integer
       
    .. db:field:: campaign_type_id
+
+      The identifier for the campaign's type.
 
       :nullable: True
       :foreignkey: :db:fld:`campaign_types.id`
             
    .. db:field:: company_id
 
+      The identifier for the company for which this campaign performs testing.
+
       :nullable: True
       :foreignkey: :db:fld:`companies.id`
             
    .. db:field:: credential_regex_username
+
+      A regular expression that can be used to determine the validity of a
+      credential's username field.
 
       :nullable: True
       :type: String
       
    .. db:field:: credential_regex_password
 
+      A regular expression that can be used to determine the validity of a
+      credential's password field.
+
       :nullable: True
       :type: String
       
    .. db:field:: credential_regex_mfa_token
 
+      A regular expression that can be used to determine the validity of a
+      credential's mfa token field.
+
       :nullable: True
       :type: String
       
 .. db:table:: companies
+
+   An entity for which a campaign's test is conducted for.
 
    .. db:field:: id
 
@@ -171,30 +204,46 @@ Tables
       
    .. db:field:: name
 
+      A short, human-readable name for the entity.
+
       :nullable: False
       :type: String
       
    .. db:field:: description
+
+      A field to store any descriptive information regarding the entity.
 
       :nullable: True
       :type: String
       
    .. db:field:: industry_id
 
+      The identifier of the primary industry in which the entity operates.
+
       :nullable: True
       :foreignkey: :db:fld:`industries.id`
-            
+
    .. db:field:: url_main
+
+      The URL to the entity's main web site, useful for incorporation into site
+      templates.
 
       :nullable: True
       :type: String
       
    .. db:field:: url_email
 
+      The URL to the entity's email portal, useful for incorporation into site
+      templates.
+
+
       :nullable: True
       :type: String
       
    .. db:field:: url_remote_access
+
+      The URL for the entity's remote access solution, useful for incorporation
+      into site templates.
 
       :nullable: True
       :type: String
