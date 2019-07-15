@@ -1,7 +1,7 @@
 .. _graphql-label:
 
-Overview
-========
+GraphQL Overview
+================
 
 The RPC API provides a function for executing GraphQL_ queries against the
 server. The schema the server supports allows accessing the database models

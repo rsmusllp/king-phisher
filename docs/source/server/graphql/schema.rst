@@ -1,7 +1,7 @@
 .. _graphql-schema-label:
 
-Schema
-======
+GraphQL Schema
+==============
 
 Top-Level Fields
 ----------------

@@ -1,7 +1,14 @@
+.. py:currentmodule:: king_phisher.server.database
+
 .. _database-schema-label:
 
-Schema
-======
+Database Schema
+===============
+
+This schema defines the various database tables and fields for the objects
+managed by the King Phisher server. These are exposed over the
+:ref:`GraphQL <graphql-label>` interface with the exception of fields which are
+restricted based on permissions.
 
 Tables
 ------
@@ -250,6 +257,8 @@ Tables
       
 .. db:table:: company_departments
 
+   A subdivision of a company used to group targets with similar roles together.
+
    .. db:field:: id
 
       :primarykey: True
@@ -257,15 +266,22 @@ Tables
       
    .. db:field:: name
 
+      A short, human-readable name for the subdivision.
+
       :nullable: False
       :type: String
       
    .. db:field:: description
 
+      A field to store any descriptive information regarding the subdivision.
+
       :nullable: True
       :type: String
       
 .. db:table:: credentials
+
+   A field storing authentication information collected from a target during the
+   course of a campaign.
 
    .. db:field:: id
 
@@ -274,40 +290,63 @@ Tables
       
    .. db:field:: visit_id
 
+      The identifier of the visit which submitted the credential information.
+
       :nullable: False
       :foreignkey: :db:fld:`visits.id`
             
    .. db:field:: message_id
+
+      The identifier of the message which submitted the credential information.
 
       :nullable: False
       :foreignkey: :db:fld:`messages.id`
             
    .. db:field:: campaign_id
 
+      The identifier campaign the information was collected as a part of.
+
       :nullable: False
       :foreignkey: :db:fld:`campaigns.id`
             
    .. db:field:: username
+
+      The username submitted by the target.
 
       :nullable: True
       :type: String
       
    .. db:field:: password
 
+      The password submitted by the target.
+
       :nullable: True
       :type: String
       
    .. db:field:: mfa_token
+
+      The multi-factor authentication (MFA) token submitted by the target. This
+      may, for example be a Time-Based One-Time Password (TOTP) code.
 
       :nullable: True
       :type: String
       
    .. db:field:: submitted
 
+      The time at which the credential information was submitted.
+
       :nullable: True
       :type: DateTime
       
    .. db:field:: regex_validated
+
+      Whether or not the fields passed validation with the regular expressions
+      defined by the campaign at the time the credentials information was
+      submitted. If no validation took place because no regular expressions were
+      defined by the campaign, this field is null. If a regular expression
+      for validation was defined for a field that was not submitted, validation
+      fails and this field is false. See
+      :py:func:`~validation.validate_credential` for more information.
 
       :nullable: True
       :type: Boolean
