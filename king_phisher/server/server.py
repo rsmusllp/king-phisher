@@ -957,8 +957,14 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			tables_api_data = serializers.JSON.load(file_h)
 		if tables_api_data['schema'] > db_models.SCHEMA_VERSION:
 			raise errors.KingPhisherInputValidationError('the table-api.json data file\'s schema version is incompatible')
-		for table, columns in tables_api_data['tables'].items():
-			self.tables_api[table] = db_models.MetaTable(column_names=columns, model=db_models.database_tables[table].model, name=table)
+		for table_name, columns in tables_api_data['tables'].items():
+			model = db_models.database_tables[table_name].model
+			self.tables_api[table_name] = db_models.MetaTable(
+				column_names=columns,
+				model=model,
+				name=table_name,
+				table=model.__table__
+			)
 		self.logger.debug("initialized the table api dataset (schema version: {0})".format(tables_api_data['schema']))
 
 	def _maintenance(self, interval):

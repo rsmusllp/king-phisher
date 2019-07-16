@@ -32,8 +32,12 @@
 
 from docutils import nodes
 
+from sphinx import addnodes
+from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain
+from sphinx.roles import XRefRole
 from sphinx.util.nodes import make_refnode
+from sphinx.util import ws_re
 
 class ArgumentBase(nodes.Part, nodes.Inline, nodes.TextElement):
 	pass
@@ -76,6 +80,54 @@ class DomainBase(Domain):
 	def get_type_name(self, type, primary=False):
 		# never prepend "Default"
 		return type.lname
+
+class GenericObjectBase(ObjectDescription):
+	def before_content(self):
+		if self.names:
+			self.env.ref_context[self.xref_attribute] = self.names[-1]
+
+	def after_content(self):
+		self.env.ref_context.pop(self.xref_attribute)
+
+	def add_target_and_index(self, name, sig, signode):
+		targetname = '%s:%s-%s' % (self.xref_prefix, self.objtype, name)
+		signode['ids'].append(targetname)
+		self.state.document.note_explicit_target(signode)
+		self.env.domaindata[self.domain]['objects'][self.objtype, name] = self.env.docname, targetname
+		self.indexnode['entries'].append(('single', "{} ({})".format(name, self.label), targetname, '', None))
+
+	def handle_signature(self, sig, signode):
+		signode.clear()
+		signode += addnodes.desc_name(sig, sig)
+		return ws_re.sub('', sig)
+
+	@property
+	def xref_attribute(self):
+		return self.xref_prefix + ':' + self.attribute
+
+class XRefRoleBase(XRefRole):
+	def process_link(self, env, refnode, has_explicit_title, title, target):
+		refnode[self.xref_attribute] = env.ref_context.get(self.xref_attribute)
+		if not has_explicit_title:
+			title = title.lstrip('.')    # only has a meaning for the target
+			target = target.lstrip('~')  # only has a meaning for the title
+			# if the first character is a tilde, don't display the module/class
+			# parts of the contents
+			if title[0:1] == '~':
+				title = title[1:]
+				dot = title.rfind('.')
+				if dot != -1:
+					title = title[dot + 1:]
+		# if the first character is a dot, search more specific namespaces first
+		# else search builtins first
+		if target[0:1] == '.':
+			target = target[1:]
+			refnode['refspecific'] = True
+		return title, target
+
+	@property
+	def xref_attribute(self):
+		return self.xref_prefix + ':' + self.attribute
 
 def argument_visit(self, node):
 	pass

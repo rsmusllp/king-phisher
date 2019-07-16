@@ -1,7 +1,7 @@
 .. py:currentmodule:: king_phisher.server.database
 
-Database
-========
+Database Overview
+=================
 
 .. _db-table-relationships-label:
 

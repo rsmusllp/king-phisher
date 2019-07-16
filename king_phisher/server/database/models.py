@@ -50,7 +50,7 @@ DATABASE_TABLE_REGEX = '[a-z_]+'
 SCHEMA_VERSION = 9
 """The schema version of the database, used for compatibility checks."""
 
-MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name'))
+MetaTable = collections.namedtuple('MetaTable', ('column_names', 'model', 'name', 'table'))
 """Metadata describing a table and its various attributes.
 
 .. py:attribute:: column_names
@@ -299,7 +299,7 @@ class BaseRowCls(object):
 		:rtype: :py:class:`.MetaTable`
 		"""
 		columns = tuple(col.name for col in cls.__table__.columns)
-		return MetaTable(column_names=columns, model=cls, name=cls.__tablename__)
+		return MetaTable(column_names=columns, model=cls, name=cls.__tablename__, table=cls.__table__)
 
 	def to_dict(self):
 		# versionadded:: 1.13.0
