@@ -280,7 +280,7 @@ Tables
       
 .. db:table:: credentials
 
-   A field storing authentication information collected from a target during the
+   A table storing authentication information collected from a target during the
    course of a campaign.
 
    .. db:field:: id
@@ -353,6 +353,9 @@ Tables
       
 .. db:table:: deaddrop_connections
 
+   A connection instance of an agent which has sent information to the server to
+   prove that the agent was executed.
+
    .. db:field:: id
 
       :primarykey: True
@@ -360,50 +363,74 @@ Tables
       
    .. db:field:: deployment_id
 
+      The deployment identifier of agent which initiated the connection.
+
       :nullable: False
       :foreignkey: :db:fld:`deaddrop_deployments.id`
             
    .. db:field:: campaign_id
+
+      The identifier campaign the information was collected as a part of.
 
       :nullable: False
       :foreignkey: :db:fld:`campaigns.id`
             
    .. db:field:: count
 
+      The number of times the agent made the connection with the same
+      information, implying that the agent was executed multiple times.
+
       :nullable: True
       :type: Integer
       
    .. db:field:: ip
+
+      The external IP address from which this information was submitted and
+      collected from.
 
       :nullable: True
       :type: String
       
    .. db:field:: local_username
 
+      The username that executed the agent.
+
       :nullable: True
       :type: String
       
    .. db:field:: local_hostname
+
+      The hostname the agent was executed on.
 
       :nullable: True
       :type: String
       
    .. db:field:: local_ip_addresses
 
+      The local IP addresses the agent identified on the system from which it
+      was executed.
+
       :nullable: True
       :type: String
       
    .. db:field:: first_seen
+
+      The first time the information was submitted to the server.
 
       :nullable: True
       :type: DateTime
       
    .. db:field:: last_seen
 
+      The last time the information was submitted to the server.
+
       :nullable: True
       :type: DateTime
       
 .. db:table:: deaddrop_deployments
+
+   An instance of a generated agent which can be distributed as part of testing
+   to identify users that are susceptible to executing arbitrary programs.
 
    .. db:field:: id
 
@@ -412,15 +439,22 @@ Tables
       
    .. db:field:: campaign_id
 
+      The identifier of the campaign the deaddrop agent was generated for.
+
       :nullable: False
       :foreignkey: :db:fld:`campaigns.id`
             
    .. db:field:: destination
 
+      A descriptive field describing where the agent was deployed to. Used for
+      reporting and tracking purposes.
+
       :nullable: True
       :type: String
       
 .. db:table:: industries
+
+   An industry in which a company operates in.
 
    .. db:field:: id
 
@@ -429,15 +463,25 @@ Tables
       
    .. db:field:: name
 
+      A short, human-readable name for the industry.
+
       :nullable: False
       :type: String
       
    .. db:field:: description
 
+      A field to store any descriptive information regarding the industry.
+
       :nullable: True
       :type: String
       
 .. db:table:: landing_pages
+
+   A page that is intended to be visited during the course of a test to be
+   qualified as a failure. Visits to the landing page will increment the
+   :db:field:`visits.count` field, while requests to non-landing pages will not.
+   A campaign may have one or more landing pages, and they are automatically
+   identified from the Target URL when messages are sent.
 
    .. db:field:: id
 
@@ -446,15 +490,21 @@ Tables
       
    .. db:field:: campaign_id
 
+      The identifier of the campaign this landing page is associated with.
+
       :nullable: False
       :foreignkey: :db:fld:`campaigns.id`
             
    .. db:field:: hostname
 
+      The hostname component of the URL this landing page uses.
+
       :nullable: False
       :type: String
       
    .. db:field:: page
+
+      The path component of the URL this landing page uses.
 
       :nullable: False
       :type: String
@@ -671,5 +721,3 @@ Tables
 
       :nullable: True
       :type: DateTime
-      
-
