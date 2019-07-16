@@ -479,7 +479,7 @@ Tables
 
    A page that is intended to be visited during the course of a test to be
    qualified as a failure. Visits to the landing page will increment the
-   :db:field:`visits.count` field, while requests to non-landing pages will not.
+   :db:fld:`visits.count` field, while requests to non-landing pages will not.
    A campaign may have one or more landing pages, and they are automatically
    identified from the Target URL when messages are sent.
 
@@ -511,6 +511,9 @@ Tables
       
 .. db:table:: messages
 
+   A message that was sent to a target user to test their susceptibility to
+   phishing attempts.
+
    .. db:field:: id
 
       :primarykey: True
@@ -518,75 +521,110 @@ Tables
       
    .. db:field:: campaign_id
 
+      The identifier of the campaign which this message was sent as a part of.
+
       :nullable: False
       :foreignkey: :db:fld:`campaigns.id`
             
    .. db:field:: target_email
+
+      The email address of the user who this message was sent to.
 
       :nullable: True
       :type: String
       
    .. db:field:: first_name
 
+      The first name of the user who this message was sent to.
+
       :nullable: True
       :type: String
       
    .. db:field:: last_name
+
+      The last name of the user who this message was sent to.
 
       :nullable: True
       :type: String
       
    .. db:field:: opened
 
+      The time at which the message was confirmed to have been opened. This
+      field is prone to false negatives due to many email clients not
+      automatically loading remote images.
+
       :nullable: True
       :type: DateTime
       
    .. db:field:: opener_ip
+
+      The IP address which opened the message.
 
       :nullable: True
       :type: String
       
    .. db:field:: opener_user_agent
 
+      The user agent of the request sent when the message was opened.
+
       :nullable: True
       :type: String
       
    .. db:field:: sent
+
+      The time at which the message was sent to the target.
 
       :nullable: True
       :type: DateTime
       
    .. db:field:: reported
 
+      The time at which the message was reported by the target.
+
       :nullable: True
       :type: DateTime
       
    .. db:field:: trained
+
+      Whether or not the taget agreed to any training provided during the
+      course of the testing.
 
       :nullable: True
       :type: Boolean
       
    .. db:field:: delivery_status
 
+      A short, human-readable status regarding the state of delivery of the
+      message such as delivered, rejected or deferred.
+
       :nullable: True
       :type: String
       
    .. db:field:: delivery_details
+
+      Any additional details regarding the state of the message delivery status.
 
       :nullable: True
       :type: String
       
    .. db:field:: testing
 
+      Whether or not the message was intended for testing and should be omitted
+      from the overall results.
+
       :nullable: False
       :type: Boolean
       
    .. db:field:: company_department_id
 
+      The identifier of the company subdivision that the target is a member of.
+
       :nullable: True
       :foreignkey: :db:fld:`company_departments.id`
             
 .. db:table:: storage_data
+
+   Storage for internal server data that is generated at run time.
 
    .. db:field:: id
 
@@ -595,32 +633,51 @@ Tables
       
    .. db:field:: created
 
+      The time at which the data unit was created.
+
       :nullable: True
       :type: DateTime
       
    .. db:field:: modified
+
+      The time at which the data unit was modified.
 
       :nullable: True
       :type: DateTime
       
    .. db:field:: namespace
 
+      The namespace in which the data unit exists to allow the same
+      :db:fld:`storage_data.key` to be used multiple times while remaining
+      uniquely identifiable.
+
       :nullable: True
       :type: String
       
    .. db:field:: key
+
+      The key by which the data unit is retrieved. This value must be unique
+      within the defined :db:fld:`storage_data.namespace`.
 
       :nullable: False
       :type: String
       
    .. db:field:: value
 
+      The readable and writable data unit itself, serialized as a binary object
+      to be loaded and unloaded from the database.
+
       :nullable: True
       :type: Binary
       
 .. db:table:: users
 
+   An authorized user as loaded through the server's authentication mechanism.
+
    .. db:field:: expiration
+
+      The time at which the user should no longer be able to authenticate to the
+      server.
 
       :nullable: True
       :type: DateTime
@@ -632,45 +689,69 @@ Tables
       
    .. db:field:: name
 
+      The name of the user.
+
       :nullable: False
       :type: String
       
    .. db:field:: description
+
+      A field to store any descriptive information regarding the user.
 
       :nullable: True
       :type: String
       
    .. db:field:: phone_carrier
 
+      The service provider of the user's cell phone. This information is used to
+      send text messages via the providers email to SMS gateway.
+
       :nullable: True
       :type: String
       
    .. db:field:: phone_number
+
+      The user's cell phone number. This information is used to provide the user
+      with alerts regarding campaigns to which they have subscribed.
 
       :nullable: True
       :type: String
       
    .. db:field:: email_address
 
+      The user's email address. This information is used to provide the user
+      with alerts regarding campaigns to which they have been subscribed.
+
       :nullable: True
       :type: String
       
    .. db:field:: otp_secret
+
+      A secret value used when prompting for Multi Factor Authentication (MFA)
+      to the server.
 
       :nullable: True
       :type: String
       
    .. db:field:: last_login
 
+      The time at which the user last authenticated.
+
       :nullable: True
       :type: DateTime
       
    .. db:field:: access_level
 
+      The level of access available to a users, where a higher number represents
+      less access than a lower number.
+
       :nullable: False
       :type: Integer
       
 .. db:table:: visits
+
+   An instance where a targeted user has failed their testing attempt by
+   visiting the link provided to them from a message.
 
    .. db:field:: id
 
@@ -679,45 +760,68 @@ Tables
       
    .. db:field:: message_id
 
+      The identifier of the message that was sent to the target which initiated
+      the visit.
+
       :nullable: False
       :foreignkey: :db:fld:`messages.id`
             
    .. db:field:: campaign_id
+
+      The identifier of the campaign that this visit is associated with.
 
       :nullable: False
       :foreignkey: :db:fld:`campaigns.id`
             
    .. db:field:: count
 
+      The number of times the user visited a landing page associated with the
+      campaign. This would be the case when the user visits the link they were
+      provided multiple times from the same browser.
+
       :nullable: True
       :type: Integer
       
    .. db:field:: ip
+
+      The IP address from which the user visited the server.
 
       :nullable: True
       :type: String
       
    .. db:field:: details
 
+      Any applicable details regarding the visist.
+
       :nullable: True
       :type: String
       
    .. db:field:: user_agent
+
+      The user agent of the visist request.
 
       :nullable: True
       :type: String
       
    .. db:field:: first_landing_page_id
 
+      The identifier of the first landing page the visit was made. This is used
+      to determine which landing page a user visited if multiple landing pages
+      are associated with the campaign.
+
       :nullable: True
       :foreignkey: :db:fld:`landing_pages.id`
             
    .. db:field:: first_seen
 
+      The time at which the first visit was made to the server.
+
       :nullable: True
       :type: DateTime
       
    .. db:field:: last_seen
+
+      The time at which the last visit was made to the server.
 
       :nullable: True
       :type: DateTime
