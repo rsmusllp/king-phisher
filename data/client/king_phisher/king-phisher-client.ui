@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.1 
+<!-- Generated with glade 3.22.1
 
 Copyright (c) 2013-2017, SecureState LLC
 All rights reserved.
@@ -49,7 +49,7 @@ Spencer McIntyre
     <property name="title" translatable="yes">About</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">King Phisher</property>
-    <property name="copyright" translatable="yes">Copyright (c) 2013-2019, SecureState LLC</property>
+    <property name="copyright" translatable="yes">Copyright (c) 2013-2017, SecureState LLC</property>
     <property name="comments" translatable="yes">Phishing Campaign Toolkit</property>
     <property name="website">https://github.com/securestate/king-phisher</property>
     <property name="website_label" translatable="yes">GitHub Home Page</property>
@@ -263,7 +263,6 @@ Spencer McIntyre</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
                 <property name="placeholder_text" translatable="yes">campaign name (REQUIRED)</property>
-                <signal name="changed" handler="signal_entry_changed_campaign_name" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -969,35 +968,86 @@ Spencer McIntyre</property>
           </packing>
         </child>
         <child>
-          <object class="GtkBox">
+          <object class="GtkAlignment">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="top_padding">5</property>
+            <property name="bottom_padding">5</property>
+            <property name="left_padding">12</property>
+            <property name="right_padding">5</property>
             <child>
-              <object class="GtkLabel" id="CampaignAssistant.label_hostname_filter">
+              <object class="GtkGrid">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Hostname:</property>
+                <property name="row_spacing">3</property>
+                <property name="column_spacing">10</property>
+                <child>
+                  <object class="GtkComboBoxText">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkComboBoxText">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkComboBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Scheme</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Hostname</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Path</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="CampaignAssistant.entry_hostname_filter">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">Hostname to filter URLs by.</property>
-                <property name="hexpand">True</property>
-                <property name="placeholder_text" translatable="yes">king-phisher.lan</property>
-                <signal name="changed" handler="signal_url_entry_change" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
             </child>
           </object>
           <packing>
@@ -1007,221 +1057,187 @@ Spencer McIntyre</property>
           </packing>
         </child>
         <child>
-          <object class="GtkPaned" id="CampaignAssistant.paned_url_info">
+          <object class="GtkExpander" id="CampaignAssistant.expander_url_info">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="orientation">vertical</property>
-            <signal name="button-press-event" handler="signal_paned_button_press_event" swapped="no"/>
+            <property name="valign">end</property>
+            <signal name="activate" handler="signal_expander_activate" swapped="no"/>
             <child>
-              <object class="GtkScrolledWindow" id="CampaignAssistant.scrolledwindow_url_info_treeview">
+              <object class="GtkScrolledWindow" id="CampaignAssistant.scrolledwindow_url_info_details">
+                <property name="height_request">125</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
+                <property name="border_width">3</property>
                 <property name="shadow_type">in</property>
                 <child>
-                  <object class="GtkTreeView" id="CampaignAssistant.treeview_url_selector">
+                  <object class="GtkViewport">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="activate_on_single_click">True</property>
-                    <signal name="row-activated" handler="signal_treeview_row_activated" swapped="no"/>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="CampaignAssistant.treeselection_url_selector"/>
-                    </child>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="resize">True</property>
-                <property name="shrink">False</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkExpander" id="CampaignAssistant.expander_url_info">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="valign">end</property>
-                <signal name="activate" handler="signal_expander_activate" swapped="no"/>
-                <child>
-                  <object class="GtkScrolledWindow" id="CampaignAssistant.scrolledwindow_url_info_details">
-                    <property name="height_request">125</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="vexpand">True</property>
-                    <property name="border_width">3</property>
-                    <property name="shadow_type">in</property>
+                    <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkViewport">
+                      <object class="GtkGrid">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkGrid">
+                          <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_url">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <child>
-                              <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_url">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="halign">end</property>
-                                <property name="valign">start</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="label" translatable="yes">URL:</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_authors">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="halign">end</property>
-                                <property name="valign">start</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="label" translatable="yes">Author(s):</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_classifiers">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="halign">end</property>
-                                <property name="valign">start</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="label" translatable="yes">Classifiers:</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">3</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_description">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="halign">end</property>
-                                <property name="valign">start</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="label" translatable="yes">Description:</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">4</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_created">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="halign">end</property>
-                                <property name="valign">start</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="label" translatable="yes">Created:</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="CampaignAssistant.label_url_info_url">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="halign">start</property>
-                                <property name="valign">start</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="CampaignAssistant.label_url_info_authors">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="halign">start</property>
-                                <property name="valign">start</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="CampaignAssistant.label_url_info_created">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="halign">start</property>
-                                <property name="valign">start</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="CampaignAssistant.label_url_info_description">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="halign">start</property>
-                                <property name="valign">start</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="wrap">True</property>
-                                <property name="selectable">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">4</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkListBox" id="CampaignAssistant.listbox_url_info_classifiers">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="hexpand">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">3</property>
-                              </packing>
-                            </child>
+                            <property name="halign">end</property>
+                            <property name="valign">start</property>
+                            <property name="margin_top">3</property>
+                            <property name="margin_bottom">3</property>
+                            <property name="label" translatable="yes">URL:</property>
                           </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_authors">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="valign">start</property>
+                            <property name="margin_top">3</property>
+                            <property name="margin_bottom">3</property>
+                            <property name="label" translatable="yes">Author(s):</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_classifiers">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="valign">start</property>
+                            <property name="margin_top">3</property>
+                            <property name="margin_bottom">3</property>
+                            <property name="label" translatable="yes">Classifiers:</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_description">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="valign">start</property>
+                            <property name="margin_top">3</property>
+                            <property name="margin_bottom">3</property>
+                            <property name="label" translatable="yes">Description:</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">4</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_created">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="valign">start</property>
+                            <property name="margin_top">3</property>
+                            <property name="margin_bottom">3</property>
+                            <property name="label" translatable="yes">Created:</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_url_info_url">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="valign">start</property>
+                            <property name="margin_top">3</property>
+                            <property name="margin_bottom">3</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_url_info_authors">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="valign">start</property>
+                            <property name="margin_top">3</property>
+                            <property name="margin_bottom">3</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_url_info_created">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="valign">start</property>
+                            <property name="margin_top">3</property>
+                            <property name="margin_bottom">3</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="CampaignAssistant.label_url_info_description">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="valign">start</property>
+                            <property name="margin_top">3</property>
+                            <property name="margin_bottom">3</property>
+                            <property name="wrap">True</property>
+                            <property name="selectable">True</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">4</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkListBox" id="CampaignAssistant.listbox_url_info_classifiers">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="hexpand">True</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">3</property>
+                          </packing>
                         </child>
                       </object>
                     </child>
                   </object>
                 </child>
-                <child type="label">
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">URL Information</property>
-                  </object>
-                </child>
               </object>
-              <packing>
-                <property name="resize">False</property>
-                <property name="shrink">False</property>
-              </packing>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">URL Information</property>
+              </object>
             </child>
           </object>
           <packing>
-            <property name="expand">True</property>
+            <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">2</property>
           </packing>
@@ -2898,7 +2914,6 @@ Spencer McIntyre</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="tooltip_text" translatable="yes">The URL the company's primary website.</property>
-        <property name="hexpand">True</property>
         <property name="placeholder_text" translatable="yes">http://king-phisher.com/ (OPTIONAL)</property>
       </object>
       <packing>
@@ -2907,29 +2922,27 @@ Spencer McIntyre</property>
       </packing>
     </child>
     <child>
-      <object class="GtkEntry" id="CompanyEditorGrid.entry_company_url_remote_access">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="tooltip_text" translatable="yes">The URL the company uses for remote access.</property>
-        <property name="hexpand">True</property>
-        <property name="placeholder_text" translatable="yes">http://king-phisher.com/ (OPTIONAL)</property>
-      </object>
-      <packing>
-        <property name="left_attach">1</property>
-        <property name="top_attach">6</property>
-      </packing>
-    </child>
-    <child>
       <object class="GtkEntry" id="CompanyEditorGrid.entry_company_url_email">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="tooltip_text" translatable="yes">The URL the company uses for web mail access.</property>
-        <property name="hexpand">True</property>
         <property name="placeholder_text" translatable="yes">http://king-phisher.com/ (OPTIONAL)</property>
       </object>
       <packing>
         <property name="left_attach">1</property>
         <property name="top_attach">5</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkEntry" id="CompanyEditorGrid.entry_company_url_remote_access">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="tooltip_text" translatable="yes">The URL the company uses for remote access.</property>
+        <property name="placeholder_text" translatable="yes">http://king-phisher.com/ (OPTIONAL)</property>
+      </object>
+      <packing>
+        <property name="left_attach">1</property>
+        <property name="top_attach">6</property>
       </packing>
     </child>
   </object>
@@ -3140,6 +3153,10 @@ Spencer McIntyre</property>
   <object class="GtkApplicationWindow" id="HTMLWindow">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="margin_left">5</property>
+    <property name="margin_right">5</property>
+    <property name="margin_top">5</property>
+    <property name="margin_bottom">5</property>
     <property name="default_width">600</property>
     <property name="default_height">500</property>
     <child>
@@ -4546,6 +4563,33 @@ Spencer McIntyre</property>
     <property name="step_increment">0.5</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkListStore" id="SPFCheckLevels">
+    <columns>
+      <!-- column-name SPFCheckLevels.level_id -->
+      <column type="gint"/>
+      <!-- column-name SPFCheckLevels.level_name -->
+      <column type="gchararray"/>
+      <!-- column-name SPFCheckLevels.level_description -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">Do Not Check</col>
+        <col id="2" translatable="yes">Do not check SPF records.</col>
+      </row>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">Permissive</col>
+        <col id="2" translatable="yes">Ensure the configuration does not result in a failure.</col>
+      </row>
+      <row>
+        <col id="0">2</col>
+        <col id="1" translatable="yes">Strict</col>
+        <col id="2" translatable="yes">Ensure the configuration results in neutral or pass.</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkDialog" id="ConfigurationDialog">
     <property name="width_request">600</property>
     <property name="height_request">350</property>
@@ -4938,9 +4982,7 @@ Spencer McIntyre</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="top_padding">5</property>
-                                <property name="bottom_padding">3</property>
                                 <property name="left_padding">12</property>
-                                <property name="right_padding">3</property>
                                 <child>
                                   <object class="GtkGrid" id="grid4">
                                     <property name="visible">True</property>
@@ -5201,337 +5243,221 @@ Spencer McIntyre</property>
               </packing>
             </child>
             <child>
-              <object class="GtkScrolledWindow">
+              <object class="GtkBox" id="ConfigurationDialog.box_client_tab">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="shadow_type">in</property>
+                <property name="can_focus">False</property>
+                <property name="valign">start</property>
+                <property name="margin_left">5</property>
+                <property name="margin_right">5</property>
+                <property name="margin_top">5</property>
+                <property name="margin_bottom">5</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">3</property>
                 <child>
-                  <object class="GtkViewport">
+                  <object class="GtkBox" id="box6">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="homogeneous">True</property>
                     <child>
-                      <object class="GtkBox" id="ConfigurationDialog.box_client_tab">
+                      <object class="GtkLabel" id="label18">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="valign">start</property>
-                        <property name="margin_top">5</property>
-                        <property name="margin_bottom">5</property>
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">3</property>
+                        <property name="label" translatable="yes">SPF Record Check Type</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="ConfigurationDialog.combobox_spf_check_level">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">The level to use when checking SPF records.</property>
+                        <property name="model">SPFCheckLevels</property>
+                        <property name="active">1</property>
+                        <signal name="changed" handler="signal_changed_spf_check_level" swapped="no"/>
                         <child>
-                          <object class="GtkBox" id="box6">
+                          <object class="GtkCellRendererText" id="cellrenderertext4"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="ConfigurationDialog.label_spf_level_description">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <attributes>
+                      <attribute name="style" value="italic"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkFrame" id="ConfigurationDialog.frame_dashboard">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label_xalign">0</property>
+                    <child>
+                      <object class="GtkAlignment" id="alignment1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="top_padding">5</property>
+                        <property name="left_padding">12</property>
+                        <property name="right_padding">5</property>
+                        <child>
+                          <object class="GtkGrid" id="grid6">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="homogeneous">True</property>
+                            <property name="margin_right">3</property>
+                            <property name="margin_bottom">3</property>
+                            <property name="row_spacing">3</property>
+                            <property name="column_spacing">25</property>
+                            <property name="row_homogeneous">True</property>
                             <child>
-                              <object class="GtkLabel" id="label18">
+                              <object class="GtkLabel" id="label15">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">SPF Record Check Type</property>
+                                <property name="margin_left">10</property>
+                                <property name="label" translatable="yes">Top Left</property>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">0</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBox" id="ConfigurationDialog.combobox_spf_check_level">
+                              <object class="GtkLabel" id="label16">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">The level to use when checking SPF records.</property>
-                                <property name="model">SPFCheckLevels</property>
-                                <property name="active">1</property>
-                                <signal name="changed" handler="signal_changed_spf_check_level" swapped="no"/>
-                                <child>
-                                  <object class="GtkCellRendererText" id="cellrenderertext4"/>
-                                  <attributes>
-                                    <attribute name="text">1</attribute>
-                                  </attributes>
-                                </child>
+                                <property name="margin_left">10</property>
+                                <property name="label" translatable="yes">Top Right</property>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="ConfigurationDialog.label_spf_level_description">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <attributes>
-                              <attribute name="style" value="italic"/>
-                            </attributes>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkFrame" id="ConfigurationDialog.frame_dashboard">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label_xalign">0</property>
-                            <child>
-                              <object class="GtkAlignment" id="alignment1">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="top_padding">5</property>
-                                <property name="bottom_padding">3</property>
-                                <property name="left_padding">12</property>
-                                <property name="right_padding">3</property>
-                                <child>
-                                  <object class="GtkGrid" id="grid6">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="row_spacing">3</property>
-                                    <property name="row_homogeneous">True</property>
-                                    <child>
-                                      <object class="GtkLabel" id="label15">
-                                        <property name="width_request">120</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="label" translatable="yes">Top Left</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">0</property>
-                                        <property name="top_attach">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel" id="label16">
-                                        <property name="width_request">120</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="label" translatable="yes">Top Right</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">0</property>
-                                        <property name="top_attach">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel" id="label17">
-                                        <property name="width_request">120</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="label" translatable="yes">Bottom</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">0</property>
-                                        <property name="top_attach">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkComboBoxText" id="ConfigurationDialog.combobox_dashboard_top_left">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="hexpand">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="top_attach">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkComboBoxText" id="ConfigurationDialog.combobox_dashboard_top_right">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="hexpand">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="top_attach">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkComboBoxText" id="ConfigurationDialog.combobox_dashboard_bottom">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="hexpand">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="top_attach">2</property>
-                                      </packing>
-                                    </child>
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                            <child type="label">
-                              <object class="GtkLabel" id="label25">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">&lt;b&gt;Dashboard Layout&lt;/b&gt;</property>
-                                <property name="use_markup">True</property>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">2</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkBox" id="box11">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <child>
-                              <object class="GtkLabel" id="label37">
-                                <property name="width_request">132</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">SFTP Client</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="ConfigurationDialog.entry_sftp_client">
+                              <object class="GtkLabel" id="label17">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="tooltip_text" translatable="yes">The command to run to start an SFTP client.</property>
+                                <property name="can_focus">False</property>
+                                <property name="margin_left">10</property>
+                                <property name="label" translatable="yes">Bottom</property>
                               </object>
                               <packing>
-                                <property name="expand">True</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="ConfigurationDialog.combobox_dashboard_top_left">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="ConfigurationDialog.combobox_dashboard_top_right">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="ConfigurationDialog.combobox_dashboard_bottom">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="hexpand">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">2</property>
                               </packing>
                             </child>
                           </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="padding">3</property>
-                            <property name="position">3</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkFrame">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label_xalign">0</property>
-                            <property name="shadow_type">none</property>
-                            <child>
-                              <object class="GtkAlignment">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="bottom_padding">3</property>
-                                <property name="left_padding">12</property>
-                                <property name="right_padding">3</property>
-                                <child>
-                                  <object class="GtkGrid">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="row_spacing">3</property>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="width_request">120</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="label" translatable="yes">Proxy URL</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">0</property>
-                                        <property name="top_attach">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="label" translatable="yes">Username</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">0</property>
-                                        <property name="top_attach">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="label" translatable="yes">Password</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">0</property>
-                                        <property name="top_attach">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkEntry" id="ConfigurationDialog.entry_proxy_username">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="tooltip_text" translatable="yes">Username for the proxy server.</property>
-                                        <property name="hexpand">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="top_attach">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkEntry" id="ConfigurationDialog.entry_proxy_url">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="tooltip_text" translatable="yes">An optional URL for the proxy to use.</property>
-                                        <property name="hexpand">True</property>
-                                        <property name="placeholder_text" translatable="yes">http://proxy.lan:8080/</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="top_attach">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkEntry" id="ConfigurationDialog.entry_proxy_password">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="tooltip_text" translatable="yes">Password for the proxy server.</property>
-                                        <property name="hexpand">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="top_attach">2</property>
-                                      </packing>
-                                    </child>
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                            <child type="label">
-                              <object class="GtkLabel">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">&lt;b&gt;Proxy Settings&lt;/b&gt;</property>
-                                <property name="use_markup">True</property>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">4</property>
-                          </packing>
                         </child>
                       </object>
                     </child>
+                    <child type="label">
+                      <object class="GtkLabel" id="label25">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Dashboard Layout&lt;/b&gt;</property>
+                        <property name="use_markup">True</property>
+                      </object>
+                    </child>
                   </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox" id="box11">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkLabel" id="label37">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
+                        <property name="label" translatable="yes">SFTP Client</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="ConfigurationDialog.entry_sftp_client">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">The command to run to start an SFTP client.</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="padding">3</property>
+                    <property name="position">3</property>
+                  </packing>
                 </child>
               </object>
               <packing>
@@ -5634,33 +5560,6 @@ Spencer McIntyre</property>
       <action-widget response="-6">ConfigurationDialog.button_cancel</action-widget>
       <action-widget response="-10">ConfigurationDialog.button_apply</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkListStore" id="SPFCheckLevels">
-    <columns>
-      <!-- column-name SPFCheckLevels.level_id -->
-      <column type="gint"/>
-      <!-- column-name SPFCheckLevels.level_name -->
-      <column type="gchararray"/>
-      <!-- column-name SPFCheckLevels.level_description -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">0</col>
-        <col id="1" translatable="yes">Do Not Check</col>
-        <col id="2" translatable="yes">Do not check SPF records.</col>
-      </row>
-      <row>
-        <col id="0">1</col>
-        <col id="1" translatable="yes">Permissive</col>
-        <col id="2" translatable="yes">Ensure the configuration does not result in a failure.</col>
-      </row>
-      <row>
-        <col id="0">2</col>
-        <col id="1" translatable="yes">Strict</col>
-        <col id="2" translatable="yes">Ensure the configuration results in neutral or pass.</col>
-      </row>
-    </data>
   </object>
   <object class="GtkImage" id="StockAddImage">
     <property name="visible">True</property>
