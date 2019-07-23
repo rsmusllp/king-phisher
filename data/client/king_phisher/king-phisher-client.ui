@@ -1004,32 +1004,18 @@ Spencer McIntyre</property>
                                 <property name="row_spacing">3</property>
                                 <property name="column_spacing">10</property>
                                 <child>
-                                  <object class="GtkComboBoxText" id="CampaignAssistant.comboboxtext_url_hostname">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="hexpand">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="top_attach">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkComboBoxText" id="CampaignAssistant.comboboxtext_url_path">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="hexpand">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="top_attach">2</property>
-                                  </packing>
-                                </child>
-                                <child>
                                   <object class="GtkComboBox" id="CampaignAssistant.combobox_url_scheme">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">The scheme to use for the URL to send in messages.</property>
                                     <property name="hexpand">True</property>
+                                    <property name="id_column">0</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="cellrenderertext5"/>
+                                      <attributes>
+                                        <attribute name="text">1</attribute>
+                                      </attributes>
+                                    </child>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1070,6 +1056,48 @@ Spencer McIntyre</property>
                                   <packing>
                                     <property name="left_attach">0</property>
                                     <property name="top_attach">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBox" id="CampaignAssistant.combobox_url_hostname">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">The server hostname to use for the URL to send in messages.</property>
+                                    <property name="has_entry">True</property>
+                                    <property name="entry_text_column">0</property>
+                                    <property name="id_column">0</property>
+                                    <signal name="changed" handler="signal_combobox_changed_url_hostname" swapped="no"/>
+                                    <child internal-child="entry">
+                                      <object class="GtkEntry">
+                                        <property name="can_focus">True</property>
+                                        <property name="placeholder_text" translatable="yes">hostname.lan</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBox" id="CampaignAssistant.combobox_url_path">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="tooltip_text" translatable="yes">The resource path to use for the URL to send in messages.</property>
+                                    <property name="button_sensitivity">off</property>
+                                    <property name="has_entry">True</property>
+                                    <property name="entry_text_column">0</property>
+                                    <property name="id_column">0</property>
+                                    <child internal-child="entry">
+                                      <object class="GtkEntry">
+                                        <property name="can_focus">True</property>
+                                        <property name="placeholder_text" translatable="yes">/resource/path</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">2</property>
                                   </packing>
                                 </child>
                               </object>

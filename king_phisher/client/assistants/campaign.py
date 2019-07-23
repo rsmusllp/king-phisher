@@ -86,9 +86,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'checkbutton_reject_after_credentials',
 			'combobox_campaign_type',
 			'combobox_company_existing',
+			'combobox_url_hostname',
+			'combobox_url_path',
 			'combobox_url_scheme',
-			'comboboxtext_url_hostname',
-			'comboboxtext_url_path',
 			'entry_campaign_description',
 			'entry_campaign_name',
 			'entry_kpm_dest_folder',
@@ -167,6 +167,35 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['label_intro_body'].set_text('This assistant will walk you through creating and configuring a new King Phisher campaign.')
 			self.gobjects['label_intro_title'].set_text('New Campaign')
 
+	def __async_rpc_cb_populate_url_hostname_combobox(self, hostnames):
+		hostnames = sorted(hostnames)
+		model = self.gobjects['combobox_url_hostname'].get_model()
+		for hostname in hostnames:
+			model.append((hostname,))
+
+	def __async_rpc_cb_populate_url_scheme_combobox(self, addresses):
+		addresses = sorted(addresses, key=lambda address: address['port'])
+		model = self.gobjects['combobox_url_scheme'].get_model()
+		for idx, address in enumerate(addresses):
+			if address['ssl']:
+				scheme = 'https'
+				description = '' if address['port'] == 443 else 'port: ' + str(address['port'])
+			else:
+				scheme = 'http'
+				description = '' if address['port'] == 80 else 'port: ' + str(address['port'])
+			# use the scheme and port to make a row UID
+			model.append((scheme + '/' + str(address['port']), scheme, description))
+
+	def __async_rpc_cb_populate_url_path_combobox(self, results):
+		templates = results['siteTemplates']
+		combobox = self.gobjects['combobox_url_path']
+		combobox.set_property('button-sensitivity', templates['total'] > 0)
+		model = combobox.get_model()
+		model.clear()
+		for template in templates['edges']:
+			template = template['node']
+			model.append((template['path'],))
+
 	@property
 	def campaign_name(self):
 		"""
@@ -226,6 +255,22 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				combobox.pack_start(renderer, True)
 				combobox.add_attribute(renderer, 'text', 2)
 			combobox.set_model(rpc.get_tag_model(tag_table, model=model))
+		# setup the URL scheme combobox asynchronously
+		model = Gtk.ListStore(str, str, str)
+		combobox = self.gobjects['combobox_url_scheme']
+		combobox.set_model(model)
+		combobox.pack_start(renderer, True)
+		combobox.add_attribute(renderer, 'text', 2)
+		rpc.async_call('config/get', ('server.addresses',), on_success=self.__async_rpc_cb_populate_url_scheme_combobox, when_idle=True)
+		# setup the URL hostname combobox asynchronously
+		model = Gtk.ListStore(str)
+		combobox = self.gobjects['combobox_url_hostname']
+		combobox.set_model(model)
+		rpc.async_call('hostnames/get', on_success=self.__async_rpc_cb_populate_url_hostname_combobox, when_idle=True)
+		# setup the URL path combobox model, but don't populate it until a hostname is selected
+		model = Gtk.ListStore(str)
+		combobox = self.gobjects['combobox_url_path']
+		combobox.set_model(model)
 
 	def _set_defaults(self):
 		"""
@@ -505,6 +550,30 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def signal_checkbutton_expire_campaign_toggled(self, _):
 		active = self.gobjects['checkbutton_expire_campaign'].get_property('active')
 		self.gobjects['frame_campaign_expiration'].set_sensitive(active)
+
+	def signal_combobox_changed_url_hostname(self, combobox):
+		active = combobox.get_active()
+		if active == -1:
+			return
+		model = combobox.get_model()
+		hostname = model[active][0]
+		self.application.rpc.async_graphql(
+			"""
+			query getSiteTemplate($hostname: String) {
+			  siteTemplates(hostname: $hostname) {
+				total
+				edges {
+				  node {
+					path
+				  }
+				}
+			  }
+			}
+			""",
+			query_vars={'hostname': hostname},
+			on_success=self.__async_rpc_cb_populate_url_path_combobox,
+			when_idle=True
+		)
 
 	def signal_entry_changed_campaign_name(self, entry):
 		campaign_name = entry.get_text().strip()
