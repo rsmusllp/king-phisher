@@ -263,6 +263,7 @@ Spencer McIntyre</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
                 <property name="placeholder_text" translatable="yes">campaign name (REQUIRED)</property>
+                <signal name="changed" handler="signal_entry_changed_campaign_name" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -1066,7 +1067,7 @@ Spencer McIntyre</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">end</property>
-                                    <property name="label" translatable="yes">Hostname:</property>
+                                    <property name="label" translatable="yes">Hostname</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -1078,7 +1079,7 @@ Spencer McIntyre</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">end</property>
-                                    <property name="label" translatable="yes">Path:</property>
+                                    <property name="label" translatable="yes">Path</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -1090,7 +1091,7 @@ Spencer McIntyre</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">end</property>
-                                    <property name="label" translatable="yes">Scheme:</property>
+                                    <property name="label" translatable="yes">Scheme</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>

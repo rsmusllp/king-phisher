@@ -33,6 +33,7 @@
 import collections
 import datetime
 import os
+import posixpath
 import re
 
 from king_phisher import utilities
@@ -68,6 +69,14 @@ _KPMPaths = collections.namedtuple('KPMPaths', (
 	'destination_folder',
 	'is_valid'
 ))
+
+def _relpath(path):
+	if not path.startswith('/'):
+		path = '/' + path
+	path = posixpath.relpath(path, '/')
+	if path == '.':
+		path = ''
+	return path
 
 class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
@@ -191,8 +200,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 	def __async_rpc_cb_populate_url_scheme_combobox(self, addresses):
 		addresses = sorted(addresses, key=lambda address: address['port'])
-		model = self.gobjects['combobox_url_scheme'].get_model()
-		for idx, address in enumerate(addresses):
+		combobox_url_scheme = self.gobjects['combobox_url_scheme']
+		model = combobox_url_scheme.get_model()
+		for address in addresses:
 			if address['ssl']:
 				scheme_name = 'https'
 				description = '' if address['port'] == 443 else 'port: ' + str(address['port'])
@@ -206,6 +216,10 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				description=description,
 				port=address['port']
 			))
+		if gui_utilities.gtk_list_store_search(model, 'https/443'):
+			combobox_url_scheme.set_active_id('https/443')
+		elif gui_utilities.gtk_list_store_search(model, 'http/80'):
+			combobox_url_scheme.set_active_id('http/80')
 
 	def __async_rpc_cb_populate_url_path_combobox(self, results):
 		templates = results['siteTemplates']
@@ -215,8 +229,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		model.clear()
 		for template in templates['edges']:
 			template = template['node']
+			path = os.path.normpath(template['path'])
 			for page in template['metadata']['pages']:
-				model.append((os.path.normpath(os.path.join(template['path'], page)), template['path']))
+				model.append((path + os.path.normpath(page), path))
 
 	@property
 	def campaign_name(self):
@@ -241,30 +256,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	@property
 	def _server_uses_ssl(self):
 		return any(address['ssl'] for address in self.config['server_config']['server.addresses'])
-
-	def signal_kpm_select_clicked(self, _):
-		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
-		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
-		dialog.quick_add_filter('All Files', '*')
-		response = dialog.run_quick_open()
-		dialog.destroy()
-		if not response:
-			return False
-		self.gobjects['entry_kpm_file'].set_text(response['target_path'])
-		self._update_completion_status()
-
-	def signal_kpm_dest_folder_clicked(self, _):
-		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
-		response = dialog.run_quick_select_directory()
-		dialog.destroy()
-		if not response:
-			return False
-		self.gobjects['entry_kpm_dest_folder'].set_text(response['target_path'])
-		self._update_completion_status()
-
-	def signal_kpm_entry_clear(self, entry_widget):
-		entry_widget.set_text('')
-		self._update_completion_status()
 
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
@@ -537,7 +528,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			else:
 				gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message configuration.')
 
-		# todo: set the self.config['mailer.webserver_url'] setting here
+		self.config['mailer.webserver_url'] = self.gobjects['label_url_preview'].get_text()
 		self.application.emit('campaign-set', old_cid, cid)
 		self._close_ready = True
 		return
@@ -583,7 +574,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		path = gui_utilities.gtk_combobox_get_active_cell(combobox_url_path, column=1)
 		if path is None:
 			model = combobox_url_path.get_model()
-			row_iter = gui_utilities.gtk_list_store_search(model, gui_utilities.gtk_combobox_get_entry_text(combobox_url_path))
+			text = _relpath(gui_utilities.gtk_combobox_get_entry_text(combobox_url_path))
+			row_iter = gui_utilities.gtk_list_store_search(model, text)
 			if row_iter:
 				path = model[row_iter][1]
 		gui_utilities.gtk_widget_destroy_children(self.gobjects['listbox_url_info_classifiers'])
@@ -608,12 +600,13 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if active == -1:
 			return
 		url_scheme = _ModelURLScheme(*combobox_url_scheme.get_model()[active])
-		hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
+		authority = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
 		path = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_path'])
-		if (url_scheme and hostname):
-			if not path.startswith('/'):
-				path = '/' + path
-			label.set_text("{}://{}{}".format(url_scheme.name, hostname, path))
+		if (url_scheme and authority):
+			path = _relpath(path)
+			if (url_scheme.name == 'http' and url_scheme.port != 80) or (url_scheme.name == 'https' and url_scheme.port != 443):
+				authority += ':' + str(url_scheme.port)
+			label.set_text("{}://{}/{}".format(url_scheme.name, authority, path))
 
 	def signal_combobox_changed_url_hostname(self, combobox):
 		active = combobox.get_active()
@@ -657,6 +650,30 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 	def signal_entry_changed_validation_regex(self, entry):
 		self._do_regex_validation(self.gobjects['entry_test_validation_text'].get_text(), entry)
+
+	def signal_kpm_select_clicked(self, _):
+		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
+		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
+		dialog.quick_add_filter('All Files', '*')
+		response = dialog.run_quick_open()
+		dialog.destroy()
+		if not response:
+			return False
+		self.gobjects['entry_kpm_file'].set_text(response['target_path'])
+		self._update_completion_status()
+
+	def signal_kpm_dest_folder_clicked(self, _):
+		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
+		response = dialog.run_quick_select_directory()
+		dialog.destroy()
+		if not response:
+			return False
+		self.gobjects['entry_kpm_dest_folder'].set_text(response['target_path'])
+		self._update_completion_status()
+
+	def signal_kpm_entry_clear(self, entry_widget):
+		entry_widget.set_text('')
+		self._update_completion_status()
 
 	def signal_radiobutton_toggled(self, radiobutton):
 		if not radiobutton.get_active():

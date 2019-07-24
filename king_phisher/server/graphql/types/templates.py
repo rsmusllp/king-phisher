@@ -119,6 +119,8 @@ class SiteTemplate(graphene.ObjectType):
 		if not os.path.isdir(disk_path):
 			logger.warning("requested template path: {0} is not a directory".format(disk_path))
 			return None
+		if resource_path == '.':
+			resource_path = ''
 		return cls(disk_path, path=resource_path, **kwargs)
 
 	@classmethod
@@ -203,4 +205,4 @@ class SiteTemplateConnection(graphene.relay.Connection):
 			for disk_path in iterate_templates(directory):
 				resource_path = os.path.relpath(disk_path, directory)
 				templates.append(SiteTemplate.from_path(disk_path, resource_path, hostname=hostname))
-		return templates
+		return sorted(templates, key=lambda template: template.path)
