@@ -96,6 +96,7 @@ Special Thanks (QA / Beta Testing):
 
  - Jake Garlie - jagar
  - Jeremy Schoeneman - Shad0wman
+ - Bryan Sfara
  - Ken Smith - p4tchw0rk
  - Brianna Whittaker
 
