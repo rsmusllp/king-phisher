@@ -32,10 +32,8 @@
 
 import collections
 import datetime
-import ipaddress
 import os
 import re
-import urllib
 
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
@@ -56,6 +54,13 @@ _ModelNamedRow = collections.namedtuple('ModelNamedRow', (
 	'authors',
 	'description',
 	'created'
+))
+
+_ModelURLScheme = collections.namedtuple('ModelURLScheme', (
+	'id',
+	'name',
+	'description',
+	'port'
 ))
 
 _KPMPaths = collections.namedtuple('KPMPaths', (
@@ -108,8 +113,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'label_url_info_authors',
 			'label_url_info_created',
 			'label_url_info_description',
-			'label_url_info_for_classifiers',
-			'label_url_info_url',
+			'label_url_preview',
 			'label_validation_regex_mfa_token',
 			'label_validation_regex_password',
 			'label_validation_regex_username',
@@ -173,18 +177,35 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		for hostname in hostnames:
 			model.append((hostname,))
 
+	def __async_rpc_cb_populate_url_info(self, results):
+		template = results['siteTemplate']
+		if template is None:
+			return
+		self.gobjects['label_url_info_created'].set_text(utilities.format_datetime(utilities.datetime_utc_to_local(template['created'])))
+		metadata = template['metadata']
+		if metadata is None:
+			return
+		self.gobjects['label_url_info_authors'].set_text('\n'.join(metadata['authors']))
+		self.gobjects['label_url_info_description'].set_text(metadata['description'])
+		gui_utilities.gtk_listbox_populate_labels(self.gobjects['listbox_url_info_classifiers'], metadata['classifiers'])
+
 	def __async_rpc_cb_populate_url_scheme_combobox(self, addresses):
 		addresses = sorted(addresses, key=lambda address: address['port'])
 		model = self.gobjects['combobox_url_scheme'].get_model()
 		for idx, address in enumerate(addresses):
 			if address['ssl']:
-				scheme = 'https'
+				scheme_name = 'https'
 				description = '' if address['port'] == 443 else 'port: ' + str(address['port'])
 			else:
-				scheme = 'http'
+				scheme_name = 'http'
 				description = '' if address['port'] == 80 else 'port: ' + str(address['port'])
 			# use the scheme and port to make a row UID
-			model.append((scheme + '/' + str(address['port']), scheme, description))
+			model.append(_ModelURLScheme(
+				id=scheme_name + '/' + str(address['port']),
+				name=scheme_name,
+				description=description,
+				port=address['port']
+			))
 
 	def __async_rpc_cb_populate_url_path_combobox(self, results):
 		templates = results['siteTemplates']
@@ -194,7 +215,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		model.clear()
 		for template in templates['edges']:
 			template = template['node']
-			model.append((template['path'],))
+			for page in template['metadata']['pages']:
+				model.append((os.path.normpath(os.path.join(template['path'], page)), template['path']))
 
 	@property
 	def campaign_name(self):
@@ -256,7 +278,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				combobox.add_attribute(renderer, 'text', 2)
 			combobox.set_model(rpc.get_tag_model(tag_table, model=model))
 		# setup the URL scheme combobox asynchronously
-		model = Gtk.ListStore(str, str, str)
+		model = Gtk.ListStore(str, str, str, int)
 		combobox = self.gobjects['combobox_url_scheme']
 		combobox.set_model(model)
 		combobox.pack_start(renderer, True)
@@ -268,7 +290,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		combobox.set_model(model)
 		rpc.async_call('hostnames/get', on_success=self.__async_rpc_cb_populate_url_hostname_combobox, when_idle=True)
 		# setup the URL path combobox model, but don't populate it until a hostname is selected
-		model = Gtk.ListStore(str)
+		model = Gtk.ListStore(str, str)
 		combobox = self.gobjects['combobox_url_path']
 		combobox.set_model(model)
 
@@ -551,6 +573,48 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		active = self.gobjects['checkbutton_expire_campaign'].get_property('active')
 		self.gobjects['frame_campaign_expiration'].set_sensitive(active)
 
+	def signal_combobox_changed_set_url_information(self, _):
+		for label in ('authors', 'created', 'description'):
+			self.gobjects['label_url_info_' + label].set_text('')
+		hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
+		if not hostname:
+			return
+		combobox_url_path = self.gobjects['combobox_url_path']
+		path = gui_utilities.gtk_combobox_get_active_cell(combobox_url_path, column=1)
+		if path is None:
+			model = combobox_url_path.get_model()
+			row_iter = gui_utilities.gtk_list_store_search(model, gui_utilities.gtk_combobox_get_entry_text(combobox_url_path))
+			if row_iter:
+				path = model[row_iter][1]
+		gui_utilities.gtk_widget_destroy_children(self.gobjects['listbox_url_info_classifiers'])
+		self.application.rpc.async_graphql(
+			"""
+			query getSiteTemplate($hostname: String, $path: String) {
+			  siteTemplate(hostname: $hostname, path: $path) {
+				created path metadata { authors classifiers description pages }
+			  }
+			}
+			""",
+			query_vars={'hostname': hostname, 'path': path},
+			on_success=self.__async_rpc_cb_populate_url_info,
+			when_idle=True
+		)
+
+	def signal_combobox_changed_set_url_preview(self, _):
+		label = self.gobjects['label_url_preview']
+		label.set_text('')
+		combobox_url_scheme = self.gobjects['combobox_url_scheme']
+		active = combobox_url_scheme.get_active()
+		if active == -1:
+			return
+		url_scheme = _ModelURLScheme(*combobox_url_scheme.get_model()[active])
+		hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
+		path = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_path'])
+		if (url_scheme and hostname):
+			if not path.startswith('/'):
+				path = '/' + path
+			label.set_text("{}://{}{}".format(url_scheme.name, hostname, path))
+
 	def signal_combobox_changed_url_hostname(self, combobox):
 		active = combobox.get_active()
 		if active == -1:
@@ -561,12 +625,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			"""
 			query getSiteTemplate($hostname: String) {
 			  siteTemplates(hostname: $hostname) {
-				total
-				edges {
-				  node {
-					path
-				  }
-				}
+				total edges { node { path metadata { pages } } }
 			  }
 			}
 			""",

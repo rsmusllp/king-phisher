@@ -287,6 +287,56 @@ GOBJECT_PROPERTY_MAP['calendar'] = (
 	gtk_calendar_get_pydate
 )
 
+def gtk_combobox_get_active_cell(combobox, column=None):
+	"""
+	Get the active value from a GTK combobox and it's respective model. If
+	nothing is selected, ``None`` is returned.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to retrieve the active model value for.
+	:param int column: The column ID to retrieve from the selected row. If not
+		specified, the combobox's ``id-column`` property will be used.
+	:return: The selected model row's value.
+	"""
+	row = gtk_combobox_get_active_row(combobox)
+	if row is None:
+		return None
+	if column is None:
+		column = combobox.get_property('id-column')
+	return row[column]
+
+def gtk_combobox_get_active_row(combobox):
+	"""
+	Get the active row from a GTK combobox and it's respective model. If
+	nothing is selected, ``None`` is returned.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to retrieve the active model row for.
+	:return: The selected model row.
+	"""
+	active = combobox.get_active()
+	if active == -1:
+		return None
+	model = combobox.get_model()
+	return model[active]
+
+def gtk_combobox_get_entry_text(combobox):
+	"""
+	Get the text from a combobox's entry widget.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to retrieve the entry text for.
+	:return: The value of the entry text.
+	:rtype: str
+	"""
+	if not combobox.get_has_entry():
+		raise ValueError('the specified combobox does not have an entry')
+	entry = combobox.get_child()
+	return entry.get_text()
+
 def gtk_list_store_search(list_store, value, column=0):
 	"""
 	Search a :py:class:`Gtk.ListStore` for a value and return a

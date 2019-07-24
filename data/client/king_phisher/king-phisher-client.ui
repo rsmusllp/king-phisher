@@ -998,6 +998,43 @@ Spencer McIntyre</property>
                             <property name="left_padding">12</property>
                             <property name="right_padding">3</property>
                             <child>
+                              <object class="GtkLabel" id="CampaignAssistant.label_url_preview">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="halign">start</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="label">
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">URL Preview</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFrame">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label_xalign">0</property>
+                        <property name="shadow_type">none</property>
+                        <child>
+                          <object class="GtkAlignment">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="top_padding">5</property>
+                            <property name="bottom_padding">3</property>
+                            <property name="left_padding">12</property>
+                            <property name="right_padding">3</property>
+                            <child>
                               <object class="GtkGrid">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -1010,6 +1047,8 @@ Spencer McIntyre</property>
                                     <property name="tooltip_text" translatable="yes">The scheme to use for the URL to send in messages.</property>
                                     <property name="hexpand">True</property>
                                     <property name="id_column">0</property>
+                                    <signal name="changed" handler="signal_combobox_changed_set_url_information" swapped="no"/>
+                                    <signal name="changed" handler="signal_combobox_changed_set_url_preview" swapped="no"/>
                                     <child>
                                       <object class="GtkCellRendererText" id="cellrenderertext5"/>
                                       <attributes>
@@ -1066,6 +1105,8 @@ Spencer McIntyre</property>
                                     <property name="has_entry">True</property>
                                     <property name="entry_text_column">0</property>
                                     <property name="id_column">0</property>
+                                    <signal name="changed" handler="signal_combobox_changed_set_url_information" swapped="no"/>
+                                    <signal name="changed" handler="signal_combobox_changed_set_url_preview" swapped="no"/>
                                     <signal name="changed" handler="signal_combobox_changed_url_hostname" swapped="no"/>
                                     <child internal-child="entry">
                                       <object class="GtkEntry">
@@ -1088,6 +1129,8 @@ Spencer McIntyre</property>
                                     <property name="has_entry">True</property>
                                     <property name="entry_text_column">0</property>
                                     <property name="id_column">0</property>
+                                    <signal name="changed" handler="signal_combobox_changed_set_url_information" swapped="no"/>
+                                    <signal name="changed" handler="signal_combobox_changed_set_url_preview" swapped="no"/>
                                     <child internal-child="entry">
                                       <object class="GtkEntry">
                                         <property name="can_focus">True</property>
@@ -1115,7 +1158,7 @@ Spencer McIntyre</property>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">0</property>
+                        <property name="position">1</property>
                       </packing>
                     </child>
                     <child>
@@ -1137,21 +1180,6 @@ Spencer McIntyre</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <child>
-                                  <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_url">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="halign">end</property>
-                                    <property name="valign">start</property>
-                                    <property name="margin_top">3</property>
-                                    <property name="margin_bottom">3</property>
-                                    <property name="label" translatable="yes">URL:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">0</property>
-                                    <property name="top_attach">0</property>
-                                  </packing>
-                                </child>
-                                <child>
                                   <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_authors">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
@@ -1163,7 +1191,7 @@ Spencer McIntyre</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">1</property>
+                                    <property name="top_attach">0</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1178,7 +1206,7 @@ Spencer McIntyre</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">3</property>
+                                    <property name="top_attach">2</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1193,7 +1221,7 @@ Spencer McIntyre</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">4</property>
+                                    <property name="top_attach">3</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1208,21 +1236,7 @@ Spencer McIntyre</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="CampaignAssistant.label_url_info_url">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="halign">start</property>
-                                    <property name="valign">start</property>
-                                    <property name="margin_top">3</property>
-                                    <property name="margin_bottom">3</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="top_attach">0</property>
+                                    <property name="top_attach">1</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1236,7 +1250,7 @@ Spencer McIntyre</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">1</property>
+                                    <property name="top_attach">0</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1250,7 +1264,7 @@ Spencer McIntyre</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">2</property>
+                                    <property name="top_attach">1</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1266,7 +1280,7 @@ Spencer McIntyre</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">4</property>
+                                    <property name="top_attach">3</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -1277,7 +1291,7 @@ Spencer McIntyre</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">3</property>
+                                    <property name="top_attach">2</property>
                                   </packing>
                                 </child>
                               </object>
@@ -1295,7 +1309,7 @@ Spencer McIntyre</property>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">1</property>
+                        <property name="position">2</property>
                       </packing>
                     </child>
                   </object>
