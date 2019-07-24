@@ -18,6 +18,7 @@ Version 1.14.0
 * Deleted ``Pipefile.lock`` from repository to prevent hash issues between python interpreter versions
 * Add ``--three`` to ``pipenv install`` and ``pipenv --update`` startup procedures to force use of ``Python3``
 * Server will now attempt to install missing plugin requirements during initialization
+* Added asynchronous RPC methods to the client
 
 Version 1.13.1
 ^^^^^^^^^^^^^^

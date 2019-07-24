@@ -194,8 +194,25 @@ def _graphql_find_file(query_file):
 
 class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 	"""
-	The main RPC object for communicating with the King Phisher Server
-	over RPC.
+	The main RPC object for communicating with the King Phisher Server over RPC.
+
+    .. _client-rpc-async-methods:
+
+	.. versionadded:: 1.14.0 Asynchronous Methods
+
+	This RPC object provides a few methods for asynchronously making RPC calls
+	to the server. This makes it easier to issue and RPC call and then process
+	the results without having to either wait (and by extension lock the GUI
+	thread) or start and manage a separate thread. These methods use the name
+	``async_`` prefix and have many of the same arguments.
+
+	In all cases, the callback parameters *on_success* and *on_error* are called
+	with the signature :samp:`callback(*(cb_args + ({results},)), **cb_kwargs)`
+	where ``results`` is either the return value of the RPC method in the case
+	of *on_success* or the exception instance in the case of *on_error*. The
+	*when_idle* parameter can be used to specify that the callbacks must be
+	executed within the main GUI thread and can thus access GObjects such as
+	widgets.
 	"""
 	def __init__(self, *args, **kwargs):
 		self.logger = logging.getLogger('KingPhisher.Client.RPC')
@@ -243,6 +260,29 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		logger.debug('the async RPC worker is exiting')
 
 	def async_call(self, method, args=None, kwargs=None, on_success=None, on_error=None, when_idle=False, cb_args=None, cb_kwargs=None):
+		"""
+		Perform an asynchronous RPC call to the server. This will queue a work
+		item for a thread to issue the RPC call and then specifies the behavior
+		for completion. See :ref:`Asynchronous Methods
+		<client-rpc-async-methods>` for more information.
+
+		.. versionadded:: 1.14.0
+
+		:param str method: The RPC method name to call.
+		:param tuple args: The arguments to the RPC method.
+		:param tuple kwargs: The keyword arguments to the RPC method.
+		:param on_success: A callback function to be called after the RPC method
+			returns successfully.
+		:param on_error: A callback function to be called if the RPC method
+			raises an exception.
+		:param when_idle: Whether or not the *on_success* and *on_error*
+			callback functions should be called from the main GUI thread while
+			it is idle.
+		:param cb_args: The arguments to the *on_success* and *on_error*
+			callback functions.
+		:param cb_kwargs: The keyword arguments to the *on_success* and
+			*on_error* callback functions.
+		"""
 		self._async_queue.put(_WorkItem(
 			callback_on_success=on_success,
 			callback_on_error=on_error,
@@ -255,6 +295,29 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		))
 
 	def async_graphql(self, query, query_vars=None, on_success=None, on_error=None, when_idle=False, cb_args=None, cb_kwargs=None):
+		"""
+		Perform an asynchronous RPC GraphQL query to the server. This will queue
+		a work item for a thread to issue the RPC call and then specifies the
+		behavior for completion. See :ref:`Asynchronous Methods
+		<client-rpc-async-methods>` for more information.
+
+		.. versionadded:: 1.14.0
+
+		:param str query: The GraphQL query string to execute asynchronously.
+		:param dict query_vars: Any variable definitions required by the GraphQL
+			query.
+		:param on_success: A callback function to be called after the RPC method
+			returns successfully.
+		:param on_error: A callback function to be called if the RPC method
+			raises an exception.
+		:param when_idle: Whether or not the *on_success* and *on_error*
+			callback functions should be called from the main GUI thread while
+			it is idle.
+		:param cb_args: The arguments to the *on_success* and *on_error*
+			callback functions.
+		:param cb_kwargs: The keyword arguments to the *on_success* and
+			*on_error* callback functions.
+		"""
 		self._async_queue.put(_WorkItem(
 			callback_on_success=on_success,
 			callback_on_error=on_error,
@@ -267,6 +330,16 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		))
 
 	def async_graphql_file(self, file_or_path, *args, **kwargs):
+		"""
+		Perform an asynchronous RPC GraphQL query from a file on the server.
+		This will queue a work item for a thread to issue the RPC call and then
+		specifies the behavior for completion. See :ref:`Asynchronous Methods
+		<client-rpc-async-methods>` for more information.
+
+		.. versionadded:: 1.14.0
+
+		:param file_or_path: The file object or path to the file from which to read.
+		"""
 		query = _graphql_file(file_or_path)
 		return self.async_graphql(query, *args, **kwargs)
 
@@ -277,7 +350,8 @@ class KingPhisherRPCClient(advancedhttpserver.RPCClientCached):
 		the query fails.
 
 		:param str query: The GraphQL query string to execute.
-		:param query_vars: The variables for *query*.
+		:param query_vars: Any variable definitions required by the GraphQL
+			*query*.
 		:return: The query results.
 		:rtype: dict
 		"""
