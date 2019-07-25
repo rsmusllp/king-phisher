@@ -233,9 +233,11 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		model.clear()
 		for template in templates['edges']:
 			template = template['node']
-			path = os.path.normpath(template['path'])
+			path = _relpath(template['path'])
+			if path and not path.endswith('/'):
+				path += '/'
 			for page in template['metadata']['pages']:
-				model.append((path + os.path.normpath(page), path))
+				model.append((path + _relpath(page), path))
 		# this is going to trigger a changed signal and the cascade effect will update the URL information and preview
 		combobox.set_active_id(gui_utilities.gtk_combobox_get_entry_text(combobox))
 
