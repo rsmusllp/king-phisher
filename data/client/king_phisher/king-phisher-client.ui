@@ -1003,6 +1003,7 @@ Spencer McIntyre</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="halign">start</property>
+                                <property name="ellipsize">end</property>
                               </object>
                             </child>
                           </object>
@@ -1106,7 +1107,6 @@ Spencer McIntyre</property>
                                     <property name="has_entry">True</property>
                                     <property name="entry_text_column">0</property>
                                     <property name="id_column">0</property>
-                                    <signal name="changed" handler="signal_combobox_changed_set_url_information" swapped="no"/>
                                     <signal name="changed" handler="signal_combobox_changed_set_url_preview" swapped="no"/>
                                     <signal name="changed" handler="signal_combobox_changed_url_hostname" swapped="no"/>
                                     <child internal-child="entry">
@@ -1918,6 +1918,7 @@ Spencer McIntyre</property>
               <object class="GtkAlignment">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="top_padding">5</property>
                 <property name="bottom_padding">3</property>
                 <property name="left_padding">12</property>
                 <property name="right_padding">3</property>
@@ -2211,6 +2212,7 @@ Spencer McIntyre</property>
               <object class="GtkAlignment">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="top_padding">5</property>
                 <property name="bottom_padding">3</property>
                 <property name="left_padding">12</property>
                 <property name="right_padding">3</property>
@@ -2357,6 +2359,7 @@ Spencer McIntyre</property>
               <object class="GtkAlignment">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="top_padding">5</property>
                 <property name="bottom_padding">3</property>
                 <property name="left_padding">12</property>
                 <property name="right_padding">3</property>
@@ -2503,6 +2506,7 @@ Spencer McIntyre</property>
               <object class="GtkAlignment">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="top_padding">5</property>
                 <property name="bottom_padding">3</property>
                 <property name="left_padding">12</property>
                 <property name="right_padding">3</property>

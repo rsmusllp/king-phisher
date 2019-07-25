@@ -337,6 +337,24 @@ def gtk_combobox_get_entry_text(combobox):
 	entry = combobox.get_child()
 	return entry.get_text()
 
+def gtk_combobox_set_entry_completion(combobox):
+	"""
+	Add completion for a :py:class:`Gtk.ComboBox` widget which contains an
+	entry. They combobox's ``entry-text-column`` property it used to determine
+	which column in its model contains the strings to suggest for completion.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to add completion for.
+	:type: :py:class:`Gtk.ComboBox`
+	"""
+	utilities.assert_arg_type(combobox, Gtk.ComboBox)
+	completion = Gtk.EntryCompletion()
+	completion.set_model(combobox.get_model())
+	completion.set_text_column(combobox.get_entry_text_column())
+	entry = combobox.get_child()
+	entry.set_completion(completion)
+
 def gtk_list_store_search(list_store, value, column=0):
 	"""
 	Search a :py:class:`Gtk.ListStore` for a value and return a

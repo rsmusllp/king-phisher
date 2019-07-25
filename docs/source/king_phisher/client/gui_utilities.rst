@@ -34,6 +34,8 @@ Functions
 
 .. autofunction:: gtk_calendar_set_pydate
 
+.. autofunction:: gtk_combobox_set_entry_completion
+
 .. autofunction:: gtk_list_store_search
 
 .. autofunction:: gtk_listbox_populate_labels

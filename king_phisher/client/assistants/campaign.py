@@ -232,6 +232,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			path = os.path.normpath(template['path'])
 			for page in template['metadata']['pages']:
 				model.append((path + os.path.normpath(page), path))
+		# todo: test this
+		# this is going to trigger a changed signal and the cascade effect will update the URL information and preview
+		combobox.set_active_id(gui_utilities.gtk_combobox_get_entry_text(combobox))
 
 	@property
 	def campaign_name(self):
@@ -268,6 +271,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				combobox.pack_start(renderer, True)
 				combobox.add_attribute(renderer, 'text', 2)
 			combobox.set_model(rpc.get_tag_model(tag_table, model=model))
+			gui_utilities.gtk_combobox_set_entry_completion(combobox)
 		# setup the URL scheme combobox asynchronously
 		model = Gtk.ListStore(str, str, str, int)
 		combobox = self.gobjects['combobox_url_scheme']
@@ -279,11 +283,13 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		model = Gtk.ListStore(str)
 		combobox = self.gobjects['combobox_url_hostname']
 		combobox.set_model(model)
+		gui_utilities.gtk_combobox_set_entry_completion(combobox)
 		rpc.async_call('hostnames/get', on_success=self.__async_rpc_cb_populate_url_hostname_combobox, when_idle=True)
 		# setup the URL path combobox model, but don't populate it until a hostname is selected
 		model = Gtk.ListStore(str, str)
 		combobox = self.gobjects['combobox_url_path']
 		combobox.set_model(model)
+		gui_utilities.gtk_combobox_set_entry_completion(combobox)
 
 	def _set_defaults(self):
 		"""
@@ -565,8 +571,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self.gobjects['frame_campaign_expiration'].set_sensitive(active)
 
 	def signal_combobox_changed_set_url_information(self, _):
-		for label in ('authors', 'created', 'description'):
-			self.gobjects['label_url_info_' + label].set_text('')
+		for label in ('info_authors', 'info_created', 'info_description', 'preview'):
+			self.gobjects['label_url_' + label].set_text('')
 		hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
 		if not hostname:
 			return
@@ -602,18 +608,16 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		url_scheme = _ModelURLScheme(*combobox_url_scheme.get_model()[active])
 		authority = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
 		path = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_path'])
-		if (url_scheme and authority):
+		if url_scheme and authority:
 			path = _relpath(path)
 			if (url_scheme.name == 'http' and url_scheme.port != 80) or (url_scheme.name == 'https' and url_scheme.port != 443):
 				authority += ':' + str(url_scheme.port)
 			label.set_text("{}://{}/{}".format(url_scheme.name, authority, path))
 
 	def signal_combobox_changed_url_hostname(self, combobox):
-		active = combobox.get_active()
-		if active == -1:
+		hostname = gui_utilities.gtk_combobox_get_entry_text(combobox)
+		if not hostname:
 			return
-		model = combobox.get_model()
-		hostname = model[active][0]
 		self.application.rpc.async_graphql(
 			"""
 			query getSiteTemplate($hostname: String) {
