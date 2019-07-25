@@ -159,6 +159,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		{ db { campaigns { edges { node { id name } } } } }
 		""")['db']['campaigns']['edges']
 		self._campaign_names = dict((edge['node']['name'], edge['node']['id']) for edge in campaign_edges)
+		self._cache_site_template = {}
+		self._cache_site_templates = {}
 
 		self._expiration_time = managers.TimeSelectorButtonManager(self.application, self.gobjects['togglebutton_expiration_time'])
 		self._set_comboboxes()
@@ -186,7 +188,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		for hostname in hostnames:
 			model.append((hostname,))
 
-	def __async_rpc_cb_populate_url_info(self, results):
+	def __async_rpc_cb_populate_url_info(self, hostname, path, results):
+		self._cache_site_template[(hostname, path)] = results
 		template = results['siteTemplate']
 		if template is None:
 			return
@@ -221,7 +224,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		elif gui_utilities.gtk_list_store_search(model, 'http/80'):
 			combobox_url_scheme.set_active_id('http/80')
 
-	def __async_rpc_cb_populate_url_path_combobox(self, results):
+	def __async_rpc_cb_populate_url_path_combobox(self, hostname, results):
+		self._cache_site_templates[hostname] = results
 		templates = results['siteTemplates']
 		combobox = self.gobjects['combobox_url_path']
 		combobox.set_property('button-sensitivity', templates['total'] > 0)
@@ -232,7 +236,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			path = os.path.normpath(template['path'])
 			for page in template['metadata']['pages']:
 				model.append((path + os.path.normpath(page), path))
-		# todo: test this
 		# this is going to trigger a changed signal and the cascade effect will update the URL information and preview
 		combobox.set_active_id(gui_utilities.gtk_combobox_get_entry_text(combobox))
 
@@ -572,7 +575,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 	@gui_utilities.delayed_signal()
 	def signal_combobox_changed_set_url_information(self, _):
-		for label in ('info_authors', 'info_created', 'info_description', 'preview'):
+		for label in ('info_authors', 'info_created', 'info_description'):
 			self.gobjects['label_url_' + label].set_text('')
 		hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
 		if not hostname:
@@ -586,6 +589,10 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			if row_iter:
 				path = model[row_iter][1]
 		gui_utilities.gtk_widget_destroy_children(self.gobjects['listbox_url_info_classifiers'])
+		cached_result = self._cache_site_template.get((hostname, path))
+		if cached_result:
+			self.__async_rpc_cb_populate_url_info(hostname, path, cached_result)
+			return
 		self.application.rpc.async_graphql(
 			"""
 			query getSiteTemplate($hostname: String, $path: String) {
@@ -596,6 +603,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			""",
 			query_vars={'hostname': hostname, 'path': path},
 			on_success=self.__async_rpc_cb_populate_url_info,
+			cb_args=(hostname, path),
 			when_idle=True
 		)
 
@@ -620,16 +628,21 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		hostname = gui_utilities.gtk_combobox_get_entry_text(combobox)
 		if not hostname:
 			return
+		cached_result = self._cache_site_templates.get(hostname)
+		if cached_result:
+			self.__async_rpc_cb_populate_url_path_combobox(hostname, cached_result)
+			return
 		self.application.rpc.async_graphql(
 			"""
-			query getSiteTemplate($hostname: String) {
+			query getSiteTemplates($hostname: String) {
 			  siteTemplates(hostname: $hostname) {
-				total edges { node { path metadata { pages } } }
+				total edges { node { hostname path metadata { pages } } }
 			  }
 			}
 			""",
 			query_vars={'hostname': hostname},
 			on_success=self.__async_rpc_cb_populate_url_path_combobox,
+			cb_args=(hostname,),
 			when_idle=True
 		)
 
