@@ -109,6 +109,39 @@ def _store_extend(store, things, clear=False):
 	for thing in things:
 		store.append(thing)
 
+def delayed_signal(delay=500):
+	"""
+	A decorator to delay the execution of a signal handler to aggregate emission
+	into a single event. This can for example be used to run a handler when a
+	:py:class:`Gtk.Entry` widget's ``changed`` signal is emitted but not after
+	every single key press meaning the handler can perform network operations to
+	validate or otherwise process input.
+
+	.. note::
+		The decorated function **must** be a method. The wrapper installed by
+		this decorator will automatically add an attribute to the class to track
+		invoked instances to ensure the timeout is respected.
+
+	.. versionadded:: 1.14.0
+
+	:param int delay: The delay in milliseconds from the original emission
+		before the handler should be executed.
+	"""
+	def decorator(function):
+		src_name = '__delayed_source_' + function.__name__
+		@functools.wraps(function)
+		def wrapped(self, *args, **kwargs):
+			def new_function(self, *args, **kwargs):
+				setattr(self, src_name, None)
+				return function(self, *args, **kwargs)
+			src = getattr(self, src_name, None)
+			if src is not None:
+				return
+			src = GLib.timeout_add(delay, new_function, self, *args, **kwargs)
+			setattr(self, src_name, src)
+		return wrapped
+	return decorator
+
 def glib_idle_add_store_extend(store, things, clear=False, wait=False):
 	"""
 	Extend a GTK store object (either :py:class:`Gtk.ListStore` or

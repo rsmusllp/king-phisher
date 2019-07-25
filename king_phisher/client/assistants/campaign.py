@@ -570,6 +570,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		active = self.gobjects['checkbutton_expire_campaign'].get_property('active')
 		self.gobjects['frame_campaign_expiration'].set_sensitive(active)
 
+	@gui_utilities.delayed_signal()
 	def signal_combobox_changed_set_url_information(self, _):
 		for label in ('info_authors', 'info_created', 'info_description', 'preview'):
 			self.gobjects['label_url_' + label].set_text('')
@@ -614,6 +615,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				authority += ':' + str(url_scheme.port)
 			label.set_text("{}://{}/{}".format(url_scheme.name, authority, path))
 
+	@gui_utilities.delayed_signal()
 	def signal_combobox_changed_url_hostname(self, combobox):
 		hostname = gui_utilities.gtk_combobox_get_entry_text(combobox)
 		if not hostname:

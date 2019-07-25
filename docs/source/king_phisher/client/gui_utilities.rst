@@ -16,6 +16,8 @@ Data
 Functions
 ---------
 
+.. autofunction:: delayed_signal
+
 .. autofunction:: glib_idle_add_once
 
 .. autofunction:: glib_idle_add_wait
