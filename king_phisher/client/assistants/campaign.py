@@ -35,7 +35,9 @@ import datetime
 import os
 import posixpath as webpath
 import re
+import urllib.parse
 
+from king_phisher import archive
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
@@ -69,6 +71,15 @@ _KPMPaths = collections.namedtuple('KPMPaths', (
 	'destination_folder',
 	'is_valid'
 ))
+
+def _kpm_file_path_is_valid(file_path):
+	if not file_path:
+		return False
+	if not os.path.isfile(file_path) and os.access(file_path, os.R_OK):
+		return False
+	if not archive.is_archive(file_path):
+		return False
+	return True
 
 class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
@@ -168,6 +179,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['label_confirm_body'].set_text(confirm_preamble + ', then hit "Apply" to update the King Phisher campaign with the new settings.')
 			self.gobjects['label_intro_body'].set_text('This assistant will walk you through reconfiguring the selected King Phisher campaign.')
 			self.gobjects['label_intro_title'].set_text('Configure Campaign')
+			self._set_webserver_url(self.config['mailer.webserver_url'])
 		else:
 			# creating a new campaign
 			self.gobjects['label_confirm_body'].set_text(confirm_preamble + ', then hit "Apply" to create the new King Phisher campaign.')
@@ -231,7 +243,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			for page in template['metadata']['pages']:
 				model.append((path + utilities.make_webrelpath(page), path))
 		# this is going to trigger a changed signal and the cascade effect will update the URL information and preview
-		combobox.set_active_id(gui_utilities.gtk_combobox_get_entry_text(combobox))
+		combobox.set_active_id(utilities.make_webrelpath(gui_utilities.gtk_combobox_get_entry_text(combobox)))
 
 	@property
 	def campaign_name(self):
@@ -406,11 +418,25 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		dir_path = self.gobjects['entry_kpm_dest_folder'].get_text()
 		if not dir_path and not file_path:
 			return _KPMPaths(None, None, True)
-		if not (file_path and os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
+		if not _kpm_file_path_is_valid(file_path):
 			return _KPMPaths(None, None, False)
 		if not (dir_path and os.path.isdir(dir_path) and os.access(dir_path, os.R_OK | os.W_OK)):
 			return _KPMPaths(None, None, False)
 		return _KPMPaths(file_path, dir_path, True)
+
+	def _get_webserver_url(self):
+		return self.gobjects['label_url_preview'].get_text()
+
+	def _set_webserver_url(self, webserver_url):
+		webserver_url = urllib.parse.urlparse(webserver_url.strip())
+		if webserver_url.scheme == 'http':
+			self.gobjects['combobox_url_scheme'].set_active_id('http/' + str(webserver_url.port or 80))
+		elif webserver_url.scheme == 'https':
+			self.gobjects['combobox_url_scheme'].set_active_id('https/' + str(webserver_url.port or 443))
+		if webserver_url.hostname:
+			self.gobjects['combobox_url_hostname'].get_child().set_text(webserver_url.hostname)
+		if webserver_url.path:
+			self.gobjects['combobox_url_path'].get_child().set_text(utilities.make_webrelpath(webserver_url.path))
 
 	def _do_regex_validation(self, test_text, entry):
 		try:
@@ -531,7 +557,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			else:
 				gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message configuration.')
 
-		self.config['mailer.webserver_url'] = self.gobjects['label_url_preview'].get_text()
+		self.config['mailer.webserver_url'] = self._get_webserver_url()
 		self.application.emit('campaign-set', old_cid, cid)
 		self._close_ready = True
 		return
@@ -672,8 +698,23 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		dialog.destroy()
 		if not response:
 			return False
-		self.gobjects['entry_kpm_file'].set_text(response['target_path'])
+		target_path = response['target_path']
+		self.gobjects['entry_kpm_file'].set_text(target_path)
 		self._update_completion_status()
+
+		if not _kpm_file_path_is_valid(target_path):
+			return
+		# open the KPM for reading to extract the target URL for the assistant,
+		# ignore the directory to allow the user to optionally only import the URL
+		kpm = archive.ArchiveFile(target_path, 'r')
+		if not kpm.has_file('message_config.json'):
+			self.logger.warning('the kpm archive is missing the message_config.json file')
+			return
+		message_config = kpm.get_json('message_config.json')
+		webserver_url = message_config.get('webserver_url')
+		if not webserver_url:
+			return
+		self._set_webserver_url(webserver_url)
 
 	def signal_kpm_dest_folder_clicked(self, _):
 		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
