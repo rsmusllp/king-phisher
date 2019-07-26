@@ -85,6 +85,7 @@ def _load_metadata(path):
 	except jsonschema.exceptions.ValidationError:
 		logger.error("template metadata file: {0} failed to pass schema validation".format(file_path), exc_info=True)
 		return None
+	metadata['pages'] = [utilities.make_webrelpath(path) for path in metadata['pages']]
 	return metadata
 
 def _search_filter(path):

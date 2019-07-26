@@ -26,6 +26,8 @@ Functions
 
 .. autofunction:: make_message_uid
 
+.. autofunction:: make_webrelpath
+
 .. autofunction:: make_visit_uid
 
 .. autofunction:: nonempty_string

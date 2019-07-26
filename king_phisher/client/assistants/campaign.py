@@ -33,7 +33,7 @@
 import collections
 import datetime
 import os
-import posixpath
+import posixpath as webpath
 import re
 
 from king_phisher import utilities
@@ -69,14 +69,6 @@ _KPMPaths = collections.namedtuple('KPMPaths', (
 	'destination_folder',
 	'is_valid'
 ))
-
-def _relpath(path):
-	if not path.startswith('/'):
-		path = '/' + path
-	path = posixpath.relpath(path, '/')
-	if path == '.':
-		path = ''
-	return path
 
 class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
@@ -233,11 +225,11 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		model.clear()
 		for template in templates['edges']:
 			template = template['node']
-			path = _relpath(template['path'])
-			if path and not path.endswith('/'):
-				path += '/'
+			path = utilities.make_webrelpath(template['path'])
+			if path and not path.endswith(webpath.sep):
+				path += webpath.sep
 			for page in template['metadata']['pages']:
-				model.append((path + _relpath(page), path))
+				model.append((path + utilities.make_webrelpath(page), path))
 		# this is going to trigger a changed signal and the cascade effect will update the URL information and preview
 		combobox.set_active_id(gui_utilities.gtk_combobox_get_entry_text(combobox))
 
@@ -586,7 +578,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		path = gui_utilities.gtk_combobox_get_active_cell(combobox_url_path, column=1)
 		if path is None:
 			model = combobox_url_path.get_model()
-			text = _relpath(gui_utilities.gtk_combobox_get_entry_text(combobox_url_path))
+			text = utilities.make_webrelpath(gui_utilities.gtk_combobox_get_entry_text(combobox_url_path))
 			row_iter = gui_utilities.gtk_list_store_search(model, text)
 			if row_iter:
 				path = model[row_iter][1]
@@ -620,7 +612,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		authority = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
 		path = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_path'])
 		if url_scheme and authority:
-			path = _relpath(path)
+			path = utilities.make_webrelpath(path)
 			if (url_scheme.name == 'http' and url_scheme.port != 80) or (url_scheme.name == 'https' and url_scheme.port != 443):
 				authority += ':' + str(url_scheme.port)
 			label.set_text("{}://{}/{}".format(url_scheme.name, authority, path))
