@@ -32,7 +32,7 @@ query.
 
 .. gql:field:: plugins
 
-   :type: Connection
+   :type: Connection to :gql:obj:`Plugin`
 
    A connection for enumerating available server plugins.
 
@@ -51,7 +51,7 @@ query.
       site templates.
    :param Int max_depth: An optional maximum depth to search for site templates
       within the web root.
-   :type: Connection
+   :type: Connection to :gql:obj:`SiteTemplate`
 
    A connection for enumerating available site templates.
 
@@ -272,7 +272,7 @@ Objects
 
    .. gql:field:: sniHostnames
 
-      :type: Connection
+      :type: Connection to :gql:obj:`SniHostname`
 
       A connection for enumerating all of the available SNI configurations.
 
