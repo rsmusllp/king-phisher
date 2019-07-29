@@ -179,6 +179,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self._cache_hostname = {}
 		self._cache_site_template = {}
 		self._can_issue_certs = False
+		self._ssl_status = {}
 
 		self._expiration_time = managers.TimeSelectorButtonManager(self.application, self.gobjects['togglebutton_expiration_time'])
 		self._set_comboboxes()
@@ -297,6 +298,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			label.set_text('A certificate for the specified hostname is available')
 
 	def __async_rpc_cb_ssl_status(self, results):
+		self._ssl_status = results['ssl']['status']
 		self._can_issue_certs = all(results['ssl']['status'].values())
 
 	@property
@@ -616,6 +618,16 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				gui_utilities.show_dialog_info('Failure', self.parent, 'Failed to import the message configuration.')
 			else:
 				gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message configuration.')
+
+		if self._ssl_status['hasSni']:
+			combobox_url_scheme = self.gobjects['combobox_url_scheme']
+			active = combobox_url_scheme.get_active()
+			if active != -1:
+				url_scheme = _ModelURLScheme(*combobox_url_scheme.get_model()[active])
+				if url_scheme.name == 'https':
+					hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
+					if not self.application.rpc('ssl/sni_hostnames/load', hostname):
+						gui_utilities.show_dialog_error('Failure', self.parent, 'Failed to load an SSL certificate for the specified hostname.')
 
 		self.config['mailer.webserver_url'] = self._get_webserver_url()
 		self.application.emit('campaign-set', old_cid, cid)
