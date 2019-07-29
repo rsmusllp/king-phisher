@@ -42,6 +42,8 @@ Functions
 
 .. autofunction:: gtk_listbox_populate_labels
 
+.. autofunction:: gtk_listbox_populate_urls
+
 .. autofunction:: gtk_menu_get_item_by_label
 
 .. autofunction:: gtk_menu_insert_by_path

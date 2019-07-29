@@ -2627,10 +2627,7 @@ Spencer McIntyre</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">end</property>
                                     <property name="valign">start</property>
-                                    <property name="label" translatable="yes">Authors:</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
+                                    <property name="label" translatable="yes">Author(s):</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -2679,9 +2676,6 @@ Spencer McIntyre</property>
                                     <property name="halign">end</property>
                                     <property name="valign">start</property>
                                     <property name="label" translatable="yes">Description:</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -2715,9 +2709,6 @@ Spencer McIntyre</property>
                                     <property name="halign">end</property>
                                     <property name="valign">start</property>
                                     <property name="label" translatable="yes">Version:</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">2</property>
@@ -2919,9 +2910,6 @@ Spencer McIntyre</property>
                                     <property name="halign">end</property>
                                     <property name="valign">start</property>
                                     <property name="label" translatable="yes">Maintainers:</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -2953,9 +2941,6 @@ Spencer McIntyre</property>
                                     <property name="halign">end</property>
                                     <property name="valign">start</property>
                                     <property name="label" translatable="yes">Description:</property>
-                                    <attributes>
-                                      <attribute name="scale" value="0.90000000000000002"/>
-                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -2995,7 +2980,14 @@ Spencer McIntyre</property>
                                   </packing>
                                 </child>
                                 <child>
-                                  <placeholder/>
+                                  <object class="GtkLabel">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">3</property>
+                                    <property name="top_attach">1</property>
+                                  </packing>
                                 </child>
                               </object>
                               <packing>
@@ -5720,20 +5712,18 @@ Spencer McIntyre</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="row_spacing">3</property>
-                                <property name="column_spacing">10</property>
+                                <property name="column_spacing">3</property>
                                 <child>
                                   <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_authors">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">end</property>
                                     <property name="valign">start</property>
-                                    <property name="margin_top">3</property>
-                                    <property name="margin_bottom">3</property>
                                     <property name="label" translatable="yes">Author(s):</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">0</property>
+                                    <property name="top_attach">1</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -5742,13 +5732,11 @@ Spencer McIntyre</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">end</property>
                                     <property name="valign">start</property>
-                                    <property name="margin_top">3</property>
-                                    <property name="margin_bottom">3</property>
                                     <property name="label" translatable="yes">Classifiers:</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">2</property>
+                                    <property name="top_attach">4</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -5757,13 +5745,11 @@ Spencer McIntyre</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">end</property>
                                     <property name="valign">start</property>
-                                    <property name="margin_top">3</property>
-                                    <property name="margin_bottom">3</property>
                                     <property name="label" translatable="yes">Description:</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">3</property>
+                                    <property name="top_attach">2</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -5772,13 +5758,11 @@ Spencer McIntyre</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">end</property>
                                     <property name="valign">start</property>
-                                    <property name="margin_top">3</property>
-                                    <property name="margin_bottom">3</property>
                                     <property name="label" translatable="yes">Created:</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
-                                    <property name="top_attach">1</property>
+                                    <property name="top_attach">5</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -5787,12 +5771,10 @@ Spencer McIntyre</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">start</property>
                                     <property name="valign">start</property>
-                                    <property name="margin_top">3</property>
-                                    <property name="margin_bottom">3</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">0</property>
+                                    <property name="top_attach">1</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -5801,12 +5783,10 @@ Spencer McIntyre</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">start</property>
                                     <property name="valign">start</property>
-                                    <property name="margin_top">3</property>
-                                    <property name="margin_bottom">3</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">1</property>
+                                    <property name="top_attach">5</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -5815,14 +5795,12 @@ Spencer McIntyre</property>
                                     <property name="can_focus">False</property>
                                     <property name="halign">start</property>
                                     <property name="valign">start</property>
-                                    <property name="margin_top">3</property>
-                                    <property name="margin_bottom">3</property>
                                     <property name="wrap">True</property>
                                     <property name="selectable">True</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">3</property>
+                                    <property name="top_attach">2</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -5833,7 +5811,56 @@ Spencer McIntyre</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
-                                    <property name="top_attach">2</property>
+                                    <property name="top_attach">4</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_references">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">end</property>
+                                    <property name="valign">start</property>
+                                    <property name="label" translatable="yes">References:</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="CampaignAssistant.label_url_info_for_title">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">end</property>
+                                    <property name="valign">start</property>
+                                    <property name="label" translatable="yes">Title:</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="CampaignAssistant.label_url_info_title">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="valign">start</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkListBox" id="CampaignAssistant.listbox_url_info_references">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="hexpand">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">3</property>
                                   </packing>
                                 </child>
                               </object>

@@ -633,10 +633,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		classifiers = plugin.get('classifiers', [])
 		if classifiers:
 			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', True)
-			gui_utilities.gtk_listbox_populate_labels(
-				self.gobjects['listbox_plugin_info_classifiers'],
-				classifiers
-			)
+			listbox = self.gobjects['listbox_plugin_info_classifiers']
+			listbox.set_property('visible', True)
+			gui_utilities.gtk_listbox_populate_labels(listbox, classifiers)
 		else:
 			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', False)
 
@@ -667,16 +666,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		label.set_property('visible', True)
 		listbox.set_property('visible', True)
-		for reference_url in reference_urls:
-			label = Gtk.Label()
-			label.connect('activate-link', self.signal_label_activate_link)
-			label.set_markup("<a href=\"{0}\">{1}</a>".format(reference_url.replace('"', '&quot;'), saxutils.escape(reference_url)))
-			label.set_property('halign', Gtk.Align.START)
-			label.set_property('track-visited-links', False)
-			label.set_property('use-markup', True)
-			label.set_property('valign', Gtk.Align.START)
-			label.set_property('visible', True)
-			listbox.add(label)
+		gui_utilities.gtk_listbox_populate_urls(listbox, reference_urls, signals={'activate-link': self.signal_label_activate_link})
 
 	def _show_dialog_busy(self):
 		gui_utilities.show_dialog_warning('Currently Busy', self.window, 'An operation is already running.')

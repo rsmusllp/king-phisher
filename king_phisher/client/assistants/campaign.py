@@ -134,6 +134,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'label_url_info_authors',
 			'label_url_info_created',
 			'label_url_info_description',
+			'label_url_info_title',
 			'label_url_info_for_authors',
 			'label_url_preview',
 			'label_url_ssl_for_status',
@@ -142,6 +143,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'label_validation_regex_password',
 			'label_validation_regex_username',
 			'listbox_url_info_classifiers',
+			'listbox_url_info_references',
 			'radiobutton_company_existing',
 			'radiobutton_company_new',
 			'radiobutton_company_none',
@@ -244,8 +246,15 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		metadata = template['metadata']
 		if metadata is None:
 			return
+		self.gobjects['label_url_info_title'].set_text(metadata['title'])
 		self.gobjects['label_url_info_authors'].set_text('\n'.join(metadata['authors']))
 		self.gobjects['label_url_info_description'].set_text(metadata['description'])
+		if metadata['referenceUrls']:
+			gui_utilities.gtk_listbox_populate_urls(
+				self.gobjects['listbox_url_info_references'],
+				metadata['referenceUrls'],
+				signals={'activate-link': self.signal_label_activate_link}
+			)
 		gui_utilities.gtk_listbox_populate_labels(self.gobjects['listbox_url_info_classifiers'], metadata['classifiers'])
 
 	def __async_rpc_cb_populate_url_scheme_combobox(self, addresses):
@@ -681,7 +690,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 	@gui_utilities.delayed_signal()
 	def signal_combobox_changed_set_url_information(self, _):
-		for label in ('info_authors', 'info_created', 'info_description'):
+		for label in ('info_title', 'info_authors', 'info_created', 'info_description'):
 			self.gobjects['label_url_' + label].set_text('')
 		hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
 		if not hostname:
@@ -695,6 +704,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			if row_iter:
 				path = model[row_iter][1]
 		gui_utilities.gtk_widget_destroy_children(self.gobjects['listbox_url_info_classifiers'])
+		gui_utilities.gtk_widget_destroy_children(self.gobjects['listbox_url_info_references'])
 		cached_result = self._cache_site_template.get((hostname, path))
 		if cached_result:
 			self.__async_rpc_cb_populate_url_info(hostname, path, cached_result)
@@ -703,7 +713,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			"""
 			query getSiteTemplate($hostname: String, $path: String) {
 			  siteTemplate(hostname: $hostname, path: $path) {
-				created path metadata { authors classifiers description pages }
+				created path metadata { title authors description referenceUrls classifiers pages }
 			  }
 			}
 			""",
@@ -785,6 +795,9 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 	def signal_entry_changed_validation_regex(self, entry):
 		self._do_regex_validation(self.gobjects['entry_test_validation_text'].get_text(), entry)
+
+	def signal_label_activate_link(self, _, uri):
+		utilities.open_uri(uri)
 
 	def signal_kpm_select_clicked(self, _):
 		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)

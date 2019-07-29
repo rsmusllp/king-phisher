@@ -407,8 +407,8 @@ def gtk_list_store_search(list_store, value, column=0):
 
 def gtk_listbox_populate_labels(listbox, label_strings):
 	"""
-	Formats and adds labels to a listbox. Each label is styled as a separate
-	entry.
+	Formats and adds labels to a listbox. Each label is styled and added as a
+	separate entry.
 
 	.. versionadded:: 1.13.0
 
@@ -417,11 +417,37 @@ def gtk_listbox_populate_labels(listbox, label_strings):
 	:param list label_strings: List of strings to add to the Gtk Listbox as labels.
 	"""
 	gtk_widget_destroy_children(listbox)
-	listbox.set_property('visible', True)
 	for label_text in label_strings:
 		label = Gtk.Label()
 		label.set_markup("<span font=\"smaller\"><tt>{0}</tt></span>".format(saxutils.escape(label_text)))
 		label.set_property('halign', Gtk.Align.START)
+		label.set_property('use-markup', True)
+		label.set_property('valign', Gtk.Align.START)
+		label.set_property('visible', True)
+		listbox.add(label)
+
+def gtk_listbox_populate_urls(listbox, url_strings, signals=None):
+	"""
+	Format and adds URLs to a list box. Each URL is styeled and added as a
+	seperate entry.
+
+	.. versionadded:: 1.14.0
+
+	:param listbox: Gtk Listbox to put the labels in.
+	:type listbox: :py:class:`Gtk.listbox`
+	:param list url_strings: List of URL strings to add to the Gtk Listbox as labels.
+	:param dict signals: A dictionary, keyed by signal names to signal handler
+		functions for the labels added to the listbox.
+	"""
+	gtk_widget_destroy_children(listbox)
+	signals = signals or {}
+	for url in url_strings:
+		label = Gtk.Label()
+		for signal, handler in signals.items():
+			label.connect(signal, handler)
+		label.set_markup("<a href=\"{0}\">{1}</a>".format(url.replace('"', '&quot;'), saxutils.escape(url)))
+		label.set_property('halign', Gtk.Align.START)
+		label.set_property('track-visited-links', False)
 		label.set_property('use-markup', True)
 		label.set_property('valign', Gtk.Align.START)
 		label.set_property('visible', True)
