@@ -81,6 +81,11 @@ def _kpm_file_path_is_valid(file_path):
 		return False
 	return True
 
+def _homogenous_label_width(labels):
+	width = max(label.get_preferred_width().minimum_width for label in labels)
+	for label in labels:
+		label.set_property('width-request', width)
+
 class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
 	Display an assistant which walks the user through creating a new campaign or
@@ -97,6 +102,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			),
 			'button_select_kpm_dest_folder',
 			'button_select_kpm_file',
+			'button_url_ssl_issue_certificate',
 			'calendar_campaign_expiration',
 			'checkbutton_alert_subscribe',
 			'checkbutton_expire_campaign',
@@ -122,10 +128,16 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'label_confirm_title',
 			'label_intro_body',
 			'label_intro_title',
+			'label_url_for_scheme',
+			'label_url_for_hostname',
+			'label_url_for_path',
 			'label_url_info_authors',
 			'label_url_info_created',
 			'label_url_info_description',
+			'label_url_info_for_authors',
 			'label_url_preview',
+			'label_url_ssl_for_status',
+			'label_url_ssl_status',
 			'label_validation_regex_mfa_token',
 			'label_validation_regex_password',
 			'label_validation_regex_username',
@@ -133,11 +145,13 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'radiobutton_company_existing',
 			'radiobutton_company_new',
 			'radiobutton_company_none',
+			'revealer_url_ssl_settings',
 			'togglebutton_expiration_time',
 		),
 		top_level=(
 			'ClockHourAdjustment',
-			'ClockMinuteAdjustment'
+			'ClockMinuteAdjustment',
+			'StockExecuteImage',
 		)
 	)
 	top_gobject = 'assistant'
@@ -158,16 +172,26 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			if page_title:
 				self._page_titles[page_title] = page_n
 
-		campaign_edges = self.application.rpc.graphql("""\
-		{ db { campaigns { edges { node { id name } } } } }
-		""")['db']['campaigns']['edges']
+		campaign_edges = self.application.rpc.graphql(
+			'{ db { campaigns { edges { node { id name } } } } }',
+		)['db']['campaigns']['edges']
 		self._campaign_names = dict((edge['node']['name'], edge['node']['id']) for edge in campaign_edges)
+		self._cache_hostname = {}
 		self._cache_site_template = {}
-		self._cache_site_templates = {}
+		self._can_issue_certs = False
 
 		self._expiration_time = managers.TimeSelectorButtonManager(self.application, self.gobjects['togglebutton_expiration_time'])
 		self._set_comboboxes()
 		self._set_defaults()
+		self.application.rpc.async_graphql(
+			'{ ssl { status { enabled hasLetsencrypt hasSni } } }',
+			on_success=self.__async_rpc_cb_ssl_status
+		)
+		_homogenous_label_width((
+			self.gobjects['label_url_for_scheme'],
+			self.gobjects['label_url_ssl_for_status'],
+			self.gobjects['label_url_info_for_authors']
+		))
 
 		if not self.config['server_config']['server.require_id']:
 			self.gobjects['checkbutton_reject_after_credentials'].set_sensitive(False)
@@ -185,6 +209,24 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['label_confirm_body'].set_text(confirm_preamble + ', then hit "Apply" to create the new King Phisher campaign.')
 			self.gobjects['label_intro_body'].set_text('This assistant will walk you through creating and configuring a new King Phisher campaign.')
 			self.gobjects['label_intro_title'].set_text('New Campaign')
+
+	def __async_rpc_cb_issue_cert_error(self, error, message=None):
+		self._set_page_complete(True, page='Web Server URL')
+		self.gobjects['button_url_ssl_issue_certificate'].set_sensitive(True)
+		label = self.gobjects['label_url_ssl_status']
+		label.set_text('An error occurred while requesting a certificate for the specified hostname')
+		gui_utilities.show_dialog_error(
+			'Operation Error',
+			self.application.get_active_window(),
+			message or "Unknown error: {!r}".format(error)
+		)
+
+	def __async_rpc_cb_issue_cert_success(self, result):
+		self._set_page_complete(True, page='Web Server URL')
+		if not result['success']:
+			return self.__async_rpc_cb_issue_cert_error(None, result['message'])
+		label = self.gobjects['label_url_ssl_status']
+		label.set_text('A certificate for the specified hostname has been issued and loaded')
 
 	def __async_rpc_cb_populate_url_hostname_combobox(self, hostnames):
 		hostnames = sorted(hostnames)
@@ -228,8 +270,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		elif gui_utilities.gtk_list_store_search(model, 'http/80'):
 			combobox_url_scheme.set_active_id('http/80')
 
-	def __async_rpc_cb_populate_url_path_combobox(self, hostname, results):
-		self._cache_site_templates[hostname] = results
+	def __async_rpc_cb_changed_url_hostname(self, hostname, results):
+		self._cache_hostname[hostname] = results
 		templates = results['siteTemplates']
 		combobox = self.gobjects['combobox_url_path']
 		combobox.set_property('button-sensitivity', templates['total'] > 0)
@@ -244,6 +286,18 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				model.append((path + utilities.make_webrelpath(page), path))
 		# this is going to trigger a changed signal and the cascade effect will update the URL information and preview
 		combobox.set_active_id(utilities.make_webrelpath(gui_utilities.gtk_combobox_get_entry_text(combobox)))
+
+		sni_hostname = results['ssl']['sniHostname']
+		label = self.gobjects['label_url_ssl_status']
+		if sni_hostname is None:
+			label.set_text('There is no certificate available for the specified hostname')
+			if self._can_issue_certs:
+				self.gobjects['button_url_ssl_issue_certificate'].set_sensitive(True)
+		else:
+			label.set_text('A certificate for the specified hostname is available')
+
+	def __async_rpc_cb_ssl_status(self, results):
+		self._can_issue_certs = all(results['ssl']['status'].values())
 
 	@property
 	def campaign_name(self):
@@ -446,8 +500,14 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if webserver_url.path:
 			self.gobjects['combobox_url_path'].get_child().set_text(utilities.make_webrelpath(webserver_url.path))
 
-	def _update_completion_status(self):
-		self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), self._get_kpm_path().is_valid)
+	def _set_page_complete(self, complete, page=None):
+		if page is None:
+			page = self.assistant.get_nth_page(self.assistant.get_current_page())
+		elif isinstance(page, str):
+			page = self.assistant.get_nth_page(self._page_titles[page])
+		elif isinstance(page, int):
+			page = self.assistant.get_nth_page(page)
+		self.assistant.set_page_complete(page, complete)
 
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
@@ -582,6 +642,20 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 					combobox.set_active_iter(model_iter)
 					self.gobjects['radiobutton_company_existing'].set_active(True)
 
+	def signal_button_clicked_issue_certificate(self, button):
+		button.set_sensitive(False)
+		self._set_page_complete(False, page='Web Server URL')
+		label = self.gobjects['label_url_ssl_status']
+		label.set_text('A certificate for the specified hostname is being requested')
+		hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
+		self.application.rpc.async_call(
+			'ssl/letsencrypt/issue',
+			(hostname,),
+			on_error=self.__async_rpc_cb_issue_cert_error,
+			on_success=self.__async_rpc_cb_issue_cert_success,
+			when_idle=True
+		)
+
 	def signal_calendar_prev(self, calendar):
 		today = datetime.date.today()
 		calendar_day = gui_utilities.gtk_calendar_get_pydate(calendar)
@@ -645,26 +719,36 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 
 	@gui_utilities.delayed_signal()
 	def signal_combobox_changed_url_hostname(self, combobox):
+		self.gobjects['button_url_ssl_issue_certificate'].set_sensitive(False)
 		hostname = gui_utilities.gtk_combobox_get_entry_text(combobox)
 		if not hostname:
 			return
-		cached_result = self._cache_site_templates.get(hostname)
+		cached_result = self._cache_hostname.get(hostname)
 		if cached_result:
-			self.__async_rpc_cb_populate_url_path_combobox(hostname, cached_result)
+			self.__async_rpc_cb_changed_url_hostname(hostname, cached_result)
 			return
 		self.application.rpc.async_graphql(
 			"""
-			query getSiteTemplates($hostname: String) {
+			query getHostname($hostname: String) {
 			  siteTemplates(hostname: $hostname) {
 				total edges { node { hostname path metadata { pages } } }
 			  }
+			  ssl { sniHostname(hostname: $hostname) { enabled } }
 			}
 			""",
 			query_vars={'hostname': hostname},
-			on_success=self.__async_rpc_cb_populate_url_path_combobox,
+			on_success=self.__async_rpc_cb_changed_url_hostname,
 			cb_args=(hostname,),
 			when_idle=True
 		)
+
+	def signal_combobox_changed_url_scheme(self, combobox):
+		active = combobox.get_active()
+		if active == -1:
+			return
+		url_scheme = _ModelURLScheme(*combobox.get_model()[active])
+		revealer = self.gobjects['revealer_url_ssl_settings']
+		revealer.set_reveal_child(url_scheme.name == 'https')
 
 	def signal_entry_changed_campaign_name(self, entry):
 		campaign_name = entry.get_text().strip()
@@ -700,7 +784,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			return False
 		target_path = response['target_path']
 		self.gobjects['entry_kpm_file'].set_text(target_path)
-		self._update_completion_status()
+		self._set_page_complete(self._get_kpm_path().is_valid)
 
 		if not _kpm_file_path_is_valid(target_path):
 			return
@@ -723,11 +807,11 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if not response:
 			return False
 		self.gobjects['entry_kpm_dest_folder'].set_text(response['target_path'])
-		self._update_completion_status()
+		self._set_page_complete(self._get_kpm_path().is_valid)
 
 	def signal_kpm_entry_clear(self, entry_widget):
 		entry_widget.set_text('')
-		self._update_completion_status()
+		self._set_page_complete(self._get_kpm_path().is_valid)
 
 	def signal_radiobutton_toggled(self, radiobutton):
 		if not radiobutton.get_active():
