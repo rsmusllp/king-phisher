@@ -262,8 +262,98 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def is_new_campaign(self):
 		return self.campaign_id is None
 
-	def _update_completion_status(self):
-		self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), self._get_kpm_path().is_valid)
+	def _do_regex_validation(self, test_text, entry):
+		try:
+			regex = re.compile(entry.get_text())
+		except re.error:
+			entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
+			return
+		result = True
+		if regex.pattern and test_text:
+			result = regex.match(test_text) is not None
+		entry.set_property('secondary-icon-stock', 'gtk-yes' if result else 'gtk-no')
+
+	def _get_campaign_by_name(self, name):
+		campaign = self.application.rpc.graphql("""\
+			query getCampaignByName($name: String!)
+			{ db { campaign(name: $name) { id } } }
+		""", query_vars={'name': name})['db']['campaign']
+		return campaign
+
+	def _get_company_existing_id(self):
+		combobox_company = self.gobjects['combobox_company_existing']
+		model = combobox_company.get_model()
+		model_iter = combobox_company.get_active_iter()
+		if model is None or model_iter is None:
+			return
+		return model.get_value(model_iter, 0)
+
+	def _get_company_new_id(self):
+		name = self.gobjects['entry_company_name'].get_text()
+		name = name.strip()
+		# check if this company name already exists in the model
+		model = self.gobjects['combobox_company_existing'].get_model()
+		model_iter = gui_utilities.gtk_list_store_search(model, name, column=1)
+		if model_iter is not None:
+			return model.get_value(model_iter, 0)
+		# check if this company name already exists remotely
+		remote_company = self._get_graphql_company(name)
+		if remote_company:
+			return remote_company['id']
+
+		company_id = self.application.rpc(
+			'db/table/insert',
+			'companies',
+			('name', 'description', 'industry_id', 'url_main', 'url_email', 'url_remote_access'),
+			(
+				name,
+				self.get_entry_value('company_description'),
+				self._get_tag_from_combobox(self.gobjects['combobox_company_industry'], 'industries'),
+				self.get_entry_value('company_url_main'),
+				self.get_entry_value('company_url_email'),
+				self.get_entry_value('company_url_remote_access')
+			)
+		)
+		self.gobjects['radiobutton_company_existing'].set_active(True)
+		return company_id
+
+	def _get_graphql_company(self, company_name):
+		results = self.application.rpc.graphql("""\
+		query getCompany($name: String!) {
+			db {
+				company(name: $name) {
+					id
+				}
+			}
+		}""", {'name': company_name})
+		return results['db']['company']
+
+	def _get_kpm_path(self):
+		file_path = self.gobjects['entry_kpm_file'].get_text()
+		dir_path = self.gobjects['entry_kpm_dest_folder'].get_text()
+		if not dir_path and not file_path:
+			return _KPMPaths(None, None, True)
+		if not _kpm_file_path_is_valid(file_path):
+			return _KPMPaths(None, None, False)
+		if not (dir_path and os.path.isdir(dir_path) and os.access(dir_path, os.R_OK | os.W_OK)):
+			return _KPMPaths(None, None, False)
+		return _KPMPaths(file_path, dir_path, True)
+
+	def _get_tag_from_combobox(self, combobox, db_table):
+		model = combobox.get_model()
+		model_iter = combobox.get_active_iter()
+		if model_iter is not None:
+			return model.get_value(model_iter, 0)
+		campaign_type = combobox.get_child().get_text().strip()
+		if not campaign_type:
+			return
+		model_iter = gui_utilities.gtk_list_store_search(model, campaign_type, column=1)
+		if model_iter is None:
+			return self.application.rpc('db/table/insert', db_table, 'name', campaign_type)
+		return model.get_value(model_iter, 0)
+
+	def _get_webserver_url(self):
+		return self.gobjects['label_url_preview'].get_text()
 
 	@property
 	def _server_uses_ssl(self):
@@ -345,88 +435,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self._expiration_time.time = expiration.time()
 			gui_utilities.gtk_calendar_set_pydate(self.gobjects['calendar_campaign_expiration'], expiration.date())
 
-	def _get_tag_from_combobox(self, combobox, db_table):
-		model = combobox.get_model()
-		model_iter = combobox.get_active_iter()
-		if model_iter is not None:
-			return model.get_value(model_iter, 0)
-		campaign_type = combobox.get_child().get_text().strip()
-		if not campaign_type:
-			return
-		model_iter = gui_utilities.gtk_list_store_search(model, campaign_type, column=1)
-		if model_iter is None:
-			return self.application.rpc('db/table/insert', db_table, 'name', campaign_type)
-		return model.get_value(model_iter, 0)
-
-	def _get_campaign_by_name(self, name):
-		campaign = self.application.rpc.graphql("""\
-			query getCampaignByName($name: String!)
-			{ db { campaign(name: $name) { id } } }
-		""", query_vars={'name': name})['db']['campaign']
-		return campaign
-
-	def _get_company_existing_id(self):
-		combobox_company = self.gobjects['combobox_company_existing']
-		model = combobox_company.get_model()
-		model_iter = combobox_company.get_active_iter()
-		if model is None or model_iter is None:
-			return
-		return model.get_value(model_iter, 0)
-
-	def _get_company_new_id(self):
-		name = self.gobjects['entry_company_name'].get_text()
-		name = name.strip()
-		# check if this company name already exists in the model
-		model = self.gobjects['combobox_company_existing'].get_model()
-		model_iter = gui_utilities.gtk_list_store_search(model, name, column=1)
-		if model_iter is not None:
-			return model.get_value(model_iter, 0)
-		# check if this company name already exists remotely
-		remote_company = self._get_graphql_company(name)
-		if remote_company:
-			return remote_company['id']
-
-		company_id = self.application.rpc(
-			'db/table/insert',
-			'companies',
-			('name', 'description', 'industry_id', 'url_main', 'url_email', 'url_remote_access'),
-			(
-				name,
-				self.get_entry_value('company_description'),
-				self._get_tag_from_combobox(self.gobjects['combobox_company_industry'], 'industries'),
-				self.get_entry_value('company_url_main'),
-				self.get_entry_value('company_url_email'),
-				self.get_entry_value('company_url_remote_access')
-			)
-		)
-		self.gobjects['radiobutton_company_existing'].set_active(True)
-		return company_id
-
-	def _get_graphql_company(self, company_name):
-		results = self.application.rpc.graphql("""\
-		query getCompany($name: String!) {
-			db {
-				company(name: $name) {
-					id
-				}
-			}
-		}""", {'name': company_name})
-		return results['db']['company']
-
-	def _get_kpm_path(self):
-		file_path = self.gobjects['entry_kpm_file'].get_text()
-		dir_path = self.gobjects['entry_kpm_dest_folder'].get_text()
-		if not dir_path and not file_path:
-			return _KPMPaths(None, None, True)
-		if not _kpm_file_path_is_valid(file_path):
-			return _KPMPaths(None, None, False)
-		if not (dir_path and os.path.isdir(dir_path) and os.access(dir_path, os.R_OK | os.W_OK)):
-			return _KPMPaths(None, None, False)
-		return _KPMPaths(file_path, dir_path, True)
-
-	def _get_webserver_url(self):
-		return self.gobjects['label_url_preview'].get_text()
-
 	def _set_webserver_url(self, webserver_url):
 		webserver_url = urllib.parse.urlparse(webserver_url.strip())
 		if webserver_url.scheme == 'http':
@@ -438,16 +446,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		if webserver_url.path:
 			self.gobjects['combobox_url_path'].get_child().set_text(utilities.make_webrelpath(webserver_url.path))
 
-	def _do_regex_validation(self, test_text, entry):
-		try:
-			regex = re.compile(entry.get_text())
-		except re.error:
-			entry.set_property('secondary-icon-stock', 'gtk-dialog-warning')
-			return
-		result = True
-		if regex.pattern and test_text:
-			result = regex.match(test_text) is not None
-		entry.set_property('secondary-icon-stock', 'gtk-yes' if result else 'gtk-no')
+	def _update_completion_status(self):
+		self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), self._get_kpm_path().is_valid)
 
 	def signal_assistant_apply(self, _):
 		self._close_ready = False
