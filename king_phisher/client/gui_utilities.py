@@ -109,6 +109,39 @@ def _store_extend(store, things, clear=False):
 	for thing in things:
 		store.append(thing)
 
+def delayed_signal(delay=500):
+	"""
+	A decorator to delay the execution of a signal handler to aggregate emission
+	into a single event. This can for example be used to run a handler when a
+	:py:class:`Gtk.Entry` widget's ``changed`` signal is emitted but not after
+	every single key press meaning the handler can perform network operations to
+	validate or otherwise process input.
+
+	.. note::
+		The decorated function **must** be a method. The wrapper installed by
+		this decorator will automatically add an attribute to the class to track
+		invoked instances to ensure the timeout is respected.
+
+	.. versionadded:: 1.14.0
+
+	:param int delay: The delay in milliseconds from the original emission
+		before the handler should be executed.
+	"""
+	def decorator(function):
+		src_name = '__delayed_source_' + function.__name__
+		@functools.wraps(function)
+		def wrapped(self, *args, **kwargs):
+			def new_function(self, *args, **kwargs):
+				setattr(self, src_name, None)
+				return function(self, *args, **kwargs)
+			src = getattr(self, src_name, None)
+			if src is not None:
+				return
+			src = GLib.timeout_add(delay, new_function, self, *args, **kwargs)
+			setattr(self, src_name, src)
+		return wrapped
+	return decorator
+
 def glib_idle_add_store_extend(store, things, clear=False, wait=False):
 	"""
 	Extend a GTK store object (either :py:class:`Gtk.ListStore` or
@@ -286,6 +319,74 @@ GOBJECT_PROPERTY_MAP['calendar'] = (
 	gtk_calendar_set_pydate,
 	gtk_calendar_get_pydate
 )
+
+def gtk_combobox_get_active_cell(combobox, column=None):
+	"""
+	Get the active value from a GTK combobox and it's respective model. If
+	nothing is selected, ``None`` is returned.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to retrieve the active model value for.
+	:param int column: The column ID to retrieve from the selected row. If not
+		specified, the combobox's ``id-column`` property will be used.
+	:return: The selected model row's value.
+	"""
+	row = gtk_combobox_get_active_row(combobox)
+	if row is None:
+		return None
+	if column is None:
+		column = combobox.get_property('id-column')
+	return row[column]
+
+def gtk_combobox_get_active_row(combobox):
+	"""
+	Get the active row from a GTK combobox and it's respective model. If
+	nothing is selected, ``None`` is returned.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to retrieve the active model row for.
+	:return: The selected model row.
+	"""
+	active = combobox.get_active()
+	if active == -1:
+		return None
+	model = combobox.get_model()
+	return model[active]
+
+def gtk_combobox_get_entry_text(combobox):
+	"""
+	Get the text from a combobox's entry widget.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to retrieve the entry text for.
+	:return: The value of the entry text.
+	:rtype: str
+	"""
+	if not combobox.get_has_entry():
+		raise ValueError('the specified combobox does not have an entry')
+	entry = combobox.get_child()
+	return entry.get_text()
+
+def gtk_combobox_set_entry_completion(combobox):
+	"""
+	Add completion for a :py:class:`Gtk.ComboBox` widget which contains an
+	entry. They combobox's ``entry-text-column`` property it used to determine
+	which column in its model contains the strings to suggest for completion.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to add completion for.
+	:type: :py:class:`Gtk.ComboBox`
+	"""
+	utilities.assert_arg_type(combobox, Gtk.ComboBox)
+	completion = Gtk.EntryCompletion()
+	completion.set_model(combobox.get_model())
+	completion.set_text_column(combobox.get_entry_text_column())
+	entry = combobox.get_child()
+	entry.set_completion(completion)
 
 def gtk_list_store_search(list_store, value, column=0):
 	"""

@@ -245,6 +245,19 @@ class ArchiveFile(object):
 		member = self._tar_h.getmember(name)
 		return self._tar_h.extractfile(member)
 
+	def get_json(self, name):
+		"""
+		Extract the specified file, deserialize it as JSON encoded content and
+		return the result.
+
+		.. versionadded:: 1.14.0
+
+		:param str name: The name of the source file in the archive.
+		:return: The deserialized contents of the specified file.
+		"""
+		data = self.get_data(name)
+		return serializers.JSON.loads(data.decode(self.encoding))
+
 	def has_file(self, name):
 		"""
 		Check if a file exists within archive.

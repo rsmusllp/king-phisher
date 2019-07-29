@@ -40,6 +40,7 @@ import json
 import logging
 import operator
 import os
+import posixpath as webpath
 import random
 import re
 import string
@@ -390,6 +391,24 @@ def make_message_uid(upper=True, lower=True, digits=True):
 	if not charset:
 		raise ValueError('at least one of upper, lower, or digits must be True')
 	return random_string(16, charset=charset)
+
+def make_webrelpath(path):
+	"""
+	Forcefully make *path* into a web-suitable relative path. This will strip
+	off leading and trailing directory separators.
+
+	.. versionadded:: 1.14.0
+
+	:param str path: The path to convert into a web-suitable relative path.
+	:return: The converted path.
+	:rtype: str
+	"""
+	if not path.startswith(webpath.sep):
+		path = webpath.sep + path
+	path = webpath.relpath(path, webpath.sep)
+	if path == webpath.curdir:
+		path = ''
+	return path
 
 def make_visit_uid():
 	"""

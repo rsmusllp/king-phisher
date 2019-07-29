@@ -32,11 +32,12 @@
 
 import collections
 import datetime
-import ipaddress
 import os
+import posixpath as webpath
 import re
-import urllib
+import urllib.parse
 
+from king_phisher import archive
 from king_phisher import utilities
 from king_phisher.client import gui_utilities
 from king_phisher.client.widget import extras
@@ -58,11 +59,27 @@ _ModelNamedRow = collections.namedtuple('ModelNamedRow', (
 	'created'
 ))
 
+_ModelURLScheme = collections.namedtuple('ModelURLScheme', (
+	'id',
+	'name',
+	'description',
+	'port'
+))
+
 _KPMPaths = collections.namedtuple('KPMPaths', (
 	'kpm_file',
 	'destination_folder',
 	'is_valid'
 ))
+
+def _kpm_file_path_is_valid(file_path):
+	if not file_path:
+		return False
+	if not os.path.isfile(file_path) and os.access(file_path, os.R_OK):
+		return False
+	if not archive.is_archive(file_path):
+		return False
+	return True
 
 class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
@@ -86,16 +103,17 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'checkbutton_reject_after_credentials',
 			'combobox_campaign_type',
 			'combobox_company_existing',
+			'combobox_url_hostname',
+			'combobox_url_path',
+			'combobox_url_scheme',
 			'entry_campaign_description',
 			'entry_campaign_name',
-			'entry_hostname_filter',
 			'entry_kpm_dest_folder',
 			'entry_kpm_file',
 			'entry_test_validation_text',
 			'entry_validation_regex_mfa_token',
 			'entry_validation_regex_password',
 			'entry_validation_regex_username',
-			'expander_url_info',
 			'frame_campaign_expiration',
 			'frame_company_existing',
 			'frame_company_new',
@@ -107,19 +125,15 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'label_url_info_authors',
 			'label_url_info_created',
 			'label_url_info_description',
-			'label_url_info_for_classifiers',
-			'label_url_info_url',
+			'label_url_preview',
 			'label_validation_regex_mfa_token',
 			'label_validation_regex_password',
 			'label_validation_regex_username',
 			'listbox_url_info_classifiers',
-			'paned_url_info',
 			'radiobutton_company_existing',
 			'radiobutton_company_new',
 			'radiobutton_company_none',
 			'togglebutton_expiration_time',
-			'treeselection_url_selector',
-			'treeview_url_selector',
 		),
 		top_level=(
 			'ClockHourAdjustment',
@@ -148,6 +162,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		{ db { campaigns { edges { node { id name } } } } }
 		""")['db']['campaigns']['edges']
 		self._campaign_names = dict((edge['node']['name'], edge['node']['id']) for edge in campaign_edges)
+		self._cache_site_template = {}
+		self._cache_site_templates = {}
 
 		self._expiration_time = managers.TimeSelectorButtonManager(self.application, self.gobjects['togglebutton_expiration_time'])
 		self._set_comboboxes()
@@ -163,38 +179,71 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			self.gobjects['label_confirm_body'].set_text(confirm_preamble + ', then hit "Apply" to update the King Phisher campaign with the new settings.')
 			self.gobjects['label_intro_body'].set_text('This assistant will walk you through reconfiguring the selected King Phisher campaign.')
 			self.gobjects['label_intro_title'].set_text('Configure Campaign')
+			self._set_webserver_url(self.config['mailer.webserver_url'])
 		else:
 			# creating a new campaign
 			self.gobjects['label_confirm_body'].set_text(confirm_preamble + ', then hit "Apply" to create the new King Phisher campaign.')
 			self.gobjects['label_intro_body'].set_text('This assistant will walk you through creating and configuring a new King Phisher campaign.')
 			self.gobjects['label_intro_title'].set_text('New Campaign')
 
-		self._url_thread = None
-		domain_completion = Gtk.EntryCompletion()
-		self._hostname_list_store = Gtk.ListStore(str)
-		domain_completion.set_model(self._hostname_list_store)
-		domain_completion.set_text_column(0)
-		self.gobjects['entry_hostname_filter'].set_completion(domain_completion)
+	def __async_rpc_cb_populate_url_hostname_combobox(self, hostnames):
+		hostnames = sorted(hostnames)
+		model = self.gobjects['combobox_url_hostname'].get_model()
+		for hostname in hostnames:
+			model.append((hostname,))
 
-		tvm = managers.TreeViewManager(self.gobjects['treeview_url_selector'])
-		tvm.set_column_titles(
-			['Hostname', 'Landing Page', 'URL'],
-			renderers=[
-				Gtk.CellRendererText(),
-				Gtk.CellRendererText(),
-				Gtk.CellRendererText()
-			]
-		)
-		self._url_model = Gtk.ListStore(str, str, str, object, object, str, str)
-		self._url_model.set_sort_column_id(0, Gtk.SortType.ASCENDING)
-		self.gobjects['treeview_url_selector'].set_model(self._url_model)
-		self._url_information = {
-			'created': None,
-			'data': None
-		}
-		self._load_url_treeview_tsafe(refresh=True)
-		paned = self.gobjects['paned_url_info']
-		self._paned_offset = paned.get_allocation().height - paned.get_position()
+	def __async_rpc_cb_populate_url_info(self, hostname, path, results):
+		self._cache_site_template[(hostname, path)] = results
+		template = results['siteTemplate']
+		if template is None:
+			return
+		self.gobjects['label_url_info_created'].set_text(utilities.format_datetime(utilities.datetime_utc_to_local(template['created'])))
+		metadata = template['metadata']
+		if metadata is None:
+			return
+		self.gobjects['label_url_info_authors'].set_text('\n'.join(metadata['authors']))
+		self.gobjects['label_url_info_description'].set_text(metadata['description'])
+		gui_utilities.gtk_listbox_populate_labels(self.gobjects['listbox_url_info_classifiers'], metadata['classifiers'])
+
+	def __async_rpc_cb_populate_url_scheme_combobox(self, addresses):
+		addresses = sorted(addresses, key=lambda address: address['port'])
+		combobox_url_scheme = self.gobjects['combobox_url_scheme']
+		model = combobox_url_scheme.get_model()
+		for address in addresses:
+			if address['ssl']:
+				scheme_name = 'https'
+				description = '' if address['port'] == 443 else 'port: ' + str(address['port'])
+			else:
+				scheme_name = 'http'
+				description = '' if address['port'] == 80 else 'port: ' + str(address['port'])
+			# use the scheme and port to make a row UID
+			model.append(_ModelURLScheme(
+				id=scheme_name + '/' + str(address['port']),
+				name=scheme_name,
+				description=description,
+				port=address['port']
+			))
+		if gui_utilities.gtk_list_store_search(model, 'https/443'):
+			combobox_url_scheme.set_active_id('https/443')
+		elif gui_utilities.gtk_list_store_search(model, 'http/80'):
+			combobox_url_scheme.set_active_id('http/80')
+
+	def __async_rpc_cb_populate_url_path_combobox(self, hostname, results):
+		self._cache_site_templates[hostname] = results
+		templates = results['siteTemplates']
+		combobox = self.gobjects['combobox_url_path']
+		combobox.set_property('button-sensitivity', templates['total'] > 0)
+		model = combobox.get_model()
+		model.clear()
+		for template in templates['edges']:
+			template = template['node']
+			path = utilities.make_webrelpath(template['path'])
+			if path and not path.endswith(webpath.sep):
+				path += webpath.sep
+			for page in template['metadata']['pages']:
+				model.append((path + utilities.make_webrelpath(page), path))
+		# this is going to trigger a changed signal and the cascade effect will update the URL information and preview
+		combobox.set_active_id(utilities.make_webrelpath(gui_utilities.gtk_combobox_get_entry_text(combobox)))
 
 	@property
 	def campaign_name(self):
@@ -217,36 +266,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self.assistant.set_page_complete(self.assistant.get_nth_page(self.assistant.get_current_page()), self._get_kpm_path().is_valid)
 
 	@property
-	def _url_thread_is_ready(self):
-		return self._url_thread is None or not self._url_thread.is_alive()
-
-	@property
 	def _server_uses_ssl(self):
 		return any(address['ssl'] for address in self.config['server_config']['server.addresses'])
-
-	def signal_kpm_select_clicked(self, _):
-		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
-		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
-		dialog.quick_add_filter('All Files', '*')
-		response = dialog.run_quick_open()
-		dialog.destroy()
-		if not response:
-			return False
-		self.gobjects['entry_kpm_file'].set_text(response['target_path'])
-		self._update_completion_status()
-
-	def signal_kpm_dest_folder_clicked(self, _):
-		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
-		response = dialog.run_quick_select_directory()
-		dialog.destroy()
-		if not response:
-			return False
-		self.gobjects['entry_kpm_dest_folder'].set_text(response['target_path'])
-		self._update_completion_status()
-
-	def signal_kpm_entry_clear(self, entry_widget):
-		entry_widget.set_text('')
-		self._update_completion_status()
 
 	def _set_comboboxes(self):
 		"""Set up all the comboboxes and load the data for their models."""
@@ -259,69 +280,25 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				combobox.pack_start(renderer, True)
 				combobox.add_attribute(renderer, 'text', 2)
 			combobox.set_model(rpc.get_tag_model(tag_table, model=model))
-
-	def _load_url_treeview_tsafe(self, hostname=None, refresh=False):
-		if refresh or not self._url_information['created']:
-			self._url_information['data'] = self.application.rpc.graphql_find_file('get_site_templates.graphql')
-			self._url_information['created'] = datetime.datetime.utcnow()
-		url_information = self._url_information['data']
-		if not url_information:
-			return
-
-		rows = []
-		domains = []
-		for edge in url_information['siteTemplates']['edges']:
-			template = edge['node']
-			for page in template['metadata']['pages']:
-				if hostname and template['hostname'] and not template['hostname'].startswith(hostname):
-					continue
-				page = page.strip('/')
-				resource = '/' + '/'.join((template.get('path', '').strip('/'), page)).lstrip('/')
-				domains.append(template['hostname'])
-				rows.append(_ModelNamedRow(
-					hostname=template['hostname'],
-					page=page,
-					url=self._build_url(template['hostname'], resource, 'http'),
-					classifiers=template['metadata']['classifiers'],
-					authors=template['metadata']['authors'],
-					description=template['metadata']['description'].strip('\n'),
-					created=utilities.format_datetime(utilities.datetime_utc_to_local(template['created']))
-				))
-
-				if self._server_uses_ssl:
-					rows.append(_ModelNamedRow(
-						hostname=template['hostname'],
-						page=page,
-						url=self._build_url(template['hostname'], resource, 'https'),
-						classifiers=template['metadata']['classifiers'],
-						authors=template['metadata']['authors'],
-						description=template['metadata']['description'].strip('\n'),
-						created=utilities.format_datetime(utilities.datetime_utc_to_local(template['created']))
-					))
-
-		gui_utilities.glib_idle_add_once(self.gobjects['treeselection_url_selector'].unselect_all)
-		gui_utilities.glib_idle_add_store_extend(self._url_model, rows, clear=True)
-		# make domain list unique in case multiple pages are advertised for the domains
-		domains = [[domain] for domain in set(domains)]
-		gui_utilities.glib_idle_add_store_extend(self._hostname_list_store, domains, clear=True)
-
-	def _build_url(self, hostname, page, scheme):
-		if not hostname:
-			for address in self.config['server_config']['server.addresses']:
-				ip = ipaddress.ip_address(address['host'])
-				if not ip.is_unspecified and (ip.is_global or ip.is_private):
-					hostname = address['host']
-					break
-			else:
-				hostname = 'localhost'
-		return urllib.parse.urljoin(scheme + '://' + hostname, page)
-
-	def signal_url_entry_change(self, gtk_entry):
-		gtk_entry_text = gtk_entry.get_text()
-		if not self._url_information['created'] or datetime.datetime.utcnow() - self._url_information['created'] > datetime.timedelta(minutes=5):
-			self._load_url_treeview_tsafe(hostname=gtk_entry_text, refresh=True)
-		else:
-			self._load_url_treeview_tsafe(hostname=gtk_entry_text, refresh=False)
+			gui_utilities.gtk_combobox_set_entry_completion(combobox)
+		# setup the URL scheme combobox asynchronously
+		model = Gtk.ListStore(str, str, str, int)
+		combobox = self.gobjects['combobox_url_scheme']
+		combobox.set_model(model)
+		combobox.pack_start(renderer, True)
+		combobox.add_attribute(renderer, 'text', 2)
+		rpc.async_call('config/get', ('server.addresses',), on_success=self.__async_rpc_cb_populate_url_scheme_combobox, when_idle=True)
+		# setup the URL hostname combobox asynchronously
+		model = Gtk.ListStore(str)
+		combobox = self.gobjects['combobox_url_hostname']
+		combobox.set_model(model)
+		gui_utilities.gtk_combobox_set_entry_completion(combobox)
+		rpc.async_call('hostnames/get', on_success=self.__async_rpc_cb_populate_url_hostname_combobox, when_idle=True)
+		# setup the URL path combobox model, but don't populate it until a hostname is selected
+		model = Gtk.ListStore(str, str)
+		combobox = self.gobjects['combobox_url_path']
+		combobox.set_model(model)
+		gui_utilities.gtk_combobox_set_entry_completion(combobox)
 
 	def _set_defaults(self):
 		"""
@@ -441,27 +418,25 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		dir_path = self.gobjects['entry_kpm_dest_folder'].get_text()
 		if not dir_path and not file_path:
 			return _KPMPaths(None, None, True)
-		if not (file_path and os.path.isfile(file_path) and os.access(file_path, os.R_OK)):
+		if not _kpm_file_path_is_valid(file_path):
 			return _KPMPaths(None, None, False)
 		if not (dir_path and os.path.isdir(dir_path) and os.access(dir_path, os.R_OK | os.W_OK)):
 			return _KPMPaths(None, None, False)
 		return _KPMPaths(file_path, dir_path, True)
 
-	def _set_info_url_details(self, model_row):
-		named_row = _ModelNamedRow(*model_row)
-		self.gobjects['label_url_info_url'].set_text(named_row.url or '')
-		self.gobjects['label_url_info_authors'].set_text('\n'.join(named_row.authors))
-		self.gobjects['label_url_info_created'].set_text(named_row.created or '')
-		self.gobjects['label_url_info_description'].set_text(named_row.description or '')
+	def _get_webserver_url(self):
+		return self.gobjects['label_url_preview'].get_text()
 
-		if named_row.classifiers:
-			self.gobjects['label_url_info_for_classifiers'].set_property('visible', True)
-			gui_utilities.gtk_listbox_populate_labels(
-				self.gobjects['listbox_url_info_classifiers'],
-				named_row.classifiers
-			)
-		else:
-			self.gobjects['label_url_info_for_classifiers'].set_property('visible', False)
+	def _set_webserver_url(self, webserver_url):
+		webserver_url = urllib.parse.urlparse(webserver_url.strip())
+		if webserver_url.scheme == 'http':
+			self.gobjects['combobox_url_scheme'].set_active_id('http/' + str(webserver_url.port or 80))
+		elif webserver_url.scheme == 'https':
+			self.gobjects['combobox_url_scheme'].set_active_id('https/' + str(webserver_url.port or 443))
+		if webserver_url.hostname:
+			self.gobjects['combobox_url_hostname'].get_child().set_text(webserver_url.hostname)
+		if webserver_url.path:
+			self.gobjects['combobox_url_path'].get_child().set_text(utilities.make_webrelpath(webserver_url.path))
 
 	def _do_regex_validation(self, test_text, entry):
 		try:
@@ -582,14 +557,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			else:
 				gui_utilities.show_dialog_info('Success', self.parent, 'Successfully imported the message configuration.')
 
-		url_model, url_iter = self.gobjects['treeselection_url_selector'].get_selected()
-		if url_iter:
-			selected_row = []
-			for column_n in range(0, url_model.get_n_columns()):
-				selected_row.append(url_model.get_value(url_iter, column_n))
-			selected_row = _ModelNamedRow(*selected_row)
-			self.config['mailer.webserver_url'] = selected_row.url
-
+		self.config['mailer.webserver_url'] = self._get_webserver_url()
 		self.application.emit('campaign-set', old_cid, cid)
 		self._close_ready = True
 		return
@@ -625,6 +593,79 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		active = self.gobjects['checkbutton_expire_campaign'].get_property('active')
 		self.gobjects['frame_campaign_expiration'].set_sensitive(active)
 
+	@gui_utilities.delayed_signal()
+	def signal_combobox_changed_set_url_information(self, _):
+		for label in ('info_authors', 'info_created', 'info_description'):
+			self.gobjects['label_url_' + label].set_text('')
+		hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
+		if not hostname:
+			return
+		combobox_url_path = self.gobjects['combobox_url_path']
+		path = gui_utilities.gtk_combobox_get_active_cell(combobox_url_path, column=1)
+		if path is None:
+			model = combobox_url_path.get_model()
+			text = utilities.make_webrelpath(gui_utilities.gtk_combobox_get_entry_text(combobox_url_path))
+			row_iter = gui_utilities.gtk_list_store_search(model, text)
+			if row_iter:
+				path = model[row_iter][1]
+		gui_utilities.gtk_widget_destroy_children(self.gobjects['listbox_url_info_classifiers'])
+		cached_result = self._cache_site_template.get((hostname, path))
+		if cached_result:
+			self.__async_rpc_cb_populate_url_info(hostname, path, cached_result)
+			return
+		self.application.rpc.async_graphql(
+			"""
+			query getSiteTemplate($hostname: String, $path: String) {
+			  siteTemplate(hostname: $hostname, path: $path) {
+				created path metadata { authors classifiers description pages }
+			  }
+			}
+			""",
+			query_vars={'hostname': hostname, 'path': path},
+			on_success=self.__async_rpc_cb_populate_url_info,
+			cb_args=(hostname, path),
+			when_idle=True
+		)
+
+	def signal_combobox_changed_set_url_preview(self, _):
+		label = self.gobjects['label_url_preview']
+		label.set_text('')
+		combobox_url_scheme = self.gobjects['combobox_url_scheme']
+		active = combobox_url_scheme.get_active()
+		if active == -1:
+			return
+		url_scheme = _ModelURLScheme(*combobox_url_scheme.get_model()[active])
+		authority = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
+		path = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_path'])
+		if url_scheme and authority:
+			path = utilities.make_webrelpath(path)
+			if (url_scheme.name == 'http' and url_scheme.port != 80) or (url_scheme.name == 'https' and url_scheme.port != 443):
+				authority += ':' + str(url_scheme.port)
+			label.set_text("{}://{}/{}".format(url_scheme.name, authority, path))
+
+	@gui_utilities.delayed_signal()
+	def signal_combobox_changed_url_hostname(self, combobox):
+		hostname = gui_utilities.gtk_combobox_get_entry_text(combobox)
+		if not hostname:
+			return
+		cached_result = self._cache_site_templates.get(hostname)
+		if cached_result:
+			self.__async_rpc_cb_populate_url_path_combobox(hostname, cached_result)
+			return
+		self.application.rpc.async_graphql(
+			"""
+			query getSiteTemplates($hostname: String) {
+			  siteTemplates(hostname: $hostname) {
+				total edges { node { hostname path metadata { pages } } }
+			  }
+			}
+			""",
+			query_vars={'hostname': hostname},
+			on_success=self.__async_rpc_cb_populate_url_path_combobox,
+			cb_args=(hostname,),
+			when_idle=True
+		)
+
 	def signal_entry_changed_campaign_name(self, entry):
 		campaign_name = entry.get_text().strip()
 		if not campaign_name:
@@ -649,13 +690,44 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def signal_entry_changed_validation_regex(self, entry):
 		self._do_regex_validation(self.gobjects['entry_test_validation_text'].get_text(), entry)
 
-	def signal_expander_activate(self, expander):
-		paned = self.gobjects['paned_url_info']
-		if expander.get_property('expanded'):  # collapsing
-			paned.set_position(paned.get_allocation().height + self._paned_offset)
+	def signal_kpm_select_clicked(self, _):
+		dialog = extras.FileChooserDialog('Import Message Configuration', self.parent)
+		dialog.quick_add_filter('King Phisher Message Files', '*.kpm')
+		dialog.quick_add_filter('All Files', '*')
+		response = dialog.run_quick_open()
+		dialog.destroy()
+		if not response:
+			return False
+		target_path = response['target_path']
+		self.gobjects['entry_kpm_file'].set_text(target_path)
+		self._update_completion_status()
 
-	def signal_paned_button_press_event(self, paned, event):
-		return not self.gobjects['expander_url_info'].get_property('expanded')
+		if not _kpm_file_path_is_valid(target_path):
+			return
+		# open the KPM for reading to extract the target URL for the assistant,
+		# ignore the directory to allow the user to optionally only import the URL
+		kpm = archive.ArchiveFile(target_path, 'r')
+		if not kpm.has_file('message_config.json'):
+			self.logger.warning('the kpm archive is missing the message_config.json file')
+			return
+		message_config = kpm.get_json('message_config.json')
+		webserver_url = message_config.get('webserver_url')
+		if not webserver_url:
+			return
+		self._set_webserver_url(webserver_url)
+
+	def signal_kpm_dest_folder_clicked(self, _):
+		dialog = extras.FileChooserDialog('Destination Directory', self.parent)
+		response = dialog.run_quick_select_directory()
+		dialog.destroy()
+		if not response:
+			return False
+		self.gobjects['entry_kpm_dest_folder'].set_text(response['target_path'])
+		self._update_completion_status()
+
+	def signal_kpm_entry_clear(self, entry_widget):
+		entry_widget.set_text('')
+		self._update_completion_status()
 
 	def signal_radiobutton_toggled(self, radiobutton):
 		if not radiobutton.get_active():
@@ -669,10 +741,6 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		elif radiobutton == self.gobjects['radiobutton_company_none']:
 			self.gobjects['frame_company_existing'].set_sensitive(False)
 			self.gobjects['frame_company_new'].set_sensitive(False)
-
-	def signal_treeview_row_activated(self, treeview, path, column):
-		model_row = self._url_model[path]
-		self._set_info_url_details(model_row)
 
 	def interact(self):
 		self.assistant.show_all()
