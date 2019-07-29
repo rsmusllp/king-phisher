@@ -93,9 +93,9 @@ def _get_files(directory, hostname):
 	return cert_path, key_path
 
 def _run_certbot(args, bin_path=None):
-	bin_path = bin_path or startup.which('certbot')
+	bin_path = bin_path or get_certbot_bin_path()
 	if bin_path is None:
-		return RuntimeError('certbot could not be found')
+		return FileNotFoundError('the certbot binary could not be found')
 	args = (bin_path,) + tuple(args)
 	return startup.run_process(args)
 
@@ -146,6 +146,30 @@ def certbot_issue(webroot, hostname, bin_path=None, unified_directory=None):
 	args.extend(['--webroot', '--webroot-path', webroot, '-d', hostname])
 	proc = _run_certbot(args, bin_path=bin_path)
 	return proc.status
+
+def get_certbot_bin_path(config=None):
+	"""
+	Get the path to Let's Encrypt's ``certbot`` command line utility. If the
+	path is found, it is verified to be both a file and executable. If the
+	path verification fails, ``None`` is returned.
+
+	.. versionadded:: 1.14.0
+
+	:param config: Configuration to retrieve settings from.
+	:type config: :py:class:`smoke_zephyr.configuration.Configuration`
+	:return: The path to the certbot binary.
+	:rtype: str
+	"""
+	if config:
+		letsencrypt_config = config.get_if_exists('server.letsencrypt', {})
+	else:
+		letsencrypt_config = {}
+	bin_path = letsencrypt_config.get('certbot_path') or startup.which('certbot')
+	if not os.path.isfile(bin_path):
+		return None
+	if not os.access(bin_path, os.R_OK | os.X_OK):
+		return None
+	return bin_path
 
 def get_sni_hostname_config(hostname, config=None):
 	"""

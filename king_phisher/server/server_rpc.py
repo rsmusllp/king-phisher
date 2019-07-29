@@ -891,9 +891,8 @@ def rpc_ssl_letsencrypt_certbot_version(handler):
 	:return: The version of certbot.
 	:rtype: str
 	"""
-	letsencrypt_config = handler.config.get_if_exists('server.letsencrypt', {})
-	bin_path = letsencrypt_config.get('certbot_path') or startup.which('certbot')
-	if not bin_path:
+	bin_path = letsencrypt.get_certbot_bin_path(handler.config)
+	if bin_path is None:
 		return None
 	results = startup.run_process((bin_path, '--version'))
 	match = re.match(r'^certbot (?P<version>\d+\.\d+\.\d+)$', results.stdout)
@@ -1075,6 +1074,7 @@ def rpc_ssl_status(handler):
 	"""
 	status = {
 		'enabled': _ssl_is_enabled(handler),
+		'has-letsencrypt': letsencrypt.get_certbot_bin_path(handler.config) is not None,
 		'has-sni': advancedhttpserver.g_ssl_has_server_sni
 	}
 	return status

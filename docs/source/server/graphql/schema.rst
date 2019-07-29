@@ -311,6 +311,13 @@ Objects
 
       Whether or not SSL is enabled for any interface the server is bound with.
 
+   .. gql:field:: hasLetsencrypt
+
+      :type: Boolean
+
+      Whether or not the Let's Encrypt functionality is available. This requires
+      that the ``certbot`` utility can be found.
+
    .. gql:field:: hasSni
 
       :type: Boolean

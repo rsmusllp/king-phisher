@@ -67,6 +67,7 @@ class SNIHostnameConnection(graphene.relay.Connection):
 
 class SSLStatus(graphene.ObjectType):
 	enabled = graphene.Field(graphene.Boolean)
+	has_letsencrypt = graphene.Field(graphene.Boolean)
 	has_sni = graphene.Field(graphene.Boolean)
 	@classmethod
 	def resolve(cls, info, **kwargs):
@@ -75,7 +76,12 @@ class SSLStatus(graphene.ObjectType):
 			enabled = any(address.get('ssl', False) for address in server_config.get('server.addresses'))
 		else:
 			enabled = False
-		return cls(enabled=enabled, has_sni=advancedhttpserver.g_ssl_has_server_sni)
+		instance = cls(
+			enabled=enabled,
+			has_letsencrypt=letsencrypt.get_certbot_bin_path(server_config),
+			has_sni=advancedhttpserver.g_ssl_has_server_sni
+		)
+		return instance
 
 class SSL(graphene.ObjectType):
 	sni_hostname = graphene.Field(SNIHostname, hostname=graphene.String())

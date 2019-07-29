@@ -18,6 +18,8 @@ Functions
 
 .. autofunction:: certbot_issue
 
+.. autofunction:: get_certbot_bin_path
+
 .. autofunction:: get_sni_hostname_config
 
 .. autofunction:: get_sni_hostnames
