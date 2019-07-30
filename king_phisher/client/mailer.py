@@ -520,6 +520,9 @@ class MailSenderThread(threading.Thread):
 			except smtplib.SMTPException:
 				self.logger.warning('received an SMTPException while negotiating STARTTLS with the SMTP server', exc_info=True)
 				return ConnectionErrorReason.ERROR_UNKNOWN
+			except socket.error:
+				self.logger.warning('received a socket.error while negotiating STARTTLS with the SMTP server')
+				return ConnectionErrorReason.ERROR_CONNECTION
 
 		username = self.config.get('smtp_username', '')
 		if username:
