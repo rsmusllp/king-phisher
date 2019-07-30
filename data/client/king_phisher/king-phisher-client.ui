@@ -5637,6 +5637,7 @@ Spencer McIntyre</property>
                                       <packing>
                                         <property name="left_attach">1</property>
                                         <property name="top_attach">1</property>
+                                        <property name="width">2</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -5659,7 +5660,7 @@ Spencer McIntyre</property>
                                         <property name="wrap">True</property>
                                       </object>
                                       <packing>
-                                        <property name="left_attach">1</property>
+                                        <property name="left_attach">2</property>
                                         <property name="top_attach">0</property>
                                       </packing>
                                     </child>
@@ -5671,6 +5672,17 @@ Spencer McIntyre</property>
                                       <packing>
                                         <property name="left_attach">0</property>
                                         <property name="top_attach">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkImage" id="CampaignAssistant.image_url_ssl_status">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-no</property>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">1</property>
+                                        <property name="top_attach">0</property>
                                       </packing>
                                     </child>
                                   </object>

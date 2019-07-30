@@ -86,6 +86,9 @@ def _homogenous_label_width(labels):
 	for label in labels:
 		label.set_property('width-request', width)
 
+def _set_icon(image, icon_name):
+	image.set_property('stock', icon_name)
+
 class CampaignAssistant(gui_utilities.GladeGObject):
 	"""
 	Display an assistant which walks the user through creating a new campaign or
@@ -124,6 +127,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 			'frame_company_existing',
 			'frame_company_new',
 			'image_intro_title',
+			'image_url_ssl_status',
 			'label_confirm_body',
 			'label_confirm_title',
 			'label_intro_body',
@@ -216,6 +220,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def __async_rpc_cb_issue_cert_error(self, error, message=None):
 		self._set_page_complete(True, page='Web Server URL')
 		self.gobjects['button_url_ssl_issue_certificate'].set_sensitive(True)
+		_set_icon(self.gobjects['image_url_ssl_status'], 'gtk-dialog-warning')
 		label = self.gobjects['label_url_ssl_status']
 		label.set_text('An error occurred while requesting a certificate for the specified hostname')
 		gui_utilities.show_dialog_error(
@@ -228,6 +233,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self._set_page_complete(True, page='Web Server URL')
 		if not result['success']:
 			return self.__async_rpc_cb_issue_cert_error(None, result['message'])
+		_set_icon(self.gobjects['image_url_ssl_status'], 'gtk-yes')
 		label = self.gobjects['label_url_ssl_status']
 		label.set_text('A certificate for the specified hostname has been issued and loaded')
 
@@ -300,10 +306,12 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		sni_hostname = results['ssl']['sniHostname']
 		label = self.gobjects['label_url_ssl_status']
 		if sni_hostname is None:
+			_set_icon(self.gobjects['image_url_ssl_status'], 'gtk-no')
 			label.set_text('There is no certificate available for the specified hostname')
 			if self._can_issue_certs:
 				self.gobjects['button_url_ssl_issue_certificate'].set_sensitive(True)
 		else:
+			_set_icon(self.gobjects['image_url_ssl_status'], 'gtk-yes')
 			label.set_text('A certificate for the specified hostname is available')
 
 	def __async_rpc_cb_ssl_status(self, results):
