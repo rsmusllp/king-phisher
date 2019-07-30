@@ -54,6 +54,7 @@
   "proxy.url": null,
   "rpc.serializer": null,
   "server": "localhost:22",
+  "server.history": [],
   "server_remote_port": 80,
   "server_use_ssl": false,
   "server_username": "",

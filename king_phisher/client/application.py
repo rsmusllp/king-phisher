@@ -726,6 +726,13 @@ class KingPhisherClientApplication(_Gtk_Application):
 		rpc.username = username
 		self.logger.debug('successfully authenticated to the remote king phisher service')
 
+		server_str = self.config['server']
+		history = self.config['server.history']
+		if server_str in history:
+			history.remove(server_str)
+		history.insert(0, server_str)
+		self.config['server.history'] = history
+
 		event_subscriber = server_events.ServerEventSubscriber(rpc)
 		if not event_subscriber.is_connected:
 			event_subscriber.reconnect = False
@@ -736,10 +743,13 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.rpc = rpc
 		self.server_events = event_subscriber
 		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), functools.partial(_rpc_ping, rpc))
-		user = self.rpc.graphql("""\
-		query getUser($name: String!) {
-			db { user(name: $name) { id name } }
-		}""", {'name': self.config['server_username']})['db']['user']
+		user = self.rpc.graphql(
+			"""\
+			query getUser($name: String!) {
+				db { user(name: $name) { id name } }
+			}""",
+			{'name': self.config['server_username']}
+		)['db']['user']
 		self.server_user = ServerUser(id=user['id'], name=user['name'])
 		self.emit('server-connected')
 		return True, ConnectionErrorReason.SUCCESS
