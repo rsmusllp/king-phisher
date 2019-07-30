@@ -36,7 +36,6 @@ import datetime
 import logging
 import os
 import re
-import subprocess
 
 from . import models
 from king_phisher import archive
@@ -44,6 +43,7 @@ from king_phisher import errors
 from king_phisher import find
 from king_phisher import ipaddress
 from king_phisher import serializers
+from king_phisher import startup
 from king_phisher.server import signals
 
 import alembic.command
@@ -69,7 +69,6 @@ _flush_signal_map = (
 )
 _metadata_namespace = 'metadata'
 _metadata_serializer = serializers.MsgPack
-_popen = lambda args: subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 
 @sqlalchemy.event.listens_for(Session, 'after_flush')
 def on_session_after_flush(session, flush_context):
@@ -83,13 +82,10 @@ def on_session_after_flush(session, flush_context):
 def _popen_psql(sql):
 	if os.getuid():
 		raise RuntimeError('_popen_psql can only be used as root due to su requirement')
-	proc_h = _popen(['su', 'postgres', '-c', "psql -At -c \"{0}\"".format(sql)])
-	if proc_h.wait():
+	results = startup.run_process(['su', 'postgres', '-c', "psql -At -c \"{0}\"".format(sql)])
+	if results.status != os.EX_OK:
 		raise errors.KingPhisherDatabaseError("failed to execute postgresql query '{0}' via su and psql".format(sql))
-	output = proc_h.stdout.read()
-	output = output.decode('utf-8')
-	output = output.strip()
-	return output.split('\n')
+	return results.stdout.split('\n')
 
 def clear_database():
 	"""
@@ -416,16 +412,15 @@ def init_database_postgresql(connection_url):
 			logger.debug('postgresql-setup was not found')
 		else:
 			logger.debug('using postgresql-setup to ensure that the database is initialized')
-			proc_h = _popen([postgresql_setup, '--initdb'])
-			proc_h.wait()
-		proc_h = _popen([systemctl_bin, 'status', 'postgresql.service'])
+			startup.run_process([postgresql_setup, '--initdb'])
+		results = startup.run_process([systemctl_bin, 'status', 'postgresql.service'])
 		# wait for the process to return and check if it's running (status 0)
-		if proc_h.wait() == 0:
+		if results.status == os.EX_OK:
 			logger.debug('postgresql service is already running via systemctl')
 		else:
 			logger.info('postgresql service is not running, starting it now via systemctl')
-			proc_h = _popen([systemctl_bin, 'start', 'postgresql'])
-			if proc_h.wait() != 0:
+			results = startup.run_process([systemctl_bin, 'start', 'postgresql'])
+			if results.status != os.EX_OK:
 				logger.error('failed to start the postgresql service via systemctl')
 				raise errors.KingPhisherDatabaseError('postgresql service failed to start via systemctl')
 			logger.debug('postgresql service successfully started via systemctl')
