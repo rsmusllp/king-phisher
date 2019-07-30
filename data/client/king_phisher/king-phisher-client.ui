@@ -4868,8 +4868,7 @@ Spencer McIntyre</property>
                         <property name="id_column">0</property>
                         <child internal-child="entry">
                           <object class="GtkEntry" id="combobox-entry3">
-                            <property name="can_focus">False</property>
-                            <property name="editable">False</property>
+                            <property name="can_focus">True</property>
                             <property name="placeholder_text" translatable="yes">company name (OPTIONAL)</property>
                           </object>
                         </child>

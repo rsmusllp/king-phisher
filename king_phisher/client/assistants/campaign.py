@@ -354,11 +354,17 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		return campaign
 
 	def _get_company_existing_id(self):
-		combobox_company = self.gobjects['combobox_company_existing']
-		model = combobox_company.get_model()
-		model_iter = combobox_company.get_active_iter()
-		if model is None or model_iter is None:
+		combobox = self.gobjects['combobox_company_existing']
+		model = combobox.get_model()
+		model_iter = combobox.get_active_iter()
+		if model is None:
 			return
+		if model_iter is None:
+			text = combobox.get_child().get_text().strip()
+			if text:
+				model_iter = gui_utilities.gtk_list_store_search(model, text, column=1)
+		if model_iter is None:
+			return None
 		return model.get_value(model_iter, 0)
 
 	def _get_company_new_id(self):
@@ -417,12 +423,12 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		model_iter = combobox.get_active_iter()
 		if model_iter is not None:
 			return model.get_value(model_iter, 0)
-		campaign_type = combobox.get_child().get_text().strip()
-		if not campaign_type:
+		text = combobox.get_child().get_text().strip()
+		if not text:
 			return
-		model_iter = gui_utilities.gtk_list_store_search(model, campaign_type, column=1)
+		model_iter = gui_utilities.gtk_list_store_search(model, text, column=1)
 		if model_iter is None:
-			return self.application.rpc('db/table/insert', db_table, 'name', campaign_type)
+			return self.application.rpc('db/table/insert', db_table, 'name', text)
 		return model.get_value(model_iter, 0)
 
 	def _get_webserver_url(self):
