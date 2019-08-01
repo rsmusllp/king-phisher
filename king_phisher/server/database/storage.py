@@ -30,35 +30,47 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import collections
+import collections.abc
 import contextlib
-import sys
 
 from . import manager as db_manager
 from . import models as db_models
 from king_phisher import serializers
 
-if sys.version_info[:3] >= (3, 3, 0):
-	_MutableMapping = collections.abc.MutableMapping
-else:
-	_MutableMapping = collections.MutableMapping
-
-class KeyValueStorage(_MutableMapping):
+class KeyValueStorage(collections.abc.MutableMapping):
 	"""
 	This class provides key-value storage of arbitrary data in the database.
 	The :py:mod:`.serializers` module is used for converting data into a format
 	suitable for storing in the database. This object, once initialized,
 	provides an interface just like a standard dictionary object. An optional
-	namespace can be specified as a unique identifier, allowing different
+	namespace should be specified as a unique identifier, allowing different
 	sources to store data using the same keys. All keys must be strings but
 	data can be anything that is serializable.
 	"""
 	serializer = serializers.MsgPack
-	def __init__(self, namespace=None):
+	def __init__(self, namespace=None, order_by='created'):
 		"""
+		.. versionchanged:: 1.14.0
+			Added the *order_by* parameter.
+
 		:param str namespace: The unique identifier of this namespace.
+		:param str order_by: The attribute to order stored items by. This must be one of "created", "id", "key", or "modified".
 		"""
 		self.namespace = namespace
+		self.order_by = order_by
+
+	@property
+	def order_by(self):
+		return self.__order_by
+
+	@order_by.setter
+	def order_by(self, value):
+		if not isinstance(value, str):
+			raise TypeError('order_by must be a string')
+		value = value.lower()
+		if value not in ('created', 'id', 'key', 'modified'):
+			raise ValueError('order_by must be one of: \'created\', \'id\', \'key\' or \'modified\'')
+		self.__order_by = value
 
 	@contextlib.contextmanager
 	def _session(self):
@@ -69,7 +81,7 @@ class KeyValueStorage(_MutableMapping):
 			session.close()
 
 	def _query(self, session):
-		return session.query(db_models.StorageData).filter_by(namespace=self.namespace)
+		return session.query(db_models.StorageData).filter_by(namespace=self.namespace).order_by(getattr(db_models.StorageData, self.order_by))
 
 	def __delitem__(self, key):
 		if not isinstance(key, str):

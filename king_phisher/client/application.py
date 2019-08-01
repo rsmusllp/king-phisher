@@ -42,6 +42,7 @@ import ssl
 import socket
 import sys
 import uuid
+import urllib.parse
 
 from king_phisher import constants
 from king_phisher import errors
@@ -496,6 +497,31 @@ class KingPhisherClientApplication(_Gtk_Application):
 		self.emit('campaign-set', None, self.config['campaign_id'])
 		return
 
+	def do_server_disconnected(self):
+		"""
+		Clean up the connections to the server and disconnect. This logs out of
+		the RPC, closes the server event socket, and stops the SSH forwarder.
+		"""
+		if self.rpc is not None:
+			if self.server_events is not None:
+				self.server_events.reconnect = False
+			GLib.source_remove(self._rpc_ping_event)
+			try:
+				self.rpc.async_call('logout')
+			except advancedhttpserver.RPCError as error:
+				self.logger.warning('failed to logout, rpc error: ' + error.message)
+			else:
+				if self.server_events is not None:
+					self.server_events.shutdown()
+					self.server_events = None
+			self.rpc.shutdown()
+			self.rpc = None
+
+		if self._ssh_forwarder:
+			self._ssh_forwarder.stop()
+			self._ssh_forwarder = None
+		return
+
 	def do_shutdown(self):
 		Gtk.Application.do_shutdown(self)
 		sys.excepthook = sys.__excepthook__
@@ -515,6 +541,8 @@ class KingPhisherClientApplication(_Gtk_Application):
 		Load the client configuration from disk and set the
 		:py:attr:`~.KingPhisherClientApplication.config` attribute.
 
+		Check the proxy environment variable and set them appropriately.
+
 		:param bool load_defaults: Load missing options from the template configuration file.
 		"""
 		client_template = find.data_file('client_config.json')
@@ -527,6 +555,24 @@ class KingPhisherClientApplication(_Gtk_Application):
 			for key, value in client_template.items():
 				if not key in self.config:
 					self.config[key] = value
+		env_proxy = os.environ.get('HTTPS_PROXY')
+		if env_proxy is not None:
+			env_proxy = env_proxy.strip()
+			proxy_url = urllib.parse.urlparse(env_proxy)
+			if not (proxy_url.hostname and proxy_url.scheme):
+				self.logger.error('invalid proxy url (missing scheme or hostname)')
+				return
+			if self.config['proxy.url'] and env_proxy != self.config['proxy.url']:
+				self.logger.warning('setting proxy configuration via the environment, overriding the configuration')
+			else:
+				self.logger.info('setting proxy configuration via the environment')
+			self.config['proxy.url'] = env_proxy
+		elif self.config['proxy.url']:
+			self.logger.info('setting proxy configuration via the configuration')
+			os.environ['HTTPS_PROXY'] = self.config['proxy.url']
+			os.environ['HTTP_PROXY'] = self.config['proxy.url']
+		else:
+			os.environ.pop('HTTP_PROXY', None)
 
 	def merge_config(self, config_file, strict=True):
 		"""
@@ -621,6 +667,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		try:
 			server_version_info = rpc('version')
 			if server_version_info is None:
+				rpc.shutdown()
 				raise RuntimeError('no version information was retrieved from the server')
 		except advancedhttpserver.RPCError as error:
 			self.logger.warning('failed to connect to the remote rpc service due to http status: ' + str(error.status))
@@ -641,6 +688,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 			connection_failed = False
 
 		if connection_failed:
+			rpc.shutdown()
 			self.emit('server-disconnected')
 			return False, ConnectionErrorReason.ERROR_CONNECTION
 
@@ -665,57 +713,46 @@ class KingPhisherClientApplication(_Gtk_Application):
 			error_text += '\nPlease update the local client installation.'
 		if error_text:
 			gui_utilities.show_dialog_error('The RPC API Versions Are Incompatible', window, error_text)
+			rpc.shutdown()
 			self.emit('server-disconnected')
 			return False, ConnectionErrorReason.ERROR_INCOMPATIBLE_VERSIONS
 
 		login_result, login_reason = rpc.login(username, password, otp)
 		if not login_result:
 			self.logger.warning('failed to authenticate to the remote king phisher service, reason: ' + login_reason)
+			rpc.shutdown()
 			self.emit('server-disconnected')
 			return False, login_reason
 		rpc.username = username
 		self.logger.debug('successfully authenticated to the remote king phisher service')
 
+		server_str = self.config['server']
+		history = self.config['server.history']
+		if server_str in history:
+			history.remove(server_str)
+		history.insert(0, server_str)
+		self.config['server.history'] = history
+
 		event_subscriber = server_events.ServerEventSubscriber(rpc)
 		if not event_subscriber.is_connected:
 			event_subscriber.reconnect = False
 			event_subscriber.shutdown()
+			rpc.shutdown()
+			self.emit('server-disconnected')
 			return False, ConnectionErrorReason.ERROR_UNKNOWN
 		self.rpc = rpc
 		self.server_events = event_subscriber
 		self._rpc_ping_event = GLib.timeout_add_seconds(parse_timespan('5m'), functools.partial(_rpc_ping, rpc))
-		user = self.rpc.graphql("""\
-		query getUser($name: String!) {
-			db { user(name: $name) { id name } }
-		}""", {'name': self.config['server_username']})['db']['user']
+		user = self.rpc.graphql(
+			"""\
+			query getUser($name: String!) {
+				db { user(name: $name) { id name } }
+			}""",
+			{'name': self.config['server_username']}
+		)['db']['user']
 		self.server_user = ServerUser(id=user['id'], name=user['name'])
 		self.emit('server-connected')
 		return True, ConnectionErrorReason.SUCCESS
-
-	def do_server_disconnected(self):
-		"""
-		Clean up the connections to the server and disconnect. This logs out
-		of the RPC, closes the server event socket, and stops the SSH
-		forwarder.
-		"""
-		if self.rpc is not None:
-			if self.server_events is not None:
-				self.server_events.reconnect = False
-			GLib.source_remove(self._rpc_ping_event)
-			try:
-				self.rpc('logout')
-			except advancedhttpserver.RPCError as error:
-				self.logger.warning('failed to logout, rpc error: ' + error.message)
-			else:
-				if self.server_events is not None:
-					self.server_events.shutdown()
-					self.server_events = None
-			self.rpc = None
-
-		if self._ssh_forwarder:
-			self._ssh_forwarder.stop()
-			self._ssh_forwarder = None
-		return
 
 	def show_campaign_graph(self, graph_name):
 		"""

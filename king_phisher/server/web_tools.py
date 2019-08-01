@@ -32,6 +32,8 @@
 
 import os
 
+from king_phisher.server import letsencrypt
+
 import smoke_zephyr.utilities
 
 def get_hostnames(config):
@@ -54,6 +56,7 @@ def get_hostnames(config):
 	"""
 	hostnames = config.get_if_exists('server.hostnames', [])
 	hostnames.extend(get_vhost_directories(config) or ())
+	hostnames.extend(letsencrypt.get_sni_hostnames(config).keys())
 	hostnames = smoke_zephyr.utilities.unique(hostnames)
 	return tuple(sorted(hostnames))
 

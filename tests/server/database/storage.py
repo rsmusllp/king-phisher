@@ -37,18 +37,8 @@ from king_phisher import testing
 from king_phisher.server.database import storage as db_storage
 
 class DatabaseStorageTests(testing.KingPhisherTestCase):
-	def test_storage_keys_must_be_strings(self):
-		storage = db_storage.KeyValueStorage()
-		with self.assertRaises(TypeError):
-			storage[1] = 'test'
-
-	def test_storage_missing_values_raise_keyerror(self):
-		storage = db_storage.KeyValueStorage()
-		with self.assertRaises(KeyError):
-			storage['missing']
-
 	def test_storage_accepts_native_types(self):
-		storage = db_storage.KeyValueStorage()
+		storage = db_storage.KeyValueStorage('testing.accepts-native-types')
 		self.assertNotIsInstance(storage, dict)
 		storage['data'] = {
 			'key1': 1,
@@ -57,6 +47,29 @@ class DatabaseStorageTests(testing.KingPhisherTestCase):
 			'key4': datetime.datetime.utcnow()
 		}
 		self.assertEquals(len(storage), 1)
+
+	def test_storage_keys_must_be_strings(self):
+		storage = db_storage.KeyValueStorage('testing.keys-must-be-strings')
+		with self.assertRaises(TypeError):
+			storage[1] = 'test'
+
+	def test_storage_missing_values_raise_keyerror(self):
+		storage = db_storage.KeyValueStorage('testing.missing-values-raise-keyerror')
+		with self.assertRaises(KeyError):
+			storage['missing']
+
+	def test_storage_order(self):
+		storage = db_storage.KeyValueStorage('testing.order')
+		self.assertEqual(storage.order_by, 'created')
+		storage['c'] = True
+		storage['a'] = True
+		storage['t'] = True
+		storage = db_storage.KeyValueStorage('testing.order', order_by='created')
+		self.assertEqual(''.join(storage.keys()), 'cat')
+		storage = db_storage.KeyValueStorage('testing.order', order_by='key')
+		self.assertEqual(''.join(storage.keys()), 'act')
+		with self.assertRaises(ValueError):
+			storage.order_by = 'doesnotexist'
 
 if __name__ == '__main__':
 	unittest.main()

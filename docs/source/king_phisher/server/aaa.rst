@@ -7,11 +7,6 @@
 This module provides the functionality authentication authorization and access
 to the server application.
 
-Functions
----------
-
-.. autofunction:: get_groups_for_user
-
 Classes
 -------
 

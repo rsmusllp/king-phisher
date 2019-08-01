@@ -52,7 +52,7 @@ from gi.repository import GObject
 from gi.repository import Gtk
 
 def main():
-	parser = argparse.ArgumentParser(description='King Phisher Client GUI', conflict_handler='resolve')
+	parser = argparse.ArgumentParser(prog='KingPhisher', description='King Phisher Client GUI', conflict_handler='resolve')
 	utilities.argp_add_args(parser, default_root='KingPhisher')
 	startup.argp_add_client(parser)
 	arguments = parser.parse_args()

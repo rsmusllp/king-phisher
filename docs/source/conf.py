@@ -42,13 +42,15 @@ import sphinx.domains.python
 import sphinx.util.docfields
 
 # -- General configuration ------------------------------------------------
-needs_sphinx = '1.6'
+needs_sphinx = '1.7'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-	'king_phisher.rpc_docs',
+	'king_phisher.sphinxext.database',
+	'king_phisher.sphinxext.graphql',
+	'king_phisher.sphinxext.rpc',
 	'sphinx.ext.autodoc',
 	'sphinx.ext.coverage',
 	'sphinx.ext.extlinks',

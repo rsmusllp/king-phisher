@@ -53,15 +53,18 @@ Special Method Names
 --------------------
 
 Some functions (and methods) have special prefixes or suffixes to denote
-specific compatibility.
+specific compatibility. Prefixes are permitted to be either preceded by a single
+or double underscore to denote internal or private use respectively.
 
-+-------------+--------+--------------------------+
-| Name        | Type   | Details                  |
-+-------------+--------+--------------------------+
-| ``_tsafe``  | Suffix | Non-Main GUI thread safe |
-+-------------+--------+--------------------------+
-| ``signal_`` | Prefix | GTK signal handler       |
-+-------------+--------+--------------------------+
++-------------------+--------+-------------------------------------+
+| Name              | Type   | Details                             |
++-------------------+--------+-------------------------------------+
+| ``_tsafe``        | Suffix | Non-Main GUI thread safe            |
++-------------------+--------+-------------------------------------+
+| ``async_rpc_cb_`` | Prefix | An asynchronous client RPC callback |
++-------------------+--------+-------------------------------------+
+| ``signal_``       | Prefix | GTK signal handler                  |
++-------------------+--------+-------------------------------------+
 
 English Verbiage
 ----------------

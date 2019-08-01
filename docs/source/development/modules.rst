@@ -1,7 +1,7 @@
 Modules
 =======
 
-The projects code base is split among multiple Python modules under the primary
+The project's code base is split among multiple Python modules under the primary
 :py:mod:`king_phisher` package. Code which is not specific to either the client
 or server code bases is directly in the root of the :py:mod:`king_phisher`
 package with code that is specific to either the client or server being under
@@ -24,7 +24,10 @@ during the early phases of the application's initialization. They may also be
 used for general purposes.
 
 * Modules must not import any code which is not either included in the Python
-  standard library or packaged with King Phisher.
+  standard library or packaged with King Phisher. For example, :py:mod:`os`,
+  :py:mod:`sys`, and :py:mod:`king_phisher.startup` may be imported while
+  :py:mod:`advancedhttpserver`, :py:mod:`jinja2`, and :py:mod:`smoke_zephyr` may
+  not.
 * Modules may only import other King Phisher modules which also have the "Clean
   Room" classification.
 

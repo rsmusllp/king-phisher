@@ -32,22 +32,15 @@
 
 import sys
 
-from king_phisher import its
-
 import boltons.typeutils
-
-if its.py_v3:
-	_intern = sys.intern
-else:
-	_intern = intern
 
 __all__ = ('OSArch', 'OSFamily', 'SPFResult')
 
 DEFAULT_LOG_LEVEL = 'WARNING'
 """The default log level to use for filtering messages by importance."""
 
-DISABLED = boltons.typeutils.make_sentinel('DISABLED')
-"""A sentinel value to indicate that a feature is disabled."""
+AUTOMATIC = boltons.typeutils.make_sentinel('AUTOMATIC', var_name='AUTOMATIC')
+DISABLED = boltons.typeutils.make_sentinel('DISABLED', var_name='DISABLED')
 
 class ConstantGroupMeta(type):
 	def __len__(cls):
@@ -82,46 +75,46 @@ class ConstantGroup(ConstantGroupMeta('_ConstantGroup', (object,), {})):
 
 class ConnectionErrorReason(ConstantGroup):
 	"""Constants which describe possible errors for an arbitrary connection process."""
-	ERROR_AUTHENTICATION_FAILED = _intern('authentication failed')
-	ERROR_CONNECTION = _intern('connection error')
-	ERROR_INCOMPATIBLE_VERSIONS = _intern('incompatible versions')
-	ERROR_INVALID_CREDENTIALS = _intern('invalid credentials')
-	ERROR_INVALID_OTP = _intern('invalid otp')
-	ERROR_PORT_FORWARD = _intern('port forward error')
-	ERROR_UNKNOWN = _intern('unknown error')
-	SUCCESS = _intern('success')
+	ERROR_AUTHENTICATION_FAILED = sys.intern('authentication failed')
+	ERROR_CONNECTION = sys.intern('connection error')
+	ERROR_INCOMPATIBLE_VERSIONS = sys.intern('incompatible versions')
+	ERROR_INVALID_CREDENTIALS = sys.intern('invalid credentials')
+	ERROR_INVALID_OTP = sys.intern('invalid otp')
+	ERROR_PORT_FORWARD = sys.intern('port forward error')
+	ERROR_UNKNOWN = sys.intern('unknown error')
+	SUCCESS = sys.intern('success')
 
 class ColorHexCode(ConstantGroup):
 	"""Constants for the hex code representations of different colors."""
-	BLACK = _intern('#000000')
-	BLUE = _intern('#0000ff')
-	GRAY = _intern('#808080')
-	GREEN = _intern('#00ff00')
-	LIGHT_YELLOW = _intern('#ffffb2')
-	ORANGE = _intern('#ffa500')
-	RED = _intern('#ff0000')
-	WHITE = _intern('#ffffff')
-	YELLOW = _intern('#ffff00')
+	BLACK = sys.intern('#000000')
+	BLUE = sys.intern('#0000ff')
+	GRAY = sys.intern('#808080')
+	GREEN = sys.intern('#00ff00')
+	LIGHT_YELLOW = sys.intern('#ffffb2')
+	ORANGE = sys.intern('#ffa500')
+	RED = sys.intern('#ff0000')
+	WHITE = sys.intern('#ffffff')
+	YELLOW = sys.intern('#ffff00')
 
 class OSArch(ConstantGroup):
 	"""Constants for different operating system architectures."""
-	PPC = _intern('PPC')
-	X86 = _intern('x86')
-	X86_64 = _intern('x86-64')
+	PPC = sys.intern('PPC')
+	X86 = sys.intern('x86')
+	X86_64 = sys.intern('x86-64')
 
 class OSFamily(ConstantGroup):
 	"""Constants for families of different operating systems."""
-	ANDROID = _intern('Android')
-	BLACKBERRY = _intern('BlackBerry')
-	IOS = _intern('iOS')
-	LINUX = _intern('Linux')
-	OSX = _intern('OS X')
-	WINDOWS = _intern('Windows NT')
-	WINDOWS_PHONE = _intern('Windows Phone')
+	ANDROID = sys.intern('Android')
+	BLACKBERRY = sys.intern('BlackBerry')
+	IOS = sys.intern('iOS')
+	LINUX = sys.intern('Linux')
+	OSX = sys.intern('OS X')
+	WINDOWS = sys.intern('Windows NT')
+	WINDOWS_PHONE = sys.intern('Windows Phone')
 
 class SPFResult(ConstantGroup):
 	"""Constants for the different result identifiers returned from SPF checks."""
-	PASS = _intern('pass')
-	NEUTRAL = _intern('neutral')
-	FAIL = _intern('fail')
-	SOFT_FAIL = _intern('softfail')
+	PASS = sys.intern('pass')
+	NEUTRAL = sys.intern('neutral')
+	FAIL = sys.intern('fail')
+	SOFT_FAIL = sys.intern('softfail')

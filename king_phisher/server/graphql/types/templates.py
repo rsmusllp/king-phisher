@@ -42,7 +42,6 @@ from . import misc as gql_misctypes
 from king_phisher import utilities
 from king_phisher.server import web_tools
 
-import graphene.relay
 import graphene.types.resolver
 import graphene.types.utils
 import jsonschema
@@ -53,12 +52,14 @@ __all__ = ('SiteTemplate', 'SiteTemplateConnection', 'SiteTemplateMetadata')
 
 logger = logging.getLogger('KingPhisher.Server.GraphQL.Types.Templates')
 
+_yaml_loader = functools.partial(yaml.load, Loader=yaml.SafeLoader)
+
 def _find_metadata(path):
 	prefixes = ('.', '_')
 	serializers = {
-		'.json': json,
-		'.yaml': yaml,
-		'.yml': yaml,
+		'.json': json.load,
+		'.yaml': _yaml_loader,
+		'.yml': _yaml_loader,
 	}
 	for prefix, (suffix, serializer) in itertools.product(prefixes, serializers.items()):
 		file_path = os.path.join(path, prefix + 'metadata' + suffix)
@@ -70,12 +71,12 @@ def _find_metadata(path):
 	return None, None
 
 def _load_metadata(path):
-	file_path, serializer = _find_metadata(path)
+	file_path, loader = _find_metadata(path)
 	if file_path is None:
 		logger.info('found no metadata file for path: ' + path)
 		return
 	with open(file_path, 'r') as file_h:
-		metadata = serializer.load(file_h)
+		metadata = loader(file_h)
 	# manually set the version to a string so the input format is more forgiving
 	if isinstance(metadata.get('version'), (float, int)):
 		metadata['version'] = str(metadata['version'])
@@ -84,10 +85,11 @@ def _load_metadata(path):
 	except jsonschema.exceptions.ValidationError:
 		logger.error("template metadata file: {0} failed to pass schema validation".format(file_path), exc_info=True)
 		return None
+	metadata['pages'] = [utilities.make_webrelpath(path) for path in metadata['pages']]
 	return metadata
 
 def _search_filter(path):
-	file_path, serializer = _find_metadata(path)
+	file_path, _ = _find_metadata(path)
 	return file_path is not None
 
 class SiteTemplateMetadata(graphene.ObjectType):
@@ -118,6 +120,8 @@ class SiteTemplate(graphene.ObjectType):
 		if not os.path.isdir(disk_path):
 			logger.warning("requested template path: {0} is not a directory".format(disk_path))
 			return None
+		if resource_path == '.':
+			resource_path = ''
 		return cls(disk_path, path=resource_path, **kwargs)
 
 	@classmethod
@@ -167,6 +171,12 @@ class SiteTemplateConnection(graphene.relay.Connection):
 			logger.warning('can not resolve templates without the server configuration')
 			return []
 		web_root = os.path.normpath(server_config.get('server.web_root'))
+		if not os.path.isdir(web_root):
+			logger.warning('can not resolve templates from the web root (invalid directory)')
+			return []
+		if not os.access(web_root, os.R_OK | os.X_OK):
+			logger.warning('can not resolve templates from the web root (invalid permissions)')
+			return []
 		hostname = kwargs.get('hostname')
 
 		if server_config.get('server.vhost_directories'):
@@ -196,4 +206,4 @@ class SiteTemplateConnection(graphene.relay.Connection):
 			for disk_path in iterate_templates(directory):
 				resource_path = os.path.relpath(disk_path, directory)
 				templates.append(SiteTemplate.from_path(disk_path, resource_path, hostname=hostname))
-		return templates
+		return sorted(templates, key=lambda template: template.path)

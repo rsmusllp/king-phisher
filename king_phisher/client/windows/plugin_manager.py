@@ -106,6 +106,7 @@ class PluginDocumentationWindow(html.HTMLWindow):
 			raise FileNotFoundError(errno.ENOENT, "could not find the data path for plugin '{0}'".format(plugin_id))
 		md_file = os.path.join(plugin_path, 'README.md')
 		if md_file is None or not os.path.isfile(md_file):
+			self.window.destroy()
 			raise FileNotFoundError(errno.ENOENT, "plugin '{0}' has no documentation".format(plugin_id), md_file)
 		self._md_file = md_file
 		self._plugin = self.application.plugin_manager[plugin_id]
@@ -171,10 +172,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	)
 	top_gobject = 'window'
 
-	# todo: this _tsafe note should be clarified in the documentation
-	# methods defined within this class that are suffixed with _tsafe are safe
-	# to be called from a non-GUI thread and by extension only call fellow
-	# _tsafe methods
 	def __init__(self, *args, **kwargs):
 		super(PluginManagerWindow, self).__init__(*args, **kwargs)
 		self.catalog_plugins = plugins.ClientCatalogManager(self.application.user_data_path)
@@ -325,20 +322,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		# WARNING: this may not be called from the GUI thread
 		self.__load_errors[name] = (error, traceback.format_exception(*sys.exc_info(), limit=5))
 
-	def _pip_install(self, packages):
-		options = ['--no-color']
-		if self.application.user_library_path is None:
-			self.logger.warning('can not install packages with out a defined library path')
-			return
-		options.extend(['--target', self.application.user_library_path])
-		args = [sys.executable, '-m', 'pip', 'install'] + options + packages
-		return startup.run_process(args)
-
 	def _plugin_disable(self, model_row):
 		named_row = _ModelNamedRow(*model_row)
 		self.application.plugin_manager.disable(named_row.id)
 		self.config['plugins.enabled'].remove(named_row.id)
-		model_row[_ModelNamedRow._fields.index('enabled')] = False
+		self._set_model_item(model_row.path, enabled=False, sensitive_installed=True)
 
 	def _plugin_enable(self, model_row):
 		named_row = _ModelNamedRow(*model_row)
@@ -348,7 +336,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		if not pm.enable(named_row.id):
 			return
-		self._set_model_item(model_row.path, 'enabled', True)
+		self._set_model_item(model_row.path, enabled=True, sensitive_installed=False)
 		self.config['plugins.enabled'].append(named_row.id)
 
 	def _plugin_install(self, model_row):
@@ -393,13 +381,25 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self.logger.info("installed plugin '{}' from catalog:{}, repository:{}".format(named_row.id, catalog_model.id, repo_model.id))
 		plugin = self._reload_plugin_tsafe(model_row, named_row)
 		if self.config['plugins.pip.install_dependencies']:
-			packages = smoke_zephyr.requirements.check_requirements(tuple(plugin.req_packages.keys()))
+			try:
+				packages = smoke_zephyr.requirements.check_requirements(tuple(plugin.req_packages.keys()))
+			except ValueError:
+				self.logger.warning("requirements check failed for plugin '{}', can not automatically install requirements".format(named_row.id))
+				packages = None
 			if packages:
 				self.logger.debug("installing missing or incompatible packages from PyPi for plugin '{0}'".format(named_row.id))
 				self._update_status_bar_tsafe(
 					"Installing {:,} dependenc{} for plugin {} from PyPi.".format(len(packages), 'y' if len(packages) == 1 else 'ies', named_row.title)
 				)
-				pip_results = self._pip_install(packages)
+				if self.application.plugin_manager.library_path:
+					pip_results = self.application.plugin_manager.install_packages(packages)
+				else:
+					self.logger.warning('no library path to install plugin dependencies')
+					_show_dialog_error_tsafe(
+						"Failed to run pip to install package(s) for plugin {}.".format(named_row.id)
+					)
+					# set pip results to none to safely complete and cleanly release installing lock.
+					pip_results = None
 				if pip_results is None:
 					self.logger.warning('pip install failed')
 					_show_dialog_error_tsafe(
@@ -418,8 +418,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 	def __plugin_install_post(self, catalog_model, repo_model, model_row, named_row):
 		# handles GUI related updates after data has been fetched from the internet
 		if model_row.path is not None:
-			self._set_model_item(model_row.path, 'installed', True)
-			self._set_model_item(model_row.path, 'version', self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version'])
+			version = self.catalog_plugins.get_collection(catalog_model.id, repo_model.id)[named_row.id]['version']
+			self._set_model_item(model_row.path, installed=True, version=version)
 			if self._selected_model_row.path == model_row.path:
 				self._popup_menu_refresh(model_row)
 		self._update_status_bar("Finished installing plugin {}.".format(named_row.title))
@@ -432,7 +432,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		if model_row.parent and model_row.parent[_ModelNamedRow._fields.index('id')] == _LOCAL_REPOSITORY_ID:
 			del self._model[model_row.path]
 		else:
-			self._set_model_item(model_row.path, 'installed', False)
+			self._set_model_item(model_row.path, installed=False)
 		self.logger.info("successfully uninstalled plugin {0}".format(named_row.id))
 		self._update_status_bar("Finished uninstalling plugin {}.".format(named_row.title))
 		return True
@@ -501,11 +501,14 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if named_row.id == self._selected_named_row.id:
 				self._set_info(model_row)
 			if klass is None:
-				self._set_model_item(model_row.path, 'title', "{0} (Reload Failed)".format(named_row.id))
+				self._set_model_item(model_row.path, title="{0} (Reload Failed)".format(named_row.id))
 			else:
-				self._set_model_item(model_row.path, 'title', klass.title)
-				self._set_model_item(model_row.path, 'compatibility', 'Yes' if klass.is_compatible else 'No')
-				self._set_model_item(model_row.path, 'version', klass.version)
+				self._set_model_item(
+					model_row.path,
+					title=klass.title,
+					compatibility='Yes' if klass.is_compatible else 'No',
+					version=klass.version
+				)
 		self._update_status_bar('Reloading plugin... completed.')
 
 	def _remove_matching_plugin(self, named_row, plugin_src):
@@ -545,8 +548,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		model_row = self._selected_model_row
 		return _ModelNamedRow(*model_row) if model_row else None
 
-	def _set_model_item(self, model_path, item, item_value):
-		self._model[model_path][_ModelNamedRow._fields.index(item)] = item_value
+	def _set_model_item(self, model_path, **kwargs):
+		model_row = self._model[model_path]
+		for key, value in kwargs.items():
+			model_row[_ModelNamedRow._fields.index(key)] = value
 
 	def _set_info(self, model_instance):
 		named_model = _ModelNamedRow(*model_instance)
@@ -628,10 +633,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		classifiers = plugin.get('classifiers', [])
 		if classifiers:
 			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', True)
-			gui_utilities.gtk_listbox_populate_labels(
-				self.gobjects['listbox_plugin_info_classifiers'],
-				classifiers
-			)
+			listbox = self.gobjects['listbox_plugin_info_classifiers']
+			listbox.set_property('visible', True)
+			gui_utilities.gtk_listbox_populate_labels(listbox, classifiers)
 		else:
 			self.gobjects['label_plugin_info_for_classifiers'].set_property('visible', False)
 
@@ -662,16 +666,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		label.set_property('visible', True)
 		listbox.set_property('visible', True)
-		for reference_url in reference_urls:
-			label = Gtk.Label()
-			label.connect('activate-link', self.signal_label_activate_link)
-			label.set_markup("<a href=\"{0}\">{1}</a>".format(reference_url.replace('"', '&quot;'), saxutils.escape(reference_url)))
-			label.set_property('halign', Gtk.Align.START)
-			label.set_property('track-visited-links', False)
-			label.set_property('use-markup', True)
-			label.set_property('valign', Gtk.Align.START)
-			label.set_property('visible', True)
-			listbox.add(label)
+		gui_utilities.gtk_listbox_populate_urls(listbox, reference_urls, signals={'activate-link': self.signal_label_activate_link})
 
 	def _show_dialog_busy(self):
 		gui_utilities.show_dialog_warning('Currently Busy', self.window, 'An operation is already running.')
@@ -950,11 +945,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		model_row = self._model[path]
 		named_row = _ModelNamedRow(*model_row)
 		if named_row.type == _ROW_TYPE_PLUGIN and named_row.installed:
+			if named_row.enabled:
+				self._plugin_disable(model_row)
 			self._plugin_uninstall(model_row)
 		else:
 			self._plugin_install(model_row)
-		if named_row.enabled:
-			self._plugin_enable(model_row)
 
 	def signal_treeview_row_activated(self, treeview, path, column):
 		model_row = self._model[path]

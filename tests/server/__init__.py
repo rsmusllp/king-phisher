@@ -31,7 +31,7 @@
 #
 
 import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
+logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
 logging.getLogger('').setLevel(logging.CRITICAL)
 
 from .aaa import ServerAuthenticatedSessionManagerTests
@@ -41,6 +41,7 @@ from .configuration import ServerConfigurationTests
 from .database import *
 from .graphql import ServerGraphQLTests
 from .graphql import ServerGraphQLDatabaseTests
+from .letsencrypt import ServerSNIHostnameTests
 from .rest_api import ServerRESTAPITests
 from .server import CampaignWorkflowTests
 from .server import ServerTests

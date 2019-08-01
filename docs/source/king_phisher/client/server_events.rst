@@ -4,6 +4,9 @@
 .. module:: king_phisher.client.server_events
    :synopsis:
 
+This module provides functionality to allow the client application to subscribe
+to events which are published by the server.
+
 Functions
 ---------
 

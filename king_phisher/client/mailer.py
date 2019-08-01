@@ -49,9 +49,9 @@ import mimetypes
 import os
 import smtplib
 import socket
-import sys
 import threading
 import time
+import urllib.parse
 
 from king_phisher import errors
 from king_phisher import ics
@@ -67,13 +67,6 @@ from king_phisher.ssh_forward import SSHTCPForwarder
 from gi.repository import GLib
 import paramiko
 import smoke_zephyr.utilities
-
-if sys.version_info[0] < 3:
-	import urllib
-	import urlparse
-	urllib.parse = urlparse
-else:
-	import urllib.parse  # pylint: disable=ungrouped-imports
 
 __all__ = (
 	'guess_smtp_server_address',
@@ -488,7 +481,9 @@ class MailSenderThread(threading.Thread):
 			self.logger.warning('failed to authenticate to the remote ssh server')
 			return ConnectionErrorReason.ERROR_AUTHENTICATION_FAILED
 		except paramiko.SSHException as error:
-			self.logger.warning("failed with ssh exception '{0}'".format(error.message))
+			self.logger.warning("failed with: {0!r}".format(error))
+		except socket.timeout:
+			self.logger.warning('the connection to the ssh server timed out')
 		except Exception:
 			self.logger.warning('failed to connect to the remote ssh server', exc_info=True)
 		else:
@@ -525,6 +520,9 @@ class MailSenderThread(threading.Thread):
 			except smtplib.SMTPException:
 				self.logger.warning('received an SMTPException while negotiating STARTTLS with the SMTP server', exc_info=True)
 				return ConnectionErrorReason.ERROR_UNKNOWN
+			except socket.error:
+				self.logger.warning('received a socket.error while negotiating STARTTLS with the SMTP server')
+				return ConnectionErrorReason.ERROR_CONNECTION
 
 		username = self.config.get('smtp_username', '')
 		if username:
@@ -685,6 +683,12 @@ class MailSenderThread(threading.Thread):
 			target = MessageTargetPlaceholder(uid=self.config['server_config'].get('server.secret_id'))
 		attachments = self.get_mime_attachments()
 		message = getattr(self, 'create_message_' + self.config['mailer.message_type'])(target, attachments)
+		# set the Message-ID header, per RFC-2822 using the target UID and the sender domain
+		mime_msg_id = '<' + target.uid
+		if '@' in self.config['mailer.source_email']:
+			mime_msg_id += '@' + self.config['mailer.source_email'].split('@', 1)[1]
+		mime_msg_id += '>'
+		message['Message-ID'] = mime_msg_id
 		mailer_tab = self.application.main_tabs['mailer']
 		mailer_tab.emit('message-create', target, message)
 		return message

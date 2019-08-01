@@ -283,6 +283,7 @@ class KingPhisherServerTestCase(KingPhisherTestCase):
 	def tearDown(self):
 		if not self.shutdown_requested:
 			self.assertTrue(self.server_thread.is_alive())
+		self.rpc.shutdown()
 		self.server.shutdown()
 		self.server_thread.join(10.0)
 		self.assertFalse(self.server_thread.is_alive())

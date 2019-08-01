@@ -8,6 +8,21 @@ team for note worthy changes.
 Version 1.x.x
 -------------
 
+Version 1.14.0
+^^^^^^^^^^^^^^
+
+Released :release:`1.14.0` on August 1st, 2019
+
+* Added the ``Message-ID`` MIME header to outgoing messages
+* Attempt SSH authentication with all agent-provided SSH keys
+* Deleted ``Pipfile.lock`` from repository to prevent hash issues between python interpreter versions
+* Add ``--three`` to ``pipenv install`` and ``pipenv --update`` startup procedures to force use of Python 3
+* Added server support for installing missing plugin requirements during initialization
+* Added asynchronous RPC methods to the client
+* Added GraphQL and database schema documentation
+* Changed Target URL to Web Server URL in Campaign Editor
+* Added the ability issue SSL Certificates through certbot
+
 Version 1.13.1
 ^^^^^^^^^^^^^^
 

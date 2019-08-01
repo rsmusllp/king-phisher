@@ -26,6 +26,8 @@ Functions
 
 .. autofunction:: make_message_uid
 
+.. autofunction:: make_webrelpath
+
 .. autofunction:: make_visit_uid
 
 .. autofunction:: nonempty_string
@@ -47,6 +49,10 @@ Functions
 Classes
 -------
 
+.. autoclass:: Event
+   :show-inheritance:
+   :members:
+
 .. autoclass:: FreezableDict
    :show-inheritance:
    :members:
@@ -58,3 +64,5 @@ Classes
 
 .. autoclass:: Mock
    :show-inheritance:
+
+.. autoclass:: Thread

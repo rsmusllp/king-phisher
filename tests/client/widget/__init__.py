@@ -31,7 +31,7 @@
 #
 
 import logging
-logging.getLogger('KingPhisher').addHandler(logging.NullHandler)
+logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
 logging.getLogger('').setLevel(logging.CRITICAL)
 
 from .completion_providers import ClientJinjaComletionProviderTests

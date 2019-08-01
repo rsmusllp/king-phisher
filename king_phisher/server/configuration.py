@@ -42,7 +42,8 @@ import smoke_zephyr.configuration as configuration
 import jsonschema
 import yaml
 
-YamlLoader = getattr(yaml, 'CLoader', yaml.Loader)
+# see: https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
+YamlLoader = getattr(yaml, 'CFullLoader', yaml.FullLoader)
 
 def _load_file(file_path, yaml_include=True):
 	_, extension = os.path.splitext(file_path)

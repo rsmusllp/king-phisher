@@ -528,10 +528,7 @@ def sign_item_files(local_path, signing_key, repo_path=None):
 		# data is done in reverse, meaning our source file as it exists on disk
 		# will be the destination when the client fetches it
 		source_file_path = os.path.relpath(local_file_path, repo_path)
-		if os.path.isdir(local_path):
-			destination_file_path = os.path.relpath(local_file_path, os.path.relpath(os.path.dirname(local_path), repo_path))
-		else:
-			destination_file_path = os.path.relpath(local_file_path, os.path.dirname(local_path))
+		destination_file_path = os.path.relpath(local_file_path, os.path.dirname(local_path))
 
 		signature = binascii.b2a_base64(signature).decode('utf-8').rstrip()
 		item_file = CollectionItemFile(

@@ -1,7 +1,7 @@
 .. _graphql-label:
 
-Overview
-========
+GraphQL Overview
+================
 
 The RPC API provides a function for executing GraphQL_ queries against the
 server. The schema the server supports allows accessing the database models
@@ -25,29 +25,32 @@ Schema
 ------
 
 The following table represents the top-level objects available in the GraphQL
-schema and their various sub-object types as applicable.
+schema and their various sub-object types as applicable. For more information,
+see the :ref:`graphql-schema-label` documentation.
 
-+-------------------+-------------+-------------------------------------------------------------+
-| Object Name       | Object Type | Description                                                 |
-+===================+=============+=============================================================+
-| ``db``            | Object      | Database models. See :ref:`db-table-relationships-label`    |
-|                   |             | for information on available sub-objects.                   |
-+-------------------+-------------+-------------------------------------------------------------+
-| ``geoloc``        | Object      | Geolocation information.                                    |
-+-------------------+-------------+-------------------------------------------------------------+
-| ``hostnames``     | [String]    | The hostnames that are configured for use with this server. |
-+-------------------+-------------+-------------------------------------------------------------+
-| ``plugin``        | Object      | Specific information for a loaded plugin.                   |
-+-------------------+-------------+-------------------------------------------------------------+
-| ``plugins``       | Connection  | Information on all loaded plugins.                          |
-+-------------------+-------------+-------------------------------------------------------------+
-| ``siteTemplate``  | Object      | Information for an available site template.                 |
-+-------------------+-------------+-------------------------------------------------------------+
-| ``siteTemplates`` | Connection  | Information on all available site templates.                |
-+-------------------+-------------+-------------------------------------------------------------+
-| ``version``       | String      | The :py:data:`~king_phisher.version.version` of the King    |
-|                   |             | Phisher server.                                             |
-+-------------------+-------------+-------------------------------------------------------------+
++--------------------------+-------------------------+-------------------------------------------------------------+
+| Object Name              | Object Type             | Description                                                 |
++==========================+=========================+=============================================================+
+| ``db``                   | Object                  | Database models. See :ref:`db-table-relationships-label`    |
+|                          |                         | for information on available sub-objects.                   |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`geoloc`        | :gql:obj:`GeoLocation`  | Geolocation information.                                    |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`hostnames`     | [String]                | The hostnames that are configured for use with this server. |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`plugin`        | :gql:obj:`Plugin`       | Specific information for a loaded plugin.                   |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`plugins`       | Connection              | Information on all loaded plugins.                          |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`siteTemplate`  | :gql:obj:`SiteTemplate` | Information for an available site template.                 |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`siteTemplates` | Connection              | Information on all available site templates.                |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`ssl`           | :gql:obj:`SSL`          | Information regarding the SSL configuration and status.     |
++--------------------------+-------------------------+-------------------------------------------------------------+
+| :gql:fld:`version`       | String                  | The :py:data:`~king_phisher.version.version` of the King    |
+|                          |                         | Phisher server.                                             |
++--------------------------+-------------------------+-------------------------------------------------------------+
 
 :Connection:
   A connection sub-object is a special object providing a defined interface used
@@ -59,8 +62,6 @@ schema and their various sub-object types as applicable.
   Objects can in turn have their own attributes which can be a combination
   of additional sub-objects or scalars.
 
-:N/A:
-  Objects with no sub-type return a scalar type such as a string or an integer.
 
 Additional Database Model Attributes
 ------------------------------------
@@ -98,7 +99,7 @@ argument is an object containing one or more of the following key words.
 | field :sup:`1` | String             | N/A      | The name of a database field to filter by.     |
 +----------------+--------------------+----------+------------------------------------------------+
 | operator       | FilterOperatorEnum | ``EQ``   | The operator to use with value, one of ``EQ``, |
-|                |                    |          | ``GE``, ``GT``, ``LE``, ``LT``, ``NE``.        |
+|                |                    |          | ``GE``, ``GT``, ``LE``, ``LT``, or ``NE``.     |
 +----------------+--------------------+----------+------------------------------------------------+
 | value          | AnyScalar          | ``Null`` | The value of the field to use with the         |
 |                |                    | :sup:`2` | specified comparison operator.                 |
@@ -121,8 +122,8 @@ one or more fields.
 +===========+===================+==========+==================================================+
 | field*    | String            | N/A      | The name of a database field to sort by.         |
 +-----------+-------------------+----------+--------------------------------------------------+
-| direction | SortDirectionEnum | ``AESC`` | The direction in which to sort the data, one of  |
-|           |                   |          | ``AESC``, ``DESC``.                              |
+| direction | SortDirectionEnum | ``AESC`` | The direction in which to sort the data, either  |
+|           |                   |          | ``AESC`` or ``DESC``.                            |
 +-----------+-------------------+----------+--------------------------------------------------+
 
 \* This keyword must be specified.
@@ -135,6 +136,14 @@ utility. This console provides a ``graphql_query`` function which takes a query
 string parameter and optional query variables. This can be used for easily
 testing queries. It should be noted however that using this utility directly on
 the server does not restrict access to data as the RPC interface does.
+
+The client's RPC terminal (only available on Linux due to the dependency on VTE)
+can also be used to easily execute raw GraphQL queries. The RPC method can be
+called directly, or when IPython is available, either the ``%graphql`` or
+``%graphql_file`` commands can be used. The former of which takes a GraphQL
+query as an argument, while the second takes the path to a file on disk to
+execute. Both of these are useful for debugging and inspecting GraphQL queries
+and their resulting data structures.
 
 .. _Connection Types: https://facebook.github.io/relay/graphql/connections.htm#sec-Connection-Types
 .. _GraphQL: http://graphql.org/

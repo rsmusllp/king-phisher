@@ -104,6 +104,15 @@ class LoginDialog(LoginDialogBase):
 		self.popup_menu.append('About', lambda x: about.AboutDialog(self.application).interact())
 		self.popup_menu.append('Import Configuration', self.signal_menuitem_activate_import_config)
 
+		# setup server completion
+		model = Gtk.ListStore(str)
+		for entry in self.config['server.history']:
+			model.append((entry,))
+		completion = Gtk.EntryCompletion()
+		completion.set_model(model)
+		completion.set_text_column(0)
+		self.gobjects['entry_server'].set_completion(completion)
+
 	def signal_button_pressed(self, _, event):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY):
 			return

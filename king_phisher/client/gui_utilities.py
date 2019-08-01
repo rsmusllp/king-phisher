@@ -109,6 +109,39 @@ def _store_extend(store, things, clear=False):
 	for thing in things:
 		store.append(thing)
 
+def delayed_signal(delay=500):
+	"""
+	A decorator to delay the execution of a signal handler to aggregate emission
+	into a single event. This can for example be used to run a handler when a
+	:py:class:`Gtk.Entry` widget's ``changed`` signal is emitted but not after
+	every single key press meaning the handler can perform network operations to
+	validate or otherwise process input.
+
+	.. note::
+		The decorated function **must** be a method. The wrapper installed by
+		this decorator will automatically add an attribute to the class to track
+		invoked instances to ensure the timeout is respected.
+
+	.. versionadded:: 1.14.0
+
+	:param int delay: The delay in milliseconds from the original emission
+		before the handler should be executed.
+	"""
+	def decorator(function):
+		src_name = '__delayed_source_' + function.__name__
+		@functools.wraps(function)
+		def wrapped(self, *args, **kwargs):
+			def new_function(self, *args, **kwargs):
+				setattr(self, src_name, None)
+				return function(self, *args, **kwargs)
+			src = getattr(self, src_name, None)
+			if src is not None:
+				return
+			src = GLib.timeout_add(delay, new_function, self, *args, **kwargs)
+			setattr(self, src_name, src)
+		return wrapped
+	return decorator
+
 def glib_idle_add_store_extend(store, things, clear=False, wait=False):
 	"""
 	Extend a GTK store object (either :py:class:`Gtk.ListStore` or
@@ -287,6 +320,74 @@ GOBJECT_PROPERTY_MAP['calendar'] = (
 	gtk_calendar_get_pydate
 )
 
+def gtk_combobox_get_active_cell(combobox, column=None):
+	"""
+	Get the active value from a GTK combobox and it's respective model. If
+	nothing is selected, ``None`` is returned.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to retrieve the active model value for.
+	:param int column: The column ID to retrieve from the selected row. If not
+		specified, the combobox's ``id-column`` property will be used.
+	:return: The selected model row's value.
+	"""
+	row = gtk_combobox_get_active_row(combobox)
+	if row is None:
+		return None
+	if column is None:
+		column = combobox.get_property('id-column')
+	return row[column]
+
+def gtk_combobox_get_active_row(combobox):
+	"""
+	Get the active row from a GTK combobox and it's respective model. If
+	nothing is selected, ``None`` is returned.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to retrieve the active model row for.
+	:return: The selected model row.
+	"""
+	active = combobox.get_active()
+	if active == -1:
+		return None
+	model = combobox.get_model()
+	return model[active]
+
+def gtk_combobox_get_entry_text(combobox):
+	"""
+	Get the text from a combobox's entry widget.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to retrieve the entry text for.
+	:return: The value of the entry text.
+	:rtype: str
+	"""
+	if not combobox.get_has_entry():
+		raise ValueError('the specified combobox does not have an entry')
+	entry = combobox.get_child()
+	return entry.get_text()
+
+def gtk_combobox_set_entry_completion(combobox):
+	"""
+	Add completion for a :py:class:`Gtk.ComboBox` widget which contains an
+	entry. They combobox's ``entry-text-column`` property it used to determine
+	which column in its model contains the strings to suggest for completion.
+
+	.. versionadded:: 1.14.0
+
+	:param combobox: The combobox to add completion for.
+	:type: :py:class:`Gtk.ComboBox`
+	"""
+	utilities.assert_arg_type(combobox, Gtk.ComboBox)
+	completion = Gtk.EntryCompletion()
+	completion.set_model(combobox.get_model())
+	completion.set_text_column(combobox.get_entry_text_column())
+	entry = combobox.get_child()
+	entry.set_completion(completion)
+
 def gtk_list_store_search(list_store, value, column=0):
 	"""
 	Search a :py:class:`Gtk.ListStore` for a value and return a
@@ -306,8 +407,8 @@ def gtk_list_store_search(list_store, value, column=0):
 
 def gtk_listbox_populate_labels(listbox, label_strings):
 	"""
-	Formats and adds labels to a listbox. Each label is styled as a separate
-	entry.
+	Formats and adds labels to a listbox. Each label is styled and added as a
+	separate entry.
 
 	.. versionadded:: 1.13.0
 
@@ -316,11 +417,37 @@ def gtk_listbox_populate_labels(listbox, label_strings):
 	:param list label_strings: List of strings to add to the Gtk Listbox as labels.
 	"""
 	gtk_widget_destroy_children(listbox)
-	listbox.set_property('visible', True)
 	for label_text in label_strings:
 		label = Gtk.Label()
 		label.set_markup("<span font=\"smaller\"><tt>{0}</tt></span>".format(saxutils.escape(label_text)))
 		label.set_property('halign', Gtk.Align.START)
+		label.set_property('use-markup', True)
+		label.set_property('valign', Gtk.Align.START)
+		label.set_property('visible', True)
+		listbox.add(label)
+
+def gtk_listbox_populate_urls(listbox, url_strings, signals=None):
+	"""
+	Format and adds URLs to a list box. Each URL is styeled and added as a
+	seperate entry.
+
+	.. versionadded:: 1.14.0
+
+	:param listbox: Gtk Listbox to put the labels in.
+	:type listbox: :py:class:`Gtk.listbox`
+	:param list url_strings: List of URL strings to add to the Gtk Listbox as labels.
+	:param dict signals: A dictionary, keyed by signal names to signal handler
+		functions for the labels added to the listbox.
+	"""
+	gtk_widget_destroy_children(listbox)
+	signals = signals or {}
+	for url in url_strings:
+		label = Gtk.Label()
+		for signal, handler in signals.items():
+			label.connect(signal, handler)
+		label.set_markup("<a href=\"{0}\">{1}</a>".format(url.replace('"', '&quot;'), saxutils.escape(url)))
+		label.set_property('halign', Gtk.Align.START)
+		label.set_property('track-visited-links', False)
 		label.set_property('use-markup', True)
 		label.set_property('valign', Gtk.Align.START)
 		label.set_property('visible', True)

@@ -35,6 +35,7 @@ import os
 import socket
 
 from king_phisher import errors
+from king_phisher.server import letsencrypt
 from king_phisher.server import signals
 from king_phisher.server.server import KingPhisherRequestHandler, KingPhisherServer
 
@@ -99,6 +100,23 @@ def get_ssl_hostnames(config):
 		ssl_hostnames.append((hostname, ssl_certfile, ssl_keyfile))
 	return ssl_hostnames
 
+def _server_add_sni_cert(server, hostname, sni_config):
+	if not os.path.isfile(sni_config.certfile):
+		logger.warning("skipping ssl configuration for hostname: {} (missing certificate file: {})".format(hostname, sni_config.certfile))
+		return False
+	if not os.access(sni_config.certfile, os.R_OK):
+		logger.warning("skipping ssl configuration for hostname: {} (unreadable certificate file: {})".format(hostname, sni_config.certfile))
+		return False
+	if not os.path.isfile(sni_config.keyfile):
+		logger.warning("skipping ssl configuration for hostname: {} (missing key file: {})".format(hostname, sni_config.keyfile))
+		return False
+	if not os.access(sni_config.keyfile, os.R_OK):
+		logger.warning("skipping ssl configuration for hostname: {} (unreadable key file: {})".format(hostname, sni_config.keyfile))
+		return False
+	logger.info("setting configuration for ssl hostname: {0} with certificate file: {1}".format(hostname, sni_config.certfile))
+	server.add_sni_cert(hostname, ssl_certfile=sni_config.certfile, ssl_keyfile=sni_config.keyfile)
+	return True
+
 def server_from_config(config, handler_klass=None, plugin_manager=None):
 	"""
 	Build a server from a provided configuration instance. If *handler_klass* is
@@ -153,9 +171,17 @@ def server_from_config(config, handler_klass=None, plugin_manager=None):
 	if config.has_option('server.server_header'):
 		server.server_version = config.get('server.server_header')
 		logger.info("setting the server version to the custom header: '{0}'".format(config.get('server.server_header')))
+
 	for hostname, ssl_certfile, ssl_keyfile in ssl_hostnames:
-		logger.info("setting configuration for ssl hostname: {0} with cert: {1}".format(hostname, ssl_certfile))
-		server.add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+		sni_config = letsencrypt.get_sni_hostname_config(hostname, config)
+		if sni_config is None:
+			letsencrypt.set_sni_hostname(hostname, ssl_certfile, ssl_keyfile, enabled=True)
+
+	for hostname, sni_config in letsencrypt.get_sni_hostnames(config, check_files=False).items():
+		if not sni_config.enabled:
+			continue
+		if not _server_add_sni_cert(server, hostname, sni_config):
+			letsencrypt.set_sni_hostname(hostname, sni_config.certfile, sni_config.keyfile, enabled=False)
 
 	signals.server_initialized.send(server)
 	return server

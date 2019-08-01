@@ -54,6 +54,7 @@ class Query(graphene.ObjectType):
 	plugins = gql_types.ConnectionField(gql_types.PluginConnection)
 	site_template = graphene.Field(gql_types.SiteTemplate, hostname=graphene.String(), path=graphene.String())
 	site_templates = gql_types.ConnectionField(gql_types.SiteTemplateConnection, hostname=graphene.String(), max_depth=graphene.Int())
+	ssl = graphene.Field(gql_types.SSL)
 	version = graphene.Field(graphene.String)
 	def resolve_db(self, info, **kwargs):
 		return gql_types.Database()
@@ -82,6 +83,9 @@ class Query(graphene.ObjectType):
 
 	def resolve_site_templates(self, info, **kwargs):
 		return gql_types.SiteTemplateConnection.resolve(info, **kwargs)
+
+	def resolve_ssl(self, info, **kwargs):
+		return gql_types.SSL.resolve(info, **kwargs)
 
 	def resolve_version(self, info, **kwargs):
 		return version.version

@@ -16,7 +16,6 @@ digraph {
     User
     Visit
 
-    // style=bold for one to one relationships
     // style=dashed for foreign key constraints which are nullable
     Campaign            ->  AlertSubscription
     Campaign            ->  Credential
@@ -34,7 +33,7 @@ digraph {
     Message             ->  Credential
     Message             ->  Visit
     User                ->  AlertSubscription
-    User                ->  AuthenticatedSession  [style=bold]
+    User                ->  AuthenticatedSession
     User                ->  Campaign
     Visit               ->  Credential
 }

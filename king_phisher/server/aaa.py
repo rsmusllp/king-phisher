@@ -50,6 +50,7 @@ import weakref
 from king_phisher import errors
 from king_phisher import its
 from king_phisher import utilities
+from king_phisher.server import pylibc
 from king_phisher.server.database import manager as db_manager
 from king_phisher.server.database import models as db_models
 
@@ -70,22 +71,9 @@ def alarm_set(seconds):
 	yield
 	signal.alarm(0)
 
-@smoke_zephyr.utilities.Cache('3h')
-def get_groups_for_user(username):
-	"""
-	Get the groups that a user is a member of.
-
-	:param str username: The user to lookup group membership for.
-	:rtype: set
-	:return: The names of the groups that the user is a member of.
-	"""
-	groups = set(g.gr_name for g in grp.getgrall() if username in g.gr_mem)
-	groups.add(grp.getgrgid(pwd.getpwnam(username).pw_gid).gr_name)
-	return groups
-
 class AuthenticatedSession(object):
 	"""A container to store information associated with an authenticated session."""
-	__slots__ = ('_event_socket', 'created', 'last_seen', 'user', 'user_is_admin')
+	__slots__ = ('_event_socket', 'created', 'last_seen', 'user', 'user_access_level', 'user_is_admin')
 	# also used in tools/database_console for mocking a live session
 	def __init__(self, user):
 		"""
@@ -93,6 +81,7 @@ class AuthenticatedSession(object):
 		:type user: :py:class:`~king_phisher.server.database.models.User`
 		"""
 		self.user = user.id
+		self.user_access_level = user.access_level
 		self.user_is_admin = user.is_admin
 		self.created = db_models.current_timestamp()
 		self.last_seen = self.created
@@ -331,11 +320,13 @@ class ForkedAuthenticator(object):
 		"""The timeout of the credential cache in seconds."""
 		self.response_timeout = 30
 		"""The timeout for individual requests in seconds."""
-		self.required_group = required_group
 		self.service = pam_service
 		self.logger.debug("use pam service '{0}' for authentication".format(self.service))
-		if self.required_group and not self.required_group in [g.gr_name for g in grp.getgrall()]:
-			self.logger.error('the specified group for authentication was not found')
+		self.required_group = required_group
+		if required_group:
+			group = pylibc.getgrnam(required_group)
+			if group is None:
+				self.logger.warning('the specified group for authentication was not found')
 		self.parent_rfile, self.child_wfile = os.pipe()
 		self.child_rfile, self.parent_wfile = os.pipe()
 		self.child_pid = os.fork()
@@ -460,10 +451,11 @@ class ForkedAuthenticator(object):
 			if result['result']:
 				if self.required_group:
 					result['result'] = False
-					self.logger.debug("checking groups for user: {0}".format(username))
+					self.logger.debug("checking group membership for user: {0}".format(username))
 					try:
 						with alarm_set(int(round(self.response_timeout - elapsed_time))):
-							groups = get_groups_for_user(username)
+							groups = pylibc.getgrouplist(username)
+							group = pylibc.getgrnam(self.required_group)
 					except errors.KingPhisherTimeoutError:
 						self.logger.warning("authentication failed for user: {0} reason: received timeout".format(username))
 					except KeyError:
@@ -471,11 +463,13 @@ class ForkedAuthenticator(object):
 					except Exception:
 						self.logger.error("encountered an Exception while looking up group membership for user: {0}".format(username), exc_info=True)
 					else:
-						if self.required_group not in groups:
+						if group is None:
+							self.logger.error('the specified group for authentication was not found, can not authenticate the user')
+						elif group.gr_gid not in groups:
 							self.logger.warning("authentication failed for user: {0} reason: lack of group membership".format(username))
-							continue
-						result['result'] = True
-						self.logger.debug("group requirement met for user: {0}".format(username))
+						else:
+							result['result'] = True
+							self.logger.debug("group requirement met for user: {0}".format(username))
 			else:
 				self.logger.warning("authentication failed for user: {0} reason: bad username or password".format(username))
 			self._raw_send(result)

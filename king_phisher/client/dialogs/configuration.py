@@ -32,7 +32,9 @@
 
 import collections
 import logging
+import os
 import string
+import urllib.parse
 
 from king_phisher import its
 from king_phisher import utilities
@@ -221,6 +223,21 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		for plugin_klass in plugin_klasses:
 			self._configure_settings_plugin_options(plugin_klass)
 
+	def _configure_settings_proxy(self):
+		if not self.config['proxy.url']:
+			return
+		formatted_proxy_url = urllib.parse.urlparse(self.config['proxy.url'])
+		netloc = formatted_proxy_url.netloc
+		if formatted_proxy_url.username or formatted_proxy_url.password:
+			if formatted_proxy_url.port:
+				netloc = '{}:{}'.format(formatted_proxy_url.hostname, formatted_proxy_url.port)
+			else:
+				netloc = formatted_proxy_url.hostname
+			self.gtk_builder_get('entry_proxy_username').set_text(formatted_proxy_url.username)
+			self.gtk_builder_get('entry_proxy_password').set_text(formatted_proxy_url.password)
+		proxy_url = urllib.parse.urlunparse((formatted_proxy_url.scheme, netloc, formatted_proxy_url.path, '', '', ''))
+		self.gtk_builder_get('entry_proxy_url').set_text(proxy_url)
+
 	def _configure_settings_server(self):
 		cb_subscribed = self.gtk_builder_get('checkbutton_alert_subscribe')
 		cb_reject_after_creds = self.gtk_builder_get('checkbutton_reject_after_credentials')
@@ -259,12 +276,14 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 		self._configure_settings_dashboard()
 		self._configure_settings_plugins()
 		self._configure_settings_server()
+		self._configure_settings_proxy()
 		self.gtk_builder_get('combobox_spf_check_level').emit('changed')
 
 		self.dialog.show_all()
 		response = self.dialog.run()
 		if response != Gtk.ResponseType.CANCEL:
 			self.objects_save_to_config()
+			self.save_proxy_settings()
 			self.save_plugin_options()
 			self.save_alert_settings()
 			entry_beef_hook = self.gtk_builder_get('entry_server_beef_hook')
@@ -273,6 +292,31 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 				self._finialize_settings_dashboard()
 		self.dialog.destroy()
 		return response
+
+	def save_proxy_settings(self):
+		proxy_url = urllib.parse.urlparse(self.gtk_builder_get('entry_proxy_url').get_text().strip())
+		proxy_username = self.gtk_builder_get('entry_proxy_username').get_text().strip()
+		proxy_password = self.gtk_builder_get('entry_proxy_password').get_text().strip()
+		if not proxy_url.geturl():
+			self.config['proxy.url'] = None
+			os.environ.pop('HTTP_PROXY', None)
+			os.environ.pop('HTTPS_PROXY', None)
+			return
+		if not (proxy_url.hostname and proxy_url.scheme):
+			gui_utilities.show_dialog_warning('Invalid Proxy Settings', self.parent, 'The proxy url you have submitted is not valid.')
+			return
+		try:
+			proxy_url.port
+		except ValueError:
+			gui_utilities.show_dialog_warning('Invalid Proxy Settings', self.parent, 'The port must be an integer between 1-65535 inclusive.')
+			return
+		netloc = proxy_url.netloc
+		if proxy_username:
+			netloc = '{}:{}@{}'.format(proxy_username, proxy_password, proxy_url.netloc)
+		formatted_proxy_url = urllib.parse.urlunparse((proxy_url.scheme, netloc, proxy_url.path, '', '', ''))
+		self.config['proxy.url'] = formatted_proxy_url
+		os.environ['HTTP_PROXY'] = formatted_proxy_url
+		os.environ['HTTPS_PROXY'] = formatted_proxy_url
 
 	def save_plugin_options(self):
 		for name, option_widgets in self._plugin_option_widgets.items():

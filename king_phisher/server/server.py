@@ -51,6 +51,7 @@ from king_phisher import templates
 from king_phisher import utilities
 from king_phisher import xor
 from king_phisher.server import aaa
+from king_phisher.server import letsencrypt
 from king_phisher.server import rest_api
 from king_phisher.server import server_rpc
 from king_phisher.server import signals
@@ -303,7 +304,8 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			'request': request_vars,
 			'server': {
 				'hostname': self.vhost,
-				'address': self.connection.getsockname()[0]
+				'address': self.connection.getsockname()[0],
+				'port': self.connection.getsockname()[1]
 			}
 		}
 		template_vars.update(self.server.template_env.standard_variables)
@@ -907,17 +909,20 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 		self._init_tables_api()
 
 		for http_server in self.sub_servers:
+			http_server.add_sni_cert = self.add_sni_cert
 			http_server.config = config
-			http_server.plugin_manager = plugin_manager
-			http_server.throttle_semaphore = self.throttle_semaphore
-			http_server.session_manager = self.session_manager
 			http_server.forked_authenticator = self.forked_authenticator
-			http_server.job_manager = self.job_manager
-			http_server.template_env = self.template_env
-			http_server.kp_shutdown = self.shutdown
-			http_server.ws_manager = self.ws_manager
+			http_server.get_sni_certs = lambda: self.sni_certs
 			http_server.headers = self.headers
+			http_server.job_manager = self.job_manager
+			http_server.kp_shutdown = self.shutdown
+			http_server.plugin_manager = plugin_manager
+			http_server.remove_sni_cert = self.remove_sni_cert
+			http_server.session_manager = self.session_manager
 			http_server.tables_api = self.tables_api
+			http_server.template_env = self.template_env
+			http_server.throttle_semaphore = self.throttle_semaphore
+			http_server.ws_manager = self.ws_manager
 
 		if not config.has_option('server.secret_id'):
 			config.set('server.secret_id', rest_api.generate_token())
@@ -952,8 +957,14 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			tables_api_data = serializers.JSON.load(file_h)
 		if tables_api_data['schema'] > db_models.SCHEMA_VERSION:
 			raise errors.KingPhisherInputValidationError('the table-api.json data file\'s schema version is incompatible')
-		for table, columns in tables_api_data['tables'].items():
-			self.tables_api[table] = db_models.MetaTable(column_names=columns, model=db_models.database_tables[table].model, name=table)
+		for table_name, columns in tables_api_data['tables'].items():
+			model = db_models.database_tables[table_name].model
+			self.tables_api[table_name] = db_models.MetaTable(
+				column_names=columns,
+				model=model,
+				name=table_name,
+				table=model.__table__
+			)
 		self.logger.debug("initialized the table api dataset (schema version: {0})".format(tables_api_data['schema']))
 
 	def _maintenance(self, interval):
@@ -994,3 +1005,22 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			self.logger.debug('stopped the forked authenticator process')
 			self.__geoip_db.close()
 			self.__is_shutdown.set()
+
+	def add_sni_cert(self, hostname, ssl_certfile=None, ssl_keyfile=None, ssl_version=None):
+		try:
+			result = super(KingPhisherServer, self).add_sni_cert(hostname, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile, ssl_version=ssl_version)
+		except Exception as error:
+			letsencrypt.set_sni_hostname(hostname, ssl_certfile, ssl_keyfile, enabled=False)
+			raise error
+		letsencrypt.set_sni_hostname(hostname, ssl_certfile, ssl_keyfile, enabled=True)
+		return result
+
+	def remove_sni_cert(self, hostname):
+		for sni_cert in self.sni_certs:
+			if sni_cert.hostname == hostname:
+				break
+		else:
+			raise ValueError('the specified hostname does not have an sni certificate configuration')
+		result = super(KingPhisherServer, self).remove_sni_cert(hostname)
+		letsencrypt.set_sni_hostname(hostname, sni_cert.certfile, sni_cert.keyfile, enabled=False)
+		return result

@@ -16,6 +16,8 @@ Data
 Functions
 ---------
 
+.. autofunction:: delayed_signal
+
 .. autofunction:: glib_idle_add_once
 
 .. autofunction:: glib_idle_add_wait
@@ -34,9 +36,13 @@ Functions
 
 .. autofunction:: gtk_calendar_set_pydate
 
+.. autofunction:: gtk_combobox_set_entry_completion
+
 .. autofunction:: gtk_list_store_search
 
 .. autofunction:: gtk_listbox_populate_labels
+
+.. autofunction:: gtk_listbox_populate_urls
 
 .. autofunction:: gtk_menu_get_item_by_label
 

@@ -1,3 +1,5 @@
+.. _gobject-signals-label:
+
 GObject Signals
 ===============
 

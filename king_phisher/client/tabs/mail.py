@@ -36,9 +36,9 @@ import hashlib
 import ipaddress
 import os
 import re
-import sys
 import time
 import urllib
+import urllib.parse
 
 from king_phisher import its
 from king_phisher import spf
@@ -65,13 +65,6 @@ import jinja2
 import requests
 from smoke_zephyr.utilities import escape_single_quote
 from smoke_zephyr.utilities import parse_timespan
-
-if sys.version_info[0] < 3:
-	import urlparse
-	urllib.parse = urlparse
-	urllib.parse.urlencode = urllib.urlencode
-else:
-	import urllib.parse  # pylint: disable=ungrouped-imports
 
 if its.mocked:
 	_GObject_GObject = type('GObject.GObject', (object,), {'__module__': ''})
@@ -1354,6 +1347,7 @@ class MailSenderTab(_GObject_GObject):
 		config_keys = (key for key in self.config.keys() if key.startswith(config_prefix))
 		for config_key in config_keys:
 			message_config[config_key[7:]] = self.config[config_key]
+		message_config.pop('company_name', None)
 		export.message_data_to_kpm(message_config, target_file)
 		return True
 
@@ -1361,16 +1355,17 @@ class MailSenderTab(_GObject_GObject):
 		config_tab = self.tabs.get('config')
 		config_prefix = config_tab.config_prefix
 		try:
-			message_data = export.message_data_from_kpm(target_file, dest_dir)
+			message_config = export.message_data_from_kpm(target_file, dest_dir)
 		except KingPhisherInputValidationError as error:
 			gui_utilities.show_dialog_error('Import Error', self.parent, error.message.capitalize() + '.')
 			return False
 
 		config_keys = set(key for key in self.config.keys() if key.startswith(config_prefix))
+		config_keys.remove('mailer.company_name')
 		config_types = dict(zip(config_keys, [type(self.config[key]) for key in config_keys]))
-		for key, value in message_data.items():
+		for key, value in message_config.items():
 			key = config_prefix + key
-			if not key in config_keys:
+			if key not in config_keys:
 				continue
 			self.config[key] = value
 			config_keys.remove(key)

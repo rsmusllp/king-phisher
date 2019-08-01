@@ -40,11 +40,10 @@ import json
 import logging
 import operator
 import os
+import posixpath as webpath
 import random
 import re
-import shlex
 import string
-import subprocess
 import sys
 import threading
 
@@ -393,6 +392,24 @@ def make_message_uid(upper=True, lower=True, digits=True):
 		raise ValueError('at least one of upper, lower, or digits must be True')
 	return random_string(16, charset=charset)
 
+def make_webrelpath(path):
+	"""
+	Forcefully make *path* into a web-suitable relative path. This will strip
+	off leading and trailing directory separators.
+
+	.. versionadded:: 1.14.0
+
+	:param str path: The path to convert into a web-suitable relative path.
+	:return: The converted path.
+	:rtype: str
+	"""
+	if not path.startswith(webpath.sep):
+		path = webpath.sep + path
+	path = webpath.relpath(path, webpath.sep)
+	if path == webpath.curdir:
+		path = ''
+	return path
+
 def make_visit_uid():
 	"""
 	Creates a random string of characters and numbers to be used as a visit id.
@@ -479,6 +496,8 @@ def validate_json_schema(data, schema_file_id):
 	"""
 	schema_file_name = schema_file_id + '.json'
 	file_path = find.data_file(os.path.join('schemas', 'json', schema_file_name))
+	if file_path is None:
+		raise FileNotFoundError('the json schema file was not found')
 	with open(file_path, 'r') as file_h:
 		schema = json.load(file_h)
 	jsonschema.validate(data, schema)
@@ -511,7 +530,7 @@ class Thread(threading.Thread):
 		"""
 		Check to see if the flag is set to stop the thread.
 		"""
-		return self.stop_flag.is_set()
+		return not self.is_alive()
 
 class Event(getattr(threading, ('_Event' if hasattr(threading, '_Event') else 'Event'))):
 	__slots__ = ('__event',)

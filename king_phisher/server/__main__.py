@@ -34,7 +34,6 @@ import argparse
 import functools
 import logging
 import os
-import pwd
 import signal
 import sys
 import threading
@@ -49,7 +48,9 @@ from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import build
 from king_phisher.server import configuration
+from king_phisher.server import fs_utilities
 from king_phisher.server import plugins
+from king_phisher.server import pylibc
 
 from boltons import strutils
 
@@ -93,17 +94,25 @@ def build_and_run(arguments, config, plugin_manager, log_file=None):
 	if config.has_option('server.setuid_username'):
 		setuid_username = config.get('server.setuid_username')
 		try:
-			user_info = pwd.getpwnam(setuid_username)
+			passwd = pylibc.getpwnam(setuid_username)
 		except KeyError:
 			logger.critical('an invalid username was specified as \'server.setuid_username\'')
 			king_phisher_server.shutdown()
 			return os.EX_NOUSER
+
 		if log_file is not None:
-			os.chown(log_file, user_info.pw_uid, user_info.pw_gid)
-		os.setgroups([])
-		os.setresgid(user_info.pw_gid, user_info.pw_gid, user_info.pw_gid)
-		os.setresuid(user_info.pw_uid, user_info.pw_uid, user_info.pw_uid)
-		logger.info("dropped privileges to the {0} account".format(setuid_username))
+			fs_utilities.chown(log_file, user=passwd.pw_uid, group=passwd.pw_gid, recursive=False)
+		data_path = config.get_if_exists('server.letsencrypt.data_path')
+		if data_path and config.get_if_exists('server.letsencrypt.chown_data_path', True):
+			if os.path.isdir(data_path):
+				fs_utilities.chown(data_path, user=passwd.pw_uid, group=passwd.pw_gid, recursive=True)
+			else:
+				logger.warning('can not chown the letsencrypt data directory (directory not found)')
+
+		os.setgroups(pylibc.getgrouplist(setuid_username))
+		os.setresgid(passwd.pw_gid, passwd.pw_gid, passwd.pw_gid)
+		os.setresuid(passwd.pw_uid, passwd.pw_uid, passwd.pw_uid)
+		logger.info("dropped privileges to the {} account (uid: {}, gid: {})".format(setuid_username, passwd.pw_uid, passwd.pw_gid))
 	else:
 		logger.warning('running with root privileges is dangerous, drop them by configuring \'server.setuid_username\'')
 	os.umask(0o077)
@@ -194,26 +203,33 @@ def _ex_config_logging(arguments, config, console_handler):
 	return file_path
 
 def main():
-	parser = argparse.ArgumentParser(description='King Phisher Server', conflict_handler='resolve')
+	parser = argparse.ArgumentParser(prog='KingPhisherServer', description='King Phisher Server', conflict_handler='resolve')
 	utilities.argp_add_args(parser)
 	startup.argp_add_server(parser)
 	arguments = parser.parse_args()
 
 	# basic runtime checks
 	if sys.version_info < (3, 4):
-		color.print_error('the Python version is too old (minimum required is 3.4)')
+		color.print_error('the python version is too old (minimum required is 3.4)')
 		return 0
 
 	console_log_handler = utilities.configure_stream_logger(arguments.logger, arguments.loglvl)
 	del parser
 
-	if os.getuid():
-		color.print_error('the server must be started as root, configure the')
-		color.print_error('\'server.setuid_username\' option in the config file to drop privileges')
-		return os.EX_NOPERM
-
 	# configure environment variables and load the config
 	find.init_data_path('server')
+	if not os.path.exists(arguments.config_file):
+		color.print_error('invalid configuration file')
+		color.print_error('the specified path does not exist')
+		return os.EX_NOINPUT
+	if not os.path.isfile(arguments.config_file):
+		color.print_error('invalid configuration file')
+		color.print_error('the specified path is not a file')
+		return os.EX_NOINPUT
+	if not os.access(arguments.config_file, os.R_OK):
+		color.print_error('invalid configuration file')
+		color.print_error('the specified path can not be read')
+		return os.EX_NOPERM
 	config = configuration.ex_load_config(arguments.config_file)
 	if arguments.verify_config:
 		color.print_good('configuration verification passed')
@@ -221,6 +237,11 @@ def main():
 		return os.EX_OK
 	if config.has_option('server.data_path'):
 		find.data_path_append(config.get('server.data_path'))
+
+	if os.getuid():
+		color.print_error('the server must be started as root, configure the')
+		color.print_error('\'server.setuid_username\' option in the config file to drop privileges')
+		return os.EX_NOPERM
 
 	if arguments.update_geoip_db:
 		color.print_status('downloading a new geoip database')

@@ -279,8 +279,12 @@ class MessageTemplateEnvironment(TemplateEnvironmentBase):
 		if mode == self.MODE_ANALYZE:
 			self.attachment_images = {}
 
-	def _inline_image_handler(self, image_path, style=None):
+	def _inline_image_handler(self, image_path, style=None, alt=None):
 		image_path = os.path.abspath(image_path)
+		if not os.path.isfile(image_path):
+			self.logger.warning('the specified inline image path is not a file')
+		elif not os.access(image_path, os.R_OK):
+			self.logger.warning('the specified inline image path can not be read')
 		if self._mode == self.MODE_PREVIEW:
 			if os.path.sep == '\\':
 				image_path = '/'.join(image_path.split('\\'))
@@ -300,5 +304,7 @@ class MessageTemplateEnvironment(TemplateEnvironmentBase):
 		img_tag = "<img src=\"{0}\"".format(image_path)
 		if style is not None:
 			img_tag += " style=\"{0}\"".format(html.escape(str(style), quote=True))
+		if alt is not None:
+			img_tag += " alt=\"{0}\"".format(html.escape(str(alt), quote=True))
 		img_tag += '>'
 		return img_tag

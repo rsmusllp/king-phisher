@@ -30,6 +30,11 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+
+import logging
+logging.getLogger('KingPhisher').addHandler(logging.NullHandler())
+logging.getLogger('').setLevel(logging.CRITICAL)
+
 from .manager import *
 from .models import *
 from .storage import *

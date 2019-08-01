@@ -34,10 +34,15 @@ import types
 import unittest
 
 from king_phisher import errors
+from king_phisher import startup
 from king_phisher import version
 from king_phisher.server import server_rpc
 from king_phisher.testing import KingPhisherServerTestCase
 from king_phisher.utilities import random_string
+
+import advancedhttpserver
+
+_certbot_bin_path = startup.which('certbot')
 
 class ServerRPCTests(KingPhisherServerTestCase):
 	def test_rpc_config_get(self):
@@ -130,6 +135,31 @@ class ServerRPCTests(KingPhisherServerTestCase):
 	def test_rpc_is_unauthorized(self):
 		http_response = self.http_request('/ping', method='RPC')
 		self.assertHTTPStatus(http_response, 401)
+
+	@unittest.skipUnless(_certbot_bin_path, 'due to certbot being unavailable')
+	def test_rpc_ssl_letsencrypt_certbot_version(self):
+		version = self.rpc('ssl/letsencrypt/certbot_version')
+		self.assertIsNotNone(version, 'the certbot version was not retrieved')
+		self.assertRegexpMatches(version, r'(\d.)*\d', 'the certbot version is invalid')
+
+	def test_rpc_ssl_sni_hostnames_get(self):
+		sni_hostnames = self.rpc('ssl/sni_hostnames/get')
+		self.assertIsInstance(sni_hostnames, dict)
+
+	def test_rpc_ssl_sni_hostnames_load(self):
+		fake_hostname = random_string(16)
+		self.assertFalse(self.rpc('ssl/sni_hostnames/load', fake_hostname))
+
+	def test_rpc_ssl_sni_hostnames_unload(self):
+		fake_hostname = random_string(16)
+		self.assertFalse(self.rpc('ssl/sni_hostnames/unload', fake_hostname))
+
+	def test_rpc_ssl_status(self):
+		ssl_status = self.rpc('ssl/status')
+		self.assertIsInstance(ssl_status, dict)
+		self.assertIn('enabled', ssl_status)
+		self.assertIn('has-sni', ssl_status)
+		self.assertEqual(ssl_status['has-sni'], advancedhttpserver.g_ssl_has_server_sni)
 
 	def test_rpc_ping(self):
 		self.assertTrue(self.rpc('ping'))
