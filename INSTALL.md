@@ -13,9 +13,20 @@ sudo bash ./install.sh
 Download the latest [Windows build here.][releases]
 
 ### Windows 10 Subsystem For Linux (WSL)
-- Download [VcXsrv][vcxsrv] from the Microsoft Store
-- Clone the king-phisher repo and install as normal
-- Include in your .bashrc/.zshrc file `export DISPLAY=:0.0`
+This is recommend for windows users as this will provide faster performance and 
+more features.
+
+- Enable [WSL][wsl]
+  - When choosing your linux distro select Ubuntu 18.04 or Kali
+- Download and install a X Window System Server. The two below are the most popular
+  - [Xming][xming]
+  - [VcXsrv][vcxsrv]
+- From powershell run `bash` to get your linux terminal
+- run `echo "export DISPLAY=127.0.0.1:0.0" >> ~/.bashrc`
+- Install King Phisher with the commands from the Linux (Client & Server) section above
+- Change working directory to King Phisher and start client
+  - `cd /opt/king-phisher`
+  - `./KingPhisher`
 
 ## Getting Started
 - [Getting Started][wiki-getting-started]
@@ -28,4 +39,6 @@ Download the latest [Windows build here.][releases]
 [videos]: https://securestate.wistia.com/projects/laevqz2p29
 [wiki]: https://github.com/securestate/king-phisher/wiki
 [wiki-getting-started]: https://github.com/securestate/king-phisher/wiki/Getting-Started
+[wsl]: https://docs.microsoft.com/en-us/windows/wsl/install-win10
 [vcxsrv]: https://sourceforge.net/projects/vcxsrv/
+[xming]: https://sourceforge.net/projects/xming/
