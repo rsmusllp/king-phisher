@@ -1005,14 +1005,14 @@ def rpc_ssl_sni_hostnames_get(handler):
 def rpc_ssl_sni_hostnames_load(handler, hostname):
 	"""
 	Load the SNI configuration for the specified *hostname*, effectively
-	enabling it. If SSL is not enabled, SNI is not available, the necessary data
-	files are not available or the SNI configuration was already loaded, this
-	function returns ``False``.
+	enabling it. If SSL is not enabled, SNI is not available, or the necessary
+	data files are not available, this function returns ``False``.
 
 	.. versionadded:: 1.14.0
 
 	:param str hostname: The hostname to configure SSL for.
-	:return: Returns ``True`` only if the SNI configuration for *hostname* was loaded.
+	:return: Returns ``True`` only if the SNI configuration for *hostname* was
+		either able to be loaded or was already loaded.
 	:rtype: bool
 	"""
 	if not _ssl_is_enabled(handler):
@@ -1024,8 +1024,8 @@ def rpc_ssl_sni_hostnames_load(handler, hostname):
 
 	for sni_cert in handler.server.get_sni_certs():
 		if sni_cert.hostname == hostname:
-			rpc_logger.warning('ignoring directive to add an SNI hostname that already exists')
-			return False
+			rpc_logger.info('ignoring directive to add an SNI hostname that already exists')
+			return True
 	sni_config = letsencrypt.get_sni_hostname_config(hostname, handler.config)
 	if not sni_config:
 		rpc_logger.warning('can not add an SNI hostname without the necessary files')

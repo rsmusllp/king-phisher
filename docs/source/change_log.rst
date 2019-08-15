@@ -8,6 +8,11 @@ team for note worthy changes.
 Version 1.x.x
 -------------
 
+Version 1.14.1
+^^^^^^^^^^^^^^
+
+* Fixed the return value when loading already loaded SNI certificates
+
 Version 1.14.0
 ^^^^^^^^^^^^^^
 
