@@ -13,6 +13,11 @@ Version 1.15.0
 
 *In Progress*
 
+Version 1.14.1
+^^^^^^^^^^^^^^
+
+* Fixed the return value when loading already loaded SNI certificates
+
 Version 1.14.0
 ^^^^^^^^^^^^^^
 
