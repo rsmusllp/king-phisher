@@ -76,7 +76,7 @@ def get_revision(encoding='utf-8'):
 revision = get_revision()
 """The git revision identifying the latest commit if available."""
 
-version_info = collections.namedtuple('version_info', ('major', 'minor', 'micro'))(1, 14, 0)
+version_info = collections.namedtuple('version_info', ('major', 'minor', 'micro'))(1, 14, 1)
 """A tuple representing the version information in the format ('major', 'minor', 'micro')"""
 
 version_label = ''
