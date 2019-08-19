@@ -831,6 +831,9 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 		cred_count = 0
 		cred = self._get_db_creds(query_creds)
 		if cred is None:
+			if db_manager.get_row_by_id(self._session, db_models.Visit, self._visit_id) is None:
+				self.logger.warning('discarding credentials because there is no visit associated with the request')
+				return
 			cred = db_models.Credential(
 				campaign_id=campaign.id,
 				message_id=self.message_id,
