@@ -208,7 +208,8 @@ class ServerEventSubscriber(_GObject_GObject):
 		)
 		new_thread = utilities.Thread(
 			target=self.ws.run_forever,
-			kwargs={'http_no_proxy': (self.rpc.host,), 'sslopt': {'cert_reqs': ssl.CERT_NONE}}
+			kwargs={'http_no_proxy': (self.rpc.host,), 'sslopt': {'cert_reqs': ssl.CERT_NONE}},
+			name='ServerEventsDispatcher'
 		)
 		new_thread.daemon = True
 		new_thread.start()
