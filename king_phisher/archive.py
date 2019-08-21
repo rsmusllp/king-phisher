@@ -44,6 +44,17 @@ from king_phisher import its
 from king_phisher import serializers
 from king_phisher import version
 
+def _compare_paths(path1, path2):
+	"""
+	Check if *path1* is the same as *path2*, taking into account file system
+	links.
+	"""
+	if os.path.islink(path1):
+		path1 = os.readlink(path1)
+	if os.path.islink(path2):
+		path2 = os.readlink(path2)
+	return os.path.abspath(path1) == os.path.abspath(path2)
+
 def is_archive(file_path):
 	"""
 	Check if the specified file appears to be a valid archive file that can be
@@ -82,14 +93,15 @@ def patch_zipfile(input_file, patches, output_file=None):
 	if isinstance(input_file, str):
 		zin_meta = ZipMeta(close=True, delete=False, obj=zipfile.ZipFile(input_file, 'r'), path=os.path.abspath(input_file))
 	elif isinstance(input_file, zipfile.ZipFile):
-		zin_meta = ZipMeta(close=False, delete=False, obj=input_file, path=os.path.abspath(input_file.filename))
+		zin_meta = ZipMeta(close=False, delete=False, obj=input_file, path=os.path.abs(input_file.filename))
 	else:
 		raise TypeError('arg 1 (input_file) must either be a path or zipfile.ZipFile instance')
 
+	if isinstance(output_file, str) and _compare_paths(output_file, zin_meta.path):
+		output_file = None
+
 	if output_file is None:
-		if not zin_meta.close:
-			raise ValueError('input_file must be a path when output_file is None')
-		tmp_fd, output_file = tempfile.mkstemp(suffix=os.path.splitext(input_file)[1])
+		tmp_fd, output_file = tempfile.mkstemp(suffix=os.path.splitext(zin_meta.path)[1])
 		os.close(tmp_fd)
 		zout_meta = ZipMeta(close=True, delete=True, obj=zipfile.ZipFile(output_file, 'w'), path=os.path.abspath(output_file))
 		copy_out_to_in = True

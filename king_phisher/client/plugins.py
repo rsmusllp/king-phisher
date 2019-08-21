@@ -501,6 +501,7 @@ class ClientPluginMailerAttachment(ClientPlugin):
 				return
 			output_path = os.path.join(tempfile.gettempdir(), os.path.basename(input_path))
 
+		self.logger.debug('processing the attachment file')
 		try:
 			new_output_path = self.process_attachment_file(input_path, output_path, target) or output_path
 		except Exception as error:
