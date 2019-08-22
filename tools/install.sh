@@ -229,7 +229,7 @@ function sync_dependencies {
 
 	cd $KING_PHISHER_DIR
 	echo "INFO: Synchronizing King Phisher's pipenv environment"
-	./KingPhisher --env-install
+	./KingPhisher --env-install --env-verbose
 }
 
 function install_postgres {

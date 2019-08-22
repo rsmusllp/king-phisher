@@ -182,7 +182,7 @@ class ClientOptionString(ClientOptionMixin, plugins.OptionString):
 	def __init__(self, name, *args, **kwargs):
 		"""
 		.. versionchanged:: 1.9.0b5
-			Added the *multiline* option.
+			Added the *multiline* parameter.
 
 		:param str name: The name of this option.
 		:param str description: The description of this option.

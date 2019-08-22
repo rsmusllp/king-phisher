@@ -42,8 +42,10 @@
 
 import collections
 import gc
+import io
 import logging
 import os
+import select
 import shlex
 import shutil
 import subprocess
@@ -69,7 +71,17 @@ A named tuple for holding the results of an executed external process.
 	An integer representing the process's exit code.
 """
 
-def _run_pipenv(args, cwd=None):
+def _multistream(input, *outputs, size=None):
+	transfered = 0
+	if select.select([input], [], [], 0)[0]:
+		chunk = input.read(size)
+		for output in outputs:
+			output.write(chunk)
+			output.flush()
+		transfered += len(chunk)
+	return transfered
+
+def _run_pipenv(args, **kwargs):
 	"""
 	Execute Pipenv with the supplied arguments and return the
 	:py:class:`~.ProcessResults`. If the exit status is non-zero, then the
@@ -85,7 +97,7 @@ def _run_pipenv(args, cwd=None):
 	if path is None:
 		return RuntimeError('pipenv could not be found')
 	args = (path,) + tuple(args)
-	results = run_process(args, cwd=cwd)
+	results = run_process(args, **kwargs)
 	if results.status:
 		sys.stderr.write('pipenv encountered the following error:\n')
 		sys.stderr.write(results.stdout)
@@ -116,8 +128,13 @@ def pipenv_entry(parser, entry_point):
 		# this is because of the os.exec call and os.EX_* status codes
 		raise RuntimeError('pipenv_entry is incompatible with windows')
 	env_group = parser.add_argument_group('environment wrapper options')
-	env_group.add_argument('--env-install', dest='pipenv_install', default=False, action='store_true', help='install pipenv environment and exit')
-	env_group.add_argument('--env-update', dest='pipenv_update', default=False, action='store_true', help='update pipenv requirements and exit')
+	env_action = env_group.add_mutually_exclusive_group()
+	env_action.add_argument('--env-install', dest='pipenv_install', default=False, action='store_true', help='install pipenv environment and exit')
+	env_action.add_argument('--env-update', dest='pipenv_update', default=False, action='store_true', help='update pipenv requirements and exit')
+	if its.on_windows:
+		env_group.set_defaults(pipenv_verbose=False)
+	else:
+		env_group.add_argument('--env-verbose', dest='pipenv_verbose', default=False, action='store_true', help='display pipenv output')
 	argp_add_default_args(parser)
 
 	arguments, _ = parser.parse_known_args()
@@ -154,12 +171,16 @@ def pipenv_entry(parser, entry_point):
 	pipenv_path = which('pipenv')
 	logger.debug("pipenv path: {0!r}".format(pipenv_path))
 
+	pipenv_args = ['--site-packages', '--three']
+	if arguments.pipenv_verbose and logger.isEnabledFor(logging.DEBUG):
+		pipenv_args.append('--verbose')
+
 	if arguments.pipenv_install or not os.path.isdir(os.path.join(target_directory, '.venv')):
 		if arguments.pipenv_install:
 			logger.info('installing the pipenv environment')
 		else:
 			logger.warning('no pre-existing pipenv environment was found, installing it now')
-		results = _run_pipenv(('--site-packages', '--three', 'install'), cwd=target_directory)
+		results = _run_pipenv(pipenv_args + ['install'], cwd=target_directory, tee=arguments.pipenv_verbose)
 		if results.status:
 			logger.error('failed to install the pipenv environment')
 			logger.info('removing the incomplete .venv directory')
@@ -173,7 +194,7 @@ def pipenv_entry(parser, entry_point):
 
 	if arguments.pipenv_update:
 		logger.info('updating the pipenv environment')
-		results = _run_pipenv(('--site-packages', '--three', 'update'), cwd=target_directory)
+		results = _run_pipenv(pipenv_args + ['update'], cwd=target_directory, tee=arguments.pipenv_verbose)
 		if results.status:
 			logger.error('failed to update the pipenv environment')
 			return results.status
@@ -185,25 +206,45 @@ def pipenv_entry(parser, entry_point):
 	passing_argv = [' ', 'run', entry_point] + sys_argv
 	os.execve(pipenv_path, passing_argv, os.environ)
 
-def run_process(process_args, cwd=None, encoding='utf-8'):
+def run_process(process_args, cwd=None, tee=False, encoding='utf-8'):
 	"""
 	Run a subprocess, wait for it to complete and return a
 	:py:class:`~.ProcessResults` object. This function differs from
 	:py:func:`.start_process` in the type it returns and the fact that it always
 	waits for the subprocess to finish before returning.
 
+	.. versionchanged:: 1.15.0
+		Added the *tee* parameter.
+
 	:param tuple process_args: The arguments for the processes including the binary.
-	:param cwd: An optional current working directory to use for the process.
+	:param bool cwd: An optional current working directory to use for the process.
+	:param bool tee: Whether or not to display the console output while the process is running.
 	:param str encoding: The encoding to use for strings.
 	:return: The results of the process including the status code and any text
 		printed to stdout or stderr.
 	:rtype: :py:class:`~.ProcessResults`
 	"""
 	process_handle = start_process(process_args, wait=False, cwd=cwd)
-	process_handle.wait()
+	if tee:
+		if its.on_windows:
+			# this is because select() does not support file descriptors
+			raise RuntimeError('tee mode is not supported on Windows')
+		stdout = io.BytesIO()
+		stderr = io.BytesIO()
+		while process_handle.poll() is None:
+			_multistream(process_handle.stdout, stdout, sys.stdout.buffer, size=1)
+			_multistream(process_handle.stderr, stderr, sys.stderr.buffer, size=1)
+		_multistream(process_handle.stdout, stdout, sys.stdout.buffer)
+		_multistream(process_handle.stderr, stderr, sys.stderr.buffer)
+		stdout = stdout.getvalue()
+		stderr = stderr.getvalue()
+	else:
+		process_handle.wait()
+		stdout = process_handle.stdout.read()
+		stderr = process_handle.stderr.read()
 	results = ProcessResults(
-		process_handle.stdout.read().decode(encoding),
-		process_handle.stderr.read().decode(encoding),
+		stdout.decode(encoding),
+		stderr.decode(encoding),
 		process_handle.returncode
 	)
 	return results
