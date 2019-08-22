@@ -48,6 +48,7 @@ from king_phisher import version
 from king_phisher.client import application
 from king_phisher.client import gui_utilities
 
+from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
 
@@ -87,6 +88,9 @@ def main():
 
 	logger.debug("king phisher version: {0} python version: {1}.{2}.{3}".format(version.version, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
 	logger.debug("client running in process: {0} main tid: 0x{1:x}".format(os.getpid(), threading.current_thread().ident))
+
+	GLib.set_application_name('King Phisher')
+	GLib.set_prgname('King Phisher')
 
 	start_time = time.time()
 	logger.debug('using ui data from glade file: ' + gui_utilities.which_glade())

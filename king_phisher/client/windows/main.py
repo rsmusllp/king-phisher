@@ -224,6 +224,7 @@ class MainAppWindow(_Gtk_ApplicationWindow):
 		self.logger = logging.getLogger('KingPhisher.Client.MainWindow')
 		self.config = config
 		"""The main King Phisher client configuration."""
+		self.set_property('role', 'main')
 		self.set_property('title', 'King Phisher')
 		vbox = Gtk.Box()
 		vbox.set_property('orientation', Gtk.Orientation.VERTICAL)
