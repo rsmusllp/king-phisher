@@ -261,6 +261,11 @@ frame {
   background: none;
   border: 2px solid shade(#00203a, 1.75);
 }
+frame > label {
+  margin-top: 3px;
+  margin-bottom: 3px;
+  margin-left: 3px;
+}
 
 grid {
   background: none;

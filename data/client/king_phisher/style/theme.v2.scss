@@ -201,6 +201,11 @@ filechooser {
 frame {
   background: none;
   border: 2px solid shade($theme_color_0, 1.75);
+  > label {
+    margin-top: 3px;
+    margin-bottom: 3px;
+    margin-left: 3px;
+  }
 }
 
 grid {
