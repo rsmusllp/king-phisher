@@ -223,7 +223,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	def __async_rpc_cb_server_event_db_inserted(self, results):
 		node = results['db']['node']
 		row_data = (str(node['id']),) + tuple(self.format_node_data(node))
-		self._tv_model.append.append(row_data)
+		self._tv_model.append(row_data)
 
 	def __async_rpc_cb_server_event_db_updated(self, results):
 		node = results['db']['node']
