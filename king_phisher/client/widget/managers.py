@@ -306,23 +306,6 @@ class TreeViewManager(object):
 			copy_menu.append(menu_item)
 		return copy_menu
 
-	def set_column_titles(self, column_titles, column_offset=0, renderers=None):
-		"""
-		Populate the column names of a GTK TreeView and set their sort IDs. This
-		also populates the :py:attr:`.column_titles` attribute.
-
-		:param list column_titles: The titles of the columns.
-		:param int column_offset: The offset to start setting column names at.
-		:param list renderers: A list containing custom renderers to use for each column.
-		:return: A dict of all the :py:class:`Gtk.TreeViewColumn` objects keyed by their column id.
-		:rtype: dict
-		"""
-		self.column_titles.update((v, k) for (k, v) in enumerate(column_titles, column_offset))
-		columns = gui_utilities.gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset, renderers=renderers)
-		for store_id, column_title in enumerate(column_titles, column_offset):
-			self.column_views[column_title] = columns[store_id]
-		return columns
-
 	def set_column_color(self, background=None, foreground=None, column_titles=None):
 		"""
 		Set a column in the model to be used as either the background or
@@ -348,6 +331,23 @@ class TreeViewManager(object):
 			if foreground is not None:
 				column.add_attribute(renderer, 'foreground-rgba', foreground)
 				column.add_attribute(renderer, 'foreground-set', True)
+
+	def set_column_titles(self, column_titles, column_offset=0, renderers=None):
+		"""
+		Populate the column names of a GTK TreeView and set their sort IDs. This
+		also populates the :py:attr:`.column_titles` attribute.
+
+		:param list column_titles: The titles of the columns.
+		:param int column_offset: The offset to start setting column names at.
+		:param list renderers: A list containing custom renderers to use for each column.
+		:return: A dict of all the :py:class:`Gtk.TreeViewColumn` objects keyed by their column id.
+		:rtype: dict
+		"""
+		self.column_titles.update((v, k) for (k, v) in enumerate(column_titles, column_offset))
+		columns = gui_utilities.gtk_treeview_set_column_titles(self.treeview, column_titles, column_offset=column_offset, renderers=renderers)
+		for store_id, column_title in enumerate(column_titles, column_offset):
+			self.column_views[column_title] = columns[store_id]
+		return columns
 
 	def signal_button_pressed(self, treeview, event, popup_menu):
 		if not (event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY):

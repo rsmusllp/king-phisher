@@ -154,6 +154,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 	table. This query is provided with the following three parameters: campaign,
 	count and cursor.
 	"""
+	secret_columns = ()
 	view_columns = ()
 	xlsx_worksheet_options = None
 	def __init__(self, *args, **kwargs):
@@ -192,12 +193,32 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		treeview.set_model(tree_model_sort)
 		self.application.connect('server-connected', self.signal_kp_server_connected)
 
+		tab_config = self._tab_config
 		filter_revealer = self.gobjects['revealer_filter']
+		filter_revealer.set_reveal_child(tab_config['filter.show'])
 		menu_item = Gtk.CheckMenuItem.new_with_label('Show Filter')
 		menu_item.set_active(filter_revealer.get_reveal_child())
 		menu_item.connect('toggled', self.signal_toggled_show_filter)
 		menu_item.show()
 		self.popup_menu.append(menu_item)
+
+		submenu = Gtk.Menu.new()
+		menu_item = Gtk.MenuItem.new_with_label('Show Columns')
+		menu_item.set_submenu(submenu)
+		menu_item.show()
+		self.popup_menu.append(menu_item)
+		visisble_columns = tab_config['columns.show']
+		for column in self.view_columns:
+			if column.title in self.secret_columns:
+				continue
+			visible = visisble_columns.get(column.title, True)
+			self.treeview_manager.column_views[column.title].set_visible(visible)
+			menu_item = Gtk.CheckMenuItem.new_with_label(column.title)
+			menu_item.set_active(visible)
+			menu_item.connect('toggled', self.signal_toggled_show_column, column)
+			menu_item.show()
+			submenu.append(menu_item)
+			visisble_columns[column.title] = visible
 
 	def __async_rpc_cb_server_event_db_inserted(self, results):
 		node = results['db']['node']
@@ -217,6 +238,16 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 		row_data = tuple(self.format_node_data(node))
 		for idx, cell_data in enumerate(row_data, 1):
 			self._tv_model[ti][idx] = cell_data
+
+	@property
+	def _tab_config(self):
+		name = 'campaign.tab.' + self.table_name
+		if name not in self.config:
+			self.config[name] = {
+				'columns.show': {column.title: True for column in self.view_columns},
+				'filter.show': False
+			}
+		return self.config[name]
 
 	def signal_entry_changed_filter(self, entry):
 		text = entry.get_text()
@@ -239,11 +270,17 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			((visible_records / all_records) if all_records > 0 else 1.0) * 100
 		))
 
+	def signal_toggled_show_column(self, widget, column):
+		visible = widget.get_active()
+		self.treeview_manager.column_views[column.title].set_visible(visible)
+		self._tab_config['columns.show'][column.title] = visible
+
 	def signal_toggled_show_filter(self, widget):
 		active = widget.get_active()
 		self.gobjects['revealer_filter'].set_reveal_child(active)
 		if active:
 			self.gobjects['entry_filter'].grab_focus()
+		self._tab_config['filter.show'] = active
 
 	def signal_kp_server_connected(self, _):
 		event_id = 'db-' + self.table_name.replace('_', '-')
