@@ -5,8 +5,51 @@ King Phisher development needs to track the support of critical libraries it
 uses for compatibility purposes. This information is used to make decisions
 regarding dropping support for legacy systems.
 
-Reference Table
----------------
+Python Packages Reference Table
+-------------------------------
+
+**Last Updated:** August 21\ :sup:`st`, 2019 by Erik Daguerre
+
++-----------------------------+-------------------------+----------------+
+| Package                     | Reason   required       | Pinned Version |
++-----------------------------+-------------------------+----------------+
+| graphene                    |                         | 2.1.8          |
+|-----------------------------+-------------------------+----------------+
+| graphene-sqlalchemy         | holds graphql-relay     | 2.2.0          |
+|                             | graphql-core <3         |                |
++-----------------------------+-------------------------+----------------+
+| grapohql-relay              | Highest version for     | 2.1.1          |
+|                             | graphene-sqlalchemy     |                |
++-----------------------------+-------------------------+----------------+
+| matplotlib                  | Windows Build           | 2.2.4          |
+|                             | Limitation              |                |
++-----------------------------+-------------------------+----------------+
+| cryptography                | required by             | 2.2.4          |
+|                             | Paramiko 2.60           |                |
++-----------------------------+-------------------------+----------------+
+| pyproj                      | required by             | -----          |
+|                             | basemaps                |                |
++-----------------------------+-------------------------+----------------+
+| pygobject                   | required for gi/gtk     | -----          |
+|                             |                         |                |
++-----------------------------+-------------------------+----------------+
+| psycopg2                    | required by sqlalchmey  | -----          |
+|                             |                         |                |
++-----------------------------+-------------------------+----------------+
+| markdown                    | required by py-gm       | 2.6.11         |
+|                             | must be less then 3.0   |                |
++-----------------------------+-------------------------+----------------+
+| jsonschema                  | Minor unit tests        | 2.6.0          |
+|                             | fails                   |                |
++-----------------------------+-------------------------+----------------+
+
+cryptography = "==2.7"
+
+py-gfm==0.1.4
+  - markdown [required: <3.0, installed: 2.6.11]
+
+Operating System Reference Table
+--------------------------------
 
 **Last Updated:** April 19\ :sup:`th`, 2019 by Spencer McIntyre
 
@@ -103,7 +146,7 @@ Windows
    # run KingPhisher in debug mode
    cd king-phisher
    python KingPhisher -L DEBUG
-   # The first 7 lines of out put will contain gi.repository version informaiton.
+   # The first 7 lines of out put will contain gi.repository version information.
    # Get python version
    python --version
 
