@@ -47,4 +47,4 @@ class TemplateExtraTests(KingPhisherServerTestCase):
 		def new_function(foo):
 			return foo
 		self.assertIn('new_function', template_extras.functions)
-		self.assertIs(template_extras.functions['new_function'], new_function)
+		self.assertIs(template_extras.functions.pop('new_function'), new_function)
