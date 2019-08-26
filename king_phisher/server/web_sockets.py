@@ -32,22 +32,17 @@
 
 import collections
 import logging
+import queue
 import threading
 import weakref
 
 from king_phisher import ipaddress
-from king_phisher import its
 from king_phisher import serializers
 from king_phisher import utilities
 from king_phisher.server import signals
 from king_phisher.server.database import models as db_models
 
 import advancedhttpserver
-
-if its.py_v2:
-	import Queue as queue
-else:
-	import queue
 
 EventSubscription = collections.namedtuple('EventSubscription', ('attributes', 'event_types'))
 
@@ -214,7 +209,7 @@ class WebSocketsManager(object):
 
 	def _sig_db(self, event_id, event_type, targets):
 		event = Event(
-			event_id='db-' + event_id,
+			event_id='db-' + event_id.replace('_', '-'),
 			event_type=event_type,
 			sources=targets
 		)
