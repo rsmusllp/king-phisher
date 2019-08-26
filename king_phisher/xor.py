@@ -30,31 +30,36 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import random
 
-def xor_encode(data, seed_key=None):
+def xor_encode(data, seed_key=None, encoding='utf-8'):
 	"""
 	Encode data using the XOR algorithm. This is not suitable for encryption
 	purposes and should only be used for light obfuscation. The key is
 	prepended to the data as the first byte which is required to be decoded
 	py the :py:func:`.xor_decode` function.
 
-	:param str data: The data to encode.
+	:param bytes data: The data to encode.
 	:param int seed_key: The optional value to use as the for XOR key.
 	:return: The encoded data.
-	:rtype: str
+	:rtype: bytes
 	"""
-	seed_key = (seed_key or random.randint(0, 255))
-	data = map(ord, data)
-	encoded_data = [seed_key]
+	if isinstance(data, str):
+		data = data.encode(encoding)
+	if seed_key is None:
+		seed_key = random.randint(0, 255)
+	else:
+		seed_key &= 0xff
+	encoded_data = collections.deque([seed_key])
 	last_key = seed_key
-	for b in data:
-		e = (b ^ last_key)
-		last_key = e
-		encoded_data.append(e)
-	return ''.join(map(chr, encoded_data))
+	for byte in data:
+		e_byte = (byte ^ last_key)
+		last_key = e_byte
+		encoded_data.append(e_byte)
+	return bytes(encoded_data)
 
-def xor_decode(data):
+def xor_decode(data, encoding='utf-8'):
 	"""
 	Decode data using the XOR algorithm. This is not suitable for encryption
 	purposes and should only be used for light obfuscation. This function
@@ -65,11 +70,13 @@ def xor_decode(data):
 	:return: The decoded data.
 	:rtype: str
 	"""
-	data = list(map(ord, data))
-	last_key = data.pop(0)
-	decoded_data = []
+	if isinstance(data, str):
+		data = data.encode(encoding)
+	data = collections.deque(data)
+	last_key = data.popleft()
+	decoded_data = collections.deque()
 	for b in data:
 		d = (b ^ last_key)
 		last_key = b
 		decoded_data.append(d)
-	return ''.join(map(chr, decoded_data))
+	return bytes(decoded_data)

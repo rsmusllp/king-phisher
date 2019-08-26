@@ -43,11 +43,12 @@ class XORTests(testing.KingPhisherTestCase):
 		self.assertNotEqual(plain_string, encoded_string)
 
 	def test_xor_decode(self):
+		encoding = 'utf-8'
 		plain_string = random_string(16)
-		encoded_string = xor_encode(plain_string)
+		encoded_string = xor_encode(plain_string, encoding=encoding)
 		self.assertNotEqual(plain_string, encoded_string)
-		decoded_string = xor_decode(encoded_string)
-		self.assertEqual(plain_string, decoded_string)
+		decoded_string = xor_decode(encoded_string, encoding=encoding)
+		self.assertEqual(plain_string.encode(encoding), decoded_string)
 
 if __name__ == '__main__':
 	unittest.main()
