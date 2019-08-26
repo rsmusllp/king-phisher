@@ -662,8 +662,17 @@ class KingPhisherRequestHandler(advancedhttpserver.RequestHandler):
 			self.logger.error('dead drop request received with invalid \'token\' data')
 			return
 
+		deaddrop_id = data.get('deaddrop_id')
+		if deaddrop_id is None:
+			self.logger.error('dead drop request received with no \'deaddrop_id\' key')
+			return
+		elif deaddrop_id == self.config.get('server.secret_id'):
+			# this allows us to test the logic to this point at least
+			self.logger.debug('dead drop request received with the test id')
+			return
+
 		self.semaphore_acquire()
-		deployment = db_manager.get_row_by_id(self._session, db_models.DeaddropDeployment, data.get('deaddrop_id'))
+		deployment = db_manager.get_row_by_id(self._session, db_models.DeaddropDeployment, deaddrop_id)
 		if not deployment:
 			self.semaphore_release()
 			self.logger.error('dead drop request received for an unknown campaign')
@@ -928,11 +937,13 @@ class KingPhisherServer(advancedhttpserver.AdvancedHTTPServer):
 			http_server.ws_manager = self.ws_manager
 
 		if not config.has_option('server.secret_id'):
-			config.set('server.secret_id', rest_api.generate_token())
+			test_id = rest_api.generate_token()
+			config.set('server.secret_id', test_id)
+			self.logger.debug('server request test id initialized with value: ' + test_id)
 		if not config.get_if_exists('server.rest_api.token'):
 			config.set('server.rest_api.token', rest_api.generate_token())
 		if config.get('server.rest_api.enabled'):
-			self.logger.info('rest api initialized with token: ' + config.get('server.rest_api.token'))
+			self.logger.info('rest api token initialized with value: ' + config.get('server.rest_api.token'))
 
 		self.__geoip_db = geoip.init_database(config.get('server.geoip.database'))
 		self.__is_shutdown = threading.Event()
