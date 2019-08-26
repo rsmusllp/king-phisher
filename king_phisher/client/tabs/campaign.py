@@ -340,7 +340,7 @@ class CampaignViewGenericTableTab(CampaignViewGenericTab):
 			message = "Delete These {0:,} Rows?".format(len(row_ids))
 		if not gui_utilities.show_dialog_yes_no(message, self.parent, 'This information will be lost.'):
 			return
-		self.application.emit(self.table_name[:-1] + '-delete', row_ids)
+		self.application.emit(self.table_name[:-1].replace('_', '-') + '-delete', row_ids)
 
 	def _tv_filter(self, model, tree_iter, _):
 		if self._rule is None:

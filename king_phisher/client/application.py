@@ -127,6 +127,7 @@ class KingPhisherClientApplication(_Gtk_Application):
 		'config-load': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (bool,)),
 		'config-save': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'credential-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
+		'deaddrop-connection-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
 		'exit': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'exit-confirm': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, ()),
 		'message-delete': (GObject.SIGNAL_ACTION | GObject.SIGNAL_RUN_LAST, None, (object,)),
@@ -340,23 +341,12 @@ class KingPhisherClientApplication(_Gtk_Application):
 			gui_utilities.show_dialog_error('Now Exiting', self.get_active_window(), 'A campaign must be selected.')
 			self.quit()
 
-	def do_credential_delete(self, row_ids):
-		if len(row_ids) == 1:
-			self.rpc('db/table/delete', 'credentials', row_ids[0])
-		else:
-			self.rpc('db/table/delete/multi', 'credentials', row_ids)
-
-	def do_message_delete(self, row_ids):
-		if len(row_ids) == 1:
-			self.rpc('db/table/delete', 'messages', row_ids[0])
-		else:
-			self.rpc('db/table/delete/multi', 'messages', row_ids)
-
-	def do_visit_delete(self, row_ids):
-		if len(row_ids) == 1:
-			self.rpc('db/table/delete', 'visits', row_ids[0])
-		else:
-			self.rpc('db/table/delete/multi', 'visits', row_ids)
+	def __do_table_delete(self, table, row_ids):
+		self.rpc.async_call('db/table/delete/multi', args=(table, row_ids))
+	do_credential_delete = functools.partialmethod(__do_table_delete, 'credentials')
+	do_deaddrop_connection_delete = functools.partialmethod(__do_table_delete, 'deaddrop_connections')
+	do_message_delete = functools.partialmethod(__do_table_delete, 'messages')
+	do_visit_delete = functools.partialmethod(__do_table_delete, 'visits')
 
 	def get_graphql_campaign(self, campaign_id=None):
 		"""
