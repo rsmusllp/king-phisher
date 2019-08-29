@@ -11,11 +11,11 @@ Python Packages Reference Table
 **Last Updated:** August 21\ :sup:`st`, 2019 by Erik Daguerre
 
 +-----------------------------+-------------------------+----------------+
-| Package                     | Reason   required       | Pinned Version |
+| Package                     | Reason                  | Pinned Version |
 +-----------------------------+-------------------------+----------------+
 | graphene                    |                         | 2.1.8          |
 |-----------------------------+-------------------------+----------------+
-| graphene-sqlalchemy         | holds graphql-relay     | 2.2.0          |
+| graphene-sqlalchemy         | Holds graphql-relay     | 2.2.0          |
 |                             | graphql-core <3         |                |
 +-----------------------------+-------------------------+----------------+
 | grapohql-relay              | Highest version for     | 2.1.1          |
@@ -24,29 +24,24 @@ Python Packages Reference Table
 | matplotlib                  | Windows Build           | 2.2.4          |
 |                             | Limitation              |                |
 +-----------------------------+-------------------------+----------------+
-| cryptography                | required by             | 2.2.4          |
+| cryptography                | Required by             | 2.2.4          |
 |                             | Paramiko 2.60           |                |
 +-----------------------------+-------------------------+----------------+
-| pyproj                      | required by             | -----          |
+| pyproj                      | Required by             | -----          |
 |                             | basemaps                |                |
 +-----------------------------+-------------------------+----------------+
-| pygobject                   | required for gi/gtk     | -----          |
+| pygobject                   | Required for gi/gtk     | -----          |
 |                             |                         |                |
 +-----------------------------+-------------------------+----------------+
-| psycopg2                    | required by sqlalchmey  | -----          |
+| psycopg2                    | Required by sqlalchmey  | -----          |
 |                             |                         |                |
 +-----------------------------+-------------------------+----------------+
-| markdown                    | required by py-gm       | 2.6.11         |
+| markdown                    | Required by py-gfm      | 2.6.11         |
 |                             | must be less then 3.0   |                |
 +-----------------------------+-------------------------+----------------+
 | jsonschema                  | Minor unit tests        | 2.6.0          |
-|                             | fails                   |                |
+|                             | failures                |                |
 +-----------------------------+-------------------------+----------------+
-
-cryptography = "==2.7"
-
-py-gfm==0.1.4
-  - markdown [required: <3.0, installed: 2.6.11]
 
 Operating System Reference Table
 --------------------------------
