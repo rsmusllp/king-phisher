@@ -651,7 +651,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 				url_scheme = _ModelURLScheme(*combobox_url_scheme.get_model()[active])
 				if url_scheme.name == 'https':
 					hostname = gui_utilities.gtk_combobox_get_entry_text(self.gobjects['combobox_url_hostname'])
-					if not self.application.rpc('ssl/sni_hostnames/load', hostname):
+					if hostname and not self.application.rpc('ssl/sni_hostnames/load', hostname):
 						gui_utilities.show_dialog_error('Failure', self.parent, 'Failed to load an SSL certificate for the specified hostname.')
 
 		self.config['mailer.webserver_url'] = self._get_webserver_url()
