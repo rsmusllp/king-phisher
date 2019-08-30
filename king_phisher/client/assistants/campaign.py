@@ -169,6 +169,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		:param campaign_id: The ID of the campaign to edit.
 		"""
 		super(CampaignAssistant, self).__init__(application)
+		if campaign_id is not None:
+			campaign_id = str(campaign_id)
 		self.campaign_id = campaign_id
 		self._close_ready = True
 		self._page_titles = {}
@@ -632,7 +634,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self.application.emit('campaign-changed', cid)
 
 		old_cid = self.config.get('campaign_id')
-		self.config['campaign_id'] = cid
+		self.config['campaign_id'] = str(cid)
 		self.config['campaign_name'] = properties['name']
 
 		_kpm_pathing = self._get_kpm_path()
