@@ -192,6 +192,8 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 		self._expiration_time = managers.TimeSelectorButtonManager(self.application, self.gobjects['togglebutton_expiration_time'])
 		self._set_comboboxes()
 		self._set_defaults()
+
+		self._set_page_complete(False, page='Web Server URL')
 		self.application.rpc.async_graphql(
 			'{ ssl { status { enabled hasLetsencrypt hasSni } } }',
 			on_success=self.__async_rpc_cb_ssl_status
@@ -319,6 +321,7 @@ class CampaignAssistant(gui_utilities.GladeGObject):
 	def __async_rpc_cb_ssl_status(self, results):
 		self._ssl_status = results['ssl']['status']
 		self._can_issue_certs = all(results['ssl']['status'].values())
+		self._set_page_complete(True, page='Web Server URL')
 
 	@property
 	def campaign_name(self):
