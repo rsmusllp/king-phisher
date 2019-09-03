@@ -165,6 +165,8 @@ def get_certbot_bin_path(config=None):
 	else:
 		letsencrypt_config = {}
 	bin_path = letsencrypt_config.get('certbot_path') or startup.which('certbot')
+	if bin_path is None:
+		return None
 	if not os.path.isfile(bin_path):
 		return None
 	if not os.access(bin_path, os.R_OK | os.X_OK):

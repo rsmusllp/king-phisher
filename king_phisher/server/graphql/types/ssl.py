@@ -78,7 +78,7 @@ class SSLStatus(graphene.ObjectType):
 			enabled = False
 		instance = cls(
 			enabled=enabled,
-			has_letsencrypt=letsencrypt.get_certbot_bin_path(server_config),
+			has_letsencrypt=letsencrypt.get_certbot_bin_path(server_config) is not None,
 			has_sni=advancedhttpserver.g_ssl_has_server_sni
 		)
 		return instance
