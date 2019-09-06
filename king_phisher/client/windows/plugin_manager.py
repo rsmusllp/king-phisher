@@ -41,6 +41,7 @@ import traceback
 import xml.sax.saxutils as saxutils
 
 from king_phisher import startup
+from king_phisher import its
 from king_phisher import utilities
 from king_phisher.catalog import Catalog
 from king_phisher.client import plugins
@@ -346,6 +347,16 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		named_row = _ModelNamedRow(*model_row)
 		repo_model, catalog_model = self._get_plugin_model_parents(model_row)
+		compatibility_details = self.catalog_plugins.compatibility(catalog_model.id, repo_model.id, named_row.id)
+		for detail in compatibility_details:
+			if detail[0] == 'Supported Platforms':
+				if not detail[2]:
+					self._dialog_error_tsafe("Plugin not supported on this operating system")
+					self.logger.warning(
+						"cannot install plugin {}, due to operating system compatibility".format(named_row.id)
+					)
+					return
+		self.logger.debug("installing plugin '{0}'".format(named_row.id))
 		if named_row.id in self.config['plugins.installed']:
 			plugin_src = self.config['plugins.installed'].get(named_row.id)
 			if plugin_src != {'catalog_id': catalog_model.id, 'repo_id': repo_model.id, 'plugin_id': named_row.id}:
@@ -357,22 +368,25 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					return
 		self._worker_thread_start(self._plugin_install_tsafe, catalog_model, repo_model, model_row, named_row)
 
+	def _dialog_error_tsafe(self, error_message):
+		_show_dialog_error_tsafe = functools.partial(gui_utilities.glib_idle_add_once, gui_utilities.show_dialog_error, 'Failed To Install', self.window)
+		_show_dialog_error_tsafe(error_message)
+
 	def _plugin_install_tsafe(self, catalog_model, repo_model, model_row, named_row):
 		self.__installing_plugin = named_row.id
 		self.logger.debug("installing plugin '{0}'".format(named_row.id))
 		self._update_status_bar_tsafe("Installing plugin {}...".format(named_row.title))
-		_show_dialog_error_tsafe = functools.partial(gui_utilities.glib_idle_add_once, gui_utilities.show_dialog_error, 'Failed To Install', self.window)
 		try:
 			self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
 		except requests.exceptions.ConnectionError:
 			self.logger.warning("failed to download plugin {}".format(named_row.id))
-			_show_dialog_error_tsafe("Failed to download {} plugin, check your internet connection.".format(named_row.id))
+			self._dialog_error_tsafe("Failed to download {} plugin, check your internet connection.".format(named_row.id))
 			self._update_status_bar_tsafe("Installing plugin {} failed.".format(named_row.title))
 			self.__installing_plugin = None
 			return
 		except Exception:
 			self.logger.warning("failed to install plugin {}".format(named_row.id), exc_info=True)
-			_show_dialog_error_tsafe("Failed to install {} plugin.".format(named_row.id))
+			self._dialog_error_tsafe("Failed to install {} plugin.".format(named_row.id))
 			self._update_status_bar_tsafe("Installing plugin {} failed.".format(named_row.title))
 			self.__installing_plugin = None
 			return
@@ -395,19 +409,19 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					pip_results = self.application.plugin_manager.install_packages(packages)
 				else:
 					self.logger.warning('no library path to install plugin dependencies')
-					_show_dialog_error_tsafe(
+					self._dialog_error_tsafe(
 						"Failed to run pip to install package(s) for plugin {}.".format(named_row.id)
 					)
 					# set pip results to none to safely complete and cleanly release installing lock.
 					pip_results = None
 				if pip_results is None:
 					self.logger.warning('pip install failed')
-					_show_dialog_error_tsafe(
+					self._dialog_error_tsafe(
 						"Failed to run pip to install package(s) for plugin {}.".format(named_row.id)
 					)
 				elif pip_results.status:
 					self.logger.warning('pip install failed, exit status: ' + str(pip_results.status))
-					_show_dialog_error_tsafe(
+					self._dialog_error_tsafe(
 						"Failed to install pip package(s) for plugin {}.".format(named_row.id)
 					)
 				else:

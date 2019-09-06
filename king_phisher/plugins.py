@@ -627,7 +627,11 @@ class PluginManagerBase(object):
 		if self.library_path is None:
 			raise errors.KingPhisherResourceError('missing plugin-specific library path')
 		options.extend(['--target', self.library_path])
-		args = [sys.executable, '-m', 'pip', 'install'] + options + packages
+		if its.frozen:
+			executable_path = os.path.dirname(sys.executable)
+			args = [os.path.join(executable_path, 'python.exe'), '-m', 'pip', 'install'] + options + packages
+		else:
+			args = [sys.executable, '-m', 'pip', 'install'] + options + packages
 		if len(packages) > 1:
 			info_string = "installing packages: {}"
 		else:
