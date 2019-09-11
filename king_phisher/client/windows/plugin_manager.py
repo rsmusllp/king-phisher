@@ -311,10 +311,20 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					version=plugin_info['version'],
 					visible_enabled=True,
 					visible_installed=True,
-					sensitive_installed=True,
+					sensitive_installed=self._is_sensitive_installed(self.catalog_plugins.compatibility(catalog.id, repo.id, plugin_name)),
 					type=_ROW_TYPE_PLUGIN
 				))
 		gui_utilities.glib_idle_add_once(self.__store_add_node, catalog_node)
+
+	def _is_sensitive_installed(self, compatibility_details):
+		for detail in compatibility_details:
+			if detail.type.name == 'platforms' and not detail.comptabile:
+				return False
+			elif detail.type.name == 'minimum-python-version' and not detail.comptabile:
+				return False
+			elif detail.type.name == 'minimum-kp-version' and not detail.comptabile:
+				return False
+		return True
 
 	def _get_plugin_model_parents(self, plugin_model_row):
 		return _ModelNamedRow(*plugin_model_row.parent), _ModelNamedRow(*plugin_model_row.parent.parent)
@@ -340,6 +350,31 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._set_model_item(model_row.path, enabled=True, sensitive_installed=False)
 		self.config['plugins.enabled'].append(named_row.id)
 
+	def _compatibility_to_dict(self, compatibility_details):
+		required_packages = []
+		kp_version = None
+		python_version = None
+		supported_os = None
+
+		for detail in compatibility_details:
+			if detail[0].lower() == 'required package':
+				required_packages.append(_ModelCompReqPackage(*detail[1:3]))
+			elif detail[0].lower() == 'supported platforms':
+				supported_os = _ModelSupportedOS(*detail[1:3])
+			elif detail[0].lower() == 'minimum king phisher version':
+				kp_version = _ModelCompKPVersion(*detail[1:3])
+			elif detail[0].lower() == 'minimum python version':
+				python_version = _ModelCompPythonVersion(*detail[1:3])
+
+		compatibility_dict = {
+			'packages': required_packages,
+			'supported_platforms': supported_os,
+			'kp_version': kp_version,
+			'python_version': python_version
+		}
+
+		return compatibility_dict
+
 	def _plugin_install(self, model_row):
 		if not self._worker_thread_is_ready:
 			# check it here to fail fast, then self._worker_thread_start checks it again later
@@ -347,15 +382,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		named_row = _ModelNamedRow(*model_row)
 		repo_model, catalog_model = self._get_plugin_model_parents(model_row)
-		compatibility_details = self.catalog_plugins.compatibility(catalog_model.id, repo_model.id, named_row.id)
-		for detail in compatibility_details:
-			if detail[0] == 'Supported Platforms':
-				if not detail[2]:
-					self._dialog_error_tsafe("Plugin not supported on this operating system")
-					self.logger.warning(
-						"cannot install plugin {}, due to operating system compatibility".format(named_row.id)
-					)
-					return
 		self.logger.debug("installing plugin '{0}'".format(named_row.id))
 		if named_row.id in self.config['plugins.installed']:
 			plugin_src = self.config['plugins.installed'].get(named_row.id)
