@@ -866,7 +866,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		if plugin_id in self.application.plugin_manager:
 			klass = self.application.plugin_manager[plugin_id]
-			compatibility_details = klass.compatibility
+			compatibility_details = list(klass.compatibility)
 		else:
 			repo_model, catalog_model = self._get_plugin_model_parents(self._last_plugin_selected)
 			compatibility_details = list(self.catalog_plugins.compatibility(catalog_model.id, repo_model.id, named_plugin.id))
@@ -884,7 +884,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		row = 0
 		for row, req in enumerate(compatibility_details):
 			grid.insert_row(row)
-			self.logger.debug(req)
 			if row == 0:
 				label = Gtk.Label(req[0])
 			else:
