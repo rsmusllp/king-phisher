@@ -740,10 +740,12 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._update_status_bar_tsafe('Loading, catalogs...')
 		self._load_catalog_local_tsafe()
 		catalog_cache = self.catalog_plugins.get_cache()
+		self.logger.debug('checking plugin cache')
 		now = datetime.datetime.utcnow()
 		for catalog_url in self.config['catalogs']:
 			catalog_cache_dict = catalog_cache.get_catalog_by_url(catalog_url)
 			if not refresh and catalog_cache_dict and catalog_cache_dict['created'] + expiration > now:
+				self.logger.debug("loading catalog from cache")
 				catalog = self._load_catalog_from_cache_tsafe(catalog_cache_dict)
 				if catalog is not None:
 					continue
@@ -755,7 +757,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				self.logger.warning('failing over to loading the catalog from the cache')
 				self._load_catalog_from_cache_tsafe(catalog_cache_dict)
 		if self._installed_plugins_treeview_tracker:
+			self.logger.debug("calling load missing plugins")
 			self._load_missing_plugins_tsafe()
+		self.logger.debug("Loading Catalogs Complete")
 		self._update_status_bar_tsafe('Loading completed')
 		self._installed_plugins_treeview_tracker = None
 
@@ -768,9 +772,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		for model_row in self._model:
 			if _ModelNamedRow(*model_row).id == _LOCAL_REPOSITORY_ID:
 				gui_utilities.glib_idle_add_wait(self._model.remove, model_row.iter)
+				self.logger.debug('breaking')
 				break
 		else:
 			raise RuntimeError('failed to find the local plugin repository')
+		self.logger.debug("calling load catalog local from missing plugins")
 		self._load_catalog_local_tsafe()
 
 	def _load_catalog_from_cache_tsafe(self, catalog_cache_dict):
@@ -782,6 +788,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		else:
 			self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_cache_dict['url'], cache=False)
 			self._add_catalog_to_tree_tsafe(catalog)
+		self.logger.debug('completed loading catalog cache')
 		return catalog
 
 	def _load_catalog_from_url_tsafe(self, catalog_url):
@@ -797,6 +804,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		else:
 			self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_url, cache=True)
 			self._add_catalog_to_tree_tsafe(catalog)
+		self.logger.debug('completed downloading catalog')
 		return catalog
 
 	def _load_catalog_local_tsafe(self):
@@ -850,7 +858,9 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 				sensitive_installed=False,
 				type=_ROW_TYPE_PLUGIN
 			))
+		self.logger.debug('idle add for nods being called')
 		gui_utilities.glib_idle_add_wait(self.__store_add_node, node)
+		self.logger.debug('completed idle add')
 
 	#
 	# Signal Handlers
