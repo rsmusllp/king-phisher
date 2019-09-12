@@ -139,10 +139,10 @@ class OptionString(OptionBase):
 Requirement = collections.namedtuple('Requirement', ('type', 'value', 'comptabile'))
 
 _RequirementMeta = collections.namedtuple('RequirementMeta', ('name', 'title'))
-class _RequirementType(enum.Enum):
+class RequirementType(enum.Enum):
 	PACKAGE = _RequirementMeta(name='package', title='Required Package')
 	PYTHON_VERSION = _RequirementMeta('minimum-python-version', 'Minimum Python Version')
-	VERSION = _RequirementMeta('minimum-kp-version', 'Minimum King Phisher Version')
+	VERSION = _RequirementMeta('minimum-version', 'Minimum King Phisher Version')
 	PLATFORMS = _RequirementMeta('platforms', 'Supported Platforms')
 
 class Requirements(collections.abc.Mapping):
@@ -199,20 +199,20 @@ class Requirements(collections.abc.Mapping):
 		if self._storage.get('minimum-python-version'):
 			# platform.python_version() cannot be used with StrictVersion because it returns letters in the version number.
 			available = StrictVersion(self._storage['minimum-python-version']) <= StrictVersion('.'.join(map(str, sys.version_info[:3])))
-			yield Requirement(_RequirementType.PYTHON_VERSION, self._storage['minimum-python-version'], available)
+			yield Requirement(RequirementType.PYTHON_VERSION, self._storage['minimum-python-version'], available)
 
 		if self._storage.get('minimum-version'):
 			available = StrictVersion(self._storage['minimum-version']) <= StrictVersion(version.distutils_version)
-			yield Requirement(_RequirementType.VERSION, self._storage['minimum-version'], available)
+			yield Requirement(RequirementType.VERSION, self._storage['minimum-version'], available)
 
 		if self._storage.get('packages'):
 			for name, available in self._storage['packages'].items():
-				yield Requirement(_RequirementType.PACKAGE, name, available)
+				yield Requirement(RequirementType.PACKAGE, name, available)
 
 		if self._storage.get('platforms'):
 			platforms = tuple(p.title() for p in self._storage['platforms'])
 			system = platform.system()
-			yield Requirement(_RequirementType.PLATFORMS, ', '.join(platforms), system.title() in platforms)
+			yield Requirement(RequirementType.PLATFORMS, ', '.join(platforms), system.title() in platforms)
 
 	def _check_for_missing_packages(self, packages):
 		missing_packages = []

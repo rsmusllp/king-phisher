@@ -38,11 +38,9 @@ import functools
 import os
 import sys
 import traceback
-import xml.sax.saxutils as saxutils
 
-from king_phisher import startup
-from king_phisher import its
 from king_phisher import utilities
+from king_phisher.plugins import RequirementType
 from king_phisher.catalog import Catalog
 from king_phisher.client import plugins
 from king_phisher.client import gui_utilities
@@ -190,6 +188,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._worker_thread_start(self._load_catalogs_tsafe)
 		self.__load_errors = {}
 		self.__installing_plugin = None
+		self._last_plugin_selected = None
 
 		tvm = managers.TreeViewManager(self.gobjects['treeview_plugins'])
 		toggle_renderer_enable = Gtk.CellRendererToggle()
@@ -311,18 +310,22 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					version=plugin_info['version'],
 					visible_enabled=True,
 					visible_installed=True,
-					sensitive_installed=self._is_sensitive_installed(self.catalog_plugins.compatibility(catalog.id, repo.id, plugin_name)),
+					sensitive_installed=self._is_sensitive_installed(self.catalog_plugins.compatibility(catalog.id, repo.id, plugin_name), plugin_name),
 					type=_ROW_TYPE_PLUGIN
 				))
 		gui_utilities.glib_idle_add_once(self.__store_add_node, catalog_node)
 
-	def _is_sensitive_installed(self, compatibility_details):
+	def _is_sensitive_installed(self, compatibility_details, plugin_name):
+		log_line = "plugin {} has insensitive install due to {}"
 		for detail in compatibility_details:
-			if detail.type.name == 'platforms' and not detail.comptabile:
+			if detail.type == RequirementType.PLATFORMS and not detail.comptabile:
+				self.logger.debug(log_line.format(plugin_name, RequirementType.PLATFORMS.title))
 				return False
-			elif detail.type.name == 'minimum-python-version' and not detail.comptabile:
+			elif detail.type == RequirementType.PYTHON_VERSION and not detail.comptabile:
+				self.logger.debug(log_line.format(plugin_name, RequirementType.PYTHON_VERSION.title))
 				return False
-			elif detail.type.name == 'minimum-kp-version' and not detail.comptabile:
+			elif detail.type == RequirementType.VERSION and not detail.comptabile:
+				self.logger.debug(log_line.format(plugin_name, RequirementType.VERSION.title))
 				return False
 		return True
 
@@ -350,31 +353,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._set_model_item(model_row.path, enabled=True, sensitive_installed=False)
 		self.config['plugins.enabled'].append(named_row.id)
 
-	def _compatibility_to_dict(self, compatibility_details):
-		required_packages = []
-		kp_version = None
-		python_version = None
-		supported_os = None
-
-		for detail in compatibility_details:
-			if detail[0].lower() == 'required package':
-				required_packages.append(_ModelCompReqPackage(*detail[1:3]))
-			elif detail[0].lower() == 'supported platforms':
-				supported_os = _ModelSupportedOS(*detail[1:3])
-			elif detail[0].lower() == 'minimum king phisher version':
-				kp_version = _ModelCompKPVersion(*detail[1:3])
-			elif detail[0].lower() == 'minimum python version':
-				python_version = _ModelCompPythonVersion(*detail[1:3])
-
-		compatibility_dict = {
-			'packages': required_packages,
-			'supported_platforms': supported_os,
-			'kp_version': kp_version,
-			'python_version': python_version
-		}
-
-		return compatibility_dict
-
 	def _plugin_install(self, model_row):
 		if not self._worker_thread_is_ready:
 			# check it here to fail fast, then self._worker_thread_start checks it again later
@@ -394,25 +372,22 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					return
 		self._worker_thread_start(self._plugin_install_tsafe, catalog_model, repo_model, model_row, named_row)
 
-	def _dialog_error_tsafe(self, error_message):
-		_show_dialog_error_tsafe = functools.partial(gui_utilities.glib_idle_add_once, gui_utilities.show_dialog_error, 'Failed To Install', self.window)
-		_show_dialog_error_tsafe(error_message)
-
 	def _plugin_install_tsafe(self, catalog_model, repo_model, model_row, named_row):
 		self.__installing_plugin = named_row.id
 		self.logger.debug("installing plugin '{0}'".format(named_row.id))
 		self._update_status_bar_tsafe("Installing plugin {}...".format(named_row.title))
+		_show_dialog_error_tsafe = functools.partial(gui_utilities.glib_idle_add_once, gui_utilities.show_dialog_error, 'Failed To Install', self.window)
 		try:
 			self.catalog_plugins.install_plugin(catalog_model.id, repo_model.id, named_row.id, self.plugin_path)
 		except requests.exceptions.ConnectionError:
 			self.logger.warning("failed to download plugin {}".format(named_row.id))
-			self._dialog_error_tsafe("Failed to download {} plugin, check your internet connection.".format(named_row.id))
+			_show_dialog_error_tsafe("Failed to download {} plugin, check your internet connection.".format(named_row.id))
 			self._update_status_bar_tsafe("Installing plugin {} failed.".format(named_row.title))
 			self.__installing_plugin = None
 			return
 		except Exception:
 			self.logger.warning("failed to install plugin {}".format(named_row.id), exc_info=True)
-			self._dialog_error_tsafe("Failed to install {} plugin.".format(named_row.id))
+			_show_dialog_error_tsafe("Failed to install {} plugin.".format(named_row.id))
 			self._update_status_bar_tsafe("Installing plugin {} failed.".format(named_row.title))
 			self.__installing_plugin = None
 			return
@@ -435,19 +410,19 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					pip_results = self.application.plugin_manager.install_packages(packages)
 				else:
 					self.logger.warning('no library path to install plugin dependencies')
-					self._dialog_error_tsafe(
+					_show_dialog_error_tsafe(
 						"Failed to run pip to install package(s) for plugin {}.".format(named_row.id)
 					)
 					# set pip results to none to safely complete and cleanly release installing lock.
 					pip_results = None
 				if pip_results is None:
 					self.logger.warning('pip install failed')
-					self._dialog_error_tsafe(
+					_show_dialog_error_tsafe(
 						"Failed to run pip to install package(s) for plugin {}.".format(named_row.id)
 					)
 				elif pip_results.status:
 					self.logger.warning('pip install failed, exit status: ' + str(pip_results.status))
-					self._dialog_error_tsafe(
+					_show_dialog_error_tsafe(
 						"Failed to install pip package(s) for plugin {}.".format(named_row.id)
 					)
 				else:
@@ -891,7 +866,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			return
 		if plugin_id in self.application.plugin_manager:
 			klass = self.application.plugin_manager[plugin_id]
-			compatibility_details = list(klass.compatibility)
+			compatibility_details = klass.compatibility
 		else:
 			repo_model, catalog_model = self._get_plugin_model_parents(self._last_plugin_selected)
 			compatibility_details = list(self.catalog_plugins.compatibility(catalog_model.id, repo_model.id, named_plugin.id))
@@ -909,7 +884,11 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		row = 0
 		for row, req in enumerate(compatibility_details):
 			grid.insert_row(row)
-			label = Gtk.Label(req[0])
+			self.logger.debug(req)
+			if row == 0:
+				label = Gtk.Label(req[0])
+			else:
+				label = Gtk.Label(req.type.value.title)
 			label.set_property('halign', Gtk.Align.START)
 			grid.attach(label, 0, row, 1, 1)
 			label = Gtk.Label(req[1])
