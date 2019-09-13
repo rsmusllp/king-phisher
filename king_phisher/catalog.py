@@ -248,6 +248,7 @@ class Repository(object):
 			collection.freeze()
 			self.collections[collection_type] = Collection(self, collection_type, collection)
 		self.collections.freeze()
+		self.logger.debug("completed init Repository ")
 
 	def __repr__(self):
 		return "<{0} title={1!r} >".format(self.__class__.__name__, self.title)

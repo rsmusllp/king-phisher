@@ -313,7 +313,10 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 					sensitive_installed=self._is_sensitive_installed(self.catalog_plugins.compatibility(catalog.id, repo.id, plugin_name), plugin_name),
 					type=_ROW_TYPE_PLUGIN
 				))
-		gui_utilities.glib_idle_add_once(self.__store_add_node, catalog_node)
+		self.logger.debug("adding catalog to tree view")
+		gui_utilities.glib_idle_add_wait(self._store_add_node, catalog_node)
+		self.logger.debug("completed adding catalog to tree view")
+		#gui_utilities.glib_idle_add_once(self.__store_add_node, catalog_node)
 
 	def _is_sensitive_installed(self, compatibility_details, plugin_name):
 		log_line = "plugin {} has insensitive install due to {}"
@@ -735,7 +738,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			if not self._installed_plugins_treeview_tracker[plugin]:
 				self._installed_plugins_treeview_tracker.pop(plugin)
 		if refresh:
-			gui_utilities.glib_idle_add_once(self._model.clear)
+			gui_utilities.glib_idle_add_wait(self._model.clear)
 		expiration = datetime.timedelta(seconds=smoke_zephyr.utilities.parse_timespan(self.config.get('cache.age', '4h')))
 		self._update_status_bar_tsafe('Loading, catalogs...')
 		self._load_catalog_local_tsafe()
@@ -787,6 +790,7 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 			self.logger.warning("{0} error when trying to add catalog dict to manager".format(error.__class__.__name))
 		else:
 			self.catalog_plugins.add_catalog(catalog, catalog_url=catalog_cache_dict['url'], cache=False)
+			self.logger.debug("calling add catalog to tree tsafe")
 			self._add_catalog_to_tree_tsafe(catalog)
 		self.logger.debug('completed loading catalog cache')
 		return catalog
