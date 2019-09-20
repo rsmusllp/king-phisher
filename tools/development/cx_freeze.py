@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import os
 import site
 import sys
@@ -133,6 +134,12 @@ include_files.append(('data/client/king_phisher', 'king_phisher'))
 include_files.append(('data/king_phisher', 'king_phisher'))
 include_files.append((pytz.__path__[0], 'pytz'))
 include_files.append((requests.__path__[0], 'requests'))
+include_files.append((collections.__path__[0], 'collections'))
+
+# include pip executible
+executable_path = os.path.dirname(sys.executable)
+include_files.append((os.path.join(executable_path, 'Scripts'), 'Scripts'))
+include_files.append((os.path.join(executable_path, 'python.exe'), 'python.exe'))
 
 exe_base = 'Win32GUI'
 if is_debugging_build:
@@ -157,6 +164,7 @@ build_exe_options = dict(
 		'cffi',
 		'collections',
 		'cryptography',
+		'distutils',
 		'dns',
 		'email',
 		'email_validator',
@@ -177,6 +185,10 @@ build_exe_options = dict(
 		'numpy',
 		'paramiko',
 		'pil',
+		'pip',
+		'os',
+		'six',
+		'sys',
 		'pkg_resources',
 		'pluginbase',
 		'qrcode',

@@ -38,9 +38,7 @@ import functools
 import os
 import sys
 import traceback
-import xml.sax.saxutils as saxutils
 
-from king_phisher import startup
 from king_phisher import utilities
 from king_phisher.catalog import Catalog
 from king_phisher.client import plugins
