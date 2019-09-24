@@ -11,7 +11,7 @@ Version 1.x.x
 Version 1.15.0
 ^^^^^^^^^^^^^^
 
-*In Progress*
+Released :release:`1.15.0` on September 24th, 2019
 
 * Add support to select visible columns for tables in the Campaign tab
 * Add support for printing pipenv running output in real time
