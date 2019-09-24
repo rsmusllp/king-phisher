@@ -15,6 +15,7 @@ Version 1.15.0
 
 * Add support to select visible columns for tables in the Campaign tab
 * Add support for printing pipenv running output in real time
+* Windows build will now install PyPI requirements for plugins during installation
 * Multiple bug fixes
 
 
