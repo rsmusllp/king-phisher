@@ -13,7 +13,7 @@ ecdsa==0.13.2
 email-validator==1.0.4
 geoip2==2.9.0
 geojson==2.5.0
-graphene-sqlalchemy==2.1.8
+graphene-sqlalchemy==2.1.2
 graphene==2.1.8
 graphql-relay==2.0.0
 icalendar==4.0.3
