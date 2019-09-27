@@ -183,6 +183,9 @@ class SPFTimeOutError(SPFTempError):
 	"""
 	pass
 
+def _to_hostname(value):
+	return str(value).rstrip('.')
+
 @smoke_zephyr.utilities.Cache('3m')
 def check_host(ip, domain, sender=None, timeout=DEFAULT_DNS_TIMEOUT):
 	"""
@@ -303,6 +306,7 @@ class SenderPolicyFramework(object):
 		if not record.startswith('v=spf1 '):
 			raise SPFParseError('invalid record header')
 
+		self.logger.debug("processing spf record: {!r}".format(record))
 		raw_directives = record[7:].split(' ')
 		raw_directives = tuple(directive for directive in raw_directives if len(directive))
 		self.logger.debug("parsing {0:,} directives for domain: {1}".format(len(raw_directives), domain))
@@ -422,12 +426,11 @@ class SenderPolicyFramework(object):
 			for answer in answers:
 				hostname = None
 				if answer.rdtype == dns.rdatatype.MX:
-					hostname = answer.exchange
+					hostname = _to_hostname(answer.exchange)
 				elif answer.rdtype == dns.rdatatype.CNAME:
-					hostname = answer.target
+					hostname = _to_hostname(answer.target)
 				else:
 					raise ValueError('answer is not an MX or CNAME record')
-				hostname = str(hostname).rstrip('.')
 				found, matches = self._hostname_matches_additional(ip, hostname, additional)
 				if matches:
 					return True
@@ -446,8 +449,8 @@ class SenderPolicyFramework(object):
 			ip = '.'.join(ip)
 			answers, _ = self._dns_query(ip + '.' + suffix + '.arpa', 'PTR')
 			for ptr_record in answers:
-				ptr_record = str(ptr_record.target).rstrip('.')
-				if ptr_domain == ptr_record or ptr_domain.endswith('.' + ptr_record):
+				hostname = _to_hostname(ptr_record.target)
+				if ptr_domain == hostname or ptr_domain.endswith('.' + hostname):
 					return True
 		else:
 			raise SPFPermError("unsupported mechanism type: '{0}'".format(mechanism))
@@ -477,7 +480,15 @@ class SenderPolicyFramework(object):
 	def _hostname_matches_ip(self, ip, name):
 		qtype = ('A' if isinstance(ip, ipaddress.IPv4Address) else 'AAAA')
 		answers, _ = self._dns_query(name, qtype)
-		return str(ip) in tuple(a.address for a in answers)
+
+		a_answers = tuple(ans for ans in answers if ans.rdtype == dns.rdatatype.A)
+		if str(ip) in tuple(ans.address for ans in a_answers):
+			return True
+		cname_answers = tuple(ans for ans in answers if ans.rdtype == dns.rdatatype.CNAME)
+		for ans in cname_answers:
+			if self._hostname_matches_ip(ip, _to_hostname(ans.target)):
+				return True
+		return False
 
 	def expand_macros(self, value, ip, domain, sender):
 		"""
