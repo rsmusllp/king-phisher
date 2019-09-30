@@ -240,7 +240,7 @@ class WebSocketsManager(object):
 			try:
 				func(*args)
 			except Exception:
-				self.logger.error('web socket manager worker thread encountered an exception while processing a job', exc_info=True)
+				self.logger.error("web socket manager worker thread encountered an exception while processing job: {}{!r}".format(func.__name__, args), exc_info=True)
 
 	def __iter__(self):
 		for web_socket in self.web_sockets:
