@@ -630,7 +630,7 @@ class PluginManagerBase(object):
 		if its.frozen:
 			args = [os.path.join(os.path.dirname(sys.executable), 'python.exe')]
 		else:
-			args = [sys.executable] + pip_options + packages
+			args = [sys.executable]
 		args += ['-m', 'pip', 'install'] + pip_options + packages
 		if len(packages) > 1:
 			info_string = "installing packages: {}"
