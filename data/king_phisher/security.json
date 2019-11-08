@@ -1,6 +1,13 @@
 {
   "keys": [
     {
+      "id": "github.com/Nib0x62s",
+      "verifying-key": {
+        "data": "AM1SXQrNRBhnQDPRcpFBOo25ewChSLiZdzsZ/j79DNHFySQHB7GAeRdIdbe/ahegWEVSbnkJnuUcVBAlBJ2aO/iEAWFGOMULYyR2gIII9GWqa/es6DOCG6yZSsLGpeTI17+jc/T4t4NLkyhO7qQkunj5DBphdvzb5zi9ignqJqQDwN6E",
+        "type": "secp521r1"
+      }
+    },
+    {
       "id": "github.com/wolfthefallen",
       "verifying-key": {
         "data": "AeFgSLT7Rk0iK954S4/ejCWH2/gN0E8Y2hdchKESYKVbn2CbeZTHVEKCts5B7KsOa/7s6bTK7BVwQMBmVCBCZJvdALNgmyglIfxfgTHf19vVq/Wq2SxYwxwZOE/nxAQxwbd2mVURlE4Dglcq6Ij12sqoLQTcov8S3t9NODmxo/Krud6b",
