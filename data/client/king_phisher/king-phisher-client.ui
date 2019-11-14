@@ -340,6 +340,26 @@ Spencer McIntyre</property>
           </packing>
         </child>
         <child>
+          <object class="GtkRevealer" id="CampaignSelectionDialog.revealer_loading">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="transition_type">none</property>
+            <property name="reveal_child">True</property>
+            <child>
+              <object class="GtkProgressBar" id="CampaignSelectionDialog.progressbar_loading">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="show_text">True</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkScrolledWindow" id="CampaignSelectionDialog.scrolledwindow5">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -357,7 +377,7 @@ Spencer McIntyre</property>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="position">1</property>
+            <property name="position">3</property>
           </packing>
         </child>
         <child>
@@ -406,7 +426,7 @@ Spencer McIntyre</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">2</property>
+            <property name="position">4</property>
           </packing>
         </child>
       </object>

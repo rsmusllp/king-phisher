@@ -32,7 +32,10 @@
 
 import collections
 import datetime
+import os
 
+from king_phisher import errors
+from king_phisher import find
 from king_phisher import its
 from king_phisher import utilities
 from king_phisher.constants import ColorHexCode
@@ -65,6 +68,8 @@ _ModelNamedRow = collections.namedtuple('ModelNamedRow', (
 	'expiration',
 ))
 
+_QUERY_PAGE_SIZE = 10
+
 class CampaignSelectionDialog(gui_utilities.GladeGObject):
 	"""
 	Display a dialog which allows a new campaign to be created or an
@@ -77,7 +82,9 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			'drawingarea_color_key',
 			'label_campaign_info',
 			'menubutton_filter',
-			'treeview_campaigns'
+			'treeview_campaigns',
+			'revealer_loading',
+			'progressbar_loading'
 		),
 		top_level=('StockAddImage',)
 	)
@@ -119,6 +126,8 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		tree_model_sort.set_sort_column_id(9, Gtk.SortType.DESCENDING)
 		treeview.set_model(tree_model_sort)
 
+		self.destroyed = False
+		self.dialog.connect('destroy', self.signal_dialog_destroy)
 		# setup menus for filtering campaigns and load campaigns
 		self.get_popup_filter_menu()
 		self.load_campaigns()
@@ -189,18 +198,29 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.load_campaigns()
 		self._highlight_campaign(self.config.get('campaign_name'))
 
-	def load_campaigns(self):
+	def load_campaigns(self, cursor=None):
 		"""Load campaigns from the remote server and populate the :py:class:`Gtk.TreeView`."""
+		if cursor is None:
+			self._tv_model.clear()
+			self.gobjects['revealer_loading'].set_reveal_child(True)
+			self.gobjects['progressbar_loading'].set_fraction(0.0)
+		path = find.data_file(os.path.join('queries', 'get_campaigns.graphql'))
+		if path is None:
+			raise errors.KingPhisherResourceError('could not find GraphQL query file: get_campaigns.graphql')
+		self.application.rpc.async_graphql_file(path, query_vars={'cursor': cursor, 'page': _QUERY_PAGE_SIZE}, on_success=self.__async_rpc_cb_load_campaigns, when_idle=True)
+
+	def __async_rpc_cb_load_campaigns(self, results):
+		if self.destroyed:
+			return
 		store = self._tv_model
-		store.clear()
 		style_context = self.dialog.get_style_context()
 		bg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_bg', default=ColorHexCode.WHITE)
 		fg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_fg', default=ColorHexCode.BLACK)
 		hlbg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlbg', default=ColorHexCode.LIGHT_YELLOW)
 		hlfg_color = gui_utilities.gtk_style_context_get_color(style_context, 'theme_color_tv_hlfg', default=ColorHexCode.BLACK)
 		now = datetime.datetime.now()
-		campaigns = self.application.rpc.graphql_find_file('get_campaigns.graphql')
-		for campaign in campaigns['db']['campaigns']['edges']:
+		campaigns = results['db']['campaigns']
+		for campaign in campaigns['edges']:
 			campaign = campaign['node']
 			created_ts = utilities.datetime_utc_to_local(campaign['created'])
 			expiration_ts = campaign['expiration']
@@ -226,6 +246,14 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			len(self._tv_model),
 			('' if len(self._tv_model) == 1 else 's')
 		))
+		progress = len(self._tv_model) / campaigns['total']
+		self.gobjects['progressbar_loading'].set_text("Loaded {:,} of {:,} campaigns ({:.1f}%)".format(len(self._tv_model), campaigns['total'], progress * 100))
+		self.gobjects['progressbar_loading'].set_fraction(progress)
+		if campaigns['pageInfo']['hasNextPage']:
+			self.load_campaigns(cursor=campaigns['pageInfo']['endCursor'])
+		else:
+			self.gobjects['revealer_loading'].set_reveal_child(False)
+			self.gobjects['progressbar_loading'].set_fraction(1.0)
 
 	def signal_assistant_destroy(self, _, campaign_creation_assistant):
 		self._creation_assistant = None
@@ -235,6 +263,9 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 		self.load_campaigns()
 		self._highlight_campaign(campaign_name)
 		self.dialog.response(Gtk.ResponseType.APPLY)
+
+	def signal_dialog_destroy(self, _):
+		self.destroyed = True
 
 	def signal_button_clicked(self, button):
 		if self._creation_assistant is not None:

@@ -1,7 +1,7 @@
 # retrieve information about all the campaigns
-query getCampaigns {
+query getCampaigns($cursor: String, $page: Int) {
   db {
-    campaigns {
+    campaigns(first: $page, after: $cursor) {
       edges {
         node {
           id
@@ -23,6 +23,12 @@ query getCampaigns {
           }
         }
       }
+      pageInfo {
+        hasNextPage
+        startCursor
+        endCursor
+      }
+      total
     }
   }
 }
