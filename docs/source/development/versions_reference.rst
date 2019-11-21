@@ -8,7 +8,7 @@ regarding dropping support for legacy systems.
 Python Packages Reference Table
 -------------------------------
 
-**Last Updated:** August 21\ :sup:`st`, 2019 by Erik Daguerre
+**Last Updated:** November 21\ :sup:`st`, 2019 by Mike Stringer
 
 +-----------------------------+-------------------------+----------------+
 | Package                     | Reason                  | Pinned Version |
@@ -20,6 +20,9 @@ Python Packages Reference Table
 +-----------------------------+-------------------------+----------------+
 | grapohql-relay              | Highest version for     | 2.1.1          |
 |                             | graphene-sqlalchemy     |                |
++-----------------------------+-------------------------+----------------+
+| numpy                       | Required by basemap but | 1.16.4         |
+|                             | not preinstalled by pip |                |
 +-----------------------------+-------------------------+----------------+
 | matplotlib                  | Windows Build           | 2.2.4          |
 |                             | Limitation              |                |
