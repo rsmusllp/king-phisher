@@ -332,11 +332,11 @@ def init_database(connection_url, extra_init=False):
 		Session.configure(bind=engine)
 		inspector = sqlalchemy.inspect(engine)
 	except sqlalchemy.exc.OperationalError as error:
-		logger.debug('encountered a sqlalchemy OperationalError while initializing the database', exc_info=True)
 		if error.args:
-			match = re.match(r'\(psycopg2\.OperationalError\) FATAL:\s+password authentication failed for user \"(?P<username>\w+)\"$', error.args[0])
+			match = re.match(r'\(psycopg2\.OperationalError\) FATAL:\s+\w+ authentication failed for user \"(?P<username>\w+)\"$', error.args[0])
 			if match:
 				raise errors.KingPhisherDatabaseAuthenticationError('database initialization failed', username=match.group('username')) from None
+		logger.debug('encountered a sqlalchemy OperationalError while initializing the database', exc_info=True)
 		raise errors.KingPhisherDatabaseError('database initialization failed') from error
 
 	if 'campaigns' not in inspector.get_table_names():
