@@ -85,7 +85,7 @@ def _popen_psql(sql):
 	results = startup.run_process(['su', 'postgres', '-c', "psql -At -c \"{0}\"".format(sql)])
 	if results.status != os.EX_OK:
 		raise errors.KingPhisherDatabaseError("failed to execute postgresql query '{0}' via su and psql".format(sql))
-	return results.stdout.split('\n')
+	return results.stdout.strip().split('\n')
 
 def clear_database():
 	"""
