@@ -81,7 +81,11 @@ class PluginsConfigurationFrame(_Gtk_Frame):
 			name_label.set_text(opt.display_name)
 			grid.attach(name_label, 0, row, 1, 1)
 
-			widget = opt.get_widget(self.application, plugin_config.get(opt.name, opt.default))
+			try:
+				widget = opt.get_widget(self.application, plugin_config.get(opt.name, opt.default))
+			except Exception:
+				self.logger.error("can not build configuration widget for plugin: {}, option: {}".format(plugin_klass.name, opt.name))
+				continue
 			widget.set_property('tooltip-text', opt.description)
 			grid.attach(widget, 1, row, 1, 1)
 			self.option_widgets[opt.name] = OptionWidget(opt, widget)
@@ -212,9 +216,13 @@ class ConfigurationDialog(gui_utilities.GladeGObject):
 			combobox.set_active_iter(ti)
 
 	def _configure_settings_plugin_options(self, plugin_klass):
-		frame = PluginsConfigurationFrame(self.application, plugin_klass)
-		self.gobjects['box_plugin_options'].pack_start(frame, True, True, 0)
-		self._plugin_option_widgets[plugin_klass.name] = frame.option_widgets
+		try:
+			frame = PluginsConfigurationFrame(self.application, plugin_klass)
+		except Exception:
+			self.logger.error('can not build the configuration frame for plugin: ' + plugin_klass.name, exc_info=True)
+		else:
+			self.gobjects['box_plugin_options'].pack_start(frame, True, True, 0)
+			self._plugin_option_widgets[plugin_klass.name] = frame.option_widgets
 
 	def _configure_settings_plugins(self):
 		pm = self.application.plugin_manager
