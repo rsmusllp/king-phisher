@@ -324,7 +324,8 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		named_row = _ModelNamedRow(*model_row)
 		self.application.plugin_manager.disable(named_row.id)
 		self.config['plugins.enabled'].remove(named_row.id)
-		self._set_model_item(model_row.path, enabled=False, sensitive_installed=True)
+		sensitive_installed = not (model_row.parent and model_row.parent[_ModelNamedRow._fields.index('id')] == _LOCAL_REPOSITORY_ID)
+		self._set_model_item(model_row.path, enabled=False, sensitive_installed=sensitive_installed)
 
 	def _plugin_enable(self, model_row):
 		named_row = _ModelNamedRow(*model_row)
@@ -743,7 +744,6 @@ class PluginManagerWindow(gui_utilities.GladeGObject):
 		self._installed_plugins_treeview_tracker = None
 
 	def _load_missing_plugins_tsafe(self):
-		local_model_row = None
 		for plugin in self._installed_plugins_treeview_tracker.keys():
 			self.logger.warning("plugin {} was not found in any loaded catalog or repo, moving to locally installed".format(plugin))
 			self.config['plugins.installed'][plugin] = None
