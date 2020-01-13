@@ -319,7 +319,7 @@ if [[ ! $LINUX_VERSION ]] && grep -E "Red Hat Enterprise Linux Server release 7(
 	KING_PHISHER_SKIP_CLIENT="x"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[4-9]|3[0]" /etc/redhat-release &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Fedora release 2[6-9]|3[0-2]" /etc/redhat-release &> /dev/null; then
 	LINUX_VERSION="Fedora"
 fi
 
@@ -331,7 +331,7 @@ if [[ ! $LINUX_VERSION ]] && grep -Ei "kali( linux |-)rolling" /etc/debian_versi
 	LINUX_VERSION="Kali"
 fi
 
-if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu 1[6789]\.(04|10)" /etc/issue &> /dev/null; then
+if [[ ! $LINUX_VERSION ]] && grep -E "Ubuntu (1[789]|2[01])\.(04|10)" /etc/issue &> /dev/null; then
 	LINUX_VERSION="Ubuntu"
 fi
 
