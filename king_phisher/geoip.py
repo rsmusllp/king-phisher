@@ -32,11 +32,11 @@
 
 import collections
 import datetime
-import gzip
 import logging
 import os
 import shutil
 import sys
+import tarfile
 import tempfile
 import threading
 
@@ -49,8 +49,6 @@ import requests
 
 __all__ = ('init_database', 'lookup', 'GeoLocation')
 
-DB_DOWNLOAD_URL = 'http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz'
-"""The URL from which the GeoLite2 City database can be downloaded from."""
 DB_RESULT_FIELDS = ('city', 'continent', 'coordinates', 'country', 'postal_code', 'time_zone')
 """A tuple listing the fields that are required in database results."""
 
@@ -67,32 +65,45 @@ def _normalize_encoding(word):
 		word = word.encode('ascii', 'ignore')
 	return word
 
-def download_geolite2_city_db(dest):
+def download_geolite2_city_db(dest, license, date=None):
 	"""
 	Download the GeoLite2 database, decompress it, and save it to disk.
 
+	.. versionchanged:: 1.16.0
+		Added the *license* and *date* parameters.
+
 	:param str dest: The file path to save the database to.
+	:param str license: The MaxMind license key to use to download the database.
+	:param date: The date for which to download the database.
+	:type date: :py:class:`datetime.date`
 	"""
+	params = {'edition_id': 'GeoLite2-City', 'license_key': license, 'suffix': 'tar.gz'}
+	if date is not None:
+		params['date'] = date.strftime('%Y%m%d')
 	try:
-		response = requests.get(DB_DOWNLOAD_URL, stream=True)
+		response = requests.get('https://download.maxmind.com/app/geoip_download', params=params, stream=True)
 	except requests.ConnectionError:
 		logger.error('geoip database download failed (could not connect to the server)')
 		raise errors.KingPhisherResourceError('could not download the geoip database') from None
 	except requests.RequestException:
 		logger.error('geoip database download failed', exc_info=True)
 		raise errors.KingPhisherResourceError('could not download the geoip database') from None
-	tfile = tempfile.mkstemp()
-	os.close(tfile[0])
-	tfile = tfile[1]
+	tmp_file = tempfile.mkstemp()
+	os.close(tmp_file[0])
+	tmp_file = tmp_file[1]
 	try:
-		with open(tfile, 'wb') as file_h:
-			for chunk in response.iter_content(chunk_size=1024):
+		with open(tmp_file, 'wb') as file_h:
+			for chunk in response.iter_content(chunk_size=4096):
 				file_h.write(chunk)
 				file_h.flush()
+		tar_file = tarfile.open(tmp_file, mode='r:gz')
+		member = next((name for name in tar_file.getnames() if name.endswith('GeoLite2-City.mmdb')), None)
+		if member is None:
+			raise errors.KingPhisherResourceError('could not find the GeoLite2-City.mmdb file in the archive')
 		with open(dest, 'wb') as file_h:
-			shutil.copyfileobj(gzip.GzipFile(tfile, mode='rb'), file_h)
+			shutil.copyfileobj(tar_file.extractfile(member), file_h)
 	finally:
-		os.remove(tfile)
+		os.remove(tmp_file)
 	os.chmod(dest, 0o644)
 	return os.stat(dest).st_size
 
@@ -108,12 +119,8 @@ def init_database(database_file):
 	"""
 	# pylint: disable=global-statement
 	global _geoip_db
-	if os.path.isfile(database_file) and os.stat(database_file).st_size == 0:
-		logger.warning('the specified geoip database is empty, downloading a new copy')
-		download_geolite2_city_db(database_file)
-	elif not os.path.isfile(database_file):
-		logger.warning('the specified geoip database does not exist, downloading a new copy')
-		download_geolite2_city_db(database_file)
+	if not (os.path.isfile(database_file) and os.access(database_file, os.R_OK)):
+		raise errors.KingPhisherResourceError('the geoip database path is not a file')
 	_geoip_db = geoip2.database.Reader(database_file)
 	metadata = _geoip_db.metadata()
 	if not metadata.database_type == 'GeoLite2-City':

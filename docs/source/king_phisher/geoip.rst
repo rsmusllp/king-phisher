@@ -10,9 +10,6 @@ This module uses GeoLite2 data created by MaxMind, available from
 Data
 ----
 
-.. autodata:: DB_DOWNLOAD_URL
-   :annotation:
-
 .. autodata:: DB_RESULT_FIELDS
    :annotation:
 

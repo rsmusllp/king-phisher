@@ -71,7 +71,7 @@ server:
 
   geoip:
     # The location of the GeoLite2 City database
-    database: /var/king-phisher/geoip.mmdb
+    database: /var/king-phisher/GeoLite2-City.mmdb
 
   # Additional headers to include in HTTP responses
   headers:

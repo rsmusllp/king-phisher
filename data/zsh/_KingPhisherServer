@@ -40,7 +40,6 @@
 
 _arguments \
   "1::config_file:_files" \
-  "--update-geoip-db[update the geoip database and exit]" \
   "--verify-config[verify the configuration and exit]" \
   {-L,--log}"[set the logging level]:loglvl:(DEBUG INFO WARNING ERROR CRITICAL)" \
   {-f,--foreground}"[run in the foreground (do not fork)]" \

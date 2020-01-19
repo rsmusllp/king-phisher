@@ -355,7 +355,6 @@ def argp_add_server(parser):
 	"""
 	kps_group = parser.add_argument_group('server specific options')
 	kps_group.add_argument('-f', '--foreground', dest='foreground', action='store_true', default=False, help='run in the foreground (do not fork)')
-	kps_group.add_argument('--update-geoip-db', dest='update_geoip_db', action='store_true', default=False, help='update the geoip database and exit')
 	kps_group.add_argument('--verify-config', dest='verify_config', action='store_true', default=False, help='verify the configuration and exit')
 	kps_group.add_argument('config_file', action='store', help='configuration file to use')
 	return parser

@@ -43,7 +43,6 @@ from king_phisher import color
 from king_phisher import constants
 from king_phisher import errors
 from king_phisher import find
-from king_phisher import geoip
 from king_phisher import utilities
 from king_phisher import version
 from king_phisher.server import build
@@ -51,8 +50,6 @@ from king_phisher.server import configuration
 from king_phisher.server import fs_utilities
 from king_phisher.server import plugins
 from king_phisher.server import pylibc
-
-from boltons import strutils
 
 logger = logging.getLogger('KingPhisher.Server.CLI')
 
@@ -242,16 +239,6 @@ def main():
 		color.print_error('the server must be started as root, configure the')
 		color.print_error('\'server.setuid_username\' option in the config file to drop privileges')
 		return os.EX_NOPERM
-
-	if arguments.update_geoip_db:
-		color.print_status('downloading a new geoip database')
-		try:
-			size = geoip.download_geolite2_city_db(config.get('server.geoip.database'))
-		except errors.KingPhisherResourceError as error:
-			color.print_error(error.message)
-			return os.EX_UNAVAILABLE
-		color.print_good("download complete, file size: {0}".format(strutils.bytes2human(size)))
-		return os.EX_OK
 
 	# setup logging based on the configuration
 	if config.has_section('logging'):
