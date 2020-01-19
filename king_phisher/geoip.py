@@ -41,6 +41,7 @@ import tempfile
 import threading
 
 from king_phisher import errors
+from king_phisher import find
 from king_phisher import ipaddress
 
 import geoip2.database
@@ -119,8 +120,12 @@ def init_database(database_file):
 	"""
 	# pylint: disable=global-statement
 	global _geoip_db
-	if not (os.path.isfile(database_file) and os.access(database_file, os.R_OK)):
-		raise errors.KingPhisherResourceError('the geoip database path is not a file')
+	if not os.path.isfile(database_file):
+		db_path = find.data_file('GeoLite2-City.mmdb')
+		if db_path is None:
+			raise errors.KingPhisherResourceError('the default geoip database file is unavailable')
+		logger.info('initializing the default geoip database')
+		shutil.copyfile(db_path, database_file)
 	_geoip_db = geoip2.database.Reader(database_file)
 	metadata = _geoip_db.metadata()
 	if not metadata.database_type == 'GeoLite2-City':

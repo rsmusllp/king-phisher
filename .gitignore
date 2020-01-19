@@ -36,6 +36,7 @@ data/client/king_phisher/style/.sass-cache/*
 !.github/*.yml
 !data/client/king_phisher/plugin-documentation.html
 !data/server/docker/docker-compose.yml
+!data/server/king_phisher/*.mmdb
 !data/server/king_phisher/error_*.html
 !data/server/king_phisher/server_config.yml
 !data/server/king_phisher/server_config_verification.yml
