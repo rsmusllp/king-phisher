@@ -246,7 +246,10 @@ class CampaignSelectionDialog(gui_utilities.GladeGObject):
 			len(self._tv_model),
 			('' if len(self._tv_model) == 1 else 's')
 		))
-		progress = len(self._tv_model) / campaigns['total']
+		if campaigns['total']:
+			progress = len(self._tv_model) / campaigns['total']
+		else:
+			progress = 1.0
 		self.gobjects['progressbar_loading'].set_text("Loaded {:,} of {:,} campaigns ({:.1f}%)".format(len(self._tv_model), campaigns['total'], progress * 100))
 		self.gobjects['progressbar_loading'].set_fraction(progress)
 		if campaigns['pageInfo']['hasNextPage']:
