@@ -46,10 +46,12 @@ from king_phisher import ipaddress
 
 import geoip2.database
 import geoip2.errors
+import maxminddb.errors
 import requests
 
 __all__ = ('init_database', 'lookup', 'GeoLocation')
 
+DB_DOWNLOAD_URL = 'https://zerosteiner.s3.amazonaws.com/data/GeoLite2-City.tar.gz'
 DB_RESULT_FIELDS = ('city', 'continent', 'coordinates', 'country', 'postal_code', 'time_zone')
 """A tuple listing the fields that are required in database results."""
 
@@ -66,9 +68,9 @@ def _normalize_encoding(word):
 		word = word.encode('ascii', 'ignore')
 	return word
 
-def download_geolite2_city_db(dest, license, date=None):
+def download_geolite2_city_db(dest, license=None, date=None):
 	"""
-	Download the GeoLite2 database, decompress it, and save it to disk.
+	Download the GeoLite2 database and save it to disk.
 
 	.. versionchanged:: 1.16.0
 		Added the *license* and *date* parameters.
@@ -80,9 +82,15 @@ def download_geolite2_city_db(dest, license, date=None):
 	"""
 	params = {'edition_id': 'GeoLite2-City', 'license_key': license, 'suffix': 'tar.gz'}
 	if date is not None:
+		if license is None:
+			raise errors.KingPhisherError('can not request a specific date when no license is specified')
 		params['date'] = date.strftime('%Y%m%d')
 	try:
-		response = requests.get('https://download.maxmind.com/app/geoip_download', params=params, stream=True)
+		if license is None:
+			logger.info('no license was specified, downloading the default GeoLite2 database')
+			response = requests.get(DB_DOWNLOAD_URL, stream=True)
+		else:
+			response = requests.get('https://download.maxmind.com/app/geoip_download', params=params, stream=True)
 	except requests.ConnectionError:
 		logger.error('geoip database download failed (could not connect to the server)')
 		raise errors.KingPhisherResourceError('could not download the geoip database') from None
@@ -126,7 +134,12 @@ def init_database(database_file):
 			raise errors.KingPhisherResourceError('the default geoip database file is unavailable')
 		logger.info('initializing the default geoip database')
 		shutil.copyfile(db_path, database_file)
-	_geoip_db = geoip2.database.Reader(database_file)
+	try:
+		_geoip_db = geoip2.database.Reader(database_file)
+	except maxminddb.errors.InvalidDatabaseError:
+		logger.warning('the geoip database file is invalid, downloading a new one')
+		download_geolite2_city_db(database_file)
+		_geoip_db = geoip2.database.Reader(database_file)
 	metadata = _geoip_db.metadata()
 	if not metadata.database_type == 'GeoLite2-City':
 		raise ValueError('the connected database is not a GeoLite2-City database')
