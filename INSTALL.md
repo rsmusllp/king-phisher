@@ -9,6 +9,11 @@ For installation on [supported Linux][operating-systems] distros:
 wget -q https://github.com/securestate/king-phisher/raw/master/tools/install.sh && \
 sudo bash ./install.sh
 ```
+
+This process may result in errors being displayed. In this case, allow
+the installation process to continue as it will attempt to address as
+many of them as it can.
+
 ## Windows (Client Only)
 Download the latest [Windows build here.][releases]
 
