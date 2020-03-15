@@ -30,6 +30,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import collections
 import logging
 import os
 import socket
@@ -39,8 +40,11 @@ from king_phisher.server import letsencrypt
 from king_phisher.server import signals
 from king_phisher.server.server import KingPhisherRequestHandler, KingPhisherServer
 
+import advancedhttpserver
+
 logger = logging.getLogger('KingPhisher.Server.build')
 
+_BindAddress = collections.namedtuple('_BindAddress', ('address', 'port', 'ssl'))
 def get_bind_addresses(config):
 	"""
 	Retrieve the addresses on which the server should bind to. Each of these
@@ -60,7 +64,7 @@ def get_bind_addresses(config):
 		if not (0 <= port <= 0xffff):
 			logger.critical("setting server.addresses[{0}] invalid port specified".format(entry))
 			raise errors.KingPhisherError("invalid port configuration for address #{0}".format(entry + 1))
-		addresses.append((address['host'], port, address.get('ssl', False)))
+		addresses.append(_BindAddress(address['host'], port, address.get('ssl', False)))
 
 	for host, port, use_ssl in addresses:
 		if port in (443, 8443) and not use_ssl:
@@ -89,15 +93,15 @@ def get_ssl_hostnames(config):
 		ssl_certfile = ssl_host.get('ssl_cert')
 		if ssl_certfile is None:
 			logger.critical("setting server.ssl_hosts[{0}] cert file not specified".format(entry))
-			raise errors.KingPhisherError("invalid ssl host configuration #{0}, missing cert file".format(entry + 1))
+			raise errors.KingPhisherError("invalid ssl host configuration #{0}, missing certificate file".format(entry + 1))
 		if not os.access(ssl_certfile, os.R_OK):
 			logger.critical("setting server.ssl_hosts[{0}] file '{1}' not found".format(entry, ssl_certfile))
-			raise errors.KingPhisherError("invalid ssl host configuration #{0}, missing cert file".format(entry + 1))
+			raise errors.KingPhisherError("invalid ssl host configuration #{0}, missing certificate file".format(entry + 1))
 		ssl_keyfile = ssl_host.get('ssl_key')
 		if ssl_keyfile is not None and not os.access(ssl_keyfile, os.R_OK):
 			logger.critical("setting server.ssl_hosts[{0}] file '{1}' not found".format(entry, ssl_keyfile))
 			raise errors.KingPhisherError("invalid ssl host configuration #{0}, missing key file".format(entry + 1))
-		ssl_hostnames.append((hostname, ssl_certfile, ssl_keyfile))
+		ssl_hostnames.append(advancedhttpserver.SSLSNICertificate(hostname, ssl_certfile, ssl_keyfile))
 	return ssl_hostnames
 
 def _server_add_sni_cert(server, hostname, sni_config):
@@ -144,20 +148,27 @@ def server_from_config(config, handler_klass=None, plugin_manager=None):
 		ssl_certfile = config.get('server.ssl_cert')
 		if not os.access(ssl_certfile, os.R_OK):
 			logger.critical("setting server.ssl_cert file '{0}' not found".format(ssl_certfile))
-			raise errors.KingPhisherError('invalid ssl configuration, missing file')
+			raise errors.KingPhisherError('invalid ssl configuration, missing certificate file')
 		logger.info("using default ssl cert file '{0}'".format(ssl_certfile))
 		if config.has_option('server.ssl_key'):
 			ssl_keyfile = config.get('server.ssl_key')
 			if not os.access(ssl_keyfile, os.R_OK):
 				logger.critical("setting server.ssl_key file '{0}' not found".format(ssl_keyfile))
-				raise errors.KingPhisherError('invalid ssl configuration, missing file')
+				raise errors.KingPhisherError('invalid ssl configuration, missing key file')
 
-	if any([address[2] for address in addresses]) and ssl_certfile is None:
-		raise errors.KingPhisherError('an ssl certificate must be specified when ssl is enabled')
-	if ssl_certfile is None:
-		ssl_hostnames = []
-	else:
+	if any([address.ssl for address in addresses]):
 		ssl_hostnames = get_ssl_hostnames(config)
+		if ssl_certfile is None:
+			if not ssl_hostnames:
+				raise errors.KingPhisherError('an ssl certificate must be specified when ssl is enabled')
+			sni_config = ssl_hostnames[0]
+			logger.warning('no default certificate file was specified, using ssl host configuration: ' + sni_config.hostname)
+			ssl_certfile = sni_config.certfile
+			ssl_keyfile = sni_config.keyfile
+	else:
+		ssl_certfile = None
+		ssl_keyfile = None
+		ssl_hostnames = []
 
 	try:
 		server = KingPhisherServer(config, plugin_manager, handler_klass, addresses=addresses, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
