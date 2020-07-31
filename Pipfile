@@ -46,7 +46,7 @@ SQLAlchemy = "==1.3.8"
 XlsxWriter = "==1.2.1"
 numpy = "==1.16.4" 
 basemap = {file = "https://github.com/matplotlib/basemap/archive/v1.2.1rel.tar.gz"}
-pyproj = "==2.4.0"
+pyproj = "==2.6.1"
 rule-engine = "~=1.1"
 matplotlib = "==2.2.4"
 
