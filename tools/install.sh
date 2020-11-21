@@ -461,7 +461,7 @@ if [ "$LINUX_VERSION" == "Kali" ]; then
 		echo "INFO: Checking Kali 2 apt sources"
 		if ! grep -E "deb http://http\.kali\.org/kali sana main non-free contrib" /etc/apt/sources.list &> /dev/null; then
 			echo "INFO: Standard Kali 2 apt sources are missing, now adding them, see"
-			echo "INFO: http://docs.kali.org/general-use/kali-linux-sources-list-repositories for more details"
+			echo "INFO: https://www.kali.org/docs/general-use/kali-linux-sources-list-repositories/ for more details"
 			echo "deb http://http.kali.org/kali sana main non-free contrib" >> /etc/apt/sources.list
 			apt-get update
 		fi
