@@ -33,7 +33,7 @@ pyotp==2.3.0
 python-dateutil==2.8.0
 python-pam==1.8.4
 pytz==2019.2
-pyyaml==5.1.2
+pyyaml==5.4
 requests-file==1.4.3
 requests==2.22.0
 rule-engine==1.1.0
