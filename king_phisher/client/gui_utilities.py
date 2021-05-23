@@ -428,8 +428,8 @@ def gtk_listbox_populate_labels(listbox, label_strings):
 
 def gtk_listbox_populate_urls(listbox, url_strings, signals=None):
 	"""
-	Format and adds URLs to a list box. Each URL is styeled and added as a
-	seperate entry.
+	Format and adds URLs to a list box. Each URL is styled and added as a
+	separate entry.
 
 	.. versionadded:: 1.14.0
 

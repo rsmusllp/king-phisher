@@ -82,7 +82,7 @@ A named tuple for holding both image and file attachments for a message.
 
 .. py:attribute:: files
 
-	A tuple of :py:class:`~.mime.MIMEBase` instances representing the messsages
+	A tuple of :py:class:`~.mime.MIMEBase` instances representing the messages
 	attachments.
 
 .. py:attribute:: images

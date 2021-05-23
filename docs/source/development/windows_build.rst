@@ -83,7 +83,7 @@ automatically, the last line of
 "[python34]\Lib\site-packages\cx_Freeze\windist.py" needs to be updated from
 ``None`` to ``"TARGETDIR"``.
 
-The ouput example of lines 52-62 of cx_freeze's "windist.py" file, with change
+The output example of lines 52-62 of cx_freeze's "windist.py" file, with change
 applied.
 
 .. code-block:: python

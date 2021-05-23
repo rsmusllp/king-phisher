@@ -136,7 +136,7 @@ include_files.append((pytz.__path__[0], 'pytz'))
 include_files.append((requests.__path__[0], 'requests'))
 include_files.append((collections.__path__[0], 'collections'))
 
-# include pip executible
+# include pip executable
 executable_path = os.path.dirname(sys.executable)
 include_files.append((os.path.join(executable_path, 'Scripts'), 'Scripts'))
 include_files.append((os.path.join(executable_path, 'python.exe'), 'python.exe'))

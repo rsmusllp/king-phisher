@@ -1,4 +1,4 @@
-:mod:`middlware`
+:mod:`middleware`
 ================
 
 .. module:: king_phisher.server.graphql.middleware
