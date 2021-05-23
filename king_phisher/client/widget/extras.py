@@ -139,7 +139,7 @@ class ColumnDefinitionBase(object):
 	"""
 	__slots__ = ('title', 'width')
 	cell_renderer = None
-	"""The :py:class:`~Gtk.CellRenderer` to use for renderering the content."""
+	"""The :py:class:`~Gtk.CellRenderer` to use for rendering the content."""
 	g_type = None
 	"""The type to specify in the context of GObjects."""
 	python_type = None
@@ -254,7 +254,7 @@ class FileChooserDialog(_Gtk_FileChooserDialog):
 		value of target_path in the returned dictionary is an absolute path.
 
 		:param set current_name: The name of the file to save.
-		:return: A dictionary with target_uri and target_path keys representing the path choosen.
+		:return: A dictionary with target_uri and target_path keys representing the path chosen.
 		:rtype: dict
 		"""
 		self.set_action(Gtk.FileChooserAction.SAVE)

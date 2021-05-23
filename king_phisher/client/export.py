@@ -464,7 +464,7 @@ def _xlsx_write(row, columns, worksheet, row_format=None):
 
 def liststore_to_xlsx_worksheet(store, worksheet, columns, title_format, xlsx_options=None):
 	"""
-	Write the contents of a :py:class:`Gtk.ListStore` to an XLSX workseet.
+	Write the contents of a :py:class:`Gtk.ListStore` to an XLSX worksheet.
 
 	:param store: The store to export the information from.
 	:type store: :py:class:`Gtk.ListStore`

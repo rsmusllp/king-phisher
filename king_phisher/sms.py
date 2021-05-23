@@ -101,7 +101,7 @@ def send_sms(message_text, phone_number, carrier, from_address=None):
 	:param str phone_number: The phone number to send the SMS to.
 	:param str carrier: The cellular carrier that the phone number belongs to.
 	:param str from_address: The optional address to display in the 'from' field of the SMS.
-	:return: This returns the status of the sent messsage.
+	:return: This returns the status of the sent message.
 	:rtype: bool
 	"""
 	from_address = (from_address or DEFAULT_FROM_ADDRESS)

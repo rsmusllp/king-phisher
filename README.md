@@ -52,7 +52,7 @@ request to the templates repository.
 Documentation for users of the application is provided on the project's
 [wiki page](https://github.com/securestate/king-phisher/wiki). This includes
 steps to help new users get started with their first campaigns. Additional
-technical documentation intended for developers is kept seperate as outlined
+technical documentation intended for developers is kept separate as outlined
 in section below.
 
 ### Code Documentation

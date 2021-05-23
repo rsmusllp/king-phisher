@@ -171,7 +171,7 @@ def getgrouplist(user, group=constants.AUTOMATIC, encoding='utf-8'):
 def getpwnam(name, encoding='utf-8'):
 	"""
 	Get the structure containing the fields from the specified entry in the
-	passwrd database. See
+	password database. See
 	`getpwnam(3) <http://man7.org/linux/man-pages/man3/getpwnam.3.html>`_ for
 	more information.
 
@@ -189,7 +189,7 @@ def getpwnam(name, encoding='utf-8'):
 def getpwuid(uid):
 	"""
 	Get the structure containing the fields from the specified entry in the
-	passwrd database. See
+	password database. See
 	`getpwuid(3) <http://man7.org/linux/man-pages/man3/getpwuid.3.html>`_ for
 	more information.
 
