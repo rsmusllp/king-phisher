@@ -82,7 +82,7 @@ def gobject_signal_parse(env, sig, signode):
 	return match.group(1)
 
 def setup(app):
-	app.add_stylesheet('theme_overrides.css')
+	app.add_css_file('theme_overrides.css')
 	doc_field_types = list(copy.copy(sphinx.domains.python.PyObject.doc_field_types))
 	doc_field_types.append(sphinx.util.docfields.Field('flags', label='Signal flags', names=['flag', 'flags'], has_arg=False))
 	app.add_object_type(
