@@ -273,7 +273,7 @@ def render_message_template(template, config, target=None, analyze=False):
 	template_vars['webserver'] = webserver_url.netloc
 	tracking_url = urllib.parse.urlunparse((webserver_url.scheme, webserver_url.netloc, tracking_image, '', 'id=' + target.uid, ''))
 	webserver_url = urllib.parse.urlunparse((webserver_url.scheme, webserver_url.netloc, webserver_url.path, '', '', ''))
-	template_vars['tracking_dot_image_tag'] = "<img src=\"{0}\" style=\"display:none\" />".format(tracking_url)
+	template_vars['tracking_dot_image_tag'] = "<img src=\"{0}\" style=\"display:none\" alt=\"\" />".format(tracking_url)
 
 	template_vars_url = {}
 	template_vars_url['rickroll'] = 'http://www.youtube.com/watch?v=oHg5SJYRHA0'
