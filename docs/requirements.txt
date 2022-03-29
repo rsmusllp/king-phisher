@@ -24,7 +24,7 @@ markdown==2.6.11
 markupsafe==1.1.1
 matplotlib==2.2.4
 msgpack-python==0.5.6
-paramiko==2.6.0
+paramiko==2.10.1
 pluginbase==1.0.0
 psycopg2==2.8.3
 py-gfm==0.1.4
