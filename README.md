@@ -5,6 +5,8 @@
 
 ![alt text](https://raw.githubusercontent.com/securestate/king-phisher/screenshots/dashboard.png "Campaign Dashboard")
 
+# King Phishger is no longer being maintained.
+
 ## Installation
 For instructions on how to install, please see the
 [INSTALL.md](https://github.com/securestate/king-phisher/blob/master/INSTALL.md)
