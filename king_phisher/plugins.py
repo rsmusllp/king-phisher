@@ -32,7 +32,7 @@
 
 import collections
 import copy
-import distutils.version
+import pacakging.version
 import functools
 import importlib
 import inspect
@@ -56,7 +56,7 @@ from king_phisher import version
 
 import pluginbase
 
-StrictVersion = distutils.version.StrictVersion
+StrictVersion = packaging.version
 
 def _recursive_reload(package, package_name, completed):
 	importlib.reload(package)
