@@ -32,7 +32,7 @@
 
 import collections
 import copy
-import pacakging.version
+import packaging.version
 import functools
 import importlib
 import inspect
