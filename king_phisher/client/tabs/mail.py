@@ -1076,9 +1076,9 @@ class MailSenderConfigurationTab(gui_utilities.GladeGObject):
 			return True
 
 		message = 'SPF exists and the policy evaluates to: ' + spf_result
-		if spf_result is 'fail':
+		if spf_result == 'fail':
 			message = 'SPF exists with a hard fail, messages will probably be blocked.'
-		elif spf_result is 'softfail':
+		elif spf_result == 'softfail':
 			message = 'SPF exists with a soft fail, messages might be blocked.'
 		gui_utilities.show_dialog_info('SPF Check Results', self.parent, message)
 		return True
