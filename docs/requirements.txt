@@ -34,7 +34,7 @@ python-pam==1.8.4
 pytz==2019.2
 pyyaml==5.4
 requests-file==1.4.3
-requests==2.22.0
+requests==2.31.0
 rule-engine==1.1.0
 six==1.12.0
 smoke-zephyr==1.4.1
